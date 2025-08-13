@@ -1,4 +1,7 @@
-Especificación Funcional y Arquitectura: Aplicación CONDOR
+---
+mode: ask
+---
+Define the task to achieve, including specific requirements, constraints, and success criteria.Especificación Funcional y Arquitectura: Aplicación CONDOR
 1. Resumen General del Proyecto
 Nombre de la Aplicación: CONDOR
 
