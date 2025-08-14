@@ -11,7 +11,10 @@ Dim objFSO
 Dim objArgs
 
 ' Configuracion
+' Configuracion inicial - se determinara la base de datos segun la accion
+Dim strDataPath
 strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
+strDataPath = "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
 strSourcePath = "C:\Proyectos\CONDOR\src"
 
 ' Obtener argumentos de linea de comandos
@@ -34,6 +37,11 @@ If strAction <> "import" And strAction <> "export" And strAction <> "createtable
 End If
 
 Set objFSO = CreateObject("Scripting.FileSystemObject")
+
+' Determinar qué base de datos usar según la acción
+If strAction = "createtable" Or strAction = "droptable" Or strAction = "listtables" Then
+    strAccessPath = strDataPath
+End If
 
 ' Verificar que existe la base de datos
 If Not objFSO.FileExists(strAccessPath) Then
