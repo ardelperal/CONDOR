@@ -180,8 +180,9 @@ cscript condor_cli.vbs import
 cscript condor_cli.vbs test
 ```
 - Ejecuta el motor de pruebas interno de CONDOR
-- Importa automáticamente los módulos antes de ejecutar las pruebas
+- **IMPORTANTE**: Requiere haber ejecutado `import` previamente para compilar los módulos
 - Proporciona un informe detallado de resultados
+- Utiliza únicamente `Application.Run` para mayor robustez
 
 ### Conversión Automática de Codificación
 
@@ -352,10 +353,18 @@ Consulta el **[Plan de Acción](PLAN_DE_ACCION.md)** para ver el roadmap complet
 
 ### Flujo de Desarrollo
 
+**Flujo Recomendado (2 pasos separados):**
 1. **Desarrollo Local**: Modificar archivos `.bas` en el directorio `src/`
-2. **Importación**: `cscript condor_cli.vbs import` para aplicar cambios a Access
-3. **Pruebas**: `cscript condor_cli.vbs test` para validar funcionalidad
+2. **Importación y Compilación**: `cscript condor_cli.vbs import` para aplicar cambios y compilar módulos
+3. **Ejecución de Pruebas**: `cscript condor_cli.vbs test` para validar funcionalidad
 4. **Exportación**: `cscript condor_cli.vbs export` para sincronizar cambios desde Access
+
+**Comando Combinado:**
+```bash
+cscript condor_cli.vbs import && cscript condor_cli.vbs test
+```
+
+**⚠️ Importante**: El comando `test` ya no realiza importación automática. Siempre ejecute `import` antes de `test` para asegurar que los módulos estén compilados correctamente.
 
 ### Configuración
 

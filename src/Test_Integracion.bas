@@ -1,4 +1,4 @@
-Attribute VB_Name = "Test_Integracion"
+﻿Attribute VB_Name = "Test_Integracion"
 ' =============================================
 ' MODULO: Test_Integracion
 ' PROPOSITO: Pruebas de integracion para CONDOR

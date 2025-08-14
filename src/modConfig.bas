@@ -1,13 +1,11 @@
 Attribute VB_Name = "modConfig"
 ' Modulo de Configuracion del Sistema CONDOR
 ' Gestiona la configuracion de rutas y entornos de desarrollo/produccion
-' Version: 2.0 (con forzado de entorno para debug)
-' Fecha: 2024
+' Version: 2.1 (corregido para compilacion)
+' Fecha: 2025-01-14
 
 Option Compare Database
 Option Explicit
-
-#If DEV_MODE Then
 
 ' Constante para modo de desarrollo
 Public Const DEV_MODE As Boolean = True
@@ -78,8 +76,8 @@ Public Function InitializeEnvironment() As Boolean
         ' Configuracion para entorno de desarrollo LOCAL
         g_AppConfig.DatabasePath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
         g_AppConfig.dataPath = "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
-        g_AppConfig.ExpedientesPath = "C:\Proyectos\CONDOR\back\EXPEDIENTES.accdb" 'Ruta local de ejemplo
-        g_AppConfig.PlantillasPath = "C:\Proyectos\CONDOR\templates"
+        g_AppConfig.ExpedientesPath = "C:\Proyectos\CONDOR\back\Expedientes_datos.accdb"
+        g_AppConfig.PlantillasPath = "C:\Proyectos\CONDOR\back\recursos\Plantillas"
         g_AppConfig.LanzaderaDbPath = "C:\Proyectos\CONDOR\back\Lanzadera_Datos.accdb"
         g_AppConfig.sourcePath = "C:\Proyectos\CONDOR\src"
         g_AppConfig.backupPath = "C:\Proyectos\CONDOR\back\backups"
@@ -87,14 +85,11 @@ Public Function InitializeEnvironment() As Boolean
         g_AppConfig.tempPath = "C:\Proyectos\CONDOR\temp"
     Else
         ' Configuracion para entorno de produccion/REMOTO
-        ' OJO: La ruta de la BBDD de desarrollo (CONDOR.accdb) no deberia estar en red,
-        ' es el frontend que se distribuye. Aqui ponemos la ruta de la lanzadera.
         g_AppConfig.DatabasePath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\0Lanzadera\CONDOR.accde"
         g_AppConfig.dataPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR Prueba\CONDOR_datos.accdb"
         g_AppConfig.ExpedientesPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\EXPEDIENTES\EXPEDIENTES_be.accdb"
         g_AppConfig.PlantillasPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR Prueba\Plantillas"
         g_AppConfig.LanzaderaDbPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\0Lanzadera\Lanzadera_Datos.accdb"
-        ' Estas rutas probablemente sigan siendo locales a la maquina del usuario
         g_AppConfig.sourcePath = "C:\Ruta\Invalida\En\Produccion"
         g_AppConfig.backupPath = Environ("APPDATA") & "\CONDOR\Backups"
         g_AppConfig.logPath = Environ("APPDATA") & "\CONDOR\Logs"
@@ -123,6 +118,38 @@ Public Function GetActiveEnvironment() As String
     GetActiveEnvironment = g_AppConfig.EntornoActivo
 End Function
 
+' Funcion para obtener la ruta de la base de datos principal
+Public Function GetDatabasePath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetDatabasePath = g_AppConfig.DatabasePath
+End Function
+
+' Funcion para obtener la ruta de la base de datos de datos
+Public Function GetDataPath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetDataPath = g_AppConfig.dataPath
+End Function
+
+' Funcion para obtener la ruta de la base de datos de Expedientes
+Public Function GetExpedientesPath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetExpedientesPath = g_AppConfig.ExpedientesPath
+End Function
+
+' Funcion para obtener la ruta de las plantillas
+Public Function GetPlantillasPath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetPlantillasPath = g_AppConfig.PlantillasPath
+End Function
+
 ' Funcion para obtener la ruta de la base de datos Lanzadera
 Public Function GetLanzaderaDbPath() As String
     If Not g_AppConfig.IsInitialized Then
@@ -131,22 +158,78 @@ Public Function GetLanzaderaDbPath() As String
     GetLanzaderaDbPath = g_AppConfig.LanzaderaDbPath
 End Function
 
-' ... (El resto de funciones Get...Path permanecen iguales) ...
+' Funcion para obtener la ruta de codigo fuente
+Public Function GetSourcePath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetSourcePath = g_AppConfig.sourcePath
+End Function
+
+' Funcion para obtener la ruta de backups
+Public Function GetBackupPath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetBackupPath = g_AppConfig.backupPath
+End Function
+
+' Funcion para obtener la ruta de logs
+Public Function GetLogPath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetLogPath = g_AppConfig.logPath
+End Function
+
+' Funcion para obtener la ruta temporal
+Public Function GetTempPath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetTempPath = g_AppConfig.tempPath
+End Function
 
 ' Funcion privada para resetear la configuracion
-Private Sub ResetConfiguration()
-    ' ... (Sin cambios) ...
+Public Sub ResetConfiguration()
+    g_AppConfig.DatabasePath = ""
+    g_AppConfig.dataPath = ""
+    g_AppConfig.ExpedientesPath = ""
+    g_AppConfig.PlantillasPath = ""
+    g_AppConfig.LanzaderaDbPath = ""
+    g_AppConfig.sourcePath = ""
+    g_AppConfig.backupPath = ""
+    g_AppConfig.logPath = ""
+    g_AppConfig.tempPath = ""
+    g_AppConfig.IsInitialized = False
+    g_AppConfig.EntornoActivo = ""
 End Sub
 
 ' Funcion privada para crear directorios necesarios
 Private Sub CreateDirectoriesIfNeeded()
-    ' ... (Sin cambios) ...
+    On Error Resume Next
+    
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    ' Crear directorios locales si no existen
+    If Not fso.FolderExists(g_AppConfig.backupPath) Then
+        fso.CreateFolder g_AppConfig.backupPath
+    End If
+    
+    If Not fso.FolderExists(g_AppConfig.logPath) Then
+        fso.CreateFolder g_AppConfig.logPath
+    End If
+    
+    If Not fso.FolderExists(g_AppConfig.tempPath) Then
+        fso.CreateFolder g_AppConfig.tempPath
+    End If
+    
+    Set fso = Nothing
+    On Error GoTo 0
 End Sub
 
-#End If
-
 ' Funcion para detectar si estamos en modo de desarrollo
-' Detecta basandose en la existencia de la estructura de directorios de desarrollo
 Public Function IsDevelopmentMode() As Boolean
     On Error GoTo ErrorHandler
     
@@ -166,48 +249,57 @@ Public Function IsDevelopmentMode() As Boolean
     For i = 0 To UBound(devPaths)
         If fso.FolderExists(devPaths(i)) Or fso.FileExists(devPaths(i)) Then
             IsDevelopmentMode = True
+            Set fso = Nothing
             Exit Function
         End If
     Next i
     
     ' Si no encuentra ninguna ruta de desarrollo, asumir produccion
     IsDevelopmentMode = False
+    Set fso = Nothing
     Exit Function
     
 ErrorHandler:
     ' En caso de error, asumir modo produccion por seguridad
     IsDevelopmentMode = False
+    If Not fso Is Nothing Then Set fso = Nothing
 End Function
 
-' Funcion de prueba (actualizada para mostrar el entorno)
+' Funcion de prueba
 Public Function TestModConfig() As String
     Dim resultado As String
     resultado = "=== PRUEBA MODCONFIG ===" & vbCrLf
     
-    #If DEV_MODE Then
-        ' Probar inicializacion
-        Dim initResult As Boolean
-        initResult = InitializeEnvironment()
-        
-        If initResult Then
-            resultado = resultado & "✓ InitializeEnvironment: OK" & vbCrLf
-            resultado = resultado & "  └─ Entorno Activo: " & GetActiveEnvironment() & vbCrLf
-        Else
-            resultado = resultado & "✗ InitializeEnvironment: FALLO" & vbCrLf
-        End If
-        
-        ' Probar obtencion de ruta
-        Dim dbPath As String
-        dbPath = GetDataPath() 'Probamos con la de datos que es la que cambia
-        
-        If Len(dbPath) > 0 Then
-            resultado = resultado & "✓ GetDataPath: OK -> " & dbPath & vbCrLf
-        Else
-            resultado = resultado & "✗ GetDataPath: FALLO" & vbCrLf
-        End If
-    #Else
-        resultado = resultado & "Modo produccion - pruebas omitidas" & vbCrLf
-    #End If
+    ' Probar inicializacion
+    Dim initResult As Boolean
+    initResult = InitializeEnvironment()
+    
+    If initResult Then
+        resultado = resultado & "[OK] InitializeEnvironment: OK" & vbCrLf
+        resultado = resultado & "  |- Entorno Activo: " & GetActiveEnvironment() & vbCrLf
+    Else
+        resultado = resultado & "[FALLO] InitializeEnvironment: FALLO" & vbCrLf
+    End If
+    
+    ' Probar obtencion de rutas
+    Dim dbPath As String
+    dbPath = GetDataPath()
+    
+    If Len(dbPath) > 0 Then
+        resultado = resultado & "[OK] GetDataPath: OK -> " & dbPath & vbCrLf
+    Else
+        resultado = resultado & "[FALLO] GetDataPath: FALLO" & vbCrLf
+    End If
+    
+    ' Probar GetLanzaderaDbPath
+    Dim lanzaderaPath As String
+    lanzaderaPath = GetLanzaderaDbPath()
+    
+    If Len(lanzaderaPath) > 0 Then
+        resultado = resultado & "[OK] GetLanzaderaDbPath: OK -> " & lanzaderaPath & vbCrLf
+    Else
+        resultado = resultado & "[FALLO] GetLanzaderaDbPath: FALLO" & vbCrLf
+    End If
     
     resultado = resultado & "=== FIN PRUEBA ===" & vbCrLf
     TestModConfig = resultado

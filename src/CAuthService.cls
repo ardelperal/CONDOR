@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -119,7 +119,9 @@ ErrorHandler:
     
     ' Limpiar recursos en caso de error
     If Not rs Is Nothing Then
-        If rs.State = 1 Then rs.Close
+        On Error Resume Next
+        rs.Close
+        On Error GoTo 0
         Set rs = Nothing
     End If
     If Not db Is Nothing Then

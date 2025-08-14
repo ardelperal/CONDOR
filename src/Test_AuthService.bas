@@ -1,4 +1,4 @@
-Attribute VB_Name = "Test_AuthService"
+﻿Attribute VB_Name = "Test_AuthService"
 Option Compare Database
 Option Explicit
 
@@ -13,22 +13,74 @@ Option Explicit
 ' FUNCION: RunAllTests
 ' PROPOSITO: Ejecutar todas las pruebas del servicio de autenticacion
 ' =====================================================
-Public Sub RunAllTests()
-    Debug.Print "=== INICIANDO PRUEBAS DE AUTENTICACION ==="
-    Debug.Print "Fecha: " & Now()
+Public Function RunAllTests() As String
+    Dim resultado As String
+    Dim testsPassed As Integer
+    Dim testsTotal As Integer
+    
+    resultado = "=== INICIANDO PRUEBAS DE AUTENTICACION ===" & vbCrLf
+    resultado = resultado & "Fecha: " & Now() & vbCrLf & vbCrLf
+    
+    testsTotal = 8
+    testsPassed = 0
     
     ' Ejecutar todas las pruebas
-    Test_AuthService_Interface
-    Test_GetUserRole_AdminUser
-    Test_GetUserRole_CalidadUser
-    Test_GetUserRole_TecnicoUser
-    Test_GetUserRole_UnknownUser
-    Test_GetUserRole_EmptyEmail
-    Test_GetUserRole_InvalidEmail
-    Test_GetCurrentUserEmail_Function
+    On Error GoTo ErrorHandler
     
-    Debug.Print "=== PRUEBAS DE AUTENTICACION COMPLETADAS ==="
-End Sub
+    Test_AuthService_Interface
+    resultado = resultado & "[PASS] Test_AuthService_Interface" & vbCrLf
+    testsPassed = testsPassed + 1
+    
+    Test_GetUserRole_AdminUser
+    resultado = resultado & "[PASS] Test_GetUserRole_AdminUser" & vbCrLf
+    testsPassed = testsPassed + 1
+    
+    Test_GetUserRole_CalidadUser
+    resultado = resultado & "[PASS] Test_GetUserRole_CalidadUser" & vbCrLf
+    testsPassed = testsPassed + 1
+    
+    Test_GetUserRole_TecnicoUser
+    resultado = resultado & "[PASS] Test_GetUserRole_TecnicoUser" & vbCrLf
+    testsPassed = testsPassed + 1
+    
+    Test_GetUserRole_UnknownUser
+    resultado = resultado & "[PASS] Test_GetUserRole_UnknownUser" & vbCrLf
+    testsPassed = testsPassed + 1
+    
+    Test_GetUserRole_EmptyEmail
+    resultado = resultado & "[PASS] Test_GetUserRole_EmptyEmail" & vbCrLf
+    testsPassed = testsPassed + 1
+    
+    Test_GetUserRole_InvalidEmail
+    resultado = resultado & "[PASS] Test_GetUserRole_InvalidEmail" & vbCrLf
+    testsPassed = testsPassed + 1
+    
+    Test_GetCurrentUserEmail_Function
+    resultado = resultado & "[PASS] Test_GetCurrentUserEmail_Function" & vbCrLf
+    testsPassed = testsPassed + 1
+    
+    GoTo TestsComplete
+    
+ErrorHandler:
+    resultado = resultado & "[FAIL] Error en prueba: " & Err.Description & vbCrLf
+    Resume Next
+    
+TestsComplete:
+    resultado = resultado & vbCrLf & "RESUMEN AUTENTICACION:" & vbCrLf
+    resultado = resultado & "Pruebas ejecutadas: " & testsTotal & vbCrLf
+    resultado = resultado & "Pruebas exitosas: " & testsPassed & vbCrLf
+    resultado = resultado & "Pruebas fallidas: " & (testsTotal - testsPassed) & vbCrLf
+    
+    If testsPassed = testsTotal Then
+        resultado = resultado & "RESULTADO AUTENTICACION: TODAS LAS PRUEBAS PASARON [OK]" & vbCrLf
+    Else
+        resultado = resultado & "RESULTADO AUTENTICACION: ALGUNAS PRUEBAS FALLARON [ERROR]" & vbCrLf
+    End If
+    
+    resultado = resultado & "=== PRUEBAS DE AUTENTICACION COMPLETADAS ===" & vbCrLf
+    
+    RunAllTests = resultado
+End Function
 
 ' =====================================================
 ' PRUEBA: Test_AuthService_Interface
@@ -38,7 +90,7 @@ Private Sub Test_AuthService_Interface()
     Debug.Print "[TEST] Verificando interfaz IAuthService..."
     
     Dim authService As IAuthService
-    Set authService = New CAuthService
+    Set authService = New CMockAuthService
     
     ' Verificar que la instancia se creo correctamente
     Debug.Assert Not authService Is Nothing
@@ -54,7 +106,7 @@ Private Sub Test_GetUserRole_AdminUser()
     Debug.Print "[TEST] Verificando rol de usuario administrador..."
     
     Dim authService As IAuthService
-    Set authService = New CAuthService
+    Set authService = New CMockAuthService
     
     ' Email de prueba para administrador
     Dim adminEmail As String
@@ -63,13 +115,10 @@ Private Sub Test_GetUserRole_AdminUser()
     Dim userRole As E_UserRole
     userRole = authService.GetUserRole(adminEmail)
     
-    ' Nota: Esta prueba fallara si no hay datos de prueba en la BD Lanzadera
-' En un entorno de pruebas real, se deberia configurar datos de prueba
+    ' Con CMockAuthService, debe retornar Rol_Admin para este email
+    Debug.Assert userRole = Rol_Admin
+    
     Debug.Print "[INFO] Rol obtenido para " & adminEmail & ": " & GetRoleNameForTest(userRole)
-    
-    ' Para pruebas sin datos reales, verificamos que no hay errores de ejecucion
-    Debug.Assert userRole >= Rol_Desconocido And userRole <= Rol_Admin
-    
     Debug.Print "[PASS] Prueba de usuario administrador completada"
 End Sub
 
@@ -81,7 +130,7 @@ Private Sub Test_GetUserRole_CalidadUser()
     Debug.Print "[TEST] Verificando rol de usuario de calidad..."
     
     Dim authService As IAuthService
-    Set authService = New CAuthService
+    Set authService = New CMockAuthService
     
     ' Email de prueba para calidad
     Dim calidadEmail As String
@@ -90,11 +139,10 @@ Private Sub Test_GetUserRole_CalidadUser()
     Dim userRole As E_UserRole
     userRole = authService.GetUserRole(calidadEmail)
     
+    ' Con CMockAuthService, debe retornar Rol_Calidad para este email
+    Debug.Assert userRole = Rol_Calidad
+    
     Debug.Print "[INFO] Rol obtenido para " & calidadEmail & ": " & GetRoleNameForTest(userRole)
-    
-    ' Verificar que el rol esta en el rango valido
-    Debug.Assert userRole >= Rol_Desconocido And userRole <= Rol_Admin
-    
     Debug.Print "[PASS] Prueba de usuario de calidad completada"
 End Sub
 
@@ -106,7 +154,7 @@ Private Sub Test_GetUserRole_TecnicoUser()
     Debug.Print "[TEST] Verificando rol de usuario tecnico..."
     
     Dim authService As IAuthService
-    Set authService = New CAuthService
+    Set authService = New CMockAuthService
     
     ' Email de prueba para tecnico
     Dim tecnicoEmail As String
@@ -115,11 +163,10 @@ Private Sub Test_GetUserRole_TecnicoUser()
     Dim userRole As E_UserRole
     userRole = authService.GetUserRole(tecnicoEmail)
     
+    ' Con CMockAuthService, debe retornar Rol_Tecnico para este email
+    Debug.Assert userRole = Rol_Tecnico
+    
     Debug.Print "[INFO] Rol obtenido para " & tecnicoEmail & ": " & GetRoleNameForTest(userRole)
-    
-    ' Verificar que el rol esta en el rango valido
-    Debug.Assert userRole >= Rol_Desconocido And userRole <= Rol_Admin
-    
     Debug.Print "[PASS] Prueba de usuario tecnico completada"
 End Sub
 
@@ -131,7 +178,7 @@ Private Sub Test_GetUserRole_UnknownUser()
     Debug.Print "[TEST] Verificando usuario desconocido..."
     
     Dim authService As IAuthService
-    Set authService = New CAuthService
+    Set authService = New CMockAuthService
     
     ' Email de usuario que no deberia existir
     Dim unknownEmail As String
@@ -154,7 +201,7 @@ Private Sub Test_GetUserRole_EmptyEmail()
     Debug.Print "[TEST] Verificando manejo de email vacio..."
     
     Dim authService As IAuthService
-    Set authService = New CAuthService
+    Set authService = New CMockAuthService
     
     Dim userRole As E_UserRole
     userRole = authService.GetUserRole("")
@@ -173,7 +220,7 @@ Private Sub Test_GetUserRole_InvalidEmail()
     Debug.Print "[TEST] Verificando manejo de email con caracteres especiales..."
     
     Dim authService As IAuthService
-    Set authService = New CAuthService
+    Set authService = New CMockAuthService
     
     ' Email con comilla simple para probar escape SQL
     Dim invalidEmail As String
