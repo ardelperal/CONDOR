@@ -183,6 +183,35 @@ cscript condor_cli.vbs test
 - Importa automáticamente los módulos antes de ejecutar las pruebas
 - Proporciona un informe detallado de resultados
 
+### Conversión Automática de Codificación
+
+La herramienta CLI maneja automáticamente la conversión entre las diferentes codificaciones de caracteres utilizadas por VS Code y Access VBA:
+
+#### Problema de Codificación
+- **VS Code**: Utiliza codificación UTF-8 (estándar moderno) que puede representar cualquier carácter
+- **Access VBA**: Utiliza codificación ANSI/Windows-1252 (estándar legacy) con conjunto limitado de caracteres
+- **Conflicto**: Los caracteres especiales (tildes, eñes) se representan de forma diferente en cada codificación
+
+#### Solución Automática
+La CLI actúa como traductor inteligente en ambas direcciones:
+
+**Durante la Exportación (Access → src/):**
+- Lee módulos VBA desde Access (formato ANSI interno)
+- Convierte automáticamente a UTF-8 al escribir archivos en `/src`
+- Preserva todos los caracteres especiales correctamente
+
+**Durante la Importación (src/ → Access):**
+- Lee archivos UTF-8 desde el directorio `/src`
+- Convierte automáticamente a ANSI antes de importar a Access
+- Elimina metadatos "Attribute VB_" durante el proceso
+- Garantiza compatibilidad total con el editor VBA
+
+#### Beneficios
+- **Transparente**: Los desarrolladores no necesitan preocuparse por la codificación
+- **Preserva Caracteres**: Mantiene tildes, eñes y caracteres especiales intactos
+- **Sin Mojibake**: Evita caracteres corruptos como "Ã¡" o "�"
+- **Código Limpio**: El código fuente nunca se modifica, solo se traduce la codificación
+
 ### Sistema de Pruebas
 
 CONDOR incluye un motor de pruebas unitarias integrado que permite validar la funcionalidad del código VBA.

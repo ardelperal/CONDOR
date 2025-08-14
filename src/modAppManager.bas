@@ -3,8 +3,8 @@ Option Compare Database
 Option Explicit
 
 ' =====================================================
-' MÓDULO: modAppManager
-' PROPÓSITO: Gestión centralizada de la aplicación y autenticación
+' MODULO: modAppManager
+' PROPOSITO: Gestion centralizada de la aplicacion y autenticacion
 ' AUTOR: CONDOR-Expert
 ' FECHA: 2025-01-14
 ' =====================================================
@@ -21,32 +21,32 @@ End Enum
 Public g_CurrentUserRole As E_UserRole
 
 ' =====================================================
-' FUNCIÓN: GetCurrentUserEmail
-' PROPÓSITO: Obtener el email del usuario actual con capacidad de suplantación en desarrollo
+' FUNCION: GetCurrentUserEmail
+' PROPOSITO: Obtener el email del usuario actual con capacidad de suplantacion en desarrollo
 ' RETORNA: String - Email del usuario
 ' =====================================================
 Public Function GetCurrentUserEmail() As String
     #If DEV_MODE Then
-        ' Descomentar la siguiente línea para suplantar a un usuario durante las pruebas
+        ' Descomentar la siguiente linea para suplantar a un usuario durante las pruebas
         ' GetCurrentUserEmail = "correo.de.prueba.calidad@example.com"
         If GetCurrentUserEmail = "" Then GetCurrentUserEmail = VBA.Command
     #Else
-        ' En producción, siempre se usa VBA.Command
+        ' En produccion, siempre se usa VBA.Command
         GetCurrentUserEmail = VBA.Command
     #End If
 End Function
 
 ' =====================================================
-' FLUJO DE ARRANQUE DE LA APLICACIÓN
+' FLUJO DE ARRANQUE DE LA APLICACION
 ' =====================================================
-' El flujo de arranque típico en una subrutina principal App_Start() sería:
+' El flujo de arranque tipico en una subrutina principal App_Start() seria:
 '
 ' Sub App_Start()
 '     ' 1. Obtener el email del usuario actual
 '     Dim userEmail As String
 '     userEmail = GetCurrentUserEmail()
 '
-'     ' 2. Crear instancia del servicio de autenticación
+'     ' 2. Crear instancia del servicio de autenticacion
 '     Dim authService As IAuthService
 '     Set authService = New CAuthService
 '
@@ -54,19 +54,19 @@ End Function
 '     Dim currentUserRole As E_UserRole
 '     currentUserRole = authService.GetUserRole(userEmail)
 '
-'     ' 4. Guardar el rol en variable global para uso en toda la aplicación
+'     ' 4. Guardar el rol en variable global para uso en toda la aplicacion
 '     g_CurrentUserRole = currentUserRole
 '
-'     ' 5. Continuar con la inicialización de la aplicación según el rol
+'     ' 5. Continuar con la inicializacion de la aplicacion segun el rol
 '     Select Case g_CurrentUserRole
 '         Case Rol_Admin
 '             ' Inicializar funcionalidades de administrador
 '         Case Rol_Calidad
 '             ' Inicializar funcionalidades de calidad
 '         Case Rol_Tecnico
-'             ' Inicializar funcionalidades técnicas
+'             ' Inicializar funcionalidades tecnicas
 '         Case Rol_Desconocido
-'             ' Mostrar error y cerrar aplicación
+'             ' Mostrar error y cerrar aplicacion
 '             MsgBox "Usuario sin permisos para acceder a CONDOR", vbCritical
 '             Application.Quit
 '     End Select

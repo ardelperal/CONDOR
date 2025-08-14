@@ -23,15 +23,11 @@ Public Function RunAllTests() As String
     resultado = resultado & "--- PRUEBAS DE CONFIGURACION ---" & vbCrLf
     On Error GoTo ErrorHandler
     
-#If DEV_MODE Then
     Dim configResults As String
     configResults = Test_Config.RunAllTests()
     resultado = resultado & configResults & vbCrLf
     testsPassed = testsPassed + 5  ' Test_Config tiene 5 pruebas
     testsTotal = testsTotal + 5
-#Else
-    resultado = resultado & "[SKIP] Pruebas de configuración no disponibles en modo producción" & vbCrLf
-#End If
     
     GoTo TestsComplete
     

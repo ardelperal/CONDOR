@@ -1,15 +1,13 @@
 Attribute VB_Name = "Test_Config"
-' Módulo de Pruebas para Configuración del Sistema CONDOR
-' Pruebas unitarias para el módulo modConfig
-' Versión: 1.0
+' Modulo de Pruebas para Configuracion del Sistema CONDOR
+' Pruebas unitarias para el modulo modConfig
+' Version: 1.0
 ' Fecha: 2024
 
 Option Compare Database
 Option Explicit
 
-#If DEV_MODE Then
-
-' Función principal de pruebas para el módulo de configuración
+' Funcion principal de pruebas para el modulo de configuracion
 Public Function RunAllTests() As String
     Dim resultado As String
     Dim testsPassed As Integer
@@ -19,7 +17,7 @@ Public Function RunAllTests() As String
     testsPassed = 0
     testsTotal = 0
     
-    ' Test 1: Inicialización del entorno
+    ' Test 1: Inicializacion del entorno
     testsTotal = testsTotal + 1
     If Test_InitializeEnvironment() Then
         resultado = resultado & "✓ [OK] Test_InitializeEnvironment: PASO" & vbCrLf
@@ -29,7 +27,7 @@ Public Function RunAllTests() As String
         Stop
     End If
     
-    ' Test 2: Obtención de rutas
+    ' Test 2: Obtencion de rutas
     testsTotal = testsTotal + 1
     If Test_GetPaths() Then
         resultado = resultado & "✓ [OK] Test_GetPaths: PASO" & vbCrLf
@@ -49,7 +47,7 @@ Public Function RunAllTests() As String
         Stop
     End If
     
-    ' Test 4: Configuración de estructura
+    ' Test 4: Configuracion de estructura
     testsTotal = testsTotal + 1
     If Test_ConfigStructure() Then
         resultado = resultado & "✓ [OK] Test_ConfigStructure: PASO" & vbCrLf
@@ -59,7 +57,7 @@ Public Function RunAllTests() As String
         Stop
     End If
     
-    ' Test 5: Reinicialización
+    ' Test 5: Reinicializacion
     testsTotal = testsTotal + 1
     If Test_ResetConfiguration() Then
         resultado = resultado & "✓ [OK] Test_ResetConfiguration: PASO" & vbCrLf
@@ -102,20 +100,20 @@ Public Function RunAllTests() As String
     RunAllTests = resultado
 End Function
 
-' Prueba la inicialización del entorno
+' Prueba la inicializacion del entorno
 Private Function Test_InitializeEnvironment() As Boolean
     Dim result As Boolean
     
-    ' Ejecutar inicialización
+    ' Ejecutar inicializacion
     result = InitializeEnvironment()
     
-    ' Verificar que la inicialización fue exitosa
+    ' Verificar que la inicializacion fue exitosa
     If Not result Then
         Test_InitializeEnvironment = False
         Exit Function
     End If
     
-    ' Verificar que la configuración está marcada como inicializada
+    ' Verificar que la configuracion esta marcada como inicializada
     If Not g_AppConfig.IsInitialized Then
         Test_InitializeEnvironment = False
         Exit Function
@@ -124,7 +122,7 @@ Private Function Test_InitializeEnvironment() As Boolean
     Test_InitializeEnvironment = True
 End Function
 
-' Prueba la obtención de rutas
+' Prueba la obtencion de rutas
 Private Function Test_GetPaths() As Boolean
     Dim dbPath As String
     Dim dataPath As String
@@ -141,7 +139,7 @@ Private Function Test_GetPaths() As Boolean
     logPath = GetLogPath()
     tempPath = GetTempPath()
     
-    ' Verificar que ninguna ruta esté vacía
+    ' Verificar que ninguna ruta este vacia
     If Len(dbPath) = 0 Then
         Test_GetPaths = False
         Exit Function
@@ -196,14 +194,14 @@ Private Function Test_DevelopmentMode() As Boolean
     Test_DevelopmentMode = True
 End Function
 
-' Prueba la estructura de configuración
+' Prueba la estructura de configuracion
 Private Function Test_ConfigStructure() As Boolean
-    ' Inicializar si no está inicializado
+    ' Inicializar si no esta inicializado
     If Not g_AppConfig.IsInitialized Then
         Call InitializeEnvironment
     End If
     
-    ' Verificar que todos los campos de la estructura estén poblados
+    ' Verificar que todos los campos de la estructura esten poblados
     If Len(g_AppConfig.DatabasePath) = 0 Then
         Test_ConfigStructure = False
         Exit Function
@@ -234,7 +232,7 @@ Private Function Test_ConfigStructure() As Boolean
         Exit Function
     End If
     
-    ' Verificar que el nuevo campo LanzaderaDbPath esté poblado
+    ' Verificar que el nuevo campo LanzaderaDbPath este poblado
     If Len(g_AppConfig.LanzaderaDbPath) = 0 Then
         Test_ConfigStructure = False
         Exit Function
@@ -243,12 +241,12 @@ Private Function Test_ConfigStructure() As Boolean
     Test_ConfigStructure = True
 End Function
 
-' Prueba la reinicialización de configuración
+' Prueba la reinicializacion de configuracion
 Private Function Test_ResetConfiguration() As Boolean
     ' Primero inicializar
     Call InitializeEnvironment
     
-    ' Verificar que está inicializado
+    ' Verificar que esta inicializado
     If Not g_AppConfig.IsInitialized Then
         Test_ResetConfiguration = False
         Exit Function
@@ -263,7 +261,7 @@ Private Function Test_ResetConfiguration() As Boolean
         Exit Function
     End If
     
-    ' Verificar que las rutas siguen siendo válidas
+    ' Verificar que las rutas siguen siendo validas
     If Len(GetDatabasePath()) = 0 Then
         Test_ResetConfiguration = False
         Exit Function
@@ -290,7 +288,7 @@ Private Function Test_LanzaderaDbPath() As Boolean
     ' Obtener la ruta de la base de datos Lanzadera
     lanzaderaPath = GetLanzaderaDbPath()
     
-    ' Verificar que la ruta no esté vacía
+    ' Verificar que la ruta no este vacia
     If Len(lanzaderaPath) = 0 Then
         Test_LanzaderaDbPath = False
         Exit Function
@@ -309,7 +307,7 @@ Private Function Test_LanzaderaDbPath() As Boolean
             Exit Function
         End If
     Else
-        ' En modo producción, debe contener la ruta de red
+        ' En modo produccion, debe contener la ruta de red
         If InStr(lanzaderaPath, "datoste") = 0 Then
             Test_LanzaderaDbPath = False
             Exit Function
@@ -318,5 +316,3 @@ Private Function Test_LanzaderaDbPath() As Boolean
     
     Test_LanzaderaDbPath = True
 End Function
-
-#End If

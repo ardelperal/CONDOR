@@ -83,7 +83,7 @@ Public Sub Test_IntegracionBaseDatos()
     On Error Resume Next
     Err.Clear
     
-    ' Simular operación CRUD en base de datos
+    ' Simular operacion CRUD en base de datos
     Dim operacionExitosa As Boolean
     operacionExitosa = True ' Simular operacion exitosa
     

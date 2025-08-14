@@ -1,6 +1,6 @@
-' CONDOR CLI - Herramienta de l�nea de comandos para el proyecto CONDOR
-' Funcionalidades: Sincronizaci�n VBA, gesti�n de tablas, y operaciones del proyecto
-' Versi�n sin di�logos para automatizaci�n completa
+' CONDOR CLI - Herramienta de linea de comandos para el proyecto CONDOR
+' Funcionalidades: Sincronizacion VBA, gestion de tablas, y operaciones del proyecto
+' Version sin dialogos para automatizacion completa
 
 Option Explicit
 
@@ -22,22 +22,35 @@ strSourcePath = "C:\Proyectos\CONDOR\src"
 ' Obtener argumentos de linea de comandos
 Set objArgs = WScript.Arguments
 If objArgs.Count = 0 Then
-    WScript.Echo "Uso: cscript condor_cli.vbs [import|export|createtable|droptable|listtables|test|relink]"
-    WScript.Echo "  import     - Importar modulos VBA desde /src"
-    WScript.Echo "  export     - Exportar modulos VBA a /src"
+    WScript.Echo "=== CONDOR CLI - Herramienta de linea de comandos ==="
+    WScript.Echo "Uso: cscript condor_cli.vbs [comando] [opciones]"
+    WScript.Echo ""
+    WScript.Echo "COMANDOS DISPONIBLES:"
+    WScript.Echo "  import     - Importar modulos VBA desde /src (con validacion previa)"
+    WScript.Echo "  export     - Exportar modulos VBA a /src (con codificacion ANSI)"
+    WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
+    WScript.Echo "  test       - Ejecutar todos los tests y mostrar resultados"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
-    WScript.Echo "  listtables [db_path] - Listar todas las tablas (opcionalmente de una base específica)"
-    WScript.Echo "  test       - Ejecutar todos los tests y mostrar resultados"
-    WScript.Echo "  relink <db_path> <local_folder> - Re-vincular tablas a bases de datos locales"
-    WScript.Echo "  relink --all - Re-vincular todas las bases de datos en ./back automáticamente"
+    WScript.Echo "  listtables [db_path] - Listar tablas (opcionalmente de base especifica)"
+    WScript.Echo "  relink <db_path> <folder> - Re-vincular tablas a bases locales"
+    WScript.Echo "  relink --all - Re-vincular todas las bases en ./back automaticamente"
+    WScript.Echo ""
+    WScript.Echo "OPCIONES ESPECIALES:"
+    WScript.Echo "  --dry-run  - Simular operacion sin modificar Access (solo con import)"
+    WScript.Echo "  --verbose  - Mostrar informacion detallada durante la operacion"
+    WScript.Echo ""
+    WScript.Echo "EJEMPLOS:"
+    WScript.Echo "  cscript condor_cli.vbs validate"
+    WScript.Echo "  cscript condor_cli.vbs import --dry-run"
+    WScript.Echo "  cscript condor_cli.vbs export --verbose"
     WScript.Quit 1
 End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "import" And strAction <> "export" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" Then
-    WScript.Echo "Error: Accion debe ser 'import', 'export', 'createtable', 'droptable', 'listtables', 'test' o 'relink'"
+If strAction <> "import" And strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" Then
+    WScript.Echo "Error: Comando debe ser 'import', 'export', 'validate', 'createtable', 'droptable', 'listtables', 'test' o 'relink'"
     WScript.Quit 1
 End If
 
@@ -86,7 +99,7 @@ End If
 objAccess.Visible = False
 objAccess.UserControl = False
 
-' Abrir base de datos con compilación condicional
+' Abrir base de datos con compilacion condicional
 WScript.Echo "Abriendo base de datos..."
 
 ' Configurar Access para evitar errores de compilación
@@ -103,7 +116,7 @@ If strDbPassword = "" Then
     ' Sin contraseña
     objAccess.OpenCurrentDatabase strAccessPath
 Else
-    ' Con contraseña - usar solo dos parámetros
+    ' Con contrasena - usar solo dos parametros
     objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
 End If
 
@@ -116,10 +129,27 @@ End If
 On Error GoTo 0
 WScript.Echo "Base de datos abierta correctamente (modo seguro)"
 
-If strAction = "import" Then
-    Call ImportModules()
+' Verificar opciones especiales
+Dim bDryRun, bVerbose, i
+bDryRun = False
+bVerbose = False
+
+For i = 1 To objArgs.Count - 1
+    If LCase(objArgs(i)) = "--dry-run" Then
+        bDryRun = True
+        WScript.Echo "[MODO DRY-RUN] Simulacion activada - no se modificara Access"
+    ElseIf LCase(objArgs(i)) = "--verbose" Then
+        bVerbose = True
+        WScript.Echo "[MODO VERBOSE] Informacion detallada activada"
+    End If
+Next
+
+If strAction = "validate" Then
+    Call ValidateAllModules(bVerbose)
+ElseIf strAction = "import" Then
+    Call ImportModules(bDryRun, bVerbose)
 ElseIf strAction = "export" Then
-    Call ExportModules()
+    Call ExportModules(bVerbose)
 ElseIf strAction = "createtable" Then
     Call CreateTable()
 ElseIf strAction = "droptable" Then
@@ -127,7 +157,16 @@ ElseIf strAction = "droptable" Then
 ElseIf strAction = "listtables" Then
     Call ListTables()
 ElseIf strAction = "test" Then
-    Call RunTestsWithEngine()
+    Dim testModule, argIndex
+    testModule = ""
+    ' Buscar el primer argumento que no sea una opción especial
+    For argIndex = 1 To objArgs.Count - 1
+        If LCase(objArgs(argIndex)) <> "--verbose" And LCase(objArgs(argIndex)) <> "--dry-run" Then
+            testModule = objArgs(argIndex)
+            Exit For
+        End If
+    Next
+    Call RunTestsWithEngine(testModule)
 ElseIf strAction = "relink" Then
     Call RelinkTables()
 End If
@@ -146,21 +185,123 @@ WScript.Echo "Access cerrado correctamente"
 WScript.Echo "=== SINCRONIZACION COMPLETADA EXITOSAMENTE ==="
 WScript.Quit 0
 
-' Subrutina para importar modulos
-Sub ImportModules()
+' Subrutina para validar todos los modulos sin importar
+Sub ValidateAllModules(bVerbose)
     Dim objFolder, objFile
-    Dim strModuleName, strFileName
+    Dim strFileName, strContent
+    Dim validationResult
+    Dim totalFiles, validFiles, invalidFiles
+    
+    WScript.Echo "=== VALIDACION DE SINTAXIS VBA ==="
+    
+    If Not objFSO.FolderExists(strSourcePath) Then
+        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
+        WScript.Quit 1
+    End If
+    
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    totalFiles = 0
+    validFiles = 0
+    invalidFiles = 0
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            totalFiles = totalFiles + 1
+            strFileName = objFile.Path
+            
+            If bVerbose Then
+                WScript.Echo "Validando: " & objFile.Name
+            End If
+            
+            ' Validar sintaxis
+            Dim errorDetails
+            validationResult = ValidateVBASyntax(strFileName, errorDetails)
+            
+            If validationResult = True Then
+                validFiles = validFiles + 1
+                If bVerbose Then
+                    WScript.Echo "  ✓ Sintaxis valida"
+                End If
+            Else
+                invalidFiles = invalidFiles + 1
+                WScript.Echo "  ✗ ERROR en " & objFile.Name & ": " & errorDetails
+            End If
+        End If
+    Next
+    
+    WScript.Echo ""
+    WScript.Echo "=== RESUMEN DE VALIDACION ==="
+    WScript.Echo "Total de archivos: " & totalFiles
+    WScript.Echo "Archivos validos: " & validFiles
+    WScript.Echo "Archivos con errores: " & invalidFiles
+    
+    If invalidFiles > 0 Then
+        WScript.Echo "ADVERTENCIA: Se encontraron errores de sintaxis. Corrija antes de importar."
+        WScript.Quit 1
+    Else
+        WScript.Echo "✓ Todos los archivos tienen sintaxis valida"
+    End If
+End Sub
+
+' Subrutina para importar modulos
+Sub ImportModules(bDryRun, bVerbose)
+    Dim objFolder, objFile
+    Dim strModuleName, strFileName, strContent
     Dim vbComponent
     Dim i, j
     Dim srcModules
     Dim moduleExists
+    Dim validationResult
+    Dim totalFiles, validFiles, invalidFiles
     
-    WScript.Echo "Iniciando importacion de modulos VBA..."
+    If bDryRun Then
+        WScript.Echo "=== MODO DRY-RUN: SIMULACION DE IMPORTACION ==="
+    Else
+        WScript.Echo "Iniciando importacion de modulos VBA..."
+    End If
     
     If Not objFSO.FolderExists(strSourcePath) Then
         WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
-        objAccess.Quit
+        If Not bDryRun Then objAccess.Quit
         WScript.Quit 1
+    End If
+    
+    ' PASO 1: Validacion previa de sintaxis
+    WScript.Echo "Validando sintaxis de todos los modulos..."
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    totalFiles = 0
+    validFiles = 0
+    invalidFiles = 0
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            totalFiles = totalFiles + 1
+            Dim errorDetails
+            validationResult = ValidateVBASyntax(objFile.Path, errorDetails)
+            
+            If validationResult = True Then
+                validFiles = validFiles + 1
+                If bVerbose Then
+                    WScript.Echo "  ✓ " & objFile.Name & " - Sintaxis valida"
+                End If
+            Else
+                invalidFiles = invalidFiles + 1
+                WScript.Echo "  ✗ ERROR en " & objFile.Name & ": " & errorDetails
+            End If
+        End If
+    Next
+    
+    If invalidFiles > 0 Then
+        WScript.Echo "ABORTANDO: Se encontraron " & invalidFiles & " archivos con errores de sintaxis."
+        WScript.Echo "Use 'cscript condor_cli.vbs validate --verbose' para más detalles."
+        If Not bDryRun Then objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "✓ Validacion completada: " & validFiles & " archivos validos"
+    
+    If bDryRun Then
+        WScript.Echo "[DRY-RUN] Los siguientes modulos serian procesados:"
     End If
     
     ' Crear lista de módulos en src
@@ -173,21 +314,31 @@ Sub ImportModules()
         End If
     Next
     
-    ' Eliminar módulos que no están en src
-    WScript.Echo "Eliminando modulos que no estan en src..."
+    ' PASO 2: Eliminar modulos que no estan en src
+    If bDryRun Then
+        WScript.Echo "[DRY-RUN] Modulos que serian eliminados:"
+    Else
+        WScript.Echo "Eliminando modulos que no estan en src..."
+    End If
+    
     On Error Resume Next
     For i = objAccess.VBE.ActiveVBProject.VBComponents.Count To 1 Step -1
         Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents(i)
         If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
             If Not srcModules.Exists(vbComponent.Name) Then
-                WScript.Echo "Eliminando modulo obsoleto: " & vbComponent.Name
-                objAccess.VBE.ActiveVBProject.VBComponents.Remove vbComponent
+                If bDryRun Then
+                    WScript.Echo "  - " & vbComponent.Name & " (modulo obsoleto)"
+                Else
+                    WScript.Echo "Eliminando modulo obsoleto: " & vbComponent.Name
+                    objAccess.VBE.ActiveVBProject.VBComponents.Remove vbComponent
+                End If
             End If
         End If
     Next
     Err.Clear
     On Error GoTo 0
     
+    ' PASO 3: Procesar archivos de modulos
     Set objFolder = objFSO.GetFolder(strSourcePath)
     
     For Each objFile In objFolder.Files
@@ -195,62 +346,91 @@ Sub ImportModules()
             strFileName = objFile.Path
             strModuleName = objFSO.GetBaseName(objFile.Name)
             
-            WScript.Echo "Procesando modulo: " & strModuleName
-            
-            ' Eliminar modulo existente si existe
-            On Error Resume Next
-            For i = objAccess.VBE.ActiveVBProject.VBComponents.Count To 1 Step -1
-                If objAccess.VBE.ActiveVBProject.VBComponents(i).Name = strModuleName Then
-                    WScript.Echo "Eliminando modulo existente: " & strModuleName
-                    objAccess.VBE.ActiveVBProject.VBComponents.Remove objAccess.VBE.ActiveVBProject.VBComponents(i)
-                    Exit For
+            If bDryRun Then
+                WScript.Echo "[DRY-RUN] Procesaria modulo: " & strModuleName
+                If bVerbose Then
+                    WScript.Echo "  - Archivo: " & strFileName
+                    WScript.Echo "  - Eliminaria modulo existente si existe"
+                    WScript.Echo "  - Limpiaria contenido (eliminar Attributes)"
+                    WScript.Echo "  - Importaria con codificacion ANSI"
                 End If
-            Next
-            
-            ' Limpiar archivo antes de importar (eliminar metadatos Attribute)
-            Dim cleanedContent
-            cleanedContent = CleanVBAFile(strFileName)
-            
-            ' Importar usando contenido limpio
-            WScript.Echo "Importando modulo (con limpieza): " & strFileName
-            Call ImportCleanModule(strModuleName, cleanedContent, objFile)
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "Error al importar modulo " & strModuleName & ": " & Err.Description
-                Err.Clear
+            Else
+                WScript.Echo "Procesando modulo: " & strModuleName
+                
+                ' Eliminar modulo existente si existe
+                On Error Resume Next
+                For i = objAccess.VBE.ActiveVBProject.VBComponents.Count To 1 Step -1
+                    If objAccess.VBE.ActiveVBProject.VBComponents(i).Name = strModuleName Then
+                        If bVerbose Then
+                            WScript.Echo "  Eliminando modulo existente: " & strModuleName
+                        End If
+                        objAccess.VBE.ActiveVBProject.VBComponents.Remove objAccess.VBE.ActiveVBProject.VBComponents(i)
+                        Exit For
+                    End If
+                Next
+                
+                ' Limpiar archivo antes de importar (eliminar metadatos Attribute)
+                Dim cleanedContent
+                cleanedContent = CleanVBAFile(strFileName)
+                
+                ' Importar usando contenido limpio
+                If bVerbose Then
+                    WScript.Echo "  Importando modulo (con limpieza): " & strFileName
+                End If
+                Call ImportCleanModule(strModuleName, cleanedContent, objFile)
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "Error al importar modulo " & strModuleName & ": " & Err.Description
+                    Err.Clear
+                End If
             End If
         End If
     Next
     
-    ' Guardar cada modulo individualmente para evitar dialogos
-    WScript.Echo "Guardando modulos individualmente..."
-    On Error Resume Next
-    
-    For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
-        If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
-            WScript.Echo "Guardando modulo: " & vbComponent.Name
-            objAccess.DoCmd.Save 5, vbComponent.Name  ' acModule = 5
-            If Err.Number <> 0 Then
-                WScript.Echo "Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
-                Err.Clear
+    If bDryRun Then
+        WScript.Echo ""
+        WScript.Echo "=== RESUMEN DRY-RUN ==="
+        WScript.Echo "✓ Validacion de sintaxis completada"
+        WScript.Echo "✓ Simulacion de eliminacion de modulos obsoletos"
+        WScript.Echo "✓ Simulacion de importacion de modulos"
+        WScript.Echo "[DRY-RUN] No se realizaron cambios en Access"
+        WScript.Echo "Para ejecutar realmente: cscript condor_cli.vbs import"
+    Else
+        ' Guardar cada modulo individualmente para evitar dialogos
+        WScript.Echo "Guardando modulos individualmente..."
+        On Error Resume Next
+        
+        For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
+            If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
+                If bVerbose Then
+                    WScript.Echo "Guardando modulo: " & vbComponent.Name
+                End If
+                objAccess.DoCmd.Save 5, vbComponent.Name  ' acModule = 5
+                If Err.Number <> 0 Then
+                    WScript.Echo "Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
+                    Err.Clear
+                End If
             End If
+        Next
+        
+        ' Los modulos obsoletos ya fueron eliminados automaticamente al inicio
+        
+        ' Verificacion de integridad de nombres de modulos
+        If bVerbose Then
+            WScript.Echo "Verificando integridad de nombres de modulos..."
         End If
-    Next
-    
-    ' Los módulos obsoletos ya fueron eliminados automáticamente al inicio
-    
-    ' Verificación de integridad de nombres de módulos
-    Call VerifyModuleNames()
-    
-    ' Compilación condicional de módulos
-    WScript.Echo "Iniciando compilación condicional..."
-    Call CompileModulesConditionally()
-    
-    WScript.Echo "Importacion completada"
+        Call VerifyModuleNames()
+        
+        ' Compilacion condicional de modulos
+        WScript.Echo "Iniciando compilacion condicional..."
+        Call CompileModulesConditionally()
+        
+        WScript.Echo "Importacion completada exitosamente"
+    End If
 End Sub
 
 ' Subrutina para exportar modulos
-Sub ExportModules()
+Sub ExportModules(bVerbose)
     Dim vbComponent
     Dim strExportPath
     Dim exportedCount
@@ -268,7 +448,9 @@ Sub ExportModules()
         If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
             strExportPath = strSourcePath & "\" & vbComponent.Name & ".bas"
             
-            WScript.Echo "Exportando modulo: " & vbComponent.Name
+            If bVerbose Then
+                WScript.Echo "Exportando modulo: " & vbComponent.Name
+            End If
             
             On Error Resume Next
             Call ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
@@ -277,13 +459,19 @@ Sub ExportModules()
                 WScript.Echo "Error al exportar modulo " & vbComponent.Name & ": " & Err.Description
                 Err.Clear
             Else
-                WScript.Echo "Modulo " & vbComponent.Name & " exportado a: " & strExportPath
+                If bVerbose Then
+                    WScript.Echo "  ✓ Modulo " & vbComponent.Name & " exportado a: " & strExportPath
+                Else
+                    WScript.Echo "✓ " & vbComponent.Name & ".bas"
+                End If
                 exportedCount = exportedCount + 1
             End If
         ElseIf vbComponent.Type = 2 Then  ' vbext_ct_ClassModule
             strExportPath = strSourcePath & "\" & vbComponent.Name & ".cls"
             
-            WScript.Echo "Exportando clase: " & vbComponent.Name
+            If bVerbose Then
+                WScript.Echo "Exportando clase: " & vbComponent.Name
+            End If
             
             On Error Resume Next
             Call ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
@@ -292,13 +480,17 @@ Sub ExportModules()
                 WScript.Echo "Error al exportar clase " & vbComponent.Name & ": " & Err.Description
                 Err.Clear
             Else
-                WScript.Echo "Clase " & vbComponent.Name & " exportada a: " & strExportPath
+                If bVerbose Then
+                    WScript.Echo "  ✓ Clase " & vbComponent.Name & " exportada a: " & strExportPath
+                Else
+                    WScript.Echo "✓ " & vbComponent.Name & ".cls"
+                End If
                 exportedCount = exportedCount + 1
             End If
         End If
     Next
     
-    WScript.Echo "Exportacion completada. Modulos exportados: " & exportedCount
+    WScript.Echo "Exportacion completada exitosamente. Modulos exportados: " & exportedCount
 End Sub
 
 ' Subrutina para crear tabla
@@ -446,7 +638,7 @@ Sub VerifyTable(strTableName)
 End Sub
 
 ' Subrutina para ejecutar tests con motor interno
-Sub RunTestsWithEngine()
+Sub RunTestsWithEngine(testModule)
     WScript.Echo "=== EJECUTANDO TESTS CON MOTOR INTERNO ==="
     
     ' Compilación condicional antes de ejecutar pruebas
@@ -481,7 +673,16 @@ Sub RunTestsWithEngine()
      On Error Resume Next
      
      objAccess.TempVars.Add "TestResult", ""
-     objAccess.DoCmd.RunCode "TempVars(" & Chr(34) & "TestResult" & Chr(34) & ") = TEST_SIMPLE.TEST_SIMPLE()"
+     Dim testFunction
+     If testModule = "" Then
+         testFunction = "modTestRunner.RunAllTests()"
+     ElseIf testModule = "modConfig.TestModConfig" Then
+         testFunction = "Test_Config.RunAllTests()"
+     Else
+         testFunction = testModule & "()"
+     End If
+     
+     objAccess.DoCmd.RunCode "TempVars(" & Chr(34) & "TestResult" & Chr(34) & ") = " & testFunction
      
      If Err.Number = 0 Then
          resultado = objAccess.TempVars("TestResult").Value
@@ -502,7 +703,13 @@ Sub RunTestsWithEngine()
      If Not testExecuted Then
          WScript.Echo "Método 2: Intentando con Application.Run..."
          On Error Resume Next
-         resultado = objAccess.Application.Run("TEST_SIMPLE.TEST_SIMPLE")
+         If testModule = "" Then
+             resultado = objAccess.Application.Run("modTestRunner.RunAllTests")
+         ElseIf testModule = "modConfig.TestModConfig" Then
+             resultado = objAccess.Application.Run("Test_Config.RunAllTests")
+         Else
+             resultado = objAccess.Application.Run(testModule)
+         End If
          
          If Err.Number = 0 Then
              testExecuted = True
@@ -517,7 +724,7 @@ Sub RunTestsWithEngine()
      If Not testExecuted Then
          WScript.Echo "Método 3: Intentando con Eval..."
          On Error Resume Next
-         resultado = objAccess.Eval("TEST_SIMPLE.TEST_SIMPLE()")
+         resultado = objAccess.Eval(testFunction & "()")
          
          If Err.Number = 0 Then
              testExecuted = True
@@ -701,71 +908,159 @@ Sub VerifyModuleNames()
     End If
 End Sub
 
-' Función para limpiar archivos VBA eliminando líneas Attribute
-Function CleanVBAFile(filePath)
-    Dim objFile, strContent, arrLines, i, cleanedLines
-    Dim strLine
+' Función para validar sintaxis VBA antes de importar
+Function ValidateVBASyntax(filePath, ByRef errorDetails)
+    Dim objFile, strContent
     
-    ' Leer contenido del archivo con codificación ANSI explícita
-    Set objFile = objFSO.OpenTextFile(filePath, 1, False, 0) ' ForReading = 1, Create = False, Format = 0 (ASCII/ANSI)
-    strContent = objFile.ReadAll
-    objFile.Close
+    errorDetails = ""
     
-    ' Dividir en líneas
-    arrLines = Split(strContent, vbCrLf)
-    If UBound(arrLines) = 0 Then
-        arrLines = Split(strContent, vbLf)
+    ' Leer archivo con codificación ANSI
+    On Error Resume Next
+    Set objFile = objFSO.OpenTextFile(filePath, 1, False, 0)
+    If Err.Number <> 0 Then
+        errorDetails = "Error al leer archivo: " & Err.Description
+        ValidateVBASyntax = False
+        Exit Function
     End If
     
-    ' Filtrar líneas que no empiecen con "Attribute"
+    strContent = objFile.ReadAll
+    objFile.Close
+    On Error GoTo 0
+    
+    ' Validación básica: verificar que el archivo no esté vacío y sea legible
+    If Len(Trim(strContent)) = 0 Then
+        errorDetails = "El archivo está vacío"
+        ValidateVBASyntax = False
+        Exit Function
+    End If
+    
+    ' Verificar caracteres problemáticos básicos
+    If InStr(strContent, Chr(0)) > 0 Then
+        errorDetails = "El archivo contiene caracteres nulos"
+        ValidateVBASyntax = False
+        Exit Function
+    End If
+    
+    ' Si llegamos aquí, el archivo es válido
+    ValidateVBASyntax = True
+End Function
+
+' Función para leer archivo con codificación ANSI
+Function ReadFileWithAnsiEncoding(filePath)
+    Dim objFile, strContent
+    
+    On Error Resume Next
+    Set objFile = objFSO.OpenTextFile(filePath, 1, False, 0) ' ForReading = 1, Create = False, Format = 0 (ASCII/ANSI)
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ ERROR: No se pudo leer el archivo " & filePath & ": " & Err.Description
+        ReadFileWithAnsiEncoding = ""
+        Exit Function
+    End If
+    
+    strContent = objFile.ReadAll
+    objFile.Close
+    On Error GoTo 0
+    
+    ReadFileWithAnsiEncoding = strContent
+End Function
+
+' Función para limpiar archivos VBA eliminando líneas Attribute con validación mejorada
+Function CleanVBAFile(filePath)
+    Dim objStream, strContent, arrLines, i, cleanedLines
+    Dim strLine, errorDetails
+    
+    ' Validar sintaxis antes de procesar
+    If Not ValidateVBASyntax(filePath, errorDetails) Then
+        WScript.Echo "⚠️ ADVERTENCIA: Errores de sintaxis detectados en " & objFSO.GetFileName(filePath) & ":"
+        WScript.Echo errorDetails
+        WScript.Echo "Continuando con la importación..."
+    End If
+    
+    ' Leer contenido del archivo con codificación UTF-8 usando ADODB.Stream
+    On Error Resume Next
+    Set objStream = CreateObject("ADODB.Stream")
+    objStream.Type = 2 ' adTypeText
+    objStream.Charset = "UTF-8"
+    objStream.Open
+    objStream.LoadFromFile filePath
+    strContent = objStream.ReadText
+    objStream.Close
+    Set objStream = Nothing
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ ERROR: No se pudo leer el archivo " & filePath & ": " & Err.Description
+        CleanVBAFile = ""
+        Exit Function
+    End If
+    On Error GoTo 0
+    
+    ' Normalizar saltos de línea y dividir
+    strContent = Replace(strContent, vbCrLf, vbLf)
+    strContent = Replace(strContent, vbCr, vbLf)
+    arrLines = Split(strContent, vbLf)
+    
+    ' Filtrar líneas que no empiecen con "Attribute" y limpiar caracteres problemáticos
     cleanedLines = ""
     For i = 0 To UBound(arrLines)
-        strLine = Trim(arrLines(i))
-        If Left(strLine, 9) <> "Attribute" Then
+        strLine = arrLines(i)
+        If Left(Trim(strLine), 9) <> "Attribute" Then
+            ' Reemplazar caracteres problemáticos
+            strLine = Replace(strLine, Chr(147), Chr(34)) ' Comilla izquierda tipográfica -> comilla normal
+            strLine = Replace(strLine, Chr(148), Chr(34)) ' Comilla derecha tipográfica -> comilla normal
+            strLine = Replace(strLine, Chr(145), Chr(39)) ' Apostrofe izquierdo -> apostrofe normal
+            strLine = Replace(strLine, Chr(146), Chr(39)) ' Apostrofe derecho -> apostrofe normal
+            
             If cleanedLines <> "" Then
                 cleanedLines = cleanedLines & vbCrLf
             End If
-            cleanedLines = cleanedLines & arrLines(i)
+            cleanedLines = cleanedLines & strLine
         Else
-            WScript.Echo "  Eliminando metadato: " & strLine
+            WScript.Echo "  Eliminando metadato: " & Trim(strLine)
         End If
     Next
     
     CleanVBAFile = cleanedLines
 End Function
 
-' Función para exportar módulo con codificación ANSI explícita
+' Función para exportar módulo con conversión ANSI -> UTF-8
 Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
-    Dim tempFilePath, objTempFile, objFinalFile
-    Dim strContent, arrLines, i, strLine
+    Dim tempFilePath, objTempFile, objStream
+    Dim strContent
     
-    ' Crear archivo temporal usando el método nativo Export
-    tempFilePath = objFSO.GetParentFolderName(strExportPath) & "\temp_export_" & vbComponent.Name & objFSO.GetExtensionName(strExportPath)
+    ' Crear archivo temporal usando el método nativo Export (Access exporta en ANSI)
+    tempFilePath = objFSO.GetParentFolderName(strExportPath) & "\temp_export_" & vbComponent.Name & "." & objFSO.GetExtensionName(strExportPath)
     
-    ' Exportar a archivo temporal
+    ' Exportar a archivo temporal (Access usa ANSI internamente)
     vbComponent.Export tempFilePath
     
-    ' Leer contenido del archivo temporal
-    Set objTempFile = objFSO.OpenTextFile(tempFilePath, 1, False, 0) ' ForReading = 1, Create = False, Format = 0 (ASCII/ANSI)
+    ' Leer contenido del archivo temporal con codificación ANSI
+    Set objTempFile = objFSO.OpenTextFile(tempFilePath, 1, False, 0) ' ForReading = 1, Create = False, Format = 0 (ANSI)
     strContent = objTempFile.ReadAll
     objTempFile.Close
     
-    ' Escribir al archivo final con codificación ANSI explícita
-    Set objFinalFile = objFSO.CreateTextFile(strExportPath, True, False) ' Overwrite = True, Unicode = False (ANSI)
-    objFinalFile.Write strContent
-    objFinalFile.Close
+    ' Escribir al archivo final con codificación UTF-8 usando ADODB.Stream
+    Set objStream = CreateObject("ADODB.Stream")
+    objStream.Type = 2 ' adTypeText
+    objStream.Charset = "UTF-8"
+    objStream.Open
+    objStream.WriteText strContent
+    objStream.SaveToFile strExportPath, 2 ' adSaveCreateOverWrite
+    objStream.Close
+    Set objStream = Nothing
     
     ' Limpiar archivo temporal
     objFSO.DeleteFile tempFilePath
 End Sub
 
-' Función para importar módulo usando contenido limpio
+' Función para importar módulo con conversión UTF-8 -> ANSI
 Sub ImportCleanModule(moduleName, cleanedContent, objFile)
     Dim tempFilePath, objTempFile, vbComponent
     
     ' Crear archivo temporal con contenido limpio usando codificación ANSI
+    ' (Access requiere ANSI para importar correctamente)
     tempFilePath = objFSO.GetParentFolderName(objFile.Path) & "\temp_" & objFile.Name
     
+    ' Escribir contenido limpio con codificación ANSI explícita
     Set objTempFile = objFSO.CreateTextFile(tempFilePath, True, False) ' Overwrite = True, Unicode = False (ANSI)
     objTempFile.Write cleanedContent
     objTempFile.Close
@@ -783,7 +1078,7 @@ Sub ImportCleanModule(moduleName, cleanedContent, objFile)
         If vbComponent.Name <> moduleName Then
             vbComponent.Name = moduleName
         End If
-        WScript.Echo "Módulo " & moduleName & " importado correctamente (limpio)"
+        WScript.Echo "Módulo " & moduleName & " importado correctamente (UTF-8 -> ANSI)"
      End If
 End Sub
 

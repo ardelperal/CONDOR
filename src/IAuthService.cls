@@ -12,15 +12,15 @@ Option Explicit
 
 ' =====================================================
 ' INTERFAZ: IAuthService
-' PROPÓSITO: Define el contrato para servicios de autenticación
+' PROPOSITO: Define el contrato para servicios de autenticacion
 ' AUTOR: CONDOR-Expert
 ' FECHA: 2025-01-14
 ' =====================================================
 
 ' =====================================================
-' FUNCIÓN: GetUserRole
-' PROPÓSITO: Determinar el rol de un usuario basado en su email
-' PARÁMETROS:
+' FUNCION: GetUserRole
+' PROPOSITO: Determinar el rol de un usuario basado en su email
+' PARAMETROS:
 '   - userEmail: String - Email del usuario a verificar
 ' RETORNA: E_UserRole - Rol del usuario en el sistema
 ' =====================================================
