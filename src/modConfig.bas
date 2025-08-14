@@ -1,3 +1,4 @@
+Attribute VB_Name = "modConfig"
 ' Módulo de Configuración del Sistema CONDOR
 ' Gestiona la configuración de rutas y entornos de desarrollo/producción
 ' Versión: 2.0 (con forzado de entorno para debug)
@@ -30,14 +31,14 @@ Private Const ENTORNO_FORZADO As E_EnvironmentOverride = ForzarLocal
 ' Estructura de configuración de la aplicación
 Public Type T_AppConfig
     DatabasePath As String
-    DataPath As String
+    dataPath As String
     ExpedientesPath As String 'Añadido para la BBDD de Expedientes
     PlantillasPath As String 'Añadido para las plantillas Word
     LanzaderaDbPath As String 'Añadido para la BBDD de Lanzadera (gestión de roles)
-    SourcePath As String
-    BackupPath As String
-    LogPath As String
-    TempPath As String
+    sourcePath As String
+    backupPath As String
+    logPath As String
+    tempPath As String
     IsInitialized As Boolean
     EntornoActivo As String ' Para saber qué configuración se cargó
 End Type
@@ -76,28 +77,28 @@ Public Function InitializeEnvironment() As Boolean
     If usarRutasLocales Then
         ' Configuración para entorno de desarrollo LOCAL
         g_AppConfig.DatabasePath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
-        g_AppConfig.DataPath = "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
+        g_AppConfig.dataPath = "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
         g_AppConfig.ExpedientesPath = "C:\Proyectos\CONDOR\back\EXPEDIENTES.accdb" 'Ruta local de ejemplo
         g_AppConfig.PlantillasPath = "C:\Proyectos\CONDOR\templates"
         g_AppConfig.LanzaderaDbPath = "C:\Proyectos\CONDOR\back\Lanzadera_Datos.accdb"
-        g_AppConfig.SourcePath = "C:\Proyectos\CONDOR\src"
-        g_AppConfig.BackupPath = "C:\Proyectos\CONDOR\back\backups"
-        g_AppConfig.LogPath = "C:\Proyectos\CONDOR\logs"
-        g_AppConfig.TempPath = "C:\Proyectos\CONDOR\temp"
+        g_AppConfig.sourcePath = "C:\Proyectos\CONDOR\src"
+        g_AppConfig.backupPath = "C:\Proyectos\CONDOR\back\backups"
+        g_AppConfig.logPath = "C:\Proyectos\CONDOR\logs"
+        g_AppConfig.tempPath = "C:\Proyectos\CONDOR\temp"
     Else
         ' Configuración para entorno de producción/REMOTO
-        ' OJO: La ruta de la BBDD de desarrollo (CONDOR.accdb) no debería estar en red, 
+        ' OJO: La ruta de la BBDD de desarrollo (CONDOR.accdb) no debería estar en red,
         ' es el frontend que se distribuye. Aquí ponemos la ruta de la lanzadera.
         g_AppConfig.DatabasePath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\0Lanzadera\CONDOR.accde"
-        g_AppConfig.DataPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR Prueba\CONDOR_datos.accdb"
+        g_AppConfig.dataPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR Prueba\CONDOR_datos.accdb"
         g_AppConfig.ExpedientesPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\EXPEDIENTES\EXPEDIENTES_be.accdb"
         g_AppConfig.PlantillasPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR Prueba\Plantillas"
         g_AppConfig.LanzaderaDbPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\0Lanzadera\Lanzadera_Datos.accdb"
         ' Estas rutas probablemente sigan siendo locales a la máquina del usuario
-        g_AppConfig.SourcePath = "C:\Ruta\Invalida\En\Produccion"
-        g_AppConfig.BackupPath = Environ("APPDATA") & "\CONDOR\Backups"
-        g_AppConfig.LogPath = Environ("APPDATA") & "\CONDOR\Logs"
-        g_AppConfig.TempPath = Environ("TEMP")
+        g_AppConfig.sourcePath = "C:\Ruta\Invalida\En\Produccion"
+        g_AppConfig.backupPath = Environ("APPDATA") & "\CONDOR\Backups"
+        g_AppConfig.logPath = Environ("APPDATA") & "\CONDOR\Logs"
+        g_AppConfig.tempPath = Environ("TEMP")
     End If
     
     ' Crear directorios si no existen

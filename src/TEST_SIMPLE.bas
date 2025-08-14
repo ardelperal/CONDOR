@@ -1,5 +1,5 @@
-' Módulo de prueba simple sin compilación condicional
 Attribute VB_Name = "TEST_SIMPLE"
+' Módulo de prueba simple sin compilación condicional
 Option Compare Database
 Option Explicit
 

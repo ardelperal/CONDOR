@@ -1,3 +1,4 @@
+Attribute VB_Name = "Test_Config"
 ' Módulo de Pruebas para Configuración del Sistema CONDOR
 ' Pruebas unitarias para el módulo modConfig
 ' Versión: 1.0
@@ -208,27 +209,27 @@ Private Function Test_ConfigStructure() As Boolean
         Exit Function
     End If
     
-    If Len(g_AppConfig.DataPath) = 0 Then
+    If Len(g_AppConfig.dataPath) = 0 Then
         Test_ConfigStructure = False
         Exit Function
     End If
     
-    If Len(g_AppConfig.SourcePath) = 0 Then
+    If Len(g_AppConfig.sourcePath) = 0 Then
         Test_ConfigStructure = False
         Exit Function
     End If
     
-    If Len(g_AppConfig.BackupPath) = 0 Then
+    If Len(g_AppConfig.backupPath) = 0 Then
         Test_ConfigStructure = False
         Exit Function
     End If
     
-    If Len(g_AppConfig.LogPath) = 0 Then
+    If Len(g_AppConfig.logPath) = 0 Then
         Test_ConfigStructure = False
         Exit Function
     End If
     
-    If Len(g_AppConfig.TempPath) = 0 Then
+    If Len(g_AppConfig.tempPath) = 0 Then
         Test_ConfigStructure = False
         Exit Function
     End If

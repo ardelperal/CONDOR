@@ -1,4 +1,4 @@
-Attribute VB_Name "modTestRunner"
+Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
 

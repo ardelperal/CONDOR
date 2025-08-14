@@ -3,6 +3,10 @@ BEGIN
   MultiUse = -1  'True
 END
 Attribute VB_Name = "CAuthService"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
@@ -29,7 +33,7 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRo
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
     Dim sql As String
-    Dim lanzaderaDbPath As String
+    Dim LanzaderaDbPath As String
     Dim userRole As E_UserRole
     
     ' Inicializar con rol desconocido
@@ -42,24 +46,24 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRo
     End If
     
     ' Obtener la ruta de la base de datos Lanzadera desde modConfig
-    lanzaderaDbPath = GetLanzaderaDbPath()
+    LanzaderaDbPath = GetLanzaderaDbPath()
     
     ' Verificar que la ruta no esté vacía
-    If Trim(lanzaderaDbPath) = "" Then
+    If Trim(LanzaderaDbPath) = "" Then
         Debug.Print "Error: Ruta de base de datos Lanzadera no configurada"
         IAuthService_GetUserRole = Rol_Desconocido
         Exit Function
     End If
     
     ' Verificar que el archivo existe
-    If Dir(lanzaderaDbPath) = "" Then
-        Debug.Print "Error: No se encuentra la base de datos Lanzadera en: " & lanzaderaDbPath
+    If Dir(LanzaderaDbPath) = "" Then
+        Debug.Print "Error: No se encuentra la base de datos Lanzadera en: " & LanzaderaDbPath
         IAuthService_GetUserRole = Rol_Desconocido
         Exit Function
     End If
     
     ' Abrir conexión a la base de datos Lanzadera
-    Set db = DBEngine.OpenDatabase(lanzaderaDbPath)
+    Set db = DBEngine.OpenDatabase(LanzaderaDbPath)
     
     ' Construir consulta SQL para obtener permisos del usuario
     ' Según la Sección 2.1 del documento, se consultan las tablas:

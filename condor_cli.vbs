@@ -271,7 +271,7 @@ Sub ExportModules()
             WScript.Echo "Exportando modulo: " & vbComponent.Name
             
             On Error Resume Next
-            vbComponent.Export strExportPath
+            Call ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
             
             If Err.Number <> 0 Then
                 WScript.Echo "Error al exportar modulo " & vbComponent.Name & ": " & Err.Description
@@ -286,7 +286,7 @@ Sub ExportModules()
             WScript.Echo "Exportando clase: " & vbComponent.Name
             
             On Error Resume Next
-            vbComponent.Export strExportPath
+            Call ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
             
             If Err.Number <> 0 Then
                 WScript.Echo "Error al exportar clase " & vbComponent.Name & ": " & Err.Description
@@ -706,8 +706,8 @@ Function CleanVBAFile(filePath)
     Dim objFile, strContent, arrLines, i, cleanedLines
     Dim strLine
     
-    ' Leer contenido del archivo
-    Set objFile = objFSO.OpenTextFile(filePath, 1) ' ForReading = 1
+    ' Leer contenido del archivo con codificación ANSI explícita
+    Set objFile = objFSO.OpenTextFile(filePath, 1, False, 0) ' ForReading = 1, Create = False, Format = 0 (ASCII/ANSI)
     strContent = objFile.ReadAll
     objFile.Close
     
@@ -734,14 +734,39 @@ Function CleanVBAFile(filePath)
     CleanVBAFile = cleanedLines
 End Function
 
+' Función para exportar módulo con codificación ANSI explícita
+Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
+    Dim tempFilePath, objTempFile, objFinalFile
+    Dim strContent, arrLines, i, strLine
+    
+    ' Crear archivo temporal usando el método nativo Export
+    tempFilePath = objFSO.GetParentFolderName(strExportPath) & "\temp_export_" & vbComponent.Name & objFSO.GetExtensionName(strExportPath)
+    
+    ' Exportar a archivo temporal
+    vbComponent.Export tempFilePath
+    
+    ' Leer contenido del archivo temporal
+    Set objTempFile = objFSO.OpenTextFile(tempFilePath, 1, False, 0) ' ForReading = 1, Create = False, Format = 0 (ASCII/ANSI)
+    strContent = objTempFile.ReadAll
+    objTempFile.Close
+    
+    ' Escribir al archivo final con codificación ANSI explícita
+    Set objFinalFile = objFSO.CreateTextFile(strExportPath, True, False) ' Overwrite = True, Unicode = False (ANSI)
+    objFinalFile.Write strContent
+    objFinalFile.Close
+    
+    ' Limpiar archivo temporal
+    objFSO.DeleteFile tempFilePath
+End Sub
+
 ' Función para importar módulo usando contenido limpio
 Sub ImportCleanModule(moduleName, cleanedContent, objFile)
     Dim tempFilePath, objTempFile, vbComponent
     
-    ' Crear archivo temporal con contenido limpio
+    ' Crear archivo temporal con contenido limpio usando codificación ANSI
     tempFilePath = objFSO.GetParentFolderName(objFile.Path) & "\temp_" & objFile.Name
     
-    Set objTempFile = objFSO.CreateTextFile(tempFilePath, True)
+    Set objTempFile = objFSO.CreateTextFile(tempFilePath, True, False) ' Overwrite = True, Unicode = False (ANSI)
     objTempFile.Write cleanedContent
     objTempFile.Close
     

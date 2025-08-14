@@ -1,3 +1,4 @@
+Attribute VB_Name = "Test_Debug"
 ' Módulo de Pruebas de Debug para verificar funcionamiento
 ' Versión temporal sin compilación condicional
 
