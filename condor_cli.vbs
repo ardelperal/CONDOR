@@ -1274,8 +1274,10 @@ End Sub
 Sub RelinkAllDatabases()
     Dim objBackFolder, objFile
     Dim strBackPath, strDbCount
-    Dim dbCount
+    Dim dbCount, successCount, errorCount
     Dim strDbName, strPassword
+    Dim arrDatabases()
+    Dim i
     
     WScript.Echo "=== MODO AUTOMATICO: RE-VINCULANDO TODAS LAS BASES DE DATOS ==="
     
@@ -1295,9 +1297,11 @@ Sub RelinkAllDatabases()
     Set objBackFolder = objFSO.GetFolder(strBackPath)
     dbCount = 0
     
+    ' Redimensionar array para almacenar información de bases de datos
+    ReDim arrDatabases(50) ' Máximo 50 bases de datos
+    
     For Each objFile In objBackFolder.Files
         If LCase(objFSO.GetExtensionName(objFile.Name)) = "accdb" Then
-            dbCount = dbCount + 1
             strDbName = objFSO.GetBaseName(objFile.Name)
             
             ' Determinar contraseña según el nombre de la base de datos
@@ -1306,6 +1310,10 @@ Sub RelinkAllDatabases()
             Else
                 strPassword = "dpddpd"
             End If
+            
+            ' Almacenar información de la base de datos
+            arrDatabases(dbCount) = objFile.Path & "|" & strPassword
+            dbCount = dbCount + 1
             
             WScript.Echo "  [" & dbCount & "] " & objFile.Name & " - " & strPassword
         End If
@@ -1318,8 +1326,47 @@ Sub RelinkAllDatabases()
     End If
     
     WScript.Echo "Total de bases de datos encontradas: " & dbCount
-    WScript.Echo "Nota: Las bases de datos CONDOR no requieren contraseña, las demás usan 'dpddpd'"
-    WScript.Echo "Funcionalidad de re-vinculación automática pendiente de implementación."
+    WScript.Echo "Iniciando proceso de re-vinculación..."
+    WScript.Echo ""
+    
+    ' Procesar cada base de datos
+    successCount = 0
+    errorCount = 0
+    
+    For i = 0 To dbCount - 1
+        Dim arrDbInfo
+        arrDbInfo = Split(arrDatabases(i), "|")
+        
+        If UBound(arrDbInfo) >= 1 Then
+            Dim strDbPath, strDbPassword
+            strDbPath = arrDbInfo(0)
+            strDbPassword = arrDbInfo(1)
+            
+            WScript.Echo "Procesando: " & objFSO.GetFileName(strDbPath)
+            
+            If RelinkSingleDatabase(strDbPath, strDbPassword, strBackPath) Then
+                successCount = successCount + 1
+                WScript.Echo "  ✓ Re-vinculación exitosa"
+            Else
+                errorCount = errorCount + 1
+                WScript.Echo "  ❌ Error en re-vinculación"
+            End If
+            WScript.Echo ""
+        End If
+    Next
+    
+    ' Resumen final
+    WScript.Echo "=== RESUMEN DE RE-VINCULACION AUTOMATICA ==="
+    WScript.Echo "Total procesadas: " & dbCount
+    WScript.Echo "Exitosas: " & successCount
+    WScript.Echo "Con errores: " & errorCount
+    
+    If errorCount = 0 Then
+        WScript.Echo "✓ Todas las bases de datos fueron re-vinculadas exitosamente"
+    Else
+        WScript.Echo "⚠️ Algunas bases de datos tuvieron errores durante la re-vinculación"
+    End If
+    
     WScript.Echo "=== RE-VINCULACION AUTOMATICA COMPLETADA ==="
 End Sub
 
@@ -1335,6 +1382,95 @@ Function GetDatabasePassword(strDbPath)
         ' Las demás bases de datos usan 'dpddpd'
         GetDatabasePassword = "dpddpd"
     End If
+End Function
+
+' Función para re-vincular una sola base de datos
+Function RelinkSingleDatabase(strDbPath, strPassword, strBackPath)
+    Dim objDb, objTableDef
+    Dim strConnectionString
+    Dim linkedTableCount, successCount
+    
+    On Error Resume Next
+    
+    ' Abrir la base de datos
+    If strPassword = "(sin contraseña)" Then
+        Set objDb = objAccess.DBEngine.OpenDatabase(strDbPath)
+    Else
+        Set objDb = objAccess.DBEngine.OpenDatabase(strDbPath, False, False, ";PWD=" & strPassword)
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  Error al abrir base de datos: " & Err.Description
+        RelinkSingleDatabase = False
+        Err.Clear
+        Exit Function
+    End If
+    
+    linkedTableCount = 0
+    successCount = 0
+    
+    ' Recorrer todas las tablas vinculadas
+    For Each objTableDef In objDb.TableDefs
+        If Len(objTableDef.Connect) > 0 Then
+            linkedTableCount = linkedTableCount + 1
+            
+            ' Extraer el nombre de la base de datos del connect string actual
+            Dim strCurrentConnect, strSourceDb, strNewConnect
+            strCurrentConnect = objTableDef.Connect
+            
+            ' Buscar el patrón DATABASE= en el connect string
+            Dim intDbStart, intDbEnd, strDbName
+            intDbStart = InStr(1, UCase(strCurrentConnect), "DATABASE=")
+            
+            If intDbStart > 0 Then
+                intDbStart = intDbStart + 9 ' Longitud de "DATABASE="
+                intDbEnd = InStr(intDbStart, strCurrentConnect, ";")
+                
+                If intDbEnd = 0 Then intDbEnd = Len(strCurrentConnect) + 1
+                
+                strSourceDb = Mid(strCurrentConnect, intDbStart, intDbEnd - intDbStart)
+                strDbName = objFSO.GetFileName(strSourceDb)
+                
+                ' Construir nueva ruta local
+                Dim strNewDbPath
+                strNewDbPath = objFSO.BuildPath(strBackPath, strDbName)
+                
+                ' Verificar que la base de datos local existe
+                If objFSO.FileExists(strNewDbPath) Then
+                    ' Construir nuevo connect string
+                    strNewConnect = Replace(strCurrentConnect, strSourceDb, strNewDbPath)
+                    
+                    ' Actualizar la vinculación
+                    objTableDef.Connect = strNewConnect
+                    objTableDef.RefreshLink
+                    
+                    If Err.Number = 0 Then
+                        successCount = successCount + 1
+                        WScript.Echo "    ✓ " & objTableDef.Name & " -> " & strDbName
+                    Else
+                        WScript.Echo "    ❌ Error en " & objTableDef.Name & ": " & Err.Description
+                        Err.Clear
+                    End If
+                Else
+                    WScript.Echo "    ⚠️ Base de datos local no encontrada: " & strDbName
+                End If
+            Else
+                WScript.Echo "    ⚠️ No se pudo extraer DATABASE de: " & objTableDef.Name
+            End If
+        End If
+    Next
+    
+    ' Cerrar base de datos
+    objDb.Close
+    Set objDb = Nothing
+    
+    WScript.Echo "    Tablas vinculadas procesadas: " & linkedTableCount
+    WScript.Echo "    Re-vinculaciones exitosas: " & successCount
+    
+    ' Considerar exitoso si se procesó al menos una tabla correctamente
+    RelinkSingleDatabase = (successCount > 0 Or linkedTableCount = 0)
+    
+    On Error GoTo 0
 End Function
 
 ' La subrutina ExecuteTestModule ha sido eliminada ya que ahora se usa el motor interno modTestRunner
