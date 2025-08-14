@@ -73,7 +73,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 
 ### 1.2 Capa de Negocio
 - [x] Interfaces y clases base (IAuthService, CAuthService, CMockAuthService)
-- [ ] Clase ExpedienteService (interfaz con aplicación existente)
+- [x] Clase ExpedienteService (interfaz con aplicación existente)
 - [ ] Módulo de gestión de solicitudes
 - [ ] Módulo de workflow y estados
 - [ ] Módulo de validaciones de negocio
@@ -92,9 +92,9 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 ## 2. FUNCIONALIDADES CORE
 
 ### 2.1 Integración con Expedientes Existentes
-- [ ] Interfaz de consulta de expedientes por IDExpediente
-- [ ] Obtener datos del expediente (nemotécnico, responsable calidad, jefe proyecto)
-- [ ] Verificar si somos contratista principal
+- [x] Interfaz de consulta de expedientes por IDExpediente
+- [x] Obtener datos del expediente (nemotécnico, responsable calidad, jefe proyecto)
+- [x] Verificar si somos contratista principal
 - [ ] Buscar y filtrar expedientes desde aplicación externa
 - [ ] Cache local de datos de expedientes consultados
 - [ ] Sincronización con aplicación de expedientes
@@ -203,8 +203,8 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 
 ## Notas de Progreso
 
-### Última actualización: Diciembre 2024
-**Completado:** 19/85+ tareas (~22%)
+### Última actualización: Enero 2025
+**Completado:** 25/85+ tareas (~29%)
 
 ### Próxima revisión: Enero 2025
 **Responsable:** CONDOR-Expert
@@ -215,7 +215,10 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - ✅ **Sistema de testing robusto:** Framework completo con pruebas unitarias e integración
 - ✅ **Servicios fundamentales:** AuthService y Config implementados con mocks
 - ✅ **Herramientas de desarrollo:** CLI funcional con importación y testing automatizado
-- 🔧 **Próximo objetivo:** Implementar ExpedienteService para integración con aplicación existente
+- ✅ **ExpedienteService implementado:** Interfaz IExpedienteService, clase CExpedienteService, mock CMockExpedienteService y pruebas completas
+- ✅ **Integración con BD Expedientes:** Consulta SQL compleja implementada con conexión a base de datos externa
+- ✅ **Type T_Expediente:** Estructura de datos definida para manejar información completa de expedientes
+- 🔧 **Próximo objetivo:** Implementar módulo de gestión de solicitudes
 - 📋 **Decisión arquitectónica:** Uso de interfaces para permitir mocking y testing efectivo
 
 ---

@@ -88,6 +88,23 @@ Public Function RunAllTests() As String
         testsTotal = testsTotal + 2
     End If
     
+    ' Ejecutar pruebas de ExpedienteService
+    resultado = resultado & vbCrLf & "--- PRUEBAS DE EXPEDIENTE SERVICE ---" & vbCrLf
+    resultado = resultado & "[INFO] Iniciando ejecucion de Test_ExpedienteService.Test_ExpedienteService_All()..." & vbCrLf
+    
+    On Error Resume Next
+    Test_ExpedienteService.Test_ExpedienteService_All
+    
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Pruebas de ExpedienteService ejecutadas correctamente" & vbCrLf
+        testsPassed = testsPassed + 4  ' Test_ExpedienteService tiene 4 pruebas
+        testsTotal = testsTotal + 4
+    Else
+        resultado = resultado & "[ERROR] Error en pruebas de ExpedienteService: " & Err.Description & vbCrLf
+        testsTotal = testsTotal + 4
+    End If
+    On Error GoTo ErrorHandler
+    
     GoTo TestsComplete
     
 ErrorHandler:

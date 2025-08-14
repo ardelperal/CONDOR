@@ -142,6 +142,14 @@ Public Function GetExpedientesPath() As String
     GetExpedientesPath = g_AppConfig.ExpedientesPath
 End Function
 
+' Funcion para obtener la ruta de la base de datos de Expedientes (alias para compatibilidad)
+Public Function GetExpedientesDbPath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetExpedientesDbPath = g_AppConfig.ExpedientesPath
+End Function
+
 ' Funcion para obtener la ruta de las plantillas
 Public Function GetPlantillasPath() As String
     If Not g_AppConfig.IsInitialized Then
