@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -24,7 +24,7 @@ Implements IExpedienteService
 
 ' Implementación de la interfaz IExpedienteService
 ' Obtiene un expediente por su ID desde la base de datos de expedientes
-Private Function IExpedienteService_GetExpedientePorID(ByVal idExpediente As Long) As T_Expediente
+Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Long) As T_Expediente
     Dim resultado As T_Expediente
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -60,7 +60,7 @@ Private Function IExpedienteService_GetExpedientePorID(ByVal idExpediente As Lon
           "FROM ((TbExpedientes INNER JOIN TbExpedientesResponsables ON TbExpedientes.IDExpediente = TbExpedientesResponsables.IdExpediente) " & _
           "LEFT JOIN TbUsuariosAplicaciones ON TbExpedientesResponsables.IdUsuario = TbUsuariosAplicaciones.Id) " & _
           "LEFT JOIN TbUsuariosAplicaciones AS TbUsuariosAplicaciones_1 ON TbExpedientes.IDResponsableCalidad = TbUsuariosAplicaciones_1.Id " & _
-          "WHERE (((TbExpedientesResponsables.EsJefeProyecto)='Sí') AND ((TbExpedientes.IDExpediente)=" & idExpediente & "));"
+          "WHERE (((TbExpedientesResponsables.EsJefeProyecto)='Sí') AND ((TbExpedientes.IDExpediente)=" & IDExpediente & "));"
     
     ' Ejecutar la consulta
     Set rs = db.OpenRecordset(sql, dbOpenSnapshot)
@@ -91,3 +91,4 @@ ErrorHandler:
 End Function
 
 #End If
+

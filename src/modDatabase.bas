@@ -1,0 +1,200 @@
+﻿Attribute VB_Name = "modDatabase"
+' ============================================================================
+' Módulo: modDatabase
+' Descripción: Servicio de acceso a datos para solicitudes
+' Autor: CONDOR-Expert
+' Fecha: Diciembre 2024
+' ============================================================================
+
+' ============================================================================
+' FUNCIONES DE ACCESO A DATOS
+' ============================================================================
+
+' Función que obtiene los datos de una solicitud con INNER JOIN
+' Parámetros:
+'   idSolicitud: ID de la solicitud a obtener
+' Retorna: Recordset con los datos de Tb_Solicitudes y TbDatos_PC
+Public Function GetSolicitudData(ByVal idSolicitud As Long) As DAO.Recordset
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    Dim sql As String
+    
+    ' Conectar a la base de datos actual
+    Set db = CurrentDb()
+    
+    ' Construir consulta SQL con INNER JOIN
+    sql = "SELECT s.ID, s.NumeroExpediente, s.TipoSolicitud, s.EstadoInterno, s.EstadoRAC, " & _
+          "s.FechaCreacion, s.FechaUltimaModificacion, s.Usuario, s.Observaciones, s.Activo, " & _
+          "pc.ID as DatosID, pc.DescripcionCambio, pc.JustificacionCambio, " & _
+          "pc.ImpactoSeguridad, pc.ImpactoCalidad, pc.Estado as EstadoDatos " & _
+          "FROM Tb_Solicitudes s INNER JOIN TbDatos_PC pc ON s.ID = pc.SolicitudID " & _
+          "WHERE s.ID = " & idSolicitud & " AND s.Activo = True AND pc.Activo = True"
+    
+    ' Ejecutar consulta
+    Set GetSolicitudData = db.OpenRecordset(sql, dbOpenSnapshot)
+    
+    Exit Function
+    
+ErrorHandler:
+    Set GetSolicitudData = Nothing
+    If Not db Is Nothing Then db.Close
+End Function
+
+' Función que guarda o actualiza una solicitud PC
+' Parámetros:
+'   solicitudData: Estructura T_Solicitud con los datos generales
+'   pcData: Estructura T_Datos_PC con los datos específicos
+' Retorna: True si la operación fue exitosa, False en caso contrario
+Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData As T_Datos_PC) As Boolean
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    Dim rsSolicitud As DAO.Recordset
+    Dim rsPC As DAO.Recordset
+    Dim isNewRecord As Boolean
+    
+    SaveSolicitudPC = False
+    
+    ' Conectar a la base de datos actual
+    Set db = CurrentDb()
+    
+    ' Iniciar transacción
+    db.BeginTrans
+    
+    ' Determinar si es un registro nuevo
+    isNewRecord = (solicitudData.ID = 0)
+    
+    ' ============================================================================
+    ' GUARDAR/ACTUALIZAR Tb_Solicitudes
+    ' ============================================================================
+    
+    If isNewRecord Then
+        ' INSERT en Tb_Solicitudes
+        Set rsSolicitud = db.OpenRecordset("Tb_Solicitudes", dbOpenDynaset)
+        rsSolicitud.AddNew
+    Else
+        ' UPDATE en Tb_Solicitudes
+        Set rsSolicitud = db.OpenRecordset("SELECT * FROM Tb_Solicitudes WHERE ID = " & solicitudData.ID, dbOpenDynaset)
+        If Not rsSolicitud.EOF Then
+            rsSolicitud.Edit
+        Else
+            ' El registro no existe, tratarlo como nuevo
+            rsSolicitud.Close
+            Set rsSolicitud = db.OpenRecordset("Tb_Solicitudes", dbOpenDynaset)
+            rsSolicitud.AddNew
+            isNewRecord = True
+        End If
+    End If
+    
+    ' Asignar valores a Tb_Solicitudes
+    With rsSolicitud
+        !NumeroExpediente = solicitudData.NumeroExpediente
+        !TipoSolicitud = solicitudData.TipoSolicitud
+        !EstadoInterno = solicitudData.EstadoInterno
+        !EstadoRAC = solicitudData.EstadoRAC
+        !FechaCreacion = IIf(isNewRecord, Now(), solicitudData.FechaCreacion)
+        !FechaUltimaModificacion = Now()
+        !Usuario = solicitudData.Usuario
+        !Observaciones = solicitudData.Observaciones
+        !Activo = solicitudData.Activo
+        .Update
+        
+        ' Obtener el ID generado si es nuevo registro
+        If isNewRecord Then
+            .Bookmark = .LastModified
+            solicitudData.ID = !ID
+            pcData.SolicitudID = !ID
+        End If
+    End With
+    rsSolicitud.Close
+    
+    ' ============================================================================
+    ' GUARDAR/ACTUALIZAR TbDatos_PC
+    ' ============================================================================
+    
+    If pcData.ID = 0 Then
+        ' INSERT en TbDatos_PC
+        Set rsPC = db.OpenRecordset("TbDatos_PC", dbOpenDynaset)
+        rsPC.AddNew
+    Else
+        ' UPDATE en TbDatos_PC
+        Set rsPC = db.OpenRecordset("SELECT * FROM TbDatos_PC WHERE ID = " & pcData.ID, dbOpenDynaset)
+        If Not rsPC.EOF Then
+            rsPC.Edit
+        Else
+            ' El registro no existe, tratarlo como nuevo
+            rsPC.Close
+            Set rsPC = db.OpenRecordset("TbDatos_PC", dbOpenDynaset)
+            rsPC.AddNew
+        End If
+    End If
+    
+    ' Asignar valores a TbDatos_PC
+    With rsPC
+        !SolicitudID = pcData.SolicitudID
+        !NumeroExpediente = pcData.NumeroExpediente
+        !TipoSolicitud = pcData.TipoSolicitud
+        !DescripcionCambio = pcData.DescripcionCambio
+        !JustificacionCambio = pcData.JustificacionCambio
+        !ImpactoSeguridad = pcData.ImpactoSeguridad
+        !ImpactoCalidad = pcData.ImpactoCalidad
+        !FechaCreacion = IIf(pcData.ID = 0, Now(), pcData.FechaCreacion)
+        !FechaUltimaModificacion = Now()
+        !Estado = pcData.Estado
+        !Activo = pcData.Activo
+        .Update
+        
+        ' Obtener el ID generado si es nuevo registro
+        If pcData.ID = 0 Then
+            .Bookmark = .LastModified
+            pcData.ID = !ID
+        End If
+    End With
+    rsPC.Close
+    
+    ' Confirmar transacción
+    db.CommitTrans
+    SaveSolicitudPC = True
+    
+    ' Cerrar base de datos
+    db.Close
+    
+    Exit Function
+    
+ErrorHandler:
+    SaveSolicitudPC = False
+    If Not db Is Nothing Then
+        db.Rollback
+        db.Close
+    End If
+    If Not rsSolicitud Is Nothing Then rsSolicitud.Close
+    If Not rsPC Is Nothing Then rsPC.Close
+End Function
+
+' ============================================================================
+' FUNCIONES AUXILIARES
+' ============================================================================
+
+' Función auxiliar para verificar si una solicitud existe
+Public Function SolicitudExists(ByVal idSolicitud As Long) As Boolean
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    
+    Set db = CurrentDb()
+    Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Solicitudes WHERE ID = " & idSolicitud & " AND Activo = True", dbOpenSnapshot)
+    
+    SolicitudExists = (rs!Total > 0)
+    
+    rs.Close
+    db.Close
+    
+    Exit Function
+    
+ErrorHandler:
+    SolicitudExists = False
+    If Not rs Is Nothing Then rs.Close
+    If Not db Is Nothing Then db.Close
+End Function

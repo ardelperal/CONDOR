@@ -154,3 +154,5 @@ Private Function GetRoleName(ByVal role As E_UserRole) As String
             GetRoleName = "Indefinido"
     End Select
 End Function
+
+

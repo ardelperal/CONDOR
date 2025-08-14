@@ -1,7 +1,4 @@
-Attribute VB_Name = "modSolicitudFactory"
-Option Compare Database
-Option Explicit
-
+﻿Attribute VB_Name = "modSolicitudFactory"
 ' ============================================================================
 ' Módulo: modSolicitudFactory
 ' Descripción: Factory Pattern para crear instancias de solicitudes

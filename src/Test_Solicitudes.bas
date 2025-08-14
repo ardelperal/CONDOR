@@ -1,187 +1,204 @@
 Attribute VB_Name = "Test_Solicitudes"
+' Módulo de Pruebas para el Servicio de Solicitudes
+' Utiliza CMockSolicitudService para pruebas sin dependencias de base de datos
+' Version: 1.0
+' Fecha: 2025-01-14
+
 Option Compare Database
 Option Explicit
 
-' ============================================================================
-' Módulo: Test_Solicitudes
-' Descripción: Pruebas unitarias para el módulo de gestión de solicitudes
-' Autor: CONDOR-Expert
-' Fecha: Diciembre 2024
-' ============================================================================
+' Función principal que ejecuta todas las pruebas del servicio de solicitudes
+Public Function Test_Solicitudes_RunAll() As String
+    Dim resultado As String
+    Dim totalPruebas As Integer
+    Dim pruebasExitosas As Integer
+    
+    resultado = "=== PRUEBAS DEL SERVICIO DE SOLICITUDES ===" & vbCrLf
+    totalPruebas = 0
+    pruebasExitosas = 0
+    
+    ' Ejecutar todas las pruebas
+    If Test_CreateNuevaSolicitud() Then pruebasExitosas = pruebasExitosas + 1
+    totalPruebas = totalPruebas + 1
+    
+    If Test_GetSolicitudPorID() Then pruebasExitosas = pruebasExitosas + 1
+    totalPruebas = totalPruebas + 1
+    
+    If Test_SaveSolicitud() Then pruebasExitosas = pruebasExitosas + 1
+    totalPruebas = totalPruebas + 1
+    
+    If Test_GetAllSolicitudes() Then pruebasExitosas = pruebasExitosas + 1
+    totalPruebas = totalPruebas + 1
+    
+    If Test_DeleteSolicitud() Then pruebasExitosas = pruebasExitosas + 1
+    totalPruebas = totalPruebas + 1
+    
+    If Test_UpdateEstadoSolicitud() Then pruebasExitosas = pruebasExitosas + 1
+    totalPruebas = totalPruebas + 1
+    
+    ' Resumen de resultados
+    resultado = resultado & vbCrLf & "RESUMEN:" & vbCrLf
+    resultado = resultado & "Total de pruebas: " & totalPruebas & vbCrLf
+    resultado = resultado & "Pruebas exitosas: " & pruebasExitosas & vbCrLf
+    resultado = resultado & "Pruebas fallidas: " & (totalPruebas - pruebasExitosas) & vbCrLf
+    
+    If pruebasExitosas = totalPruebas Then
+        resultado = resultado & "RESULTADO: TODAS LAS PRUEBAS PASARON" & vbCrLf
+    Else
+        resultado = resultado & "RESULTADO: ALGUNAS PRUEBAS FALLARON" & vbCrLf
+    End If
+    
+    Test_Solicitudes_RunAll = resultado
+End Function
 
-' ============================================================================
-' PRUEBAS DEL FACTORY PATTERN
-' ============================================================================
-
-' Test básico para verificar que CreateSolicitud funciona correctamente
-Public Sub TestCreateSolicitud()
+' Prueba: Crear nueva solicitud
+Private Function Test_CreateNuevaSolicitud() As Boolean
     On Error GoTo ErrorHandler
     
-    Debug.Print "=== Iniciando TestCreateSolicitud ==="
-    
-    ' Crear una solicitud usando el factory
+    Dim solicitudService As New CMockSolicitudService
     Dim solicitud As ISolicitud
-    Set solicitud = modSolicitudFactory.CreateSolicitud(1)
     
-    ' Verificar que el objeto no es Nothing
-    Debug.Assert Not solicitud Is Nothing, "La solicitud creada no debe ser Nothing"
-    Debug.Print "✓ Solicitud creada correctamente"
+    ' Probar creación de solicitud tipo PC
+    Set solicitud = solicitudService.CreateNuevaSolicitud("PC")
     
-    ' Verificar que es del tipo correcto
-    Debug.Assert TypeOf solicitud Is CSolicitudPC, "La solicitud debe ser del tipo CSolicitudPC"
-    Debug.Print "✓ Tipo de solicitud correcto (CSolicitudPC)"
+    ' Verificar que se creó la solicitud
+    If Not solicitud Is Nothing Then
+        Debug.Print "✓ Test_CreateNuevaSolicitud: PASÓ"
+        Test_CreateNuevaSolicitud = True
+    Else
+        Debug.Print "✗ Test_CreateNuevaSolicitud: FALLÓ - No se creó la solicitud"
+        Test_CreateNuevaSolicitud = False
+    End If
     
-    Debug.Print "=== TestCreateSolicitud PASÓ ==="
-    Exit Sub
-    
-ErrorHandler:
-    Debug.Print "✗ Error en TestCreateSolicitud: " & Err.Description
-    Debug.Assert False, "TestCreateSolicitud falló: " & Err.Description
-End Sub
-
-' ============================================================================
-' PRUEBAS DE LA INTERFAZ ISolicitud
-' ============================================================================
-
-' Test para verificar las propiedades de la interfaz
-Public Sub TestISolicitudProperties()
-    On Error GoTo ErrorHandler
-    
-    Debug.Print "=== Iniciando TestISolicitudProperties ==="
-    
-    ' Crear una instancia directa de CSolicitudPC
-    Dim solicitudPC As CSolicitudPC
-    Set solicitudPC = New CSolicitudPC
-    
-    ' Verificar propiedades iniciales
-    Debug.Assert solicitudPC.TipoSolicitud = "PC", "TipoSolicitud debe ser 'PC' por defecto"
-    Debug.Print "✓ TipoSolicitud inicial correcto"
-    
-    Debug.Assert solicitudPC.EstadoInterno = "BORRADOR", "EstadoInterno debe ser 'BORRADOR' por defecto"
-    Debug.Print "✓ EstadoInterno inicial correcto"
-    
-    ' Probar asignación de propiedades
-    solicitudPC.ID_Solicitud = 123
-    solicitudPC.ID_Expediente = "EXP-2024-001"
-    solicitudPC.CodigoSolicitud = "PC-2024-001"
-    
-    Debug.Assert solicitudPC.ID_Solicitud = 123, "ID_Solicitud debe ser 123"
-    Debug.Assert solicitudPC.ID_Expediente = "EXP-2024-001", "ID_Expediente debe ser 'EXP-2024-001'"
-    Debug.Assert solicitudPC.CodigoSolicitud = "PC-2024-001", "CodigoSolicitud debe ser 'PC-2024-001'"
-    Debug.Print "✓ Asignación de propiedades correcta"
-    
-    Debug.Print "=== TestISolicitudProperties PASÓ ==="
-    Exit Sub
+    Exit Function
     
 ErrorHandler:
-    Debug.Print "✗ Error en TestISolicitudProperties: " & Err.Description
-    Debug.Assert False, "TestISolicitudProperties falló: " & Err.Description
-End Sub
+    Debug.Print "✗ Test_CreateNuevaSolicitud: ERROR - " & Err.Description
+    Test_CreateNuevaSolicitud = False
+End Function
 
-' ============================================================================
-' PRUEBAS DE LOS MÉTODOS DE LA INTERFAZ
-' ============================================================================
-
-' Test para verificar los métodos de la interfaz
-Public Sub TestISolicitudMethods()
+' Prueba: Obtener solicitud por ID
+Private Function Test_GetSolicitudPorID() As Boolean
     On Error GoTo ErrorHandler
     
-    Debug.Print "=== Iniciando TestISolicitudMethods ==="
-    
-    ' Crear una instancia usando la interfaz
+    Dim solicitudService As New CMockSolicitudService
     Dim solicitud As ISolicitud
-    Set solicitud = New CSolicitudPC
     
-    ' Probar método Load
-    Dim loadResult As Boolean
-    loadResult = solicitud.Load(456)
-    Debug.Assert loadResult = True, "Load debe retornar True"
-    Debug.Print "✓ Método Load funciona correctamente"
+    ' Probar obtener solicitud con ID válido
+    Set solicitud = solicitudService.GetSolicitudPorID(1)
     
-    ' Probar método Save
-    Dim saveResult As Boolean
-    saveResult = solicitud.Save()
-    Debug.Assert saveResult = True, "Save debe retornar True"
-    Debug.Print "✓ Método Save funciona correctamente"
+    If Not solicitud Is Nothing Then
+        Debug.Print "✓ Test_GetSolicitudPorID: PASÓ"
+        Test_GetSolicitudPorID = True
+    Else
+        Debug.Print "✗ Test_GetSolicitudPorID: FALLÓ - No se encontró la solicitud"
+        Test_GetSolicitudPorID = False
+    End If
     
-    ' Probar método ChangeState
-    Dim changeStateResult As Boolean
-    changeStateResult = solicitud.ChangeState("EN_REVISION")
-    Debug.Assert changeStateResult = True, "ChangeState debe retornar True"
-    Debug.Print "✓ Método ChangeState funciona correctamente"
-    
-    Debug.Print "=== TestISolicitudMethods PASÓ ==="
-    Exit Sub
+    Exit Function
     
 ErrorHandler:
-    Debug.Print "✗ Error en TestISolicitudMethods: " & Err.Description
-    Debug.Assert False, "TestISolicitudMethods falló: " & Err.Description
-End Sub
+    Debug.Print "✗ Test_GetSolicitudPorID: ERROR - " & Err.Description
+    Test_GetSolicitudPorID = False
+End Function
 
-' ============================================================================
-' PRUEBAS DE LA ESTRUCTURA T_Datos_PC
-' ============================================================================
-
-' Test para verificar que la estructura T_Datos_PC está disponible
-Public Sub TestTDatosPC()
+' Prueba: Guardar solicitud
+Private Function Test_SaveSolicitud() As Boolean
     On Error GoTo ErrorHandler
     
-    Debug.Print "=== Iniciando TestTDatosPC ==="
+    Dim solicitudService As New CMockSolicitudService
+    Dim solicitud As New CSolicitudPC
+    Dim resultado As Boolean
     
-    ' Crear una instancia de CSolicitudPC y verificar que tiene DatosPC
-    Dim solicitudPC As CSolicitudPC
-    Set solicitudPC = New CSolicitudPC
+    ' Probar guardar solicitud
+    resultado = solicitudService.SaveSolicitud(solicitud)
     
-    ' Verificar que se puede acceder a la propiedad DatosPC
-    ' (Por ahora solo verificamos que no genera error)
-    Dim datosPC As T_Datos_PC
-    datosPC = solicitudPC.DatosPC
+    If resultado Then
+        Debug.Print "✓ Test_SaveSolicitud: PASÓ"
+        Test_SaveSolicitud = True
+    Else
+        Debug.Print "✗ Test_SaveSolicitud: FALLÓ - No se pudo guardar la solicitud"
+        Test_SaveSolicitud = False
+    End If
     
-    Debug.Print "✓ Estructura T_Datos_PC accesible"
-    Debug.Print "✓ Propiedad DatosPC en CSolicitudPC funcional"
-    
-    Debug.Print "=== TestTDatosPC PASÓ ==="
-    Exit Sub
+    Exit Function
     
 ErrorHandler:
-    Debug.Print "✗ Error en TestTDatosPC: " & Err.Description
-    Debug.Assert False, "TestTDatosPC falló: " & Err.Description
-End Sub
+    Debug.Print "✗ Test_SaveSolicitud: ERROR - " & Err.Description
+    Test_SaveSolicitud = False
+End Function
 
-' ============================================================================
-' SUITE DE PRUEBAS COMPLETA
-' ============================================================================
-
-' Ejecutar todas las pruebas
-Public Sub RunAllSolicitudesTests()
+' Prueba: Obtener todas las solicitudes
+Private Function Test_GetAllSolicitudes() As Boolean
     On Error GoTo ErrorHandler
     
-    Debug.Print "============================================"
-    Debug.Print "EJECUTANDO SUITE DE PRUEBAS DE SOLICITUDES"
-    Debug.Print "============================================"
+    Dim solicitudService As New CMockSolicitudService
+    Dim solicitudes As Collection
     
-    Debug.Print "Iniciando TestCreateSolicitud..."
-    TestCreateSolicitud
-    Debug.Print "TestCreateSolicitud completado"
+    ' Probar obtener todas las solicitudes
+    Set solicitudes = solicitudService.GetAllSolicitudes()
     
-    Debug.Print "Iniciando TestISolicitudProperties..."
-    TestISolicitudProperties
-    Debug.Print "TestISolicitudProperties completado"
+    If Not solicitudes Is Nothing And solicitudes.Count > 0 Then
+        Debug.Print "✓ Test_GetAllSolicitudes: PASÓ - " & solicitudes.Count & " solicitudes encontradas"
+        Test_GetAllSolicitudes = True
+    Else
+        Debug.Print "✗ Test_GetAllSolicitudes: FALLÓ - No se encontraron solicitudes"
+        Test_GetAllSolicitudes = False
+    End If
     
-    Debug.Print "Iniciando TestISolicitudMethods..."
-    TestISolicitudMethods
-    Debug.Print "TestISolicitudMethods completado"
-    
-    Debug.Print "Iniciando TestTDatosPC..."
-    TestTDatosPC
-    Debug.Print "TestTDatosPC completado"
-    
-    Debug.Print "============================================"
-    Debug.Print "TODAS LAS PRUEBAS DE SOLICITUDES PASARON ✓"
-    Debug.Print "============================================"
-    Exit Sub
+    Exit Function
     
 ErrorHandler:
-    Debug.Print "ERROR en RunAllSolicitudesTests: " & Err.Description & " (Número: " & Err.Number & ")"
-    Debug.Print "Fuente: " & Err.Source
-End Sub
+    Debug.Print "✗ Test_GetAllSolicitudes: ERROR - " & Err.Description
+    Test_GetAllSolicitudes = False
+End Function
+
+' Prueba: Eliminar solicitud
+Private Function Test_DeleteSolicitud() As Boolean
+    On Error GoTo ErrorHandler
+    
+    Dim solicitudService As New CMockSolicitudService
+    Dim resultado As Boolean
+    
+    ' Probar eliminar solicitud con ID válido
+    resultado = solicitudService.DeleteSolicitud(1)
+    
+    If resultado Then
+        Debug.Print "✓ Test_DeleteSolicitud: PASÓ"
+        Test_DeleteSolicitud = True
+    Else
+        Debug.Print "✗ Test_DeleteSolicitud: FALLÓ - No se pudo eliminar la solicitud"
+        Test_DeleteSolicitud = False
+    End If
+    
+    Exit Function
+    
+ErrorHandler:
+    Debug.Print "✗ Test_DeleteSolicitud: ERROR - " & Err.Description
+    Test_DeleteSolicitud = False
+End Function
+
+' Prueba: Actualizar estado de solicitud
+Private Function Test_UpdateEstadoSolicitud() As Boolean
+    On Error GoTo ErrorHandler
+    
+    Dim solicitudService As New CMockSolicitudService
+    Dim resultado As Boolean
+    
+    ' Probar actualizar estado con parámetros válidos
+    resultado = solicitudService.UpdateEstadoSolicitud(1, "APROBADA")
+    
+    If resultado Then
+        Debug.Print "✓ Test_UpdateEstadoSolicitud: PASÓ"
+        Test_UpdateEstadoSolicitud = True
+    Else
+        Debug.Print "✗ Test_UpdateEstadoSolicitud: FALLÓ - No se pudo actualizar el estado"
+        Test_UpdateEstadoSolicitud = False
+    End If
+    
+    Exit Function
+    
+ErrorHandler:
+    Debug.Print "✗ Test_UpdateEstadoSolicitud: ERROR - " & Err.Description
+    Test_UpdateEstadoSolicitud = False
+End Function

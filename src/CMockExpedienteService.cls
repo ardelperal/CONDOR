@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -24,11 +24,11 @@ Implements IExpedienteService
 
 ' Implementación Mock de la interfaz IExpedienteService
 ' Devuelve datos predecibles y hardcodeados para pruebas unitarias
-Private Function IExpedienteService_GetExpedientePorID(ByVal idExpediente As Long) As T_Expediente
+Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Long) As T_Expediente
     Dim resultado As T_Expediente
     
     ' Datos hardcodeados predecibles para testing
-    Select Case idExpediente
+    Select Case IDExpediente
         Case 1001
             ' Expediente de prueba principal
             resultado.IDExpediente = 1001

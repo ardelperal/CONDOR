@@ -1,7 +1,4 @@
 Attribute VB_Name = "modTypes"
-Option Compare Database
-Option Explicit
-
 ' ============================================================================
 ' Módulo: modTypes
 ' Descripción: Definición de tipos de datos personalizados para CONDOR
@@ -18,6 +15,21 @@ Public Type T_Expediente
     ResponsableCalidad As String
     ResponsableTecnico As String  ' Se refiere al Jefe de Proyecto
     Pecal As String
+End Type
+
+' Tipo que representa una solicitud general
+' Basado en la tabla Tb_Solicitudes de la especificación funcional
+Public Type T_Solicitud
+    ID As Long
+    NumeroExpediente As String
+    TipoSolicitud As String
+    EstadoInterno As String
+    EstadoRAC As String
+    FechaCreacion As Date
+    FechaUltimaModificacion As Date
+    Usuario As String
+    Observaciones As String
+    Activo As Boolean
 End Type
 
 ' Tipo que representa los datos específicos para Propuestas de Cambio (PC)

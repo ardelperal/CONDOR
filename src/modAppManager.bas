@@ -1,7 +1,4 @@
 ﻿Attribute VB_Name = "modAppManager"
-Option Compare Database
-Option Explicit
-
 ' Definir constante de compilacion condicional para modo desarrollo
 #Const DEV_MODE = True
 

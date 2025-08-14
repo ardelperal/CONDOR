@@ -30,6 +30,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "  export     - Exportar modulos VBA a /src (con codificacion ANSI)"
     WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
     WScript.Echo "  test       - Ejecutar todos los tests (requiere import previo)"
+    WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
     WScript.Echo "  listtables [db_path] - Listar tablas (opcionalmente de base especifica)"
@@ -38,6 +39,9 @@ If objArgs.Count = 0 Then
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
     WScript.Echo "  1. cscript condor_cli.vbs import    (importar y compilar modulos)"
+    WScript.Echo "  2. cscript condor_cli.vbs test      (ejecutar pruebas)"
+    WScript.Echo "  Si hay errores de compilacion:"
+    WScript.Echo "  1. cscript condor_cli.vbs rebuild   (reconstruir proyecto limpio)"
     WScript.Echo "  2. cscript condor_cli.vbs test      (ejecutar pruebas)"
     WScript.Echo ""
     WScript.Echo "OPCIONES ESPECIALES:"
@@ -54,8 +58,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "import" And strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" Then
-    WScript.Echo "Error: Comando debe ser 'import', 'export', 'validate', 'createtable', 'droptable', 'listtables', 'test' o 'relink'"
+If strAction <> "import" And strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" And strAction <> "rebuild" Then
+    WScript.Echo "Error: Comando debe ser 'import', 'export', 'validate', 'createtable', 'droptable', 'listtables', 'test', 'relink' o 'rebuild'"
     WScript.Quit 1
 End If
 
@@ -73,8 +77,8 @@ ElseIf strAction = "listtables" Then
     End If
 End If
 
-' Para tests, usar la base de datos de desarrollo
-If strAction = "test" Then
+' Para tests y rebuild, usar la base de datos de desarrollo
+If strAction = "test" Or strAction = "rebuild" Then
     strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
 End If
 
@@ -172,6 +176,8 @@ ElseIf strAction = "test" Then
         End If
     Next
     Call RunTestsWithEngine(testModule)
+ElseIf strAction = "rebuild" Then
+    Call RebuildProject()
 ElseIf strAction = "relink" Then
     Call RelinkTables()
 End If
@@ -684,9 +690,9 @@ Sub RunTestsWithEngine(testModule)
     
     ' Determinar la función a llamar
     If testModule = "" Then
-        testFunction = "modTestRunner.ExecuteAllTests"
+        testFunction = "modTestRunner.RunAllTests"
     Else
-        testFunction = testModule & ".ExecuteAllTests"
+        testFunction = testModule & ".RunAllTests"
     End If
     
     WScript.Echo "Intentando ejecutar directamente: '" & testFunction & "'"
@@ -697,12 +703,12 @@ Sub RunTestsWithEngine(testModule)
      Set objDB = objAccess.CurrentDb
      
      ' Intentar con el nombre completo del módulo
-     resultado = objAccess.Application.Run("modTestRunner.ExecuteAllTests")
+     resultado = objAccess.Application.Run("modTestRunner.RunAllTests")
      
      ' Si falla, intentar sin el prefijo del módulo
      If Err.Number <> 0 Then
          Err.Clear
-         resultado = objAccess.Application.Run("ExecuteAllTests")
+         resultado = objAccess.Application.Run("RunAllTests")
      End If
      
      If Err.Number <> 0 Then
@@ -976,7 +982,7 @@ Function CleanVBAFile(filePath)
     
     ' Validar sintaxis antes de procesar
     If Not ValidateVBASyntax(filePath, errorDetails) Then
-        WScript.Echo "⚠️ ADVERTENCIA: Errores de sintaxis detectados en " & objFSO.GetFileName(filePath) & ":"
+        WScript.Echo "[WARN] ADVERTENCIA: Errores de sintaxis detectados en " & objFSO.GetFileName(filePath) & ":"
         WScript.Echo errorDetails
         WScript.Echo "Continuando con la importación..."
     End If
@@ -993,7 +999,7 @@ Function CleanVBAFile(filePath)
     Set objStream = Nothing
     
     If Err.Number <> 0 Then
-        WScript.Echo "❌ ERROR: No se pudo leer el archivo " & filePath & ": " & Err.Description
+        WScript.Echo "[ERROR] ERROR: No se pudo leer el archivo " & filePath & ": " & Err.Description
         CleanVBAFile = ""
         Exit Function
     End If
@@ -1004,68 +1010,57 @@ Function CleanVBAFile(filePath)
     strContent = Replace(strContent, vbCr, vbLf)
     arrLines = Split(strContent, vbLf)
     
-    ' Eliminar todo el encabezado de metadatos de archivos .cls
+    ' Procesar línea por línea eliminando metadatos y líneas Option
     cleanedLines = ""
-    Dim startIndex, foundStart
-    foundStart = False
-    startIndex = 0
+    Dim linesRemoved
+    linesRemoved = 0
     
-    ' Buscar la primera línea que NO sea metadato de clase
     For i = 0 To UBound(arrLines)
         strLine = Trim(arrLines(i))
         
-        ' Verificar si es una línea de metadato que debe eliminarse
-        Dim isMetadata
-        isMetadata = False
+        ' Verificar si es una línea que debe eliminarse
+        Dim shouldRemove
+        shouldRemove = False
         
-        If Left(strLine, 7) = "VERSION" Then isMetadata = True
-         If Left(strLine, 5) = "BEGIN" Then isMetadata = True
-         If Left(strLine, 8) = "MultiUse" Then isMetadata = True
-         If Left(strLine, 3) = "END" And Len(strLine) = 3 Then isMetadata = True
-         If Left(strLine, 9) = "Attribute" Then isMetadata = True
-         If Left(strLine, 14) = "Option Compare" Then isMetadata = True
-         If Left(strLine, 15) = "Option Explicit" Then isMetadata = True
-         If strLine = "" Then isMetadata = True ' Líneas vacías al inicio
+        ' Eliminar metadatos de clase (.cls)
+        If Left(strLine, 7) = "VERSION" Then shouldRemove = True
+        If Left(strLine, 5) = "BEGIN" Then shouldRemove = True
+        If Left(strLine, 8) = "MultiUse" Then shouldRemove = True
+        If strLine = "END" Then shouldRemove = True
+        If Left(strLine, 9) = "Attribute" Then shouldRemove = True
         
-        ' Si encontramos la primera línea que no es metadato, empezamos desde ahí
-        If Not isMetadata And Not foundStart Then
-            startIndex = i
-            foundStart = True
-            Exit For
+        ' Eliminar TODAS las líneas Option (crítico para evitar duplicados)
+        ' If Left(strLine, 6) = "Option" Then shouldRemove = True
+        
+        ' Eliminar líneas vacías solo al inicio del archivo
+        If strLine = "" And cleanedLines = "" Then shouldRemove = True
+        
+        ' Si la línea no debe eliminarse, agregarla al contenido limpio
+        If Not shouldRemove Then
+            ' Reemplazar caracteres problemáticos
+            strLine = arrLines(i) ' Usar línea original (con espacios)
+            strLine = Replace(strLine, Chr(147), Chr(34)) ' Comilla izquierda tipográfica -> comilla normal
+            strLine = Replace(strLine, Chr(148), Chr(34)) ' Comilla derecha tipográfica -> comilla normal
+            strLine = Replace(strLine, Chr(145), Chr(39)) ' Apostrofe izquierdo -> apostrofe normal
+            strLine = Replace(strLine, Chr(146), Chr(39)) ' Apostrofe derecho -> apostrofe normal
+            ' Reemplazar caracteres Unicode problemáticos
+            strLine = Replace(strLine, "✓", "[OK]") ' Check mark -> [OK]
+            strLine = Replace(strLine, "✗", "[FALLO]") ' X mark -> [FALLO]
+            strLine = Replace(strLine, "└─", "  |-") ' Box drawing -> simple chars
+            strLine = Replace(strLine, "✅", "[OK]") ' Green check -> [OK]
+            strLine = Replace(strLine, "❌", "[ERROR]") ' Red X -> [ERROR]
+            strLine = Replace(strLine, "⚠️", "[WARN]") ' Warning -> [WARN]
+            
+            If cleanedLines <> "" Then
+                cleanedLines = cleanedLines & vbCrLf
+            End If
+            cleanedLines = cleanedLines & strLine
+        Else
+            linesRemoved = linesRemoved + 1
         End If
     Next
     
-    ' Si no encontramos líneas de código, devolver vacío
-    If Not foundStart Then
-        WScript.Echo "  Advertencia: No se encontró código VBA válido después de los metadatos"
-        CleanVBAFile = ""
-        Exit Function
-    End If
-    
-    ' Construir el contenido limpio desde la primera línea de código real
-    For i = startIndex To UBound(arrLines)
-        strLine = arrLines(i)
-        
-        ' Reemplazar caracteres problemáticos
-        strLine = Replace(strLine, Chr(147), Chr(34)) ' Comilla izquierda tipográfica -> comilla normal
-        strLine = Replace(strLine, Chr(148), Chr(34)) ' Comilla derecha tipográfica -> comilla normal
-        strLine = Replace(strLine, Chr(145), Chr(39)) ' Apostrofe izquierdo -> apostrofe normal
-        strLine = Replace(strLine, Chr(146), Chr(39)) ' Apostrofe derecho -> apostrofe normal
-        ' Reemplazar caracteres Unicode problemáticos
-        strLine = Replace(strLine, "✓", "[OK]") ' Check mark -> [OK]
-        strLine = Replace(strLine, "✗", "[FALLO]") ' X mark -> [FALLO]
-        strLine = Replace(strLine, "└─", "  |-") ' Box drawing -> simple chars
-        strLine = Replace(strLine, "✅", "[OK]") ' Green check -> [OK]
-        strLine = Replace(strLine, "❌", "[ERROR]") ' Red X -> [ERROR]
-        strLine = Replace(strLine, "⚠️", "[WARN]") ' Warning -> [WARN]
-        
-        If cleanedLines <> "" Then
-            cleanedLines = cleanedLines & vbCrLf
-        End If
-        cleanedLines = cleanedLines & strLine
-    Next
-    
-    WScript.Echo "  Eliminado encabezado de metadatos (" & startIndex & " líneas)"
+    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option"
     
     CleanVBAFile = cleanedLines
 End Function
@@ -1089,15 +1084,11 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
     strContent = objTempFile.ReadAll
     objTempFile.Close
     
-    ' Escribir al archivo final con codificación UTF-8 usando ADODB.Stream
-    Set objStream = CreateObject("ADODB.Stream")
-    objStream.Type = 2 ' adTypeText
-    objStream.Charset = "UTF-8"
-    objStream.Open
-    objStream.WriteText strContent
-    objStream.SaveToFile strExportPath, 2 ' adSaveCreateOverWrite
-    objStream.Close
-    Set objStream = Nothing
+    ' Escribir al archivo final con la codificación ANSI original
+    Dim objFinalFile
+    Set objFinalFile = objFSO.CreateTextFile(strExportPath, True, False) ' overwrite=true, unicode=false (ANSI)
+    objFinalFile.Write strContent
+    objFinalFile.Close
     
     ' Limpiar archivo temporal
     On Error Resume Next
@@ -1472,5 +1463,105 @@ Function RelinkSingleDatabase(strDbPath, strPassword, strBackPath)
     
     On Error GoTo 0
 End Function
+
+' Subrutina para reconstruir completamente el proyecto VBA
+Sub RebuildProject()
+    WScript.Echo "=== RECONSTRUCCION COMPLETA DEL PROYECTO VBA ==="
+    WScript.Echo "ADVERTENCIA: Se eliminaran TODOS los modulos VBA existentes"
+    WScript.Echo "Iniciando proceso de reconstruccion..."
+    
+    On Error Resume Next
+    
+    ' Paso 1: Eliminar todos los módulos existentes
+    WScript.Echo "Paso 1: Eliminando todos los modulos VBA existentes..."
+    
+    Dim vbProject, vbComponent
+    Set vbProject = objAccess.VBE.ActiveVBProject
+    
+    Dim componentCount, i
+    componentCount = vbProject.VBComponents.Count
+    
+    ' Iterar hacia atrás para evitar problemas al eliminar elementos
+    For i = componentCount To 1 Step -1
+        Set vbComponent = vbProject.VBComponents(i)
+        
+        ' Solo eliminar módulos estándar y de clase (no formularios ni informes)
+        If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' vbext_ct_StdModule = 1, vbext_ct_ClassModule = 2
+            WScript.Echo "  Eliminando: " & vbComponent.Name & " (Tipo: " & vbComponent.Type & ")"
+            vbProject.VBComponents.Remove vbComponent
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "  ❌ Error eliminando " & vbComponent.Name & ": " & Err.Description
+                Err.Clear
+            Else
+                WScript.Echo "  ✓ Eliminado: " & vbComponent.Name
+            End If
+        End If
+    Next
+    
+    WScript.Echo "Paso 2: Guardando y cerrando base de datos..."
+    
+    ' Forzar guardado y cierre
+    objAccess.DoCmd.Save
+    objAccess.Quit 1  ' acQuitSaveAll = 1
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Advertencia al cerrar Access: " & Err.Description
+        Err.Clear
+    End If
+    
+    Set objAccess = Nothing
+    WScript.Echo "✓ Base de datos cerrada y guardada"
+    
+    ' Paso 3: Volver a abrir la base de datos
+    WScript.Echo "Paso 3: Reabriendo base de datos con proyecto VBA limpio..."
+    
+    Set objAccess = CreateObject("Access.Application")
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ Error al crear nueva instancia de Access: " & Err.Description
+        WScript.Quit 1
+    End If
+    
+    ' Configurar Access en modo silencioso
+    objAccess.Visible = False
+    objAccess.UserControl = False
+    
+    ' Intentar configurar DisplayAlerts si está disponible
+    On Error Resume Next
+    objAccess.DisplayAlerts = False
+    Err.Clear
+    On Error GoTo 0
+    
+    ' Determinar contraseña para la base de datos
+    Dim strDbPassword
+    strDbPassword = GetDatabasePassword(strAccessPath)
+    
+    ' Abrir base de datos
+    If strDbPassword = "" Then
+        objAccess.OpenCurrentDatabase strAccessPath
+    Else
+        objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ Error al reabrir base de datos: " & Err.Description
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "✓ Base de datos reabierta con proyecto VBA limpio"
+    
+    ' Paso 4: Importar todos los módulos de nuevo
+    WScript.Echo "Paso 4: Importando todos los modulos desde /src..."
+    
+    ' Llamar a la función ImportModules existente
+    Call ImportModules(False, True)  ' No dry-run, modo verbose
+    
+    WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
+    WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
+    WScript.Echo "Todos los modulos han sido reimportados desde /src"
+    
+    On Error GoTo 0
+End Sub
 
 ' La subrutina ExecuteTestModule ha sido eliminada ya que ahora se usa el motor interno modTestRunner

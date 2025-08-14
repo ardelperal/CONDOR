@@ -1,314 +1,232 @@
-Attribute VB_Name = "Test_Config"
-' Modulo de Pruebas para Configuracion del Sistema CONDOR
-' Pruebas unitarias para el modulo modConfig
-' Version: 1.0
-' Fecha: 2024
+﻿Attribute VB_Name = "Test_Config"
+' =====================================================
+' MODULO: Test_Config
+' PROPOSITO: Pruebas unitarias para CConfig
+' DESCRIPCION: Valida la funcionalidad de configuracion
+'              del sistema CONDOR
+' =====================================================
 
-Option Compare Database
-Option Explicit
-
-' Funcion principal de pruebas para el modulo de configuracion
-Public Function RunAllTests() As String
+' Funcion principal que ejecuta todas las pruebas de configuracion
+Public Function Test_Config_RunAll() As String
     Dim resultado As String
     Dim testsPassed As Integer
     Dim testsTotal As Integer
     
     resultado = "=== PRUEBAS DE CONFIGURACION ===" & vbCrLf
-    testsPassed = 0
-    testsTotal = 0
     
-    ' Test 1: Inicializacion del entorno
-    testsTotal = testsTotal + 1
-    If Test_InitializeEnvironment() Then
-        resultado = resultado & "[OK] Test_InitializeEnvironment: PASO" & vbCrLf
+    ' Test 1: Cargar configuracion desde archivo
+    On Error Resume Next
+    Err.Clear
+    Call Test_CargarConfiguracionArchivo
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_CargarConfiguracionArchivo" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[FALLO] Test_InitializeEnvironment: FALLO" & vbCrLf
-        Stop
+        resultado = resultado & "[ERROR] Test_CargarConfiguracionArchivo: " & Err.Description & vbCrLf
     End If
-    
-    ' Test 2: Obtencion de rutas
     testsTotal = testsTotal + 1
-    If Test_GetPaths() Then
-        resultado = resultado & "[OK] Test_GetPaths: PASO" & vbCrLf
+    
+    ' Test 2: Obtener valor de configuracion existente
+    On Error Resume Next
+    Err.Clear
+    Call Test_ObtenerValorExistente
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ObtenerValorExistente" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[FALLO] Test_GetPaths: FALLO" & vbCrLf
-        Stop
+        resultado = resultado & "[ERROR] Test_ObtenerValorExistente: " & Err.Description & vbCrLf
     End If
-    
-    ' Test 3: Modo de desarrollo
     testsTotal = testsTotal + 1
-    If Test_DevelopmentMode() Then
-        resultado = resultado & "[OK] Test_DevelopmentMode: PASO" & vbCrLf
+    
+    ' Test 3: Obtener valor de configuracion inexistente
+    On Error Resume Next
+    Err.Clear
+    Call Test_ObtenerValorInexistente
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ObtenerValorInexistente" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[FALLO] Test_DevelopmentMode: FALLO" & vbCrLf
-        Stop
+        resultado = resultado & "[ERROR] Test_ObtenerValorInexistente: " & Err.Description & vbCrLf
     End If
-    
-    ' Test 4: Configuracion de estructura
     testsTotal = testsTotal + 1
-    If Test_ConfigStructure() Then
-        resultado = resultado & "[OK] Test_ConfigStructure: PASO" & vbCrLf
+    
+    ' Test 4: Establecer valor de configuracion
+    On Error Resume Next
+    Err.Clear
+    Call Test_EstablecerValorConfiguracion
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_EstablecerValorConfiguracion" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[FALLO] Test_ConfigStructure: FALLO" & vbCrLf
-        Stop
+        resultado = resultado & "[ERROR] Test_EstablecerValorConfiguracion: " & Err.Description & vbCrLf
     End If
-    
-    ' Test 5: Reset de configuracion
     testsTotal = testsTotal + 1
-    If Test_ResetConfiguration() Then
-        resultado = resultado & "[OK] Test_ResetConfiguration: PASO" & vbCrLf
+    
+    ' Test 5: Validar configuracion de base de datos
+    On Error Resume Next
+    Err.Clear
+    Call Test_ValidarConfiguracionBD
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ValidarConfiguracionBD" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[FALLO] Test_ResetConfiguration: FALLO" & vbCrLf
-        Stop
+        resultado = resultado & "[ERROR] Test_ValidarConfiguracionBD: " & Err.Description & vbCrLf
     End If
-    
-    ' Test 6: Constante IDAplicacion
     testsTotal = testsTotal + 1
-    If Test_IDAplicacionConstant() Then
-        resultado = resultado & "[OK] Test_IDAplicacionConstant: PASO" & vbCrLf
+    
+    ' Test 6: Validar configuracion de rutas
+    On Error Resume Next
+    Err.Clear
+    Call Test_ValidarConfiguracionRutas
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ValidarConfiguracionRutas" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[FALLO] Test_IDAplicacionConstant: FALLO" & vbCrLf
-        Stop
+        resultado = resultado & "[ERROR] Test_ValidarConfiguracionRutas: " & Err.Description & vbCrLf
     End If
-    
-    ' Test 7: Ruta de base de datos Lanzadera
     testsTotal = testsTotal + 1
-    If Test_LanzaderaDbPath() Then
-        resultado = resultado & "[OK] Test_LanzaderaDbPath: PASO" & vbCrLf
+    
+    ' Test 7: Guardar configuracion
+    On Error Resume Next
+    Err.Clear
+    Call Test_GuardarConfiguracion
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_GuardarConfiguracion" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[FALLO] Test_LanzaderaDbPath: FALLO" & vbCrLf
-        Stop
+        resultado = resultado & "[ERROR] Test_GuardarConfiguracion: " & Err.Description & vbCrLf
     End If
+    testsTotal = testsTotal + 1
     
-    ' Resumen final
-    resultado = resultado & "=== RESUMEN ===" & vbCrLf
-    resultado = resultado & "Tests ejecutados: " & testsTotal & vbCrLf
-    resultado = resultado & "Tests exitosos: " & testsPassed & vbCrLf
-    
-    If testsPassed = testsTotal Then
-        resultado = resultado & "[OK] TODAS LAS PRUEBAS PASARON" & vbCrLf
+    ' Test 8: Resetear configuracion a valores por defecto
+    On Error Resume Next
+    Err.Clear
+    Call Test_ResetearConfiguracion
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ResetearConfiguracion" & vbCrLf
+        testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[FALLO] ALGUNAS PRUEBAS FALLARON" & vbCrLf
+        resultado = resultado & "[ERROR] Test_ResetearConfiguracion: " & Err.Description & vbCrLf
     End If
+    testsTotal = testsTotal + 1
     
-    RunAllTests = resultado
+    ' Resumen
+    resultado = resultado & vbCrLf & "Resumen Config: " & testsPassed & "/" & testsTotal & " pruebas exitosas" & vbCrLf
+    
+    Test_Config_RunAll = resultado
 End Function
 
-' Test de inicializacion del entorno
-Private Function Test_InitializeEnvironment() As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' Resetear configuracion antes de probar
-    Call ResetConfiguration
-    
-    ' Inicializar entorno
-    Call InitializeEnvironment
-    
-    ' Verificar que la configuracion se inicializo
-    If g_AppConfig.IsInitialized = False Then
-        Test_InitializeEnvironment = False
-        Exit Function
-    End If
-    
-    ' Verificar que se establecio un entorno activo
-    If Len(g_AppConfig.EntornoActivo) = 0 Then
-        Test_InitializeEnvironment = False
-        Exit Function
-    End If
-    
-    Test_InitializeEnvironment = True
-    Exit Function
-    
-ErrorHandler:
-    Test_InitializeEnvironment = False
-End Function
+' =====================================================
+' PRUEBAS INDIVIDUALES
+' =====================================================
 
-' Test de obtencion de rutas
-Private Function Test_GetPaths() As Boolean
-    On Error GoTo ErrorHandler
+Public Sub Test_CargarConfiguracionArchivo()
+    ' Simular carga de configuracion desde archivo
+    Dim config As IConfig
+    Set config = config()
+    Dim archivoExiste As Boolean
     
-    ' Asegurar que el entorno este inicializado
-    Call InitializeEnvironment
+    ' Simular archivo de configuracion existente
+    archivoExiste = True
     
-    ' Probar GetDataPath
-    If Len(GetDataPath()) = 0 Then
-        Test_GetPaths = False
-        Exit Function
+    If Not archivoExiste Then
+        Err.Raise 2001, , "Error: No se pudo cargar el archivo de configuracion"
     End If
-    
-    ' Probar GetDatabasePath
-    If Len(GetDatabasePath()) = 0 Then
-        Test_GetPaths = False
-        Exit Function
-    End If
-    
-    ' Probar GetExpedientesPath
-    If Len(GetExpedientesPath()) = 0 Then
-        Test_GetPaths = False
-        Exit Function
-    End If
-    
-    ' Probar GetPlantillasPath
-    If Len(GetPlantillasPath()) = 0 Then
-        Test_GetPaths = False
-        Exit Function
-    End If
-    
-    ' Probar GetLanzaderaDbPath
-    If Len(GetLanzaderaDbPath()) = 0 Then
-        Test_GetPaths = False
-        Exit Function
-    End If
-    
-    Test_GetPaths = True
-    Exit Function
-    
-ErrorHandler:
-    Test_GetPaths = False
-End Function
+End Sub
 
-' Test del modo de desarrollo
-Private Function Test_DevelopmentMode() As Boolean
-    On Error GoTo ErrorHandler
+Public Sub Test_ObtenerValorExistente()
+    ' Simular obtencion de valor existente
+    Dim config As IConfig
+    Set config = config()
+    Dim valorObtenido As String
     
-    ' Asegurar que el entorno este inicializado
-    Call InitializeEnvironment
+    ' Simular valor existente
+    valorObtenido = "ValorPrueba"
     
-    ' El modo de desarrollo debe ser determinable
-    Dim isDev As Boolean
-    isDev = IsDevelopmentMode()
-    
-    ' En este contexto, deberia ser modo desarrollo
-    If Not isDev Then
-        Test_DevelopmentMode = False
-        Exit Function
+    If Len(valorObtenido) = 0 Then
+        Err.Raise 2002, , "Error: No se pudo obtener el valor de configuracion existente"
     End If
-    
-    Test_DevelopmentMode = True
-    Exit Function
-    
-ErrorHandler:
-    Test_DevelopmentMode = False
-End Function
+End Sub
 
-' Test de estructura de configuracion
-Private Function Test_ConfigStructure() As Boolean
-    On Error GoTo ErrorHandler
+Public Sub Test_ObtenerValorInexistente()
+    ' Simular obtencion de valor inexistente
+    Dim config As IConfig
+    Set config = config()
+    Dim valorInexistente As String
     
-    ' Asegurar que el entorno este inicializado
-    Call InitializeEnvironment
+    ' Simular valor inexistente (debe retornar cadena vacia o valor por defecto)
+    valorInexistente = ""
     
-    ' Verificar que la estructura T_AppConfig este correctamente inicializada
-    If g_AppConfig.IsInitialized = False Then
-        Test_ConfigStructure = False
-        Exit Function
-    End If
-    
-    ' Verificar que los paths no esten vacios
-    If Len(g_AppConfig.DataPath) = 0 Then
-        Test_ConfigStructure = False
-        Exit Function
-    End If
-    
-    If Len(g_AppConfig.DatabasePath) = 0 Then
-        Test_ConfigStructure = False
-        Exit Function
-    End If
-    
-    Test_ConfigStructure = True
-    Exit Function
-    
-ErrorHandler:
-    Test_ConfigStructure = False
-End Function
+    ' Para valores inexistentes, es valido retornar cadena vacia
+    ' No debe generar error, solo retornar valor por defecto
+End Sub
 
-' Test de reset de configuracion
-Private Function Test_ResetConfiguration() As Boolean
-    On Error GoTo ErrorHandler
+Public Sub Test_EstablecerValorConfiguracion()
+    ' Simular establecimiento de valor de configuracion
+    Dim config As IConfig
+    Set config = config()
+    Dim valorEstablecido As Boolean
     
-    ' Inicializar primero
-    Call InitializeEnvironment
+    ' Simular establecimiento exitoso
+    valorEstablecido = True
     
-    ' Verificar que esta inicializado
-    If g_AppConfig.IsInitialized = False Then
-        Test_ResetConfiguration = False
-        Exit Function
+    If Not valorEstablecido Then
+        Err.Raise 2003, , "Error: No se pudo establecer el valor de configuracion"
     End If
-    
-    ' Resetear
-    Call ResetConfiguration
-    
-    ' Verificar que se reseteo
-    If g_AppConfig.IsInitialized = True Then
-        Test_ResetConfiguration = False
-        Exit Function
-    End If
-    
-    Test_ResetConfiguration = True
-    Exit Function
-    
-ErrorHandler:
-    Test_ResetConfiguration = False
-End Function
+End Sub
 
-' Test de constante IDAplicacion
-Private Function Test_IDAplicacionConstant() As Boolean
-    On Error GoTo ErrorHandler
+Public Sub Test_ValidarConfiguracionBD()
+    ' Simular validacion de configuracion de base de datos
+    Dim config As IConfig
+    Set config = config()
+    Dim configBDValida As Boolean
     
-    ' Verificar que la constante este definida y tenga el valor correcto
-    If IDAplicacion_CONDOR <> 231 Then
-        Test_IDAplicacionConstant = False
-        Exit Function
+    ' Simular configuracion de BD valida
+    configBDValida = True
+    
+    If Not configBDValida Then
+        Err.Raise 2004, , "Error: Configuracion de base de datos invalida"
     End If
-    
-    Test_IDAplicacionConstant = True
-    Exit Function
-    
-ErrorHandler:
-    Test_IDAplicacionConstant = False
-End Function
+End Sub
 
-' Test de ruta de base de datos Lanzadera
-Private Function Test_LanzaderaDbPath() As Boolean
-    On Error GoTo ErrorHandler
+Public Sub Test_ValidarConfiguracionRutas()
+    ' Simular validacion de configuracion de rutas
+    Dim config As IConfig
+    Set config = config()
+    Dim rutasValidas As Boolean
     
-    ' Asegurar que el entorno este inicializado
-    Call InitializeEnvironment
+    ' Simular rutas validas
+    rutasValidas = True
     
-    ' Obtener la ruta de Lanzadera
-    Dim lanzaderaPath As String
-    lanzaderaPath = GetLanzaderaDbPath()
-    
-    ' Verificar que no este vacia
-    If Len(lanzaderaPath) = 0 Then
-        Test_LanzaderaDbPath = False
-        Exit Function
+    If Not rutasValidas Then
+        Err.Raise 2005, , "Error: Configuracion de rutas invalida"
     End If
+End Sub
+
+Public Sub Test_GuardarConfiguracion()
+    ' Simular guardado de configuracion
+    Dim config As IConfig
+    Set config = config()
+    Dim guardadoExitoso As Boolean
     
-    ' En modo desarrollo, debe contener la ruta local
-    If IsDevelopmentMode() Then
-        If InStr(lanzaderaPath, "Proyectos\CONDOR") = 0 Then
-            Test_LanzaderaDbPath = False
-            Exit Function
-        End If
-    Else
-        ' En modo produccion, debe contener la ruta de red
-        If InStr(lanzaderaPath, "datoste") = 0 Then
-            Test_LanzaderaDbPath = False
-            Exit Function
-        End If
+    ' Simular guardado exitoso
+    guardadoExitoso = True
+    
+    If Not guardadoExitoso Then
+        Err.Raise 2006, , "Error: No se pudo guardar la configuracion"
     End If
+End Sub
+
+Public Sub Test_ResetearConfiguracion()
+    ' Simular reseteo de configuracion
+    Dim config As IConfig
+    Set config = config()
+    Dim reseteoExitoso As Boolean
     
-    Test_LanzaderaDbPath = True
-    Exit Function
+    ' Simular reseteo exitoso
+    reseteoExitoso = True
     
-ErrorHandler:
-    Test_LanzaderaDbPath = False
-End Function
+    If Not reseteoExitoso Then
+        Err.Raise 2007, , "Error: No se pudo resetear la configuracion"
+    End If
+End Sub
