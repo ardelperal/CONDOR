@@ -17,6 +17,45 @@ La aplicación debe tener tres roles con permisos diferenciados:
 *   **Ingeniería (Técnico):** Recibe notificaciones para completar los detalles técnicos de una solicitud y participa en las revisiones si es necesario.
 *   **Administrador:** Tiene todos los permisos de Calidad y acceso a las opciones de configuración de la aplicación.
 
+### 2.1. Gestión de Roles y Autenticación
+
+#### 2.1.1. Punto de Entrada y Obtención del Usuario
+El punto de entrada de la aplicación CONDOR recibe el correo electrónico del usuario a través del comando `VBA.Command` desde la aplicación Lanzadera. Este correo electrónico será utilizado como identificador único para determinar el rol y permisos del usuario en el sistema.
+
+#### 2.1.2. Conexión a Base de Datos Externa para Gestión de Roles
+Para determinar el rol del usuario, CONDOR debe conectarse a una base de datos externa ubicada en:
+```
+\\datoste\aplicaciones_dys\Aplicaciones PpD\0Lanzadera\Lanzadera_Datos.accdb
+```
+
+La búsqueda del rol se realizará utilizando:
+*   **Correo electrónico del usuario** (obtenido desde `VBA.Command`)
+*   **IDAplicacion de CONDOR**: `231`
+
+#### 2.1.3. Determinación del Rol de Administrador
+El rol de **Administrador** se determina consultando la tabla `TbUsuariosAplicaciones` en la base de datos externa. Los criterios son:
+*   Buscar registro donde el correo del usuario coincida
+*   Si el campo `EsAdministrador` contiene el string `"Sí"`, el usuario es Administrador
+*   **Este rol tiene la máxima prioridad** y prevalece sobre cualquier otro rol asignado
+
+#### 2.1.4. Determinación de Roles Calidad/Técnico
+Si el usuario **no es Administrador**, se determina su rol consultando la tabla `TbUsuariosAplicacionesPermisos`. Los criterios son:
+*   Buscar registro donde el correo del usuario coincida
+*   Verificar que `IDAplicacion = 231`
+*   Comprobar los campos:
+    *   `EsUsuarioCalidad`: Si contiene `"Sí"`, el usuario tiene rol de **Calidad**
+    *   `EsUsuarioTecnico`: Si contiene `"Sí"`, el usuario tiene rol de **Técnico**
+*   Ambos campos esperan un string `"Sí"` o `"No"`
+*   Un usuario NO puede tener ambos roles simultáneamente
+*   Si no aparece no tiene rol y no debería haber llegado esta aplicación
+
+#### 2.1.5. Arquitectura de Integración
+Esta arquitectura elimina la necesidad de duplicar datos de usuarios en la base de datos de CONDOR, integrándose directamente con el sistema de gestión de usuarios centralizado de la Lanzadera. Esto garantiza:
+*   **Consistencia** en la gestión de usuarios entre aplicaciones
+*   **Mantenimiento centralizado** de roles y permisos
+*   **Seguridad** mediante un único punto de control de acceso
+*   **Escalabilidad** para futuras aplicaciones del ecosistema
+
 ## 3. Flujo de Trabajo y Gestión de Estados
 El ciclo de vida de una solicitud se gestiona a través de un sistema de Fases y Estados.
 1.  **FASE REGISTRO (Estado: `REGISTRADO`)**: `Calidad` crea la solicitud.

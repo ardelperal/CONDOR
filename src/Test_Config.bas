@@ -68,6 +68,26 @@ Public Function RunAllTests() As String
         Stop
     End If
     
+    ' Test 6: Constante IDAplicacion_CONDOR
+    testsTotal = testsTotal + 1
+    If Test_IDAplicacionConstant() Then
+        resultado = resultado & "✓ [OK] Test_IDAplicacionConstant: PASO" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "✗ [FALLO] Test_IDAplicacionConstant: FALLO" & vbCrLf
+        Stop
+    End If
+    
+    ' Test 7: Ruta de base de datos Lanzadera
+    testsTotal = testsTotal + 1
+    If Test_LanzaderaDbPath() Then
+        resultado = resultado & "✓ [OK] Test_LanzaderaDbPath: PASO" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "✗ [FALLO] Test_LanzaderaDbPath: FALLO" & vbCrLf
+        Stop
+    End If
+    
     ' Resumen final
     resultado = resultado & "=== RESUMEN ===" & vbCrLf
     resultado = resultado & "Pruebas pasadas: " & testsPassed & "/" & testsTotal & vbCrLf
@@ -213,6 +233,12 @@ Private Function Test_ConfigStructure() As Boolean
         Exit Function
     End If
     
+    ' Verificar que el nuevo campo LanzaderaDbPath esté poblado
+    If Len(g_AppConfig.LanzaderaDbPath) = 0 Then
+        Test_ConfigStructure = False
+        Exit Function
+    End If
+    
     Test_ConfigStructure = True
 End Function
 
@@ -243,6 +269,53 @@ Private Function Test_ResetConfiguration() As Boolean
     End If
     
     Test_ResetConfiguration = True
+End Function
+
+' Prueba la constante IDAplicacion_CONDOR
+Private Function Test_IDAplicacionConstant() As Boolean
+    ' Verificar que la constante tenga el valor correcto
+    If IDAplicacion_CONDOR <> 231 Then
+        Test_IDAplicacionConstant = False
+        Exit Function
+    End If
+    
+    Test_IDAplicacionConstant = True
+End Function
+
+' Prueba la ruta de la base de datos Lanzadera
+Private Function Test_LanzaderaDbPath() As Boolean
+    Dim lanzaderaPath As String
+    
+    ' Obtener la ruta de la base de datos Lanzadera
+    lanzaderaPath = GetLanzaderaDbPath()
+    
+    ' Verificar que la ruta no esté vacía
+    If Len(lanzaderaPath) = 0 Then
+        Test_LanzaderaDbPath = False
+        Exit Function
+    End If
+    
+    ' Verificar que la ruta contenga "Lanzadera_Datos.accdb"
+    If InStr(lanzaderaPath, "Lanzadera_Datos.accdb") = 0 Then
+        Test_LanzaderaDbPath = False
+        Exit Function
+    End If
+    
+    ' En modo desarrollo, debe contener la ruta local
+    If IsDevelopmentMode() Then
+        If InStr(lanzaderaPath, "Proyectos\CONDOR") = 0 Then
+            Test_LanzaderaDbPath = False
+            Exit Function
+        End If
+    Else
+        ' En modo producción, debe contener la ruta de red
+        If InStr(lanzaderaPath, "datoste") = 0 Then
+            Test_LanzaderaDbPath = False
+            Exit Function
+        End If
+    End If
+    
+    Test_LanzaderaDbPath = True
 End Function
 
 #End If

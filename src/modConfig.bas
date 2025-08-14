@@ -11,6 +11,9 @@ Option Explicit
 ' Constante para modo de desarrollo
 Public Const DEV_MODE As Boolean = True
 
+' Constante para identificación de aplicación en sistema Lanzadera
+Public Const IDAplicacion_CONDOR As Long = 231
+
 ' ---------------------------------------------------------------------------------
 ' ==> INTERRUPTOR MANUAL PARA DESARROLLADORES <==
 ' Cambia este valor para forzar un entorno durante el desarrollo.
@@ -30,6 +33,7 @@ Public Type T_AppConfig
     DataPath As String
     ExpedientesPath As String 'Añadido para la BBDD de Expedientes
     PlantillasPath As String 'Añadido para las plantillas Word
+    LanzaderaDbPath As String 'Añadido para la BBDD de Lanzadera (gestión de roles)
     SourcePath As String
     BackupPath As String
     LogPath As String
@@ -75,6 +79,7 @@ Public Function InitializeEnvironment() As Boolean
         g_AppConfig.DataPath = "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
         g_AppConfig.ExpedientesPath = "C:\Proyectos\CONDOR\back\EXPEDIENTES.accdb" 'Ruta local de ejemplo
         g_AppConfig.PlantillasPath = "C:\Proyectos\CONDOR\templates"
+        g_AppConfig.LanzaderaDbPath = "C:\Proyectos\CONDOR\back\Lanzadera_Datos.accdb"
         g_AppConfig.SourcePath = "C:\Proyectos\CONDOR\src"
         g_AppConfig.BackupPath = "C:\Proyectos\CONDOR\back\backups"
         g_AppConfig.LogPath = "C:\Proyectos\CONDOR\logs"
@@ -87,6 +92,7 @@ Public Function InitializeEnvironment() As Boolean
         g_AppConfig.DataPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR Prueba\CONDOR_datos.accdb"
         g_AppConfig.ExpedientesPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\EXPEDIENTES\EXPEDIENTES_be.accdb"
         g_AppConfig.PlantillasPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR Prueba\Plantillas"
+        g_AppConfig.LanzaderaDbPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\0Lanzadera\Lanzadera_Datos.accdb"
         ' Estas rutas probablemente sigan siendo locales a la máquina del usuario
         g_AppConfig.SourcePath = "C:\Ruta\Invalida\En\Produccion"
         g_AppConfig.BackupPath = Environ("APPDATA") & "\CONDOR\Backups"
@@ -114,6 +120,14 @@ Public Function GetActiveEnvironment() As String
         Call InitializeEnvironment
     End If
     GetActiveEnvironment = g_AppConfig.EntornoActivo
+End Function
+
+' Función para obtener la ruta de la base de datos Lanzadera
+Public Function GetLanzaderaDbPath() As String
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
+    End If
+    GetLanzaderaDbPath = g_AppConfig.LanzaderaDbPath
 End Function
 
 ' ... (El resto de funciones Get...Path permanecen iguales) ...
