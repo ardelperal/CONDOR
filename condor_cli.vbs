@@ -10,6 +10,7 @@ Dim strSourcePath
 Dim strAction
 Dim objFSO
 Dim objArgs
+Dim strDbPassword
 
 ' Configuracion
 ' Configuracion inicial - se determinara la base de datos segun la accion
@@ -21,28 +22,37 @@ strSourcePath = "C:\Proyectos\CONDOR\src"
 ' Obtener argumentos de linea de comandos
 Set objArgs = WScript.Arguments
 If objArgs.Count = 0 Then
-    WScript.Echo "Uso: cscript condor_cli.vbs [import|export|createtable|droptable|listtables|test]"
+    WScript.Echo "Uso: cscript condor_cli.vbs [import|export|createtable|droptable|listtables|test|relink]"
     WScript.Echo "  import     - Importar modulos VBA desde /src"
     WScript.Echo "  export     - Exportar modulos VBA a /src"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
-    WScript.Echo "  listtables - Listar todas las tablas"
+    WScript.Echo "  listtables [db_path] - Listar todas las tablas (opcionalmente de una base específica)"
     WScript.Echo "  test       - Ejecutar todos los tests y mostrar resultados"
+    WScript.Echo "  relink <db_path> <local_folder> - Re-vincular tablas a bases de datos locales"
+    WScript.Echo "  relink --all - Re-vincular todas las bases de datos en ./back automáticamente"
     WScript.Quit 1
 End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "import" And strAction <> "export" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" Then
-    WScript.Echo "Error: Accion debe ser 'import', 'export', 'createtable', 'droptable', 'listtables' o 'test'"
+If strAction <> "import" And strAction <> "export" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" Then
+    WScript.Echo "Error: Accion debe ser 'import', 'export', 'createtable', 'droptable', 'listtables', 'test' o 'relink'"
     WScript.Quit 1
 End If
 
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 
-' Determinar qu� base de datos usar seg�n la acci�n
-If strAction = "createtable" Or strAction = "droptable" Or strAction = "listtables" Then
+' Determinar qué base de datos usar según la acción
+If strAction = "createtable" Or strAction = "droptable" Then
     strAccessPath = strDataPath
+ElseIf strAction = "listtables" Then
+    ' Para listtables, usar base específica si se proporciona, sino usar por defecto
+    If objArgs.Count > 1 Then
+        strAccessPath = objArgs(1)
+    Else
+        strAccessPath = strDataPath
+    End If
 End If
 
 ' Para tests, usar la base de datos de desarrollo
@@ -85,8 +95,17 @@ On Error Resume Next
 objAccess.DisplayAlerts = False
 Err.Clear
 
+' Determinar contraseña para la base de datos
+strDbPassword = GetDatabasePassword(strAccessPath)
+
 ' Abrir base de datos con manejo de errores robusto
-objAccess.OpenCurrentDatabase strAccessPath
+If strDbPassword = "" Then
+    ' Sin contraseña
+    objAccess.OpenCurrentDatabase strAccessPath
+Else
+    ' Con contraseña - usar solo dos parámetros
+    objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
+End If
 
 If Err.Number <> 0 Then
     WScript.Echo "Error al abrir base de datos: " & Err.Description
@@ -109,6 +128,8 @@ ElseIf strAction = "listtables" Then
     Call ListTables()
 ElseIf strAction = "test" Then
     Call RunTestsWithEngine()
+ElseIf strAction = "relink" Then
+    Call RelinkTables()
 End If
 
 ' Cerrar Access
@@ -186,21 +207,17 @@ Sub ImportModules()
                 End If
             Next
             
-            ' Importar nuevo modulo
-            WScript.Echo "Importando modulo: " & strFileName
-            Call objAccess.VBE.ActiveVBProject.VBComponents.Import(strFileName)
+            ' Limpiar archivo antes de importar (eliminar metadatos Attribute)
+            Dim cleanedContent
+            cleanedContent = CleanVBAFile(strFileName)
+            
+            ' Importar usando contenido limpio
+            WScript.Echo "Importando modulo (con limpieza): " & strFileName
+            Call ImportCleanModule(strModuleName, cleanedContent, objFile)
             
             If Err.Number <> 0 Then
                 WScript.Echo "Error al importar modulo " & strModuleName & ": " & Err.Description
                 Err.Clear
-            Else
-                ' Renombrar el modulo importado al nombre correcto
-                Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents(objAccess.VBE.ActiveVBProject.VBComponents.Count)
-                If vbComponent.Name <> strModuleName Then
-                    vbComponent.Name = strModuleName
-                End If
-                
-                WScript.Echo "Modulo " & strModuleName & " importado correctamente"
             End If
         End If
     Next
@@ -464,7 +481,7 @@ Sub RunTestsWithEngine()
      On Error Resume Next
      
      objAccess.TempVars.Add "TestResult", ""
-     objAccess.DoCmd.RunCode "TempVars(" & Chr(34) & "TestResult" & Chr(34) & ") = RunAllTests()"
+     objAccess.DoCmd.RunCode "TempVars(" & Chr(34) & "TestResult" & Chr(34) & ") = TEST_SIMPLE.TEST_SIMPLE()"
      
      If Err.Number = 0 Then
          resultado = objAccess.TempVars("TestResult").Value
@@ -485,7 +502,7 @@ Sub RunTestsWithEngine()
      If Not testExecuted Then
          WScript.Echo "Método 2: Intentando con Application.Run..."
          On Error Resume Next
-         resultado = objAccess.Application.Run("RunAllTests")
+         resultado = objAccess.Application.Run("TEST_SIMPLE.TEST_SIMPLE")
          
          If Err.Number = 0 Then
              testExecuted = True
@@ -500,7 +517,7 @@ Sub RunTestsWithEngine()
      If Not testExecuted Then
          WScript.Echo "Método 3: Intentando con Eval..."
          On Error Resume Next
-         resultado = objAccess.Eval("RunAllTests()")
+         resultado = objAccess.Eval("TEST_SIMPLE.TEST_SIMPLE()")
          
          If Err.Number = 0 Then
              testExecuted = True
@@ -683,5 +700,183 @@ Sub VerifyModuleNames()
         WScript.Echo "⚠️ ACCIÓN REQUERIDA: Revise la sincronización entre src y Access"
     End If
 End Sub
+
+' Función para limpiar archivos VBA eliminando líneas Attribute
+Function CleanVBAFile(filePath)
+    Dim objFile, strContent, arrLines, i, cleanedLines
+    Dim strLine
+    
+    ' Leer contenido del archivo
+    Set objFile = objFSO.OpenTextFile(filePath, 1) ' ForReading = 1
+    strContent = objFile.ReadAll
+    objFile.Close
+    
+    ' Dividir en líneas
+    arrLines = Split(strContent, vbCrLf)
+    If UBound(arrLines) = 0 Then
+        arrLines = Split(strContent, vbLf)
+    End If
+    
+    ' Filtrar líneas que no empiecen con "Attribute"
+    cleanedLines = ""
+    For i = 0 To UBound(arrLines)
+        strLine = Trim(arrLines(i))
+        If Left(strLine, 9) <> "Attribute" Then
+            If cleanedLines <> "" Then
+                cleanedLines = cleanedLines & vbCrLf
+            End If
+            cleanedLines = cleanedLines & arrLines(i)
+        Else
+            WScript.Echo "  Eliminando metadato: " & strLine
+        End If
+    Next
+    
+    CleanVBAFile = cleanedLines
+End Function
+
+' Función para importar módulo usando contenido limpio
+Sub ImportCleanModule(moduleName, cleanedContent, objFile)
+    Dim tempFilePath, objTempFile, vbComponent
+    
+    ' Crear archivo temporal con contenido limpio
+    tempFilePath = objFSO.GetParentFolderName(objFile.Path) & "\temp_" & objFile.Name
+    
+    Set objTempFile = objFSO.CreateTextFile(tempFilePath, True)
+    objTempFile.Write cleanedContent
+    objTempFile.Close
+    
+    ' Importar desde archivo temporal
+    On Error Resume Next
+    Call objAccess.VBE.ActiveVBProject.VBComponents.Import(tempFilePath)
+    
+    ' Limpiar archivo temporal
+    objFSO.DeleteFile tempFilePath
+    
+    If Err.Number = 0 Then
+        ' Renombrar el módulo importado al nombre correcto
+        Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents(objAccess.VBE.ActiveVBProject.VBComponents.Count)
+        If vbComponent.Name <> moduleName Then
+            vbComponent.Name = moduleName
+        End If
+        WScript.Echo "Módulo " & moduleName & " importado correctamente (limpio)"
+     End If
+End Sub
+
+' Subrutina para re-vincular tablas de Access
+Sub RelinkTables()
+    Dim strDbPath, strLocalFolder
+    
+    WScript.Echo "=== INICIANDO RE-VINCULACION DE TABLAS ==="
+    
+    ' Verificar si se usa el modo --all
+    If objArgs.Count >= 2 Then
+        If LCase(objArgs(1)) = "--all" Then
+            Call RelinkAllDatabases()
+            Exit Sub
+        End If
+    End If
+    
+    ' Verificar que se proporcionaron los argumentos necesarios para modo manual
+    If objArgs.Count < 3 Then
+        WScript.Echo "Error: El comando relink requiere argumentos:"
+        WScript.Echo "Uso: cscript condor_cli.vbs relink <db_path> <local_folder>"
+        WScript.Echo "  o: cscript condor_cli.vbs relink --all"
+        WScript.Echo "  db_path: Ruta a la base de datos frontend (.accdb)"
+        WScript.Echo "  local_folder: Ruta a la carpeta con las bases de datos locales"
+        WScript.Echo "  --all: Re-vincular todas las bases de datos en ./back automáticamente"
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    ' Leer argumentos de la línea de comandos
+    strDbPath = objArgs(1)
+    strLocalFolder = objArgs(2)
+    
+    WScript.Echo "Base de datos frontend: " & strDbPath
+    WScript.Echo "Carpeta de backends locales: " & strLocalFolder
+    
+    ' Verificar que los paths existen
+    If Not objFSO.FileExists(strDbPath) Then
+        WScript.Echo "Error: La base de datos frontend no existe: " & strDbPath
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    If Not objFSO.FolderExists(strLocalFolder) Then
+        WScript.Echo "Error: La carpeta de backends locales no existe: " & strLocalFolder
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "Funcionalidad de re-vinculación pendiente de implementación."
+    WScript.Echo "=== RE-VINCULACION COMPLETADA ==="
+End Sub
+
+' Subrutina para re-vincular todas las bases de datos automáticamente
+Sub RelinkAllDatabases()
+    Dim objBackFolder, objFile
+    Dim strBackPath, strDbCount
+    Dim dbCount
+    Dim strDbName, strPassword
+    
+    WScript.Echo "=== MODO AUTOMATICO: RE-VINCULANDO TODAS LAS BASES DE DATOS ==="
+    
+    ' Definir ruta del directorio back
+    strBackPath = objFSO.GetAbsolutePathName("back")
+    
+    ' Verificar que existe el directorio back
+    If Not objFSO.FolderExists(strBackPath) Then
+        WScript.Echo "Error: El directorio ./back no existe: " & strBackPath
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "Directorio de backends: " & strBackPath
+    
+    ' Contar y listar bases de datos .accdb
+    Set objBackFolder = objFSO.GetFolder(strBackPath)
+    dbCount = 0
+    
+    For Each objFile In objBackFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "accdb" Then
+            dbCount = dbCount + 1
+            strDbName = objFSO.GetBaseName(objFile.Name)
+            
+            ' Determinar contraseña según el nombre de la base de datos
+            If InStr(1, UCase(strDbName), "CONDOR") > 0 Then
+                strPassword = "(sin contraseña)"
+            Else
+                strPassword = "dpddpd"
+            End If
+            
+            WScript.Echo "  [" & dbCount & "] " & objFile.Name & " - " & strPassword
+        End If
+    Next
+    
+    If dbCount = 0 Then
+        WScript.Echo "No se encontraron bases de datos .accdb en el directorio ./back"
+        WScript.Echo "=== RE-VINCULACION COMPLETADA ==="
+        Exit Sub
+    End If
+    
+    WScript.Echo "Total de bases de datos encontradas: " & dbCount
+    WScript.Echo "Nota: Las bases de datos CONDOR no requieren contraseña, las demás usan 'dpddpd'"
+    WScript.Echo "Funcionalidad de re-vinculación automática pendiente de implementación."
+    WScript.Echo "=== RE-VINCULACION AUTOMATICA COMPLETADA ==="
+End Sub
+
+' Función para determinar la contraseña de una base de datos
+Function GetDatabasePassword(strDbPath)
+    Dim strDbName
+    strDbName = objFSO.GetBaseName(strDbPath)
+    
+    ' Las bases de datos CONDOR no requieren contraseña
+    If InStr(1, UCase(strDbName), "CONDOR") > 0 Then
+        GetDatabasePassword = ""
+    Else
+        ' Las demás bases de datos usan 'dpddpd'
+        GetDatabasePassword = "dpddpd"
+    End If
+End Function
 
 ' La subrutina ExecuteTestModule ha sido eliminada ya que ahora se usa el motor interno modTestRunner

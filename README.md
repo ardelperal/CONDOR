@@ -24,6 +24,119 @@ CONDOR se conecta con la aplicación de expedientes existente para obtener:
 - Actualización automática de versiones.
 - Funciona en modo oficina (producción) y local (desarrollo/test) sin cambiar el código.
 
+## Gestión de Entornos (Local vs. Remoto)
+
+CONDOR implementa un sistema avanzado de gestión de entornos que permite a los desarrolladores trabajar tanto con datos locales como remotos de manera flexible y controlada.
+
+### Diferencia entre Modo de Compilación y Entorno de Ejecución
+
+**Modo de Compilación (DEV_MODE):**
+- Es una constante de compilación que determina si la aplicación se compila en modo desarrollo o producción
+- Se define mediante directivas de compilación condicional (`#If DEV_MODE Then`)
+- Controla qué código se incluye en la compilación final
+
+**Entorno de Ejecución (Local vs. Remoto):**
+- Determina qué rutas de bases de datos y recursos utiliza la aplicación en tiempo de ejecución
+- **Local**: Utiliza rutas del directorio de desarrollo (`C:\Proyectos\CONDOR\...`)
+- **Remoto**: Utiliza rutas de la red corporativa (`\\datoste\aplicaciones_dys\...`)
+
+### Constante ENTORNO_FORZADO
+
+Dentro del módulo `modConfig.bas` existe una constante privada `ENTORNO_FORZADO` que permite a los desarrolladores forzar un entorno específico independientemente del modo de compilación:
+
+```vba
+Private Enum E_EnvironmentOverride
+    ForzarNinguno = 0 ' Elige automáticamente basado en DEV_MODE
+    ForzarLocal = 1   ' Fuerza el uso de rutas locales
+    ForzarRemoto = 2  ' Fuerza el uso de rutas remotas
+End Enum
+Private Const ENTORNO_FORZADO As E_EnvironmentOverride = ForzarNinguno
+```
+
+### Lógica de Decisión de Entorno
+
+La función `InitializeEnvironment()` utiliza la siguiente lógica para determinar el entorno:
+
+```vba
+Select Case ENTORNO_FORZADO
+    Case ForzarLocal
+        usarRutasLocales = True
+        g_AppConfig.EntornoActivo = "Local (Forzado)"
+    Case ForzarRemoto
+        usarRutasLocales = False
+        g_AppConfig.EntornoActivo = "Remoto (Forzado)"
+    Case ForzarNinguno
+        ' Comportamiento por defecto: depende del modo de compilación
+        usarRutasLocales = IsDevelopmentMode()
+        If usarRutasLocales Then
+            g_AppConfig.EntornoActivo = "Local (DEV_MODE)"
+        Else
+            g_AppConfig.EntornoActivo = "Remoto (Producción)"
+        End If
+End Select
+```
+
+### Cómo Cambiar el Entorno para Desarrollo
+
+Para cambiar el entorno de ejecución durante el desarrollo:
+
+1. **Abrir** el archivo `src/modConfig.bas`
+2. **Localizar** la línea con `Private Const ENTORNO_FORZADO`
+3. **Cambiar** el valor según necesidad:
+   - `ForzarLocal`: Para trabajar con datos locales de desarrollo
+   - `ForzarRemoto`: Para depurar con datos reales de la red
+   - `ForzarNinguno`: Para usar el comportamiento automático
+4. **Importar** los cambios: `cscript condor_cli.vbs import`
+
+### Casos de Uso Típicos
+
+**Desarrollo Normal:**
+```vba
+Private Const ENTORNO_FORZADO As E_EnvironmentOverride = ForzarNinguno
+```
+- Usa datos locales en modo desarrollo
+- Usa datos remotos en producción
+
+**Debug con Datos Reales:**
+```vba
+Private Const ENTORNO_FORZADO As E_EnvironmentOverride = ForzarRemoto
+```
+- Permite depurar desde el entorno de desarrollo usando las bases de datos de la red
+- Esencial para reproducir errores que solo ocurren con datos reales
+
+**Pruebas Aisladas:**
+```vba
+Private Const ENTORNO_FORZADO As E_EnvironmentOverride = ForzarLocal
+```
+- Garantiza el uso de datos locales incluso en compilaciones de producción
+- Útil para pruebas controladas
+
+### ⚠️ Importante: Antes del Commit Final
+
+**SIEMPRE** devolver la constante a `ForzarNinguno` antes de hacer commit:
+
+```vba
+Private Const ENTORNO_FORZADO As E_EnvironmentOverride = ForzarNinguno
+```
+
+Esto garantiza que:
+- El comportamiento por defecto se mantenga en el repositorio
+- Otros desarrolladores no hereden configuraciones específicas
+- La aplicación funcione correctamente en todos los entornos
+
+### Verificación del Entorno Activo
+
+Puede verificarse qué entorno está activo mediante:
+```vba
+Debug.Print GetActiveEnvironment()
+```
+
+Esto mostrará valores como:
+- "Local (DEV_MODE)"
+- "Remoto (Producción)"
+- "Local (Forzado)"
+- "Remoto (Forzado)"
+
 ## Gestión de Usuarios y Roles
 - Login integrado con el sistema central.
 - Roles: Calidad, Técnico, Administrador, y actores externos (solo reciben documentos).

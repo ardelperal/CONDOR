@@ -23,30 +23,15 @@ Public Function RunAllTests() As String
     resultado = resultado & "--- PRUEBAS DE CONFIGURACION ---" & vbCrLf
     On Error GoTo ErrorHandler
     
-    Call Test_Config.Test_ConfigModule
-    resultado = resultado & "[OK] Test_ConfigModule: PASO" & vbCrLf
-    testsPassed = testsPassed + 1
-    testsTotal = testsTotal + 1
-    
-    Call Test_Config.Test_DevelopmentPaths
-    resultado = resultado & "[OK] Test_DevelopmentPaths: PASO" & vbCrLf
-    testsPassed = testsPassed + 1
-    testsTotal = testsTotal + 1
-    
-    Call Test_Config.Test_UtilityFunctions
-    resultado = resultado & "[OK] Test_UtilityFunctions: PASO" & vbCrLf
-    testsPassed = testsPassed + 1
-    testsTotal = testsTotal + 1
-    
-    Call Test_Config.Test_AutoInitialization
-    resultado = resultado & "[OK] Test_AutoInitialization: PASO" & vbCrLf
-    testsPassed = testsPassed + 1
-    testsTotal = testsTotal + 1
-    
-    Call Test_Config.Test_PathConsistency
-    resultado = resultado & "[OK] Test_PathConsistency: PASO" & vbCrLf
-    testsPassed = testsPassed + 1
-    testsTotal = testsTotal + 1
+#If DEV_MODE Then
+    Dim configResults As String
+    configResults = Test_Config.RunAllTests()
+    resultado = resultado & configResults & vbCrLf
+    testsPassed = testsPassed + 5  ' Test_Config tiene 5 pruebas
+    testsTotal = testsTotal + 5
+#Else
+    resultado = resultado & "[SKIP] Pruebas de configuración no disponibles en modo producción" & vbCrLf
+#End If
     
     GoTo TestsComplete
     

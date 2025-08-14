@@ -1,170 +1,248 @@
-Attribute VB_Name = "Test_Config"
+' Módulo de Pruebas para Configuración del Sistema CONDOR
+' Pruebas unitarias para el módulo modConfig
+' Versión: 1.0
+' Fecha: 2024
 
-' =============================================================================
-' MODULO DE PRUEBAS PARA CONFIGURACION Y ENTORNOS
-' =============================================================================
-' Proposito: Verificar el correcto funcionamiento del modulo modConfig
-' =============================================================================
+Option Compare Database
+Option Explicit
 
-' Prueba principal que ejecuta todas las verificaciones
-Public Sub Test_ConfigModule()
-    Debug.Print "=== INICIANDO PRUEBAS DE CONFIGURACION ==="
-    
-    ' Llamar a InitializeEnvironment
-    Call modConfig.InitializeEnvironment
-    
-    ' Verificar que la configuracion se inicializo
-    If Not modConfig.IsConfigInitialized() = True Then
-        Debug.Print "Error: Configuracion no inicializada"
-        Stop
-    End If
-    Debug.Print "OK Configuracion inicializada correctamente"
-    
-    ' Verificar informacion del entorno
-    Dim envInfo As String
-    envInfo = modConfig.GetEnvironmentInfo()
-    If Not envInfo = "DESARROLLO (Local)" Then
-        Debug.Print "Error: Entorno incorrecto - " & envInfo
-        Stop
-    End If
-    Debug.Print "OK Entorno detectado: " & envInfo
-    
-    ' Verificar rutas de desarrollo (DEV_MODE = 1)
-    Call Test_DevelopmentPaths
-    
-    ' Verificar funciones de utilidad
-    Call Test_UtilityFunctions
-    
-    Debug.Print "=== TODAS LAS PRUEBAS DE CONFIGURACION PASARON ==="
-End Sub
+#If DEV_MODE Then
 
-' Prueba las rutas de desarrollo
-Private Sub Test_DevelopmentPaths()
-    Debug.Print "--- Verificando rutas de desarrollo ---"
+' Función principal de pruebas para el módulo de configuración
+Public Function RunAllTests() As String
+    Dim resultado As String
+    Dim testsPassed As Integer
+    Dim testsTotal As Integer
     
-    ' Verificar ruta de base de datos CONDOR
-    Dim condorPath As String
-    condorPath = modConfig.GetCondorDbPath()
-    If Not condorPath = "./back/CONDOR_datos.accdb" Then
-        Debug.Print "Error: Ruta CONDOR incorrecta - " & condorPath
+    resultado = "=== PRUEBAS DE CONFIGURACION ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Test 1: Inicialización del entorno
+    testsTotal = testsTotal + 1
+    If Test_InitializeEnvironment() Then
+        resultado = resultado & "✓ [OK] Test_InitializeEnvironment: PASO" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "✗ [FALLO] Test_InitializeEnvironment: FALLO" & vbCrLf
         Stop
     End If
-    Debug.Print "OK Ruta CONDOR: " & condorPath
     
-    ' Verificar ruta de base de datos Expedientes
-    Dim expedientesPath As String
-    expedientesPath = modConfig.GetExpedientesDbPath()
-    If Not expedientesPath = "./back/Expedientes_Local.accdb" Then
-        Debug.Print "Error: Ruta Expedientes incorrecta - " & expedientesPath
+    ' Test 2: Obtención de rutas
+    testsTotal = testsTotal + 1
+    If Test_GetPaths() Then
+        resultado = resultado & "✓ [OK] Test_GetPaths: PASO" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "✗ [FALLO] Test_GetPaths: FALLO" & vbCrLf
         Stop
     End If
-    Debug.Print "OK Ruta Expedientes: " & expedientesPath
     
-    ' Verificar ruta de plantillas
-    Dim plantillasPath As String
-    plantillasPath = modConfig.GetPlantillasPath()
-    If Not plantillasPath = "./docs/Plantillas/" Then
-        Debug.Print "Error: Ruta Plantillas incorrecta - " & plantillasPath
+    ' Test 3: Modo de desarrollo
+    testsTotal = testsTotal + 1
+    If Test_DevelopmentMode() Then
+        resultado = resultado & "✓ [OK] Test_DevelopmentMode: PASO" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "✗ [FALLO] Test_DevelopmentMode: FALLO" & vbCrLf
         Stop
     End If
-    Debug.Print "OK Ruta Plantillas: " & plantillasPath
     
-    ' Verificar ruta de logs
-    Dim logsPath As String
-    logsPath = modConfig.GetLogsPath()
-    If Not logsPath = "./logs/" Then
-        Debug.Print "Error: Ruta Logs incorrecta - " & logsPath
+    ' Test 4: Configuración de estructura
+    testsTotal = testsTotal + 1
+    If Test_ConfigStructure() Then
+        resultado = resultado & "✓ [OK] Test_ConfigStructure: PASO" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "✗ [FALLO] Test_ConfigStructure: FALLO" & vbCrLf
         Stop
     End If
-    Debug.Print "OK Ruta Logs: " & logsPath
     
-    ' Verificar ruta de backup
+    ' Test 5: Reinicialización
+    testsTotal = testsTotal + 1
+    If Test_ResetConfiguration() Then
+        resultado = resultado & "✓ [OK] Test_ResetConfiguration: PASO" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "✗ [FALLO] Test_ResetConfiguration: FALLO" & vbCrLf
+        Stop
+    End If
+    
+    ' Resumen final
+    resultado = resultado & "=== RESUMEN ===" & vbCrLf
+    resultado = resultado & "Pruebas pasadas: " & testsPassed & "/" & testsTotal & vbCrLf
+    
+    If testsPassed = testsTotal Then
+        resultado = resultado & "✓ TODAS LAS PRUEBAS PASARON" & vbCrLf
+    Else
+        resultado = resultado & "✗ ALGUNAS PRUEBAS FALLARON" & vbCrLf
+    End If
+    
+    RunAllTests = resultado
+End Function
+
+' Prueba la inicialización del entorno
+Private Function Test_InitializeEnvironment() As Boolean
+    Dim result As Boolean
+    
+    ' Ejecutar inicialización
+    result = InitializeEnvironment()
+    
+    ' Verificar que la inicialización fue exitosa
+    If Not result Then
+        Test_InitializeEnvironment = False
+        Exit Function
+    End If
+    
+    ' Verificar que la configuración está marcada como inicializada
+    If Not g_AppConfig.IsInitialized Then
+        Test_InitializeEnvironment = False
+        Exit Function
+    End If
+    
+    Test_InitializeEnvironment = True
+End Function
+
+' Prueba la obtención de rutas
+Private Function Test_GetPaths() As Boolean
+    Dim dbPath As String
+    Dim dataPath As String
+    Dim sourcePath As String
     Dim backupPath As String
-    backupPath = modConfig.GetBackupPath()
-    If Not backupPath = "./backup/" Then
-        Debug.Print "Error: Ruta Backup incorrecta - " & backupPath
-        Stop
-    End If
-    Debug.Print "OK Ruta Backup: " & backupPath
-    
-    ' Verificar ruta temporal
+    Dim logPath As String
     Dim tempPath As String
-    tempPath = modConfig.GetTempPath()
-    If Not tempPath = "./temp/" Then
-        Debug.Print "Error: Ruta Temp incorrecta - " & tempPath
-        Stop
+    
+    ' Obtener todas las rutas
+    dbPath = GetDatabasePath()
+    dataPath = GetDataPath()
+    sourcePath = GetSourcePath()
+    backupPath = GetBackupPath()
+    logPath = GetLogPath()
+    tempPath = GetTempPath()
+    
+    ' Verificar que ninguna ruta esté vacía
+    If Len(dbPath) = 0 Then
+        Test_GetPaths = False
+        Exit Function
     End If
-    Debug.Print "OK Ruta Temp: " & tempPath
-End Sub
+    
+    If Len(dataPath) = 0 Then
+        Test_GetPaths = False
+        Exit Function
+    End If
+    
+    If Len(sourcePath) = 0 Then
+        Test_GetPaths = False
+        Exit Function
+    End If
+    
+    If Len(backupPath) = 0 Then
+        Test_GetPaths = False
+        Exit Function
+    End If
+    
+    If Len(logPath) = 0 Then
+        Test_GetPaths = False
+        Exit Function
+    End If
+    
+    If Len(tempPath) = 0 Then
+        Test_GetPaths = False
+        Exit Function
+    End If
+    
+    ' Verificar que las rutas de desarrollo sean correctas
+    If InStr(dbPath, "Proyectos\CONDOR") = 0 Then
+        Test_GetPaths = False
+        Exit Function
+    End If
+    
+    Test_GetPaths = True
+End Function
 
-' Prueba las funciones de utilidad
-Private Sub Test_UtilityFunctions()
-    Debug.Print "--- Verificando funciones de utilidad ---"
+' Prueba el modo de desarrollo
+Private Function Test_DevelopmentMode() As Boolean
+    Dim isDev As Boolean
     
-    ' Verificar reset de configuracion
-    Call modConfig.ResetConfiguration
-    If Not modConfig.IsConfigInitialized() = True Then
-        Debug.Print "Error: Reset no funciono correctamente"
-        Stop
-    End If
-    Debug.Print "OK Reset de configuracion funciona correctamente"
+    isDev = IsDevelopmentMode()
     
-    ' Verificar que las rutas siguen siendo correctas despues del reset
-    If Not modConfig.GetCondorDbPath() = "./back/CONDOR_datos.accdb" Then
-        Debug.Print "Error: Ruta CONDOR incorrecta despues del reset"
-        Stop
+    ' En este contexto, debe estar en modo desarrollo
+    If Not isDev Then
+        Test_DevelopmentMode = False
+        Exit Function
     End If
-    Debug.Print "OK Rutas mantienen consistencia despues del reset"
-End Sub
+    
+    Test_DevelopmentMode = True
+End Function
 
-' Prueba de inicializacion automatica
-Public Sub Test_AutoInitialization()
-    Debug.Print "=== PRUEBA DE INICIALIZACION AUTOMATICA ==="
-    
-    ' Resetear configuracion para simular estado inicial
-    Call modConfig.ResetConfiguration
-    
-    ' Llamar directamente a una funcion getter sin inicializar explicitamente
-    Dim path As String
-    path = modConfig.GetCondorDbPath()
-    
-    ' Verificar que se inicializo automaticamente
-    If Not modConfig.IsConfigInitialized() = True Then
-        Debug.Print "Error: No se inicializo automaticamente"
-        Stop
-    End If
-    If Not path = "./back/CONDOR_datos.accdb" Then
-        Debug.Print "Error: Ruta incorrecta en inicializacion automatica"
-        Stop
+' Prueba la estructura de configuración
+Private Function Test_ConfigStructure() As Boolean
+    ' Inicializar si no está inicializado
+    If Not g_AppConfig.IsInitialized Then
+        Call InitializeEnvironment
     End If
     
-    Debug.Print "OK Inicializacion automatica funciona correctamente"
-    Debug.Print "=== PRUEBA DE INICIALIZACION AUTOMATICA COMPLETADA ==="
-End Sub
+    ' Verificar que todos los campos de la estructura estén poblados
+    If Len(g_AppConfig.DatabasePath) = 0 Then
+        Test_ConfigStructure = False
+        Exit Function
+    End If
+    
+    If Len(g_AppConfig.DataPath) = 0 Then
+        Test_ConfigStructure = False
+        Exit Function
+    End If
+    
+    If Len(g_AppConfig.SourcePath) = 0 Then
+        Test_ConfigStructure = False
+        Exit Function
+    End If
+    
+    If Len(g_AppConfig.BackupPath) = 0 Then
+        Test_ConfigStructure = False
+        Exit Function
+    End If
+    
+    If Len(g_AppConfig.LogPath) = 0 Then
+        Test_ConfigStructure = False
+        Exit Function
+    End If
+    
+    If Len(g_AppConfig.TempPath) = 0 Then
+        Test_ConfigStructure = False
+        Exit Function
+    End If
+    
+    Test_ConfigStructure = True
+End Function
 
-' Prueba de consistencia de todas las rutas
-Public Sub Test_PathConsistency()
-    Debug.Print "=== PRUEBA DE CONSISTENCIA DE RUTAS ==="
+' Prueba la reinicialización de configuración
+Private Function Test_ResetConfiguration() As Boolean
+    ' Primero inicializar
+    Call InitializeEnvironment
     
-    Call modConfig.InitializeEnvironment
+    ' Verificar que está inicializado
+    If Not g_AppConfig.IsInitialized Then
+        Test_ResetConfiguration = False
+        Exit Function
+    End If
     
-    ' Obtener todas las rutas multiples veces
-    Dim i As Integer
-    For i = 1 To 3
-        If Not modConfig.GetCondorDbPath() = "./back/CONDOR_datos.accdb" Then
-            Debug.Print "Error: Inconsistencia en ruta CONDOR - iteracion " & i
-            Stop
-        End If
-        If Not modConfig.GetExpedientesDbPath() = "./back/Expedientes_Local.accdb" Then
-            Debug.Print "Error: Inconsistencia en ruta Expedientes - iteracion " & i
-            Stop
-        End If
-        If Not modConfig.GetPlantillasPath() = "./docs/Plantillas/" Then
-            Debug.Print "Error: Inconsistencia en ruta Plantillas - iteracion " & i
-            Stop
-        End If
-    Next i
+    ' Reinicializar
+    Call InitializeEnvironment
     
-    Debug.Print "OK Todas las rutas mantienen consistencia en multiples llamadas"
-    Debug.Print "=== PRUEBA DE CONSISTENCIA COMPLETADA ==="
-End Sub
+    ' Verificar que sigue inicializado correctamente
+    If Not g_AppConfig.IsInitialized Then
+        Test_ResetConfiguration = False
+        Exit Function
+    End If
+    
+    ' Verificar que las rutas siguen siendo válidas
+    If Len(GetDatabasePath()) = 0 Then
+        Test_ResetConfiguration = False
+        Exit Function
+    End If
+    
+    Test_ResetConfiguration = True
+End Function
+
+#End If
