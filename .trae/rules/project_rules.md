@@ -1,0 +1,5 @@
+- The AI's knowledge is strictly limited to the provided documents in the context.
+- Never invent, assume, or infer information not explicitly written in the context documents.
+- If the answer is not in the documents, state that "La información no se encuentra en la especificación funcional."
+- All generated code must follow the 3-layer architecture (Presentation, Business Logic, Services) described in the specification.
+- The primary language for the response must be Spanish.
