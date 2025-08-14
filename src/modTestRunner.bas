@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modTestRunner"
+Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
 
@@ -101,6 +101,25 @@ Public Function RunAllTests() As String
         testsTotal = testsTotal + 4
     Else
         resultado = resultado & "[ERROR] Error en pruebas de ExpedienteService: " & Err.Description & vbCrLf
+        testsTotal = testsTotal + 4
+    End If
+    On Error GoTo ErrorHandler
+    
+    ' Ejecutar pruebas de Solicitudes
+    resultado = resultado & vbCrLf & "--- PRUEBAS DE SOLICITUDES ---" & vbCrLf
+    resultado = resultado & "[INFO] Iniciando ejecucion de Test_Solicitudes.RunAllSolicitudesTests()..." & vbCrLf
+    
+    On Error Resume Next
+    Test_Solicitudes.RunAllSolicitudesTests
+    
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Pruebas de Solicitudes ejecutadas correctamente" & vbCrLf
+        testsPassed = testsPassed + 4  ' Test_Solicitudes tiene 4 pruebas
+        testsTotal = testsTotal + 4
+    Else
+        resultado = resultado & "[ERROR] Error en pruebas de Solicitudes: " & Err.Description & vbCrLf
+        resultado = resultado & "[ERROR] Número de error: " & Err.Number & vbCrLf
+        resultado = resultado & "[ERROR] Fuente: " & Err.Source & vbCrLf
         testsTotal = testsTotal + 4
     End If
     On Error GoTo ErrorHandler
