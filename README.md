@@ -285,6 +285,34 @@ Public Sub Test_MiFuncion()
 End Sub
 ```
 
+### 3.4. Scripts Auxiliares
+
+CONDOR incluye scripts auxiliares que facilitan la configuración inicial y el mantenimiento del sistema.
+
+#### populate_mappings.vbs
+
+**Propósito:**
+Este script lee la configuración de mapeo de campos definida en la Sección 9 de la Especificación Funcional y la inserta en la tabla `TbMapeo_Campos` de la base de datos `CONDOR_datos.accdb`. Los mapeos definen la correspondencia entre los campos de las tablas de datos y los marcadores en las plantillas Word para la generación automática de documentos.
+
+**Cuándo Usarlo:**
+- **Configuración inicial**: Se debe ejecutar una vez al inicio del proyecto para poblar la tabla con los mapeos iniciales
+- **Sincronización**: Cada vez que haya cambios en la especificación de los mapeos (Sección 9 del documento funcional) para asegurar que la base de datos esté sincronizada con la documentación
+- **Restauración**: Cuando sea necesario restaurar los mapeos a su configuración original
+
+**Comando de Ejecución:**
+```bash
+cscript //nologo populate_mappings.vbs
+```
+
+**Funcionalidad:**
+- Limpia la tabla `TbMapeo_Campos` antes de insertar los nuevos registros
+- Procesa los mapeos para las tres plantillas principales:
+  - **PC**: Propuesta de Cambio (F4203.11)
+  - **CDCA**: Desviación/Concesión (F4203.10)
+  - **CDCASUB**: Desviación/Concesión Sub-suministrador (F4203.101)
+- Inserta aproximadamente 116 registros de mapeo
+- Proporciona un reporte detallado del proceso de inserción
+
 ## Planificación del Proyecto
 
 Consulta el **[Plan de Acción](PLAN_DE_ACCION.md)** para ver el roadmap completo del proyecto, incluyendo:
