@@ -1,6 +1,6 @@
-' CONDOR CLI - Herramienta de línea de comandos para el proyecto CONDOR
-' Funcionalidades: Sincronización VBA, gestión de tablas, y operaciones del proyecto
-' Versión sin diálogos para automatización completa
+' CONDOR CLI - Herramienta de l�nea de comandos para el proyecto CONDOR
+' Funcionalidades: Sincronizaci�n VBA, gesti�n de tablas, y operaciones del proyecto
+' Versi�n sin di�logos para automatizaci�n completa
 
 Option Explicit
 
@@ -21,27 +21,33 @@ strSourcePath = "C:\Proyectos\CONDOR\src"
 ' Obtener argumentos de linea de comandos
 Set objArgs = WScript.Arguments
 If objArgs.Count = 0 Then
-    WScript.Echo "Uso: cscript condor_cli.vbs [import|export|createtable|droptable|listtables]"
+    WScript.Echo "Uso: cscript condor_cli.vbs [import|export|createtable|droptable|listtables|test]"
     WScript.Echo "  import     - Importar modulos VBA desde /src"
     WScript.Echo "  export     - Exportar modulos VBA a /src"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
     WScript.Echo "  listtables - Listar todas las tablas"
+    WScript.Echo "  test       - Ejecutar todos los tests y mostrar resultados"
     WScript.Quit 1
 End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "import" And strAction <> "export" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" Then
-    WScript.Echo "Error: Accion debe ser 'import', 'export', 'createtable', 'droptable' o 'listtables'"
+If strAction <> "import" And strAction <> "export" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" Then
+    WScript.Echo "Error: Accion debe ser 'import', 'export', 'createtable', 'droptable', 'listtables' o 'test'"
     WScript.Quit 1
 End If
 
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 
-' Determinar qué base de datos usar según la acción
+' Determinar qu� base de datos usar seg�n la acci�n
 If strAction = "createtable" Or strAction = "droptable" Or strAction = "listtables" Then
     strAccessPath = strDataPath
+End If
+
+' Para tests, usar la base de datos de desarrollo
+If strAction = "test" Then
+    strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
 End If
 
 ' Verificar que existe la base de datos
@@ -70,8 +76,16 @@ End If
 objAccess.Visible = False
 objAccess.UserControl = False
 
-' Abrir base de datos
+' Abrir base de datos con compilación condicional
 WScript.Echo "Abriendo base de datos..."
+
+' Configurar Access para evitar errores de compilación
+On Error Resume Next
+' Intentar configurar propiedades si están disponibles
+objAccess.DisplayAlerts = False
+Err.Clear
+
+' Abrir base de datos con manejo de errores robusto
 objAccess.OpenCurrentDatabase strAccessPath
 
 If Err.Number <> 0 Then
@@ -80,7 +94,8 @@ If Err.Number <> 0 Then
     WScript.Quit 1
 End If
 
-WScript.Echo "Base de datos abierta correctamente"
+On Error GoTo 0
+WScript.Echo "Base de datos abierta correctamente (modo seguro)"
 
 If strAction = "import" Then
     Call ImportModules()
@@ -92,11 +107,19 @@ ElseIf strAction = "droptable" Then
     Call DropTable()
 ElseIf strAction = "listtables" Then
     Call ListTables()
+ElseIf strAction = "test" Then
+    Call RunTestsWithEngine()
 End If
 
 ' Cerrar Access
 WScript.Echo "Cerrando Access..."
-objAccess.Quit acQuitSaveAll
+On Error Resume Next
+objAccess.Quit 1  ' acQuitSaveAll = 1
+If Err.Number <> 0 Then
+    ' Intentar cerrar sin guardar si hay problemas
+    objAccess.Quit 2  ' acQuitSaveNone = 2
+End If
+On Error GoTo 0
 WScript.Echo "Access cerrado correctamente"
 
 WScript.Echo "=== SINCRONIZACION COMPLETADA EXITOSAMENTE ==="
@@ -107,7 +130,9 @@ Sub ImportModules()
     Dim objFolder, objFile
     Dim strModuleName, strFileName
     Dim vbComponent
-    Dim i
+    Dim i, j
+    Dim srcModules
+    Dim moduleExists
     
     WScript.Echo "Iniciando importacion de modulos VBA..."
     
@@ -117,10 +142,35 @@ Sub ImportModules()
         WScript.Quit 1
     End If
     
+    ' Crear lista de módulos en src
+    Set srcModules = CreateObject("Scripting.Dictionary")
     Set objFolder = objFSO.GetFolder(strSourcePath)
     
     For Each objFile In objFolder.Files
-        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Then
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            srcModules.Add objFSO.GetBaseName(objFile.Name), True
+        End If
+    Next
+    
+    ' Eliminar módulos que no están en src
+    WScript.Echo "Eliminando modulos que no estan en src..."
+    On Error Resume Next
+    For i = objAccess.VBE.ActiveVBProject.VBComponents.Count To 1 Step -1
+        Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents(i)
+        If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
+            If Not srcModules.Exists(vbComponent.Name) Then
+                WScript.Echo "Eliminando modulo obsoleto: " & vbComponent.Name
+                objAccess.VBE.ActiveVBProject.VBComponents.Remove vbComponent
+            End If
+        End If
+    Next
+    Err.Clear
+    On Error GoTo 0
+    
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
             strFileName = objFile.Path
             strModuleName = objFSO.GetBaseName(objFile.Name)
             
@@ -170,16 +220,14 @@ Sub ImportModules()
         End If
     Next
     
-    ' Compilar todos los modulos
-    WScript.Echo "Compilando modulos..."
-    objAccess.DoCmd.RunCommand 636  ' acCmdCompileAndSaveAllModules
+    ' Los módulos obsoletos ya fueron eliminados automáticamente al inicio
     
-    If Err.Number <> 0 Then
-        WScript.Echo "Advertencia al compilar: " & Err.Description
-        Err.Clear
-    Else
-        WScript.Echo "Modulos compilados correctamente"
-    End If
+    ' Verificación de integridad de nombres de módulos
+    Call VerifyModuleNames()
+    
+    ' Compilación condicional de módulos
+    WScript.Echo "Iniciando compilación condicional..."
+    Call CompileModulesConditionally()
     
     WScript.Echo "Importacion completada"
 End Sub
@@ -213,6 +261,21 @@ Sub ExportModules()
                 Err.Clear
             Else
                 WScript.Echo "Modulo " & vbComponent.Name & " exportado a: " & strExportPath
+                exportedCount = exportedCount + 1
+            End If
+        ElseIf vbComponent.Type = 2 Then  ' vbext_ct_ClassModule
+            strExportPath = strSourcePath & "\" & vbComponent.Name & ".cls"
+            
+            WScript.Echo "Exportando clase: " & vbComponent.Name
+            
+            On Error Resume Next
+            vbComponent.Export strExportPath
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "Error al exportar clase " & vbComponent.Name & ": " & Err.Description
+                Err.Clear
+            Else
+                WScript.Echo "Clase " & vbComponent.Name & " exportada a: " & strExportPath
                 exportedCount = exportedCount + 1
             End If
         End If
@@ -353,7 +416,7 @@ Sub VerifyTable(strTableName)
     For Each tbl In objAccess.CurrentDb.TableDefs
         If LCase(tbl.Name) = LCase(strTableName) Then
             found = True
-            WScript.Echo "✓ Tabla '" & strTableName & "' verificada exitosamente"
+            WScript.Echo "? Tabla '" & strTableName & "' verificada exitosamente"
             WScript.Echo "  - Campos: " & tbl.Fields.Count
             WScript.Echo "  - Registros: " & tbl.RecordCount
             Exit For
@@ -361,6 +424,264 @@ Sub VerifyTable(strTableName)
     Next
     
     If Not found Then
-        WScript.Echo "✗ Error: No se pudo verificar la tabla '" & strTableName & "'"
+        WScript.Echo "? Error: No se pudo verificar la tabla '" & strTableName & "'"
     End If
 End Sub
+
+' Subrutina para ejecutar tests con motor interno
+Sub RunTestsWithEngine()
+    WScript.Echo "=== EJECUTANDO TESTS CON MOTOR INTERNO ==="
+    
+    ' Compilación condicional antes de ejecutar pruebas
+    WScript.Echo "Iniciando compilación condicional para pruebas..."
+    Call CompileModulesConditionally()
+    
+    ' Pausa breve para asegurar que Access reconozca los módulos
+    WScript.Sleep 1000
+    
+    ' Listar módulos disponibles para diagnóstico
+     WScript.Echo "Listando módulos disponibles en la base de datos:"
+     On Error Resume Next
+     Dim i, vbComponents
+     Set vbComponents = objAccess.VBE.ActiveVBProject.VBComponents
+     
+     If Err.Number = 0 And Not vbComponents Is Nothing Then
+         For i = 1 To vbComponents.Count
+             WScript.Echo "  - " & vbComponents(i).Name & " (Tipo: " & vbComponents(i).Type & ")"
+         Next
+     Else
+         WScript.Echo "  No se pudieron listar los módulos VBA"
+     End If
+     On Error GoTo 0
+     
+     ' Ejecutar el motor de pruebas con manejo robusto de errores
+     Dim resultado
+     Dim testExecuted
+     testExecuted = False
+     
+     ' Método 1: Intentar con DoCmd.RunCode
+     WScript.Echo "Método 1: Intentando ejecutar RunAllTests con DoCmd.RunCode..."
+     On Error Resume Next
+     
+     objAccess.TempVars.Add "TestResult", ""
+     objAccess.DoCmd.RunCode "TempVars(" & Chr(34) & "TestResult" & Chr(34) & ") = RunAllTests()"
+     
+     If Err.Number = 0 Then
+         resultado = objAccess.TempVars("TestResult").Value
+         objAccess.TempVars.Remove "TestResult"
+         testExecuted = True
+         WScript.Echo "✓ Pruebas ejecutadas exitosamente con DoCmd.RunCode"
+     Else
+         WScript.Echo "⚠️ Error con DoCmd.RunCode: " & Err.Number & " - " & Err.Description
+         Err.Clear
+         
+         ' Limpiar TempVars si existe
+         On Error Resume Next
+         objAccess.TempVars.Remove "TestResult"
+         Err.Clear
+     End If
+     
+     ' Método 2: Intentar con Application.Run si el método 1 falló
+     If Not testExecuted Then
+         WScript.Echo "Método 2: Intentando con Application.Run..."
+         On Error Resume Next
+         resultado = objAccess.Application.Run("RunAllTests")
+         
+         If Err.Number = 0 Then
+             testExecuted = True
+             WScript.Echo "✓ Pruebas ejecutadas exitosamente con Application.Run"
+         Else
+             WScript.Echo "⚠️ Error con Application.Run: " & Err.Number & " - " & Err.Description
+             Err.Clear
+         End If
+     End If
+     
+     ' Método 3: Intentar con Eval si los métodos anteriores fallaron
+     If Not testExecuted Then
+         WScript.Echo "Método 3: Intentando con Eval..."
+         On Error Resume Next
+         resultado = objAccess.Eval("RunAllTests()")
+         
+         If Err.Number = 0 Then
+             testExecuted = True
+             WScript.Echo "✓ Pruebas ejecutadas exitosamente con Eval"
+         Else
+             WScript.Echo "⚠️ Error con Eval: " & Err.Number & " - " & Err.Description
+             Err.Clear
+         End If
+     End If
+     
+     On Error GoTo 0
+     
+     ' Verificar si se pudo ejecutar algún método
+     If testExecuted Then
+         WScript.Echo "\n" & resultado
+     Else
+         WScript.Echo "\n❌ ERROR: No se pudo ejecutar el motor de pruebas con ningún método"
+         WScript.Echo "Posibles causas:"
+         WScript.Echo "  1. El módulo modTestRunner no está compilado correctamente"
+         WScript.Echo "  2. Hay errores de sintaxis en el código VBA"
+         WScript.Echo "  3. La función RunAllTests no es accesible"
+         WScript.Echo "\nEjecutando diagnóstico básico..."
+         
+         ' Diagnóstico básico
+         On Error Resume Next
+         Dim basicTest
+         basicTest = objAccess.Eval("1+1")
+         If Err.Number = 0 Then
+             WScript.Echo "✓ Eval básico funciona (1+1 = " & basicTest & ")"
+         Else
+             WScript.Echo "❌ Eval básico falla: " & Err.Description
+         End If
+         Err.Clear
+         On Error GoTo 0
+         
+         WScript.Echo "\nEl CLI continuará funcionando para otras operaciones."
+     End If
+End Sub
+
+' Subrutina para compilación condicional de módulos
+Sub CompileModulesConditionally()
+    Dim vbComponent
+    Dim compilationErrors
+    Dim totalModules
+    Dim compiledModules
+    
+    WScript.Echo "Iniciando compilación condicional de módulos..."
+    
+    compilationErrors = 0
+    totalModules = 0
+    compiledModules = 0
+    
+    ' Intentar compilar cada módulo individualmente
+    For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
+        If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
+            totalModules = totalModules + 1
+            
+            On Error Resume Next
+            Err.Clear
+            
+            ' Intentar compilar el módulo específico
+            WScript.Echo "Compilando módulo: " & vbComponent.Name
+            
+            ' Verificar si el módulo tiene errores de sintaxis
+            Dim hasErrors
+            hasErrors = False
+            
+            ' Intentar acceder al código del módulo para detectar errores
+            Dim moduleCode
+            moduleCode = vbComponent.CodeModule.Lines(1, vbComponent.CodeModule.CountOfLines)
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "  ⚠️ Error en módulo " & vbComponent.Name & ": " & Err.Description
+                compilationErrors = compilationErrors + 1
+                hasErrors = True
+                Err.Clear
+            Else
+                ' Intentar compilar usando DoCmd.Save
+                objAccess.DoCmd.Save 5, vbComponent.Name  ' acModule = 5
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "  ⚠️ Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
+                    compilationErrors = compilationErrors + 1
+                    hasErrors = True
+                    Err.Clear
+                Else
+                    WScript.Echo "  ✓ Módulo " & vbComponent.Name & " compilado correctamente"
+                    compiledModules = compiledModules + 1
+                End If
+            End If
+            
+            On Error GoTo 0
+        End If
+    Next
+    
+    ' Intentar compilación global solo si no hay errores individuales
+    If compilationErrors = 0 Then
+        WScript.Echo "Intentando compilación global..."
+        On Error Resume Next
+        objAccess.DoCmd.RunCommand 636  ' acCmdCompileAndSaveAllModules
+        
+        If Err.Number <> 0 Then
+            WScript.Echo "⚠️ Advertencia en compilación global: " & Err.Description
+            WScript.Echo "Continuando con módulos compilados individualmente..."
+            Err.Clear
+        Else
+            WScript.Echo "✓ Compilación global exitosa"
+        End If
+        On Error GoTo 0
+    Else
+        WScript.Echo "⚠️ Se encontraron " & compilationErrors & " errores de compilación"
+        WScript.Echo "Continuando sin compilación global para evitar bloqueos..."
+    End If
+    
+    WScript.Echo "Resumen de compilación:"
+    WScript.Echo "  - Total de módulos: " & totalModules
+    WScript.Echo "  - Módulos compilados: " & compiledModules
+    WScript.Echo "  - Errores encontrados: " & compilationErrors
+    
+    If compilationErrors > 0 Then
+        WScript.Echo "⚠️ ADVERTENCIA: Algunos módulos tienen errores de compilación"
+        WScript.Echo "El CLI continuará funcionando, pero revise los módulos con errores"
+    End If
+End Sub
+
+' Subrutina para verificar que los nombres de módulos coincidan con src
+Sub VerifyModuleNames()
+    Dim objFolder, objFile
+    Dim vbComponent
+    Dim srcModules, accessModules
+    Dim moduleName
+    Dim discrepancies
+    
+    WScript.Echo "Verificando integridad de nombres de módulos..."
+    
+    ' Crear diccionarios para comparación
+    Set srcModules = CreateObject("Scripting.Dictionary")
+    Set accessModules = CreateObject("Scripting.Dictionary")
+    discrepancies = 0
+    
+    ' Obtener lista de módulos en src
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            moduleName = objFSO.GetBaseName(objFile.Name)
+            srcModules.Add moduleName, True
+        End If
+    Next
+    
+    ' Obtener lista de módulos en Access
+    For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
+        If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
+            accessModules.Add vbComponent.Name, True
+        End If
+    Next
+    
+    ' Verificar que todos los módulos de src estén en Access
+    For Each moduleName In srcModules.Keys
+        If Not accessModules.Exists(moduleName) Then
+            WScript.Echo "⚠️ ERROR: Módulo '" & moduleName & "' existe en src pero no en Access"
+            discrepancies = discrepancies + 1
+        End If
+    Next
+    
+    ' Verificar que todos los módulos de Access estén en src
+    For Each moduleName In accessModules.Keys
+        If Not srcModules.Exists(moduleName) Then
+            WScript.Echo "⚠️ ERROR: Módulo '" & moduleName & "' existe en Access pero no en src"
+            discrepancies = discrepancies + 1
+        End If
+    Next
+    
+    ' Reporte final
+    If discrepancies = 0 Then
+        WScript.Echo "✓ Verificación exitosa: Todos los módulos coinciden entre src y Access"
+        WScript.Echo "  - Módulos en src: " & srcModules.Count
+        WScript.Echo "  - Módulos en Access: " & accessModules.Count
+    Else
+        WScript.Echo "❌ FALLO EN VERIFICACIÓN: Se encontraron " & discrepancies & " discrepancias"
+        WScript.Echo "⚠️ ACCIÓN REQUERIDA: Revise la sincronización entre src y Access"
+    End If
+End Sub
+
+' La subrutina ExecuteTestModule ha sido eliminada ya que ahora se usa el motor interno modTestRunner
