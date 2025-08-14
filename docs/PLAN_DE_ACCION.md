@@ -74,7 +74,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 ### 1.2 Capa de Negocio
 - [x] Interfaces y clases base (IAuthService, CAuthService, CMockAuthService)
 - [x] Clase ExpedienteService (interfaz con aplicación existente)
-- [ ] Módulo de gestión de solicitudes
+- [x] Módulo de gestión de solicitudes (ISolicitud, CSolicitudPC, modSolicitudFactory)
 - [ ] Módulo de workflow y estados
 - [ ] Módulo de validaciones de negocio
 - [ ] Módulo de cálculos y reglas
@@ -100,7 +100,11 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - [ ] Sincronización con aplicación de expedientes
 
 ### 2.2 Gestión de Solicitudes
-- [ ] Crear nueva solicitud
+- [x] Crear nueva solicitud (Factory Pattern implementado)
+- [x] Interfaz común ISolicitud para todos los tipos de solicitud
+- [x] Implementación CSolicitudPC para solicitudes de PC
+- [x] Estructura de datos T_Datos_PC, T_Datos_CD_CA, T_Datos_CD_CA_SUB
+- [x] Pruebas unitarias completas para módulo de solicitudes
 - [ ] Vincular solicitud a expediente
 - [ ] Cambio de estados de solicitud
 - [ ] Seguimiento de plazos
@@ -147,6 +151,8 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 ### 4.1 Pruebas
 - [x] Framework de pruebas unitarias
 - [x] Pruebas de integración básicas
+- [x] Pruebas unitarias para módulo de solicitudes (Test_Solicitudes)
+- [x] Integración de pruebas de solicitudes en modTestRunner
 - [ ] Pruebas de rendimiento
 - [ ] Pruebas de seguridad
 - [ ] Pruebas de usabilidad
@@ -204,7 +210,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 ## Notas de Progreso
 
 ### Última actualización: Enero 2025
-**Completado:** 25/85+ tareas (~29%)
+**Completado:** 30/85+ tareas (~35%)
 
 ### Próxima revisión: Enero 2025
 **Responsable:** CONDOR-Expert
@@ -218,7 +224,10 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - ✅ **ExpedienteService implementado:** Interfaz IExpedienteService, clase CExpedienteService, mock CMockExpedienteService y pruebas completas
 - ✅ **Integración con BD Expedientes:** Consulta SQL compleja implementada con conexión a base de datos externa
 - ✅ **Type T_Expediente:** Estructura de datos definida para manejar información completa de expedientes
-- 🔧 **Próximo objetivo:** Implementar módulo de gestión de solicitudes
+- ✅ **Módulo de Solicitudes implementado:** ISolicitud, CSolicitudPC, modSolicitudFactory con Factory Pattern
+- ✅ **Estructuras de datos de solicitudes:** T_Datos_PC, T_Datos_CD_CA, T_Datos_CD_CA_SUB implementadas
+- ✅ **Pruebas de solicitudes:** Test_Solicitudes con cobertura completa del módulo
+- 🔧 **Próximo objetivo:** Implementar workflow y estados de solicitudes
 - 📋 **Decisión arquitectónica:** Uso de interfaces para permitir mocking y testing efectivo
 
 ---
