@@ -66,7 +66,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - [x] Diseño de base de datos completa
 - [x] Tablas principales (Solicitudes, Estados, Seguimiento)
 - [x] Tablas de configuración (TipoSolicitud, EstadoInterno, etc.)
-- [ ] Clase/Interfaz de conexión con aplicación de Expedientes existente
+- [x] Clase/Interfaz de conexión con aplicación de Expedientes existente
 - [x] Relaciones y constraints
 - [x] Índices para optimización
 - [x] Procedimientos almacenados básicos
