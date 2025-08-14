@@ -1,5 +1,6 @@
-' Script VBScript para sincronizacion de modulos VBA con Access - Version sin dialogos
-' Basado en el codigo proporcionado por el usuario
+' CONDOR CLI - Herramienta de línea de comandos para el proyecto CONDOR
+' Funcionalidades: Sincronización VBA, gestión de tablas, y operaciones del proyecto
+' Versión sin diálogos para automatización completa
 
 Option Explicit
 
@@ -20,7 +21,7 @@ strSourcePath = "C:\Proyectos\CONDOR\src"
 ' Obtener argumentos de linea de comandos
 Set objArgs = WScript.Arguments
 If objArgs.Count = 0 Then
-    WScript.Echo "Uso: cscript vba_sync.vbs [import|export|createtable|droptable|listtables]"
+    WScript.Echo "Uso: cscript condor_cli.vbs [import|export|createtable|droptable|listtables]"
     WScript.Echo "  import     - Importar modulos VBA desde /src"
     WScript.Echo "  export     - Exportar modulos VBA a /src"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
@@ -228,7 +229,7 @@ Sub CreateTable()
     
     If objArgs.Count < 3 Then
         WScript.Echo "Error: Se requiere nombre de tabla y consulta SQL"
-        WScript.Echo "Uso: cscript vba_sync.vbs createtable <nombre> <sql>"
+        WScript.Echo "Uso: cscript condor_cli.vbs createtable <nombre> <sql>"
         WScript.Quit 1
     End If
     
@@ -298,7 +299,7 @@ Sub DropTable()
     
     If objArgs.Count < 2 Then
         WScript.Echo "Error: Se requiere nombre de tabla"
-        WScript.Echo "Uso: cscript vba_sync.vbs droptable <nombre>"
+        WScript.Echo "Uso: cscript condor_cli.vbs droptable <nombre>"
         WScript.Quit 1
     End If
     
