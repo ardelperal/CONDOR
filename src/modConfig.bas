@@ -26,7 +26,7 @@ Private Enum E_EnvironmentOverride
     ForzarLocal = 1
     ForzarRemoto = 2
 End Enum
-Private Const ENTORNO_FORZADO As E_EnvironmentOverride = ForzarLocal
+Private Const ENTORNO_FORZADO As Long = 1 ' ForzarLocal
 
 ' Estructura de configuración de la aplicación
 Public Type T_AppConfig
@@ -57,13 +57,13 @@ Public Function InitializeEnvironment() As Boolean
     
     ' --- LÓGICA DE DECISIÓN DE ENTORNO ---
     Select Case ENTORNO_FORZADO
-        Case ForzarLocal
+        Case 1 ' ForzarLocal
             usarRutasLocales = True
             g_AppConfig.EntornoActivo = "Local (Forzado)"
-        Case ForzarRemoto
+        Case 2 ' ForzarRemoto
             usarRutasLocales = False
             g_AppConfig.EntornoActivo = "Remoto (Forzado)"
-        Case ForzarNinguno
+        Case 0 ' ForzarNinguno
             ' Comportamiento por defecto: depende del modo de compilación
             usarRutasLocales = IsDevelopmentMode()
             If usarRutasLocales Then
