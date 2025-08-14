@@ -1,4 +1,4 @@
-锘縑ERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,36 +7,38 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
 Option Compare Database
 Option Explicit
 
 ' Interfaz: IConfig
-' Descripci贸n: Define el contrato para servicios de configuraci贸n del sistema CONDOR
+' Descripci髇: Define el contrato para servicios de configuraci髇 del sistema CONDOR
 ' Arquitectura: Capa de Servicios - Interface
 
-' Obtiene un valor de configuraci贸n por su clave
-' @param key: Clave de configuraci贸n a buscar
-' @return: Valor de configuraci贸n (Variant para flexibilidad de tipos)
+' Obtiene un valor de configuraci髇 por su clave
+' @param key: Clave de configuraci髇 a buscar
+' @return: Valor de configuraci髇 (Variant para flexibilidad de tipos)
 Public Function GetValue(ByVal key As String) As Variant
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
 
-' Establece un valor de configuraci贸n
-' @param key: Clave de configuraci贸n
+' Establece un valor de configuraci髇
+' @param key: Clave de configuraci髇
 ' @param value: Valor a establecer
 Public Sub SetValue(ByVal key As String, ByVal value As Variant)
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Sub
 
-' Inicializa el entorno de configuraci贸n
-' @return: True si la inicializaci贸n fue exitosa
+' Inicializa el entorno de configuraci髇
+' @return: True si la inicializaci髇 fue exitosa
 Public Function InitializeEnvironment() As Boolean
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
 
-' Verifica si una clave de configuraci贸n existe
+' Verifica si una clave de configuraci髇 existe
 ' @param key: Clave a verificar
 ' @return: True si la clave existe
 Public Function HasKey(ByVal key As String) As Boolean
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
+

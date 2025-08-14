@@ -107,6 +107,15 @@ End If
 ' Configurar Access en modo silencioso
 objAccess.Visible = False
 objAccess.UserControl = False
+' Suprimir alertas y diálogos de confirmación
+objAccess.DoCmd.SetWarnings False
+objAccess.Application.Echo False
+' Configuraciones adicionales para suprimir diálogos
+On Error Resume Next
+objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
+objAccess.VBE.MainWindow.Visible = False
+Err.Clear
+On Error GoTo 0
 
 ' Abrir base de datos con compilacion condicional
 WScript.Echo "Abriendo base de datos..."
@@ -184,7 +193,9 @@ End If
 
 ' Cerrar Access
 WScript.Echo "Cerrando Access..."
+' Restaurar estado normal de Access antes de cerrar
 On Error Resume Next
+objAccess.Application.Echo True
 objAccess.Quit 1  ' acQuitSaveAll = 1
 If Err.Number <> 0 Then
     ' Intentar cerrar sin guardar si hay problemas
@@ -388,7 +399,9 @@ Sub ImportModules(bDryRun, bVerbose)
                 If bVerbose Then
                     WScript.Echo "  Importando modulo (con limpieza): " & strFileName
                 End If
-                Call ImportCleanModule(strModuleName, cleanedContent, objFile)
+                Dim fileExtension
+                fileExtension = LCase(objFSO.GetExtensionName(objFile.Name))
+                Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
                 
                 If Err.Number <> 0 Then
                     WScript.Echo "Error al importar modulo " & strModuleName & ": " & Err.Description
@@ -978,7 +991,10 @@ End Function
 ' Función para limpiar archivos VBA eliminando líneas Attribute con validación mejorada
 Function CleanVBAFile(filePath)
     Dim objStream, strContent, arrLines, i, cleanedLines
-    Dim strLine, errorDetails
+    Dim strLine, errorDetails, fileExtension
+    
+    ' Determinar la extensión del archivo
+    fileExtension = LCase(objFSO.GetExtensionName(filePath))
     
     ' Validar sintaxis antes de procesar
     If Not ValidateVBASyntax(filePath, errorDetails) Then
@@ -987,23 +1003,8 @@ Function CleanVBAFile(filePath)
         WScript.Echo "Continuando con la importación..."
     End If
     
-    ' Leer contenido del archivo con codificación UTF-8 usando ADODB.Stream
-    On Error Resume Next
-    Set objStream = CreateObject("ADODB.Stream")
-    objStream.Type = 2 ' adTypeText
-    objStream.Charset = "UTF-8"
-    objStream.Open
-    objStream.LoadFromFile filePath
-    strContent = objStream.ReadText
-    objStream.Close
-    Set objStream = Nothing
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "[ERROR] ERROR: No se pudo leer el archivo " & filePath & ": " & Err.Description
-        CleanVBAFile = ""
-        Exit Function
-    End If
-    On Error GoTo 0
+        ' Leer contenido del archivo con codificación ANSI (el formato por defecto de FSO)
+    strContent = ReadFileWithAnsiEncoding(filePath)
     
     ' Normalizar saltos de línea y dividir
     strContent = Replace(strContent, vbCrLf, vbLf)
@@ -1022,15 +1023,18 @@ Function CleanVBAFile(filePath)
         Dim shouldRemove
         shouldRemove = False
         
-        ' Eliminar metadatos de clase (.cls)
-        If Left(strLine, 7) = "VERSION" Then shouldRemove = True
-        If Left(strLine, 5) = "BEGIN" Then shouldRemove = True
-        If Left(strLine, 8) = "MultiUse" Then shouldRemove = True
-        If strLine = "END" Then shouldRemove = True
-        If Left(strLine, 9) = "Attribute" Then shouldRemove = True
+        ' Eliminar metadatos solo para archivos .cls
+        If fileExtension = "cls" Then
+            If Left(strLine, 7) = "VERSION" Then shouldRemove = True
+            If Left(strLine, 5) = "BEGIN" Then shouldRemove = True
+            If Left(strLine, 8) = "MultiUse" Then shouldRemove = True
+            If strLine = "END" Then shouldRemove = True
+            If Left(strLine, 9) = "Attribute" Then shouldRemove = True
+            ' También eliminar líneas Option para .cls porque AddFromString las duplica
+            If Left(strLine, 6) = "Option" Then shouldRemove = True
+        End If
         
-        ' Eliminar TODAS las líneas Option (crítico para evitar duplicados)
-        ' If Left(strLine, 6) = "Option" Then shouldRemove = True
+        ' Para archivos .bas, mantener las líneas Option
         
         ' Eliminar líneas vacías solo al inicio del archivo
         If strLine = "" And cleanedLines = "" Then shouldRemove = True
@@ -1097,14 +1101,11 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
 End Sub
 
 ' Función para importar módulo con conversión UTF-8 -> ANSI
-Sub ImportCleanModule(moduleName, cleanedContent, objFile)
-    Dim tempFilePath, objTempFile, vbComponent
-    Dim tempFolderPath, tempFileName
-    Dim importError, renameError
-    Dim fileExtension
-    
-    ' Determinar la extensión del archivo
-    fileExtension = LCase(objFSO.GetExtensionName(objFile.Name))
+Sub ImportModuleWithAnsiEncoding(strImportPath, moduleName, fileExtension, vbComponent, cleanedContent)
+    ' Declarar variables locales
+    Dim tempFolderPath, tempFileName, tempFilePath
+    Dim objTempFile
+    Dim importError, renameError, existingComponent
     
     If fileExtension = "bas" Then
         ' Lógica original para módulos estándar (.bas)
@@ -1177,12 +1178,37 @@ Sub ImportCleanModule(moduleName, cleanedContent, objFile)
         ' Lógica específica para módulos de clase (.cls)
         On Error Resume Next
         
-        ' Crear un nuevo componente de clase vacío
-        Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(2) ' 2 = vbext_ct_ClassModule
-        If Err.Number <> 0 Then
-            WScript.Echo "❌ ERROR: No se pudo crear componente de clase para " & moduleName & ": " & Err.Description
-            On Error GoTo 0
-            Exit Sub
+        ' Buscar si ya existe un componente con este nombre
+        Set vbComponent = Nothing
+        For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents
+            If existingComponent.Name = moduleName Then
+                Set vbComponent = existingComponent
+                Exit For
+            End If
+        Next
+        
+        ' Si no existe, crear nuevo componente
+        If vbComponent Is Nothing Then
+            Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(2) ' 2 = vbext_ct_ClassModule
+            If Err.Number <> 0 Then
+                WScript.Echo "❌ ERROR: No se pudo crear componente de clase para " & moduleName & ": " & Err.Description
+                On Error GoTo 0
+                Exit Sub
+            End If
+            
+            ' Renombrar inmediatamente después de crear
+            vbComponent.Name = moduleName
+            renameError = Err.Number
+            If renameError <> 0 Then
+                WScript.Echo "❌ ERROR: No se pudo renombrar la clase nueva a '" & moduleName & "': " & Err.Description & " (Código: " & Err.Number & ")"
+                On Error GoTo 0
+                Exit Sub
+            End If
+        Else
+            ' Si existe, limpiar el código existente
+            If vbComponent.CodeModule.CountOfLines > 0 Then
+                vbComponent.CodeModule.DeleteLines 1, vbComponent.CodeModule.CountOfLines
+            End If
         End If
         
         ' Insertar el contenido limpio en el módulo de código
@@ -1193,21 +1219,10 @@ Sub ImportCleanModule(moduleName, cleanedContent, objFile)
             Exit Sub
         End If
         
-        ' Renombrar el componente al nombre correcto
-        vbComponent.Name = moduleName
-        renameError = Err.Number
-        If renameError <> 0 Then
-            WScript.Echo "❌ ERROR: No se pudo renombrar la clase a " & moduleName & ": " & Err.Description & " (Código: " & Err.Number & ")"
-            On Error GoTo 0
-            Exit Sub
-        End If
         On Error GoTo 0
         
         ' Confirmar éxito
-        WScript.Echo "✅ Clase " & moduleName & " importada correctamente (método robusto)"
-        
-    Else
-        WScript.Echo "❌ ERROR: Extensión de archivo no soportada para " & moduleName & ": ." & fileExtension
+        WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
     End If
 End Sub
 
@@ -1527,9 +1542,14 @@ Sub RebuildProject()
     objAccess.Visible = False
     objAccess.UserControl = False
     
-    ' Intentar configurar DisplayAlerts si está disponible
+    ' Suprimir alertas y diálogos de confirmación
     On Error Resume Next
+    objAccess.DoCmd.SetWarnings False
+    objAccess.Application.Echo False
     objAccess.DisplayAlerts = False
+    ' Configuraciones adicionales para suprimir diálogos
+    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
+    objAccess.VBE.MainWindow.Visible = False
     Err.Clear
     On Error GoTo 0
     

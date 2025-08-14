@@ -1,4 +1,4 @@
-ï»¿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,6 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
 Option Compare Database
 Option Explicit
 
@@ -14,16 +15,17 @@ Option Explicit
 
 ' ============================================================================
 ' Interfaz: IExpedienteService
-' DescripciÃ³n: Define el contrato para servicios de expedientes
+' Descripción: Define el contrato para servicios de expedientes
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
 ' ============================================================================
 
-' Obtiene un expediente por su ID desde la aplicaciÃ³n de Expedientes existente
+' Obtiene un expediente por su ID desde la aplicación de Expedientes existente
 ' @param idExpediente: ID del expediente a buscar
 ' @return: Estructura T_Expediente con los datos del expediente
 Public Function GetExpedientePorID(ByVal IDExpediente As Long) As T_Expediente
-    ' Esta funciÃ³n debe ser implementada por las clases concretas
+    ' Esta función debe ser implementada por las clases concretas
 End Function
 
 #End If
+

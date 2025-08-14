@@ -1,4 +1,8 @@
-﻿Attribute VB_Name = "Test_Integracion_Solicitudes"
+Attribute VB_Name = "Test_Integracion_Solicitudes"
+Option Compare Database
+Option Explicit
+
+
 ' =====================================================
 ' MODULO: Test_Integracion_Solicitudes
 ' PROPOSITO: Pruebas de integracion para solicitudes
@@ -250,3 +254,4 @@ Public Sub Test_TransaccionesBaseDatos()
         Err.Raise 5016, , "Error: No se pudo hacer commit de la transaccion"
     End If
 End Sub
+

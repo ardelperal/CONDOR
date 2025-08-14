@@ -1,13 +1,15 @@
 Attribute VB_Name = "Test_Solicitudes"
-' MÃ³dulo de Pruebas para el Servicio de Solicitudes
+Option Compare Database
+Option Explicit
+
+
+' Módulo de Pruebas para el Servicio de Solicitudes
 ' Utiliza CMockSolicitudService para pruebas sin dependencias de base de datos
 ' Version: 1.0
 ' Fecha: 2025-01-14
 
-Option Compare Database
-Option Explicit
 
-' FunciÃ³n principal que ejecuta todas las pruebas del servicio de solicitudes
+' Función principal que ejecuta todas las pruebas del servicio de solicitudes
 Public Function Test_Solicitudes_RunAll() As String
     Dim resultado As String
     Dim totalPruebas As Integer
@@ -58,22 +60,22 @@ Private Function Test_CreateNuevaSolicitud() As Boolean
     Dim solicitudService As New CMockSolicitudService
     Dim solicitud As ISolicitud
     
-    ' Probar creaciÃ³n de solicitud tipo PC
+    ' Probar creación de solicitud tipo PC
     Set solicitud = solicitudService.CreateNuevaSolicitud("PC")
     
-    ' Verificar que se creÃ³ la solicitud
+    ' Verificar que se creó la solicitud
     If Not solicitud Is Nothing Then
-        Debug.Print "âœ“ Test_CreateNuevaSolicitud: PASÃ“"
+        Debug.Print "? Test_CreateNuevaSolicitud: PASÓ"
         Test_CreateNuevaSolicitud = True
     Else
-        Debug.Print "âœ— Test_CreateNuevaSolicitud: FALLÃ“ - No se creÃ³ la solicitud"
+        Debug.Print "? Test_CreateNuevaSolicitud: FALLÓ - No se creó la solicitud"
         Test_CreateNuevaSolicitud = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "âœ— Test_CreateNuevaSolicitud: ERROR - " & Err.Description
+    Debug.Print "? Test_CreateNuevaSolicitud: ERROR - " & Err.Description
     Test_CreateNuevaSolicitud = False
 End Function
 
@@ -84,21 +86,21 @@ Private Function Test_GetSolicitudPorID() As Boolean
     Dim solicitudService As New CMockSolicitudService
     Dim solicitud As ISolicitud
     
-    ' Probar obtener solicitud con ID vÃ¡lido
+    ' Probar obtener solicitud con ID válido
     Set solicitud = solicitudService.GetSolicitudPorID(1)
     
     If Not solicitud Is Nothing Then
-        Debug.Print "âœ“ Test_GetSolicitudPorID: PASÃ“"
+        Debug.Print "? Test_GetSolicitudPorID: PASÓ"
         Test_GetSolicitudPorID = True
     Else
-        Debug.Print "âœ— Test_GetSolicitudPorID: FALLÃ“ - No se encontrÃ³ la solicitud"
+        Debug.Print "? Test_GetSolicitudPorID: FALLÓ - No se encontró la solicitud"
         Test_GetSolicitudPorID = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "âœ— Test_GetSolicitudPorID: ERROR - " & Err.Description
+    Debug.Print "? Test_GetSolicitudPorID: ERROR - " & Err.Description
     Test_GetSolicitudPorID = False
 End Function
 
@@ -114,17 +116,17 @@ Private Function Test_SaveSolicitud() As Boolean
     resultado = solicitudService.SaveSolicitud(solicitud)
     
     If resultado Then
-        Debug.Print "âœ“ Test_SaveSolicitud: PASÃ“"
+        Debug.Print "? Test_SaveSolicitud: PASÓ"
         Test_SaveSolicitud = True
     Else
-        Debug.Print "âœ— Test_SaveSolicitud: FALLÃ“ - No se pudo guardar la solicitud"
+        Debug.Print "? Test_SaveSolicitud: FALLÓ - No se pudo guardar la solicitud"
         Test_SaveSolicitud = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "âœ— Test_SaveSolicitud: ERROR - " & Err.Description
+    Debug.Print "? Test_SaveSolicitud: ERROR - " & Err.Description
     Test_SaveSolicitud = False
 End Function
 
@@ -139,17 +141,17 @@ Private Function Test_GetAllSolicitudes() As Boolean
     Set solicitudes = solicitudService.GetAllSolicitudes()
     
     If Not solicitudes Is Nothing And solicitudes.Count > 0 Then
-        Debug.Print "âœ“ Test_GetAllSolicitudes: PASÃ“ - " & solicitudes.Count & " solicitudes encontradas"
+        Debug.Print "? Test_GetAllSolicitudes: PASÓ - " & solicitudes.Count & " solicitudes encontradas"
         Test_GetAllSolicitudes = True
     Else
-        Debug.Print "âœ— Test_GetAllSolicitudes: FALLÃ“ - No se encontraron solicitudes"
+        Debug.Print "? Test_GetAllSolicitudes: FALLÓ - No se encontraron solicitudes"
         Test_GetAllSolicitudes = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "âœ— Test_GetAllSolicitudes: ERROR - " & Err.Description
+    Debug.Print "? Test_GetAllSolicitudes: ERROR - " & Err.Description
     Test_GetAllSolicitudes = False
 End Function
 
@@ -160,21 +162,21 @@ Private Function Test_DeleteSolicitud() As Boolean
     Dim solicitudService As New CMockSolicitudService
     Dim resultado As Boolean
     
-    ' Probar eliminar solicitud con ID vÃ¡lido
+    ' Probar eliminar solicitud con ID válido
     resultado = solicitudService.DeleteSolicitud(1)
     
     If resultado Then
-        Debug.Print "âœ“ Test_DeleteSolicitud: PASÃ“"
+        Debug.Print "? Test_DeleteSolicitud: PASÓ"
         Test_DeleteSolicitud = True
     Else
-        Debug.Print "âœ— Test_DeleteSolicitud: FALLÃ“ - No se pudo eliminar la solicitud"
+        Debug.Print "? Test_DeleteSolicitud: FALLÓ - No se pudo eliminar la solicitud"
         Test_DeleteSolicitud = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "âœ— Test_DeleteSolicitud: ERROR - " & Err.Description
+    Debug.Print "? Test_DeleteSolicitud: ERROR - " & Err.Description
     Test_DeleteSolicitud = False
 End Function
 
@@ -185,20 +187,20 @@ Private Function Test_UpdateEstadoSolicitud() As Boolean
     Dim solicitudService As New CMockSolicitudService
     Dim resultado As Boolean
     
-    ' Probar actualizar estado con parÃ¡metros vÃ¡lidos
+    ' Probar actualizar estado con parámetros válidos
     resultado = solicitudService.UpdateEstadoSolicitud(1, "APROBADA")
     
     If resultado Then
-        Debug.Print "âœ“ Test_UpdateEstadoSolicitud: PASÃ“"
+        Debug.Print "? Test_UpdateEstadoSolicitud: PASÓ"
         Test_UpdateEstadoSolicitud = True
     Else
-        Debug.Print "âœ— Test_UpdateEstadoSolicitud: FALLÃ“ - No se pudo actualizar el estado"
+        Debug.Print "? Test_UpdateEstadoSolicitud: FALLÓ - No se pudo actualizar el estado"
         Test_UpdateEstadoSolicitud = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "âœ— Test_UpdateEstadoSolicitud: ERROR - " & Err.Description
+    Debug.Print "? Test_UpdateEstadoSolicitud: ERROR - " & Err.Description
     Test_UpdateEstadoSolicitud = False
 End Function

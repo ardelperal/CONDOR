@@ -1,4 +1,4 @@
-ÔªøVERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,12 +7,13 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
 Option Compare Database
 Option Explicit
 
 ' ============================================================================
 ' Clase: CSolicitudPC
-' Descripci√≥n: Implementaci√≥n concreta para solicitudes de Propuesta de Cambio
+' DescripciÛn: ImplementaciÛn concreta para solicitudes de Propuesta de Cambio
 ' Implementa: ISolicitud
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
@@ -20,7 +21,7 @@ Option Explicit
 
 Implements ISolicitud
 
-' Datos espec√≠ficos de la Propuesta de Cambio
+' Datos especÌficos de la Propuesta de Cambio
 Private m_DatosPC As T_Datos_PC
 
 ' Variables privadas para las propiedades de la interfaz
@@ -31,7 +32,7 @@ Private m_CodigoSolicitud As String
 Private m_EstadoInterno As String
 
 ' ============================================================================
-' IMPLEMENTACI√ìN DE LA INTERFAZ ISolicitud
+' IMPLEMENTACI”N DE LA INTERFAZ ISolicitud
 ' ============================================================================
 
 ' Propiedades de la interfaz ISolicitud
@@ -75,7 +76,7 @@ Private Property Let ISolicitud_EstadoInterno(ByVal value As String)
     m_EstadoInterno = value
 End Property
 
-' M√©todos de la interfaz ISolicitud
+' MÈtodos de la interfaz ISolicitud
 Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
     On Error GoTo ErrorHandler
     
@@ -86,7 +87,7 @@ Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
     
     ' Verificar si se encontraron datos
     If rs Is Nothing Or rs.EOF Then
-        ISolicitud_Load = Fa lse
+        ISolicitud_Load = False
         Exit Function
     End If
     
@@ -97,7 +98,7 @@ Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
         m_TipoSolicitud = !TipoSolicitud & ""
         m_EstadoInterno = !EstadoInterno & ""
         
-        ' Generar c√≥digo de solicitud
+        ' Generar cÛdigo de solicitud
         m_CodigoSolicitud = m_TipoSolicitud & "-" & Format(m_ID_Solicitud, "0000")
         
         ' Hidratar estructura DatosPC
@@ -138,11 +139,11 @@ Private Function ISolicitud_Save() As Boolean
         .NumeroExpediente = m_ID_Expediente
         .TipoSolicitud = m_TipoSolicitud
         .EstadoInterno = m_EstadoInterno
-        .EstadoRAC = "" ' Por defecto vac√≠o
+        .EstadoRAC = "" ' Por defecto vacÌo
         .FechaCreacion = m_DatosPC.FechaCreacion
         .FechaUltimaModificacion = Now()
         .Usuario = Environ("USERNAME") ' Usuario actual del sistema
-        .Observaciones = "" ' Por defecto vac√≠o
+        .Observaciones = "" ' Por defecto vacÌo
         .Activo = True
     End With
     
@@ -173,7 +174,7 @@ Private Function ISolicitud_ChangeState(ByVal newState As String) As Boolean
     ' Por ahora retorna True para que compile
     On Error GoTo ErrorHandler
     
-    ' Aqu√≠ se implementar√° la l√≥gica de cambio de estado
+    ' AquÌ se implementar· la lÛgica de cambio de estado
     m_EstadoInterno = newState
     
     ISolicitud_ChangeState = True
@@ -184,7 +185,7 @@ ErrorHandler:
 End Function
 
 ' ============================================================================
-' PROPIEDADES P√öBLICAS ESPEC√çFICAS DE ESTA CLASE
+' PROPIEDADES P⁄BLICAS ESPECÕFICAS DE ESTA CLASE
 ' ============================================================================
 
 Public Property Get DatosPC() As T_Datos_PC
@@ -196,7 +197,7 @@ Public Property Let DatosPC(ByVal value As T_Datos_PC)
 End Property
 
 ' ============================================================================
-' INICIALIZACI√ìN
+' INICIALIZACI”N
 ' ============================================================================
 
 Private Sub Class_Initialize()
@@ -204,4 +205,5 @@ Private Sub Class_Initialize()
     m_TipoSolicitud = "PC"
     m_EstadoInterno = "BORRADOR"
 End Sub
+
 

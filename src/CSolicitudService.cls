@@ -1,4 +1,4 @@
-锘縑ERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,10 +7,11 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
 Option Compare Database
 Option Explicit
 
-' Implementaci贸n del Servicio de Solicitudes
+' Implementaci髇 del Servicio de Solicitudes
 ' Maneja las operaciones CRUD de solicitudes en el sistema CONDOR
 ' Version: 1.0
 ' Fecha: 2025-01-14
@@ -18,44 +19,45 @@ Option Explicit
 
 Implements ISolicitudService
 
-' Implementaci贸n: Crear una nueva solicitud
+' Implementaci髇: Crear una nueva solicitud
 Private Function ISolicitudService_CreateNuevaSolicitud(ByVal tipo As String) As ISolicitud
-    ' TODO: Implementar l贸gica de creaci贸n de solicitud
+    ' TODO: Implementar l骻ica de creaci髇 de solicitud
     ' Por ahora retorna Nothing para que compile
     Set ISolicitudService_CreateNuevaSolicitud = Nothing
 End Function
 
-' Implementaci贸n: Obtener una solicitud por su ID
+' Implementaci髇: Obtener una solicitud por su ID
 Private Function ISolicitudService_GetSolicitudPorID(ByVal ID As Long) As ISolicitud
     ' TODO: Implementar consulta a base de datos
     ' Por ahora retorna Nothing para que compile
     Set ISolicitudService_GetSolicitudPorID = Nothing
 End Function
 
-' Implementaci贸n: Guardar una solicitud
+' Implementaci髇: Guardar una solicitud
 Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ISolicitud) As Boolean
-    ' TODO: Implementar l贸gica de guardado
+    ' TODO: Implementar l骻ica de guardado
     ' Por ahora retorna False para que compile
     ISolicitudService_SaveSolicitud = False
 End Function
 
-' Implementaci贸n: Obtener todas las solicitudes
+' Implementaci髇: Obtener todas las solicitudes
 Private Function ISolicitudService_GetAllSolicitudes() As Collection
     ' TODO: Implementar consulta de todas las solicitudes
-    ' Por ahora retorna colecci贸n vac铆a para que compile
+    ' Por ahora retorna colecci髇 vac韆 para que compile
     Set ISolicitudService_GetAllSolicitudes = New Collection
 End Function
 
-' Implementaci贸n: Eliminar una solicitud
+' Implementaci髇: Eliminar una solicitud
 Private Function ISolicitudService_DeleteSolicitud(ByVal ID As Long) As Boolean
-    ' TODO: Implementar l贸gica de eliminaci贸n
+    ' TODO: Implementar l骻ica de eliminaci髇
     ' Por ahora retorna False para que compile
     ISolicitudService_DeleteSolicitud = False
 End Function
 
-' Implementaci贸n: Actualizar el estado de una solicitud
+' Implementaci髇: Actualizar el estado de una solicitud
 Private Function ISolicitudService_UpdateEstadoSolicitud(ByVal ID As Long, ByVal nuevoEstado As String) As Boolean
-    ' TODO: Implementar l贸gica de actualizaci贸n de estado
+    ' TODO: Implementar l骻ica de actualizaci髇 de estado
     ' Por ahora retorna False para que compile
     ISolicitudService_UpdateEstadoSolicitud = False
 End Function
+

@@ -2,14 +2,17 @@ Attribute VB_Name = "Test_CompilacionISolicitud"
 Option Compare Database
 Option Explicit
 
+
+
+
 ' ============================================================================
-' MÃ³dulo: Test_CompilacionISolicitud
-' DescripciÃ³n: Prueba de compilaciÃ³n para verificar la implementaciÃ³n de ISolicitud
+' Módulo: Test_CompilacionISolicitud
+' Descripción: Prueba de compilación para verificar la implementación de ISolicitud
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
 ' ============================================================================
 
-' FunciÃ³n de prueba para verificar que la implementaciÃ³n de ISolicitud funciona
+' Función de prueba para verificar que la implementación de ISolicitud funciona
 Public Function Test_ImplementacionISolicitud() As Boolean
     On Error GoTo ErrorHandler
     
@@ -36,8 +39,8 @@ Public Function Test_ImplementacionISolicitud() As Boolean
     If solicitud.CodigoSolicitud <> "PC-0123" Then GoTo ErrorHandler
     If solicitud.EstadoInterno <> "BORRADOR" Then GoTo ErrorHandler
     
-    ' Probar mÃ©todos de la interfaz
-    ' Nota: Estos mÃ©todos pueden fallar por falta de datos, pero no deben dar error de compilaciÃ³n
+    ' Probar métodos de la interfaz
+    ' Nota: Estos métodos pueden fallar por falta de datos, pero no deben dar error de compilación
     Dim loadResult As Boolean
     Dim saveResult As Boolean
     Dim changeStateResult As Boolean
@@ -60,13 +63,13 @@ ErrorHandler:
     Set solicitudPC = Nothing
 End Function
 
-' FunciÃ³n para ejecutar la prueba y mostrar resultado
+' Función para ejecutar la prueba y mostrar resultado
 Public Sub Ejecutar_Test_Compilacion()
     If Test_ImplementacionISolicitud() Then
-        Debug.Print "âœ“ Test de compilaciÃ³n ISolicitud: EXITOSO"
-        MsgBox "Test de compilaciÃ³n ISolicitud: EXITOSO", vbInformation
+        Debug.Print "? Test de compilación ISolicitud: EXITOSO"
+        MsgBox "Test de compilación ISolicitud: EXITOSO", vbInformation
     Else
-        Debug.Print "âœ— Test de compilaciÃ³n ISolicitud: FALLÃ“"
-        MsgBox "Test de compilaciÃ³n ISolicitud: FALLÃ“", vbCritical
+        Debug.Print "? Test de compilación ISolicitud: FALLÓ"
+        MsgBox "Test de compilación ISolicitud: FALLÓ", vbCritical
     End If
 End Sub

@@ -1,4 +1,4 @@
-ï»¿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,6 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
 Option Compare Database
 Option Explicit
 
@@ -23,11 +24,11 @@ Private Function ISolicitudService_CreateNuevaSolicitud(ByVal tipo As String) As
     ' Retorna un mock de solicitud con datos predecibles
     Dim mockSolicitud As New CSolicitudPC
     
-    ' Configurar datos mock segÃºn el tipo
+    ' Configurar datos mock según el tipo
     Select Case UCase(tipo)
         Case "PC"
             ' Configurar solicitud PC mock
-            ' TODO: Implementar configuraciÃ³n especÃ­fica cuando CSolicitudPC estÃ© completa
+            ' TODO: Implementar configuración específica cuando CSolicitudPC esté completa
         Case Else
             ' Tipo por defecto
     End Select
@@ -37,10 +38,10 @@ End Function
 
 ' Mock: Obtener una solicitud por su ID
 Private Function ISolicitudService_GetSolicitudPorID(ByVal ID As Long) As ISolicitud
-    ' Retorna un mock de solicitud con ID especÃ­fico
+    ' Retorna un mock de solicitud con ID específico
     Dim mockSolicitud As New CSolicitudPC
     
-    ' Configurar datos mock segÃºn el ID
+    ' Configurar datos mock según el ID
     Select Case ID
         Case 1
             ' Solicitud de prueba #1
@@ -67,12 +68,12 @@ End Function
 
 ' Mock: Obtener todas las solicitudes
 Private Function ISolicitudService_GetAllSolicitudes() As Collection
-    ' Retorna una colecciÃ³n con solicitudes mock
+    ' Retorna una colección con solicitudes mock
     Dim coleccion As New Collection
     Dim solicitud1 As New CSolicitudPC
     Dim solicitud2 As New CSolicitudPC
     
-    ' Agregar solicitudes mock a la colecciÃ³n
+    ' Agregar solicitudes mock a la colección
     coleccion.Add solicitud1
     coleccion.Add solicitud2
     
@@ -81,7 +82,7 @@ End Function
 
 ' Mock: Eliminar una solicitud
 Private Function ISolicitudService_DeleteSolicitud(ByVal ID As Long) As Boolean
-    ' Simula eliminaciÃ³n exitosa para IDs vÃ¡lidos
+    ' Simula eliminación exitosa para IDs válidos
     If ID > 0 And ID <= 100 Then
         ISolicitudService_DeleteSolicitud = True
     Else
@@ -91,10 +92,11 @@ End Function
 
 ' Mock: Actualizar el estado de una solicitud
 Private Function ISolicitudService_UpdateEstadoSolicitud(ByVal ID As Long, ByVal nuevoEstado As String) As Boolean
-    ' Simula actualizaciÃ³n exitosa para IDs y estados vÃ¡lidos
+    ' Simula actualización exitosa para IDs y estados válidos
     If ID > 0 And ID <= 100 And Len(nuevoEstado) > 0 Then
         ISolicitudService_UpdateEstadoSolicitud = True
     Else
         ISolicitudService_UpdateEstadoSolicitud = False
     End If
 End Function
+

@@ -1,4 +1,8 @@
-﻿Attribute VB_Name = "Test_Integracion"
+Attribute VB_Name = "Test_Integracion"
+Option Compare Database
+Option Explicit
+
+
 ' =====================================================
 ' MODULO: Test_Integracion
 ' PROPOSITO: Pruebas de integracion del sistema CONDOR
@@ -221,3 +225,4 @@ Public Sub Test_RecuperacionErrores()
         Err.Raise 6009, , "Error: Fallo en la recuperacion de errores"
     End If
 End Sub
+
