@@ -86,7 +86,7 @@ Para cambiar el entorno de ejecución durante el desarrollo:
    - `ForzarLocal`: Para trabajar con datos locales de desarrollo
    - `ForzarRemoto`: Para depurar con datos reales de la red
    - `ForzarNinguno`: Para usar el comportamiento automático
-4. **Importar** los cambios: `cscript condor_cli.vbs import`
+4. **Reconstruir** el proyecto: `cscript condor_cli.vbs rebuild`
 
 ### Casos de Uso Típicos
 
@@ -166,13 +166,14 @@ cscript condor_cli.vbs export
 - Útil para sincronizar cambios realizados directamente en Access hacia el control de versiones
 - Mantiene la estructura del código y comentarios
 
-#### Importación de Módulos
+#### Reconstrucción del Proyecto
 ```bash
-cscript condor_cli.vbs import
+cscript condor_cli.vbs rebuild
 ```
+- Elimina todos los módulos VBA existentes de la base de datos Access
 - Importa todos los archivos `.bas` del directorio `src/` hacia la base de datos Access
-- Reemplaza los módulos existentes con las versiones actualizadas
 - Compila automáticamente los módulos después de la importación
+- Garantiza un estado 100% limpio y compilado
 - Muestra advertencias de compilación si las hay
 
 #### Ejecución de Pruebas
@@ -180,7 +181,7 @@ cscript condor_cli.vbs import
 cscript condor_cli.vbs test
 ```
 - Ejecuta el motor de pruebas interno de CONDOR
-- **IMPORTANTE**: Requiere haber ejecutado `import` previamente para compilar los módulos
+- **IMPORTANTE**: Requiere haber ejecutado `rebuild` previamente para compilar los módulos
 - Proporciona un informe detallado de resultados
 - Utiliza únicamente `Application.Run` para mayor robustez
 
@@ -353,18 +354,18 @@ Consulta el **[Plan de Acción](PLAN_DE_ACCION.md)** para ver el roadmap complet
 
 ### Flujo de Desarrollo
 
-**Flujo Recomendado (2 pasos separados):**
+**Flujo Recomendado (3 pasos):**
 1. **Desarrollo Local**: Modificar archivos `.bas` en el directorio `src/`
-2. **Importación y Compilación**: `cscript condor_cli.vbs import` para aplicar cambios y compilar módulos
+2. **Reconstrucción**: `cscript condor_cli.vbs rebuild` para aplicar cambios y compilar módulos
 3. **Ejecución de Pruebas**: `cscript condor_cli.vbs test` para validar funcionalidad
-4. **Exportación**: `cscript condor_cli.vbs export` para sincronizar cambios desde Access
+4. **Exportación**: `cscript condor_cli.vbs export` para sincronizar cambios desde Access (opcional)
 
 **Comando Combinado:**
 ```bash
-cscript condor_cli.vbs import && cscript condor_cli.vbs test
+cscript condor_cli.vbs rebuild && cscript condor_cli.vbs test
 ```
 
-**⚠️ Importante**: El comando `test` ya no realiza importación automática. Siempre ejecute `import` antes de `test` para asegurar que los módulos estén compilados correctamente.
+**⚠️ Importante**: El comando `test` requiere que los módulos estén compilados. Siempre ejecute `rebuild` antes de `test` para garantizar un estado limpio y compilado.
 
 ### Configuración
 

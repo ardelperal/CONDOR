@@ -1,4 +1,4 @@
-Attribute VB_Name = "modDatabase"
+﻿Attribute VB_Name = "modDatabase"
 Option Compare Database
 Option Explicit
 
@@ -199,6 +199,8 @@ ErrorHandler:
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
 End Function
+
+
 
 
 

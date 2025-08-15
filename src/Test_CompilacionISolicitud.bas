@@ -1,4 +1,4 @@
-Attribute VB_Name = "Test_CompilacionISolicitud"
+﻿Attribute VB_Name = "Test_CompilacionISolicitud"
 Option Compare Database
 Option Explicit
 
@@ -23,15 +23,15 @@ Public Function Test_ImplementacionISolicitud() As Boolean
     Set solicitud = solicitudPC
     
     ' Probar propiedades de la interfaz
-    solicitud.IdSolicitud = 123
-    solicitud.IdExpediente = "EXP-001"
+    solicitud.idSolicitud = 123
+    solicitud.IDExpediente = "EXP-001"
     solicitud.TipoSolicitud = "PC"
     solicitud.CodigoSolicitud = "PC-0123"
     solicitud.EstadoInterno = "BORRADOR"
     
     ' Verificar que los valores se asignaron correctamente
-    If solicitud.IdSolicitud <> 123 Then GoTo ErrorHandler
-    If solicitud.IdExpediente <> "EXP-001" Then GoTo ErrorHandler
+    If solicitud.idSolicitud <> 123 Then GoTo ErrorHandler
+    If solicitud.IDExpediente <> "EXP-001" Then GoTo ErrorHandler
     If solicitud.TipoSolicitud <> "PC" Then GoTo ErrorHandler
     If solicitud.CodigoSolicitud <> "PC-0123" Then GoTo ErrorHandler
     If solicitud.EstadoInterno <> "BORRADOR" Then GoTo ErrorHandler
@@ -70,4 +70,5 @@ Public Sub Ejecutar_Test_Compilacion()
         MsgBox "Test de compilaci?n ISolicitud: FALL?", vbCritical
     End If
 End Sub
+
 

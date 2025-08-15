@@ -1,3 +1,12 @@
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CSolicitudPC"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
@@ -53,7 +62,7 @@ Private Property Let ISolicitud_EstadoInterno(ByVal RHS As String)
     m_EstadoInterno = RHS
 End Property
 
-Private Function ISolicitud_Load(ByVal id As Long) As Boolean
+Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
     ' TODO: Implementar lógica de carga
     ISolicitud_Load = True
 End Function
@@ -71,19 +80,19 @@ End Function
 ' --- 2. Miembros PÚBLICOS de la Clase ---
 '     Exponen la funcionalidad al mundo. Delegan en la implementación de la interfaz.
 
-Public Property Get IdSolicitud() As Long
-    IdSolicitud = ISolicitud_IdSolicitud
+Public Property Get idSolicitud() As Long
+    idSolicitud = ISolicitud_IdSolicitud
 End Property
 
-Public Property Let IdSolicitud(ByVal val As Long)
+Public Property Let idSolicitud(ByVal val As Long)
     ISolicitud_IdSolicitud = val
 End Property
 
-Public Property Get IdExpediente() As String
-    IdExpediente = ISolicitud_IdExpediente
+Public Property Get IDExpediente() As String
+    IDExpediente = ISolicitud_IdExpediente
 End Property
 
-Public Property Let IdExpediente(ByVal val As String)
+Public Property Let IDExpediente(ByVal val As String)
     ISolicitud_IdExpediente = val
 End Property
 
@@ -111,8 +120,8 @@ Public Property Let EstadoInterno(ByVal val As String)
     ISolicitud_EstadoInterno = val
 End Property
 
-Public Function Load(ByVal id As Long) As Boolean
-    Load = ISolicitud_Load(id)
+Public Function Load(ByVal ID As Long) As Boolean
+    Load = ISolicitud_Load(ID)
 End Function
 
 Public Function Save() As Boolean
@@ -131,6 +140,7 @@ End Property
 Public Property Let DatosPC(ByRef val As T_Datos_PC)
     m_DatosPC = val
 End Property
+
 
 
 

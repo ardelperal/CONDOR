@@ -1,4 +1,4 @@
-Attribute VB_Name = "Test_Integracion_Solicitudes"
+﻿Attribute VB_Name = "Test_Integracion_Solicitudes"
 Option Compare Database
 Option Explicit
 
@@ -94,7 +94,7 @@ Public Sub Test_SaveAndLoad_PC()
     Dim solicitudCargada As CSolicitudPC
     
     ' Configurar datos de prueba
-    solicitudPC.IdExpediente = "EXP-TEST-001"
+    solicitudPC.IDExpediente = "EXP-TEST-001"
     solicitudPC.CodigoSolicitud = "PC-TEST-001"
     solicitudPC.TipoSolicitud = "PC"
     solicitudPC.EstadoInterno = "BORRADOR"
@@ -253,5 +253,6 @@ Public Sub Test_TransaccionesBaseDatos()
         Err.Raise 5016, , "Error: No se pudo hacer commit de la transaccion"
     End If
 End Sub
+
 
 

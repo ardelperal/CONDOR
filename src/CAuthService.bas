@@ -1,9 +1,4 @@
-Attribute VB_Name = "CAuthService"
-
-Option Compare Database
-Option Explicit
-
-
+﻿Attribute VB_Name = "CAuthService"
 ' =====================================================
 ' CLASE: CAuthService
 ' PROPOSITO: Implementacion concreta del servicio de autenticacion
@@ -148,4 +143,8 @@ Private Function GetRoleName(ByVal role As E_UserRole) As String
             GetRoleName = "Indefinido"
     End Select
 End Function
+
+
+
+
 

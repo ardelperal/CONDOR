@@ -10,7 +10,7 @@ Public Function Test_Solicitudes_RunAll() As String
     On Error GoTo ErrorHandler
     
     Test_Factory_Crea_PC
-    resultado = resultado & "✓ Test_Factory_Crea_PC: PASÓ" & vbCrLf
+    resultado = resultado & "? Test_Factory_Crea_PC: PASÓ" & vbCrLf
     
     resultado = resultado & "=== RESUMEN ===" & vbCrLf
     resultado = resultado & "Total de pruebas: 1" & vbCrLf
@@ -21,7 +21,7 @@ Public Function Test_Solicitudes_RunAll() As String
     Exit Function
     
 ErrorHandler:
-    resultado = resultado & "✗ Test_Factory_Crea_PC: FALLÓ - " & Err.Description & vbCrLf
+    resultado = resultado & "? Test_Factory_Crea_PC: FALLÓ - " & Err.Description & vbCrLf
     resultado = resultado & "=== RESUMEN ===" & vbCrLf
     resultado = resultado & "Total de pruebas: 1" & vbCrLf
     resultado = resultado & "Pruebas exitosas: 0" & vbCrLf
@@ -34,3 +34,4 @@ Private Sub Test_Factory_Crea_PC()
     Set s = modSolicitudFactory.CreateSolicitud(1)
     Debug.Assert TypeOf s Is CSolicitudPC
 End Sub
+

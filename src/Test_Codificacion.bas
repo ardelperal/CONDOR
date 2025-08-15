@@ -1,4 +1,6 @@
-﻿Option Explicit
+﻿Attribute VB_Name = "Test_Codificacion"
+Option Compare Database
+Option Explicit
 
 ' Módulo de prueba para verificar la codificación UTF-8
 ' Contiene caracteres especiales: áéíóú ñÑ ¿¡
@@ -9,9 +11,9 @@ Public Sub TestCaracteresEspeciales()
     mensaje = "Prueba de codificación: áéíóú ñÑ ¿¡"
     
     ' Verificar que los caracteres se muestran correctamente
-    Debug.Print "✓ Mensaje con acentos: " & mensaje
-    Debug.Print "✓ Símbolos especiales: ✅❌⚠️"
-    Debug.Print "✓ Caracteres de caja: └─ ├─"
+    Debug.Print "? Mensaje con acentos: " & mensaje
+    Debug.Print "? Símbolos especiales: ????"
+    Debug.Print "? Caracteres de caja: +- +-"
 End Sub
 
 Public Function ObtenerMensajeConAcentos() As String
