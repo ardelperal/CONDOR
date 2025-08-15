@@ -89,6 +89,8 @@ El sistema encolará correos en los cambios de fase clave para notificar a los r
 
 ## 8. Estructura de la Base de Datos
 
+**Nota de implementación**: Aunque los campos en la base de datos usan guiones bajos (Snake_Case), en el código VBA se accederá a ellos a través de propiedades que siguen la convención CamelCase (ej. la propiedad IdSolicitud mapea al campo ID_Solicitud).
+
 ### 8.1. `Tb_Solicitudes`
 *   **ID_Solicitud**: Autonumérico (Clave Primaria).
 *   **ID_Expediente**: Numérico / Texto (Clave Externa).

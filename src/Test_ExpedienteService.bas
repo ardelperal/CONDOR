@@ -1,7 +1,6 @@
-Attribute VB_Name = "Test_ExpedienteService"
+﻿Attribute VB_Name = "Test_ExpedienteService"
 Option Compare Database
 Option Explicit
-
 
 ' =====================================================
 ' MODULO: Test_ExpedienteService
@@ -227,4 +226,5 @@ Public Sub Test_ObtenerHistorialExpediente()
         Err.Raise 3008, , "Error: No se pudo obtener el historial del expediente"
     End If
 End Sub
+
 

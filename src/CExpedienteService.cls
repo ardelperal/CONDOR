@@ -7,7 +7,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-
 Option Compare Database
 Option Explicit
 
@@ -17,15 +16,15 @@ Implements IExpedienteService
 
 ' ============================================================================
 ' Clase: CExpedienteService
-' Descripción: Implementación real del servicio de expedientes
-'              Conecta con la aplicación de Expedientes existente
+' Descripci?n: Implementaci?n real del servicio de expedientes
+'              Conecta con la aplicaci?n de Expedientes existente
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
 ' ============================================================================
 
-' Implementación de la interfaz IExpedienteService
+' Implementaci?n de la interfaz IExpedienteService
 ' Obtiene un expediente por su ID desde la base de datos de expedientes
-Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Long) As T_Expediente
+Private Function IExpedienteService_GetExpedienteById(ByVal IDExpediente As Long) As T_Expediente
     Dim resultado As T_Expediente
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -33,7 +32,7 @@ Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Lon
     
     On Error GoTo ErrorHandler
     
-    ' Inicializar resultado vacío
+    ' Inicializar resultado vac?o
     resultado.IDExpediente = 0
     resultado.Nemotecnico = ""
     resultado.Titulo = ""
@@ -41,7 +40,7 @@ Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Lon
     resultado.ResponsableTecnico = ""
     resultado.Pecal = ""
     
-    ' Obtener la ruta de la base de datos de expedientes desde configuración
+    ' Obtener la ruta de la base de datos de expedientes desde configuraci?n
     Dim rutaExpedientes As String
     rutaExpedientes = GetExpedientesDbPath()
     
@@ -50,7 +49,7 @@ Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Lon
         GoTo Cleanup
     End If
     
-    ' Abrir conexión a la base de datos de expedientes
+    ' Abrir conexi?n a la base de datos de expedientes
     Set db = DBEngine.OpenDatabase(rutaExpedientes)
     
     ' Construir la consulta SQL con filtro por ID
@@ -61,7 +60,7 @@ Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Lon
           "FROM ((TbExpedientes INNER JOIN TbExpedientesResponsables ON TbExpedientes.IDExpediente = TbExpedientesResponsables.IdExpediente) " & _
           "LEFT JOIN TbUsuariosAplicaciones ON TbExpedientesResponsables.IdUsuario = TbUsuariosAplicaciones.Id) " & _
           "LEFT JOIN TbUsuariosAplicaciones AS TbUsuariosAplicaciones_1 ON TbExpedientes.IDResponsableCalidad = TbUsuariosAplicaciones_1.Id " & _
-          "WHERE (((TbExpedientesResponsables.EsJefeProyecto)='Sí') AND ((TbExpedientes.IDExpediente)=" & IDExpediente & "));"
+          "WHERE (((TbExpedientesResponsables.EsJefeProyecto)='S?') AND ((TbExpedientes.IDExpediente)=" & IDExpediente & "));"
     
     ' Ejecutar la consulta
     Set rs = db.OpenRecordset(sql, dbOpenSnapshot)
@@ -83,15 +82,17 @@ Cleanup:
     Set rs = Nothing
     Set db = Nothing
     
-    IExpedienteService_GetExpedientePorID = resultado
+    IExpedienteService_GetExpedienteById = resultado
     Exit Function
     
 ErrorHandler:
-    Debug.Print "Error en CExpedienteService.GetExpedientePorID: " & Err.Description
+    Debug.Print "Error en CExpedienteService.GetExpedienteById: " & Err.Description
     Resume Cleanup
 End Function
 
 #End If
+
+
 
 
 

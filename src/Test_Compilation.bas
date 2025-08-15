@@ -1,9 +1,8 @@
-Attribute VB_Name = "Test_Compilation"
+ï»¿Attribute VB_Name = "Test_Compilation"
 Option Compare Database
 Option Explicit
 
-
-' Módulo de prueba para verificar compilación
+' M?dulo de prueba para verificar compilaci?n
 
 Public Function TestCompilation() As Boolean
     On Error GoTo ErrorHandler
@@ -12,15 +11,16 @@ Public Function TestCompilation() As Boolean
     Dim solicitud As ISolicitud
     Set solicitud = New CSolicitudPC
     
-    ' Si llegamos aquí, la compilación es exitosa
+    ' Si llegamos aqu?, la compilaci?n es exitosa
     TestCompilation = True
-    Debug.Print "Compilación exitosa - CSolicitudPC creado correctamente"
+    Debug.Print "Compilaci?n exitosa - CSolicitudPC creado correctamente"
     
     Exit Function
     
 ErrorHandler:
     TestCompilation = False
-    Debug.Print "Error de compilación: " & Err.Description
-    Debug.Print "Número de error: " & Err.Number
+    Debug.Print "Error de compilaci?n: " & Err.Description
+    Debug.Print "N?mero de error: " & Err.Number
 End Function
+
 

@@ -7,7 +7,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-
 Option Compare Database
 Option Explicit
 
@@ -17,15 +16,15 @@ Implements IExpedienteService
 
 ' ============================================================================
 ' Clase: CMockExpedienteService
-' Descripción: Implementación Mock del servicio de expedientes para testing
+' Descripci?n: Implementaci?n Mock del servicio de expedientes para testing
 '              NO se conecta a ninguna base de datos, devuelve datos hardcodeados
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
 ' ============================================================================
 
-' Implementación Mock de la interfaz IExpedienteService
+' Implementaci?n Mock de la interfaz IExpedienteService
 ' Devuelve datos predecibles y hardcodeados para pruebas unitarias
-Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Long) As T_Expediente
+Private Function IExpedienteService_GetExpedienteById(ByVal IDExpediente As Long) As T_Expediente
     Dim resultado As T_Expediente
     
     ' Datos hardcodeados predecibles para testing
@@ -49,7 +48,7 @@ Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Lon
             resultado.Pecal = "NO"
             
         Case 1003
-            ' Expediente con campos vacíos para probar manejo de nulos
+            ' Expediente con campos vac?os para probar manejo de nulos
             resultado.IDExpediente = 1003
             resultado.Nemotecnico = "TEST-003"
             resultado.Titulo = "Expediente con Campos Vacios"
@@ -58,7 +57,7 @@ Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Lon
             resultado.Pecal = ""
             
         Case Else
-            ' Para cualquier otro ID, devolver expediente vacío (simula "no encontrado")
+            ' Para cualquier otro ID, devolver expediente vac?o (simula "no encontrado")
             resultado.IDExpediente = 0
             resultado.Nemotecnico = ""
             resultado.Titulo = ""
@@ -67,8 +66,9 @@ Private Function IExpedienteService_GetExpedientePorID(ByVal IDExpediente As Lon
             resultado.Pecal = ""
     End Select
     
-    IExpedienteService_GetExpedientePorID = resultado
+    IExpedienteService_GetExpedienteById = resultado
 End Function
 
 #End If
+
 

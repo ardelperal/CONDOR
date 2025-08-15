@@ -21,6 +21,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
     *   **Interfaces:** Deben empezar con el prefijo `I` (ej. `IExpedienteService`).
     *   **Clases:** Deben empezar con el prefijo `C` (ej. `CExpedienteService`).
     *   **Módulos:** Deben empezar con el prefijo `mod` (ej. `modConfig`).
+    *   **Miembros (Propiedades, Funciones, Subrutinas):** Los nombres de miembros deben usar CamelCase. El uso de guiones bajos está prohibido para evitar bugs del compilador.
 
 ---
 ### **CICLO DE TRABAJO DE DESARROLLO (MODO AUTÓNOMO)**

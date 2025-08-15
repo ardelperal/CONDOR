@@ -1,7 +1,6 @@
-Attribute VB_Name = "Test_Config"
+﻿Attribute VB_Name = "Test_Config"
 Option Compare Database
 Option Explicit
-
 
 ' =====================================================
 ' MODULO: Test_Config
@@ -234,4 +233,5 @@ Public Sub Test_ResetearConfiguracion()
         Err.Raise 2007, , "Error: No se pudo resetear la configuracion"
     End If
 End Sub
+
 

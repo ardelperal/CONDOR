@@ -2,8 +2,7 @@ Attribute VB_Name = "modTest"
 Option Compare Database
 Option Explicit
 
-
-' Módulo de prueba para verificar la implementación de la interfaz
+' M?dulo de prueba para verificar la implementaci?n de la interfaz
 Public Sub TestInterface()
     On Error GoTo ErrorHandler
     
@@ -17,13 +16,13 @@ Public Sub TestInterface()
     Set solicitud = solicitudPC
     
     ' Probar propiedades
-    solicitud.ID_Solicitud = 1
-    solicitud.ID_Expediente = "EXP-001"
+    solicitud.IdSolicitud = 1
+    solicitud.IdExpediente = "EXP-001"
     solicitud.TipoSolicitud = "PC"
     solicitud.EstadoInterno = "Borrador"
     
-    Debug.Print "Test exitoso: ID=" & solicitud.ID_Solicitud
-    Debug.Print "Test exitoso: Expediente=" & solicitud.ID_Expediente
+    Debug.Print "Test exitoso: ID=" & solicitud.IdSolicitud
+    Debug.Print "Test exitoso: Expediente=" & solicitud.IdExpediente
     Debug.Print "Test exitoso: Tipo=" & solicitud.TipoSolicitud
     Debug.Print "Test exitoso: Estado=" & solicitud.EstadoInterno
     
@@ -39,4 +38,5 @@ ErrorHandler:
     Set solicitud = Nothing
     Set solicitudPC = Nothing
 End Sub
+
 

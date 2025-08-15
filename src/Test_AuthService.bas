@@ -1,7 +1,6 @@
-Attribute VB_Name = "Test_AuthService"
+ï»¿Attribute VB_Name = "Test_AuthService"
 Option Compare Database
 Option Explicit
-
 
 ' =====================================================
 ' MODULO: Test_AuthService
@@ -42,7 +41,7 @@ Public Function Test_AuthService_RunAll() As String
     End If
     testsTotal = testsTotal + 1
     
-    ' Test 3: Validar contraseña correcta
+    ' Test 3: Validar contrase?a correcta
     On Error Resume Next
     Err.Clear
     Call Test_ValidarPasswordCorrecta
@@ -54,7 +53,7 @@ Public Function Test_AuthService_RunAll() As String
     End If
     testsTotal = testsTotal + 1
     
-    ' Test 4: Validar contraseña incorrecta
+    ' Test 4: Validar contrase?a incorrecta
     On Error Resume Next
     Err.Clear
     Call Test_ValidarPasswordIncorrecta
@@ -151,28 +150,28 @@ Public Sub Test_ValidarUsuarioInvalido()
 End Sub
 
 Public Sub Test_ValidarPasswordCorrecta()
-    ' Simular validacion de contraseña correcta
+    ' Simular validacion de contrase?a correcta
     Dim authService As New CAuthService
     Dim passwordCorrecta As Boolean
     
-    ' Simular contraseña correcta
+    ' Simular contrase?a correcta
     passwordCorrecta = True
     
     If Not passwordCorrecta Then
-        Err.Raise 1003, , "Error: Contraseña correcta no fue aceptada"
+        Err.Raise 1003, , "Error: Contrase?a correcta no fue aceptada"
     End If
 End Sub
 
 Public Sub Test_ValidarPasswordIncorrecta()
-    ' Simular validacion de contraseña incorrecta
+    ' Simular validacion de contrase?a incorrecta
     Dim authService As New CAuthService
     Dim passwordIncorrecta As Boolean
     
-    ' Simular contraseña incorrecta
+    ' Simular contrase?a incorrecta
     passwordIncorrecta = False
     
     If passwordIncorrecta Then
-        Err.Raise 1004, , "Error: Contraseña incorrecta fue aceptada"
+        Err.Raise 1004, , "Error: Contrase?a incorrecta fue aceptada"
     End If
 End Sub
 
@@ -227,4 +226,5 @@ Public Sub Test_LogoutUsuario()
         Err.Raise 1008, , "Error: Logout de usuario fallo"
     End If
 End Sub
+
 

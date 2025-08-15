@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+ï»¿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,13 +7,12 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-
 Option Compare Database
 Option Explicit
 
 ' Clase: CConfig
-' Descripción: Implementación concreta del servicio de configuración del sistema CONDOR
-' Arquitectura: Capa de Servicios - Implementación
+' Descripci?n: Implementaci?n concreta del servicio de configuraci?n del sistema CONDOR
+' Arquitectura: Capa de Servicios - Implementaci?n
 ' Implementa: IConfig
 
 Implements IConfig
@@ -52,7 +51,7 @@ End Type
 ' Variable privada de configuracion
 Private m_AppConfig As T_AppConfig
 
-' Implementación de IConfig.GetValue
+' Implementaci?n de IConfig.GetValue
 Private Function IConfig_GetValue(ByVal key As String) As Variant
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
@@ -88,7 +87,7 @@ Private Function IConfig_GetValue(ByVal key As String) As Variant
     End Select
 End Function
 
-' Implementación de IConfig.SetValue
+' Implementaci?n de IConfig.SetValue
 Private Sub IConfig_SetValue(ByVal key As String, ByVal value As Variant)
     Select Case UCase(key)
         Case "DATABASEPATH"
@@ -116,7 +115,7 @@ Private Sub IConfig_SetValue(ByVal key As String, ByVal value As Variant)
     End Select
 End Sub
 
-' Implementación de IConfig.InitializeEnvironment
+' Implementaci?n de IConfig.InitializeEnvironment
 Private Function IConfig_InitializeEnvironment() As Boolean
     On Error GoTo ErrorHandler
     
@@ -182,7 +181,7 @@ ErrorHandler:
     m_AppConfig.IsInitialized = False
 End Function
 
-' Implementación de IConfig.HasKey
+' Implementaci?n de IConfig.HasKey
 Private Function IConfig_HasKey(ByVal key As String) As Boolean
     Select Case UCase(key)
         Case "DATABASEPATH", "DATAPATH", "EXPEDIENTESPATH", "PLANTILLASPATH", _
@@ -194,7 +193,7 @@ Private Function IConfig_HasKey(ByVal key As String) As Boolean
     End Select
 End Function
 
-' Métodos públicos adicionales para compatibilidad
+' M?todos p?blicos adicionales para compatibilidad
 Public Function GetActiveEnvironment() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
@@ -272,7 +271,7 @@ Public Function GetTempPath() As String
     GetTempPath = m_AppConfig.tempPath
 End Function
 
-' Métodos privados de soporte
+' M?todos privados de soporte
 Private Sub ResetConfiguration()
     m_AppConfig.DatabasePath = ""
     m_AppConfig.dataPath = ""
@@ -345,7 +344,7 @@ ErrorHandler:
     If Not fso Is Nothing Then Set fso = Nothing
 End Function
 
-' Función de prueba
+' Funci?n de prueba
 Public Function TestCConfig() As String
     Dim resultado As String
     resultado = "=== PRUEBA CCONFIG ===" & vbCrLf
@@ -384,6 +383,8 @@ Public Function TestCConfig() As String
     resultado = resultado & "=== FIN PRUEBA ===" & vbCrLf
     TestCConfig = resultado
 End Function
+
+
 
 
 

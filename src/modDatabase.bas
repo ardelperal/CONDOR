@@ -1,11 +1,10 @@
-Attribute VB_Name = "modDatabase"
+ï»¿Attribute VB_Name = "modDatabase"
 Option Compare Database
 Option Explicit
 
-
 ' ============================================================================
-' Módulo: modDatabase
-' Descripción: Servicio de acceso a datos para solicitudes
+' M?dulo: modDatabase
+' Descripci?n: Servicio de acceso a datos para solicitudes
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
 ' ============================================================================
@@ -14,8 +13,8 @@ Option Explicit
 ' FUNCIONES DE ACCESO A DATOS
 ' ============================================================================
 
-' Función que obtiene los datos de una solicitud con INNER JOIN
-' Parámetros:
+' Funci?n que obtiene los datos de una solicitud con INNER JOIN
+' Par?metros:
 '   idSolicitud: ID de la solicitud a obtener
 ' Retorna: Recordset con los datos de Tb_Solicitudes y TbDatos_PC
 Public Function GetSolicitudData(ByVal idSolicitud As Long) As DAO.Recordset
@@ -45,11 +44,11 @@ ErrorHandler:
     If Not db Is Nothing Then db.Close
 End Function
 
-' Función que guarda o actualiza una solicitud PC
-' Parámetros:
+' Funci?n que guarda o actualiza una solicitud PC
+' Par?metros:
 '   solicitudData: Estructura T_Solicitud con los datos generales
-'   pcData: Estructura T_Datos_PC con los datos específicos
-' Retorna: True si la operación fue exitosa, False en caso contrario
+'   pcData: Estructura T_Datos_PC con los datos espec?ficos
+' Retorna: True si la operaci?n fue exitosa, False en caso contrario
 Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData As T_Datos_PC) As Boolean
     On Error GoTo ErrorHandler
     
@@ -63,7 +62,7 @@ Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData
     ' Conectar a la base de datos actual
     Set db = CurrentDb()
     
-    ' Iniciar transacción
+    ' Iniciar transacci?n
     db.BeginTrans
     
     ' Determinar si es un registro nuevo
@@ -157,7 +156,7 @@ Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData
     End With
     rsPC.Close
     
-    ' Confirmar transacción
+    ' Confirmar transacci?n
     db.CommitTrans
     SaveSolicitudPC = True
     
@@ -180,7 +179,7 @@ End Function
 ' FUNCIONES AUXILIARES
 ' ============================================================================
 
-' Función auxiliar para verificar si una solicitud existe
+' Funci?n auxiliar para verificar si una solicitud existe
 Public Function SolicitudExists(ByVal idSolicitud As Long) As Boolean
     On Error GoTo ErrorHandler
     
@@ -202,5 +201,7 @@ ErrorHandler:
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
 End Function
+
+
 
 

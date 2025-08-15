@@ -1,10 +1,9 @@
-Attribute VB_Name = "modTestRunner"
+ï»¿Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
 
-
-' Módulo: modTestRunner
-' Descripción: Motor principal para ejecutar todas las suites de pruebas del proyecto.
+' M?dulo: modTestRunner
+' Descripci?n: Motor principal para ejecutar todas las suites de pruebas del proyecto.
 
 #Const DEV_MODE = True
 
@@ -23,15 +22,15 @@ Public Function RunAllTests() As String
     
     On Error GoTo ErrorHandler
     
-    ' --- Ejecutar Pruebas de Configuración ---
-    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Configuración ---" & vbCrLf
+    ' --- Ejecutar Pruebas de Configuraci?n ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Configuraci?n ---" & vbCrLf
     suiteResult = Test_Config_RunAll()
     resultado = resultado & suiteResult
     ' (Asumimos que las funciones de prueba devuelven un informe que podemos analizar)
-    ' (En una versión futura, podríamos hacer esto más sofisticado)
+    ' (En una versi?n futura, podr?amos hacer esto m?s sofisticado)
     
-    ' --- Ejecutar Pruebas de Autenticación ---
-    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Autenticación ---" & vbCrLf
+    ' --- Ejecutar Pruebas de Autenticaci?n ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Autenticaci?n ---" & vbCrLf
     suiteResult = Test_AuthService_RunAll()
     resultado = resultado & suiteResult
     
@@ -45,13 +44,13 @@ Public Function RunAllTests() As String
     suiteResult = Test_Solicitudes_RunAll()
     resultado = resultado & suiteResult
     
-    ' --- Ejecutar Pruebas de Integración ---
-    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Integración ---" & vbCrLf
+    ' --- Ejecutar Pruebas de Integraci?n ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Integraci?n ---" & vbCrLf
     suiteResult = Test_Integracion_RunAll()
     resultado = resultado & suiteResult
     
-    ' --- Ejecutar Pruebas de Integración de Solicitudes ---
-    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Integración de Solicitudes ---" & vbCrLf
+    ' --- Ejecutar Pruebas de Integraci?n de Solicitudes ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Integraci?n de Solicitudes ---" & vbCrLf
     suiteResult = Test_Integracion_Solicitudes_RunAll()
     resultado = resultado & suiteResult
     
@@ -63,8 +62,9 @@ Public Function RunAllTests() As String
     Exit Function
     
 ErrorHandler:
-    RunAllTests = resultado & vbCrLf & "[ERROR FATAL] El Test Runner falló: " & Err.Description
+    RunAllTests = resultado & vbCrLf & "[ERROR FATAL] El Test Runner fall?: " & Err.Description
 End Function
 
 #End If
+
 

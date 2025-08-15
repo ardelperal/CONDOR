@@ -31,6 +31,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
     WScript.Echo "  test       - Ejecutar todos los tests (requiere import previo)"
     WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
+    WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
     WScript.Echo "  listtables [db_path] - Listar tablas (opcionalmente de base especifica)"
@@ -58,8 +59,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "import" And strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" And strAction <> "rebuild" Then
-    WScript.Echo "Error: Comando debe ser 'import', 'export', 'validate', 'createtable', 'droptable', 'listtables', 'test', 'relink' o 'rebuild'"
+If strAction <> "import" And strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" Then
+    WScript.Echo "Error: Comando debe ser 'import', 'export', 'validate', 'createtable', 'droptable', 'listtables', 'test', 'relink', 'rebuild' o 'lint'"
     WScript.Quit 1
 End If
 
@@ -187,6 +188,8 @@ ElseIf strAction = "test" Then
     Call RunTestsWithEngine(testModule)
 ElseIf strAction = "rebuild" Then
     Call RebuildProject()
+ElseIf strAction = "lint" Then
+    Call LintProject()
 ElseIf strAction = "relink" Then
     Call RelinkTables()
 End If
@@ -326,13 +329,18 @@ Sub ImportModules(bDryRun, bVerbose)
         WScript.Echo "[DRY-RUN] Los siguientes modulos serian procesados:"
     End If
     
-    ' Crear lista de módulos en src
+    ' Crear lista de módulos en src (usando nombre completo para evitar duplicados)
     Set srcModules = CreateObject("Scripting.Dictionary")
     Set objFolder = objFSO.GetFolder(strSourcePath)
     
     For Each objFile In objFolder.Files
         If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-            srcModules.Add objFSO.GetBaseName(objFile.Name), True
+            ' Usar nombre base del módulo como clave, pero almacenar el archivo completo
+            Dim moduleBaseName
+            moduleBaseName = objFSO.GetBaseName(objFile.Name)
+            If Not srcModules.Exists(moduleBaseName) Then
+                srcModules.Add moduleBaseName, True
+            End If
         End If
     Next
     
@@ -391,16 +399,18 @@ Sub ImportModules(bDryRun, bVerbose)
                     End If
                 Next
                 
+                ' Determinar tipo de archivo
+                Dim fileExtension
+                fileExtension = LCase(objFSO.GetExtensionName(objFile.Name))
+                
                 ' Limpiar archivo antes de importar (eliminar metadatos Attribute)
                 Dim cleanedContent
-                cleanedContent = CleanVBAFile(strFileName)
+                cleanedContent = CleanVBAFile(strFileName, fileExtension)
                 
                 ' Importar usando contenido limpio
                 If bVerbose Then
                     WScript.Echo "  Importando modulo (con limpieza): " & strFileName
                 End If
-                Dim fileExtension
-                fileExtension = LCase(objFSO.GetExtensionName(objFile.Name))
                 Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
                 
                 If Err.Number <> 0 Then
@@ -778,6 +788,79 @@ Sub RunTestsWithEngine(testModule)
     On Error GoTo 0
 End Sub
 
+' ===================================================================
+' SUBRUTINA: LintProject
+' Descripción: Audita el código VBA para detectar cabeceras duplicadas
+' ===================================================================
+Sub LintProject()
+    Dim vbComponent, codeModule
+    Dim lineContent, moduleName
+    Dim optionCompareCount, optionExplicitCount
+    Dim i, hasErrors
+    
+    WScript.Echo "=== INICIANDO AUDITORIA VBA ==="
+    WScript.Echo "Accion: lint"
+    WScript.Echo "Base de datos: " & strAccessPath
+    
+    Set objAccess = CreateObject("Access.Application")
+    objAccess.Visible = False
+    objAccess.OpenCurrentDatabase strAccessPath, False
+    
+    WScript.Echo "=== AUDITORIA DE CABECERAS VBA ==="
+    WScript.Echo ""
+    
+    hasErrors = False
+    
+    For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
+        moduleName = vbComponent.Name
+        Set codeModule = vbComponent.CodeModule
+        
+        optionCompareCount = 0
+        optionExplicitCount = 0
+        
+        For i = 1 To 10
+            If i <= codeModule.CountOfLines Then
+                lineContent = Trim(codeModule.Lines(i, 1))
+                
+                If InStr(1, lineContent, "Option Compare", 1) > 0 Then
+                    optionCompareCount = optionCompareCount + 1
+                End If
+                
+                If InStr(1, lineContent, "Option Explicit", 1) > 0 Then
+                    optionExplicitCount = optionExplicitCount + 1
+                End If
+            End If
+        Next
+        
+        If optionCompareCount > 1 Then
+            WScript.Echo "ERROR: Modulo " & moduleName & " tiene " & optionCompareCount & " declaraciones Option Compare duplicadas"
+            hasErrors = True
+        End If
+        
+        If optionExplicitCount > 1 Then
+            WScript.Echo "ERROR: Modulo " & moduleName & " tiene " & optionExplicitCount & " declaraciones Option Explicit duplicadas"
+            hasErrors = True
+        End If
+        
+        If optionCompareCount <= 1 And optionExplicitCount <= 1 Then
+            WScript.Echo "OK: " & moduleName & " - Cabeceras correctas"
+        End If
+    Next
+    
+    If hasErrors Then
+        WScript.Echo ""
+        WScript.Echo "=== LINT FALLIDO ==="
+        WScript.Echo "Se encontraron cabeceras duplicadas."
+        objAccess.Quit
+        WScript.Quit 1
+    Else
+        WScript.Echo ""
+        WScript.Echo "=== LINT COMPLETADO EXITOSAMENTE ==="
+    End If
+    
+    objAccess.Quit
+End Sub
+
 ' Subrutina para compilación condicional de módulos
 Sub CompileModulesConditionally()
     Dim vbComponent
@@ -971,30 +1054,39 @@ End Function
 
 ' Función para leer archivo con codificación ANSI
 Function ReadFileWithAnsiEncoding(filePath)
-    Dim objFile, strContent
+    Dim objStream, strContent
     
     On Error Resume Next
-    Set objFile = objFSO.OpenTextFile(filePath, 1, False, 0) ' ForReading = 1, Create = False, Format = 0 (ASCII/ANSI)
+    
+    ' Leer contenido del archivo usando ADODB.Stream con UTF-8
+    Set objStream = CreateObject("ADODB.Stream")
+    objStream.Type = 2 ' adTypeText
+    objStream.Charset = "UTF-8"
+    objStream.Open
+    objStream.LoadFromFile filePath
+    strContent = objStream.ReadText
+    objStream.Close
+    Set objStream = Nothing
+    
     If Err.Number <> 0 Then
         WScript.Echo "❌ ERROR: No se pudo leer el archivo " & filePath & ": " & Err.Description
         ReadFileWithAnsiEncoding = ""
+        Err.Clear
+        On Error GoTo 0
         Exit Function
     End If
     
-    strContent = objFile.ReadAll
-    objFile.Close
     On Error GoTo 0
-    
     ReadFileWithAnsiEncoding = strContent
 End Function
 
 ' Función para limpiar archivos VBA eliminando líneas Attribute con validación mejorada
-Function CleanVBAFile(filePath)
+Function CleanVBAFile(filePath, fileType)
     Dim objStream, strContent, arrLines, i, cleanedLines
-    Dim strLine, errorDetails, fileExtension
+    Dim strLine, errorDetails
     
-    ' Determinar la extensión del archivo
-    fileExtension = LCase(objFSO.GetExtensionName(filePath))
+    ' Usar el tipo de archivo pasado como parámetro ("bas" o "cls")
+    ' fileType debe ser "bas" o "cls"
     
     ' Validar sintaxis antes de procesar
     If Not ValidateVBASyntax(filePath, errorDetails) Then
@@ -1003,8 +1095,26 @@ Function CleanVBAFile(filePath)
         WScript.Echo "Continuando con la importación..."
     End If
     
-        ' Leer contenido del archivo con codificación ANSI (el formato por defecto de FSO)
-    strContent = ReadFileWithAnsiEncoding(filePath)
+    ' Leer contenido del archivo usando ADODB.Stream con UTF-8
+    On Error Resume Next
+    Set objStream = CreateObject("ADODB.Stream")
+    objStream.Type = 2 ' adTypeText
+    objStream.Charset = "UTF-8"
+    objStream.Open
+    objStream.LoadFromFile filePath
+    strContent = objStream.ReadText
+    objStream.Close
+    Set objStream = Nothing
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ ERROR: No se pudo leer el archivo " & filePath & ": " & Err.Description
+        CleanVBAFile = ""
+        Err.Clear
+        On Error GoTo 0
+        Exit Function
+    End If
+    
+    On Error GoTo 0
     
     ' Normalizar saltos de línea y dividir
     strContent = Replace(strContent, vbCrLf, vbLf)
@@ -1023,18 +1133,16 @@ Function CleanVBAFile(filePath)
         Dim shouldRemove
         shouldRemove = False
         
-        ' Eliminar metadatos solo para archivos .cls
-        If fileExtension = "cls" Then
-            If Left(strLine, 7) = "VERSION" Then shouldRemove = True
-            If Left(strLine, 5) = "BEGIN" Then shouldRemove = True
-            If Left(strLine, 8) = "MultiUse" Then shouldRemove = True
-            If strLine = "END" Then shouldRemove = True
-            If Left(strLine, 9) = "Attribute" Then shouldRemove = True
-            ' También eliminar líneas Option para .cls porque AddFromString las duplica
-            If Left(strLine, 6) = "Option" Then shouldRemove = True
-        End If
+        ' SIEMPRE eliminar metadatos Attribute y VERSION para ambos tipos
+        If Left(strLine, 7) = "VERSION" Then shouldRemove = True
+        If Left(strLine, 5) = "BEGIN" Then shouldRemove = True
+        If Left(strLine, 8) = "MultiUse" Then shouldRemove = True
+        If strLine = "END" Then shouldRemove = True
+        If Left(strLine, 9) = "Attribute" Then shouldRemove = True
         
-        ' Para archivos .bas, mantener las líneas Option
+        ' ELIMINAR líneas Option para AMBOS tipos (.bas y .cls)
+        ' Esto es necesario porque AddFromString automáticamente añade las cabeceras Option
+        If Left(strLine, 6) = "Option" Then shouldRemove = True
         
         ' Eliminar líneas vacías solo al inicio del archivo
         If strLine = "" And cleanedLines = "" Then shouldRemove = True
@@ -1064,16 +1172,22 @@ Function CleanVBAFile(filePath)
         End If
     Next
     
-    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option"
+    If fileType = "cls" Then
+        WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option (archivo .cls)"
+    Else
+        WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos (archivo .bas, Option mantenidas)"
+    End If
     
     CleanVBAFile = cleanedLines
 End Function
 
-' Función para exportar módulo con conversión ANSI -> UTF-8
+' Función para exportar módulo con conversión ANSI -> UTF-8 usando ADODB.Stream
 Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
     Dim tempFilePath, objTempFile, objStream
     Dim strContent
     Dim tempFolderPath, tempFileName
+    
+    On Error Resume Next
     
     ' Crear archivo temporal usando el directorio temporal del sistema
     tempFolderPath = objFSO.GetSpecialFolder(2) ' El 2 es la constante para la carpeta temporal del sistema
@@ -1083,20 +1197,29 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
     ' Exportar a archivo temporal (Access usa ANSI internamente)
     vbComponent.Export tempFilePath
     
-    ' Leer contenido del archivo temporal con codificación ANSI
+    ' Leer contenido del archivo temporal con codificación ANSI usando FSO
     Set objTempFile = objFSO.OpenTextFile(tempFilePath, 1, False, 0) ' ForReading = 1, Create = False, Format = 0 (ANSI)
     strContent = objTempFile.ReadAll
     objTempFile.Close
     
-    ' Escribir al archivo final con la codificación ANSI original
-    Dim objFinalFile
-    Set objFinalFile = objFSO.CreateTextFile(strExportPath, True, False) ' overwrite=true, unicode=false (ANSI)
-    objFinalFile.Write strContent
-    objFinalFile.Close
+    ' Escribir al archivo final con codificación UTF-8 usando ADODB.Stream
+    Set objStream = CreateObject("ADODB.Stream")
+    objStream.Type = 2 ' adTypeText
+    objStream.Charset = "UTF-8"
+    objStream.Open
+    objStream.WriteText strContent
+    objStream.SaveToFile strExportPath, 2 ' adSaveCreateOverWrite
+    objStream.Close
+    Set objStream = Nothing
     
     ' Limpiar archivo temporal
-    On Error Resume Next
     objFSO.DeleteFile tempFilePath
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ ERROR en ExportModuleWithAnsiEncoding: " & Err.Description
+        Err.Clear
+    End If
+    
     On Error GoTo 0
 End Sub
 
@@ -1108,71 +1231,54 @@ Sub ImportModuleWithAnsiEncoding(strImportPath, moduleName, fileExtension, vbCom
     Dim importError, renameError, existingComponent
     
     If fileExtension = "bas" Then
-        ' Lógica original para módulos estándar (.bas)
-        ' Crear archivo temporal con contenido limpio usando codificación ANSI
-        tempFolderPath = objFSO.GetSpecialFolder(2)
-        tempFileName = objFSO.GetTempName()
-        tempFilePath = objFSO.BuildPath(tempFolderPath, tempFileName)
-        
-        ' Escribir contenido limpio con codificación ANSI explícita
+        ' Lógica corregida para módulos estándar (.bas) - usar Add(1)
         On Error Resume Next
-        Set objTempFile = objFSO.CreateTextFile(tempFilePath, True, False)
-        If Err.Number <> 0 Then
-            WScript.Echo "❌ ERROR: No se pudo crear archivo temporal para " & moduleName & ": " & Err.Description
-            On Error GoTo 0
-            Exit Sub
-        End If
         
-        objTempFile.Write cleanedContent
-        objTempFile.Close
-        On Error GoTo 0
+        ' Buscar si ya existe un componente con este nombre
+        Set vbComponent = Nothing
+        For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents
+            If existingComponent.Name = moduleName Then
+                Set vbComponent = existingComponent
+                Exit For
+            End If
+        Next
         
-        ' Importar desde archivo temporal
-        On Error Resume Next
-        Call objAccess.VBE.ActiveVBProject.VBComponents.Import(tempFilePath)
-        importError = Err.Number
-        If importError <> 0 Then
-            WScript.Echo "❌ ERROR: Fallo al importar " & moduleName & ": " & Err.Description & " (Código: " & Err.Number & ")"
-            On Error GoTo 0
-            ' Limpiar archivo temporal
-            On Error Resume Next
-            objFSO.DeleteFile tempFilePath
-            On Error GoTo 0
-            Exit Sub
-        End If
-        On Error GoTo 0
-        
-        ' Renombrar el módulo importado al nombre correcto
-        On Error Resume Next
-        Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents(objAccess.VBE.ActiveVBProject.VBComponents.Count)
-        If Err.Number <> 0 Then
-            WScript.Echo "❌ ERROR: No se pudo acceder al módulo importado " & moduleName & ": " & Err.Description
-            On Error GoTo 0
-            ' Limpiar archivo temporal
-            On Error Resume Next
-            objFSO.DeleteFile tempFilePath
-            On Error GoTo 0
-            Exit Sub
-        End If
-        
-        If vbComponent.Name <> moduleName Then
+        ' Si no existe, crear nuevo componente
+        If vbComponent Is Nothing Then
+            Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(1) ' 1 = vbext_ct_StdModule
+            If Err.Number <> 0 Then
+                WScript.Echo "❌ ERROR: No se pudo crear componente estándar para " & moduleName & ": " & Err.Description
+                On Error GoTo 0
+                Exit Sub
+            End If
+            
+            ' Renombrar inmediatamente después de crear
             vbComponent.Name = moduleName
             renameError = Err.Number
             If renameError <> 0 Then
-                WScript.Echo "❌ ERROR: No se pudo renombrar el módulo a " & moduleName & ": " & Err.Description & " (Código: " & Err.Number & ")"
+                WScript.Echo "❌ ERROR: No se pudo renombrar el módulo nuevo a '" & moduleName & "': " & Err.Description & " (Código: " & Err.Number & ")"
+                On Error GoTo 0
+                Exit Sub
             End If
-            On Error GoTo 0
+        Else
+            ' Si existe, limpiar el código existente
+            If vbComponent.CodeModule.CountOfLines > 0 Then
+                vbComponent.CodeModule.DeleteLines 1, vbComponent.CodeModule.CountOfLines
+            End If
         End If
         
-        ' Limpiar archivo temporal
-        On Error Resume Next
-        objFSO.DeleteFile tempFilePath
+        ' Insertar el contenido limpio en el módulo de código
+        vbComponent.CodeModule.AddFromString cleanedContent
+        If Err.Number <> 0 Then
+            WScript.Echo "❌ ERROR: No se pudo insertar código en el módulo " & moduleName & ": " & Err.Description
+            On Error GoTo 0
+            Exit Sub
+        End If
+        
         On Error GoTo 0
         
-        ' Confirmar éxito si no hubo errores
-        If importError = 0 And renameError = 0 Then
-            WScript.Echo "✅ Módulo " & moduleName & " importado correctamente (UTF-8 -> ANSI)"
-        End If
+        ' Confirmar éxito
+        WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
         
     ElseIf fileExtension = "cls" Then
         ' Lógica específica para módulos de clase (.cls)

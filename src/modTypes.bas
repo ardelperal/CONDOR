@@ -1,17 +1,16 @@
-Attribute VB_Name = "modTypes"
+ï»¿Attribute VB_Name = "modTypes"
 Option Compare Database
 Option Explicit
 
-
 ' ============================================================================
-' Módulo: modTypes
-' Descripción: Definición de tipos de datos personalizados para CONDOR
+' M?dulo: modTypes
+' Descripci?n: Definici?n de tipos de datos personalizados para CONDOR
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
 ' ============================================================================
 
-' Tipo que representa un expediente basado en la consulta SQL de integración
-' con la aplicación de Expedientes existente
+' Tipo que representa un expediente basado en la consulta SQL de integraci?n
+' con la aplicaci?n de Expedientes existente
 Public Type T_Expediente
     IDExpediente As Long
     Nemotecnico As String
@@ -22,7 +21,7 @@ Public Type T_Expediente
 End Type
 
 ' Tipo que representa una solicitud general
-' Basado en la tabla Tb_Solicitudes de la especificación funcional
+' Basado en la tabla Tb_Solicitudes de la especificaci?n funcional
 Public Type T_Solicitud
     ID As Long
     NumeroExpediente As String
@@ -36,8 +35,8 @@ Public Type T_Solicitud
     Activo As Boolean
 End Type
 
-' Tipo que representa los datos específicos para Propuestas de Cambio (PC)
-' Basado en la tabla TbDatos_PC de la especificación funcional
+' Tipo que representa los datos espec?ficos para Propuestas de Cambio (PC)
+' Basado en la tabla TbDatos_PC de la especificaci?n funcional
 Public Type T_Datos_PC
     ID As Long
     SolicitudID As Long
@@ -53,8 +52,8 @@ Public Type T_Datos_PC
     Activo As Boolean
 End Type
 
-' Tipo que representa los datos específicos para Concesiones y Desviaciones (CD_CA)
-' Basado en la tabla TbDatos_CD_CA de la especificación funcional
+' Tipo que representa los datos espec?ficos para Concesiones y Desviaciones (CD_CA)
+' Basado en la tabla TbDatos_CD_CA de la especificaci?n funcional
 Public Type T_Datos_CD_CA
     ID As Long
     SolicitudID As Long
@@ -71,8 +70,8 @@ Public Type T_Datos_CD_CA
     Activo As Boolean
 End Type
 
-' Tipo que representa los datos específicos para Concesiones y Desviaciones de Sub-suministrador (CD_CA_SUB)
-' Basado en la tabla TbDatos_CD_CA_SUB de la especificación funcional
+' Tipo que representa los datos espec?ficos para Concesiones y Desviaciones de Sub-suministrador (CD_CA_SUB)
+' Basado en la tabla TbDatos_CD_CA_SUB de la especificaci?n funcional
 Public Type T_Datos_CD_CA_SUB
     ID As Long
     SolicitudID As Long
@@ -89,3 +88,4 @@ Public Type T_Datos_CD_CA_SUB
     Estado As String
     Activo As Boolean
 End Type
+
