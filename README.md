@@ -148,6 +148,7 @@ Esto mostrará valores como:
 ## Arquitectura de Código
 - Separación en capas: Presentación, Negocio, Acceso a Datos y Servicios Externos.
 - Uso de interfaces para facilitar tests unitarios.
+- Sistema de manejo de errores centralizado (`modErrorHandler.bas`) que registra todos los errores en la tabla `Tb_Log_Errores` de la base de datos.
 
 ## Estructura de Datos
 - Tablas principales: Expedientes, Solicitudes, Datos específicos y Mapeo de campos.

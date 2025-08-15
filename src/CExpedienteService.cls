@@ -86,7 +86,7 @@ Cleanup:
     Exit Function
     
 ErrorHandler:
-    Debug.Print "Error en CExpedienteService.GetExpedienteById: " & Err.Description
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "CExpedienteService.GetExpedienteById")
     Resume Cleanup
 End Function
 

@@ -55,11 +55,13 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - [x] Herramienta CLI (condor_cli.vbs)
 - [x] Sistema de pruebas unitarias
 - [x] Sistema de pruebas de integración
+- [x] Refactorización del sistema de pruebas (eliminación comando test CLI, método manual implementado)
 - [x] Documentación inicial (README.md)
 - [x] Arquitectura en 3 capas implementada
 - [x] Sistema de interfaces y mocks para testing
 - [x] Servicios de autenticación y configuración
 - [x] Framework de testing completo con reportes
+- [x] Método manual de ejecución de pruebas (_EJECUTAR_TODAS_LAS_PRUEBAS)
 
 ## 1. ARQUITECTURA Y ESTRUCTURA BASE
 
@@ -211,7 +213,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 ## Notas de Progreso
 
 ### Última actualización: Enero 2025
-**Completado:** 30/85+ tareas (~35%)
+**Completado:** 35/85+ tareas (~41%)
 
 ### Próxima revisión: Enero 2025
 **Responsable:** CONDOR-Expert
@@ -228,6 +230,11 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - ✅ **Módulo de Solicitudes implementado:** ISolicitud, CSolicitudPC, modSolicitudFactory con Factory Pattern
 - ✅ **Estructuras de datos de solicitudes:** T_Datos_PC, T_Datos_CD_CA, T_Datos_CD_CA_SUB implementadas
 - ✅ **Pruebas de solicitudes:** Test_Solicitudes con cobertura completa del módulo
+- ✅ **Refactorización del sistema de testing:** Eliminado comando test de CLI, implementado método manual _EJECUTAR_TODAS_LAS_PRUEBAS
+- ✅ **Documentación actualizada:** README.md y PLAN_DE_ACCION.md actualizados con nuevo flujo de pruebas
+- ✅ **Sistema de manejo de errores centralizado:** modErrorHandler.bas implementado con función LogError
+- ✅ **Integración de manejo de errores:** Refactorizado CAuthService, CExpedienteService y modDatabase para usar sistema centralizado
+- ✅ **Pruebas de manejo de errores:** Test_ErrorHandler.bas con cobertura completa del sistema de errores
 - 🔧 **Próximo objetivo:** Implementar workflow y estados de solicitudes
 - 📋 **Decisión arquitectónica:** Uso de interfaces para permitir mocking y testing efectivo
 

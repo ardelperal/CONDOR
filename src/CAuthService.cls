@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -114,8 +114,8 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRo
     Exit Function
     
 ErrorHandler:
-    ' Manejo de errores
-    Debug.Print "Error en IAuthService_GetUserRole: " & Err.Number & " - " & Err.Description
+    ' Registrar error en el sistema centralizado
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "CAuthService.IAuthService_GetUserRole", "Consultando rol de usuario: " & userEmail)
     
     ' Limpiar recursos en caso de error
     If Not rs Is Nothing Then

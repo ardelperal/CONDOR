@@ -40,6 +40,7 @@ Public Function GetSolicitudData(ByVal idSolicitud As Long) As DAO.Recordset
     Exit Function
     
 ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modDatabase.GetSolicitudData")
     Set GetSolicitudData = Nothing
     If Not db Is Nothing Then db.Close
 End Function
@@ -166,7 +167,7 @@ ErrorHandler:
     SaveSolicitudPC = False
     ' Si hubo un error, deshacer todos los cambios de la transacción
     DBEngine.Rollback
-    Debug.Print "Error en SaveSolicitudPC: " & Err.Number & " - " & Err.Description
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modDatabase.SaveSolicitudPC")
     ' Limpiar objetos
     If Not rsSolicitud Is Nothing Then rsSolicitud.Close
     If Not rsPC Is Nothing Then rsPC.Close
@@ -195,6 +196,7 @@ Public Function SolicitudExists(ByVal idSolicitud As Long) As Boolean
     Exit Function
     
 ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modDatabase.SolicitudExists")
     SolicitudExists = False
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
