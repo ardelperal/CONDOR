@@ -177,16 +177,38 @@ cscript condor_cli.vbs rebuild
 - Garantiza un estado 100% limpio y compilado
 - Muestra advertencias de compilación si las hay
 
-#### Ejecución de Pruebas (Manual)
-Para ejecutar las pruebas del sistema:
-1. Abrir `CONDOR.accdb` en Microsoft Access
-2. Presionar `Alt+F8` para abrir la ventana de Macros
-3. Ejecutar la macro `_EJECUTAR_TODAS_LAS_PRUEBAS`
-4. Presionar `Ctrl+G` para abrir la Ventana Inmediato y revisar los resultados
+#### Flujo de Trabajo de Verificación Manual (Post-push de la IA)
 
-- Ejecuta el motor de pruebas interno de CONDOR
-- **IMPORTANTE**: Requiere haber ejecutado `rebuild` previamente para compilar los módulos
-- Proporciona un informe detallado de resultados en la Ventana Inmediato
+Después de que el agente autónomo complete una tarea y suba los cambios, el supervisor humano debe realizar el siguiente proceso de control de calidad para validar el trabajo:
+
+**Paso 1: Sincronizar el Repositorio Local**
+- Abrir una terminal en la raíz del proyecto.
+- Ejecutar `git pull` para descargar los últimos cambios.
+
+**Paso 2: Reconstruir la Base de Datos de Desarrollo**
+- En la misma terminal, ejecutar el comando de reconstrucción completa:
+```bash
+cscript //nologo condor_cli.vbs rebuild
+```
+
+**Paso 3: Verificar la Compilación (Paso de Calidad Crítico)**
+- Abrir el fichero `CONDOR.accdb` de la carpeta de desarrollo.
+- Abrir el editor de VBA (`Alt + F11`).
+- Ir al menú **Depurar > Compilar [Nombre del Proyecto]**.
+- Si aparece un error de compilación, la verificación falla. Se debe notificar a la IA con una captura de pantalla del error. No se debe continuar al siguiente paso.
+- Si no ocurre nada, la compilación es exitosa.
+
+**Paso 4: Ejecutar la Suite de Pruebas Automatizadas**
+- Con el editor de VBA abierto, mostrar la Ventana Inmediato (`Ctrl + G`).
+- Para ejecutar todas las pruebas, escribir en la Ventana Inmediato y pulsar Enter:
+```vb
+_EJECUTAR_TODAS_LAS_PRUEBAS
+```
+
+**Paso 5: Analizar los Resultados y Notificar**
+- Revisar el informe de pruebas que aparece en la Ventana Inmediato.
+- Si todas las pruebas pasan, notificar a la IA que el trabajo ha sido validado y que puede proceder con la siguiente tarea del `PLAN_DE_ACCION.MD`.
+- Si alguna prueba falla, copiar el log de error y proporcionárselo a la IA para que inicie un nuevo ciclo de depuración.
 
 ### Conversión Automática de Codificación
 
