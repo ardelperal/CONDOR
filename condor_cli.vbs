@@ -847,11 +847,7 @@ Function CleanVBAFile(filePath, fileType)
         End If
     Next
     
-    If fileType = "cls" Then
-        WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option (archivo .cls)"
-    Else
-        WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos (archivo .bas, Option mantenidas)"
-    End If
+    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option (archivo ." & fileType & ")"
     
     CleanVBAFile = cleanedLines
 End Function
