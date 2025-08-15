@@ -504,9 +504,9 @@ Sub RunTestsWithEngine(testModule)
     
     ' Determinar la función a llamar
     If testModule = "" Then
-        testFunction = "modTestRunner.RunAllTests"
+        testFunction = "modTestRunner.ExecuteAllTests"
     Else
-        testFunction = testModule & ".RunAllTests"
+        testFunction = testModule & ".ExecuteAllTests"
     End If
     
     WScript.Echo "Intentando ejecutar directamente: '" & testFunction & "'"
@@ -516,10 +516,17 @@ Sub RunTestsWithEngine(testModule)
      ' Intentar diferentes métodos de llamada
      Set objDB = objAccess.CurrentDb
      
-     ' Intentar con el nombre completo del módulo
-     resultado = objAccess.Application.Run("modTestRunner.RunAllTests")
+     ' Método 1: Intentar con la función wrapper ExecuteAllTests (Sub)
+     objAccess.Application.Run "modTestRunner.ExecuteAllTests"
+     resultado = "Pruebas ejecutadas correctamente usando ExecuteAllTests"
      
-     ' Si falla, intentar sin el prefijo del módulo
+     ' Método 2: Si falla, intentar con RunAllTests (Function)
+     If Err.Number <> 0 Then
+         Err.Clear
+         resultado = objAccess.Application.Run("modTestRunner.RunAllTests")
+     End If
+     
+     ' Método 3: Si falla, intentar sin el prefijo del módulo
      If Err.Number <> 0 Then
          Err.Clear
          resultado = objAccess.Application.Run("RunAllTests")

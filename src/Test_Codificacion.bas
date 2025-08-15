@@ -20,3 +20,4 @@ Public Function ObtenerMensajeConAcentos() As String
     ' Función que retorna un mensaje con acentos
     ObtenerMensajeConAcentos = "Configuración exitosa con caracteres españoles"
 End Function
+

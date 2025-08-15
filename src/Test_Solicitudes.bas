@@ -35,3 +35,4 @@ Private Sub Test_Factory_Crea_PC()
     Debug.Assert TypeOf s Is CSolicitudPC
 End Sub
 
+

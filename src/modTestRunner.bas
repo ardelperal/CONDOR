@@ -7,10 +7,6 @@ Option Explicit
 
 ' Ejecuta todas las suites de pruebas del proyecto y devuelve un informe completo.
 Public Function RunAllTests() As String
-    If Not modConfig.DEV_MODE Then
-        RunAllTests = "Las pruebas solo están disponibles en modo desarrollo"
-        Exit Function
-    End If
     Dim resultado As String
     Dim testsPassed As Long, testsTotal As Long
     Dim suiteResult As String
@@ -64,5 +60,12 @@ Public Function RunAllTests() As String
 ErrorHandler:
     RunAllTests = resultado & vbCrLf & "[ERROR FATAL] El Test Runner falló: " & Err.Description
 End Function
+
+' Función wrapper simple para facilitar la llamada desde VBScript
+Public Sub ExecuteAllTests()
+    Dim resultado As String
+    resultado = RunAllTests()
+    Debug.Print resultado
+End Sub
 
 
