@@ -176,14 +176,16 @@ cscript condor_cli.vbs rebuild
 - Garantiza un estado 100% limpio y compilado
 - Muestra advertencias de compilación si las hay
 
-#### Ejecución de Pruebas
-```bash
-cscript condor_cli.vbs test
-```
+#### Ejecución de Pruebas (Manual)
+Para ejecutar las pruebas del sistema:
+1. Abrir `CONDOR.accdb` en Microsoft Access
+2. Presionar `Alt+F8` para abrir la ventana de Macros
+3. Ejecutar la macro `_EJECUTAR_TODAS_LAS_PRUEBAS`
+4. Presionar `Ctrl+G` para abrir la Ventana Inmediato y revisar los resultados
+
 - Ejecuta el motor de pruebas interno de CONDOR
 - **IMPORTANTE**: Requiere haber ejecutado `rebuild` previamente para compilar los módulos
-- Proporciona un informe detallado de resultados
-- Utiliza únicamente `Application.Run` para mayor robustez
+- Proporciona un informe detallado de resultados en la Ventana Inmediato
 
 ### Conversión Automática de Codificación
 
@@ -357,15 +359,15 @@ Consulta el **[Plan de Acción](PLAN_DE_ACCION.md)** para ver el roadmap complet
 **Flujo Recomendado (3 pasos):**
 1. **Desarrollo Local**: Modificar archivos `.bas` en el directorio `src/`
 2. **Reconstrucción**: `cscript condor_cli.vbs rebuild` para aplicar cambios y compilar módulos
-3. **Ejecución de Pruebas**: `cscript condor_cli.vbs test` para validar funcionalidad
+3. **Verificación Manual**: Abrir `CONDOR.accdb`, ejecutar macro `_EJECUTAR_TODAS_LAS_PRUEBAS` (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G)
 4. **Exportación**: `cscript condor_cli.vbs export` para sincronizar cambios desde Access (opcional)
 
-**Comando Combinado:**
+**Comando de Reconstrucción:**
 ```bash
-cscript condor_cli.vbs rebuild && cscript condor_cli.vbs test
+cscript condor_cli.vbs rebuild
 ```
 
-**⚠️ Importante**: El comando `test` requiere que los módulos estén compilados. Siempre ejecute `rebuild` antes de `test` para garantizar un estado limpio y compilado.
+**⚠️ Importante**: Las pruebas requieren que los módulos estén compilados. Siempre ejecute `rebuild` antes de ejecutar las pruebas manualmente para garantizar un estado limpio y compilado.
 
 ### Configuración
 

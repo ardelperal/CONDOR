@@ -28,7 +28,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "COMANDOS DISPONIBLES:"
     WScript.Echo "  export     - Exportar modulos VBA a /src (con codificacion ANSI)"
     WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
-    WScript.Echo "  test       - Ejecutar todos los tests (requiere rebuild previo)"
+
     WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
@@ -39,7 +39,6 @@ If objArgs.Count = 0 Then
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
     WScript.Echo "  1. cscript condor_cli.vbs rebuild   (sincronizar y compilar modulos)"
-    WScript.Echo "  2. cscript condor_cli.vbs test      (ejecutar pruebas)"
     WScript.Echo ""
     WScript.Echo "OPCIONES ESPECIALES:"
     WScript.Echo "  --dry-run  - Simular operacion sin modificar Access (solo con import)"
@@ -48,14 +47,14 @@ If objArgs.Count = 0 Then
     WScript.Echo "EJEMPLOS:"
     WScript.Echo "  cscript condor_cli.vbs validate"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
-    WScript.Echo "  cscript condor_cli.vbs rebuild && cscript condor_cli.vbs test"
+    WScript.Echo "  cscript condor_cli.vbs rebuild"
     WScript.Quit 1
 End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'createtable', 'droptable', 'listtables', 'test', 'relink', 'rebuild' o 'lint'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild' o 'lint'"
     WScript.Quit 1
 End If
 
@@ -73,8 +72,8 @@ ElseIf strAction = "listtables" Then
     End If
 End If
 
-' Para tests y rebuild, usar la base de datos de desarrollo
-If strAction = "test" Or strAction = "rebuild" Then
+' Para rebuild, usar la base de datos de desarrollo
+If strAction = "rebuild" Then
     strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
 End If
 
@@ -168,17 +167,7 @@ ElseIf strAction = "droptable" Then
     Call DropTable()
 ElseIf strAction = "listtables" Then
     Call ListTables()
-ElseIf strAction = "test" Then
-    Dim testModule, argIndex
-    testModule = ""
-    ' Buscar el primer argumento que no sea una opción especial
-    For argIndex = 1 To objArgs.Count - 1
-        If LCase(objArgs(argIndex)) <> "--verbose" And LCase(objArgs(argIndex)) <> "--dry-run" Then
-            testModule = objArgs(argIndex)
-            Exit For
-        End If
-    Next
-    Call RunTestsWithEngine(testModule)
+
 ElseIf strAction = "rebuild" Then
     Call RebuildProject()
 ElseIf strAction = "lint" Then
@@ -471,120 +460,8 @@ Sub VerifyTable(strTableName)
     End If
 End Sub
 
-' Subrutina para ejecutar tests con motor interno (versión simplificada)
-' Subrutina para ejecutar tests con motor interno (versión final y robusta)
-Sub RunTestsWithEngine(testModule)
-    WScript.Echo "=== EJECUTANDO PRUEBAS (MODO DIRECTO) ==="
-    
-    ' Forzar compilación antes de ejecutar las pruebas
-    WScript.Echo "Forzando compilación antes de ejecutar pruebas..."
-    On Error Resume Next
-    Err.Clear
-    
-    ' Intentar compilación usando VBE
-    Dim vbProject
-    Set vbProject = objAccess.VBE.ActiveVBProject
-    
-    ' Forzar compilación accediendo a cada módulo
-    Dim vbComponent
-    For Each vbComponent In vbProject.VBComponents
-        ' Acceder al código para forzar compilación
-        Dim tempCode
-        tempCode = vbComponent.CodeModule.Lines(1, 1)
-        If Err.Number <> 0 Then
-            WScript.Echo "⚠️ Error compilando " & vbComponent.Name & ": " & Err.Description
-            Err.Clear
-        End If
-    Next
-    
-    WScript.Echo "✓ Compilación previa completada"
-    On Error GoTo 0
-    
-    Dim resultado, testFunction
-    
-    ' Determinar la función a llamar
-    If testModule = "" Then
-        testFunction = "modTestRunner.ExecuteAllTests"
-    Else
-        testFunction = testModule & ".ExecuteAllTests"
-    End If
-    
-    WScript.Echo "Intentando ejecutar directamente: '" & testFunction & "'"
-    
-    On Error Resume Next
-     ' Usamos Application.Run, que es el método más fiable para funciones que devuelven un valor.
-     ' Intentar diferentes métodos de llamada
-     Set objDB = objAccess.CurrentDb
-     
-     ' Método 1: Intentar con la función wrapper ExecuteAllTests (Sub)
-     objAccess.Application.Run "modTestRunner.ExecuteAllTests"
-     resultado = "Pruebas ejecutadas correctamente usando ExecuteAllTests"
-     
-     ' Método 2: Si falla, intentar con RunAllTests (Function)
-     If Err.Number <> 0 Then
-         Err.Clear
-         resultado = objAccess.Application.Run("modTestRunner.RunAllTests")
-     End If
-     
-     ' Método 3: Si falla, intentar sin el prefijo del módulo
-     If Err.Number <> 0 Then
-         Err.Clear
-         resultado = objAccess.Application.Run("RunAllTests")
-     End If
-     
-     If Err.Number <> 0 Then
-        WScript.Echo ""
-        WScript.Echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        WScript.Echo "!!! ERROR CRITICO AL EJECUTAR LAS PRUEBAS !!!"
-        WScript.Echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        WScript.Echo "Error: " & Err.Number & " - " & Err.Description
-        WScript.Echo "Causa más probable: El proyecto VBA no está compilado. El flujo de trabajo en dos pasos es obligatorio."
-        WScript.Echo ""
-        WScript.Echo "FLUJO DE TRABAJO OBLIGATORIO:"
-        WScript.Echo "1. Ejecute: cscript condor_cli.vbs rebuild"
-        WScript.Echo "2. Ejecute: cscript condor_cli.vbs test"
-        Err.Clear
-    Else
-        WScript.Echo "" ' Línea en blanco
-        WScript.Echo "--- INICIO DEL REPORTE DE PRUEBAS ---"
-        
-        ' Intentar leer el archivo temporal con los resultados detallados
-        Dim fso, tempFile, testResults
-        Set fso = CreateObject("Scripting.FileSystemObject")
-        tempFile = fso.GetSpecialFolder(2) & "\condor_test_results.txt"  ' GetSpecialFolder(2) = Temp folder
-        
-        If fso.FileExists(tempFile) Then
-            On Error Resume Next
-            Dim file
-            Set file = fso.OpenTextFile(tempFile, 1)  ' ForReading = 1
-            If Err.Number = 0 Then
-                testResults = file.ReadAll
-                file.Close
-                If Len(Trim(testResults)) > 0 Then
-                    WScript.Echo testResults
-                Else
-                    WScript.Echo "[INFO] Archivo de resultados vacio"
-                    WScript.Echo resultado
-                End If
-            Else
-                WScript.Echo "[WARNING] No se pudo leer archivo de resultados: " & Err.Description
-                WScript.Echo resultado
-                Err.Clear
-            End If
-            On Error GoTo 0
-            
-            ' Limpiar archivo temporal
-            fso.DeleteFile tempFile, True
-        Else
-            WScript.Echo "[INFO] No se encontro archivo de resultados, mostrando resultado directo"
-            WScript.Echo resultado
-        End If
-        
-        WScript.Echo "--- FIN DEL REPORTE DE PRUEBAS ---"
-    End If
-    
-    On Error GoTo 0
-End Sub
+
+
 
 ' ===================================================================
 ' SUBRUTINA: LintProject

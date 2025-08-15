@@ -473,106 +473,42 @@ End Sub
 
 ' Subrutina para ejecutar tests con motor interno (versión simplificada)
 ' Subrutina para ejecutar tests con motor interno (versión final y robusta)
-Sub RunTestsWithEngine(testModule)
-    WScript.Echo "=== EJECUTANDO PRUEBAS (MODO DIRECTO) ==="
+Sub RunTestsWithEngine(testModule) ' 'testModule' ya no se usa, pero lo mantenemos por ahora
+    WScript.Echo "=== EJECUTANDO PRUEBAS (CON SMOKE TEST) ==="
     
-    ' Forzar compilación antes de ejecutar las pruebas
-    WScript.Echo "Forzando compilación antes de ejecutar pruebas..."
+    ' --- 1. SMOKE TEST: ¿Podemos llamar a CUALQUIER función? ---
+    WScript.Echo "Intentando ejecutar 'Ping' de diagnóstico..."
+    Dim pongResult
     On Error Resume Next
-    Err.Clear
+    pongResult = objAccess.Application.Run("modAppManager.Ping")
     
-    ' Intentar compilación usando VBE
-    Dim vbProject
-    Set vbProject = objAccess.VBE.ActiveVBProject
-    
-    ' Forzar compilación accediendo a cada módulo
-    Dim vbComponent
-    For Each vbComponent In vbProject.VBComponents
-        ' Acceder al código para forzar compilación
-        Dim tempCode
-        tempCode = vbComponent.CodeModule.Lines(1, 1)
-        If Err.Number <> 0 Then
-            WScript.Echo "⚠️ Error compilando " & vbComponent.Name & ": " & Err.Description
-            Err.Clear
-        End If
-    Next
-    
-    WScript.Echo "✓ Compilación previa completada"
-    On Error GoTo 0
-    
-    Dim resultado, testFunction
-    
-    ' Determinar la función a llamar
-    If testModule = "" Then
-        testFunction = "modTestRunner.RunAllTests"
-    Else
-        testFunction = testModule & ".RunAllTests"
-    End If
-    
-    WScript.Echo "Intentando ejecutar directamente: '" & testFunction & "'"
-    
-    On Error Resume Next
-     ' Usamos Application.Run, que es el método más fiable para funciones que devuelven un valor.
-     ' Intentar diferentes métodos de llamada
-     Set objDB = objAccess.CurrentDb
-     
-     ' Intentar con el nombre completo del módulo
-     resultado = objAccess.Application.Run("modTestRunner.RunAllTests")
-     
-     ' Si falla, intentar sin el prefijo del módulo
-     If Err.Number <> 0 Then
-         Err.Clear
-         resultado = objAccess.Application.Run("RunAllTests")
-     End If
-     
-     If Err.Number <> 0 Then
+    If Err.Number <> 0 Then
         WScript.Echo ""
-        WScript.Echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        WScript.Echo "!!! ERROR CRITICO AL EJECUTAR LAS PRUEBAS !!!"
-        WScript.Echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        WScript.Echo "!!! DIAGNÓSTICO: EL SMOKE TEST HA FALLADO !!!"
+        WScript.Echo "!!! No se puede establecer la conexión de automatización con el motor VBA."
         WScript.Echo "Error: " & Err.Number & " - " & Err.Description
-        WScript.Echo "Causa más probable: El proyecto VBA no está compilado. El flujo de trabajo en dos pasos es obligatorio."
-        WScript.Echo ""
-        WScript.Echo "FLUJO DE TRABAJO OBLIGATORIO:"
-        WScript.Echo "1. Ejecute: cscript condor_cli.vbs rebuild"
-        WScript.Echo "2. Ejecute: cscript condor_cli.vbs test"
+        Err.Clear
+        On Error GoTo 0
+        Exit Sub ' Si el Ping no funciona, no tiene sentido continuar
+    End If
+    On Error GoTo 0
+    WScript.Echo "✓ Smoke Test exitoso. Respuesta: '" & pongResult & "'"
+    WScript.Echo ""
+
+    ' --- 2. PRUEBA REAL: Ahora intentamos llamar al Test Runner ---
+    WScript.Echo "Intentando ejecutar: 'modTestRunner.RunAllTests'"
+    Dim testResult
+    On Error Resume Next
+    testResult = objAccess.Application.Run("modTestRunner.RunAllTests")
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "!!! ERROR CRÍTICO AL EJECUTAR LAS PRUEBAS !!!"
+        WScript.Echo "Error: " & Err.Number & " - " & Err.Description
+        WScript.Echo "Diagnóstico: El Smoke Test pasó, pero RunAllTests falló. El problema está específicamente en el módulo modTestRunner o sus dependencias."
         Err.Clear
     Else
-        WScript.Echo "" ' Línea en blanco
         WScript.Echo "--- INICIO DEL REPORTE DE PRUEBAS ---"
-        
-        ' Intentar leer el archivo temporal con los resultados detallados
-        Dim fso, tempFile, testResults
-        Set fso = CreateObject("Scripting.FileSystemObject")
-        tempFile = fso.GetSpecialFolder(2) & "\condor_test_results.txt"  ' GetSpecialFolder(2) = Temp folder
-        
-        If fso.FileExists(tempFile) Then
-            On Error Resume Next
-            Dim file
-            Set file = fso.OpenTextFile(tempFile, 1)  ' ForReading = 1
-            If Err.Number = 0 Then
-                testResults = file.ReadAll
-                file.Close
-                If Len(Trim(testResults)) > 0 Then
-                    WScript.Echo testResults
-                Else
-                    WScript.Echo "[INFO] Archivo de resultados vacio"
-                    WScript.Echo resultado
-                End If
-            Else
-                WScript.Echo "[WARNING] No se pudo leer archivo de resultados: " & Err.Description
-                WScript.Echo resultado
-                Err.Clear
-            End If
-            On Error GoTo 0
-            
-            ' Limpiar archivo temporal
-            fso.DeleteFile tempFile, True
-        Else
-            WScript.Echo "[INFO] No se encontro archivo de resultados, mostrando resultado directo"
-            WScript.Echo resultado
-        End If
-        
+        WScript.Echo testResult
         WScript.Echo "--- FIN DEL REPORTE DE PRUEBAS ---"
     End If
     

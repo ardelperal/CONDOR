@@ -37,7 +37,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 2.  **Desarrollo y Pruebas (Tu Bucle Autónomo):**
     a. **Generar Código Protegido:** Escribe el código VBA para la funcionalidad y sus pruebas. Ambos deben estar protegidos por el bloque de compilación condicional `#If DEV_MODE Then`.
     b. **Reconstruir Proyecto con Limpieza:** Ejecuta `cscript //nologo condor_cli.vbs rebuild`. **CRÍTICO:** Durante la reconstrucción, el sistema debe "limpiar" automáticamente cada archivo .bas/.cls eliminando todas las líneas que empiecen con "Attribute" antes de usar AddFromString en Access.
-    c. **Ejecutar Pruebas:** Ejecuta `cscript //nologo condor_cli.vbs test`.
+    c. **Verificar Pruebas:** Abrir `CONDOR.accdb`, ejecutar macro `_EJECUTAR_TODAS_LAS_PRUEBAS` (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G).
     d. **Analizar Resultado:**
         *   **Si las pruebas fallan:** Analiza el log de error, corrige el código VBA, y **repite desde el paso 2b**. Continúa en este bucle hasta que todas las pruebas pasen.
         *   **Si las pruebas pasan:** Procede al siguiente paso.
