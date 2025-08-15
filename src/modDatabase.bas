@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modDatabase"
+Attribute VB_Name = "modDatabase"
 Option Compare Database
 Option Explicit
 
@@ -58,12 +58,11 @@ Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData
     Dim isNewRecord As Boolean
     
     SaveSolicitudPC = False
+    Set db = CurrentDb
     
-    ' Conectar a la base de datos actual
-    Set db = CurrentDb()
-    
-    ' Iniciar transacci?n
-    db.BeginTrans
+    ' --- INICIO DE LA TRANSACCIÓN ---
+    ' Se gestiona a través del espacio de trabajo DBEngine
+    DBEngine.BeginTrans
     
     ' Determinar si es un registro nuevo
     isNewRecord = (solicitudData.ID = 0)
@@ -156,23 +155,22 @@ Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData
     End With
     rsPC.Close
     
-    ' Confirmar transacci?n
-    db.CommitTrans
+    ' --- FINALIZACIÓN DE LA TRANSACCIÓN ---
+    DBEngine.CommitTrans
     SaveSolicitudPC = True
     
-    ' Cerrar base de datos
-    db.Close
-    
+    Set db = Nothing
     Exit Function
     
 ErrorHandler:
     SaveSolicitudPC = False
-    If Not db Is Nothing Then
-        db.Rollback
-        db.Close
-    End If
+    ' Si hubo un error, deshacer todos los cambios de la transacción
+    DBEngine.Rollback
+    Debug.Print "Error en SaveSolicitudPC: " & Err.Number & " - " & Err.Description
+    ' Limpiar objetos
     If Not rsSolicitud Is Nothing Then rsSolicitud.Close
     If Not rsPC Is Nothing Then rsPC.Close
+    If Not db Is Nothing Then Set db = Nothing
 End Function
 
 ' ============================================================================
