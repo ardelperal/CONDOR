@@ -89,7 +89,7 @@ End Function
 ' PROPOSITO: Punto de entrada manual para ejecutar todas las pruebas
 ' USO: Ejecutar desde la ventana de Macros (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G)
 ' =====================================================
-Public Sub _EJECUTAR_TODAS_LAS_PRUEBAS()
+Public Sub EJECUTAR_TODAS_LAS_PRUEBAS()
     Debug.Print modTestRunner.RunAllTests()
 End Sub
 
