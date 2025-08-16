@@ -418,7 +418,7 @@ Public Function Test_CConfig_GetValue_ValidKeys_ReturnsValues() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = New CConfig
     
     ' Act & Assert - Probar varias claves
@@ -451,7 +451,7 @@ Public Function Test_CConfig_GetValue_InvalidKey_ReturnsNull() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = New CConfig
     
     ' Act
