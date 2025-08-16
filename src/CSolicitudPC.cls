@@ -41,7 +41,6 @@ Private m_EstadoInterno As String
 
 ' --- 1. Implementación PRIVADA de la Interfaz ---
 '     Satisface el contrato "Implements".
-
 Private Property Get ISolicitud_IdSolicitud() As Long
     ISolicitud_IdSolicitud = m_IdSolicitud
 End Property
