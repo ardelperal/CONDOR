@@ -23,6 +23,12 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
     *   **Módulos:** Deben empezar con el prefijo `mod` (ej. `modConfig`).
     *   **Miembros (Propiedades, Funciones, Subrutinas):** Los nombres de miembros deben usar CamelCase. El uso de guiones bajos está prohibido para evitar bugs del compilador.
 
+4.  **Principio de Pruebas Unitarias: Programar contra la Interfaz.**
+    *   **Regla Inquebrantable:** Dentro de cualquier módulo de pruebas (ficheros Test_*.bas), las variables que referencian a nuestras clases de negocio (C*) DEBEN ser declaradas del tipo de su interfaz (I*), no de su clase concreta.
+    *   **Ejemplo Correcto:** `Dim configSvc As IConfig`
+    *   **Ejemplo Incorrecto:** `Dim configSvc As CConfig`
+    *   **Objetivo:** Forzar el desacoplamiento total en el entorno de pruebas. Esto garantiza que los tests solo dependan del contrato público definido en la interfaz, lo cual es esencial para el mocking y la prevención de errores de compilación como "método no encontrado".
+
 ---
 ### **CICLO DE TRABAJO DE DESARROLLO (MODO AUTÓNOMO)**
 
