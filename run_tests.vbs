@@ -41,10 +41,10 @@ WScript.Echo "Base de datos: " & strAccessPath
 WScript.Echo "Fecha y hora: " & Now()
 WScript.Echo ""
 
-' Ejecutar las pruebas
+' Ejecutar las pruebas y obtener resultados
 On Error Resume Next
 Dim resultado
-resultado = objAccess.Run("EJECUTAR_TODAS_LAS_PRUEBAS")
+resultado = objAccess.Run("OBTENER_RESULTADOS_PRUEBAS")
 If Err.Number <> 0 Then
     WScript.Echo "Error ejecutando pruebas: " & Err.Description
     objAccess.Quit
@@ -52,6 +52,9 @@ If Err.Number <> 0 Then
 End If
 On Error GoTo 0
 
+' Mostrar los resultados en el terminal
+WScript.Echo resultado
+WScript.Echo ""
 WScript.Echo "=== PRUEBAS COMPLETADAS ==="
 
 ' Cerrar Access

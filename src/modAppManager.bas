@@ -85,13 +85,22 @@ Public Function Ping() As String
 End Function
 
 ' =====================================================
-' SUBRUTINA: _EJECUTAR_TODAS_LAS_PRUEBAS
+' SUBRUTINA: EJECUTAR_TODAS_LAS_PRUEBAS
 ' PROPOSITO: Punto de entrada manual para ejecutar todas las pruebas
 ' USO: Ejecutar desde la ventana de Macros (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G)
 ' =====================================================
 Public Sub EJECUTAR_TODAS_LAS_PRUEBAS()
     Debug.Print modTestRunner.RunAllTests()
 End Sub
+
+' =====================================================
+' FUNCION: OBTENER_RESULTADOS_PRUEBAS
+' PROPOSITO: Obtener los resultados de todas las pruebas como string
+' RETORNA: String - Resultados de las pruebas
+' =====================================================
+Public Function OBTENER_RESULTADOS_PRUEBAS() As String
+    OBTENER_RESULTADOS_PRUEBAS = modTestRunner.RunAllTests()
+End Function
 
 
 

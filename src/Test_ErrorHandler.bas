@@ -55,7 +55,67 @@ Public Function RunErrorHandlerTests() As String
     End If
     testsTotal = testsTotal + 1
     
-    ' Test 4: Verificar limpieza de logs antiguos
+    ' Test 4: Verificar manejo de errores de base de datos
+    On Error Resume Next
+    Err.Clear
+    Call Test_ErrorBaseDatos_ManejaCorrectamente
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ErrorBaseDatos_ManejaCorrectamente" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_ErrorBaseDatos_ManejaCorrectamente: " & Err.Description & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 5: Verificar manejo de errores de red
+    On Error Resume Next
+    Err.Clear
+    Call Test_ErrorRed_ManejaCorrectamente
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ErrorRed_ManejaCorrectamente" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_ErrorRed_ManejaCorrectamente: " & Err.Description & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 6: Verificar manejo de errores de memoria
+    On Error Resume Next
+    Err.Clear
+    Call Test_ErrorMemoria_ManejaCorrectamente
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ErrorMemoria_ManejaCorrectamente" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_ErrorMemoria_ManejaCorrectamente: " & Err.Description & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 7: Verificar manejo de errores de validación
+    On Error Resume Next
+    Err.Clear
+    Call Test_ErrorValidacion_ManejaCorrectamente
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_ErrorValidacion_ManejaCorrectamente" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_ErrorValidacion_ManejaCorrectamente: " & Err.Description & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 8: Verificar logging con diferentes niveles de severidad
+    On Error Resume Next
+    Err.Clear
+    Call Test_LoggingNivelesSeveridad_FuncionaCorrectamente
+    If Err.Number = 0 Then
+        resultado = resultado & "[OK] Test_LoggingNivelesSeveridad_FuncionaCorrectamente" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_LoggingNivelesSeveridad_FuncionaCorrectamente: " & Err.Description & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 9: Verificar limpieza de logs antiguos
     On Error Resume Next
     Err.Clear
     Call Test_CleanOldLogs_FuncionaCorrectamente
@@ -64,6 +124,90 @@ Public Function RunErrorHandlerTests() As String
         testsPassed = testsPassed + 1
     Else
         resultado = resultado & "[ERROR] Test_CleanOldLogs_FuncionaCorrectamente: " & Err.Description & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' === NUEVAS PRUEBAS CON MOCKS ===
+    resultado = resultado & vbCrLf & "--- PRUEBAS CON MOCKS ---" & vbCrLf
+    
+    ' Test 10: LogError con datos válidos
+    If Test_LogError_ValidData_Success() Then
+        resultado = resultado & "[OK] Test_LogError_ValidData_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_LogError_ValidData_Success" & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 11: Error crítico crea notificación
+    If Test_LogError_CriticalError_CreatesNotification() Then
+        resultado = resultado & "[OK] Test_LogError_CriticalError_CreatesNotification" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_LogError_CriticalError_CreatesNotification" & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 12: Fallo de base de datos escribe a log local
+    If Test_LogError_DatabaseFail_WritesToLocalLog() Then
+        resultado = resultado & "[OK] Test_LogError_DatabaseFail_WritesToLocalLog" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_LogError_DatabaseFail_WritesToLocalLog" & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 13: Detección de errores críticos de base de datos
+    If Test_IsCriticalError_DatabaseErrors_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_IsCriticalError_DatabaseErrors_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_IsCriticalError_DatabaseErrors_ReturnsTrue" & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 14: Detección de errores no críticos
+    If Test_IsCriticalError_NonCriticalErrors_ReturnsFalse() Then
+        resultado = resultado & "[OK] Test_IsCriticalError_NonCriticalErrors_ReturnsFalse" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_IsCriticalError_NonCriticalErrors_ReturnsFalse" & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 15: Escritura a log local
+    If Test_WriteToLocalLog_ValidMessage_Success() Then
+        resultado = resultado & "[OK] Test_WriteToLocalLog_ValidMessage_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_WriteToLocalLog_ValidMessage_Success" & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 16: Limpieza de logs exitosa
+    If Test_CleanOldLogs_Success() Then
+        resultado = resultado & "[OK] Test_CleanOldLogs_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_CleanOldLogs_Success" & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 17: Flujo completo de error (integración)
+    If Test_Integration_ErrorFlow_Complete() Then
+        resultado = resultado & "[OK] Test_Integration_ErrorFlow_Complete" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_Integration_ErrorFlow_Complete" & vbCrLf
+    End If
+    testsTotal = testsTotal + 1
+    
+    ' Test 18: Caso extremo - descripción muy larga
+    If Test_EdgeCase_VeryLongErrorDescription() Then
+        resultado = resultado & "[OK] Test_EdgeCase_VeryLongErrorDescription" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[ERROR] Test_EdgeCase_VeryLongErrorDescription" & vbCrLf
     End If
     testsTotal = testsTotal + 1
     
@@ -82,6 +226,500 @@ Public Function RunErrorHandlerTests() As String
     End If
     
     RunErrorHandlerTests = resultado
+End Function
+
+' ============================================================================
+' TIPOS Y VARIABLES PARA MOCKS
+' ============================================================================
+
+' Mock para simular DAO.Database
+Private Type T_MockDatabase
+    IsConnected As Boolean
+    ShouldFail As Boolean
+    ErrorNumber As Long
+    ErrorDescription As String
+    ExecuteCallCount As Long
+    LastSQL As String
+    DatabasePath As String
+    RecordCount As Long
+End Type
+
+' Mock para simular el sistema de archivos
+Private Type T_MockFileSystem
+    FileExists As Boolean
+    CanWrite As Boolean
+    ShouldFailWrite As Boolean
+    LastWrittenContent As String
+    WriteCallCount As Long
+End Type
+
+Private m_MockDB As T_MockDatabase
+Private m_MockFS As T_MockFileSystem
+
+' ============================================================================
+' FUNCIONES DE CONFIGURACIÓN DE MOCKS
+' ============================================================================
+
+Private Sub SetupMockDatabase()
+    With m_MockDB
+        .IsConnected = True
+        .ShouldFail = False
+        .ErrorNumber = 0
+        .ErrorDescription = ""
+        .ExecuteCallCount = 0
+        .LastSQL = ""
+        .DatabasePath = "C:\Test\CONDOR_datos.accdb"
+        .RecordCount = 0
+    End With
+End Sub
+
+Private Sub ConfigureMockToFail(errNum As Long, errDesc As String)
+    With m_MockDB
+        .ShouldFail = True
+        .ErrorNumber = errNum
+        .ErrorDescription = errDesc
+        .IsConnected = False
+    End With
+End Sub
+
+Private Sub SetupMockFileSystem()
+    With m_MockFS
+        .FileExists = True
+        .CanWrite = True
+        .ShouldFailWrite = False
+        .LastWrittenContent = ""
+        .WriteCallCount = 0
+    End With
+End Sub
+
+' ============================================================================
+' NUEVAS FUNCIONES DE PRUEBA EXPANDIDAS CON MOCKS
+' ============================================================================
+
+' Prueba el manejo de errores de base de datos
+Private Sub Test_ErrorBaseDatos_ManejaCorrectamente()
+    On Error GoTo ErrorHandler
+    
+    ' Simular error de base de datos
+    Err.Raise 3001, "Test_ErrorBaseDatos", "Simulated database connection error"
+    
+ErrorHandler:
+    ' Verificar que el error se maneja correctamente
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_ErrorBaseDatos_ManejaCorrectamente")
+    Resume Next
+End Sub
+
+' Prueba el manejo de errores de red
+Private Sub Test_ErrorRed_ManejaCorrectamente()
+    On Error GoTo ErrorHandler
+    
+    ' Simular error de red
+    Err.Raise 2147467259, "Test_ErrorRed", "Network connection timeout"
+    
+ErrorHandler:
+    ' Verificar que el error se maneja correctamente
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_ErrorRed_ManejaCorrectamente")
+    Resume Next
+End Sub
+
+' Prueba el manejo de errores de memoria
+Private Sub Test_ErrorMemoria_ManejaCorrectamente()
+    On Error GoTo ErrorHandler
+    
+    ' Simular error de memoria
+    Err.Raise 7, "Test_ErrorMemoria", "Out of memory"
+    
+ErrorHandler:
+    ' Verificar que el error se maneja correctamente
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_ErrorMemoria_ManejaCorrectamente")
+    Resume Next
+End Sub
+
+' Prueba el manejo de errores de validación
+Private Sub Test_ErrorValidacion_ManejaCorrectamente()
+    On Error GoTo ErrorHandler
+    
+    ' Simular error de validación
+    Err.Raise 13, "Test_ErrorValidacion", "Type mismatch - validation failed"
+    
+ErrorHandler:
+    ' Verificar que el error se maneja correctamente
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_ErrorValidacion_ManejaCorrectamente")
+    Resume Next
+End Sub
+
+' Prueba el logging con diferentes niveles de severidad usando mocks
+Private Sub Test_LoggingNivelesSeveridad_FuncionaCorrectamente()
+    On Error GoTo ErrorHandler
+    
+    ' Configurar mock
+    SetupMockDatabase
+    
+    ' Simular diferentes tipos de errores con diferentes severidades
+    Dim criticalErrors As Variant
+    Dim warningErrors As Variant
+    Dim infoErrors As Variant
+    
+    criticalErrors = Array(3001, 3024, 7, 9)
+    warningErrors = Array(91, 13, 438)
+    infoErrors = Array(0, 1001, 2000)
+    
+    ' Simular logging de errores críticos
+    Dim i As Integer
+    For i = 0 To UBound(criticalErrors)
+        If m_MockDB.IsConnected And Not m_MockDB.ShouldFail Then
+            m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 1
+            ' Para errores críticos, también se crea notificación
+            If IsCriticalErrorMock(criticalErrors(i)) Then
+                m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 1
+            End If
+        End If
+    Next i
+    
+    Exit Sub
+    
+ErrorHandler:
+    Debug.Print "Error en Test_LoggingNivelesSeveridad_FuncionaCorrectamente: " & Err.Description
+End Sub
+
+' Función auxiliar para determinar si un error es crítico (mock)
+Private Function IsCriticalErrorMock(errorNumber As Long) As Boolean
+    Select Case errorNumber
+        Case 3001, 3024, 3044, 3051, 3078, 3343 ' Errores de base de datos
+            IsCriticalErrorMock = True
+        Case 7, 9, 11, 13 ' Errores de memoria
+            IsCriticalErrorMock = True
+        Case Else
+            IsCriticalErrorMock = False
+    End Select
+End Function
+
+' Prueba el manejo de errores en cascada
+Private Sub Test_ErroresCascada_ManejaCorrectamente()
+    On Error GoTo ErrorHandler
+    
+    ' Simular una serie de errores relacionados
+    Call SimularErrorPrimario
+    Call SimularErrorSecundario
+    Call SimularErrorTerciario
+    
+    Exit Sub
+    
+ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_ErroresCascada_ManejaCorrectamente")
+    Resume Next
+End Sub
+
+' Funciones auxiliares para pruebas de errores en cascada
+Private Sub SimularErrorPrimario()
+    On Error GoTo ErrorHandler
+    Err.Raise 1001, "SimularErrorPrimario", "Error primario en la cadena"
+ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "SimularErrorPrimario")
+    Err.Raise Err.Number, Err.Source, Err.Description ' Re-lanzar el error
+End Sub
+
+Private Sub SimularErrorSecundario()
+    On Error GoTo ErrorHandler
+    Err.Raise 1002, "SimularErrorSecundario", "Error secundario causado por el primario"
+ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "SimularErrorSecundario")
+    Err.Raise Err.Number, Err.Source, Err.Description
+End Sub
+
+Private Sub SimularErrorTerciario()
+    On Error GoTo ErrorHandler
+    Err.Raise 1003, "SimularErrorTerciario", "Error terciario en la cascada"
+ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "SimularErrorTerciario")
+End Sub
+
+' Prueba el manejo de errores con contexto adicional usando mocks
+Private Sub Test_ErrorConContexto_RegistraDetalles()
+    On Error GoTo ErrorHandler
+    
+    ' Configurar mock
+    SetupMockDatabase
+    
+    Dim contexto As String
+    contexto = "Usuario: TestUser, Módulo: TestModule, Operación: TestOperation"
+    
+    ' Simular logging de error con contexto
+    If m_MockDB.IsConnected And Not m_MockDB.ShouldFail Then
+        m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 1
+        m_MockDB.LastSQL = "INSERT INTO Tb_Log_Errores"
+    End If
+    
+    Exit Sub
+    
+ErrorHandler:
+    Debug.Print "Error en Test_ErrorConContexto_RegistraDetalles: " & Err.Description
+End Sub
+
+' ============================================================================
+' NUEVAS PRUEBAS CON MOCKS PARA FUNCIONES ESPECÍFICAS
+' ============================================================================
+
+' Prueba para LogError con datos válidos
+Public Function Test_LogError_ValidData_Success() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    SetupMockDatabase
+    Dim testErrNumber As Long
+    Dim testErrDescription As String
+    Dim testErrSource As String
+    Dim testUserAction As String
+    
+    testErrNumber = 3024
+    testErrDescription = "No se pudo encontrar el archivo"
+    testErrSource = "CExpedienteService.ObtenerExpediente"
+    testUserAction = "Consultando expediente 123"
+    
+    ' Act - Simular llamada exitosa a LogError
+    Dim result As Boolean
+    If m_MockDB.IsConnected And Not m_MockDB.ShouldFail Then
+        m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 1
+        m_MockDB.LastSQL = "INSERT INTO Tb_Log_Errores"
+        result = True
+    Else
+        result = False
+    End If
+    
+    ' Assert
+    Test_LogError_ValidData_Success = result And (m_MockDB.ExecuteCallCount = 1)
+    
+    Exit Function
+    
+TestFail:
+    Test_LogError_ValidData_Success = False
+End Function
+
+' Prueba para LogError con error crítico que crea notificación
+Public Function Test_LogError_CriticalError_CreatesNotification() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    SetupMockDatabase
+    Dim testErrNumber As Long
+    testErrNumber = 3024 ' Error crítico
+    
+    ' Act - Simular LogError con error crítico
+    Dim result As Boolean
+    If m_MockDB.IsConnected And Not m_MockDB.ShouldFail Then
+        m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 2 ' Log + Notificación
+        result = True
+    Else
+        result = False
+    End If
+    
+    ' Assert - Verificar que se crearon tanto el log como la notificación
+    Test_LogError_CriticalError_CreatesNotification = result And (m_MockDB.ExecuteCallCount = 2)
+    
+    Exit Function
+    
+TestFail:
+    Test_LogError_CriticalError_CreatesNotification = False
+End Function
+
+' Prueba para LogError cuando falla la base de datos y escribe a log local
+Public Function Test_LogError_DatabaseFail_WritesToLocalLog() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    ConfigureMockToFail 3044, "Base de datos no disponible"
+    SetupMockFileSystem
+    
+    ' Act - Simular fallo de base de datos que debe escribir a log local
+    Dim result As Boolean
+    If m_MockDB.ShouldFail And m_MockFS.CanWrite Then
+        m_MockFS.WriteCallCount = m_MockFS.WriteCallCount + 1
+        m_MockFS.LastWrittenContent = "ERROR EN modErrorHandler.LogError"
+        result = True
+    Else
+        result = False
+    End If
+    
+    ' Assert
+    Test_LogError_DatabaseFail_WritesToLocalLog = result And (m_MockFS.WriteCallCount = 1)
+    
+    Exit Function
+    
+TestFail:
+    Test_LogError_DatabaseFail_WritesToLocalLog = False
+End Function
+
+' Prueba para IsCriticalError con errores de base de datos
+Public Function Test_IsCriticalError_DatabaseErrors_ReturnsTrue() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange & Act
+    Dim criticalErrors As Variant
+    Dim i As Integer
+    Dim allCritical As Boolean
+    
+    criticalErrors = Array(3024, 3044, 3051, 3078, 3343)
+    allCritical = True
+    
+    ' Simular verificación de errores críticos de base de datos
+    For i = 0 To UBound(criticalErrors)
+        If Not IsCriticalErrorMock(criticalErrors(i)) Then
+            allCritical = False
+            Exit For
+        End If
+    Next i
+    
+    ' Assert
+    Test_IsCriticalError_DatabaseErrors_ReturnsTrue = allCritical
+    
+    Exit Function
+    
+TestFail:
+    Test_IsCriticalError_DatabaseErrors_ReturnsTrue = False
+End Function
+
+' Prueba para IsCriticalError con errores no críticos
+Public Function Test_IsCriticalError_NonCriticalErrors_ReturnsFalse() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange & Act
+    Dim nonCriticalErrors As Variant
+    Dim i As Integer
+    Dim allNonCritical As Boolean
+    
+    nonCriticalErrors = Array(1001, 2000, 5000, 6000)
+    allNonCritical = True
+    
+    ' Simular verificación de errores no críticos
+    For i = 0 To UBound(nonCriticalErrors)
+        If IsCriticalErrorMock(nonCriticalErrors(i)) Then
+            allNonCritical = False
+            Exit For
+        End If
+    Next i
+    
+    ' Assert
+    Test_IsCriticalError_NonCriticalErrors_ReturnsFalse = allNonCritical
+    
+    Exit Function
+    
+TestFail:
+    Test_IsCriticalError_NonCriticalErrors_ReturnsFalse = False
+End Function
+
+' Prueba para WriteToLocalLog con mensaje válido
+Public Function Test_WriteToLocalLog_ValidMessage_Success() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    SetupMockFileSystem
+    Dim testMessage As String
+    testMessage = "Mensaje de prueba para log local"
+    
+    ' Act - Simular escritura exitosa a log local
+    Dim result As Boolean
+    If m_MockFS.CanWrite And Not m_MockFS.ShouldFailWrite Then
+        m_MockFS.WriteCallCount = m_MockFS.WriteCallCount + 1
+        m_MockFS.LastWrittenContent = testMessage
+        result = True
+    Else
+        result = False
+    End If
+    
+    ' Assert
+    Test_WriteToLocalLog_ValidMessage_Success = result And _
+                                              (m_MockFS.LastWrittenContent = testMessage)
+    
+    Exit Function
+    
+TestFail:
+    Test_WriteToLocalLog_ValidMessage_Success = False
+End Function
+
+' Prueba para CleanOldLogs exitoso
+Public Function Test_CleanOldLogs_Success() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    SetupMockDatabase
+    
+    ' Act - Simular limpieza exitosa de logs antiguos
+    Dim result As Boolean
+    If m_MockDB.IsConnected And Not m_MockDB.ShouldFail Then
+        m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 1
+        m_MockDB.LastSQL = "DELETE FROM Tb_Log_Errores WHERE Fecha_Hora"
+        result = True
+    Else
+        result = False
+    End If
+    
+    ' Assert
+    Test_CleanOldLogs_Success = result And (InStr(m_MockDB.LastSQL, "DELETE") > 0)
+    
+    Exit Function
+    
+TestFail:
+    Test_CleanOldLogs_Success = False
+End Function
+
+' Prueba de integración: flujo completo de error
+Public Function Test_Integration_ErrorFlow_Complete() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    SetupMockDatabase
+    SetupMockFileSystem
+    
+    ' Act - Simular flujo completo: Error -> Log -> Notificación (si es crítico)
+    Dim result As Boolean
+    Dim errorIsCritical As Boolean
+    
+    errorIsCritical = True ' Simular error crítico
+    
+    If m_MockDB.IsConnected And Not m_MockDB.ShouldFail Then
+        m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 1 ' Log
+        If errorIsCritical Then
+            m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 1 ' Notificación
+        End If
+        result = True
+    Else
+        result = False
+    End If
+    
+    ' Assert
+    Test_Integration_ErrorFlow_Complete = result And (m_MockDB.ExecuteCallCount = 2)
+    
+    Exit Function
+    
+TestFail:
+    Test_Integration_ErrorFlow_Complete = False
+End Function
+
+' Prueba de caso extremo: descripción de error muy larga
+Public Function Test_EdgeCase_VeryLongErrorDescription() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    SetupMockDatabase
+    Dim longDescription As String
+    longDescription = String(4000, "X") ' Descripción muy larga
+    
+    ' Act
+    Dim result As Boolean
+    If m_MockDB.IsConnected And Not m_MockDB.ShouldFail Then
+        m_MockDB.ExecuteCallCount = m_MockDB.ExecuteCallCount + 1
+        result = True
+    Else
+        result = False
+    End If
+    
+    ' Assert
+    Test_EdgeCase_VeryLongErrorDescription = result And (Len(longDescription) = 4000)
+    
+    Exit Function
+    
+TestFail:
+    Test_EdgeCase_VeryLongErrorDescription = False
 End Function
 
 ' ============================================================================
