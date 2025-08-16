@@ -12,6 +12,13 @@ Option Explicit
 
 Implements ISolicitud
 
+Private m_DatosPC As T_Datos_PC
+Private m_IdSolicitud As Long
+Private m_IdExpediente As String
+Private m_TipoSolicitud As String
+Private m_CodigoSolicitud As String
+Private m_EstadoInterno As String
+
 #If DEV_MODE Then
 Private mRepository As ISolicitudRepository
 #End If
@@ -31,13 +38,6 @@ Private Sub Class_Terminate()
         Set mRepository = Nothing
     #End If
 End Sub
-
-Private m_DatosPC As T_Datos_PC
-Private m_IdSolicitud As Long
-Private m_IdExpediente As String
-Private m_TipoSolicitud As String
-Private m_CodigoSolicitud As String
-Private m_EstadoInterno As String
 
 ' --- 1. Implementación PRIVADA de la Interfaz ---
 '     Satisface el contrato "Implements".
