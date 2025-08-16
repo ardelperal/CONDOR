@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modTypes"
+Attribute VB_Name = "modTypes"
 Option Compare Database
 Option Explicit
 
@@ -12,6 +12,7 @@ Option Explicit
 ' Tipo que representa un expediente basado en la consulta SQL de integraci?n
 ' con la aplicaci?n de Expedientes existente
 Public Type T_Expediente
+    ID As Long
     IDExpediente As Long
     Nemotecnico As String
     Titulo As String
