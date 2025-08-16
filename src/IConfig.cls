@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -38,6 +38,78 @@ End Function
 ' @param key: Clave a verificar
 ' @return: True si la clave existe
 Public Function HasKey(ByVal key As String) As Boolean
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene el entorno activo
+' @return: Nombre del entorno activo
+Public Function GetActiveEnvironment() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de la base de datos principal
+' @return: Ruta de la base de datos principal
+Public Function GetDatabasePath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de la base de datos de datos
+' @return: Ruta de la base de datos de datos
+Public Function GetDataPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de la base de datos de Expedientes
+' @return: Ruta de la base de datos de Expedientes
+Public Function GetExpedientesPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de la base de datos de Expedientes (alias)
+' @return: Ruta de la base de datos de Expedientes
+Public Function GetExpedientesDbPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de las plantillas
+' @return: Ruta de las plantillas
+Public Function GetPlantillasPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de la base de datos Lanzadera
+' @return: Ruta de la base de datos Lanzadera
+Public Function GetLanzaderaDbPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de c?digo fuente
+' @return: Ruta de c?digo fuente
+Public Function GetSourcePath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de backups
+' @return: Ruta de backups
+Public Function GetBackupPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta de logs
+' @return: Ruta de logs
+Public Function GetLogPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la ruta temporal
+' @return: Ruta temporal
+Public Function GetTempPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Funci?n de prueba de la configuraci?n
+' @return: Resultado de la prueba
+Public Function TestCConfig() As String
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
 

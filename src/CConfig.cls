@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -193,82 +193,82 @@ Private Function IConfig_HasKey(ByVal key As String) As Boolean
     End Select
 End Function
 
-' M?todos p?blicos adicionales para compatibilidad
-Public Function GetActiveEnvironment() As String
+' Implementaciones de la interfaz IConfig
+Private Function IConfig_GetActiveEnvironment() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetActiveEnvironment = m_AppConfig.EntornoActivo
+    IConfig_GetActiveEnvironment = m_AppConfig.EntornoActivo
 End Function
 
-Public Function GetDatabasePath() As String
+Private Function IConfig_GetDatabasePath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetDatabasePath = m_AppConfig.DatabasePath
+    IConfig_GetDatabasePath = m_AppConfig.DatabasePath
 End Function
 
-Public Function GetDataPath() As String
+Private Function IConfig_GetDataPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetDataPath = m_AppConfig.dataPath
+    IConfig_GetDataPath = m_AppConfig.dataPath
 End Function
 
-Public Function GetExpedientesPath() As String
+Private Function IConfig_GetExpedientesPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetExpedientesPath = m_AppConfig.ExpedientesPath
+    IConfig_GetExpedientesPath = m_AppConfig.ExpedientesPath
 End Function
 
-Public Function GetExpedientesDbPath() As String
+Private Function IConfig_GetExpedientesDbPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetExpedientesDbPath = m_AppConfig.ExpedientesPath
+    IConfig_GetExpedientesDbPath = m_AppConfig.ExpedientesPath
 End Function
 
-Public Function GetPlantillasPath() As String
+Private Function IConfig_GetPlantillasPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetPlantillasPath = m_AppConfig.PlantillasPath
+    IConfig_GetPlantillasPath = m_AppConfig.PlantillasPath
 End Function
 
-Public Function GetLanzaderaDbPath() As String
+Private Function IConfig_GetLanzaderaDbPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetLanzaderaDbPath = m_AppConfig.LanzaderaDbPath
+    IConfig_GetLanzaderaDbPath = m_AppConfig.LanzaderaDbPath
 End Function
 
-Public Function GetSourcePath() As String
+Private Function IConfig_GetSourcePath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetSourcePath = m_AppConfig.sourcePath
+    IConfig_GetSourcePath = m_AppConfig.sourcePath
 End Function
 
-Public Function GetBackupPath() As String
+Private Function IConfig_GetBackupPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetBackupPath = m_AppConfig.backupPath
+    IConfig_GetBackupPath = m_AppConfig.backupPath
 End Function
 
-Public Function GetLogPath() As String
+Private Function IConfig_GetLogPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetLogPath = m_AppConfig.logPath
+    IConfig_GetLogPath = m_AppConfig.logPath
 End Function
 
-Public Function GetTempPath() As String
+Private Function IConfig_GetTempPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    GetTempPath = m_AppConfig.tempPath
+    IConfig_GetTempPath = m_AppConfig.tempPath
 End Function
 
 ' M?todos privados de soporte
@@ -344,8 +344,8 @@ ErrorHandler:
     If Not fso Is Nothing Then Set fso = Nothing
 End Function
 
-' Funci?n de prueba
-Public Function TestCConfig() As String
+' Implementaci?n de IConfig.TestCConfig
+Private Function IConfig_TestCConfig() As String
     Dim resultado As String
     resultado = "=== PRUEBA CCONFIG ===" & vbCrLf
     
@@ -355,14 +355,14 @@ Public Function TestCConfig() As String
     
     If initResult Then
         resultado = resultado & "[OK] InitializeEnvironment: OK" & vbCrLf
-        resultado = resultado & "  |- Entorno Activo: " & GetActiveEnvironment() & vbCrLf
+        resultado = resultado & "  |- Entorno Activo: " & IConfig_GetActiveEnvironment() & vbCrLf
     Else
         resultado = resultado & "[FALLO] InitializeEnvironment: FALLO" & vbCrLf
     End If
     
     ' Probar obtencion de rutas
     Dim dbPath As String
-    dbPath = GetDataPath()
+    dbPath = IConfig_GetDataPath()
     
     If Len(dbPath) > 0 Then
         resultado = resultado & "[OK] GetDataPath: OK -> " & dbPath & vbCrLf
@@ -372,7 +372,7 @@ Public Function TestCConfig() As String
     
     ' Probar GetLanzaderaDbPath
     Dim lanzaderaPath As String
-    lanzaderaPath = GetLanzaderaDbPath()
+    lanzaderaPath = IConfig_GetLanzaderaDbPath()
     
     If Len(lanzaderaPath) > 0 Then
         resultado = resultado & "[OK] GetLanzaderaDbPath: OK -> " & lanzaderaPath & vbCrLf
@@ -381,7 +381,7 @@ Public Function TestCConfig() As String
     End If
     
     resultado = resultado & "=== FIN PRUEBA ===" & vbCrLf
-    TestCConfig = resultado
+    IConfig_TestCConfig = resultado
 End Function
 
 
