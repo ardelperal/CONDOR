@@ -914,11 +914,40 @@ Sub ExecuteTests()
     ' 2. Ejecutar las pruebas en Access
     WScript.Echo "Ejecutando suite de pruebas en Access..."
     On Error Resume Next
-    ' Pasamos la ruta del log como argumento
-    Call objAccess.Application.Run("ExecuteAllTests", strLogPath)
+    
+    ' Verificar que la función ExecuteAllTests existe
+    Dim testFunctionExists
+    testFunctionExists = False
+    
+    ' Intentar verificar si la función existe en los módulos
+    Dim vbComp, vbModule
+    For Each vbComp In objAccess.VBE.ActiveVBProject.VBComponents
+        If vbComp.Type = 1 Then ' vbext_ct_StdModule
+            Set vbModule = vbComp.CodeModule
+            If InStr(vbModule.Lines(1, vbModule.CountOfLines), "ExecuteAllTests") > 0 Then
+                testFunctionExists = True
+                WScript.Echo "✓ Función ExecuteAllTests encontrada en módulo: " & vbComp.Name
+                Exit For
+            End If
+        End If
+    Next
+    
+    If Not testFunctionExists Then
+        WScript.Echo "ERROR: No se encontró la función ExecuteAllTests en ningún módulo VBA"
+        WScript.Echo "SUGERENCIA: Verifica que el módulo modTestRunner.bas esté correctamente importado"
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    ' Ejecutar función wrapper sin parámetros
+    objAccess.Application.Run "RunTests"
 
     If Err.Number <> 0 Then
-        WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas. " & Err.Description
+        WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas."
+        WScript.Echo "  Código de Error: " & Err.Number
+        WScript.Echo "  Descripción: " & Err.Description
+        WScript.Echo "  Fuente: " & Err.Source
+        WScript.Echo "SUGERENCIA: Abre Access manualmente y ejecuta ExecuteAllTests desde el módulo modTestRunner para ver el error específico"
         objAccess.Quit
         WScript.Quit 1
     End If
