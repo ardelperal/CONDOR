@@ -18,6 +18,9 @@ End Function
 Public Function IsUserAuthorized(email As String, permission As String) As Boolean
 End Function
 
+Public Function GetUserRole(email As String) As E_UserRole
+End Function
+
 
 
 
