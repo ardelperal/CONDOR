@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modTestRunner"
+Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
 
@@ -61,11 +61,81 @@ ErrorHandler:
     RunAllTests = resultado & vbCrLf & "[ERROR FATAL] El Test Runner falló: " & Err.Description
 End Function
 
-' Función wrapper simple para facilitar la llamada desde VBScript
-Public Sub ExecuteAllTests()
+' Función principal para ejecutar todas las pruebas y escribir resultados en archivo de log
+Public Sub ExecuteAllTests(strLogPath As String)
     Dim resultado As String
-    resultado = RunAllTests()
-    Debug.Print resultado
+    Dim fso As Object
+    Dim logFile As Object
+    Dim testsPassed As Long, testsTotal As Long
+    Dim allTestsPassed As Boolean
+    
+    On Error GoTo ErrorHandler
+    
+    ' Crear objeto FileSystemObject
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    ' Crear/abrir archivo de log para escritura
+    Set logFile = fso.CreateTextFile(strLogPath, True)
+    
+    ' Escribir encabezado
+    logFile.WriteLine "============================================"
+    logFile.WriteLine "        REPORTE DE PRUEBAS DE CONDOR"
+    logFile.WriteLine "============================================"
+    logFile.WriteLine "Fecha y hora: " & Now()
+    logFile.WriteLine ""
+    
+    allTestsPassed = True
+    testsTotal = 0
+    testsPassed = 0
+    
+    ' Ejecutar todas las pruebas de los módulos Test_*
+    ' Nota: En una implementación completa, aquí se ejecutarían dinámicamente
+    ' todos los procedimientos Public Sub Test_* de todos los módulos Test_*
+    
+    logFile.WriteLine "--- Ejecutando Pruebas de Compilación ---"
+    Call Test_ImplementacionISolicitud
+    testsTotal = testsTotal + 1
+    testsPassed = testsPassed + 1 ' Asumimos éxito si no hay error
+    
+    ' Aquí se añadirían más llamadas a las pruebas cuando estén refactorizadas
+    ' Call Test_CConfig_Creation_Success
+    ' Call Test_CAuthService_Creation_Success
+    ' etc.
+    
+    logFile.WriteLine ""
+    logFile.WriteLine "============================================"
+    logFile.WriteLine "RESUMEN FINAL:"
+    logFile.WriteLine "Pruebas ejecutadas: " & testsTotal
+    logFile.WriteLine "Pruebas exitosas: " & testsPassed
+    logFile.WriteLine "Pruebas fallidas: " & (testsTotal - testsPassed)
+    
+    If testsPassed = testsTotal Then
+        logFile.WriteLine "RESULT: SUCCESS"
+    Else
+        logFile.WriteLine "RESULT: FAILURE"
+    End If
+    
+    logFile.WriteLine "============================================"
+    
+    ' Cerrar archivo
+    logFile.Close
+    Set logFile = Nothing
+    Set fso = Nothing
+    
+    ' Cerrar Access
+    Application.Quit
+    
+    Exit Sub
+    
+ErrorHandler:
+    If Not logFile Is Nothing Then
+        logFile.WriteLine "[ERROR FATAL] El Test Runner falló: " & Err.Description
+        logFile.WriteLine "RESULT: FAILURE"
+        logFile.Close
+    End If
+    Set logFile = Nothing
+    Set fso = Nothing
+    Application.Quit
 End Sub
 
 

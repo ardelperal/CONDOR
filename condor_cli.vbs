@@ -28,7 +28,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "COMANDOS DISPONIBLES:"
     WScript.Echo "  export     - Exportar modulos VBA a /src (con codificacion ANSI)"
     WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
-
+    WScript.Echo "  test       - Ejecutar suite de pruebas unitarias"
     WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
@@ -53,8 +53,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild' o 'lint'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild' o 'lint'"
     WScript.Quit 1
 End If
 
@@ -72,8 +72,8 @@ ElseIf strAction = "listtables" Then
     End If
 End If
 
-' Para rebuild, usar la base de datos de desarrollo
-If strAction = "rebuild" Then
+' Para rebuild y test, usar la base de datos de desarrollo
+If strAction = "rebuild" Or strAction = "test" Then
     strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
 End If
 
@@ -161,6 +161,8 @@ If strAction = "validate" Then
     Call ValidateAllModules(bVerbose)
 ElseIf strAction = "export" Then
     Call ExportModules(bVerbose)
+ElseIf strAction = "test" Then
+    Call ExecuteTests()
 ElseIf strAction = "createtable" Then
     Call CreateTable()
 ElseIf strAction = "droptable" Then
@@ -892,6 +894,58 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
     End If
     
     On Error GoTo 0
+End Sub
+
+' Subrutina para ejecutar la suite de pruebas unitarias
+Sub ExecuteTests()
+    WScript.Echo "=== INICIANDO EJECUCION DE PRUEBAS ==="
+    Dim strLogPath, objLogFile, strLine, testsFailed
+    strLogPath = "C:\Proyectos\CONDOR\logs\test_results.log"
+
+    ' 1. Limpiar log anterior
+    If objFSO.FileExists(strLogPath) Then objFSO.DeleteFile(strLogPath)
+
+    ' 2. Ejecutar las pruebas en Access
+    WScript.Echo "Ejecutando suite de pruebas en Access..."
+    On Error Resume Next
+    ' Pasamos la ruta del log como argumento
+    Call objAccess.Application.Run("ExecuteAllTests", strLogPath)
+
+    If Err.Number <> 0 Then
+        WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas. " & Err.Description
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
+
+    ' Access se cerrará automáticamente al final de las pruebas.
+    ' Esperamos un momento para asegurar que el fichero de log se ha escrito.
+    WScript.Sleep 2000
+
+    ' 3. Leer y mostrar los resultados desde el log
+    WScript.Echo "--- INICIO DE RESULTADOS DE PRUEBAS ---"
+    testsFailed = True ' Asumir fallo hasta que se confirme el éxito
+    If objFSO.FileExists(strLogPath) Then
+        Set objLogFile = objFSO.OpenTextFile(strLogPath, 1) ' ForReading
+        Do While Not objLogFile.AtEndOfStream
+            strLine = objLogFile.ReadLine
+            WScript.Echo strLine
+            If InStr(strLine, "RESULT: SUCCESS") > 0 Then testsFailed = False
+        Loop
+        objLogFile.Close
+    Else
+        WScript.Echo "ERROR: No se encontró el fichero de resultados de pruebas."
+    End If
+    WScript.Echo "--- FIN DE RESULTADOS DE PRUEBAS ---"
+
+    ' 4. Salir con el código de estado apropiado
+    If testsFailed Then
+        WScript.Echo "RESULTADO FINAL: ✗ Pruebas fallidas."
+        WScript.Quit 1 ' Código de error para CI/CD
+    Else
+        WScript.Echo "RESULTADO FINAL: ✓ Todas las pruebas pasaron."
+        WScript.Quit 0 ' Código de éxito
+    End If
 End Sub
 
 ' Función para importar módulo con conversión UTF-8 -> ANSI

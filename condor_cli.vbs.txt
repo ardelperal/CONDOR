@@ -28,7 +28,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "COMANDOS DISPONIBLES:"
     WScript.Echo "  export     - Exportar modulos VBA a /src (con codificacion ANSI)"
     WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
-    WScript.Echo "  test       - Ejecutar todos los tests (requiere rebuild previo)"
+
     WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
@@ -39,7 +39,6 @@ If objArgs.Count = 0 Then
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
     WScript.Echo "  1. cscript condor_cli.vbs rebuild   (sincronizar y compilar modulos)"
-    WScript.Echo "  2. cscript condor_cli.vbs test      (ejecutar pruebas)"
     WScript.Echo ""
     WScript.Echo "OPCIONES ESPECIALES:"
     WScript.Echo "  --dry-run  - Simular operacion sin modificar Access (solo con import)"
@@ -48,14 +47,14 @@ If objArgs.Count = 0 Then
     WScript.Echo "EJEMPLOS:"
     WScript.Echo "  cscript condor_cli.vbs validate"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
-    WScript.Echo "  cscript condor_cli.vbs rebuild && cscript condor_cli.vbs test"
+    WScript.Echo "  cscript condor_cli.vbs rebuild"
     WScript.Quit 1
 End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "test" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'createtable', 'droptable', 'listtables', 'test', 'relink', 'rebuild' o 'lint'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild' o 'lint'"
     WScript.Quit 1
 End If
 
@@ -73,8 +72,8 @@ ElseIf strAction = "listtables" Then
     End If
 End If
 
-' Para tests y rebuild, usar la base de datos de desarrollo
-If strAction = "test" Or strAction = "rebuild" Then
+' Para rebuild, usar la base de datos de desarrollo
+If strAction = "rebuild" Then
     strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
 End If
 
@@ -168,17 +167,7 @@ ElseIf strAction = "droptable" Then
     Call DropTable()
 ElseIf strAction = "listtables" Then
     Call ListTables()
-ElseIf strAction = "test" Then
-    Dim testModule, argIndex
-    testModule = ""
-    ' Buscar el primer argumento que no sea una opción especial
-    For argIndex = 1 To objArgs.Count - 1
-        If LCase(objArgs(argIndex)) <> "--verbose" And LCase(objArgs(argIndex)) <> "--dry-run" Then
-            testModule = objArgs(argIndex)
-            Exit For
-        End If
-    Next
-    Call RunTestsWithEngine(testModule)
+
 ElseIf strAction = "rebuild" Then
     Call RebuildProject()
 ElseIf strAction = "lint" Then
@@ -471,49 +460,8 @@ Sub VerifyTable(strTableName)
     End If
 End Sub
 
-' Subrutina para ejecutar tests con motor interno (versión simplificada)
-' Subrutina para ejecutar tests con motor interno (versión final y robusta)
-Sub RunTestsWithEngine(testModule) ' 'testModule' ya no se usa, pero lo mantenemos por ahora
-    WScript.Echo "=== EJECUTANDO PRUEBAS (CON SMOKE TEST) ==="
-    
-    ' --- 1. SMOKE TEST: ¿Podemos llamar a CUALQUIER función? ---
-    WScript.Echo "Intentando ejecutar 'Ping' de diagnóstico..."
-    Dim pongResult
-    On Error Resume Next
-    pongResult = objAccess.Application.Run("modAppManager.Ping")
-    
-    If Err.Number <> 0 Then
-        WScript.Echo ""
-        WScript.Echo "!!! DIAGNÓSTICO: EL SMOKE TEST HA FALLADO !!!"
-        WScript.Echo "!!! No se puede establecer la conexión de automatización con el motor VBA."
-        WScript.Echo "Error: " & Err.Number & " - " & Err.Description
-        Err.Clear
-        On Error GoTo 0
-        Exit Sub ' Si el Ping no funciona, no tiene sentido continuar
-    End If
-    On Error GoTo 0
-    WScript.Echo "✓ Smoke Test exitoso. Respuesta: '" & pongResult & "'"
-    WScript.Echo ""
 
-    ' --- 2. PRUEBA REAL: Ahora intentamos llamar al Test Runner ---
-    WScript.Echo "Intentando ejecutar: 'modTestRunner.RunAllTests'"
-    Dim testResult
-    On Error Resume Next
-    testResult = objAccess.Application.Run("modTestRunner.RunAllTests")
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "!!! ERROR CRÍTICO AL EJECUTAR LAS PRUEBAS !!!"
-        WScript.Echo "Error: " & Err.Number & " - " & Err.Description
-        WScript.Echo "Diagnóstico: El Smoke Test pasó, pero RunAllTests falló. El problema está específicamente en el módulo modTestRunner o sus dependencias."
-        Err.Clear
-    Else
-        WScript.Echo "--- INICIO DEL REPORTE DE PRUEBAS ---"
-        WScript.Echo testResult
-        WScript.Echo "--- FIN DEL REPORTE DE PRUEBAS ---"
-    End If
-    
-    On Error GoTo 0
-End Sub
+
 
 ' ===================================================================
 ' SUBRUTINA: LintProject
@@ -899,11 +847,7 @@ Function CleanVBAFile(filePath, fileType)
         End If
     Next
     
-    If fileType = "cls" Then
-        WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option (archivo .cls)"
-    Else
-        WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos (archivo .bas, Option mantenidas)"
-    End If
+    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option (archivo ." & fileType & ")"
     
     CleanVBAFile = cleanedLines
 End Function

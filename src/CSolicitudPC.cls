@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -11,6 +11,26 @@ Option Compare Database
 Option Explicit
 
 Implements ISolicitud
+
+#If DEV_MODE Then
+Private mRepository As ISolicitudRepository
+#End If
+
+'******************************************************************************
+' EVENTOS DE CLASE
+'******************************************************************************
+
+Private Sub Class_Initialize()
+    #If DEV_MODE Then
+        Set mRepository = modRepositoryFactory.CreateSolicitudRepository
+    #End If
+End Sub
+
+Private Sub Class_Terminate()
+    #If DEV_MODE Then
+        Set mRepository = Nothing
+    #End If
+End Sub
 
 Private m_DatosPC As T_Datos_PC
 Private m_IdSolicitud As Long
@@ -63,13 +83,49 @@ Private Property Let ISolicitud_EstadoInterno(ByVal RHS As String)
 End Property
 
 Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
+#If DEV_MODE Then
+    If Not mRepository Is Nothing Then
+        Dim loadedSolicitud As CSolicitudPC
+        Set loadedSolicitud = mRepository.LoadPC(ID)
+        If Not loadedSolicitud Is Nothing Then
+            ' Copiar propiedades del objeto cargado
+            m_IdSolicitud = loadedSolicitud.idSolicitud
+            m_IdExpediente = loadedSolicitud.IDExpediente
+            m_TipoSolicitud = loadedSolicitud.TipoSolicitud
+            m_CodigoSolicitud = loadedSolicitud.CodigoSolicitud
+            m_EstadoInterno = loadedSolicitud.EstadoInterno
+            m_DatosPC = loadedSolicitud.DatosPC
+            ISolicitud_Load = True
+        Else
+            ISolicitud_Load = False
+        End If
+    Else
+        ISolicitud_Load = False
+    End If
+#Else
     ' TODO: Implementar lógica de carga
     ISolicitud_Load = True
+#End If
 End Function
 
 Private Function ISolicitud_Save() As Boolean
+#If DEV_MODE Then
+    If Not mRepository Is Nothing Then
+        Dim savedId As Long
+        savedId = mRepository.SavePC(Me)
+        If savedId > 0 Then
+            m_IdSolicitud = savedId
+            ISolicitud_Save = True
+        Else
+            ISolicitud_Save = False
+        End If
+    Else
+        ISolicitud_Save = False
+    End If
+#Else
     ' TODO: Implementar lógica de guardado
     ISolicitud_Save = True
+#End If
 End Function
 
 Private Function ISolicitud_ChangeState(ByVal newState As String) As Boolean
@@ -124,13 +180,30 @@ Public Function Load(ByVal ID As Long) As Boolean
     Load = ISolicitud_Load(ID)
 End Function
 
-Public Function Save() As Boolean
-    Save = ISolicitud_Save
+Public Function Save() As Long
+#If DEV_MODE Then
+    If Not mRepository Is Nothing Then
+        Save = mRepository.SavePC(Me)
+    Else
+        Save = 0
+    End If
+#Else
+    ' Delegar a la implementación de la interfaz
+    If ISolicitud_Save Then
+        Save = m_IdSolicitud
+    Else
+        Save = 0
+    End If
+#End If
 End Function
 
 Public Function ChangeState(ByVal newState As String) As Boolean
     ChangeState = ISolicitud_ChangeState(newState)
 End Function
+
+#If DEV_MODE Then
+
+
 
 ' --- Propiedades específicas de PC ---
 Public Property Get DatosPC() As T_Datos_PC
@@ -140,6 +213,8 @@ End Property
 Public Property Let DatosPC(ByRef val As T_Datos_PC)
     m_DatosPC = val
 End Property
+
+#End If
 
 
 

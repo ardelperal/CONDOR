@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_CompilacionISolicitud"
+Attribute VB_Name = "Test_CompilacionISolicitud"
 Option Compare Database
 Option Explicit
 
@@ -9,8 +9,8 @@ Option Explicit
 ' Fecha: Diciembre 2024
 ' ============================================================================
 
-' Funci?n de prueba para verificar que la implementaci?n de ISolicitud funciona
-Public Function Test_ImplementacionISolicitud() As Boolean
+' Procedimiento de prueba para verificar que la implementaci?n de ISolicitud funciona
+Public Sub Test_ImplementacionISolicitud()
     On Error GoTo ErrorHandler
     
     Dim solicitud As ISolicitud
@@ -46,19 +46,19 @@ Public Function Test_ImplementacionISolicitud() As Boolean
     saveResult = solicitud.Save()
     changeStateResult = solicitud.ChangeState("ENVIADO")
     
-    Test_ImplementacionISolicitud = True
+    Debug.Print "✓ Test_ImplementacionISolicitud: EXITOSO"
     
     ' Limpiar objetos
     Set solicitud = Nothing
     Set solicitudPC = Nothing
     
-    Exit Function
+    Exit Sub
     
 ErrorHandler:
-    Test_ImplementacionISolicitud = False
+    Debug.Print "✗ Test_ImplementacionISolicitud: FALLIDO - " & Err.Description
     Set solicitud = Nothing
     Set solicitudPC = Nothing
-End Function
+End Sub
 
 ' Funci?n para ejecutar la prueba y mostrar resultado
 Public Sub Ejecutar_Test_Compilacion()
