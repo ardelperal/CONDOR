@@ -30,33 +30,29 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
     *   **Objetivo:** Forzar el desacoplamiento total en el entorno de pruebas. Esto garantiza que los tests solo dependan del contrato público definido en la interfaz, lo cual es esencial para el mocking y la prevención de errores de compilación como "método no encontrado".
 
 ---
-### **CICLO DE TRABAJO DE DESARROLLO (MODO AUTÓNOMO)**
+### **CICLO DE TRABAJO ASISTIDO (SUPERVISOR + IA)**
 
-**Objetivo:** Automatizar el ciclo de desarrollo completo para cada tarea.
-
-**Capacidades Asumidas:** Tienes acceso a la terminal y puedes ejecutar comandos como `cscript`, `git add`, `git commit` y `git push`.
+**Objetivo:** Combinar la velocidad de la IA con la supervisión humana en el punto crítico de la compilación para garantizar la estabilidad del proyecto.
 
 **Proceso a Seguir para Cada Tarea:**
 
-1.  **Iniciativa (Supervisor Humano):** El Supervisor te indicará la siguiente tarea a realizar del plan de acción.
+1.  **Iniciativa (CONDOR-Architect):** El Arquitecto le proporciona al Supervisor un prompt detallado para la tarea.
 
-2.  **Desarrollo y Pruebas (Tu Bucle Autónomo):**
-    a. **Generar Código Protegido:** Escribe el código VBA para la funcionalidad y sus pruebas. Ambos deben estar protegidos por el bloque de compilación condicional `#If DEV_MODE Then`.
-    b. **Reconstruir Proyecto con Limpieza:** Ejecuta `cscript //nologo condor_cli.vbs rebuild`. **CRÍTICO:** Durante la reconstrucción, el sistema debe "limpiar" automáticamente cada archivo .bas/.cls eliminando todas las líneas que empiecen con "Attribute" antes de usar AddFromString en Access.
-    c. **Verificar Compilación:** Ejecuta `cscript //nologo condor_cli.vbs compile`. Si este paso falla, el ciclo se detiene aquí.
-    d. **Verificar Pruebas:** Ejecuta `cscript //nologo condor_cli.vbs test`.
-    e. **Analizar Resultado:**
-        *   **Si las pruebas fallan:** Analiza el log de error, corrige el código VBA, y **repite desde el paso 2b**. Continúa en este bucle hasta que todas las pruebas pasen.
-        *   **Si las pruebas pasan:** Procede al siguiente paso.
+2.  **Ejecución de IA (Tu Rol, Copilot):**
+    a. Recibes el prompt del Supervisor.
+    b. Generas el código necesario y ejecutas `cscript //nologo condor_cli.vbs rebuild` para sincronizar el proyecto.
+    c. Pausa y espera la confirmación del Supervisor.
 
-3.  **Finalización y Despliegue (Tu Secuencia Final Autónoma):**
-    a. **Liberar Código:** Reescribe los archivos de código VBA (funcionalidad y pruebas) eliminando los bloques `#If DEV_MODE Then`.
-    b. **Reconstruir Código Final con Limpieza:** Ejecuta `cscript //nologo condor_cli.vbs rebuild`. **CRÍTICO:** El sistema debe aplicar la misma lógica de limpieza de metadatos "Attribute" durante esta reconstrucción final.
-    c. **Verificar Compilación Final:** Ejecuta `cscript //nologo condor_cli.vbs compile` para asegurar que el código final compila correctamente.
-    d. **Actualizar Documentación:** Si es necesario, modifica el `README.md` para reflejar la nueva funcionalidad.
-    e. **Confirmar Cambios:** Ejecuta la secuencia de Git: `git add .`, `git commit -m "..."` (con un mensaje descriptivo), y `git push`.
+3.  **Verificación Manual (Rol del Supervisor):**
+    a. El Supervisor abre CONDOR.accdb y ejecuta Depuración -> Compilar Proyecto.
+    b. Si hay un error, el ciclo se detiene y el Supervisor lo reporta al Arquitecto.
+    c. Si el proyecto compila, el Supervisor te da la orden para continuar.
 
-4.  **Informe Final (Tu Notificación al Supervisor):** Una vez completado el `push`, notifícame que la tarea se ha completado con éxito y proporciona un resumen de lo que se ha hecho.
+4.  **Finalización de IA (Tu Rol, Copilot):**
+    a. Tras la confirmación del Supervisor, ejecutas la secuencia final: `cscript //nologo condor_cli.vbs compile` y luego `cscript //nologo condor_cli.vbs test`.
+    b. Si las pruebas pasan, preparas el commit y ejecutas el push.
+
+5.  **Informe Final (Tu Rol, Copilot):** Notificas al Supervisor que la tarea se ha completado con éxito.
 ---
 ## Estado del Proyecto
 - [x] Estructura base del proyecto
