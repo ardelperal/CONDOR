@@ -472,7 +472,7 @@ Public Function Test_CConfig_HasKey_ValidAndInvalidKeys() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = New CConfig
     
     ' Act & Assert

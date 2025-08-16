@@ -72,7 +72,7 @@ Public Function Test_CSolicitudService_Creation_Success() As Boolean
     On Error GoTo TestFail
     
     ' Arrange & Act
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Assert
@@ -88,7 +88,7 @@ Public Function Test_CSolicitudService_ImplementsISolicitudService() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act
@@ -113,7 +113,7 @@ Public Function Test_GetSolicitud_ValidId_ReturnsSolicitud() As Boolean
     
     ' Arrange
     SetupValidSolicitudMock
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act
@@ -134,7 +134,7 @@ Public Function Test_GetSolicitud_InvalidId_HandlesGracefully() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act
@@ -154,7 +154,7 @@ Public Function Test_GetSolicitud_ZeroId_HandlesGracefully() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act
@@ -179,7 +179,7 @@ Public Function Test_CreateSolicitud_ValidData_ReturnsId() As Boolean
     
     ' Arrange
     SetupValidSolicitudMock
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act
@@ -202,7 +202,7 @@ Public Function Test_CreateSolicitud_InvalidExpedienteId_HandlesError() As Boole
     On Error GoTo TestFail
     
     ' Arrange
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act
@@ -222,7 +222,7 @@ Public Function Test_CreateSolicitud_EmptyTipo_HandlesError() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act
@@ -242,7 +242,7 @@ Public Function Test_CreateSolicitud_InvalidUserId_HandlesError() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act
@@ -267,7 +267,7 @@ Public Function Test_UpdateSolicitud_ValidData_ReturnsTrue() As Boolean
     
     ' Arrange
     SetupValidSolicitudMock
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Act

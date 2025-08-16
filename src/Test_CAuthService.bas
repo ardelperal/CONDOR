@@ -56,7 +56,7 @@ Public Function Test_CAuthService_Creation_Success() As Boolean
     On Error GoTo TestFail
     
     ' Arrange & Act
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Assert
@@ -72,7 +72,7 @@ Public Function Test_CAuthService_ImplementsIAuthService() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -97,7 +97,7 @@ Public Function Test_AuthenticateUser_ValidEmail_ReturnsTrue() As Boolean
     
     ' Arrange
     SetupValidUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -119,7 +119,7 @@ Public Function Test_AuthenticateUser_InvalidEmail_ReturnsFalse() As Boolean
     
     ' Arrange
     SetupInvalidUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -140,7 +140,7 @@ Public Function Test_AuthenticateUser_EmptyEmail_HandlesGracefully() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -166,7 +166,7 @@ Public Function Test_IsUserAuthorized_ValidUser_ReturnsBoolean() As Boolean
     
     ' Arrange
     SetupValidUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -188,7 +188,7 @@ Public Function Test_IsUserAuthorized_InvalidPermission_ReturnsFalse() As Boolea
     
     ' Arrange
     SetupValidUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -210,7 +210,7 @@ Public Function Test_IsUserAuthorized_GuestUser_LimitedPermissions() As Boolean
     
     ' Arrange
     SetupGuestUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -238,7 +238,7 @@ Public Function Test_GetUserRole_ValidUser_ReturnsRole() As Boolean
     
     ' Arrange
     SetupValidUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -260,7 +260,7 @@ Public Function Test_GetUserRole_InvalidUser_ReturnsEmpty() As Boolean
     
     ' Arrange
     SetupInvalidUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act

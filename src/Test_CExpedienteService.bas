@@ -64,7 +64,7 @@ Public Function Test_CExpedienteService_Creation_Success() As Boolean
     On Error GoTo TestFail
     
     ' Arrange & Act
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Assert
@@ -80,7 +80,7 @@ Public Function Test_CExpedienteService_ImplementsIExpedienteService() As Boolea
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -105,7 +105,7 @@ Public Function Test_GetExpediente_ValidId_ReturnsExpediente() As Boolean
     
     ' Arrange
     SetupValidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -126,7 +126,7 @@ Public Function Test_GetExpediente_InvalidId_HandlesGracefully() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -147,7 +147,7 @@ Public Function Test_GetExpediente_ZeroId_HandlesGracefully() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -172,7 +172,7 @@ Public Function Test_CreateExpediente_ValidData_ReturnsId() As Boolean
     
     ' Arrange
     SetupValidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -195,7 +195,7 @@ Public Function Test_CreateExpediente_EmptyNumber_HandlesError() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -216,7 +216,7 @@ Public Function Test_CreateExpediente_InvalidUserId_HandlesError() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -241,7 +241,7 @@ Public Function Test_UpdateExpediente_ValidData_ReturnsTrue() As Boolean
     
     ' Arrange
     SetupValidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -263,7 +263,7 @@ Public Function Test_UpdateExpediente_InvalidId_ReturnsFalse() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -288,7 +288,7 @@ Public Function Test_DeleteExpediente_ValidId_ReturnsTrue() As Boolean
     
     ' Arrange
     SetupValidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -308,7 +308,7 @@ Public Function Test_DeleteExpediente_InvalidId_ReturnsFalse() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -332,7 +332,7 @@ Public Function Test_SearchExpedientes_ValidCriteria_ReturnsResults() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -353,7 +353,7 @@ Public Function Test_SearchExpedientes_EmptyCriteria_ReturnsAll() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -374,7 +374,7 @@ Public Function Test_GetExpedientesByUser_ValidUserId_ReturnsResults() As Boolea
     
     ' Arrange
     SetupValidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -399,7 +399,7 @@ Public Function Test_ValidateExpediente_ValidData_ReturnsTrue() As Boolean
     
     ' Arrange
     SetupValidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -425,7 +425,7 @@ Public Function Test_ValidateExpediente_InvalidData_ReturnsFalse() As Boolean
     
     ' Arrange
     SetupInvalidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -455,7 +455,7 @@ Public Function Test_Integration_CreateAndRetrieve() As Boolean
     
     ' Arrange
     SetupValidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -481,7 +481,7 @@ Public Function Test_Integration_UpdateAndVerify() As Boolean
     
     ' Arrange
     SetupValidExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -508,7 +508,7 @@ Public Function Test_LargeDataHandling_LongDescription() As Boolean
     
     ' Arrange
     SetupLargeExpedienteMock
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act
@@ -528,7 +528,7 @@ Public Function Test_ConcurrentOperations_MultipleUsers() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Act

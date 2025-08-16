@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modConfig"
+Attribute VB_Name = "modConfig"
 Option Compare Database
 Option Explicit
 
@@ -33,84 +33,84 @@ End Function
 
 ' Funci?n para obtener el entorno activo (para debug)
 Public Function GetActiveEnvironment() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetActiveEnvironment = configInstance.GetActiveEnvironment()
 End Function
 
 ' Funci?n para obtener la ruta de la base de datos principal
 Public Function GetDatabasePath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetDatabasePath = configInstance.GetDatabasePath()
 End Function
 
 ' Funci?n para obtener la ruta de la base de datos de datos
 Public Function GetDataPath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetDataPath = configInstance.GetDataPath()
 End Function
 
 ' Funci?n para obtener la ruta de la base de datos de Expedientes
 Public Function GetExpedientesPath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetExpedientesPath = configInstance.GetExpedientesPath()
 End Function
 
 ' Funci?n para obtener la ruta de la base de datos de Expedientes (alias para compatibilidad)
 Public Function GetExpedientesDbPath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetExpedientesDbPath = configInstance.GetExpedientesDbPath()
 End Function
 
 ' Funci?n para obtener la ruta de las plantillas
 Public Function GetPlantillasPath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetPlantillasPath = configInstance.GetPlantillasPath()
 End Function
 
 ' Funci?n para obtener la ruta de la base de datos Lanzadera
 Public Function GetLanzaderaDbPath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetLanzaderaDbPath = configInstance.GetLanzaderaDbPath()
 End Function
 
 ' Funci?n para obtener la ruta de c?digo fuente
 Public Function GetSourcePath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetSourcePath = configInstance.GetSourcePath()
 End Function
 
 ' Funci?n para obtener la ruta de backups
 Public Function GetBackupPath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetBackupPath = configInstance.GetBackupPath()
 End Function
 
 ' Funci?n para obtener la ruta de logs
 Public Function GetLogPath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetLogPath = configInstance.GetLogPath()
 End Function
 
 ' Funci?n para obtener la ruta temporal
 Public Function GetTempPath() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     GetTempPath = configInstance.GetTempPath()
 End Function
 
 ' Funci?n de prueba (delegada a CConfig)
 Public Function TestModConfig() As String
-    Dim configInstance As CConfig
+    Dim configInstance As IConfig
     Set configInstance = config()
     TestModConfig = configInstance.TestCConfig()
 End Function
