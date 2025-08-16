@@ -64,10 +64,10 @@ End Sub
 Public Sub Ejecutar_Test_Compilacion()
     If Test_ImplementacionISolicitud() Then
         Debug.Print "? Test de compilaci?n ISolicitud: EXITOSO"
-        MsgBox "Test de compilaci?n ISolicitud: EXITOSO", vbInformation
+        ' MsgBox eliminado para operaci?n desatendida
     Else
         Debug.Print "? Test de compilaci?n ISolicitud: FALL?"
-        MsgBox "Test de compilaci?n ISolicitud: FALL?", vbCritical
+        ' MsgBox eliminado para operaci?n desatendida
     End If
 End Sub
 

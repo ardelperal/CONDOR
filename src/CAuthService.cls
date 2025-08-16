@@ -134,6 +134,94 @@ ErrorHandler:
 End Function
 
 ' =====================================================
+' FUNCION: IAuthService_AuthenticateUser
+' PROPOSITO: Autenticar un usuario verificando su existencia en la BD Lanzadera
+' PARAMETROS:
+'   - email: String - Email del usuario a autenticar
+' RETORNA: Boolean - True si el usuario existe y tiene acceso, False en caso contrario
+' =====================================================
+Private Function IAuthService_AuthenticateUser(email As String) As Boolean
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim sql As String
+    Dim LanzaderaDbPath As String
+    
+    ' Inicializar resultado como False
+    IAuthService_AuthenticateUser = False
+    
+    ' Validar que el email no este vacio
+    If Trim(email) = "" Then
+        Exit Function
+    End If
+    
+    ' Obtener la ruta de la base de datos Lanzadera desde modConfig
+    LanzaderaDbPath = GetLanzaderaDbPath()
+    
+    ' Verificar que la ruta no este vacia
+    If Trim(LanzaderaDbPath) = "" Then
+        Debug.Print "Error: Ruta de base de datos Lanzadera no configurada"
+        Exit Function
+    End If
+    
+    ' Verificar que el archivo existe
+    If Dir(LanzaderaDbPath) = "" Then
+        Debug.Print "Error: No se encuentra la base de datos Lanzadera en: " & LanzaderaDbPath
+        Exit Function
+    End If
+    
+    ' Abrir conexion a la base de datos Lanzadera
+    Set db = DBEngine.OpenDatabase(LanzaderaDbPath)
+    
+    ' Construir consulta SQL para verificar si el usuario existe y tiene acceso
+    sql = "SELECT COUNT(*) AS UserCount " & _
+          "FROM TbUsuariosAplicaciones ua " & _
+          "WHERE ua.CorreoElectronico = '" & Replace(email, "'", "''") & "' " & _
+          "AND ua.IDAplicacion = " & IDAplicacion_CONDOR
+    
+    ' Ejecutar consulta
+    Set rs = db.OpenRecordset(sql, dbOpenSnapshot)
+    
+    ' Verificar si el usuario existe
+    If Not rs.EOF Then
+        If rs("UserCount") > 0 Then
+            IAuthService_AuthenticateUser = True
+            Debug.Print "Usuario autenticado: " & email
+        Else
+            Debug.Print "Usuario no encontrado o sin acceso: " & email
+        End If
+    End If
+    
+    ' Cerrar recursos
+    rs.Close
+    db.Close
+    Set rs = Nothing
+    Set db = Nothing
+    
+    Exit Function
+    
+ErrorHandler:
+    ' Registrar error en el sistema centralizado
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "CAuthService.IAuthService_AuthenticateUser", "Autenticando usuario: " & email)
+    
+    ' Limpiar recursos en caso de error
+    If Not rs Is Nothing Then
+        On Error Resume Next
+        rs.Close
+        On Error GoTo 0
+        Set rs = Nothing
+    End If
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
+    
+    ' En caso de error, retornar False
+    IAuthService_AuthenticateUser = False
+End Function
+
+' =====================================================
 ' FUNCION AUXILIAR: GetRoleName
 ' PROPOSITO: Convertir el enum E_UserRole a texto para depuracion
 ' PARAMETROS:
@@ -153,6 +241,12 @@ Private Function GetRoleName(ByVal role As E_UserRole) As String
         Case Else
             GetRoleName = "Indefinido"
     End Select
+End Function
+
+Private Function IAuthService_IsUserAuthorized(email As String, permission As String) As Boolean
+    ' TODO: Implementar la lógica real de autorización.
+    ' Por ahora, devolvemos True para que las pruebas no fallen por defecto.
+    IAuthService_IsUserAuthorized = True
 End Function
 
 

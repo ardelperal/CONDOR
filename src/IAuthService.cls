@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -10,7 +10,12 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-Public Function GetUserRole(ByVal userEmail As String) As E_UserRole
+' Contrato para los servicios de autenticación y autorización.
+
+Public Function AuthenticateUser(email As String) As Boolean
+End Function
+
+Public Function IsUserAuthorized(email As String, permission As String) As Boolean
 End Function
 
 

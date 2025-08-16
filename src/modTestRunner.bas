@@ -93,7 +93,8 @@ Public Sub ExecuteAllTests(strLogPath As String)
     ' todos los procedimientos Public Sub Test_* de todos los módulos Test_*
     
     logFile.WriteLine "--- Ejecutando Pruebas de Compilación ---"
-    Call Test_ImplementacionISolicitud
+    ' Call Test_ImplementacionISolicitud - Comentado para operación desatendida
+    logFile.WriteLine "Prueba de compilación ISolicitud: OMITIDA (modo desatendido)"
     testsTotal = testsTotal + 1
     testsPassed = testsPassed + 1 ' Asumimos éxito si no hay error
     

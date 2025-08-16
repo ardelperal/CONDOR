@@ -284,7 +284,7 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     Set solicitud = New CSolicitudPC
     
     Dim datosPC As T_Datos_PC
-    datosPC.IDDatosPC = 456
+    datosPC.ID = 456
     datosPC.IDSolicitud = 123
     datosPC.TituloPC = "Propuesta de Cambio de Prueba"
     datosPC.DescripcionPC = "Descripci?n de la propuesta"
@@ -299,7 +299,7 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     retrievedDatos = solicitud.DatosPC
     
     ' Assert
-    Test_CSolicitudPC_DatosPC_SetAndGet = (retrievedDatos.IDDatosPC = 456) And _
+    Test_CSolicitudPC_DatosPC_SetAndGet = (retrievedDatos.ID = 456) And _
                                          (retrievedDatos.IDSolicitud = 123) And _
                                          (retrievedDatos.TituloPC = "Propuesta de Cambio de Prueba")
     

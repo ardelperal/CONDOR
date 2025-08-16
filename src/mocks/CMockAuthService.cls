@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -71,26 +71,6 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRo
 End Function
 
 ' =====================================================
-' IMPLEMENTACION: IAuthService_AuthenticateUser
-' PROPOSITO: Autenticar un usuario basado en su email (VERSION MOCK)
-' PARAMETROS:
-'   - email: Email del usuario a autenticar
-' RETORNA: Boolean - True si el usuario es válido, False en caso contrario
-' NOTAS: Esta implementacion NO accede a ninguna base de datos.
-'        La autenticación se determina mediante emails predefinidos para pruebas.
-' =====================================================
-Private Function IAuthService_AuthenticateUser(email As String) As Boolean
-    ' Lógica MOCK para la autenticación.
-    ' Devuelve True solo para usuarios de prueba conocidos.
-    Select Case LCase(email)
-        Case "admin.condor@example.com", "calidad.condor@example.com", "tecnico.condor@example.com", "usuario.test@example.com"
-            IAuthService_AuthenticateUser = True
-        Case Else
-            IAuthService_AuthenticateUser = False
-    End Select
-End Function
-
-' =====================================================
 ' METODO PUBLICO: GetMockUserList
 ' PROPOSITO: Obtener la lista de usuarios mock disponibles para pruebas
 ' RETORNA: String - Lista formateada de usuarios mock
@@ -120,16 +100,6 @@ End Function
 ' =====================================================
 Public Function IsMockService() As Boolean
     IsMockService = True
-End Function
-
-Private Function IAuthService_IsUserAuthorized(email As String, permission As String) As Boolean
-    ' Lógica MOCK para autorización.
-    ' Devuelve True si el permiso es "READ" para cualquier usuario de prueba.
-    If LCase(permission) = "read" Then
-        IAuthService_IsUserAuthorized = True
-    Else
-        IAuthService_IsUserAuthorized = False
-    End If
 End Function
 
 

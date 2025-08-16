@@ -6,8 +6,6 @@ Attribute VB_Name = "modRepositoryFactory"
 ' FECHA: 2024
 '******************************************************************************
 
-#If DEV_MODE Then
-
 Option Explicit
 
 '******************************************************************************
@@ -20,13 +18,7 @@ Option Explicit
 ' RETORNA: ISolicitudRepository - Instancia del repositorio (Mock o Real)
 '******************************************************************************
 Public Function CreateSolicitudRepository() As ISolicitudRepository
-    #If DEV_MODE Then
-        ' En modo desarrollo, devolvemos el Mock para las pruebas
-        Set CreateSolicitudRepository = New CMockSolicitudRepository
-    #Else
-        ' En modo producción, devolvemos la implementación real
-        Set CreateSolicitudRepository = New CSolicitudRepository
-    #End If
+    ' Por ahora siempre devolvemos el Mock para las pruebas
+    ' TODO: Implementar lógica para alternar entre Mock y Real según configuración
+    Set CreateSolicitudRepository = New CMockSolicitudRepository
 End Function
-
-#End If

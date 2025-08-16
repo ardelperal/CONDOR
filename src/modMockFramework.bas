@@ -175,12 +175,12 @@ Public Sub InitializeExpedientesMock()
         ' Inicializar datos de expediente por defecto
         With .ExpedienteData
             .ID = 123
-            .NumeroExpediente = "EXP-2024-001"
-            .Descripcion = "Expediente de prueba"
-            .Estado = "Activo"
-            .FechaCreacion = Date
-            .Usuario = "usuario.prueba@empresa.com"
-            .Activo = True
+            .IDExpediente = 123
+            .Nemotecnico = "EXP-2024-001"
+            .Titulo = "Expediente de prueba"
+            .ResponsableCalidad = "usuario.prueba@empresa.com"
+            .ResponsableTecnico = "jefe.proyecto@empresa.com"
+            .Pecal = "PECAL-001"
         End With
     End With
 End Sub
@@ -443,15 +443,16 @@ Public Sub SetLanzaderaUser(email As String, role As String, exists As Boolean)
     End With
 End Sub
 
-Public Sub SetExpedienteData(id As Long, numero As String, descripcion As String, estado As String)
+Public Sub SetExpedienteData(id As Long, nemotecnico As String, titulo As String, responsableCalidad As String)
     ' Configurar datos específicos de expediente
     With g_MockExpedientes.ExpedienteData
         .ID = id
-        .NumeroExpediente = numero
-        .Descripcion = descripcion
-        .Estado = estado
-        .FechaCreacion = Date
-        .Activo = True
+        .IDExpediente = id
+        .Nemotecnico = nemotecnico
+        .Titulo = titulo
+        .ResponsableCalidad = responsableCalidad
+        .ResponsableTecnico = "jefe.proyecto@empresa.com"
+        .Pecal = "PECAL-001"
     End With
     g_MockExpedientes.ExpedienteExists = True
     g_MockExpedientes.RecordCount = 1

@@ -114,7 +114,7 @@ Public Function Test_GetExpediente_ValidId_ReturnsExpediente() As Boolean
     
     ' Assert
     ' Verificamos que retorna un expediente (ID > 0 indica éxito)
-    Test_GetExpediente_ValidId_ReturnsExpediente = (expediente.IdExpediente >= 0)
+    Test_GetExpediente_ValidId_ReturnsExpediente = (expediente.IDExpediente >= 0)
     
     Exit Function
     
@@ -404,9 +404,8 @@ Public Function Test_ValidateExpediente_ValidData_ReturnsTrue() As Boolean
     
     ' Act
     Dim expediente As T_Expediente
-    expediente.IdExpediente = m_MockExpediente.IdExpediente
-    expediente.NumeroExpediente = m_MockExpediente.NumeroExpediente
-    expediente.Descripcion = m_MockExpediente.Descripcion
+    expediente.IDExpediente = m_MockExpediente.IdExpediente
+    expediente.Titulo = m_MockExpediente.Descripcion
     
     Dim result As Boolean
     result = expedienteService.ValidateExpediente(expediente)
@@ -430,9 +429,8 @@ Public Function Test_ValidateExpediente_InvalidData_ReturnsFalse() As Boolean
     
     ' Act
     Dim expediente As T_Expediente
-    expediente.IdExpediente = m_MockExpediente.IdExpediente
-    expediente.NumeroExpediente = m_MockExpediente.NumeroExpediente
-    expediente.Descripcion = m_MockExpediente.Descripcion
+    expediente.IDExpediente = m_MockExpediente.IdExpediente
+    expediente.Titulo = m_MockExpediente.Descripcion
     
     Dim result As Boolean
     result = expedienteService.ValidateExpediente(expediente)

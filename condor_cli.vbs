@@ -30,6 +30,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
     WScript.Echo "  test       - Ejecutar suite de pruebas unitarias"
     WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
+    WScript.Echo "  compile    - Compilar todos los modulos VBA del proyecto"
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
@@ -53,8 +54,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild' o 'lint'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "compile" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint' o 'compile'"
     WScript.Quit 1
 End If
 
@@ -87,6 +88,9 @@ WScript.Echo "=== INICIANDO SINCRONIZACION VBA ==="
 WScript.Echo "Accion: " & strAction
 WScript.Echo "Base de datos: " & strAccessPath
 WScript.Echo "Directorio: " & strSourcePath
+
+' Verificar y cerrar procesos de Access existentes
+Call CloseExistingAccessProcesses()
 
 On Error Resume Next
 
@@ -172,6 +176,8 @@ ElseIf strAction = "listtables" Then
 
 ElseIf strAction = "rebuild" Then
     Call RebuildProject()
+ElseIf strAction = "compile" Then
+    Call CompileProject()
 ElseIf strAction = "lint" Then
     Call LintProject()
 ElseIf strAction = "relink" Then
@@ -1511,6 +1517,85 @@ Sub RebuildProject()
     WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
     WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
     WScript.Echo "Todos los modulos han sido reimportados desde /src"
+    
+    On Error GoTo 0
+End Sub
+
+' Subrutina para compilar el proyecto VBA con verificaciones defensivas
+Sub CompileProject()
+    WScript.Echo "=== INICIANDO COMPILACION COMPLETA DEL PROYECTO VBA ==="
+
+    ' --- Verificación Defensiva ---
+    If objAccess Is Nothing Then
+        WScript.Echo "ERROR CRITICO: El objeto de la aplicación Access no es válido (Nothing)."
+        WScript.Quit 1
+    End If
+
+    On Error Resume Next
+    If objAccess.CurrentDb Is Nothing Then
+        WScript.Echo "ERROR CRITICO: No hay ninguna base de datos abierta en la instancia de Access."
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
+    ' --- Fin de la Verificación ---
+
+    WScript.Echo "Instancia de Access y base de datos validadas. Intentando compilar..."
+
+    On Error Resume Next
+    Err.Clear
+
+    ' Comando para compilar y guardar todos los módulos.
+    objAccess.DoCmd.RunCommand 584 ' acCmdCompileAndSaveAllModules
+
+    If Err.Number <> 0 Then
+        WScript.Echo "--------------------------------------------------"
+        WScript.Echo "ERROR DE COMPILACION DETECTADO:"
+        WScript.Echo "  Código de Error: " & Err.Number
+        WScript.Echo "  Descripción: " & Err.Description
+        WScript.Echo "--------------------------------------------------"
+        WScript.Echo "ACCION REQUERIDA: Abre Access, ve al editor de VBA (Alt+F11) y selecciona 'Depuración -> Compilar' para localizar el error."
+        Err.Clear
+        objAccess.Quit
+        WScript.Quit 1 ' Salir con código de error
+    Else
+        WScript.Echo "✓ Compilación completada exitosamente. No se encontraron errores."
+        ' Dejamos que el script principal se encargue de cerrar Access.
+    End If
+
+    On Error GoTo 0
+End Sub
+
+' Subrutina para verificar y cerrar procesos de Access existentes
+Sub CloseExistingAccessProcesses()
+    Dim objWMI, colProcesses, objProcess
+    Dim processCount
+    
+    WScript.Echo "Verificando procesos de Access existentes..."
+    
+    On Error Resume Next
+    Set objWMI = GetObject("winmgmts:")
+    Set colProcesses = objWMI.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'MSACCESS.EXE'")
+    
+    processCount = 0
+    For Each objProcess In colProcesses
+        processCount = processCount + 1
+    Next
+    
+    If processCount > 0 Then
+        WScript.Echo "Se encontraron " & processCount & " procesos de Access ejecutándose. Cerrándolos..."
+        
+        For Each objProcess In colProcesses
+            WScript.Echo "Terminando proceso Access PID: " & objProcess.ProcessId
+            objProcess.Terminate()
+        Next
+        
+        ' Esperar un momento para que los procesos se cierren completamente
+        WScript.Sleep 2000
+        WScript.Echo "✓ Procesos de Access cerrados correctamente"
+    Else
+        WScript.Echo "✓ No se encontraron procesos de Access ejecutándose"
+    End If
     
     On Error GoTo 0
 End Sub

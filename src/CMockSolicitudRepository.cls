@@ -1,4 +1,3 @@
-#If DEV_MODE Then
 Option Compare Database
 Option Explicit
 Implements ISolicitudRepository
@@ -17,8 +16,7 @@ End Function
 Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Long
     Dim newId As Long
     newId = m_storage.Count + 1
-    solicitudPC.IdSolicitud = newId
+    solicitudPC.idSolicitud = newId
     m_storage.Add solicitudPC, CStr(newId)
     ISolicitudRepository_SavePC = newId
 End Function
-#End If

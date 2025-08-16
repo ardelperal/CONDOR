@@ -122,7 +122,7 @@ Public Function Test_GetSolicitud_ValidId_ReturnsSolicitud() As Boolean
     
     ' Assert
     ' Verificamos que retorna una solicitud (ID >= 0 indica éxito)
-    Test_GetSolicitud_ValidId_ReturnsSolicitud = (solicitud.IdSolicitud >= 0)
+    Test_GetSolicitud_ValidId_ReturnsSolicitud = (solicitud.idSolicitud >= 0)
     
     Exit Function
     
@@ -472,10 +472,10 @@ Public Function Test_ValidateSolicitud_ValidData_ReturnsTrue() As Boolean
     
     ' Act
     Dim solicitud As T_Solicitud
-    solicitud.IdSolicitud = m_MockSolicitud.IdSolicitud
-    solicitud.IdExpediente = m_MockSolicitud.IdExpediente
+    solicitud.idSolicitud = m_MockSolicitud.IdSolicitud
+    solicitud.IDExpediente = m_MockSolicitud.IdExpediente
     solicitud.TipoSolicitud = m_MockSolicitud.TipoSolicitud
-    solicitud.CodigoSolicitud = m_MockSolicitud.CodigoSolicitud
+    ' solicitud.CodigoSolicitud = m_MockSolicitud.CodigoSolicitud ' Comentado: CodigoSolicitud no existe en T_Solicitud
     
     Dim result As Boolean
     result = solicitudService.ValidateSolicitud(solicitud)
@@ -499,10 +499,10 @@ Public Function Test_ValidateSolicitud_InvalidData_ReturnsFalse() As Boolean
     
     ' Act
     Dim solicitud As T_Solicitud
-    solicitud.IdSolicitud = m_MockSolicitud.IdSolicitud
-    solicitud.IdExpediente = m_MockSolicitud.IdExpediente
+    solicitud.idSolicitud = m_MockSolicitud.IdSolicitud
+    solicitud.IDExpediente = m_MockSolicitud.IdExpediente
     solicitud.TipoSolicitud = m_MockSolicitud.TipoSolicitud
-    solicitud.CodigoSolicitud = m_MockSolicitud.CodigoSolicitud
+    ' solicitud.CodigoSolicitud = m_MockSolicitud.CodigoSolicitud ' Comentado: CodigoSolicitud no existe en T_Solicitud
     
     Dim result As Boolean
     result = solicitudService.ValidateSolicitud(solicitud)
