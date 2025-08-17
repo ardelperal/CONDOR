@@ -3,232 +3,6 @@ Option Compare Database
 Option Explicit
 
 ' ============================================================================
-' Módulo: Test_ErrorHandler
-' Descripción: Pruebas para el sistema de manejo de errores centralizado
-' Autor: Sistema CONDOR
-' Fecha: 2024
-' ============================================================================
-
-' Función principal que ejecuta todas las pruebas del manejo de errores
-Public Function RunErrorHandlerTests() As String
-    Dim resultado As String
-    Dim testsPassed As Integer
-    Dim testsTotal As Integer
-    
-    resultado = "=== PRUEBAS DEL SISTEMA DE MANEJO DE ERRORES ===" & vbCrLf & vbCrLf
-    testsPassed = 0
-    testsTotal = 0
-    
-    ' Test 1: Verificar que LogError registra correctamente
-    On Error Resume Next
-    Err.Clear
-    Call Test_LogError_RegistraCorrectamente
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_LogError_RegistraCorrectamente" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_LogError_RegistraCorrectamente: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 2: Verificar manejo de errores en función diseñada para fallar
-    On Error Resume Next
-    Err.Clear
-    Call Test_FuncionConError_RegistraError
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_FuncionConError_RegistraError" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_FuncionConError_RegistraError: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 3: Verificar que se detectan errores críticos
-    On Error Resume Next
-    Err.Clear
-    Call Test_ErrorCritico_CreaNotificacion
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_ErrorCritico_CreaNotificacion" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_ErrorCritico_CreaNotificacion: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 4: Verificar manejo de errores de base de datos
-    On Error Resume Next
-    Err.Clear
-    Call Test_ErrorBaseDatos_ManejaCorrectamente
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_ErrorBaseDatos_ManejaCorrectamente" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_ErrorBaseDatos_ManejaCorrectamente: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 5: Verificar manejo de errores de red
-    On Error Resume Next
-    Err.Clear
-    Call Test_ErrorRed_ManejaCorrectamente
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_ErrorRed_ManejaCorrectamente" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_ErrorRed_ManejaCorrectamente: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 6: Verificar manejo de errores de memoria
-    On Error Resume Next
-    Err.Clear
-    Call Test_ErrorMemoria_ManejaCorrectamente
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_ErrorMemoria_ManejaCorrectamente" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_ErrorMemoria_ManejaCorrectamente: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 7: Verificar manejo de errores de validación
-    On Error Resume Next
-    Err.Clear
-    Call Test_ErrorValidacion_ManejaCorrectamente
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_ErrorValidacion_ManejaCorrectamente" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_ErrorValidacion_ManejaCorrectamente: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 8: Verificar logging con diferentes niveles de severidad
-    On Error Resume Next
-    Err.Clear
-    Call Test_LoggingNivelesSeveridad_FuncionaCorrectamente
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_LoggingNivelesSeveridad_FuncionaCorrectamente" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_LoggingNivelesSeveridad_FuncionaCorrectamente: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 9: Verificar limpieza de logs antiguos
-    On Error Resume Next
-    Err.Clear
-    Call Test_CleanOldLogs_FuncionaCorrectamente
-    If Err.Number = 0 Then
-        resultado = resultado & "[OK] Test_CleanOldLogs_FuncionaCorrectamente" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_CleanOldLogs_FuncionaCorrectamente: " & Err.Description & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' === NUEVAS PRUEBAS CON MOCKS ===
-    resultado = resultado & vbCrLf & "--- PRUEBAS CON MOCKS ---" & vbCrLf
-    
-    ' Test 10: LogError con datos válidos
-    If Test_LogError_ValidData_Success() Then
-        resultado = resultado & "[OK] Test_LogError_ValidData_Success" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_LogError_ValidData_Success" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 11: Error crítico crea notificación
-    If Test_LogError_CriticalError_CreatesNotification() Then
-        resultado = resultado & "[OK] Test_LogError_CriticalError_CreatesNotification" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_LogError_CriticalError_CreatesNotification" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 12: Fallo de base de datos escribe a log local
-    If Test_LogError_DatabaseFail_WritesToLocalLog() Then
-        resultado = resultado & "[OK] Test_LogError_DatabaseFail_WritesToLocalLog" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_LogError_DatabaseFail_WritesToLocalLog" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 13: Detección de errores críticos de base de datos
-    If Test_IsCriticalError_DatabaseErrors_ReturnsTrue() Then
-        resultado = resultado & "[OK] Test_IsCriticalError_DatabaseErrors_ReturnsTrue" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_IsCriticalError_DatabaseErrors_ReturnsTrue" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 14: Detección de errores no críticos
-    If Test_IsCriticalError_NonCriticalErrors_ReturnsFalse() Then
-        resultado = resultado & "[OK] Test_IsCriticalError_NonCriticalErrors_ReturnsFalse" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_IsCriticalError_NonCriticalErrors_ReturnsFalse" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 15: Escritura a log local
-    If Test_WriteToLocalLog_ValidMessage_Success() Then
-        resultado = resultado & "[OK] Test_WriteToLocalLog_ValidMessage_Success" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_WriteToLocalLog_ValidMessage_Success" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 16: Limpieza de logs exitosa
-    If Test_CleanOldLogs_Success() Then
-        resultado = resultado & "[OK] Test_CleanOldLogs_Success" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_CleanOldLogs_Success" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 17: Flujo completo de error (integración)
-    If Test_Integration_ErrorFlow_Complete() Then
-        resultado = resultado & "[OK] Test_Integration_ErrorFlow_Complete" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_Integration_ErrorFlow_Complete" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    ' Test 18: Caso extremo - descripción muy larga
-    If Test_EdgeCase_VeryLongErrorDescription() Then
-        resultado = resultado & "[OK] Test_EdgeCase_VeryLongErrorDescription" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[ERROR] Test_EdgeCase_VeryLongErrorDescription" & vbCrLf
-    End If
-    testsTotal = testsTotal + 1
-    
-    On Error GoTo 0
-    
-    ' Resumen final
-    resultado = resultado & vbCrLf & "=== RESUMEN ===" & vbCrLf
-    resultado = resultado & "Pruebas ejecutadas: " & testsTotal & vbCrLf
-    resultado = resultado & "Pruebas exitosas: " & testsPassed & vbCrLf
-    resultado = resultado & "Pruebas fallidas: " & (testsTotal - testsPassed) & vbCrLf
-    
-    If testsPassed = testsTotal Then
-        resultado = resultado & "RESULTADO: ✓ TODAS LAS PRUEBAS PASARON" & vbCrLf
-    Else
-        resultado = resultado & "RESULTADO: ✗ ALGUNAS PRUEBAS FALLARON" & vbCrLf
-    End If
-    
-    RunErrorHandlerTests = resultado
-End Function
-
-' ============================================================================
 ' TIPOS Y VARIABLES PARA MOCKS
 ' ============================================================================
 
@@ -252,9 +26,123 @@ Private Type T_MockFileSystem
     LastWrittenContent As String
     WriteCallCount As Long
 End Type
-
 Private m_MockDB As T_MockDatabase
 Private m_MockFS As T_MockFileSystem
+' ============================================================================
+' Módulo: Test_ErrorHandler
+' Descripción: Pruebas para el sistema de manejo de errores centralizado
+' Autor: Sistema CONDOR
+' Fecha: 2024
+' Implementa patrón AAA (Arrange, Act, Assert)
+' ============================================================================
+
+' Función principal que ejecuta todas las pruebas del manejo de errores
+Public Function RunErrorHandlerTests() As String
+    Dim resultado As String
+    Dim testsPassed As Integer
+    Dim testsTotal As Integer
+    
+    resultado = "=== PRUEBAS DEL SISTEMA DE MANEJO DE ERRORES ===" & vbCrLf & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Test 1: LogError con datos válidos
+    testsTotal = testsTotal + 1
+    If Test_LogError_ValidData_Success() Then
+        resultado = resultado & "[OK] Test_LogError_ValidData_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_LogError_ValidData_Success" & vbCrLf
+    End If
+    
+    ' Test 2: Error crítico crea notificación
+    testsTotal = testsTotal + 1
+    If Test_LogError_CriticalError_CreatesNotification() Then
+        resultado = resultado & "[OK] Test_LogError_CriticalError_CreatesNotification" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_LogError_CriticalError_CreatesNotification" & vbCrLf
+    End If
+    
+    ' Test 3: Fallo de base de datos escribe a log local
+    testsTotal = testsTotal + 1
+    If Test_LogError_DatabaseFail_WritesToLocalLog() Then
+        resultado = resultado & "[OK] Test_LogError_DatabaseFail_WritesToLocalLog" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_LogError_DatabaseFail_WritesToLocalLog" & vbCrLf
+    End If
+    
+    ' Test 4: Detección de errores críticos de base de datos
+    testsTotal = testsTotal + 1
+    If Test_IsCriticalError_DatabaseErrors_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_IsCriticalError_DatabaseErrors_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_IsCriticalError_DatabaseErrors_ReturnsTrue" & vbCrLf
+    End If
+    
+    ' Test 5: Detección de errores no críticos
+    testsTotal = testsTotal + 1
+    If Test_IsCriticalError_NonCriticalErrors_ReturnsFalse() Then
+        resultado = resultado & "[OK] Test_IsCriticalError_NonCriticalErrors_ReturnsFalse" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_IsCriticalError_NonCriticalErrors_ReturnsFalse" & vbCrLf
+    End If
+    
+    ' Test 6: Escritura a log local
+    testsTotal = testsTotal + 1
+    If Test_WriteToLocalLog_ValidMessage_Success() Then
+        resultado = resultado & "[OK] Test_WriteToLocalLog_ValidMessage_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_WriteToLocalLog_ValidMessage_Success" & vbCrLf
+    End If
+    
+    ' Test 7: Limpieza de logs exitosa
+    testsTotal = testsTotal + 1
+    If Test_CleanOldLogs_Success() Then
+        resultado = resultado & "[OK] Test_CleanOldLogs_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CleanOldLogs_Success" & vbCrLf
+    End If
+    
+    ' Test 8: Flujo completo de error (integración)
+    testsTotal = testsTotal + 1
+    If Test_Integration_ErrorFlow_Complete() Then
+        resultado = resultado & "[OK] Test_Integration_ErrorFlow_Complete" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_ErrorFlow_Complete" & vbCrLf
+    End If
+    
+    ' Test 9: Caso extremo - descripción muy larga
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_VeryLongErrorDescription() Then
+        resultado = resultado & "[OK] Test_EdgeCase_VeryLongErrorDescription" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_VeryLongErrorDescription" & vbCrLf
+    End If
+    
+    ' Resumen final
+    resultado = resultado & vbCrLf & "=== RESUMEN ===" & vbCrLf
+    resultado = resultado & "Pruebas ejecutadas: " & testsTotal & vbCrLf
+    resultado = resultado & "Pruebas exitosas: " & testsPassed & vbCrLf
+    resultado = resultado & "Pruebas fallidas: " & (testsTotal - testsPassed) & vbCrLf
+    
+    If testsPassed = testsTotal Then
+        resultado = resultado & "RESULTADO: ✓ TODAS LAS PRUEBAS PASARON" & vbCrLf
+    Else
+        resultado = resultado & "RESULTADO: ✗ ALGUNAS PRUEBAS FALLARON" & vbCrLf
+    End If
+    
+    RunErrorHandlerTests = resultado
+End Function
+
+
 
 ' ============================================================================
 ' FUNCIONES DE CONFIGURACIÓN DE MOCKS
@@ -383,7 +271,7 @@ ErrorHandler:
 End Sub
 
 ' Función auxiliar para determinar si un error es crítico (mock)
-Private Function IsCriticalErrorMock(errorNumber As Long) As Boolean
+Private Function IsCriticalErrorMock(ByVal errorNumber As Long) As Boolean
     Select Case errorNumber
         Case 3001, 3024, 3044, 3051, 3078, 3343 ' Errores de base de datos
             IsCriticalErrorMock = True

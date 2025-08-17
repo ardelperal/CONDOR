@@ -519,7 +519,7 @@ End Sub
 ' FUNCIONES DE UTILIDAD
 ' ============================================================================
 
-Private Function ModuleExists(moduleName As String) As Boolean
+Private Function ModuleExists(ByVal moduleName As String) As Boolean
     ' Verificar si un módulo existe en el proyecto
     On Error GoTo NotFound
     
@@ -554,7 +554,7 @@ Public Function GetTestSummary() As T_TestSuiteSummary
     GetTestSummary = g_TestSummary
 End Function
 
-Public Function GetModuleResults(moduleName As String) As T_ModuleTestResults
+Public Function GetModuleResults(ByVal moduleName As String) As T_ModuleTestResults
     ' Obtener resultados de un módulo específico
     Dim i As Long
     For i = 1 To g_CurrentModuleIndex

@@ -261,7 +261,22 @@ Private Function IConfig_GetLogPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    IConfig_GetLogPath = m_AppConfig.logPath
+
+    Dim logPath As String
+    ' Asumimos que DEV_MODE es una constante o variable global accesible
+    If DEV_MODE Then
+        ' Entorno de Desarrollo: carpeta \logs en la raíz del proyecto
+        logPath = Application.CurrentProject.Path & "\..\logs\"
+        If Dir(logPath, vbDirectory) = "" Then MkDir logPath
+        IConfig_GetLogPath = logPath & "condor_development.log"
+    Else
+        ' Entorno de Producción: carpeta \logs junto al backend
+        Dim backendPath As String
+        backendPath = IConfig_GetDatabasePath()
+        logPath = Left(backendPath, InStrRev(backendPath, "\")) & "logs\"
+        If Dir(logPath, vbDirectory) = "" Then MkDir logPath
+        IConfig_GetLogPath = logPath & "condor_production.log"
+    End If
 End Function
 
 Private Function IConfig_GetTempPath() As String

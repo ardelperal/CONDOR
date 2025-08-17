@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -24,7 +24,7 @@ Implements IExpedienteService
 
 ' Implementaci?n Mock de la interfaz IExpedienteService
 ' Devuelve datos predecibles y hardcodeados para pruebas unitarias
-Private Function IExpedienteService_GetExpedienteById(ByVal IDExpediente As Long) As T_Expediente
+Private Function IExpedienteService_GetExpediente(ByVal IDExpediente As Long) As T_Expediente
     Dim resultado As T_Expediente
     
     ' Datos hardcodeados predecibles para testing
@@ -66,7 +66,42 @@ Private Function IExpedienteService_GetExpedienteById(ByVal IDExpediente As Long
             resultado.Pecal = ""
     End Select
     
-    IExpedienteService_GetExpedienteById = resultado
+    IExpedienteService_GetExpediente = resultado
+End Function
+
+Private Function IExpedienteService_GetExpedienteById(ByVal IDExpediente As Long) As T_Expediente
+    ' Wrapper que llama al método principal GetExpediente
+    IExpedienteService_GetExpedienteById = IExpedienteService_GetExpediente(IDExpediente)
+End Function
+
+Private Function IExpedienteService_CreateExpediente(ByVal numeroExpediente As String, ByVal descripcion As String, ByVal idUsuario As Long) As Long
+    ' Mock implementation - simula crear expediente
+    IExpedienteService_CreateExpediente = 999
+End Function
+
+Private Function IExpedienteService_UpdateExpediente(ByVal ID As Long, ByVal descripcion As String, ByVal estado As String) As Boolean
+    ' Mock implementation - simula actualizar expediente
+    IExpedienteService_UpdateExpediente = True
+End Function
+
+Private Function IExpedienteService_DeleteExpediente(ByVal ID As Long) As Boolean
+    ' Mock implementation - simula eliminar expediente
+    IExpedienteService_DeleteExpediente = True
+End Function
+
+Private Function IExpedienteService_SearchExpedientes(ByVal criterio As String) As Collection
+    ' Mock implementation - devuelve colección ficticia
+    Set IExpedienteService_SearchExpedientes = New Collection
+End Function
+
+Private Function IExpedienteService_GetExpedientesByUser(ByVal idUsuario As Long) As Collection
+    ' Mock implementation - devuelve colección ficticia
+    Set IExpedienteService_GetExpedientesByUser = New Collection
+End Function
+
+Private Function IExpedienteService_ValidateExpediente(expediente As T_Expediente) As Boolean
+    ' Mock implementation - simula validación
+    IExpedienteService_ValidateExpediente = True
 End Function
 
 #End If

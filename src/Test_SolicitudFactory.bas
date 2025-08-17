@@ -359,7 +359,7 @@ End Function
 ' FUNCI?N PRINCIPAL DE EJECUCI?N DE PRUEBAS
 ' ============================================================================
 
-Public Sub RunSolicitudFactoryTests()
+Public Function RunSolicitudFactoryTests() As Boolean
     Dim totalTests As Integer
     Dim passedTests As Integer
     Dim failedTests As Integer
@@ -509,9 +509,11 @@ Public Sub RunSolicitudFactoryTests()
     
     If failedTests = 0 Then
         Debug.Print "\n🎉 ¡TODAS LAS PRUEBAS PASARON!"
+        RunSolicitudFactoryTests = True
     Else
         Debug.Print "\n⚠️  ALGUNAS PRUEBAS FALLARON. Revisar implementación."
+        RunSolicitudFactoryTests = False
     End If
     
     Debug.Print "============================================================================"
-End Sub
+End Function

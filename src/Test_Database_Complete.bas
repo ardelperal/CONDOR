@@ -405,7 +405,7 @@ Public Function Test_EdgeCase_SpecialCharactersInData_HandlesCorrectly() As Bool
         .TipoSolicitud = "PC"
         .EstadoInterno = "Borrador"
         .Usuario = "usuario.??@empresa.com"
-        .Observaciones = "Observaci?n con 'comillas' y \"caracteres especiales\""
+        .Observaciones = "Observaci?n con 'comillas' y ""caracteres especiales"""
         .Activo = True
     End With
     
@@ -423,7 +423,7 @@ End Function
 ' FUNCI?N PRINCIPAL DE EJECUCI?N DE PRUEBAS
 ' ============================================================================
 
-Public Sub RunDatabaseCompleteTests()
+Public Function RunDatabaseCompleteTests() As Boolean
     Dim totalTests As Integer
     Dim passedTests As Integer
     Dim failedTests As Integer
@@ -584,4 +584,7 @@ Public Sub RunDatabaseCompleteTests()
     End If
     
     Debug.Print "============================================================================"
-End Sub
+    
+    ' Retornar True si todas las pruebas pasaron
+    RunDatabaseCompleteTests = (failedTests = 0)
+End Function

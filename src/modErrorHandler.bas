@@ -19,60 +19,22 @@ Option Explicit
 ' @param errSource: Origen del error (Clase.Función)
 ' @param userAction: Acción que estaba realizando el usuario (opcional)
 Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, ByVal errSource As String, Optional ByVal userAction As String = "")
-    On Error GoTo ErrorHandler
-    
-    Dim db As DAO.Database
-    Dim strSQL As String
-    Dim strFechaHora As String
-    Dim strUsuario As String
-    
-    ' Obtener información del contexto
-    strFechaHora = Format(Now(), "yyyy-mm-dd hh:nn:ss")
-    strUsuario = Environ("USERNAME") ' Usuario del sistema
-    
-    ' Conectar a la base de datos de datos
-    Set db = OpenDatabase(GetDatabasePath())
-    
-    ' Construir la consulta INSERT
-    strSQL = "INSERT INTO Tb_Log_Errores (" & _
-             "Fecha_Hora, " & _
-             "Numero_Error, " & _
-             "Descripcion_Error, " & _
-             "Origen_Error, " & _
-             "Usuario, " & _
-             "Accion_Usuario" & _
-             ") VALUES (" & _
-             "'" & strFechaHora & "', " & _
-             errNumber & ", " & _
-             "'" & Replace(errDescription, "'", "''") & "', " & _
-             "'" & Replace(errSource, "'", "''") & "', " & _
-             "'" & strUsuario & "', " & _
-             "'" & Replace(userAction, "'", "''") & "'" & _
-             ")"
-    
-    ' Ejecutar la inserción
-    db.Execute strSQL
-    
-    ' Verificar si es un error crítico y crear notificación
+    On Error Resume Next ' Para evitar bucles infinitos si el propio logging falla
+
+    Dim logger As ILoggingService
+    Set logger = New CLoggingService ' TODO: Usar Factory cuando exista
+
+    ' Registrar error en el servicio centralizado con contexto
+    Dim contexto As String
+    contexto = "AccionUsuario=" & userAction & "; Usuario=" & Environ("USERNAME")
+    logger.LogError errNumber, errDescription, errSource, contexto
+
+    ' Notificar si es crítico (sin depender de base de datos)
     If IsCriticalError(errNumber) Then
-        Call CreateAdminNotification(errNumber, errDescription, errSource, strUsuario)
+        Call CreateAdminNotification(errNumber, errDescription, errSource, Environ("USERNAME"))
     End If
-    
-    ' Limpiar recursos
-    db.Close
-    Set db = Nothing
-    
-    Exit Sub
-    
-ErrorHandler:
-    ' Si hay error al registrar el error, intentar escribir en log local
-    Call WriteToLocalLog("ERROR EN modErrorHandler.LogError: " & Err.Description & " | Error Original: " & errDescription)
-    
-    ' Limpiar recursos
-    If Not db Is Nothing Then
-        db.Close
-        Set db = Nothing
-    End If
+
+    Set logger = Nothing
 End Sub
 
 ' ===============================================================================
@@ -85,7 +47,7 @@ Private Function GetDatabasePath() As String
 End Function
 
 ' Determina si un error es crítico y requiere notificación al administrador
-Private Function IsCriticalError(errNumber As Long) As Boolean
+Private Function IsCriticalError(ByVal errNumber As Long) As Boolean
     Select Case errNumber
         Case 3024, 3044, 3051, 3078, 3343 ' Errores de base de datos críticos
             IsCriticalError = True

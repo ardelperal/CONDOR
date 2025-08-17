@@ -9,8 +9,11 @@ Public Function Test_Solicitudes_RunAll() As String
     Debug.Print "Ejecutando Test_Factory_Crea_PC..."
     On Error GoTo ErrorHandler
     
-    Test_Factory_Crea_PC
-    resultado = resultado & "? Test_Factory_Crea_PC: PASÓ" & vbCrLf
+    If Test_Factory_Crea_PC() Then
+        resultado = resultado & "? Test_Factory_Crea_PC: PASÓ" & vbCrLf
+    Else
+        resultado = resultado & "? Test_Factory_Crea_PC: FALLÓ" & vbCrLf
+    End If
     
     resultado = resultado & "=== RESUMEN ===" & vbCrLf
     resultado = resultado & "Total de pruebas: 1" & vbCrLf
@@ -29,7 +32,7 @@ ErrorHandler:
     Test_Solicitudes_RunAll = resultado
 End Function
 
-Private Sub Test_Factory_Crea_PC()
+Private Function Test_Factory_Crea_PC() As Boolean
     ' Test básico - solo verificar que se puede crear el objeto
     On Error GoTo ErrorHandler
     
@@ -37,10 +40,11 @@ Private Sub Test_Factory_Crea_PC()
     Set solicitud = New CSolicitudPC
     
     ' Si llegamos aquí, el objeto se creó exitosamente
-    Exit Sub
+    Test_Factory_Crea_PC = True
+    Exit Function
     
 ErrorHandler:
-    Err.Raise Err.Number, "Test_Factory_Crea_PC", "Error al crear CSolicitudPC: " & Err.Description
-End Sub
+    Test_Factory_Crea_PC = False
+End Function
 
 

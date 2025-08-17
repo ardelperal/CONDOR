@@ -184,7 +184,7 @@ Public Function Test_LogError_SpecialCharacters_HandlesCorrectly() As Boolean
     SetupMockNotificationSystem False
     
     Dim errNum As Long: errNum = 1003
-    Dim errDesc As String: errDesc = "Error con 'comillas' y \"caracteres especiales\""
+    Dim errDesc As String: errDesc = "Error con 'comillas' y ""caracteres especiales"""
     Dim errSource As String: errSource = "Test.SpecialChars"
     Dim userAction As String: userAction = "Procesando datos con símbolos: @#$%^&*()"
     
@@ -591,7 +591,7 @@ End Function
 ' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
 ' ============================================================================
 
-Public Sub RunErrorHandlerExtendedTests()
+Public Function RunErrorHandlerExtendedTests() As Boolean
     Dim totalTests As Integer
     Dim passedTests As Integer
     Dim failedTests As Integer
@@ -815,4 +815,7 @@ Public Sub RunErrorHandlerExtendedTests()
     End If
     
     Debug.Print "============================================================================"
-End Sub
+    
+    ' Devolver resultado basado en si todas las pruebas pasaron
+    RunErrorHandlerExtendedTests = (failedTests = 0)
+End Function

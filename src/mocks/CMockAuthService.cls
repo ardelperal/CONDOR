@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -100,6 +100,30 @@ End Function
 ' =====================================================
 Public Function IsMockService() As Boolean
     IsMockService = True
+End Function
+
+' Métodos faltantes de IAuthService
+Private Function IAuthService_AuthenticateUser(ByVal email As String) As Boolean
+    ' Mock: autenticar usuarios válidos (que no sean email_invalido)
+    IAuthService_AuthenticateUser = (email <> "email_invalido")
+End Function
+
+Private Function IAuthService_IsUserAuthorized(ByVal email As String, ByVal permission As String) As Boolean
+    ' Mock: autorizar según el rol del usuario
+    Dim userRole As E_UserRole
+    userRole = IAuthService_GetUserRole(email)
+    
+    ' Admin tiene todos los permisos
+    If userRole = Rol_Admin Then
+        IAuthService_IsUserAuthorized = True
+    Else
+        IAuthService_IsUserAuthorized = False
+    End If
+End Function
+
+Private Function IAuthService_ValidateEmail(ByVal email As String) As Boolean
+    ' Mock: validar formato básico de email
+    IAuthService_ValidateEmail = (email <> "email_invalido")
 End Function
 
 

@@ -67,13 +67,7 @@ End Function
 '         Case Rol_Calidad
 '             ' Inicializar funcionalidades de calidad
 '         Case Rol_Tecnico
-'             ' Inicializar funcionalidades tecnicas
-'         Case Rol_Desconocido
-'             ' Mostrar error y cerrar aplicacion
-'             MsgBox "Usuario sin permisos para acceder a CONDOR", vbCritical
-'             Application.Quit
-'     End Select
-' End Sub
+' TODO: Implementar inicialización específica por rol cuando sea necesario
 
 ' =====================================================
 ' FUNCION: Ping

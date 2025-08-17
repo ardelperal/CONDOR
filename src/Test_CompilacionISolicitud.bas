@@ -10,7 +10,7 @@ Option Explicit
 ' ============================================================================
 
 ' Procedimiento de prueba para verificar que la implementaci?n de ISolicitud funciona
-Public Sub Test_ImplementacionISolicitud()
+Public Function Test_ImplementacionISolicitud() As Boolean
     On Error GoTo ErrorHandler
     
     Dim solicitud As ISolicitud
@@ -52,24 +52,22 @@ Public Sub Test_ImplementacionISolicitud()
     Set solicitud = Nothing
     Set solicitudPC = Nothing
     
-    Exit Sub
+    Test_ImplementacionISolicitud = True
+    Exit Function
     
 ErrorHandler:
     Debug.Print "✗ Test_ImplementacionISolicitud: FALLIDO - " & Err.Description
     Set solicitud = Nothing
     Set solicitudPC = Nothing
-End Sub
+    Test_ImplementacionISolicitud = False
+End Function
 
-' Funci?n para ejecutar la prueba y mostrar resultado
-Public Sub Ejecutar_Test_Compilacion()
-    If Test_ImplementacionISolicitud() Then
-        Debug.Print "? Test de compilaci?n ISolicitud: EXITOSO"
-        ' MsgBox eliminado para operaci?n desatendida
-    Else
-        Debug.Print "? Test de compilaci?n ISolicitud: FALL?"
-        ' MsgBox eliminado para operaci?n desatendida
-    End If
-End Sub
+Public Function Ejecutar_Test_Compilacion() As Boolean
+    Dim resultado As Boolean
+    resultado = Test_ImplementacionISolicitud()
+    Debug.Print "? Test de compilaci?n ISolicitud ejecutado"
+    Ejecutar_Test_Compilacion = resultado
+End Function
 
 
 

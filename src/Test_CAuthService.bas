@@ -55,7 +55,10 @@ End Sub
 Public Function Test_CAuthService_Creation_Success() As Boolean
     On Error GoTo TestFail
     
-    ' Arrange & Act
+    ' Arrange
+    SetupValidUserMock
+    
+    ' Act
     Dim authService As IAuthService
     Set authService = New CAuthService
     
@@ -72,6 +75,7 @@ Public Function Test_CAuthService_ImplementsIAuthService() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
+    SetupValidUserMock
     Dim authService As IAuthService
     Set authService = New CAuthService
     
@@ -285,7 +289,7 @@ Public Function Test_ValidateEmail_ValidFormat_ReturnsTrue() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -305,7 +309,7 @@ Public Function Test_ValidateEmail_InvalidFormat_ReturnsFalse() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -325,7 +329,7 @@ Public Function Test_ValidateEmail_EmptyString_ReturnsFalse() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -350,7 +354,7 @@ Public Function Test_Integration_AuthenticateAndAuthorize() As Boolean
     
     ' Arrange
     SetupValidUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -372,7 +376,10 @@ End Function
 Public Function Test_Integration_GetCurrentUserEmail() As Boolean
     On Error GoTo TestFail
     
-    ' Arrange & Act
+    ' Arrange
+    ' No hay configuración específica necesaria para esta prueba
+    
+    ' Act
     Dim currentEmail As String
     currentEmail = modAppManager.GetCurrentUserEmail()
     
@@ -395,7 +402,7 @@ Public Function Test_MultipleAuthentications_SameUser() As Boolean
     
     ' Arrange
     SetupValidUserMock
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
@@ -420,12 +427,12 @@ Public Function Test_ConcurrentUsers_DifferentRoles() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Act
-    Dim adminRole As String
-    Dim guestRole As String
+    Dim adminRole As E_UserRole
+    Dim guestRole As E_UserRole
     adminRole = authService.GetUserRole("admin@condor.com")
     guestRole = authService.GetUserRole("guest@condor.com")
     

@@ -8,7 +8,7 @@ Private Sub Class_Initialize()
     Set m_storage = New Collection
 End Sub
 
-Private Function ISolicitudRepository_LoadPC(solicitudId As Long) As CSolicitudPC
+Private Function ISolicitudRepository_LoadPC(ByVal solicitudId As Long) As CSolicitudPC
     On Error Resume Next
     Set ISolicitudRepository_LoadPC = m_storage(CStr(solicitudId))
 End Function

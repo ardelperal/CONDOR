@@ -7,5 +7,5 @@ Option Explicit
 Public Function SavePC(solicitudPC As CSolicitudPC) As Long
 End Function
 
-Public Function LoadPC(solicitudId As Long) As CSolicitudPC
+Public Function LoadPC(ByVal solicitudId As Long) As CSolicitudPC
 End Function

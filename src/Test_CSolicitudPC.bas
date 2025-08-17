@@ -59,7 +59,7 @@ End Sub
 ' PRUEBAS DE CREACI?N E INICIALIZACI?N
 ' ============================================================================
 
-Public Sub Test_CSolicitudPC_Creation_Success()
+Public Function Test_CSolicitudPC_Creation_Success() As Boolean
     On Error GoTo TestFail
     
     ' Arrange & Act
@@ -67,15 +67,15 @@ Public Sub Test_CSolicitudPC_Creation_Success()
     Set solicitud = New CSolicitudPC
     
     ' Assert
-    Debug.Print "Test_CSolicitudPC_Creation_Success: " & IIf(Not (solicitud Is Nothing), "PASS", "FAIL")
+    Test_CSolicitudPC_Creation_Success = Not (solicitud Is Nothing)
     
-    Exit Sub
+    Exit Function
     
 TestFail:
-    Debug.Print "Test_CSolicitudPC_Creation_Success: FAIL - " & Err.Description
-End Sub
+    Test_CSolicitudPC_Creation_Success = False
+End Function
 
-Public Sub Test_CSolicitudPC_ImplementsISolicitud()
+Public Function Test_CSolicitudPC_ImplementsISolicitud() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
@@ -87,19 +87,19 @@ Public Sub Test_CSolicitudPC_ImplementsISolicitud()
     Set interfaz = solicitud
     
     ' Assert
-    Debug.Print "Test_CSolicitudPC_ImplementsISolicitud: " & IIf(Not (interfaz Is Nothing), "PASS", "FAIL")
+    Test_CSolicitudPC_ImplementsISolicitud = Not (interfaz Is Nothing)
     
-    Exit Sub
+    Exit Function
     
 TestFail:
-    Debug.Print "Test_CSolicitudPC_ImplementsISolicitud: FAIL - " & Err.Description
-End Sub
+    Test_CSolicitudPC_ImplementsISolicitud = False
+End Function
 
 ' ============================================================================
 ' PRUEBAS DE PROPIEDADES DE LA INTERFAZ
 ' ============================================================================
 
-Public Sub Test_ISolicitud_IdSolicitud_GetSet()
+Public Function Test_ISolicitud_IdSolicitud_GetSet() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
@@ -115,15 +115,15 @@ Public Sub Test_ISolicitud_IdSolicitud_GetSet()
     ' Esta prueba verifica que la clase compila correctamente con la interfaz
     
     ' Assert
-    Debug.Print "Test_ISolicitud_IdSolicitud_GetSet: PASS"
+    Test_ISolicitud_IdSolicitud_GetSet = True
     
-    Exit Sub
+    Exit Function
     
 TestFail:
-    Debug.Print "Test_ISolicitud_IdSolicitud_GetSet: FAIL - " & Err.Description
-End Sub
+    Test_ISolicitud_IdSolicitud_GetSet = False
+End Function
 
-Public Sub Test_ISolicitud_IdExpediente_GetSet()
+Public Function Test_ISolicitud_IdExpediente_GetSet() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
@@ -134,15 +134,15 @@ Public Sub Test_ISolicitud_IdExpediente_GetSet()
     
     ' Act & Assert
     ' Verificamos que la interfaz est? implementada correctamente
-    Debug.Print "Test_ISolicitud_IdExpediente_GetSet: PASS"
+    Test_ISolicitud_IdExpediente_GetSet = True
     
-    Exit Sub
+    Exit Function
     
 TestFail:
-    Debug.Print "Test_ISolicitud_IdExpediente_GetSet: FAIL - " & Err.Description
-End Sub
+    Test_ISolicitud_IdExpediente_GetSet = False
+End Function
 
-Public Sub Test_ISolicitud_TipoSolicitud_GetSet()
+Public Function Test_ISolicitud_TipoSolicitud_GetSet() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
@@ -151,13 +151,13 @@ Public Sub Test_ISolicitud_TipoSolicitud_GetSet()
     
     ' Act & Assert
     ' Verificamos que la propiedad TipoSolicitud est? implementada
-    Debug.Print "Test_ISolicitud_TipoSolicitud_GetSet: PASS"
+    Test_ISolicitud_TipoSolicitud_GetSet = True
     
-    Exit Sub
+    Exit Function
     
 TestFail:
-    Debug.Print "Test_ISolicitud_TipoSolicitud_GetSet: FAIL - " & Err.Description
-End Sub
+    Test_ISolicitud_TipoSolicitud_GetSet = False
+End Function
 
 Public Function Test_ISolicitud_CodigoSolicitud_GetSet() As Boolean
     On Error GoTo TestFail

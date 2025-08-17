@@ -14,7 +14,7 @@ Option Explicit
 ' PRUEBAS DE PERSISTENCIA
 '******************************************************************************
 
-Public Sub Test_Save_PC_ShouldDelegateToRepository()
+Public Function Test_Save_PC_ShouldDelegateToRepository() As Boolean
     ' Arrange
     Dim solicitud As CSolicitudPC
     Dim mockRepo As ISolicitudRepository
@@ -42,12 +42,14 @@ Public Sub Test_Save_PC_ShouldDelegateToRepository()
     ' Assert
     If resultado > 0 Then
         Debug.Print "Test_Save_PC_ShouldDelegateToRepository: PASO"
+        Test_Save_PC_ShouldDelegateToRepository = True
     Else
         Debug.Print "Test_Save_PC_ShouldDelegateToRepository: FALLO - No se guardo correctamente"
+        Test_Save_PC_ShouldDelegateToRepository = False
     End If
-End Sub
+End Function
 
-Public Sub Test_Load_PC_ShouldPopulateObjectFromRepository()
+Public Function Test_Load_PC_ShouldPopulateObjectFromRepository() As Boolean
     ' Arrange
     Dim solicitud As CSolicitudPC
     Dim mockRepo As ISolicitudRepository
@@ -62,13 +64,15 @@ Public Sub Test_Load_PC_ShouldPopulateObjectFromRepository()
     ' Assert
     If resultado And solicitud.idSolicitud = 999 And solicitud.CodigoSolicitud = "PC-TEST-001" Then
         Debug.Print "Test_Load_PC_ShouldPopulateObjectFromRepository: PASO"
+        Test_Load_PC_ShouldPopulateObjectFromRepository = True
     Else
         Debug.Print "Test_Load_PC_ShouldPopulateObjectFromRepository: FALLO - No se cargo correctamente"
         Debug.Print "  ID: " & solicitud.idSolicitud & ", Codigo: " & solicitud.CodigoSolicitud
+        Test_Load_PC_ShouldPopulateObjectFromRepository = False
     End If
-End Sub
+End Function
 
-Public Sub Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity()
+Public Function Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity() As Boolean
     ' Arrange
     Dim solicitudOriginal As CSolicitudPC
     Dim solicitudCargada As CSolicitudPC
@@ -105,12 +109,14 @@ Public Sub Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity()
        solicitudCargada.CodigoSolicitud = solicitudOriginal.CodigoSolicitud And _
        solicitudCargada.DatosPC.Procesador = solicitudOriginal.DatosPC.Procesador Then
         Debug.Print "Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity: PASO"
+        Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity = True
     Else
         Debug.Print "Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity: FALLO - Integridad de datos comprometida"
         Debug.Print "  Original ID Expediente: " & solicitudOriginal.IDExpediente & ", Cargado: " & solicitudCargada.IDExpediente
         Debug.Print "  Original Codigo: " & solicitudOriginal.CodigoSolicitud & ", Cargado: " & solicitudCargada.CodigoSolicitud
+        Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity = False
     End If
-End Sub
+End Function
 
 '******************************************************************************
 ' SUITE DE PRUEBAS

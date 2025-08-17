@@ -21,7 +21,7 @@ Implements ISolicitudRepository
 ' IMPLEMENTACIÓN DE INTERFAZ ISolicitudRepository
 '******************************************************************************
 
-Private Function ISolicitudRepository_SavePC(solicitud As CSolicitudPC) As Long
+Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Long
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
@@ -34,18 +34,18 @@ Private Function ISolicitudRepository_SavePC(solicitud As CSolicitudPC) As Long
     ws.BeginTrans
     
     ' Verificar si la solicitud ya existe
-    If solicitud.idSolicitud > 0 Then
-        If SolicitudExists(solicitud.idSolicitud) Then
+    If solicitudPC.idSolicitud > 0 Then
+        If SolicitudExists(solicitudPC.idSolicitud) Then
             ' Actualizar solicitud existente
-            UpdateExistingSolicitud solicitud
-            solicitudId = solicitud.idSolicitud
+            UpdateExistingSolicitud solicitudPC
+            solicitudId = solicitudPC.idSolicitud
         Else
             ' Insertar nueva solicitud
-            solicitudId = InsertNewSolicitud(solicitud)
+            solicitudId = InsertNewSolicitud(solicitudPC)
         End If
     Else
         ' Insertar nueva solicitud
-        solicitudId = InsertNewSolicitud(solicitud)
+        solicitudId = InsertNewSolicitud(solicitudPC)
     End If
     
     ' Confirmar transacción
@@ -59,7 +59,7 @@ ErrorHandler:
     ISolicitudRepository_SavePC = 0
 End Function
 
-Private Function ISolicitudRepository_LoadPC(ByVal ID As Long) As CSolicitudPC
+Private Function ISolicitudRepository_LoadPC(ByVal solicitudId As Long) As CSolicitudPC
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
@@ -72,7 +72,7 @@ Private Function ISolicitudRepository_LoadPC(ByVal ID As Long) As CSolicitudPC
     ' Consulta JOIN para obtener datos de ambas tablas
     sql = "SELECT s.*, pc.* FROM Tb_Solicitudes s " & _
           "INNER JOIN Tb_Datos_PC pc ON s.ID_Solicitud = pc.ID_Solicitud " & _
-          "WHERE s.ID_Solicitud = " & ID
+          "WHERE s.ID_Solicitud = " & solicitudId
     
     Set rs = db.OpenRecordset(sql)
     

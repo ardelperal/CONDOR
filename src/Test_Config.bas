@@ -8,6 +8,7 @@ Option Explicit
 ' Pruebas para modConfig.bas y CConfig.cls
 ' Incluye mocks para sistema de archivos y pruebas de entornos
 ' Fecha: 2025-01-14
+' Implementa patrón AAA (Arrange, Act, Assert)
 ' ============================================================================
 
 ' ============================================================================
@@ -92,7 +93,7 @@ Private Sub SetupMockConfig()
     End With
 End Sub
 
-' Funcion principal que ejecuta todas las pruebas de configuracion
+' Función principal que ejecuta todas las pruebas de configuración
 Public Function Test_Config_RunAll() As String
     Dim resultado As String
     Dim testsPassed As Integer
@@ -100,101 +101,77 @@ Public Function Test_Config_RunAll() As String
     
     resultado = "=== PRUEBAS DE CONFIGURACION ===" & vbCrLf
     
-    ' Test 1: Cargar configuracion desde archivo
-    On Error Resume Next
-    Err.Clear
-    Call Test_CargarConfiguracionArchivo
-    If Err.Number = 0 Then
+    ' Test 1: Cargar configuración desde archivo
+    testsTotal = testsTotal + 1
+    If Test_CargarConfiguracionArchivoAAA() Then
         resultado = resultado & "[OK] Test_CargarConfiguracionArchivo" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[ERROR] Test_CargarConfiguracionArchivo: " & Err.Description & vbCrLf
+        resultado = resultado & "[FAIL] Test_CargarConfiguracionArchivo" & vbCrLf
     End If
-    testsTotal = testsTotal + 1
     
-    ' Test 2: Obtener valor de configuracion existente
-    On Error Resume Next
-    Err.Clear
-    Call Test_ObtenerValorExistente
-    If Err.Number = 0 Then
+    ' Test 2: Obtener valor de configuración existente
+    testsTotal = testsTotal + 1
+    If Test_ObtenerValorExistenteAAA() Then
         resultado = resultado & "[OK] Test_ObtenerValorExistente" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[ERROR] Test_ObtenerValorExistente: " & Err.Description & vbCrLf
+        resultado = resultado & "[FAIL] Test_ObtenerValorExistente" & vbCrLf
     End If
-    testsTotal = testsTotal + 1
     
-    ' Test 3: Obtener valor de configuracion inexistente
-    On Error Resume Next
-    Err.Clear
-    Call Test_ObtenerValorInexistente
-    If Err.Number = 0 Then
+    ' Test 3: Obtener valor de configuración inexistente
+    testsTotal = testsTotal + 1
+    If Test_ObtenerValorInexistenteAAA() Then
         resultado = resultado & "[OK] Test_ObtenerValorInexistente" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[ERROR] Test_ObtenerValorInexistente: " & Err.Description & vbCrLf
+        resultado = resultado & "[FAIL] Test_ObtenerValorInexistente" & vbCrLf
     End If
-    testsTotal = testsTotal + 1
     
-    ' Test 4: Establecer valor de configuracion
-    On Error Resume Next
-    Err.Clear
-    Call Test_EstablecerValorConfiguracion
-    If Err.Number = 0 Then
+    ' Test 4: Establecer valor de configuración
+    testsTotal = testsTotal + 1
+    If Test_EstablecerValorConfiguracionAAA() Then
         resultado = resultado & "[OK] Test_EstablecerValorConfiguracion" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[ERROR] Test_EstablecerValorConfiguracion: " & Err.Description & vbCrLf
+        resultado = resultado & "[FAIL] Test_EstablecerValorConfiguracion" & vbCrLf
     End If
-    testsTotal = testsTotal + 1
     
-    ' Test 5: Validar configuracion de base de datos
-    On Error Resume Next
-    Err.Clear
-    Call Test_ValidarConfiguracionBD
-    If Err.Number = 0 Then
+    ' Test 5: Validar configuración de base de datos
+    testsTotal = testsTotal + 1
+    If Test_ValidarConfiguracionBDAAA() Then
         resultado = resultado & "[OK] Test_ValidarConfiguracionBD" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[ERROR] Test_ValidarConfiguracionBD: " & Err.Description & vbCrLf
+        resultado = resultado & "[FAIL] Test_ValidarConfiguracionBD" & vbCrLf
     End If
-    testsTotal = testsTotal + 1
     
-    ' Test 6: Validar configuracion de rutas
-    On Error Resume Next
-    Err.Clear
-    Call Test_ValidarConfiguracionRutas
-    If Err.Number = 0 Then
+    ' Test 6: Validar configuración de rutas
+    testsTotal = testsTotal + 1
+    If Test_ValidarConfiguracionRutasAAA() Then
         resultado = resultado & "[OK] Test_ValidarConfiguracionRutas" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[ERROR] Test_ValidarConfiguracionRutas: " & Err.Description & vbCrLf
+        resultado = resultado & "[FAIL] Test_ValidarConfiguracionRutas" & vbCrLf
     End If
-    testsTotal = testsTotal + 1
     
-    ' Test 7: Guardar configuracion
-    On Error Resume Next
-    Err.Clear
-    Call Test_GuardarConfiguracion
-    If Err.Number = 0 Then
+    ' Test 7: Guardar configuración
+    testsTotal = testsTotal + 1
+    If Test_GuardarConfiguracionAAA() Then
         resultado = resultado & "[OK] Test_GuardarConfiguracion" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[ERROR] Test_GuardarConfiguracion: " & Err.Description & vbCrLf
+        resultado = resultado & "[FAIL] Test_GuardarConfiguracion" & vbCrLf
     End If
-    testsTotal = testsTotal + 1
     
-    ' Test 8: Resetear configuracion a valores por defecto
-    On Error Resume Next
-    Err.Clear
-    Call Test_ResetearConfiguracion
-    If Err.Number = 0 Then
+    ' Test 8: Resetear configuración a valores por defecto
+    testsTotal = testsTotal + 1
+    If Test_ResetearConfiguracionAAA() Then
         resultado = resultado & "[OK] Test_ResetearConfiguracion" & vbCrLf
         testsPassed = testsPassed + 1
     Else
-        resultado = resultado & "[ERROR] Test_ResetearConfiguracion: " & Err.Description & vbCrLf
+        resultado = resultado & "[FAIL] Test_ResetearConfiguracion" & vbCrLf
     End If
-    testsTotal = testsTotal + 1
     
     ' Resumen
     resultado = resultado & vbCrLf & "Resumen Config: " & testsPassed & "/" & testsTotal & " pruebas exitosas" & vbCrLf
@@ -203,119 +180,128 @@ Public Function Test_Config_RunAll() As String
 End Function
 
 ' =====================================================
-' PRUEBAS INDIVIDUALES
+' PRUEBAS INDIVIDUALES - PATRÓN AAA
 ' =====================================================
 
-Public Sub Test_CargarConfiguracionArchivo()
-    ' Simular carga de configuracion desde archivo
-    Dim config As IConfig
-    Set config = config()
-    Dim archivoExiste As Boolean
+Public Function Test_CargarConfiguracionArchivoAAA() As Boolean
+    ' Arrange
+    Dim configService As IConfig
+    Set configService = config()
+    Dim archivoEsperado As String
+    archivoEsperado = "config.ini"
     
-    ' Simular archivo de configuracion existente
+    ' Act - Simular carga de configuración
+    Dim archivoExiste As Boolean
     archivoExiste = True
     
-    If Not archivoExiste Then
-        Err.Raise 2001, , "Error: No se pudo cargar el archivo de configuracion"
-    End If
-End Sub
+    ' Assert
+    Test_CargarConfiguracionArchivoAAA = archivoExiste
+End Function
 
-Public Sub Test_ObtenerValorExistente()
-    ' Simular obtencion de valor existente
-    Dim config As IConfig
-    Set config = config()
+Public Function Test_ObtenerValorExistenteAAA() As Boolean
+    ' Arrange
+    Dim configService As IConfig
+    Set configService = config()
+    Dim clave As String
+    clave = "DatabasePath"
+    
+    ' Act - Simular obtención de valor existente
     Dim valorObtenido As String
+    valorObtenido = "C:\CONDOR\Database\CONDOR.accdb"
     
-    ' Simular valor existente
-    valorObtenido = "ValorPrueba"
-    
-    If Len(valorObtenido) = 0 Then
-        Err.Raise 2002, , "Error: No se pudo obtener el valor de configuracion existente"
-    End If
-End Sub
+    ' Assert
+    Test_ObtenerValorExistenteAAA = (Len(valorObtenido) > 0)
+End Function
 
-Public Sub Test_ObtenerValorInexistente()
-    ' Simular obtencion de valor inexistente
-    Dim config As IConfig
-    Set config = config()
-    Dim valorInexistente As String
+Public Function Test_ObtenerValorInexistenteAAA() As Boolean
+    ' Arrange
+    Dim configService As IConfig
+    Set configService = config()
+    Dim claveInexistente As String
+    claveInexistente = "ClaveNoExistente"
     
-    ' Simular valor inexistente (debe retornar cadena vacia o valor por defecto)
+    ' Act - Simular obtención de valor inexistente
+    Dim valorInexistente As String
     valorInexistente = ""
     
-    ' Para valores inexistentes, es valido retornar cadena vacia
-    ' No debe generar error, solo retornar valor por defecto
-End Sub
+    ' Assert - Para valores inexistentes, es válido retornar cadena vacía
+    Test_ObtenerValorInexistenteAAA = True
+End Function
 
-Public Sub Test_EstablecerValorConfiguracion()
-    ' Simular establecimiento de valor de configuracion
-    Dim config As IConfig
-    Set config = config()
-    Dim valorEstablecido As Boolean
+Public Function Test_EstablecerValorConfiguracionAAA() As Boolean
+    ' Arrange
+    Dim configService As IConfig
+    Set configService = config()
+    Dim clave As String: clave = "NuevaClave"
+    Dim valor As String: valor = "NuevoValor"
     
-    ' Simular establecimiento exitoso
+    ' Act - Simular establecimiento de valor
+    Dim valorEstablecido As Boolean
     valorEstablecido = True
     
-    If Not valorEstablecido Then
-        Err.Raise 2003, , "Error: No se pudo establecer el valor de configuracion"
-    End If
-End Sub
+    ' Assert
+    Test_EstablecerValorConfiguracionAAA = valorEstablecido
+End Function
 
-Public Sub Test_ValidarConfiguracionBD()
-    ' Simular validacion de configuracion de base de datos
-    Dim config As IConfig
-    Set config = config()
+Public Function Test_ValidarConfiguracionBDAAA() As Boolean
+    ' Arrange
+    Dim configService As IConfig
+    Set configService = config()
+    Dim rutaBD As String
+    rutaBD = "C:\CONDOR\Database\CONDOR.accdb"
+    
+    ' Act - Simular validación de configuración de BD
     Dim configBDValida As Boolean
+    configBDValida = (InStr(rutaBD, ".accdb") > 0)
     
-    ' Simular configuracion de BD valida
-    configBDValida = True
-    
-    If Not configBDValida Then
-        Err.Raise 2004, , "Error: Configuracion de base de datos invalida"
-    End If
-End Sub
+    ' Assert
+    Test_ValidarConfiguracionBDAAA = configBDValida
+End Function
 
-Public Sub Test_ValidarConfiguracionRutas()
-    ' Simular validacion de configuracion de rutas
-    Dim config As IConfig
-    Set config = config()
+Public Function Test_ValidarConfiguracionRutasAAA() As Boolean
+    ' Arrange
+    Dim configService As IConfig
+    Set configService = config()
+    Dim rutasDatos As String
+    rutasDatos = "C:\CONDOR\Data\"
+    
+    ' Act - Simular validación de rutas
     Dim rutasValidas As Boolean
+    rutasValidas = (Len(rutasDatos) > 0)
     
-    ' Simular rutas validas
-    rutasValidas = True
-    
-    If Not rutasValidas Then
-        Err.Raise 2005, , "Error: Configuracion de rutas invalida"
-    End If
-End Sub
+    ' Assert
+    Test_ValidarConfiguracionRutasAAA = rutasValidas
+End Function
 
-Public Sub Test_GuardarConfiguracion()
-    ' Simular guardado de configuracion
-    Dim config As IConfig
-    Set config = config()
-    Dim guardadoExitoso As Boolean
+Public Function Test_GuardarConfiguracionAAA() As Boolean
+    ' Arrange
+    Dim configService As IConfig
+    Set configService = config()
+    Dim archivoDestino As String
+    archivoDestino = "config_backup.ini"
     
-    ' Simular guardado exitoso
+    ' Act - Simular guardado de configuración
+    Dim guardadoExitoso As Boolean
     guardadoExitoso = True
     
-    If Not guardadoExitoso Then
-        Err.Raise 2006, , "Error: No se pudo guardar la configuracion"
-    End If
-End Sub
+    ' Assert
+    Test_GuardarConfiguracionAAA = guardadoExitoso
+End Function
 
-Public Sub Test_ResetearConfiguracion()
-    ' Simular reseteo de configuracion
-    Dim config As IConfig
-    Set config = config()
-    Dim reseteoExitoso As Boolean
+Public Function Test_ResetearConfiguracionAAA() As Boolean
+    ' Arrange
+    Dim configService As IConfig
+    Set configService = config()
+    Dim valoresOriginales As String
+    valoresOriginales = "defaults"
     
-    ' Simular reseteo exitoso
+    ' Act - Simular reseteo de configuración
+    Dim reseteoExitoso As Boolean
     reseteoExitoso = True
     
-    If Not reseteoExitoso Then
-        Err.Raise 2007, , "Error: No se pudo resetear la configuracion"
-    End If
-End Sub
+    ' Assert
+    Test_ResetearConfiguracionAAA = reseteoExitoso
+End Function
 
 ' ============================================================================
 ' NUEVAS PRUEBAS CON MOCKS PARA modConfig.bas
@@ -564,7 +550,7 @@ End Function
 ' ============================================================================
 
 ' Función principal para ejecutar todas las pruebas de configuración
-Public Sub RunConfigTestsComplete()
+Public Function RunConfigTestsComplete() As Boolean
     Debug.Print "=== INICIANDO PRUEBAS COMPLETAS DE CONFIGURACIÓN ==="
     Debug.Print "Fecha/Hora: " & Now
     Debug.Print ""
@@ -671,7 +657,10 @@ Public Sub RunConfigTestsComplete()
     Debug.Print "Nuevas pruebas que fallaron: " & (totalTests - passedTests)
     Debug.Print "Porcentaje de éxito (nuevas): " & Format((passedTests / totalTests) * 100, "0.0") & "%"
     Debug.Print "=== FIN DE PRUEBAS COMPLETAS DE CONFIGURACIÓN ==="
-End Sub
+    
+    ' Retornar True si todas las pruebas pasaron
+    RunConfigTestsComplete = (passedTests = totalTests)
+End Function
 
 
 

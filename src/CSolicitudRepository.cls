@@ -2,7 +2,7 @@ Option Compare Database
 Option Explicit
 Implements ISolicitudRepository
 
-Private Function ISolicitudRepository_LoadPC(solicitudId As Long) As CSolicitudPC
+Private Function ISolicitudRepository_LoadPC(ByVal solicitudId As Long) As CSolicitudPC
     ' TODO: Implementar lógica de carga desde Tb_Solicitudes y Tb_Datos_PC
     Debug.Print "CSolicitudRepository: LoadPC llamado con ID " & solicitudId
     Set ISolicitudRepository_LoadPC = New CSolicitudPC

@@ -1,136 +1,45 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CMockAuthService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
+#If DEV_MODE Then
 Option Compare Database
 Option Explicit
-
-' =====================================================
-' CLASE: CMockAuthService
-' PROPOSITO: Implementacion MOCK del servicio de autenticacion para pruebas
-' AUTOR: CONDOR-Expert
-' FECHA: 2025-01-14
-' DESCRIPCION: Esta clase simula el comportamiento del servicio de autenticacion
-'              sin conectarse a la base de datos real. Utiliza datos hardcodeados
-'              para proporcionar respuestas predecibles en las pruebas.
-' =====================================================
-
 Implements IAuthService
 
-' =====================================================
-' IMPLEMENTACION: IAuthService_GetUserRole
-' PROPOSITO: Obtener el rol de un usuario basado en su email (VERSION MOCK)
-' PARAMETROS:
-'   - userEmail: Email del usuario a consultar
-' RETORNA: E_UserRole - Rol del usuario (hardcodeado para pruebas)
-' NOTAS: Esta implementacion NO accede a ninguna base de datos.
-'        Los roles se determinan mediante un Select Case con emails predefinidos.
-' =====================================================
-Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRole
-    ' Este es un servicio FALSO para pruebas. No toca la base de datos.
-    ' Los datos estan hardcodeados para proporcionar resultados predecibles
-    
-    ' Normalizar el email (convertir a minusculas para comparacion)
-    Dim normalizedEmail As String
-    normalizedEmail = LCase(Trim(userEmail))
-    
-    ' Validar que el email no este vacio
-    If Len(normalizedEmail) = 0 Then
-        IAuthService_GetUserRole = Rol_Desconocido
-        Exit Function
-    End If
-    
-    ' Determinar el rol basado en emails predefinidos para pruebas
-    Select Case normalizedEmail
-        Case "admin.condor@example.com"
-            IAuthService_GetUserRole = Rol_Admin
-            
-        Case "calidad.condor@example.com"
-            IAuthService_GetUserRole = Rol_Calidad
-            
-        Case "tecnico.condor@example.com"
-            IAuthService_GetUserRole = Rol_Tecnico
-            
-        Case "usuario.test@example.com"
-            ' Email adicional para pruebas generales
-            IAuthService_GetUserRole = Rol_Tecnico
-            
-        Case "supervisor.condor@example.com"
-            ' Email adicional para pruebas de supervisor
-            IAuthService_GetUserRole = Rol_Calidad
-            
-        Case Else
-            ' Cualquier otro email retorna rol desconocido
-            IAuthService_GetUserRole = Rol_Desconocido
-    End Select
-End Function
-
-' =====================================================
-' IMPLEMENTACION: IAuthService_AuthenticateUser
-' PROPOSITO: Autenticar un usuario basado en su email (VERSION MOCK)
-' PARAMETROS:
-'   - email: Email del usuario a autenticar
-' RETORNA: Boolean - True si el usuario es válido, False en caso contrario
-' NOTAS: Esta implementacion NO accede a ninguna base de datos.
-'        La autenticación se determina mediante emails predefinidos para pruebas.
-' =====================================================
-Private Function IAuthService_AuthenticateUser(email As String) As Boolean
-    ' Lógica MOCK para la autenticación.
-    ' Devuelve True solo para usuarios de prueba conocidos.
+Private Function IAuthService_AuthenticateUser(ByVal email As String) As Boolean
     Select Case LCase(email)
-        Case "admin.condor@example.com", "calidad.condor@example.com", "tecnico.condor@example.com", "usuario.test@example.com"
+        Case "admin.condor@example.com", "calidad.condor@example.com", "tecnico.condor@example.com"
             IAuthService_AuthenticateUser = True
         Case Else
             IAuthService_AuthenticateUser = False
     End Select
 End Function
 
-' =====================================================
-' METODO PUBLICO: GetMockUserList
-' PROPOSITO: Obtener la lista de usuarios mock disponibles para pruebas
-' RETORNA: String - Lista formateada de usuarios mock
-' NOTAS: Metodo auxiliar para documentacion y debugging de pruebas
-' =====================================================
-Public Function GetMockUserList() As String
-    Dim userList As String
-    
-    userList = "USUARIOS MOCK DISPONIBLES PARA PRUEBAS:" & vbCrLf
-    userList = userList & "========================================" & vbCrLf
-    userList = userList & "admin.condor@example.com -> Rol_Admin" & vbCrLf
-    userList = userList & "calidad.condor@example.com -> Rol_Calidad" & vbCrLf
-    userList = userList & "tecnico.condor@example.com -> Rol_Tecnico" & vbCrLf
-    userList = userList & "usuario.test@example.com -> Rol_Tecnico" & vbCrLf
-    userList = userList & "supervisor.condor@example.com -> Rol_Calidad" & vbCrLf
-    userList = userList & "[cualquier otro email] -> Rol_Desconocido" & vbCrLf
-    userList = userList & "========================================" & vbCrLf
-    
-    GetMockUserList = userList
+Private Function IAuthService_GetUserRole(ByVal email As String) As E_UserRole
+    Select Case LCase(email)
+        Case "admin.condor@example.com"
+            IAuthService_GetUserRole = Rol_Admin
+        Case "calidad.condor@example.com"
+            IAuthService_GetUserRole = Rol_Calidad
+        Case "tecnico.condor@example.com"
+            IAuthService_GetUserRole = Rol_Tecnico
+        Case Else
+            IAuthService_GetUserRole = Rol_Desconocido
+    End Select
 End Function
 
-' =====================================================
-' METODO PUBLICO: IsMockService
-' PROPOSITO: Identificar que esta es una implementacion mock
-' RETORNA: Boolean - Siempre True para esta clase
-' NOTAS: Metodo auxiliar para identificacion en tiempo de ejecucion
-' =====================================================
-Public Function IsMockService() As Boolean
-    IsMockService = True
-End Function
-
-Private Function IAuthService_IsUserAuthorized(email As String, permission As String) As Boolean
+Private Function IAuthService_IsUserAuthorized(ByVal email As String, ByVal permission As String) As Boolean
     ' Lógica MOCK para autorización.
-    ' Devuelve True si el permiso es "READ" para cualquier usuario de prueba.
+    ' Devuelve True solo si el permiso es "read" para cualquier usuario de prueba.
     If LCase(permission) = "read" Then
         IAuthService_IsUserAuthorized = True
     Else
         IAuthService_IsUserAuthorized = False
     End If
 End Function
+
+Private Function IAuthService_ValidateEmail(ByVal email As String) As Boolean
+    ' Lógica MOCK simple para validación
+    IAuthService_ValidateEmail = (email <> "email_invalido")
+End Function
+#End If
 
 
 

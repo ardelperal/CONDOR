@@ -35,22 +35,23 @@ End Sub
 
 ' --- 1. Implementación PRIVADA de la Interfaz ---
 '     Satisface el contrato "Implements".
-Private Property Get ISolicitud_IdSolicitud() As Long
-    ISolicitud_IdSolicitud = m_IdSolicitud
+Private Property Get ISolicitud_idSolicitud() As Long
+    ISolicitud_idSolicitud = m_IdSolicitud
 End Property
 
-Private Property Let ISolicitud_IdSolicitud(ByVal RHS As Long)
+Private Property Let ISolicitud_idSolicitud(ByVal RHS As Long)
     m_IdSolicitud = RHS
 End Property
 
-Private Property Get ISolicitud_IdExpediente() As String
-    ISolicitud_IdExpediente = m_IdExpediente
+Private Property Get ISolicitud_IDExpediente() As String
+    ISolicitud_IDExpediente = m_IdExpediente
 End Property
 
-Private Property Let ISolicitud_IdExpediente(ByVal RHS As String)
+Private Property Let ISolicitud_IDExpediente(ByVal RHS As String)
     m_IdExpediente = RHS
 End Property
 
+' Interfaz ISolicitud - Propiedades
 Private Property Get ISolicitud_TipoSolicitud() As String
     ISolicitud_TipoSolicitud = m_TipoSolicitud
 End Property
@@ -120,19 +121,19 @@ End Function
 '     Exponen la funcionalidad al mundo. Delegan en la implementación de la interfaz.
 
 Public Property Get idSolicitud() As Long
-    idSolicitud = ISolicitud_IdSolicitud
+    idSolicitud = ISolicitud_idSolicitud
 End Property
 
 Public Property Let idSolicitud(ByVal val As Long)
-    ISolicitud_IdSolicitud = val
+    ISolicitud_idSolicitud = val
 End Property
 
 Public Property Get IDExpediente() As String
-    IDExpediente = ISolicitud_IdExpediente
+    IDExpediente = ISolicitud_IDExpediente
 End Property
 
 Public Property Let IDExpediente(ByVal val As String)
-    ISolicitud_IdExpediente = val
+    ISolicitud_IDExpediente = val
 End Property
 
 Public Property Get TipoSolicitud() As String

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -19,11 +19,33 @@ Option Explicit
 ' Fecha: Diciembre 2024
 ' ============================================================================
 
-' Obtiene un expediente por su ID desde la aplicaci?n de Expedientes existente
+' Obtiene un expediente por su ID desde la aplicación de Expedientes existente
 ' @param idExpediente: ID del expediente a buscar
 ' @return: Estructura T_Expediente con los datos del expediente
 Public Function GetExpedienteById(ByVal IDExpediente As Long) As T_Expediente
-    ' Esta funci?n debe ser implementada por las clases concretas
+    ' Esta función debe ser implementada por las clases concretas
+End Function
+
+' Métodos adicionales identificados en las pruebas
+Public Function GetExpediente(ByVal ID As Long) As T_Expediente
+End Function
+
+Public Function CreateExpediente(ByVal numeroExpediente As String, ByVal descripcion As String, ByVal idUsuario As Long) As Long
+End Function
+
+Public Function UpdateExpediente(ByVal ID As Long, ByVal descripcion As String, ByVal estado As String) As Boolean
+End Function
+
+Public Function DeleteExpediente(ByVal ID As Long) As Boolean
+End Function
+
+Public Function SearchExpedientes(ByVal criterio As String) As Collection
+End Function
+
+Public Function GetExpedientesByUser(ByVal idUsuario As Long) As Collection
+End Function
+
+Public Function ValidateExpediente(expediente As T_Expediente) As Boolean
 End Function
 
 #End If

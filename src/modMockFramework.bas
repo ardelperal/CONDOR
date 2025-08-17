@@ -576,7 +576,7 @@ End Sub
 ' FUNCIONES DE VALIDACIÓN Y VERIFICACIÓN
 ' ============================================================================
 
-Public Function VerifyQueryExecuted(mockType As String, expectedQuery As String) As Boolean
+Public Function VerifyQueryExecuted(ByVal mockType As String, ByVal expectedQuery As String) As Boolean
     ' Verificar que se ejecutó la consulta esperada
     Dim actualQuery As String
     
@@ -595,14 +595,14 @@ Public Function VerifyQueryExecuted(mockType As String, expectedQuery As String)
     VerifyQueryExecuted = (InStr(UCase(actualQuery), UCase(expectedQuery)) > 0)
 End Function
 
-Public Function VerifyFileAccessed(expectedPath As String, expectedOperation As String) As Boolean
+Public Function VerifyFileAccessed(ByVal expectedPath As String, ByVal expectedOperation As String) As Boolean
     ' Verificar que se accedió al archivo esperado
     With g_MockFileSystem
         VerifyFileAccessed = (.FilePath = expectedPath) And (.AccessAttempts > 0)
     End With
 End Function
 
-Public Function VerifyNotificationSent(expectedRecipient As String, expectedSubject As String) As Boolean
+Public Function VerifyNotificationSent(ByVal expectedRecipient As String, ByVal expectedSubject As String) As Boolean
     ' Verificar que se envió la notificación esperada
     With g_MockNotifications
         VerifyNotificationSent = (.LastRecipient = expectedRecipient) And _
@@ -611,7 +611,7 @@ Public Function VerifyNotificationSent(expectedRecipient As String, expectedSubj
     End With
 End Function
 
-Public Function VerifyTransactionState(expectedState As String) As Boolean
+Public Function VerifyTransactionState(ByVal expectedState As String) As Boolean
     ' Verificar el estado de la transacción
     With g_MockTransaction
         Select Case UCase(expectedState)

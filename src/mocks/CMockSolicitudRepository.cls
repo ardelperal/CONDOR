@@ -43,12 +43,12 @@ End Sub
 ' IMPLEMENTACIÓN DE INTERFAZ ISolicitudRepository
 '******************************************************************************
 
-Private Function ISolicitudRepository_SavePC(solicitud As CSolicitudPC) As Long
+Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Long
     Dim solicitudClone As CSolicitudPC
     Dim keyToRemove As String
     
     ' Clonar la solicitud para evitar referencias
-    Set solicitudClone = CloneSolicitud(solicitud)
+    Set solicitudClone = CloneSolicitud(solicitudPC)
     
     ' Si no tiene ID, asignar uno nuevo
     If solicitudClone.idSolicitud = 0 Then
@@ -68,11 +68,11 @@ Private Function ISolicitudRepository_SavePC(solicitud As CSolicitudPC) As Long
     ISolicitudRepository_SavePC = solicitudClone.idSolicitud
 End Function
 
-Private Function ISolicitudRepository_LoadPC(ByVal ID As Long) As CSolicitudPC
+Private Function ISolicitudRepository_LoadPC(ByVal solicitudId As Long) As CSolicitudPC
     Dim key As String
     Dim solicitud As CSolicitudPC
     
-    key = "ID_" & ID
+    key = "ID_" & solicitudId
     
     On Error Resume Next
     Set solicitud = mSolicitudes(key)

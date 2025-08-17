@@ -136,7 +136,7 @@ Private Function Test_CAuthService_GetUserRole_Admin() As Boolean
     g_MockLanzadera.UserPermissions = "ADMIN"
     
     ' Simular que el servicio retorna rol de administrador
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' En un entorno real, esto llamar?a a IAuthService_GetUserRole
@@ -159,7 +159,7 @@ Private Function Test_CAuthService_GetUserRole_Calidad() As Boolean
     g_MockLanzadera.UserRole = Rol_Calidad
     g_MockLanzadera.UserPermissions = "CALIDAD"
     
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     Test_CAuthService_GetUserRole_Calidad = (g_MockLanzadera.UserRole = Rol_Calidad)
@@ -180,7 +180,7 @@ Private Function Test_CAuthService_GetUserRole_Tecnico() As Boolean
     g_MockLanzadera.UserRole = Rol_Tecnico
     g_MockLanzadera.UserPermissions = "TECNICO"
     
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     Test_CAuthService_GetUserRole_Tecnico = (g_MockLanzadera.UserRole = Rol_Tecnico)
@@ -201,7 +201,7 @@ Private Function Test_CAuthService_GetUserRole_UsuarioInexistente() As Boolean
     g_MockLanzadera.UserExists = False
     g_MockLanzadera.UserRole = Rol_Desconocido
     
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     Test_CAuthService_GetUserRole_UsuarioInexistente = (g_MockLanzadera.UserRole = Rol_Desconocido)
@@ -220,7 +220,7 @@ Private Function Test_CAuthService_GetUserRole_EmailVacio() As Boolean
     
     SetupMockLanzaderaDB
     
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Con email vac?o debe retornar Rol_Desconocido
@@ -240,7 +240,7 @@ Private Function Test_CAuthService_GetUserRole_ErrorBD() As Boolean
     
     ConfigureMockLanzaderaToFail 3024, "No se pudo encontrar el archivo"
     
-    Dim authService As CAuthService
+    Dim authService As IAuthService
     Set authService = New CAuthService
     
     ' Con error de BD debe retornar Rol_Desconocido
@@ -264,7 +264,7 @@ Private Function Test_CExpedienteService_GetExpedienteById_IDValido() As Boolean
     
     SetupMockExpedientesDB
     
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     ' Verificar que el mock tiene datos v?lidos
@@ -287,7 +287,7 @@ Private Function Test_CExpedienteService_GetExpedienteById_IDInexistente() As Bo
     g_MockExpedientes.ExpedienteExists = False
     g_MockExpedientes.ExpedienteData.IDExpediente = 0
     
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     Test_CExpedienteService_GetExpedienteById_IDInexistente = (g_MockExpedientes.ExpedienteData.IDExpediente = 0)
@@ -306,7 +306,7 @@ Private Function Test_CExpedienteService_GetExpedienteById_ErrorBD() As Boolean
     
     ConfigureMockExpedientesToFail 3024, "No se pudo encontrar el archivo"
     
-    Dim expedienteService As CExpedienteService
+    Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
     
     Test_CExpedienteService_GetExpedienteById_ErrorBD = g_MockExpedientes.ShouldFail
@@ -330,7 +330,7 @@ Private Function Test_CSolicitudService_CreateNuevaSolicitud_TipoValido() As Boo
     SetupMockSolicitudService
     g_MockSolicitudSvc.LastCreatedType = "PC"
     
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Por ahora la implementaci?n retorna Nothing, pero verificamos que no falle
@@ -350,7 +350,7 @@ Private Function Test_CSolicitudService_GetSolicitudPorID_IDValido() As Boolean
     
     SetupMockSolicitudService
     
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Por ahora la implementaci?n retorna Nothing, pero verificamos que no falle
@@ -371,7 +371,7 @@ Private Function Test_CSolicitudService_SaveSolicitud_SolicitudValida() As Boole
     SetupMockSolicitudService
     g_MockSolicitudSvc.LastSavedSolicitud = "Solicitud de prueba"
     
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Por ahora la implementaci?n retorna False, pero verificamos que no falle
@@ -391,7 +391,7 @@ Private Function Test_CSolicitudService_GetAllSolicitudes() As Boolean
     
     SetupMockSolicitudService
     
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     ' Por ahora la implementaci?n retorna colecci?n vac?a, pero verificamos que no falle
@@ -412,7 +412,7 @@ Private Function Test_CSolicitudService_DeleteSolicitud_IDValido() As Boolean
     SetupMockSolicitudService
     g_MockSolicitudSvc.LastDeletedID = 123
     
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     Test_CSolicitudService_DeleteSolicitud_IDValido = (g_MockSolicitudSvc.LastDeletedID = 123)
@@ -433,7 +433,7 @@ Private Function Test_CSolicitudService_UpdateEstadoSolicitud_Valido() As Boolea
     g_MockSolicitudSvc.LastUpdatedID = 123
     g_MockSolicitudSvc.LastUpdatedEstado = "Aprobado"
     
-    Dim solicitudService As CSolicitudService
+    Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
     Test_CSolicitudService_UpdateEstadoSolicitud_Valido = (g_MockSolicitudSvc.LastUpdatedID = 123) And _
@@ -459,8 +459,8 @@ Private Function Test_Integration_AuthAndExpediente() As Boolean
     SetupMockExpedientesDB
     
     ' Simular flujo: autenticar usuario y obtener expediente
-    Dim authService As CAuthService
-    Dim expedienteService As CExpedienteService
+    Dim authService As IAuthService
+    Dim expedienteService As IExpedienteService
     
     Set authService = New CAuthService
     Set expedienteService = New CExpedienteService
@@ -480,7 +480,7 @@ End Function
 ' FUNCI?N PRINCIPAL DE EJECUCI?N DE PRUEBAS
 ' ============================================================================
 
-Public Sub RunServicesTests()
+Public Function RunServicesTests() As Boolean
     Debug.Print "============================================================================"
     Debug.Print "EJECUTANDO PRUEBAS PARA CLASES DE SERVICIO"
     Debug.Print "============================================================================"
@@ -582,12 +582,14 @@ Public Sub RunServicesTests()
     
     If passedTests = totalTests Then
         Debug.Print "✓ TODAS LAS PRUEBAS PASARON CORRECTAMENTE"
+        RunServicesTests = True
     Else
-        Debug.Print "✗ ALGUNAS PRUEBAS FALLARON - Revisar implementaci?n"
+        Debug.Print "✗ ALGUNAS PRUEBAS FALLARON - Revisar implementación"
+        RunServicesTests = False
     End If
     
     Debug.Print "============================================================================"
-End Sub
+End Function
 
 ' ============================================================================
 ' FUNCI?N DE PRUEBA R?PIDA
