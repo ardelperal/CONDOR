@@ -88,6 +88,41 @@ End Function
 ' ============================================================================
 
 ' Prueba: CSolicitudService se puede instanciar exitosamente
+' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
+Public Function Test_CSolicitudService_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE CSolicitudService ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudService_Creation_Success() Then
+        resultado = resultado & "[OK] Test_CSolicitudService_Creation_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudService_Creation_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudService_ImplementsISolicitudService() Then
+        resultado = resultado & "[OK] Test_CSolicitudService_ImplementsISolicitudService" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudService_ImplementsISolicitudService" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_CSolicitudService_RunAll = resultado
+End Function
+
 Public Function Test_CSolicitudService_Creation_Success() As Boolean
     On Error GoTo TestFail
     

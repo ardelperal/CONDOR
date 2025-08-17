@@ -477,8 +477,154 @@ ErrorHandler:
 End Function
 
 ' ============================================================================
-' FUNCI?N PRINCIPAL DE EJECUCI?N DE PRUEBAS
+' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
 ' ============================================================================
+
+Public Function Test_Services_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE SERVICIOS ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas de CAuthService
+    testsTotal = testsTotal + 1
+    If Test_CAuthService_GetUserRole_Admin() Then
+        resultado = resultado & "[OK] Test_CAuthService_GetUserRole_Admin" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CAuthService_GetUserRole_Admin" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CAuthService_GetUserRole_Calidad() Then
+        resultado = resultado & "[OK] Test_CAuthService_GetUserRole_Calidad" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CAuthService_GetUserRole_Calidad" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CAuthService_GetUserRole_Tecnico() Then
+        resultado = resultado & "[OK] Test_CAuthService_GetUserRole_Tecnico" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CAuthService_GetUserRole_Tecnico" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CAuthService_GetUserRole_UsuarioInexistente() Then
+        resultado = resultado & "[OK] Test_CAuthService_GetUserRole_UsuarioInexistente" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CAuthService_GetUserRole_UsuarioInexistente" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CAuthService_GetUserRole_EmailVacio() Then
+        resultado = resultado & "[OK] Test_CAuthService_GetUserRole_EmailVacio" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CAuthService_GetUserRole_EmailVacio" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CAuthService_GetUserRole_ErrorBD() Then
+        resultado = resultado & "[OK] Test_CAuthService_GetUserRole_ErrorBD" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CAuthService_GetUserRole_ErrorBD" & vbCrLf
+    End If
+    
+    ' Ejecutar todas las pruebas de CExpedienteService
+    testsTotal = testsTotal + 1
+    If Test_CExpedienteService_GetExpedienteById_IDValido() Then
+        resultado = resultado & "[OK] Test_CExpedienteService_GetExpedienteById_IDValido" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CExpedienteService_GetExpedienteById_IDValido" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CExpedienteService_GetExpedienteById_IDInexistente() Then
+        resultado = resultado & "[OK] Test_CExpedienteService_GetExpedienteById_IDInexistente" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CExpedienteService_GetExpedienteById_IDInexistente" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CExpedienteService_GetExpedienteById_ErrorBD() Then
+        resultado = resultado & "[OK] Test_CExpedienteService_GetExpedienteById_ErrorBD" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CExpedienteService_GetExpedienteById_ErrorBD" & vbCrLf
+    End If
+    
+    ' Ejecutar todas las pruebas de CSolicitudService
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudService_CreateNuevaSolicitud_TipoValido() Then
+        resultado = resultado & "[OK] Test_CSolicitudService_CreateNuevaSolicitud_TipoValido" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudService_CreateNuevaSolicitud_TipoValido" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudService_GetSolicitudPorID_IDValido() Then
+        resultado = resultado & "[OK] Test_CSolicitudService_GetSolicitudPorID_IDValido" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudService_GetSolicitudPorID_IDValido" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudService_SaveSolicitud_SolicitudValida() Then
+        resultado = resultado & "[OK] Test_CSolicitudService_SaveSolicitud_SolicitudValida" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudService_SaveSolicitud_SolicitudValida" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudService_GetAllSolicitudes() Then
+        resultado = resultado & "[OK] Test_CSolicitudService_GetAllSolicitudes" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudService_GetAllSolicitudes" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudService_DeleteSolicitud_IDValido() Then
+        resultado = resultado & "[OK] Test_CSolicitudService_DeleteSolicitud_IDValido" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudService_DeleteSolicitud_IDValido" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudService_UpdateEstadoSolicitud_Valido() Then
+        resultado = resultado & "[OK] Test_CSolicitudService_UpdateEstadoSolicitud_Valido" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudService_UpdateEstadoSolicitud_Valido" & vbCrLf
+    End If
+    
+    ' Ejecutar prueba de integración
+    testsTotal = testsTotal + 1
+    If Test_Integration_AuthAndExpediente() Then
+        resultado = resultado & "[OK] Test_Integration_AuthAndExpediente" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_AuthAndExpediente" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_Services_RunAll = resultado
+End Function
 
 Public Function RunServicesTests() As Boolean
     Debug.Print "============================================================================"

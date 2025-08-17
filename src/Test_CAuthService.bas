@@ -96,6 +96,49 @@ End Function
 ' PRUEBAS DE AUTENTICACIÓN
 ' ============================================================================
 
+' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
+Public Function Test_CAuthService_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE CAuthService ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If Test_CAuthService_Creation_Success() Then
+        resultado = resultado & "[OK] Test_CAuthService_Creation_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CAuthService_Creation_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CAuthService_ImplementsIAuthService() Then
+        resultado = resultado & "[OK] Test_CAuthService_ImplementsIAuthService" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CAuthService_ImplementsIAuthService" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_AuthenticateUser_ValidEmail_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_AuthenticateUser_ValidEmail_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_AuthenticateUser_ValidEmail_ReturnsTrue" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_CAuthService_RunAll = resultado
+End Function
+
 Public Function Test_AuthenticateUser_ValidEmail_ReturnsTrue() As Boolean
     On Error GoTo TestFail
     

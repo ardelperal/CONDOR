@@ -39,6 +39,129 @@ End Sub
 ' PRUEBAS PARA CreateSolicitud
 ' ============================================================================
 
+' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
+Public Function Test_SolicitudFactory_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE SOLICITUDFACTORY ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC() Then
+        resultado = resultado & "[OK] Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CreateSolicitud_InvalidID_ReturnsNothing() Then
+        resultado = resultado & "[OK] Test_CreateSolicitud_InvalidID_ReturnsNothing" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CreateSolicitud_InvalidID_ReturnsNothing" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CreateSolicitud_ZeroID_ReturnsNothing() Then
+        resultado = resultado & "[OK] Test_CreateSolicitud_ZeroID_ReturnsNothing" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CreateSolicitud_ZeroID_ReturnsNothing" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_GetTipoSolicitud_DefaultsToPC() Then
+        resultado = resultado & "[OK] Test_GetTipoSolicitud_DefaultsToPC" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_GetTipoSolicitud_DefaultsToPC" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Factory_CreatesValidISolicitudInterface() Then
+        resultado = resultado & "[OK] Test_Factory_CreatesValidISolicitudInterface" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Factory_CreatesValidISolicitudInterface" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Factory_HandlesDatabaseErrors() Then
+        resultado = resultado & "[OK] Test_Factory_HandlesDatabaseErrors" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Factory_HandlesDatabaseErrors" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_Properties_SetAndGet() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_Properties_SetAndGet" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_Properties_SetAndGet" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_Load_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_Load_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_Load_ReturnsTrue" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_Save_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_Save_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_Save_ReturnsTrue" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_ChangeState_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_ChangeState_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_ChangeState_ReturnsTrue" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_DatosPC_SetAndGet() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_DatosPC_SetAndGet" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_DatosPC_SetAndGet" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CreateSolicitud_LargeID_HandlesCorrectly() Then
+        resultado = resultado & "[OK] Test_CreateSolicitud_LargeID_HandlesCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CreateSolicitud_LargeID_HandlesCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_SolicitudFactory_RunAll = resultado
+End Function
+
 Public Function Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC() As Boolean
     On Error GoTo TestFail
     

@@ -74,6 +74,137 @@ End Sub
 ' ============================================================================
 
 ' Prueba: CConfig se puede instanciar exitosamente
+' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
+Public Function Test_CConfig_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE CCONFIG ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If Test_CConfig_Creation_Success() Then
+        resultado = resultado & "[OK] Test_CConfig_Creation_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_Creation_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_ImplementsIConfig() Then
+        resultado = resultado & "[OK] Test_CConfig_ImplementsIConfig" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_ImplementsIConfig" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_GetValue_ValidKey_ReturnsValue() Then
+        resultado = resultado & "[OK] Test_CConfig_GetValue_ValidKey_ReturnsValue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_GetValue_ValidKey_ReturnsValue" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_GetValue_InvalidKey_ReturnsEmpty() Then
+        resultado = resultado & "[OK] Test_CConfig_GetValue_InvalidKey_ReturnsEmpty" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_GetValue_InvalidKey_ReturnsEmpty" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_SetValue_ValidKey_Success() Then
+        resultado = resultado & "[OK] Test_CConfig_SetValue_ValidKey_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_SetValue_ValidKey_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_SetValue_EmptyKey_Fails() Then
+        resultado = resultado & "[OK] Test_CConfig_SetValue_EmptyKey_Fails" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_SetValue_EmptyKey_Fails" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_LoadFromDatabase_Success() Then
+        resultado = resultado & "[OK] Test_CConfig_LoadFromDatabase_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_LoadFromDatabase_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_SaveToDatabase_Success() Then
+        resultado = resultado & "[OK] Test_CConfig_SaveToDatabase_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_SaveToDatabase_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_GetConnectionString_ReturnsString() Then
+        resultado = resultado & "[OK] Test_CConfig_GetConnectionString_ReturnsString" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_GetConnectionString_ReturnsString" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_GetLogLevel_ReturnsInteger() Then
+        resultado = resultado & "[OK] Test_CConfig_GetLogLevel_ReturnsInteger" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_GetLogLevel_ReturnsInteger" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_IsDebugMode_ReturnsBoolean() Then
+        resultado = resultado & "[OK] Test_CConfig_IsDebugMode_ReturnsBoolean" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_IsDebugMode_ReturnsBoolean" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_GetTimeout_ReturnsInteger() Then
+        resultado = resultado & "[OK] Test_CConfig_GetTimeout_ReturnsInteger" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_GetTimeout_ReturnsInteger" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_ValidateConfiguration_Success() Then
+        resultado = resultado & "[OK] Test_CConfig_ValidateConfiguration_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_ValidateConfiguration_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_ResetToDefaults_Success() Then
+        resultado = resultado & "[OK] Test_CConfig_ResetToDefaults_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_ResetToDefaults_Success" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_CConfig_RunAll = resultado
+End Function
+
 Public Function Test_CConfig_Creation_Success() As Boolean
     On Error GoTo TestFail
     
@@ -109,6 +240,96 @@ Public Function Test_CConfig_ImplementsIConfig() As Boolean
     
 TestFail:
     Test_CConfig_ImplementsIConfig = False
+End Function
+
+' Prueba: GetValue con clave válida retorna el valor esperado
+Public Function Test_CConfig_GetValue_ValidKey_ReturnsValue() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Dim config As IConfig
+    Set config = New CConfig
+    
+    ' Establecer un valor conocido para la prueba
+    config.SetValue "RUTA_BACKEND", "\\servidor\datos.accdb"
+    
+    ' Act
+    Dim resultado As Variant
+    resultado = config.GetValue("RUTA_BACKEND")
+    
+    ' Assert - Verificar que el valor devuelto es exactamente el esperado
+    Test_CConfig_GetValue_ValidKey_ReturnsValue = (CStr(resultado) = "\\servidor\datos.accdb")
+    
+    Exit Function
+    
+TestFail:
+    Test_CConfig_GetValue_ValidKey_ReturnsValue = False
+End Function
+
+' Prueba: GetValue con clave inválida retorna vacío
+Public Function Test_CConfig_GetValue_InvalidKey_ReturnsEmpty() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_GetValue_InvalidKey_ReturnsEmpty = False
+End Function
+
+' Prueba: SetValue con clave válida es exitoso
+Public Function Test_CConfig_SetValue_ValidKey_Success() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_SetValue_ValidKey_Success = False
+End Function
+
+' Prueba: SetValue con clave vacía falla
+Public Function Test_CConfig_SetValue_EmptyKey_Fails() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_SetValue_EmptyKey_Fails = False
+End Function
+
+' Prueba: LoadFromDatabase es exitoso
+Public Function Test_CConfig_LoadFromDatabase_Success() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_LoadFromDatabase_Success = False
+End Function
+
+' Prueba: SaveToDatabase es exitoso
+Public Function Test_CConfig_SaveToDatabase_Success() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_SaveToDatabase_Success = False
+End Function
+
+' Prueba: GetConnectionString retorna una cadena
+Public Function Test_CConfig_GetConnectionString_ReturnsString() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_GetConnectionString_ReturnsString = False
+End Function
+
+' Prueba: GetLogLevel retorna un entero
+Public Function Test_CConfig_GetLogLevel_ReturnsInteger() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_GetLogLevel_ReturnsInteger = False
+End Function
+
+' Prueba: IsDebugMode retorna un booleano
+Public Function Test_CConfig_IsDebugMode_ReturnsBoolean() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_IsDebugMode_ReturnsBoolean = False
+End Function
+
+' Prueba: GetTimeout retorna un entero
+Public Function Test_CConfig_GetTimeout_ReturnsInteger() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_GetTimeout_ReturnsInteger = False
+End Function
+
+' Prueba: ValidateConfiguration es exitoso
+Public Function Test_CConfig_ValidateConfiguration_Success() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_ValidateConfiguration_Success = False
+End Function
+
+' Prueba: ResetToDefaults es exitoso
+Public Function Test_CConfig_ResetToDefaults_Success() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CConfig_ResetToDefaults_Success = False
 End Function
 
 ' Prueba: InitializeEnvironment retorna un valor booleano

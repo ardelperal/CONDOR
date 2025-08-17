@@ -60,6 +60,41 @@ End Sub
 ' PRUEBAS DE CREACIÓN E INICIALIZACIÓN
 ' ============================================================================
 
+' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
+Public Function Test_CExpedienteService_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE CExpedienteService ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If Test_CExpedienteService_Creation_Success() Then
+        resultado = resultado & "[OK] Test_CExpedienteService_Creation_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CExpedienteService_Creation_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CExpedienteService_ImplementsIExpedienteService() Then
+        resultado = resultado & "[OK] Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_CExpedienteService_RunAll = resultado
+End Function
+
 Public Function Test_CExpedienteService_Creation_Success() As Boolean
     On Error GoTo TestFail
     

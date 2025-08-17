@@ -2,6 +2,10 @@ Attribute VB_Name = "Test_Solicitudes"
 Option Compare Database
 Option Explicit
 
+' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
 Public Function Test_Solicitudes_RunAll() As String
     Dim resultado As String
     resultado = "=== PRUEBAS DE SOLICITUDES ===" & vbCrLf

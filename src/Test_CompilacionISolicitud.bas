@@ -69,5 +69,40 @@ Public Function Ejecutar_Test_Compilacion() As Boolean
     Ejecutar_Test_Compilacion = resultado
 End Function
 
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
+' ============================================================================
+
+Public Function Test_CompilacionISolicitud_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Integer
+    Dim testsTotal As Integer
+    
+    resultado = "=== PRUEBAS DE COMPILACIÓN ISOLICITUD ===" & vbCrLf
+    
+    ' Test 1: Implementación ISolicitud
+    testsTotal = testsTotal + 1
+    If Test_ImplementacionISolicitud() Then
+        resultado = resultado & "[OK] Test_ImplementacionISolicitud" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_ImplementacionISolicitud" & vbCrLf
+    End If
+    
+    ' Test 2: Ejecutar test de compilación
+    testsTotal = testsTotal + 1
+    If Ejecutar_Test_Compilacion() Then
+        resultado = resultado & "[OK] Ejecutar_Test_Compilacion" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Ejecutar_Test_Compilacion" & vbCrLf
+    End If
+    
+    ' Resumen final
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasaron" & vbCrLf
+    
+    Test_CompilacionISolicitud_RunAll = resultado
+End Function
+
 
 

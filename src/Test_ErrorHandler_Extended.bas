@@ -588,8 +588,175 @@ TestFail:
 End Function
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
 ' ============================================================================
+
+Public Function Test_ErrorHandler_Extended_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS EXTENDIDAS DE ERRORHANDLER ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas y contar resultados
+    testsTotal = testsTotal + 1
+    If Test_LogError_StandardError_LogsSuccessfully() Then
+        resultado = resultado & "[OK] Test_LogError_StandardError_LogsSuccessfully" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_LogError_StandardError_LogsSuccessfully" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_LogError_CriticalError_CreatesNotification() Then
+        resultado = resultado & "[OK] Test_LogError_CriticalError_CreatesNotification" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_LogError_CriticalError_CreatesNotification" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_LogError_DatabaseFailure_WritesToLocalLog() Then
+        resultado = resultado & "[OK] Test_LogError_DatabaseFailure_WritesToLocalLog" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_LogError_DatabaseFailure_WritesToLocalLog" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_LogError_SpecialCharacters_HandlesCorrectly() Then
+        resultado = resultado & "[OK] Test_LogError_SpecialCharacters_HandlesCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_LogError_SpecialCharacters_HandlesCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_IsCriticalError_DatabaseErrors_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_IsCriticalError_DatabaseErrors_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_IsCriticalError_DatabaseErrors_ReturnsTrue" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_IsCriticalError_MemoryErrors_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_IsCriticalError_MemoryErrors_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_IsCriticalError_MemoryErrors_ReturnsTrue" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_IsCriticalError_StandardErrors_ReturnsFalse() Then
+        resultado = resultado & "[OK] Test_IsCriticalError_StandardErrors_ReturnsFalse" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_IsCriticalError_StandardErrors_ReturnsFalse" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CreateAdminNotification_ValidData_CreatesNotification() Then
+        resultado = resultado & "[OK] Test_CreateAdminNotification_ValidData_CreatesNotification" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CreateAdminNotification_ValidData_CreatesNotification" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog() Then
+        resultado = resultado & "[OK] Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_WriteToLocalLog_ValidMessage_WritesSuccessfully() Then
+        resultado = resultado & "[OK] Test_WriteToLocalLog_ValidMessage_WritesSuccessfully" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_WriteToLocalLog_ValidMessage_WritesSuccessfully" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_WriteToLocalLog_FileSystemError_HandlesGracefully() Then
+        resultado = resultado & "[OK] Test_WriteToLocalLog_FileSystemError_HandlesGracefully" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_WriteToLocalLog_FileSystemError_HandlesGracefully" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_LogCurrentError_WithValidError_LogsCorrectly() Then
+        resultado = resultado & "[OK] Test_LogCurrentError_WithValidError_LogsCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_LogCurrentError_WithValidError_LogsCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CleanOldLogs_ValidExecution_RemovesOldRecords() Then
+        resultado = resultado & "[OK] Test_CleanOldLogs_ValidExecution_RemovesOldRecords" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CleanOldLogs_ValidExecution_RemovesOldRecords" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CleanOldLogs_DatabaseError_WritesToLocalLog() Then
+        resultado = resultado & "[OK] Test_CleanOldLogs_DatabaseError_WritesToLocalLog" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CleanOldLogs_DatabaseError_WritesToLocalLog" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Integration_ErrorFlow_CompleteProcess() Then
+        resultado = resultado & "[OK] Test_Integration_ErrorFlow_CompleteProcess" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_ErrorFlow_CompleteProcess" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Integration_FallbackMechanism_WorksCorrectly() Then
+        resultado = resultado & "[OK] Test_Integration_FallbackMechanism_WorksCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_FallbackMechanism_WorksCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly() Then
+        resultado = resultado & "[OK] Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly() Then
+        resultado = resultado & "[OK] Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_ConcurrentAccess_HandlesCorrectly() Then
+        resultado = resultado & "[OK] Test_EdgeCase_ConcurrentAccess_HandlesCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_ConcurrentAccess_HandlesCorrectly" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_ErrorHandler_Extended_RunAll = resultado
+End Function
 
 Public Function RunErrorHandlerExtendedTests() As Boolean
     Dim totalTests As Integer

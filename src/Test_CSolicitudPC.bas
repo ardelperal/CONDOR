@@ -59,6 +59,81 @@ End Sub
 ' PRUEBAS DE CREACI?N E INICIALIZACI?N
 ' ============================================================================
 
+' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
+Public Function Test_CSolicitudPC_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE CSOLICITUDPC ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_Creation_Success() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_Creation_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_Creation_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_ImplementsISolicitud() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_ImplementsISolicitud" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_ImplementsISolicitud" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_Properties_SetAndGet() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_Properties_SetAndGet" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_Properties_SetAndGet" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_Load_Success() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_Load_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_Load_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_Save_Success() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_Save_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_Save_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_ChangeState_Success() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_ChangeState_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_ChangeState_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CSolicitudPC_DatosPC_SetAndGet() Then
+        resultado = resultado & "[OK] Test_CSolicitudPC_DatosPC_SetAndGet" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CSolicitudPC_DatosPC_SetAndGet" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_CSolicitudPC_RunAll = resultado
+End Function
+
 Public Function Test_CSolicitudPC_Creation_Success() As Boolean
     On Error GoTo TestFail
     
@@ -331,7 +406,36 @@ TestFail:
 End Function
 
 ' ============================================================================
-' FUNCI?N PRINCIPAL DE EJECUCI?N DE PRUEBAS
+' STUBS DE FUNCIONES DE PRUEBA FALTANTES
+' ============================================================================
+
+Public Function Test_CSolicitudPC_Properties_SetAndGet() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CSolicitudPC_Properties_SetAndGet = False
+End Function
+
+Public Function Test_CSolicitudPC_Load_Success() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CSolicitudPC_Load_Success = False
+End Function
+
+Public Function Test_CSolicitudPC_Save_Success() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CSolicitudPC_Save_Success = False
+End Function
+
+Public Function Test_CSolicitudPC_ChangeState_Success() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CSolicitudPC_ChangeState_Success = False
+End Function
+
+Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
+    ' TODO: Implementar lógica de la prueba
+    Test_CSolicitudPC_DatosPC_SetAndGet = False
+End Function
+
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
 ' ============================================================================
 
 Public Function RunCSolicitudPCTests() As String

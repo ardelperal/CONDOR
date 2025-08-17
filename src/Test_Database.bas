@@ -89,6 +89,171 @@ Private Sub SetupValidDatosPCData()
 End Sub
 
 ' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
+Public Function Test_Database_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE DATABASE ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas básicas
+    testsTotal = testsTotal + 1
+    If Test_GetSolicitudData_ValidID_ReturnsRecordset() Then
+        resultado = resultado & "[OK] Test_GetSolicitudData_ValidID_ReturnsRecordset" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_GetSolicitudData_ValidID_ReturnsRecordset" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_GetSolicitudData_InvalidID_ReturnsNothing() Then
+        resultado = resultado & "[OK] Test_GetSolicitudData_InvalidID_ReturnsNothing" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_GetSolicitudData_InvalidID_ReturnsNothing" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_GetSolicitudData_DatabaseError_HandlesGracefully() Then
+        resultado = resultado & "[OK] Test_GetSolicitudData_DatabaseError_HandlesGracefully" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_GetSolicitudData_DatabaseError_HandlesGracefully" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SaveSolicitudPC_NewRecord_Success() Then
+        resultado = resultado & "[OK] Test_SaveSolicitudPC_NewRecord_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SaveSolicitudPC_NewRecord_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SaveSolicitudPC_UpdateRecord_Success() Then
+        resultado = resultado & "[OK] Test_SaveSolicitudPC_UpdateRecord_Success" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SaveSolicitudPC_UpdateRecord_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SaveSolicitudPC_TransactionFail_Rollback() Then
+        resultado = resultado & "[OK] Test_SaveSolicitudPC_TransactionFail_Rollback" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SaveSolicitudPC_TransactionFail_Rollback" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SaveSolicitudPC_InvalidData_HandlesError() Then
+        resultado = resultado & "[OK] Test_SaveSolicitudPC_InvalidData_HandlesError" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SaveSolicitudPC_InvalidData_HandlesError" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SolicitudExists_ValidID_ReturnsTrue() Then
+        resultado = resultado & "[OK] Test_SolicitudExists_ValidID_ReturnsTrue" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SolicitudExists_ValidID_ReturnsTrue" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SolicitudExists_InvalidID_ReturnsFalse() Then
+        resultado = resultado & "[OK] Test_SolicitudExists_InvalidID_ReturnsFalse" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SolicitudExists_InvalidID_ReturnsFalse" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SolicitudExists_ZeroID_ReturnsFalse() Then
+        resultado = resultado & "[OK] Test_SolicitudExists_ZeroID_ReturnsFalse" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SolicitudExists_ZeroID_ReturnsFalse" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SolicitudExists_DatabaseError_ReturnsFalse() Then
+        resultado = resultado & "[OK] Test_SolicitudExists_DatabaseError_ReturnsFalse" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SolicitudExists_DatabaseError_ReturnsFalse" & vbCrLf
+    End If
+    
+    ' Pruebas de integración
+    testsTotal = testsTotal + 1
+    If Test_Integration_SaveAndRetrieve() Then
+        resultado = resultado & "[OK] Test_Integration_SaveAndRetrieve" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_SaveAndRetrieve" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Integration_SaveUpdateSave() Then
+        resultado = resultado & "[OK] Test_Integration_SaveUpdateSave" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_SaveUpdateSave" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Integration_ErrorHandling() Then
+        resultado = resultado & "[OK] Test_Integration_ErrorHandling" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_ErrorHandling" & vbCrLf
+    End If
+    
+    ' Casos edge
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_LargeDataset() Then
+        resultado = resultado & "[OK] Test_EdgeCase_LargeDataset" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_LargeDataset" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_VeryLongStrings() Then
+        resultado = resultado & "[OK] Test_EdgeCase_VeryLongStrings" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_VeryLongStrings" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_SpecialCharacters() Then
+        resultado = resultado & "[OK] Test_EdgeCase_SpecialCharacters" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_SpecialCharacters" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_ConcurrentOperations() Then
+        resultado = resultado & "[OK] Test_EdgeCase_ConcurrentOperations" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_ConcurrentOperations" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_Database_RunAll = resultado
+End Function
+
+' ============================================================================
 ' PRUEBAS PARA GetSolicitudData
 ' ============================================================================
 

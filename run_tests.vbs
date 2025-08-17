@@ -52,15 +52,10 @@ If Err.Number <> 0 Then
 End If
 On Error GoTo 0
 
-' Mostrar los resultados en el terminal
+' Mostrar los resultados en el terminal (salida completa)
 WScript.Echo resultado
-WScript.Echo ""
-WScript.Echo "=== PRUEBAS COMPLETADAS ==="
 
 ' Cerrar Access
 objAccess.Quit
 Set objAccess = Nothing
 Set objFSO = Nothing
-
-WScript.Echo "Nota: Los resultados detallados se muestran en la Ventana Inmediato de Access."
-WScript.Echo "Para ver los resultados, abra Access y presione Ctrl+G."

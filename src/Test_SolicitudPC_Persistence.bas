@@ -122,6 +122,49 @@ End Function
 ' SUITE DE PRUEBAS
 '******************************************************************************
 
+' ============================================================================
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' ============================================================================
+
+Public Function Test_SolicitudPC_Persistence_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE SOLICITUDPC PERSISTENCE ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If Test_Save_PC_ShouldDelegateToRepository() Then
+        resultado = resultado & "[OK] Test_Save_PC_ShouldDelegateToRepository" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Save_PC_ShouldDelegateToRepository" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Load_PC_ShouldPopulateObjectFromRepository() Then
+        resultado = resultado & "[OK] Test_Load_PC_ShouldPopulateObjectFromRepository" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Load_PC_ShouldPopulateObjectFromRepository" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity() Then
+        resultado = resultado & "[OK] Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_SolicitudPC_Persistence_RunAll = resultado
+End Function
+
 Public Sub EJECUTAR_PRUEBAS_PERSISTENCIA_PC()
     Debug.Print "=== INICIANDO PRUEBAS DE PERSISTENCIA PC ==="
     

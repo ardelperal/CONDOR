@@ -480,8 +480,167 @@ TestFail:
 End Function
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
+' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
 ' ============================================================================
+
+Public Function Test_AppManager_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE APPMANAGER ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If Test_GetCurrentUserEmail_ReturnsString() Then
+        resultado = resultado & "[OK] Test_GetCurrentUserEmail_ReturnsString" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_GetCurrentUserEmail_ReturnsString" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_GetCurrentUserEmail_DevMode_HandlesCorrectly() Then
+        resultado = resultado & "[OK] Test_GetCurrentUserEmail_DevMode_HandlesCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_GetCurrentUserEmail_DevMode_HandlesCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Ping_ReturnsPong() Then
+        resultado = resultado & "[OK] Test_Ping_ReturnsPong" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Ping_ReturnsPong" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Ping_ConsistentResponse() Then
+        resultado = resultado & "[OK] Test_Ping_ConsistentResponse" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Ping_ConsistentResponse" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_UserRole_AdminRole_SetsCorrectly() Then
+        resultado = resultado & "[OK] Test_UserRole_AdminRole_SetsCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_UserRole_AdminRole_SetsCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_UserRole_CalidadRole_SetsCorrectly() Then
+        resultado = resultado & "[OK] Test_UserRole_CalidadRole_SetsCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_UserRole_CalidadRole_SetsCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_UserRole_TecnicoRole_SetsCorrectly() Then
+        resultado = resultado & "[OK] Test_UserRole_TecnicoRole_SetsCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_UserRole_TecnicoRole_SetsCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_UserRole_DesconocidoRole_SetsCorrectly() Then
+        resultado = resultado & "[OK] Test_UserRole_DesconocidoRole_SetsCorrectly" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_UserRole_DesconocidoRole_SetsCorrectly" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_UserRoleEnum_ValidValues() Then
+        resultado = resultado & "[OK] Test_UserRoleEnum_ValidValues" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_UserRoleEnum_ValidValues" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_UserRoleEnum_CanAssignToVariable() Then
+        resultado = resultado & "[OK] Test_UserRoleEnum_CanAssignToVariable" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_UserRoleEnum_CanAssignToVariable" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Integration_WithAuthService() Then
+        resultado = resultado & "[OK] Test_Integration_WithAuthService" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_WithAuthService" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Integration_EmailAndRoleConsistency() Then
+        resultado = resultado & "[OK] Test_Integration_EmailAndRoleConsistency" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Integration_EmailAndRoleConsistency" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail() Then
+        resultado = resultado & "[OK] Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString() Then
+        resultado = resultado & "[OK] Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_MultipleRoleChanges() Then
+        resultado = resultado & "[OK] Test_EdgeCase_MultipleRoleChanges" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_MultipleRoleChanges" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_ConcurrentEmailCalls() Then
+        resultado = resultado & "[OK] Test_EdgeCase_ConcurrentEmailCalls" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_ConcurrentEmailCalls" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_EdgeCase_PingStressTest() Then
+        resultado = resultado & "[OK] Test_EdgeCase_PingStressTest" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_EdgeCase_PingStressTest" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_DevMode_ConstantExists() Then
+        resultado = resultado & "[OK] Test_DevMode_ConstantExists" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_DevMode_ConstantExists" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_AppManager_RunAll = resultado
+End Function
 
 Public Function RunAppManagerTests() As String
     Dim resultado As String

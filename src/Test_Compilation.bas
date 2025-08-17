@@ -1,8 +1,35 @@
-﻿Attribute VB_Name = "Test_Compilation"
+Attribute VB_Name = "Test_Compilation"
 Option Compare Database
 Option Explicit
 
 ' M?dulo de prueba para verificar compilaci?n
+
+' ============================================================================
+' PRUEBAS DE COMPILACIÓN
+' ============================================================================
+
+Public Function Test_Compilation_RunAll() As String
+    Dim resultado As String
+    Dim testsPassed As Long, testsTotal As Long
+    
+    resultado = "=== PRUEBAS DE COMPILACIÓN ===" & vbCrLf
+    testsPassed = 0
+    testsTotal = 0
+    
+    ' Ejecutar todas las pruebas
+    testsTotal = testsTotal + 1
+    If TestCompilation() Then
+        resultado = resultado & "[OK] TestCompilation" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] TestCompilation" & vbCrLf
+    End If
+    
+    ' Agregar resumen
+    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
+    
+    Test_Compilation_RunAll = resultado
+End Function
 
 Public Function TestCompilation() As Boolean
     On Error GoTo ErrorHandler
