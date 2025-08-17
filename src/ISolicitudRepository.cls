@@ -9,3 +9,6 @@ End Function
 
 Public Function LoadPC(ByVal solicitudId As Long) As CSolicitudPC
 End Function
+
+Public Function ObtenerPorId(ByVal idSolicitud As Long) As T_Solicitud
+End Function

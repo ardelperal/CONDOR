@@ -55,6 +55,18 @@ Public Function RunAllTests() As String
     resultado = resultado & suiteResult
     Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
     
+    ' --- Ejecutar Pruebas de NotificationService ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de NotificationService ---" & vbCrLf
+    suiteResult = Test_NotificationService_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de DocumentService ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de DocumentService ---" & vbCrLf
+    suiteResult = Test_DocumentService_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
     ' --- Ejecutar Pruebas de Integraci?n ---
     resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Integraci?n ---" & vbCrLf
     suiteResult = Test_Integracion_RunAll()

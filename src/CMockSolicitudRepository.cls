@@ -20,3 +20,8 @@ Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Lon
     m_storage.Add solicitudPC, CStr(newId)
     ISolicitudRepository_SavePC = newId
 End Function
+
+Private Function ISolicitudRepository_ObtenerPorId(ByVal idSolicitud As Long) As T_Solicitud
+    On Error Resume Next
+    Set ISolicitudRepository_ObtenerPorId = m_storage(CStr(idSolicitud))
+End Function

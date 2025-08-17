@@ -89,3 +89,9 @@ Public Estado As String
 
 ' Usuario creador de la solicitud
 Public UsuarioCreador As String
+
+' Fecha de modificación (usada en CSolicitudRepository)
+Public FechaModificacion As Date
+
+' Usuario que modificó la solicitud (usada en CSolicitudRepository)
+Public UsuarioModificador As String
