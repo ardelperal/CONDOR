@@ -164,11 +164,18 @@ Public Function Load(ByVal ID As Long) As Boolean
     Load = ISolicitud_Load(ID)
 End Function
 
-Public Function Save() As Long
+Public Function Save() As Boolean
     If Not mRepository Is Nothing Then
-        Save = mRepository.SavePC(Me)
+        Dim savedId As Long
+        savedId = mRepository.SavePC(Me)
+        If savedId > 0 Then
+            m_IdSolicitud = savedId
+            Save = True
+        Else
+            Save = False
+        End If
     Else
-        Save = 0
+        Save = False
     End If
 End Function
 
@@ -178,11 +185,11 @@ End Function
 
 ' --- Propiedades específicas de PC ---
 Public Property Get DatosPC() As T_Datos_PC
-    DatosPC = m_DatosPC
+    Set DatosPC = m_DatosPC
 End Property
 
-Public Property Let DatosPC(ByRef val As T_Datos_PC)
-    m_DatosPC = val
+Public Property Set DatosPC(ByRef val As T_Datos_PC)
+    Set m_DatosPC = val
 End Property
 
 

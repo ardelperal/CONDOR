@@ -66,3 +66,26 @@ Public IDExpediente As String
 ' PROPIEDAD CRÍTICA IDENTIFICADA EN TESTS
 ' Identificador de solicitud usado en CSolicitudPC y tests
 Public idSolicitud As Long
+
+'******************************************************************************
+' PROPIEDADES ADICIONALES REQUERIDAS POR TEST_VALIDATIONSERVICE
+' Basadas en la Lección 6: Los tests actúan como especificación
+'******************************************************************************
+
+' Descripción de la solicitud
+Public Descripcion As String
+
+' Justificación de la solicitud
+Public Justificacion As String
+
+' Importe original (para solicitudes PC)
+Public ImporteOriginal As Currency
+
+' Importe nuevo propuesto (para solicitudes PC)
+Public ImporteNuevo As Currency
+
+' Estado de la solicitud (diferente de EstadoInterno)
+Public Estado As String
+
+' Usuario creador de la solicitud
+Public UsuarioCreador As String
