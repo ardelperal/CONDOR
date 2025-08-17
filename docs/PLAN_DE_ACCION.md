@@ -84,7 +84,6 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - [x] Módulo de gestión de solicitudes (ISolicitud, CSolicitudPC, modSolicitudFactory)
 - [ ] Módulo de workflow y estados
 - [ ] Módulo de validaciones de negocio
-- [ ] Módulo de cálculos y reglas
 - [ ] Módulo de notificaciones
 
 ### 1.3 Capa de Presentación
