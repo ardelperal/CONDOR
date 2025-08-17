@@ -7,67 +7,26 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-' ===================================================================
-' Interfaz: INotificationService
-' Descripción: Contrato para servicios de notificaciones por correo electrónico
-' Autor: Sistema CONDOR
-' Fecha: 2024
-' ===================================================================
+' INotificationService.cls
+' Interfaz para el servicio de notificaciones asíncrono
+' Basado en las Especificaciones de Integración - Sección 2.5
+' El servicio encola correos en la base de datos Correos_datos.accdb
 
+Option Compare Database
 Option Explicit
 
-' ===================================================================
-' MÉTODOS DE NOTIFICACIÓN PRINCIPAL
-' ===================================================================
-
-' Envía una notificación por correo electrónico para eventos de solicitudes
+' Método principal para enviar notificaciones
+' Encola un correo en la base de datos externa para procesamiento asíncrono
 ' Parámetros:
-'   solicitud: Objeto T_Solicitud que genera el evento
-'   tipoEvento: Tipo de evento ("CambioEstado", "Creacion", "Aprobacion", etc.)
-'   destinatario: Variable de salida con el email del destinatario
-'   asunto: Variable de salida con el asunto del correo
-'   cuerpo: Variable de salida con el cuerpo del mensaje
-' Retorna: True si la notificación se procesó correctamente, False en caso contrario
-Public Function EnviarNotificacion(ByVal solicitud As T_Solicitud, ByVal tipoEvento As String, ByRef destinatario As String, ByRef asunto As String, ByRef cuerpo As String) As Boolean
-End Function
-
-' ===================================================================
-' MÉTODOS DE CONSTRUCCIÓN DE CONTENIDO
-' ===================================================================
-
-' Construye el asunto del correo basado en la solicitud y tipo de evento
-' Parámetros:
-'   solicitud: Objeto T_Solicitud
-'   tipoEvento: Tipo de evento
-' Retorna: String con el asunto formateado
-Public Function ConstruirAsunto(ByVal solicitud As T_Solicitud, ByVal tipoEvento As String) As String
-End Function
-
-' Construye el cuerpo del mensaje basado en la solicitud y tipo de evento
-' Parámetros:
-'   solicitud: Objeto T_Solicitud
-'   tipoEvento: Tipo de evento
-' Retorna: String con el cuerpo del mensaje formateado
-Public Function ConstruirCuerpo(ByVal solicitud As T_Solicitud, ByVal tipoEvento As String) As String
-End Function
-
-' Obtiene el destinatario apropiado basado en la solicitud y tipo de evento
-' Parámetros:
-'   solicitud: Objeto T_Solicitud
-'   tipoEvento: Tipo de evento
-' Retorna: String con el email del destinatario
-Public Function ObtenerDestinatario(ByVal solicitud As T_Solicitud, ByVal tipoEvento As String) As String
-End Function
-
-' ===================================================================
-' MÉTODOS DE VALIDACIÓN
-' ===================================================================
-
-' Valida que los parámetros de notificación sean válidos
-' Parámetros:
-'   solicitud: Objeto T_Solicitud a validar
-'   tipoEvento: Tipo de evento a validar
-'   mensajeError: Variable de salida con el mensaje de error (si aplica)
-' Retorna: True si los parámetros son válidos, False en caso contrario
-Public Function ValidarParametrosNotificacion(ByVal solicitud As T_Solicitud, ByVal tipoEvento As String, ByRef mensajeError As String) As Boolean
+'   destinatarios: Lista de correos separados por punto y coma
+'   asunto: Asunto del correo
+'   cuerpoHTML: Cuerpo del correo en formato HTML
+'   urlAdjunto: Ruta completa al archivo adjunto (opcional)
+' Retorna: True si se encoló correctamente, False en caso contrario
+Public Function EnviarNotificacion( _
+    ByVal destinatarios As String, _
+    ByVal asunto As String, _
+    ByVal cuerpoHTML As String, _
+    Optional ByVal urlAdjunto As String = "" _
+) As Boolean
 End Function
