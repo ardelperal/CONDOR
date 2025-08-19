@@ -82,9 +82,9 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - [x] Interfaces y clases base (IAuthService, CAuthService, CMockAuthService)
 - [x] Clase ExpedienteService (interfaz con aplicación existente)
 - [x] Módulo de gestión de solicitudes (ISolicitud, CSolicitudPC, modSolicitudFactory)
-- [x] Repositorios de datos (ISolicitudRepository, CSolicitudRepository, CMockSolicitudRepository)
 - [ ] Módulo de workflow y estados
 - [ ] Módulo de validaciones de negocio
+- [ ] Módulo de cálculos y reglas
 - [ ] Módulo de notificaciones
 
 ### 1.3 Capa de Presentación
@@ -223,7 +223,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 ## Notas de Progreso
 
 ### Última actualización: Enero 2025
-**Completado:** 39/85+ tareas (~46%)
+**Completado:** 38/85+ tareas (~45%)
 
 ### Próxima revisión: Enero 2025
 **Responsable:** CONDOR-Expert
@@ -248,7 +248,6 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - ✅ **Auditoría y actualización completa del sistema de pruebas:** Se identificaron y corrigieron 17 módulos de prueba que no estaban siendo ejecutados, ahora todos los 23 módulos están integrados en modTestRunner con 38 pruebas ejecutándose exitosamente
 - ✅ **Auditoría y corrección de Test_CSolicitudPC.bas:** Se identificaron 5 funciones de prueba faltantes de las 7 requeridas por Test_CSolicitudPC_RunAll, se crearon stubs para estas funciones (Test_CSolicitudPC_Properties_SetAndGet, Test_CSolicitudPC_Load_Success, Test_CSolicitudPC_Save_Success, Test_CSolicitudPC_ChangeState_Success, Test_CSolicitudPC_DatosPC_SetAndGet) y se integró la suite en modTestRunner.bas. El proyecto ahora compila sin errores y ejecuta 24/24 pruebas exitosamente
 - ✅ **Ciclo de Trabajo Asistido completado:** Se implementaron completamente los 5 tests fallidos de CSolicitudPC, corrigiendo problemas de Property Set/Get para objetos y tipos de retorno. Se validó que los 38 tests del sistema pasan exitosamente, garantizando la estabilidad completa del proyecto
-- ✅ **Documentación completa:** Lecciones aprendidas documentadas y Plan de Acción actualizado
 - 🔧 **Próximo objetivo:** Implementar workflow y estados de solicitudes
 - 📋 **Decisión arquitectónica:** Uso de interfaces para permitir mocking y testing efectivo
 
