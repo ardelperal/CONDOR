@@ -763,6 +763,7 @@ Function ReadFileWithAnsiEncoding(filePath)
     ReadFileWithAnsiEncoding = strContent
 End Function
 
+' Función para verificar y corregir líneas Option en archivo fuente
 ' Función para limpiar archivos VBA eliminando líneas Attribute con validación mejorada
 Function CleanVBAFile(filePath, fileType)
     Dim objStream, strContent, arrLines, i, cleanedLines
@@ -804,7 +805,7 @@ Function CleanVBAFile(filePath, fileType)
     strContent = Replace(strContent, vbCr, vbLf)
     arrLines = Split(strContent, vbLf)
     
-    ' Procesar línea por línea eliminando metadatos y líneas Option
+    ' Procesar línea por línea eliminando SOLO metadatos (NO líneas Option)
     cleanedLines = ""
     Dim linesRemoved
     linesRemoved = 0
@@ -823,9 +824,9 @@ Function CleanVBAFile(filePath, fileType)
         If strLine = "END" Then shouldRemove = True
         If Left(strLine, 9) = "Attribute" Then shouldRemove = True
         
-        ' ELIMINAR líneas Option para AMBOS tipos (.bas y .cls)
-        ' Esto es necesario porque AddFromString automáticamente añade las cabeceras Option
-        If Left(strLine, 6) = "Option" Then shouldRemove = True
+        ' ELIMINAR también las líneas Option - Access las añadirá automáticamente
+        If strLine = "Option Compare Database" Then shouldRemove = True
+        If strLine = "Option Explicit" Then shouldRemove = True
         
         ' Eliminar líneas vacías solo al inicio del archivo
         If strLine = "" And cleanedLines = "" Then shouldRemove = True
@@ -855,7 +856,14 @@ Function CleanVBAFile(filePath, fileType)
         End If
     Next
     
-    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option (archivo ." & fileType & ")"
+    ' Añadir Option Explicit como primera línea después de eliminar metadatos
+    If cleanedLines <> "" Then
+        cleanedLines = "Option Explicit" & vbCrLf & cleanedLines
+    Else
+        cleanedLines = "Option Explicit"
+    End If
+    
+    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos (archivo ." & fileType & ")"
     
     CleanVBAFile = cleanedLines
 End Function
@@ -1539,9 +1547,6 @@ Sub RebuildProject()
     ' PASO 4.4: Verificacion de integridad y compilacion
     WScript.Echo "Verificando integridad de nombres de modulos..."
     Call VerifyModuleNames()
-    
-    WScript.Echo "Iniciando compilacion condicional..."
-    Call CompileModulesConditionally()
     
     WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
     WScript.Echo "El proyecto VBA ha sido completamente reconstruido"

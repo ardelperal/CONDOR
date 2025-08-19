@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_ErrorHandler_Extended"
+﻿Attribute VB_Name = "Test_ErrorHandler_Extended"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -80,13 +82,13 @@ Public Sub SetupMockFileSystem(canWrite As Boolean)
     End With
 End Sub
 
-Public Sub SetupMockNotificationSystem(shouldFail As Boolean)
+Public Sub SetupMockNotificationSystem(ShouldFail As Boolean)
     ' Configurar mock del sistema de notificaciones
     With g_MockNotif
         .NotificationsSent = 0
         .LastNotificationSubject = ""
         .LastNotificationMessage = ""
-        .ShouldFailNotification = shouldFail
+        .ShouldFailNotification = ShouldFail
     End With
 End Sub
 
@@ -776,37 +778,37 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_LogError_StandardError_LogsSuccessfully() Then
-        Debug.Print "✓ Test_LogError_StandardError_LogsSuccessfully: PASÓ"
+        Debug.Print "? Test_LogError_StandardError_LogsSuccessfully: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_LogError_StandardError_LogsSuccessfully: FALLÓ"
+        Debug.Print "? Test_LogError_StandardError_LogsSuccessfully: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_LogError_CriticalError_CreatesNotification() Then
-        Debug.Print "✓ Test_LogError_CriticalError_CreatesNotification: PASÓ"
+        Debug.Print "? Test_LogError_CriticalError_CreatesNotification: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_LogError_CriticalError_CreatesNotification: FALLÓ"
+        Debug.Print "? Test_LogError_CriticalError_CreatesNotification: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_LogError_DatabaseFailure_WritesToLocalLog() Then
-        Debug.Print "✓ Test_LogError_DatabaseFailure_WritesToLocalLog: PASÓ"
+        Debug.Print "? Test_LogError_DatabaseFailure_WritesToLocalLog: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_LogError_DatabaseFailure_WritesToLocalLog: FALLÓ"
+        Debug.Print "? Test_LogError_DatabaseFailure_WritesToLocalLog: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_LogError_SpecialCharacters_HandlesCorrectly() Then
-        Debug.Print "✓ Test_LogError_SpecialCharacters_HandlesCorrectly: PASÓ"
+        Debug.Print "? Test_LogError_SpecialCharacters_HandlesCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_LogError_SpecialCharacters_HandlesCorrectly: FALLÓ"
+        Debug.Print "? Test_LogError_SpecialCharacters_HandlesCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -815,28 +817,28 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_IsCriticalError_DatabaseErrors_ReturnsTrue() Then
-        Debug.Print "✓ Test_IsCriticalError_DatabaseErrors_ReturnsTrue: PASÓ"
+        Debug.Print "? Test_IsCriticalError_DatabaseErrors_ReturnsTrue: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_IsCriticalError_DatabaseErrors_ReturnsTrue: FALLÓ"
+        Debug.Print "? Test_IsCriticalError_DatabaseErrors_ReturnsTrue: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_IsCriticalError_MemoryErrors_ReturnsTrue() Then
-        Debug.Print "✓ Test_IsCriticalError_MemoryErrors_ReturnsTrue: PASÓ"
+        Debug.Print "? Test_IsCriticalError_MemoryErrors_ReturnsTrue: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_IsCriticalError_MemoryErrors_ReturnsTrue: FALLÓ"
+        Debug.Print "? Test_IsCriticalError_MemoryErrors_ReturnsTrue: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_IsCriticalError_StandardErrors_ReturnsFalse() Then
-        Debug.Print "✓ Test_IsCriticalError_StandardErrors_ReturnsFalse: PASÓ"
+        Debug.Print "? Test_IsCriticalError_StandardErrors_ReturnsFalse: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_IsCriticalError_StandardErrors_ReturnsFalse: FALLÓ"
+        Debug.Print "? Test_IsCriticalError_StandardErrors_ReturnsFalse: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -845,19 +847,19 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_CreateAdminNotification_ValidData_CreatesNotification() Then
-        Debug.Print "✓ Test_CreateAdminNotification_ValidData_CreatesNotification: PASÓ"
+        Debug.Print "? Test_CreateAdminNotification_ValidData_CreatesNotification: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CreateAdminNotification_ValidData_CreatesNotification: FALLÓ"
+        Debug.Print "? Test_CreateAdminNotification_ValidData_CreatesNotification: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog() Then
-        Debug.Print "✓ Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog: PASÓ"
+        Debug.Print "? Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog: FALLÓ"
+        Debug.Print "? Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -866,19 +868,19 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_WriteToLocalLog_ValidMessage_WritesSuccessfully() Then
-        Debug.Print "✓ Test_WriteToLocalLog_ValidMessage_WritesSuccessfully: PASÓ"
+        Debug.Print "? Test_WriteToLocalLog_ValidMessage_WritesSuccessfully: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_WriteToLocalLog_ValidMessage_WritesSuccessfully: FALLÓ"
+        Debug.Print "? Test_WriteToLocalLog_ValidMessage_WritesSuccessfully: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_WriteToLocalLog_FileSystemError_HandlesGracefully() Then
-        Debug.Print "✓ Test_WriteToLocalLog_FileSystemError_HandlesGracefully: PASÓ"
+        Debug.Print "? Test_WriteToLocalLog_FileSystemError_HandlesGracefully: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_WriteToLocalLog_FileSystemError_HandlesGracefully: FALLÓ"
+        Debug.Print "? Test_WriteToLocalLog_FileSystemError_HandlesGracefully: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -887,10 +889,10 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_LogCurrentError_WithValidError_LogsCorrectly() Then
-        Debug.Print "✓ Test_LogCurrentError_WithValidError_LogsCorrectly: PASÓ"
+        Debug.Print "? Test_LogCurrentError_WithValidError_LogsCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_LogCurrentError_WithValidError_LogsCorrectly: FALLÓ"
+        Debug.Print "? Test_LogCurrentError_WithValidError_LogsCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -899,19 +901,19 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_CleanOldLogs_ValidExecution_RemovesOldRecords() Then
-        Debug.Print "✓ Test_CleanOldLogs_ValidExecution_RemovesOldRecords: PASÓ"
+        Debug.Print "? Test_CleanOldLogs_ValidExecution_RemovesOldRecords: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CleanOldLogs_ValidExecution_RemovesOldRecords: FALLÓ"
+        Debug.Print "? Test_CleanOldLogs_ValidExecution_RemovesOldRecords: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CleanOldLogs_DatabaseError_WritesToLocalLog() Then
-        Debug.Print "✓ Test_CleanOldLogs_DatabaseError_WritesToLocalLog: PASÓ"
+        Debug.Print "? Test_CleanOldLogs_DatabaseError_WritesToLocalLog: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CleanOldLogs_DatabaseError_WritesToLocalLog: FALLÓ"
+        Debug.Print "? Test_CleanOldLogs_DatabaseError_WritesToLocalLog: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -920,19 +922,19 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_Integration_ErrorFlow_CompleteProcess() Then
-        Debug.Print "✓ Test_Integration_ErrorFlow_CompleteProcess: PASÓ"
+        Debug.Print "? Test_Integration_ErrorFlow_CompleteProcess: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_Integration_ErrorFlow_CompleteProcess: FALLÓ"
+        Debug.Print "? Test_Integration_ErrorFlow_CompleteProcess: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_Integration_FallbackMechanism_WorksCorrectly() Then
-        Debug.Print "✓ Test_Integration_FallbackMechanism_WorksCorrectly: PASÓ"
+        Debug.Print "? Test_Integration_FallbackMechanism_WorksCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_Integration_FallbackMechanism_WorksCorrectly: FALLÓ"
+        Debug.Print "? Test_Integration_FallbackMechanism_WorksCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -941,28 +943,28 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly() Then
-        Debug.Print "✓ Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly: PASÓ"
+        Debug.Print "? Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly: FALLÓ"
+        Debug.Print "? Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly() Then
-        Debug.Print "✓ Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly: PASÓ"
+        Debug.Print "? Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly: FALLÓ"
+        Debug.Print "? Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_EdgeCase_ConcurrentAccess_HandlesCorrectly() Then
-        Debug.Print "✓ Test_EdgeCase_ConcurrentAccess_HandlesCorrectly: PASÓ"
+        Debug.Print "? Test_EdgeCase_ConcurrentAccess_HandlesCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_EdgeCase_ConcurrentAccess_HandlesCorrectly: FALLÓ"
+        Debug.Print "? Test_EdgeCase_ConcurrentAccess_HandlesCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -976,9 +978,9 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     Debug.Print "Porcentaje de éxito: " & Format((passedTests / totalTests) * 100, "0.00") & "%"
     
     If failedTests = 0 Then
-        Debug.Print "\n🎉 ¡TODAS LAS PRUEBAS EXTENDIDAS PASARON!"
+        Debug.Print "\n?? ¡TODAS LAS PRUEBAS EXTENDIDAS PASARON!"
     Else
-        Debug.Print "\n⚠️  ALGUNAS PRUEBAS FALLARON. Revisar implementación."
+        Debug.Print "\n??  ALGUNAS PRUEBAS FALLARON. Revisar implementación."
     End If
     
     Debug.Print "============================================================================"
@@ -986,3 +988,8 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     ' Devolver resultado basado en si todas las pruebas pasaron
     RunErrorHandlerExtendedTests = (failedTests = 0)
 End Function
+
+
+
+
+

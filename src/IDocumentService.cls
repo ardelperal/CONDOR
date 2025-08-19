@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -8,6 +8,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -26,14 +28,14 @@ Option Explicit
 ' Parámetros:
 '   - IdSolicitud: ID de la solicitud para generar el documento
 ' Retorna: Ruta completa del documento generado
-Public Function GenerarDocumento(ByVal IdSolicitud As Long) As String
+Public Function GenerarDocumento(ByVal idSolicitud As Long) As String
 End Function
 
 ' Obtiene el nombre de la plantilla correspondiente al tipo de solicitud
 ' Parámetros:
 '   - TipoSolicitud: Tipo de solicitud (PC, RAC, etc.)
 ' Retorna: Nombre del archivo de plantilla
-Public Function ObtenerNombrePlantilla(ByVal TipoSolicitud As String) As String
+Public Function ObtenerNombrePlantilla(ByVal tipoSolicitud As String) As String
 End Function
 
 ' Método eliminado: ValidarSolicitudParaDocumento
@@ -43,7 +45,7 @@ End Function
 ' Parámetros:
 '   - TipoSolicitud: Tipo de solicitud (PC, RAC, etc.)
 ' Retorna: String con los campos mapeados separados por comas
-Public Function ObtenerMapeoCampos(ByVal TipoSolicitud As String) As String
+Public Function ObtenerMapeoCampos(ByVal tipoSolicitud As String) As String
 End Function
 
 ' ============================================================================
@@ -62,7 +64,7 @@ End Function
 '   - IdSolicitud: ID de la solicitud con los datos
 '   - MapeoCampos: String con el mapeo de campos
 ' Retorna: True si el reemplazo fue exitoso
-Public Function ReemplazarCamposEnPlantilla(ByVal IdSolicitud As Long, ByVal MapeoCampos As String) As Boolean
+Public Function ReemplazarCamposEnPlantilla(ByVal idSolicitud As Long, ByVal MapeoCampos As String) As Boolean
 End Function
 
 ' Guarda el documento procesado en la ubicación especificada
@@ -70,7 +72,7 @@ End Function
 '   - RutaDestino: Ruta donde guardar el documento final
 '   - NombreArchivo: Nombre del archivo a generar
 ' Retorna: True si el guardado fue exitoso
-Public Function GuardarDocumento(ByVal RutaDestino As String, ByVal NombreArchivo As String) As Boolean
+Public Function GuardarDocumento(ByVal rutaDestino As String, ByVal NombreArchivo As String) As Boolean
 End Function
 
 ' ============================================================================
@@ -81,14 +83,14 @@ End Function
 ' Parámetros:
 '   - IdSolicitud: ID de la solicitud
 ' Retorna: Recordset con los datos de la solicitud
-Public Function ObtenerDatosSolicitud(ByVal IdSolicitud As Long) As Object
+Public Function ObtenerDatosSolicitud(ByVal idSolicitud As Long) As Object
 End Function
 
 ' Obtiene la configuración de mapeo desde Tb_Mapeo_Campos
 ' Parámetros:
 '   - TipoSolicitud: Tipo de solicitud para obtener el mapeo
 ' Retorna: Recordset con la configuración de mapeo
-Public Function ObtenerConfiguracionMapeo(ByVal TipoSolicitud As String) As Object
+Public Function ObtenerConfiguracionMapeo(ByVal tipoSolicitud As String) As Object
 End Function
 
 ' ============================================================================
@@ -107,9 +109,14 @@ End Function
 '   - IdSolicitud: ID de la solicitud
 '   - TipoSolicitud: Tipo de solicitud
 ' Retorna: Nombre único para el documento
-Public Function GenerarNombreDocumento(ByVal IdSolicitud As Long, ByVal TipoSolicitud As String) As String
+Public Function GenerarNombreDocumento(ByVal idSolicitud As Long, ByVal tipoSolicitud As String) As String
 End Function
 
 ' Limpia recursos y cierra conexiones abiertas
 Public Sub LimpiarRecursos()
 End Sub
+
+
+
+
+

@@ -1,5 +1,7 @@
-Attribute VB_Name = "modTestRunner"
+﻿Attribute VB_Name = "modTestRunner"
 Option Compare Database
+
+
 Option Explicit
 
 ' M?dulo: modTestRunner
@@ -98,9 +100,9 @@ Public Function RunAllTests() As String
     resultado = resultado & "Pruebas fallidas: " & testsFailed & vbCrLf
     
     If testsFailed = 0 Then
-        resultado = resultado & "✅ RESULTADO: TODAS LAS PRUEBAS PASARON" & vbCrLf
+        resultado = resultado & "? RESULTADO: TODAS LAS PRUEBAS PASARON" & vbCrLf
     Else
-        resultado = resultado & "❌ RESULTADO: ALGUNAS PRUEBAS FALLARON" & vbCrLf
+        resultado = resultado & "? RESULTADO: ALGUNAS PRUEBAS FALLARON" & vbCrLf
         If failedTests <> "" Then
             resultado = resultado & "Detalles de fallos: " & failedTests & vbCrLf
         End If
@@ -178,7 +180,7 @@ TestRunnerErrorHandler:
     logFile.WriteLine "Error al ejecutar la prueba: " & currentTest
     logFile.WriteLine "Código de Error VBA: " & Err.Number
     logFile.WriteLine "Descripción: " & Err.Description
-    logFile.WriteLine "Fuente: " & Err.Source
+    logFile.WriteLine "Fuente: " & Err.source
     logFile.WriteLine "--------------------------------------------"
     logFile.WriteLine "RESULT: FAILURE"
     
@@ -271,5 +273,11 @@ Private Function ExtractTestName(line As String) As String
         ExtractTestName = "Prueba desconocida"
     End If
 End Function
+
+
+
+
+
+
 
 

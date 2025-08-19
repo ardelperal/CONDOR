@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,12 +7,15 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Compare Database
+
+
+Option Explicit
+
 ' CMockNotificationService.cls
 ' Mock del servicio de notificaciones para pruebas unitarias
 ' Simula el comportamiento de CNotificationService sin acceder a bases de datos externas
 
-Option Compare Database
-Option Explicit
 
 ' Implementa la interfaz INotificationService
 Implements INotificationService
@@ -48,7 +51,6 @@ Private Function INotificationService_EnviarNotificacion( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
-    Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
     
     ' Incrementar contador de llamadas
@@ -74,7 +76,6 @@ Public Function FueLlamadoCon( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
-    Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
     
     FueLlamadoCon = (UltimaLlamada_Destinatarios = destinatarios) And _
@@ -82,3 +83,14 @@ Public Function FueLlamadoCon( _
                     (UltimaLlamada_CuerpoHTML = cuerpoHTML) And _
                     (UltimaLlamada_URLAdjunto = urlAdjunto)
 End Function
+
+
+
+
+
+
+
+
+
+
+

@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_CSolicitudPC"
+﻿Attribute VB_Name = "Test_CSolicitudPC"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -13,12 +15,12 @@ Option Explicit
 Private Type T_MockSolicitudPCData
     ID As Long
     NumeroExpediente As String
-    TipoSolicitud As String
-    DescripcionCambio As String
+    tipoSolicitud As String
+    descripcionCambio As String
     JustificacionCambio As String
     ImpactoSeguridad As String
-    ImpactoCalidad As String
-    EstadoInterno As String
+    impactoCalidad As String
+    estadoInterno As String
     IsValid As Boolean
     ShouldFailLoad As Boolean
 End Type
@@ -32,12 +34,12 @@ Private m_MockData As T_MockSolicitudPCData
 Private Sub SetupValidMockData()
     m_MockData.ID = 123
     m_MockData.NumeroExpediente = "EXP-2025-001"
-    m_MockData.TipoSolicitud = "PC"
-    m_MockData.DescripcionCambio = "Cambio en el m?dulo de autenticaci?n"
+    m_MockData.tipoSolicitud = "PC"
+    m_MockData.descripcionCambio = "Cambio en el m?dulo de autenticaci?n"
     m_MockData.JustificacionCambio = "Mejora de seguridad"
     m_MockData.ImpactoSeguridad = "Bajo"
-    m_MockData.ImpactoCalidad = "Medio"
-    m_MockData.EstadoInterno = "Borrador"
+    m_MockData.impactoCalidad = "Medio"
+    m_MockData.estadoInterno = "Borrador"
     m_MockData.IsValid = True
     m_MockData.ShouldFailLoad = False
 End Sub
@@ -45,12 +47,12 @@ End Sub
 Private Sub SetupInvalidMockData()
     m_MockData.ID = -1
     m_MockData.NumeroExpediente = ""
-    m_MockData.TipoSolicitud = ""
-    m_MockData.DescripcionCambio = ""
+    m_MockData.tipoSolicitud = ""
+    m_MockData.descripcionCambio = ""
     m_MockData.JustificacionCambio = ""
     m_MockData.ImpactoSeguridad = ""
-    m_MockData.ImpactoCalidad = ""
-    m_MockData.EstadoInterno = ""
+    m_MockData.impactoCalidad = ""
+    m_MockData.estadoInterno = ""
     m_MockData.IsValid = False
     m_MockData.ShouldFailLoad = True
 End Sub
@@ -184,8 +186,8 @@ Public Function Test_ISolicitud_IdSolicitud_GetSet() As Boolean
     Set interfaz = solicitud
     
     ' Act
-    Dim testId As Long
-    testId = 456
+    Dim testID As Long
+    testID = 456
     ' Nota: Las propiedades privadas de la interfaz no son accesibles directamente
     ' Esta prueba verifica que la clase compila correctamente con la interfaz
     
@@ -420,17 +422,17 @@ Public Function Test_CSolicitudPC_Properties_SetAndGet() As Boolean
     solicitud.idSolicitud = 123
     If solicitud.idSolicitud <> 123 Then GoTo TestFail
     
-    solicitud.IDExpediente = "EXP-2025-001"
-    If solicitud.IDExpediente <> "EXP-2025-001" Then GoTo TestFail
+    solicitud.idExpediente = "EXP-2025-001"
+    If solicitud.idExpediente <> "EXP-2025-001" Then GoTo TestFail
     
-    solicitud.TipoSolicitud = "PC"
-    If solicitud.TipoSolicitud <> "PC" Then GoTo TestFail
+    solicitud.tipoSolicitud = "PC"
+    If solicitud.tipoSolicitud <> "PC" Then GoTo TestFail
     
-    solicitud.CodigoSolicitud = "SOL-PC-001"
-    If solicitud.CodigoSolicitud <> "SOL-PC-001" Then GoTo TestFail
+    solicitud.codigoSolicitud = "SOL-PC-001"
+    If solicitud.codigoSolicitud <> "SOL-PC-001" Then GoTo TestFail
     
-    solicitud.EstadoInterno = "Borrador"
-    If solicitud.EstadoInterno <> "Borrador" Then GoTo TestFail
+    solicitud.estadoInterno = "Borrador"
+    If solicitud.estadoInterno <> "Borrador" Then GoTo TestFail
     
     Test_CSolicitudPC_Properties_SetAndGet = True
     Exit Function
@@ -448,17 +450,17 @@ Public Function Test_CSolicitudPC_Load_Success() As Boolean
     
     ' Configurar propiedades iniciales
     solicitud.idSolicitud = 456
-    solicitud.IDExpediente = "EXP-2025-002"
-    solicitud.TipoSolicitud = "PC"
-    solicitud.CodigoSolicitud = "SOL-PC-002"
-    solicitud.EstadoInterno = "En Proceso"
+    solicitud.idExpediente = "EXP-2025-002"
+    solicitud.tipoSolicitud = "PC"
+    solicitud.codigoSolicitud = "SOL-PC-002"
+    solicitud.estadoInterno = "En Proceso"
     
     ' Act - Simular carga exitosa (en un entorno real usaría datos de BD)
     ' Por ahora verificamos que el objeto mantiene sus propiedades
     Dim result As Boolean
     result = (solicitud.idSolicitud = 456 And _
-              solicitud.IDExpediente = "EXP-2025-002" And _
-              solicitud.TipoSolicitud = "PC")
+              solicitud.idExpediente = "EXP-2025-002" And _
+              solicitud.tipoSolicitud = "PC")
     
     ' Assert
     Test_CSolicitudPC_Load_Success = result
@@ -477,10 +479,10 @@ Public Function Test_CSolicitudPC_Save_Success() As Boolean
     
     ' Configurar datos válidos para guardar
     solicitud.idSolicitud = 789
-    solicitud.IDExpediente = "EXP-2025-003"
-    solicitud.TipoSolicitud = "PC"
-    solicitud.CodigoSolicitud = "SOL-PC-003"
-    solicitud.EstadoInterno = "Borrador"
+    solicitud.idExpediente = "EXP-2025-003"
+    solicitud.tipoSolicitud = "PC"
+    solicitud.codigoSolicitud = "SOL-PC-003"
+    solicitud.estadoInterno = "Borrador"
     
     ' Configurar datos PC
     Dim datosPC As T_Datos_PC
@@ -489,7 +491,7 @@ Public Function Test_CSolicitudPC_Save_Success() As Boolean
     datosPC.DescripcionPC = "Implementar autenticación de dos factores"
     datosPC.JustificacionPC = "Mejora de seguridad requerida"
     datosPC.ImpactoPC = "Bajo"
-    Set solicitud.DatosPC = datosPC
+    Set solicitud.datosPC = datosPC
     
     ' Act - Intentar guardar
     Dim result As Boolean
@@ -512,9 +514,9 @@ Public Function Test_CSolicitudPC_ChangeState_Success() As Boolean
     
     ' Configurar solicitud inicial
     solicitud.idSolicitud = 101
-    solicitud.IDExpediente = "EXP-2025-004"
-    solicitud.TipoSolicitud = "PC"
-    solicitud.EstadoInterno = "Borrador"
+    solicitud.idExpediente = "EXP-2025-004"
+    solicitud.tipoSolicitud = "PC"
+    solicitud.estadoInterno = "Borrador"
     
     ' Act - Cambiar estado
     Dim result As Boolean
@@ -541,12 +543,12 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     
     ' Act - Configurar datos PC completos
     datosPC.ID = 1
-    datosPC.IDSolicitud = 123
+    datosPC.idSolicitud = 123
     datosPC.TituloPC = "Actualización del sistema de reportes"
     datosPC.DescripcionPC = "Implementar nuevos filtros y opciones de exportación"
     datosPC.JustificacionPC = "Requerimiento del usuario para mejorar la funcionalidad"
     datosPC.ImpactoPC = "Medio - Afecta módulo de reportes"
-    datosPC.FechaCreacion = Now
+    datosPC.fechaCreacion = Now
     datosPC.CreadoPor = "Usuario Test"
     
     ' Propiedades técnicas
@@ -556,19 +558,19 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     datosPC.SistemaOperativo = "Windows 11"
     
     ' Propiedades adicionales
-    datosPC.DescripcionCambio = "Cambio en interfaz de usuario"
+    datosPC.descripcionCambio = "Cambio en interfaz de usuario"
     datosPC.JustificacionCambio = "Mejora de usabilidad"
     datosPC.ImpactoSeguridad = "Bajo"
-    datosPC.ImpactoCalidad = "Alto"
+    datosPC.impactoCalidad = "Alto"
     datosPC.Estado = "Activo"
     datosPC.Activo = True
     
     ' Asignar a la solicitud
-    Set solicitud.DatosPC = datosPC
+    Set solicitud.datosPC = datosPC
     
     ' Assert - Verificar que los datos se asignaron correctamente
     Dim datosRecuperados As T_Datos_PC
-    Set datosRecuperados = solicitud.DatosPC
+    Set datosRecuperados = solicitud.datosPC
     
     Dim result As Boolean
     result = (datosRecuperados.TituloPC = "Actualización del sistema de reportes" And _
@@ -602,105 +604,105 @@ Public Function RunCSolicitudPCTests() As String
     totalTests = totalTests + 1
     If Test_CSolicitudPC_Creation_Success() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CSolicitudPC_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_Creation_Success" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CSolicitudPC_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_Creation_Success" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_ImplementsISolicitud() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CSolicitudPC_ImplementsISolicitud" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_ImplementsISolicitud" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CSolicitudPC_ImplementsISolicitud" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_ImplementsISolicitud" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ISolicitud_IdSolicitud_GetSet() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ISolicitud_IdSolicitud_GetSet" & vbCrLf
+        resultado = resultado & "? Test_ISolicitud_IdSolicitud_GetSet" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ISolicitud_IdSolicitud_GetSet" & vbCrLf
+        resultado = resultado & "? Test_ISolicitud_IdSolicitud_GetSet" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ISolicitud_IdExpediente_GetSet() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ISolicitud_IdExpediente_GetSet" & vbCrLf
+        resultado = resultado & "? Test_ISolicitud_IdExpediente_GetSet" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ISolicitud_IdExpediente_GetSet" & vbCrLf
+        resultado = resultado & "? Test_ISolicitud_IdExpediente_GetSet" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ISolicitud_TipoSolicitud_GetSet() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ISolicitud_TipoSolicitud_GetSet" & vbCrLf
+        resultado = resultado & "? Test_ISolicitud_TipoSolicitud_GetSet" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ISolicitud_TipoSolicitud_GetSet" & vbCrLf
+        resultado = resultado & "? Test_ISolicitud_TipoSolicitud_GetSet" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ISolicitud_CodigoSolicitud_GetSet() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ISolicitud_CodigoSolicitud_GetSet" & vbCrLf
+        resultado = resultado & "? Test_ISolicitud_CodigoSolicitud_GetSet" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ISolicitud_CodigoSolicitud_GetSet" & vbCrLf
+        resultado = resultado & "? Test_ISolicitud_CodigoSolicitud_GetSet" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Load_ValidID_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Load_ValidID_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_Load_ValidID_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Load_ValidID_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_Load_ValidID_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Load_InvalidID_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Load_InvalidID_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_Load_InvalidID_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Load_InvalidID_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_Load_InvalidID_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_DatosPC_Structure_IsValid() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_DatosPC_Structure_IsValid" & vbCrLf
+        resultado = resultado & "? Test_DatosPC_Structure_IsValid" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_DatosPC_Structure_IsValid" & vbCrLf
+        resultado = resultado & "? Test_DatosPC_Structure_IsValid" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_DatosPC_DescripcionCambio_HandlesLongText() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_DatosPC_DescripcionCambio_HandlesLongText" & vbCrLf
+        resultado = resultado & "? Test_DatosPC_DescripcionCambio_HandlesLongText" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_DatosPC_DescripcionCambio_HandlesLongText" & vbCrLf
+        resultado = resultado & "? Test_DatosPC_DescripcionCambio_HandlesLongText" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_IntegrationWithFactory() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CSolicitudPC_IntegrationWithFactory" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_IntegrationWithFactory" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CSolicitudPC_IntegrationWithFactory" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_IntegrationWithFactory" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_HandlesEmptyStrings() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CSolicitudPC_HandlesEmptyStrings" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_HandlesEmptyStrings" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CSolicitudPC_HandlesEmptyStrings" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_HandlesEmptyStrings" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_HandlesNullValues() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CSolicitudPC_HandlesNullValues" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_HandlesNullValues" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CSolicitudPC_HandlesNullValues" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudPC_HandlesNullValues" & vbCrLf
     End If
     
     ' Resumen
@@ -708,3 +710,14 @@ Public Function RunCSolicitudPCTests() As String
     
     RunCSolicitudPCTests = resultado
 End Function
+
+
+
+
+
+
+
+
+
+
+

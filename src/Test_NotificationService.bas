@@ -1,11 +1,14 @@
-Attribute VB_Name = "Test_NotificationService"
+﻿Attribute VB_Name = "Test_NotificationService"
+Option Compare Database
+
+
+Option Explicit
+
 ' Test_NotificationService.bas
 ' Módulo de pruebas para el servicio de notificaciones
 ' Sigue el patrón TDD y las lecciones aprendidas del proyecto CONDOR
 ' Basado en las Especificaciones de Integración - Sección 2
 
-Option Compare Database
-Option Explicit
 
 ' Variables de módulo para el mock
 Private mockNotificationService As CMockNotificationService
@@ -172,3 +175,8 @@ ErrorEsperado:
     
     On Error GoTo 0
 End Sub
+
+
+
+
+

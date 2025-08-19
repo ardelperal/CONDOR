@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_Config"
+﻿Attribute VB_Name = "Test_Config"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -202,8 +204,8 @@ Public Function Test_ObtenerValorExistenteAAA() As Boolean
     ' Arrange
     Dim configService As IConfig
     Set configService = config()
-    Dim clave As String
-    clave = "DatabasePath"
+    Dim Clave As String
+    Clave = "DatabasePath"
     
     ' Act - Simular obtención de valor existente
     Dim valorObtenido As String
@@ -232,8 +234,8 @@ Public Function Test_EstablecerValorConfiguracionAAA() As Boolean
     ' Arrange
     Dim configService As IConfig
     Set configService = config()
-    Dim clave As String: clave = "NuevaClave"
-    Dim valor As String: valor = "NuevoValor"
+    Dim Clave As String: Clave = "NuevaClave"
+    Dim Valor As String: Valor = "NuevoValor"
     
     ' Act - Simular establecimiento de valor
     Dim valorEstablecido As Boolean
@@ -366,11 +368,11 @@ Public Function Test_ModConfig_GetDataPath_ReturnsValidPath() As Boolean
     On Error GoTo TestFail
     
     ' Act
-    Dim dataPath As String
-    dataPath = GetDataPath()
+    Dim DataPath As String
+    DataPath = GetDataPath()
     
     ' Assert
-    Test_ModConfig_GetDataPath_ReturnsValidPath = (Len(dataPath) > 0 And InStr(dataPath, "datos.accdb") > 0)
+    Test_ModConfig_GetDataPath_ReturnsValidPath = (Len(DataPath) > 0 And InStr(DataPath, "datos.accdb") > 0)
     
     Exit Function
     
@@ -570,82 +572,82 @@ Public Function RunConfigTestsComplete() As Boolean
     Debug.Print "--- Nuevas Pruebas con Mocks ---"
     
     If Test_ModConfig_Singleton_ReturnsSameInstance() Then
-        Debug.Print "✓ Test_ModConfig_Singleton_ReturnsSameInstance: PASÓ"
+        Debug.Print "? Test_ModConfig_Singleton_ReturnsSameInstance: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_ModConfig_Singleton_ReturnsSameInstance: FALLÓ"
+        Debug.Print "? Test_ModConfig_Singleton_ReturnsSameInstance: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_ModConfig_GetActiveEnvironment_ReturnsString() Then
-        Debug.Print "✓ Test_ModConfig_GetActiveEnvironment_ReturnsString: PASÓ"
+        Debug.Print "? Test_ModConfig_GetActiveEnvironment_ReturnsString: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_ModConfig_GetActiveEnvironment_ReturnsString: FALLÓ"
+        Debug.Print "? Test_ModConfig_GetActiveEnvironment_ReturnsString: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_ModConfig_GetDatabasePath_ReturnsValidPath() Then
-        Debug.Print "✓ Test_ModConfig_GetDatabasePath_ReturnsValidPath: PASÓ"
+        Debug.Print "? Test_ModConfig_GetDatabasePath_ReturnsValidPath: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_ModConfig_GetDatabasePath_ReturnsValidPath: FALLÓ"
+        Debug.Print "? Test_ModConfig_GetDatabasePath_ReturnsValidPath: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_ModConfig_GetDataPath_ReturnsValidPath() Then
-        Debug.Print "✓ Test_ModConfig_GetDataPath_ReturnsValidPath: PASÓ"
+        Debug.Print "? Test_ModConfig_GetDataPath_ReturnsValidPath: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_ModConfig_GetDataPath_ReturnsValidPath: FALLÓ"
+        Debug.Print "? Test_ModConfig_GetDataPath_ReturnsValidPath: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_ModConfig_GetExpedientesPath_ReturnsValidPath() Then
-        Debug.Print "✓ Test_ModConfig_GetExpedientesPath_ReturnsValidPath: PASÓ"
+        Debug.Print "? Test_ModConfig_GetExpedientesPath_ReturnsValidPath: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_ModConfig_GetExpedientesPath_ReturnsValidPath: FALLÓ"
+        Debug.Print "? Test_ModConfig_GetExpedientesPath_ReturnsValidPath: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_CConfig_GetValue_ValidKeys_ReturnsValues() Then
-        Debug.Print "✓ Test_CConfig_GetValue_ValidKeys_ReturnsValues: PASÓ"
+        Debug.Print "? Test_CConfig_GetValue_ValidKeys_ReturnsValues: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CConfig_GetValue_ValidKeys_ReturnsValues: FALLÓ"
+        Debug.Print "? Test_CConfig_GetValue_ValidKeys_ReturnsValues: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_CConfig_GetValue_InvalidKey_ReturnsNull() Then
-        Debug.Print "✓ Test_CConfig_GetValue_InvalidKey_ReturnsNull: PASÓ"
+        Debug.Print "? Test_CConfig_GetValue_InvalidKey_ReturnsNull: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CConfig_GetValue_InvalidKey_ReturnsNull: FALLÓ"
+        Debug.Print "? Test_CConfig_GetValue_InvalidKey_ReturnsNull: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_CConfig_HasKey_ValidAndInvalidKeys() Then
-        Debug.Print "✓ Test_CConfig_HasKey_ValidAndInvalidKeys: PASÓ"
+        Debug.Print "? Test_CConfig_HasKey_ValidAndInvalidKeys: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CConfig_HasKey_ValidAndInvalidKeys: FALLÓ"
+        Debug.Print "? Test_CConfig_HasKey_ValidAndInvalidKeys: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_CConfig_DevelopmentMode_Detection() Then
-        Debug.Print "✓ Test_CConfig_DevelopmentMode_Detection: PASÓ"
+        Debug.Print "? Test_CConfig_DevelopmentMode_Detection: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CConfig_DevelopmentMode_Detection: FALLÓ"
+        Debug.Print "? Test_CConfig_DevelopmentMode_Detection: FALLÓ"
     End If
     totalTests = totalTests + 1
     
     If Test_Integration_CompleteConfigFlow() Then
-        Debug.Print "✓ Test_Integration_CompleteConfigFlow: PASÓ"
+        Debug.Print "? Test_Integration_CompleteConfigFlow: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_Integration_CompleteConfigFlow: FALLÓ"
+        Debug.Print "? Test_Integration_CompleteConfigFlow: FALLÓ"
     End If
     totalTests = totalTests + 1
     
@@ -661,6 +663,18 @@ Public Function RunConfigTestsComplete() As Boolean
     ' Retornar True si todas las pruebas pasaron
     RunConfigTestsComplete = (passedTests = totalTests)
 End Function
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

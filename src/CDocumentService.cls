@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -8,6 +8,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -88,13 +90,13 @@ End Sub
 ' IMPLEMENTACIÓN DE IDocumentService - MÉTODOS PRINCIPALES
 ' ============================================================================
 
-Private Function IDocumentService_GenerarDocumento(ByVal IdSolicitud As Long) As String
+Private Function IDocumentService_GenerarDocumento(ByVal idSolicitud As Long) As String
     On Error GoTo ErrorHandler
     
     Dim tipoSolicitud As String
     Dim nombrePlantilla As String
-    Dim rutaPlantilla As String
-    Dim mapeoCampos As String
+    Dim RutaPlantilla As String
+    Dim MapeoCampos As String
     Dim nombreDocumento As String
     Dim rutaDestino As String
     
@@ -107,10 +109,10 @@ Private Function IDocumentService_GenerarDocumento(ByVal IdSolicitud As Long) As
     
     ' Obtener datos de la solicitud usando el repositorio
     Dim solicitudPC As CSolicitudPC
-    Set solicitudPC = m_SolicitudRepository.LoadPC(IdSolicitud)
+    Set solicitudPC = m_SolicitudRepository.LoadPC(idSolicitud)
     
     If solicitudPC Is Nothing Then
-        m_LastError = "No se pudo cargar la solicitud con ID: " & IdSolicitud
+        m_LastError = "No se pudo cargar la solicitud con ID: " & idSolicitud
         IDocumentService_GenerarDocumento = ""
         Exit Function
     End If
@@ -119,48 +121,48 @@ Private Function IDocumentService_GenerarDocumento(ByVal IdSolicitud As Long) As
     Dim solicitudData As T_Solicitud
     Set solicitudData = New T_Solicitud
     solicitudData.idSolicitud = solicitudPC.idSolicitud
-    solicitudData.TipoSolicitud = solicitudPC.TipoSolicitud
-    solicitudData.EstadoInterno = solicitudPC.EstadoInterno
+    solicitudData.tipoSolicitud = solicitudPC.tipoSolicitud
+    solicitudData.estadoInterno = solicitudPC.estadoInterno
     
     ' Validar solicitud usando IValidationService
-    Dim mensajeError As String
-    If Not m_ValidationService.ValidarSolicitud(solicitudData, mensajeError) Then
-        m_LastError = "Solicitud inválida para generar documento: " & mensajeError
+    Dim MensajeError As String
+    If Not m_ValidationService.ValidarSolicitud(solicitudData, MensajeError) Then
+        m_LastError = "Solicitud inválida para generar documento: " & MensajeError
         IDocumentService_GenerarDocumento = ""
         Exit Function
     End If
     
     ' Obtener tipo de solicitud del objeto cargado
-    tipoSolicitud = solicitudPC.TipoSolicitud
+    tipoSolicitud = solicitudPC.tipoSolicitud
     If tipoSolicitud = "" Then
-        m_LastError = "Tipo de solicitud no definido para ID: " & IdSolicitud
+        m_LastError = "Tipo de solicitud no definido para ID: " & idSolicitud
         IDocumentService_GenerarDocumento = ""
         Exit Function
     End If
     
     ' Obtener plantilla y mapeo
     nombrePlantilla = IDocumentService_ObtenerNombrePlantilla(tipoSolicitud)
-    mapeoCampos = IDocumentService_ObtenerMapeoCampos(tipoSolicitud)
+    MapeoCampos = IDocumentService_ObtenerMapeoCampos(tipoSolicitud)
     
     ' Construir ruta completa de plantilla
-    rutaPlantilla = CurrentProject.Path & "\back\recursos\Plantillas\" & nombrePlantilla
+    RutaPlantilla = CurrentProject.path & "\back\recursos\Plantillas\" & nombrePlantilla
     
     ' Validar que la plantilla existe
-    If Not IDocumentService_ValidarPlantilla(rutaPlantilla) Then
-        m_LastError = "Plantilla no encontrada: " & rutaPlantilla
+    If Not IDocumentService_ValidarPlantilla(RutaPlantilla) Then
+        m_LastError = "Plantilla no encontrada: " & RutaPlantilla
         IDocumentService_GenerarDocumento = ""
         Exit Function
     End If
     
     ' Abrir plantilla
-    If Not IDocumentService_AbrirPlantilla(rutaPlantilla) Then
-        m_LastError = "Error al abrir plantilla: " & rutaPlantilla
+    If Not IDocumentService_AbrirPlantilla(RutaPlantilla) Then
+        m_LastError = "Error al abrir plantilla: " & RutaPlantilla
         IDocumentService_GenerarDocumento = ""
         Exit Function
     End If
     
     ' Reemplazar campos
-    If Not IDocumentService_ReemplazarCamposEnPlantilla(IdSolicitud, mapeoCampos) Then
+    If Not IDocumentService_ReemplazarCamposEnPlantilla(idSolicitud, MapeoCampos) Then
         m_LastError = "Error al reemplazar campos en plantilla"
         IDocumentService_GenerarDocumento = ""
         Exit Function
@@ -168,7 +170,7 @@ Private Function IDocumentService_GenerarDocumento(ByVal IdSolicitud As Long) As
     
     ' Generar nombre y ruta de destino usando los datos ya cargados
     nombreDocumento = GenerarNombreDocumentoConDatos(solicitudPC)
-    rutaDestino = CurrentProject.Path & "\back\recursos\Documentos_Generados\"
+    rutaDestino = CurrentProject.path & "\back\recursos\Documentos_Generados\"
     
     ' Crear directorio si no existe
     If Dir(rutaDestino, vbDirectory) = "" Then
@@ -189,21 +191,21 @@ ErrorHandler:
     IDocumentService_GenerarDocumento = ""
 End Function
 
-Private Function IDocumentService_ObtenerNombrePlantilla(ByVal TipoSolicitud As String) As String
+Private Function IDocumentService_ObtenerNombrePlantilla(ByVal tipoSolicitud As String) As String
     On Error GoTo ErrorHandler
     
     Dim sql As String
     Dim rs As Object
     
-    sql = "SELECT NombrePlantilla FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & TipoSolicitud & "'"
+    sql = "SELECT NombrePlantilla FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & tipoSolicitud & "'"
     
     Set rs = CurrentDb.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        IDocumentService_ObtenerNombrePlantilla = rs("NombrePlantilla").Value
+        IDocumentService_ObtenerNombrePlantilla = rs("NombrePlantilla").value
     Else
         ' Plantilla por defecto basada en tipo
-        IDocumentService_ObtenerNombrePlantilla = TipoSolicitud & "_template.docx"
+        IDocumentService_ObtenerNombrePlantilla = tipoSolicitud & "_template.docx"
     End If
     
     rs.Close
@@ -213,7 +215,7 @@ Private Function IDocumentService_ObtenerNombrePlantilla(ByVal TipoSolicitud As 
     
 ErrorHandler:
     m_LastError = "Error al obtener nombre de plantilla: " & Err.Description
-    IDocumentService_ObtenerNombrePlantilla = TipoSolicitud & "_template.docx"
+    IDocumentService_ObtenerNombrePlantilla = tipoSolicitud & "_template.docx"
     If Not rs Is Nothing Then
         rs.Close
         Set rs = Nothing
@@ -222,21 +224,21 @@ End Function
 
 ' Función eliminada: ValidarSolicitudParaDocumento - Ahora se usa IValidationService.ValidarSolicitud
 
-Private Function IDocumentService_ObtenerMapeoCampos(ByVal TipoSolicitud As String) As String
+Private Function IDocumentService_ObtenerMapeoCampos(ByVal tipoSolicitud As String) As String
     On Error GoTo ErrorHandler
     
     Dim sql As String
     Dim rs As Object
     
-    sql = "SELECT MapeoCampos FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & TipoSolicitud & "'"
+    sql = "SELECT MapeoCampos FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & tipoSolicitud & "'"
     
     Set rs = CurrentDb.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        IDocumentService_ObtenerMapeoCampos = rs("MapeoCampos").Value
+        IDocumentService_ObtenerMapeoCampos = rs("MapeoCampos").value
     Else
         ' Mapeo por defecto para tipos conocidos
-        Select Case TipoSolicitud
+        Select Case tipoSolicitud
             Case "PC"
                 IDocumentService_ObtenerMapeoCampos = "NumeroExpediente,FechaSolicitud,TipoSolicitud"
             Case "RAC"
@@ -285,7 +287,7 @@ ErrorHandler:
     IDocumentService_AbrirPlantilla = False
 End Function
 
-Private Function IDocumentService_ReemplazarCamposEnPlantilla(ByVal IdSolicitud As Long, ByVal MapeoCampos As String) As Boolean
+Private Function IDocumentService_ReemplazarCamposEnPlantilla(ByVal idSolicitud As Long, ByVal MapeoCampos As String) As Boolean
     On Error GoTo ErrorHandler
     
     If m_WordDoc Is Nothing Then
@@ -296,10 +298,10 @@ Private Function IDocumentService_ReemplazarCamposEnPlantilla(ByVal IdSolicitud 
     
     ' Obtener datos de la solicitud
     Dim rs As Object
-    Set rs = IDocumentService_ObtenerDatosSolicitud(IdSolicitud)
+    Set rs = IDocumentService_ObtenerDatosSolicitud(idSolicitud)
     
     If rs Is Nothing Or rs.EOF Then
-        m_LastError = "No se encontraron datos para la solicitud: " & IdSolicitud
+        m_LastError = "No se encontraron datos para la solicitud: " & idSolicitud
         IDocumentService_ReemplazarCamposEnPlantilla = False
         Exit Function
     End If
@@ -307,18 +309,18 @@ Private Function IDocumentService_ReemplazarCamposEnPlantilla(ByVal IdSolicitud 
     ' Procesar cada campo del mapeo
     Dim campos() As String
     Dim i As Integer
-    Dim nombreCampo As String
+    Dim NombreCampo As String
     Dim valorCampo As String
     Dim marcador As String
     
     campos = Split(MapeoCampos, ",")
     
     For i = 0 To UBound(campos)
-        nombreCampo = Trim(campos(i))
-        marcador = "{{" & nombreCampo & "}}"
+        NombreCampo = Trim(campos(i))
+        marcador = "{{" & NombreCampo & "}}"
         
         ' Obtener valor del campo
-        valorCampo = ObtenerValorCampo(rs, nombreCampo)
+        valorCampo = ObtenerValorCampo(rs, NombreCampo)
         
         ' Reemplazar en el documento
         With m_WordDoc.Range.Find
@@ -343,7 +345,7 @@ ErrorHandler:
     End If
 End Function
 
-Private Function IDocumentService_GuardarDocumento(ByVal RutaDestino As String, ByVal NombreArchivo As String) As Boolean
+Private Function IDocumentService_GuardarDocumento(ByVal rutaDestino As String, ByVal NombreArchivo As String) As Boolean
     On Error GoTo ErrorHandler
     
     If m_WordDoc Is Nothing Then
@@ -353,7 +355,7 @@ Private Function IDocumentService_GuardarDocumento(ByVal RutaDestino As String, 
     End If
     
     Dim rutaCompleta As String
-    rutaCompleta = RutaDestino & NombreArchivo
+    rutaCompleta = rutaDestino & NombreArchivo
     
     ' Guardar como documento Word
     m_WordDoc.SaveAs2 rutaCompleta
@@ -370,7 +372,7 @@ End Function
 ' IMPLEMENTACIÓN DE IDocumentService - CONSULTA DE DATOS
 ' ============================================================================
 
-Private Function IDocumentService_ObtenerDatosSolicitud(ByVal IdSolicitud As Long) As Object
+Private Function IDocumentService_ObtenerDatosSolicitud(ByVal idSolicitud As Long) As Object
     On Error GoTo ErrorHandler
     
     Dim sql As String
@@ -380,7 +382,7 @@ Private Function IDocumentService_ObtenerDatosSolicitud(ByVal IdSolicitud As Lon
           "pc.NombreSolicitante, pc.ApellidosSolicitante, pc.DNI " & _
           "FROM TbSolicitudes s " & _
           "LEFT JOIN TbDatos_PC pc ON s.IdSolicitud = pc.IdSolicitud " & _
-          "WHERE s.IdSolicitud = " & IdSolicitud
+          "WHERE s.IdSolicitud = " & idSolicitud
     
     Set IDocumentService_ObtenerDatosSolicitud = CurrentDb.OpenRecordset(sql)
     
@@ -391,12 +393,12 @@ ErrorHandler:
     Set IDocumentService_ObtenerDatosSolicitud = Nothing
 End Function
 
-Private Function IDocumentService_ObtenerConfiguracionMapeo(ByVal TipoSolicitud As String) As Object
+Private Function IDocumentService_ObtenerConfiguracionMapeo(ByVal tipoSolicitud As String) As Object
     On Error GoTo ErrorHandler
     
     Dim sql As String
     
-    sql = "SELECT * FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & TipoSolicitud & "'"
+    sql = "SELECT * FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & tipoSolicitud & "'"
     
     Set IDocumentService_ObtenerConfiguracionMapeo = CurrentDb.OpenRecordset(sql)
     
@@ -424,34 +426,34 @@ ErrorHandler:
     IDocumentService_ValidarPlantilla = False
 End Function
 
-Private Function IDocumentService_GenerarNombreDocumento(ByVal IdSolicitud As Long, ByVal TipoSolicitud As String) As String
+Private Function IDocumentService_GenerarNombreDocumento(ByVal idSolicitud As Long, ByVal tipoSolicitud As String) As String
     On Error GoTo ErrorHandler
     
     Dim fechaActual As String
-    Dim numeroExpediente As String
+    Dim NumeroExpediente As String
     Dim solicitud As T_Solicitud
     
     fechaActual = Format(Date, "yyyy-mm-dd")
     
     ' Usar el repositorio inyectado para obtener la solicitud y su número de expediente
-    Set solicitud = m_SolicitudRepository.ObtenerPorId(IdSolicitud)
+    Set solicitud = m_SolicitudRepository.ObtenerPorId(idSolicitud)
     If Not solicitud Is Nothing Then
-        numeroExpediente = solicitud.NumeroExpediente
+        NumeroExpediente = solicitud.NumeroExpediente
     Else
-        numeroExpediente = ""
+        NumeroExpediente = ""
     End If
     
-    If numeroExpediente <> "" Then
-        IDocumentService_GenerarNombreDocumento = "DOC-" & TipoSolicitud & "-" & numeroExpediente & "-" & fechaActual & ".docx"
+    If NumeroExpediente <> "" Then
+        IDocumentService_GenerarNombreDocumento = "DOC-" & tipoSolicitud & "-" & NumeroExpediente & "-" & fechaActual & ".docx"
     Else
-        IDocumentService_GenerarNombreDocumento = "DOC-" & TipoSolicitud & "-" & IdSolicitud & "-" & fechaActual & ".docx"
+        IDocumentService_GenerarNombreDocumento = "DOC-" & tipoSolicitud & "-" & idSolicitud & "-" & fechaActual & ".docx"
     End If
     
     Exit Function
     
 ErrorHandler:
     m_LastError = "Error al generar nombre de documento: " & Err.Description
-    IDocumentService_GenerarNombreDocumento = "DOC-" & TipoSolicitud & "-" & IdSolicitud & ".docx"
+    IDocumentService_GenerarNombreDocumento = "DOC-" & tipoSolicitud & "-" & idSolicitud & ".docx"
 End Function
 
 Private Sub IDocumentService_LimpiarRecursos()
@@ -484,41 +486,41 @@ Private Function GenerarNombreDocumentoConDatos(ByVal solicitudPC As CSolicitudP
     On Error GoTo ErrorHandler
     
     Dim fechaActual As String
-    Dim numeroExpediente As String
+    Dim NumeroExpediente As String
     
     fechaActual = Format(Date, "yyyy-mm-dd")
-    numeroExpediente = solicitudPC.IDExpediente
+    NumeroExpediente = solicitudPC.idExpediente
     
-    If numeroExpediente <> "" Then
-        GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.TipoSolicitud & "-" & numeroExpediente & "-" & fechaActual & ".docx"
+    If NumeroExpediente <> "" Then
+        GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.tipoSolicitud & "-" & NumeroExpediente & "-" & fechaActual & ".docx"
     Else
-        GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.TipoSolicitud & "-" & solicitudPC.idSolicitud & "-" & fechaActual & ".docx"
+        GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.tipoSolicitud & "-" & solicitudPC.idSolicitud & "-" & fechaActual & ".docx"
     End If
     
     Exit Function
     
 ErrorHandler:
     m_LastError = "Error al generar nombre de documento: " & Err.Description
-    GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.TipoSolicitud & "-" & solicitudPC.idSolicitud & ".docx"
+    GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.tipoSolicitud & "-" & solicitudPC.idSolicitud & ".docx"
 End Function
 
 Private Function ObtenerValorCampo(ByRef rs As Object, ByVal NombreCampo As String) As String
     On Error GoTo ErrorHandler
     
-    Dim valor As Variant
+    Dim Valor As Variant
     
     ' Intentar obtener el valor del campo
-    valor = rs(NombreCampo).Value
+    Valor = rs(NombreCampo).value
     
-    If IsNull(valor) Then
+    If IsNull(Valor) Then
         ObtenerValorCampo = ""
     Else
         ' Formatear según el tipo de campo
         Select Case NombreCampo
             Case "FechaSolicitud", "FechaLimite"
-                ObtenerValorCampo = Format(valor, "dd/mm/yyyy")
+                ObtenerValorCampo = Format(Valor, "dd/mm/yyyy")
             Case Else
-                ObtenerValorCampo = CStr(valor)
+                ObtenerValorCampo = CStr(Valor)
         End Select
     End If
     
@@ -539,3 +541,14 @@ End Function
 Public Sub ClearLastError()
     m_LastError = ""
 End Sub
+
+
+
+
+
+
+
+
+
+
+

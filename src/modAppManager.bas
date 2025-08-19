@@ -1,5 +1,7 @@
-Attribute VB_Name = "modAppManager"
+﻿Attribute VB_Name = "modAppManager"
 Option Compare Database
+
+
 Option Explicit
 
 ' Definir constante de compilacion condicional para modo desarrollo
@@ -95,6 +97,12 @@ End Sub
 Public Function OBTENER_RESULTADOS_PRUEBAS() As String
     OBTENER_RESULTADOS_PRUEBAS = modTestRunner.RunAllTests()
 End Function
+
+
+
+
+
+
 
 
 

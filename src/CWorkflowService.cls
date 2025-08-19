@@ -1,12 +1,17 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
 Attribute VB_Name = "CWorkflowService"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Compare Database
+
+
+Option Explicit
+
 '******************************************************************************
 ' CLASE: CWorkflowService
 ' DESCRIPCIÓN: Implementación concreta del servicio de workflow y estados
@@ -17,8 +22,6 @@ Attribute VB_Exposed = False
 '        Lección 6 - Utiliza módulos de acceso a datos como especificación
 '******************************************************************************
 
-Option Compare Database
-Option Explicit
 
 ' Lección 1: Implementar la interfaz
 Implements IWorkflowService
@@ -41,7 +44,7 @@ Private Const ROL_ADMINISTRADOR As String = "Administrador"
 ' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN DE TRANSICIONES
 '******************************************************************************
 
-Private Function IWorkflowService_ValidateTransition(ByVal solicitudId As Long, _
+Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, _
                                                     ByVal estadoOrigen As String, _
                                                     ByVal estadoDestino As String, _
                                                     ByVal tipoSolicitud As String, _
@@ -93,7 +96,7 @@ Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As Stri
     Set rs = db.OpenRecordset(sql)
     
     Do While Not rs.EOF
-        estados.Add rs("CodigoEstado").Value, rs("CodigoEstado").Value
+        estados.Add rs("CodigoEstado").value, rs("CodigoEstado").value
         rs.MoveNext
     Loop
     
@@ -128,7 +131,7 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, _
     Set rs = db.OpenRecordset(sql)
     
     Do While Not rs.EOF
-        estadosSiguientes.Add rs("CodigoEstado").Value, rs("CodigoEstado").Value
+        estadosSiguientes.Add rs("CodigoEstado").value, rs("CodigoEstado").value
         rs.MoveNext
     Loop
     
@@ -154,7 +157,7 @@ Private Function IWorkflowService_GetInitialState(ByVal tipoSolicitud As String)
     Set rs = db.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        resultado = rs("CodigoEstado").Value
+        resultado = rs("CodigoEstado").value
     Else
         resultado = ESTADO_BORRADOR ' Estado por defecto
     End If
@@ -184,7 +187,7 @@ Private Function IWorkflowService_IsStateFinal(ByVal estadoCodigo As String, _
     Set rs = db.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        resultado = CBool(rs("EsEstadoFinal").Value)
+        resultado = CBool(rs("EsEstadoFinal").value)
     Else
         resultado = False
     End If
@@ -200,7 +203,7 @@ End Function
 ' IMPLEMENTACIÓN DE MÉTODOS DE HISTORIAL DE ESTADOS
 '******************************************************************************
 
-Private Function IWorkflowService_RecordStateChange(ByVal solicitudId As Long, _
+Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
                                                    ByVal estadoAnterior As String, _
                                                    ByVal estadoNuevo As String, _
                                                    ByVal usuario As String, _
@@ -216,7 +219,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal solicitudId As Long, _
     
     ' Insertar registro en TbHistorialEstados (asumiendo que existe esta tabla)
     sql = "INSERT INTO TbHistorialEstados (SolicitudID, EstadoAnterior, EstadoNuevo, Usuario, Comentarios, FechaCambio) " & _
-          "VALUES (" & solicitudId & ", '" & estadoAnterior & "', '" & estadoNuevo & "', '" & usuario & "', '" & comentarios & "', Now())"
+          "VALUES (" & SolicitudID & ", '" & estadoAnterior & "', '" & estadoNuevo & "', '" & usuario & "', '" & comentarios & "', Now())"
     
     db.Execute sql
     
@@ -230,7 +233,7 @@ ErrorHandler:
     IWorkflowService_RecordStateChange = False
 End Function
 
-Private Function IWorkflowService_GetStateHistory(ByVal solicitudId As Long) As Collection
+Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As Collection
     Dim historial As New Collection
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -241,16 +244,16 @@ Private Function IWorkflowService_GetStateHistory(ByVal solicitudId As Long) As 
     
     sql = "SELECT EstadoAnterior, EstadoNuevo, Usuario, Comentarios, FechaCambio " & _
           "FROM TbHistorialEstados " & _
-          "WHERE SolicitudID = " & solicitudId & " " & _
+          "WHERE SolicitudID = " & SolicitudID & " " & _
           "ORDER BY FechaCambio DESC"
     
     Set rs = db.OpenRecordset(sql)
     
     Do While Not rs.EOF
-        registro = rs("FechaCambio").Value & " - " & rs("Usuario").Value & ": " & _
-                  rs("EstadoAnterior").Value & " → " & rs("EstadoNuevo").Value
-        If Not IsNull(rs("Comentarios").Value) And Len(Trim(rs("Comentarios").Value)) > 0 Then
-            registro = registro & " (" & rs("Comentarios").Value & ")"
+        registro = rs("FechaCambio").value & " - " & rs("Usuario").value & ": " & _
+                  rs("EstadoAnterior").value & " ? " & rs("EstadoNuevo").value
+        If Not IsNull(rs("Comentarios").value) And Len(Trim(rs("Comentarios").value)) > 0 Then
+            registro = registro & " (" & rs("Comentarios").value & ")"
         End If
         historial.Add registro
         rs.MoveNext
@@ -292,7 +295,7 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
     
     If Not rs.EOF Then
         Dim rolRequerido As String
-        rolRequerido = Nz(rs("RolRequerido").Value, "")
+        rolRequerido = Nz(rs("RolRequerido").value, "")
         
         ' Si no hay rol requerido específico, cualquier usuario puede hacer la transición
         If Len(Trim(rolRequerido)) = 0 Then
@@ -337,7 +340,7 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
     Set rs = db.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        resultado = CBool(rs("RequiereAprobacion").Value)
+        resultado = CBool(rs("RequiereAprobacion").value)
     Else
         resultado = False
     End If
@@ -375,7 +378,7 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     Set rs = db.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        resultado = (rs("Total").Value > 0)
+        resultado = (rs("Total").value > 0)
     Else
         resultado = False
     End If
@@ -386,3 +389,14 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     
     TransitionExists = resultado
 End Function
+
+
+
+
+
+
+
+
+
+
+

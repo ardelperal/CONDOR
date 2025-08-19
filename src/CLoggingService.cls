@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -8,7 +8,10 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
+
+
 Option Explicit
+
 Implements ILoggingService
 
 ' Clase: CLoggingService
@@ -41,12 +44,12 @@ Private Sub WriteToLog(level As String, message As String, moduleName As String,
     On Error Resume Next
     Dim logFile As Object
     Dim json As String
-    Dim logPath As String
+    Dim LogPath As String
 
-    logPath = configSvc.GetLogPath()
+    LogPath = configSvc.GetLogPath()
 
     ' Abrir el fichero en modo Append (8)
-    Set logFile = fso.OpenTextFile(logPath, 8, True)
+    Set logFile = fso.OpenTextFile(LogPath, 8, True)
 
     ' Construir la línea de log en formato JSON
     json = "{"
@@ -74,3 +77,8 @@ Private Function EscapeJSON(ByVal str As String) As String
     temp = Replace(temp, vbLf, "\n")
     EscapeJSON = temp
 End Function
+
+
+
+
+

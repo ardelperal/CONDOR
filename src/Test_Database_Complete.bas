@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_Database_Complete"
+﻿Attribute VB_Name = "Test_Database_Complete"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -62,11 +64,11 @@ Public Sub ConfigureMockDatabaseToFail(errorNum As Long, errorDesc As String)
     End With
 End Sub
 
-Public Sub SetupMockRecordset(hasRecords As Boolean, recordCount As Long)
+Public Sub SetupMockRecordset(hasRecords As Boolean, RecordCount As Long)
     ' Configurar mock de recordset
     With g_MockRS
         .IsEOF = Not hasRecords
-        .RecordCount = recordCount
+        .RecordCount = RecordCount
         .IsOpen = True
     End With
 End Sub
@@ -152,10 +154,10 @@ Public Function Test_SaveSolicitudPC_NewRecord_ReturnsTrue() As Boolean
     With solicitudData
         .ID = 0 ' Nuevo registro
         .NumeroExpediente = "EXP-2024-001"
-        .TipoSolicitud = "PC"
-        .EstadoInterno = "Borrador"
+        .tipoSolicitud = "PC"
+        .estadoInterno = "Borrador"
         .EstadoRAC = "Pendiente"
-        .Usuario = "usuario.prueba@empresa.com"
+        .usuario = "usuario.prueba@empresa.com"
         .Observaciones = "Solicitud de prueba"
         .Activo = True
     End With
@@ -164,11 +166,11 @@ Public Function Test_SaveSolicitudPC_NewRecord_ReturnsTrue() As Boolean
         .ID = 0 ' Nuevo registro
         .SolicitudID = 0
         .NumeroExpediente = "EXP-2024-001"
-        .TipoSolicitud = "PC"
-        .DescripcionCambio = "Descripci?n de prueba"
+        .tipoSolicitud = "PC"
+        .descripcionCambio = "Descripci?n de prueba"
         .JustificacionCambio = "Justificaci?n de prueba"
         .ImpactoSeguridad = "Bajo"
-        .ImpactoCalidad = "Medio"
+        .impactoCalidad = "Medio"
         .Estado = "Activo"
         .Activo = True
     End With
@@ -195,10 +197,10 @@ Public Function Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue() As Boolean
     With solicitudData
         .ID = 123 ' Registro existente
         .NumeroExpediente = "EXP-2024-001"
-        .TipoSolicitud = "PC"
-        .EstadoInterno = "En Revisi?n"
+        .tipoSolicitud = "PC"
+        .estadoInterno = "En Revisi?n"
         .EstadoRAC = "Aprobado"
-        .Usuario = "usuario.prueba@empresa.com"
+        .usuario = "usuario.prueba@empresa.com"
         .Observaciones = "Solicitud actualizada"
         .Activo = True
     End With
@@ -207,11 +209,11 @@ Public Function Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue() As Boolean
         .ID = 456 ' Registro existente
         .SolicitudID = 123
         .NumeroExpediente = "EXP-2024-001"
-        .TipoSolicitud = "PC"
-        .DescripcionCambio = "Descripci?n actualizada"
+        .tipoSolicitud = "PC"
+        .descripcionCambio = "Descripci?n actualizada"
         .JustificacionCambio = "Justificaci?n actualizada"
         .ImpactoSeguridad = "Alto"
-        .ImpactoCalidad = "Alto"
+        .impactoCalidad = "Alto"
         .Estado = "Modificado"
         .Activo = True
     End With
@@ -238,9 +240,9 @@ Public Function Test_SaveSolicitudPC_TransactionRollback_ReturnsFalse() As Boole
     With solicitudData
         .ID = 0
         .NumeroExpediente = "EXP-FAIL"
-        .TipoSolicitud = "PC"
-        .EstadoInterno = "Borrador"
-        .Usuario = "usuario.fail@empresa.com"
+        .tipoSolicitud = "PC"
+        .estadoInterno = "Borrador"
+        .usuario = "usuario.fail@empresa.com"
         .Activo = True
     End With
     
@@ -352,9 +354,9 @@ Public Function Test_Integration_SaveAndRetrieve() As Boolean
     With solicitudData
         .ID = 0
         .NumeroExpediente = "EXP-INT-001"
-        .TipoSolicitud = "PC"
-        .EstadoInterno = "Borrador"
-        .Usuario = "usuario.integracion@empresa.com"
+        .tipoSolicitud = "PC"
+        .estadoInterno = "Borrador"
+        .usuario = "usuario.integracion@empresa.com"
         .Activo = True
     End With
     
@@ -402,9 +404,9 @@ Public Function Test_EdgeCase_SpecialCharactersInData_HandlesCorrectly() As Bool
     With solicitudData
         .ID = 0
         .NumeroExpediente = "EXP-2024-???"
-        .TipoSolicitud = "PC"
-        .EstadoInterno = "Borrador"
-        .Usuario = "usuario.??@empresa.com"
+        .tipoSolicitud = "PC"
+        .estadoInterno = "Borrador"
+        .usuario = "usuario.??@empresa.com"
         .Observaciones = "Observaci?n con 'comillas' y ""caracteres especiales"""
         .Activo = True
     End With
@@ -560,28 +562,28 @@ Public Function RunDatabaseCompleteTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_GetSolicitudData_ValidID_ReturnsRecordset() Then
-        Debug.Print "✓ Test_GetSolicitudData_ValidID_ReturnsRecordset: PASÓ"
+        Debug.Print "? Test_GetSolicitudData_ValidID_ReturnsRecordset: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_GetSolicitudData_ValidID_ReturnsRecordset: FALLÓ"
+        Debug.Print "? Test_GetSolicitudData_ValidID_ReturnsRecordset: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_GetSolicitudData_InvalidID_ReturnsNothing() Then
-        Debug.Print "✓ Test_GetSolicitudData_InvalidID_ReturnsNothing: PASÓ"
+        Debug.Print "? Test_GetSolicitudData_InvalidID_ReturnsNothing: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_GetSolicitudData_InvalidID_ReturnsNothing: FALLÓ"
+        Debug.Print "? Test_GetSolicitudData_InvalidID_ReturnsNothing: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_GetSolicitudData_DatabaseError_HandlesGracefully() Then
-        Debug.Print "✓ Test_GetSolicitudData_DatabaseError_HandlesGracefully: PASÓ"
+        Debug.Print "? Test_GetSolicitudData_DatabaseError_HandlesGracefully: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_GetSolicitudData_DatabaseError_HandlesGracefully: FALLÓ"
+        Debug.Print "? Test_GetSolicitudData_DatabaseError_HandlesGracefully: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -590,28 +592,28 @@ Public Function RunDatabaseCompleteTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_SaveSolicitudPC_NewRecord_ReturnsTrue() Then
-        Debug.Print "✓ Test_SaveSolicitudPC_NewRecord_ReturnsTrue: PASÓ"
+        Debug.Print "? Test_SaveSolicitudPC_NewRecord_ReturnsTrue: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_SaveSolicitudPC_NewRecord_ReturnsTrue: FALLÓ"
+        Debug.Print "? Test_SaveSolicitudPC_NewRecord_ReturnsTrue: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue() Then
-        Debug.Print "✓ Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue: PASÓ"
+        Debug.Print "? Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue: FALLÓ"
+        Debug.Print "? Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_SaveSolicitudPC_TransactionRollback_ReturnsFalse() Then
-        Debug.Print "✓ Test_SaveSolicitudPC_TransactionRollback_ReturnsFalse: PASÓ"
+        Debug.Print "? Test_SaveSolicitudPC_TransactionRollback_ReturnsFalse: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_SaveSolicitudPC_TransactionRollback_ReturnsFalse: FALLÓ"
+        Debug.Print "? Test_SaveSolicitudPC_TransactionRollback_ReturnsFalse: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -620,37 +622,37 @@ Public Function RunDatabaseCompleteTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_SolicitudExists_ValidID_ReturnsTrue() Then
-        Debug.Print "✓ Test_SolicitudExists_ValidID_ReturnsTrue: PASÓ"
+        Debug.Print "? Test_SolicitudExists_ValidID_ReturnsTrue: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_SolicitudExists_ValidID_ReturnsTrue: FALLÓ"
+        Debug.Print "? Test_SolicitudExists_ValidID_ReturnsTrue: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_SolicitudExists_InvalidID_ReturnsFalse() Then
-        Debug.Print "✓ Test_SolicitudExists_InvalidID_ReturnsFalse: PASÓ"
+        Debug.Print "? Test_SolicitudExists_InvalidID_ReturnsFalse: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_SolicitudExists_InvalidID_ReturnsFalse: FALLÓ"
+        Debug.Print "? Test_SolicitudExists_InvalidID_ReturnsFalse: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_SolicitudExists_ZeroID_ReturnsFalse() Then
-        Debug.Print "✓ Test_SolicitudExists_ZeroID_ReturnsFalse: PASÓ"
+        Debug.Print "? Test_SolicitudExists_ZeroID_ReturnsFalse: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_SolicitudExists_ZeroID_ReturnsFalse: FALLÓ"
+        Debug.Print "? Test_SolicitudExists_ZeroID_ReturnsFalse: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_SolicitudExists_DatabaseError_ReturnsFalse() Then
-        Debug.Print "✓ Test_SolicitudExists_DatabaseError_ReturnsFalse: PASÓ"
+        Debug.Print "? Test_SolicitudExists_DatabaseError_ReturnsFalse: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_SolicitudExists_DatabaseError_ReturnsFalse: FALLÓ"
+        Debug.Print "? Test_SolicitudExists_DatabaseError_ReturnsFalse: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -659,10 +661,10 @@ Public Function RunDatabaseCompleteTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_Integration_SaveAndRetrieve() Then
-        Debug.Print "✓ Test_Integration_SaveAndRetrieve: PASÓ"
+        Debug.Print "? Test_Integration_SaveAndRetrieve: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_Integration_SaveAndRetrieve: FALLÓ"
+        Debug.Print "? Test_Integration_SaveAndRetrieve: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -671,19 +673,19 @@ Public Function RunDatabaseCompleteTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_EdgeCase_VeryLargeID_HandlesCorrectly() Then
-        Debug.Print "✓ Test_EdgeCase_VeryLargeID_HandlesCorrectly: PASÓ"
+        Debug.Print "? Test_EdgeCase_VeryLargeID_HandlesCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_EdgeCase_VeryLargeID_HandlesCorrectly: FALLÓ"
+        Debug.Print "? Test_EdgeCase_VeryLargeID_HandlesCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_EdgeCase_SpecialCharactersInData_HandlesCorrectly() Then
-        Debug.Print "✓ Test_EdgeCase_SpecialCharactersInData_HandlesCorrectly: PASÓ"
+        Debug.Print "? Test_EdgeCase_SpecialCharactersInData_HandlesCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_EdgeCase_SpecialCharactersInData_HandlesCorrectly: FALLÓ"
+        Debug.Print "? Test_EdgeCase_SpecialCharactersInData_HandlesCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -697,9 +699,9 @@ Public Function RunDatabaseCompleteTests() As Boolean
     Debug.Print "Porcentaje de éxito: " & Format((passedTests / totalTests) * 100, "0.00") & "%"
     
     If failedTests = 0 Then
-        Debug.Print "\n🎉 ¡TODAS LAS PRUEBAS PASARON!"
+        Debug.Print "\n?? ¡TODAS LAS PRUEBAS PASARON!"
     Else
-        Debug.Print "\n⚠️  ALGUNAS PRUEBAS FALLARON. Revisar implementación."
+        Debug.Print "\n??  ALGUNAS PRUEBAS FALLARON. Revisar implementación."
     End If
     
     Debug.Print "============================================================================"
@@ -707,3 +709,8 @@ Public Function RunDatabaseCompleteTests() As Boolean
     ' Retornar True si todas las pruebas pasaron
     RunDatabaseCompleteTests = (failedTests = 0)
 End Function
+
+
+
+
+

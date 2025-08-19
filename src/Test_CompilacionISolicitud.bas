@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_CompilacionISolicitud"
+﻿Attribute VB_Name = "Test_CompilacionISolicitud"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -24,17 +26,17 @@ Public Function Test_ImplementacionISolicitud() As Boolean
     
     ' Probar propiedades de la interfaz
     solicitud.idSolicitud = 123
-    solicitud.IDExpediente = "EXP-001"
-    solicitud.TipoSolicitud = "PC"
-    solicitud.CodigoSolicitud = "PC-0123"
-    solicitud.EstadoInterno = "BORRADOR"
+    solicitud.idExpediente = "EXP-001"
+    solicitud.tipoSolicitud = "PC"
+    solicitud.codigoSolicitud = "PC-0123"
+    solicitud.estadoInterno = "BORRADOR"
     
     ' Verificar que los valores se asignaron correctamente
     If solicitud.idSolicitud <> 123 Then GoTo ErrorHandler
-    If solicitud.IDExpediente <> "EXP-001" Then GoTo ErrorHandler
-    If solicitud.TipoSolicitud <> "PC" Then GoTo ErrorHandler
-    If solicitud.CodigoSolicitud <> "PC-0123" Then GoTo ErrorHandler
-    If solicitud.EstadoInterno <> "BORRADOR" Then GoTo ErrorHandler
+    If solicitud.idExpediente <> "EXP-001" Then GoTo ErrorHandler
+    If solicitud.tipoSolicitud <> "PC" Then GoTo ErrorHandler
+    If solicitud.codigoSolicitud <> "PC-0123" Then GoTo ErrorHandler
+    If solicitud.estadoInterno <> "BORRADOR" Then GoTo ErrorHandler
     
     ' Probar m?todos de la interfaz
     ' Nota: Estos m?todos pueden fallar por falta de datos, pero no deben dar error de compilaci?n
@@ -46,7 +48,7 @@ Public Function Test_ImplementacionISolicitud() As Boolean
     saveResult = solicitud.Save()
     changeStateResult = solicitud.ChangeState("ENVIADO")
     
-    Debug.Print "✓ Test_ImplementacionISolicitud: EXITOSO"
+    Debug.Print "? Test_ImplementacionISolicitud: EXITOSO"
     
     ' Limpiar objetos
     Set solicitud = Nothing
@@ -56,7 +58,7 @@ Public Function Test_ImplementacionISolicitud() As Boolean
     Exit Function
     
 ErrorHandler:
-    Debug.Print "✗ Test_ImplementacionISolicitud: FALLIDO - " & Err.Description
+    Debug.Print "? Test_ImplementacionISolicitud: FALLIDO - " & Err.Description
     Set solicitud = Nothing
     Set solicitudPC = Nothing
     Test_ImplementacionISolicitud = False
@@ -103,6 +105,12 @@ Public Function Test_CompilacionISolicitud_RunAll() As String
     
     Test_CompilacionISolicitud_RunAll = resultado
 End Function
+
+
+
+
+
+
 
 
 

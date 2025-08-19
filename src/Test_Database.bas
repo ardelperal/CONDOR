@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_Database"
+﻿Attribute VB_Name = "Test_Database"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -60,12 +62,12 @@ Private Sub SetupValidSolicitudData()
     With m_TestSolicitud
         .ID = 0 ' Nuevo registro
         .NumeroExpediente = "EXP-2025-001"
-        .TipoSolicitud = "PC"
-        .EstadoInterno = "Borrador"
+        .tipoSolicitud = "PC"
+        .estadoInterno = "Borrador"
         .EstadoRAC = "Pendiente"
-        .FechaCreacion = Now()
+        .fechaCreacion = Now()
         .FechaUltimaModificacion = Now()
-        .Usuario = "test@condor.com"
+        .usuario = "test@condor.com"
         .Observaciones = "Solicitud de prueba"
         .Activo = True
     End With
@@ -76,12 +78,12 @@ Private Sub SetupValidDatosPCData()
         .ID = 0 ' Nuevo registro
         .SolicitudID = 0 ' Se asignará después
         .NumeroExpediente = "EXP-2025-001"
-        .TipoSolicitud = "PC"
-        .DescripcionCambio = "Cambio en el proceso de validación"
+        .tipoSolicitud = "PC"
+        .descripcionCambio = "Cambio en el proceso de validación"
         .JustificacionCambio = "Mejora en la eficiencia del proceso"
         .ImpactoSeguridad = "Bajo"
-        .ImpactoCalidad = "Medio"
-        .FechaCreacion = Now()
+        .impactoCalidad = "Medio"
+        .fechaCreacion = Now()
         .FechaUltimaModificacion = Now()
         .Estado = "Activo"
         .Activo = True
@@ -399,7 +401,7 @@ Public Function Test_SaveSolicitudPC_InvalidData_HandlesError() As Boolean
     SetupValidDatosPCData
     ' Datos inválidos
     m_TestSolicitud.NumeroExpediente = ""
-    m_TestSolicitud.Usuario = ""
+    m_TestSolicitud.usuario = ""
     
     ' Act & Assert
     Test_SaveSolicitudPC_InvalidData_HandlesError = m_MockDB.ShouldFail
@@ -599,13 +601,13 @@ Public Function Test_EdgeCase_VeryLongStrings() As Boolean
     
     ' Crear strings muy largos
     m_TestSolicitud.Observaciones = String(4000, "A")
-    m_TestDatosPC.DescripcionCambio = String(4000, "B")
+    m_TestDatosPC.descripcionCambio = String(4000, "B")
     m_TestDatosPC.JustificacionCambio = String(4000, "C")
     
     ' Act & Assert
     ' Verificar que el mock maneja strings largos
     Test_EdgeCase_VeryLongStrings = (Len(m_TestSolicitud.Observaciones) = 4000) And _
-                                  (Len(m_TestDatosPC.DescripcionCambio) = 4000)
+                                  (Len(m_TestDatosPC.descripcionCambio) = 4000)
     
     Exit Function
     
@@ -623,11 +625,11 @@ Public Function Test_EdgeCase_SpecialCharacters() As Boolean
     
     ' Usar caracteres especiales
     m_TestSolicitud.Observaciones = "Prueba con 'comillas' y ""comillas dobles"" y símbolos: @#$%^&*()"
-    m_TestDatosPC.DescripcionCambio = "Descripción con ñ, á, é, í, ó, ú y ¿¡caracteres especiales!?"
+    m_TestDatosPC.descripcionCambio = "Descripción con ñ, á, é, í, ó, ú y ¿¡caracteres especiales!?"
     
     ' Act & Assert
     Test_EdgeCase_SpecialCharacters = (InStr(m_TestSolicitud.Observaciones, "'") > 0) And _
-                                    (InStr(m_TestDatosPC.DescripcionCambio, "ñ") > 0)
+                                    (InStr(m_TestDatosPC.descripcionCambio, "ñ") > 0)
     
     Exit Function
     
@@ -679,145 +681,145 @@ Public Function RunDatabaseTests() As String
     totalTests = totalTests + 1
     If Test_GetSolicitudData_ValidID_ReturnsRecordset() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitudData_ValidID_ReturnsRecordset" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudData_ValidID_ReturnsRecordset" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitudData_ValidID_ReturnsRecordset" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudData_ValidID_ReturnsRecordset" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetSolicitudData_InvalidID_ReturnsNothing() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitudData_InvalidID_ReturnsNothing" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudData_InvalidID_ReturnsNothing" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitudData_InvalidID_ReturnsNothing" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudData_InvalidID_ReturnsNothing" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetSolicitudData_DatabaseError_HandlesGracefully() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitudData_DatabaseError_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudData_DatabaseError_HandlesGracefully" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitudData_DatabaseError_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudData_DatabaseError_HandlesGracefully" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SaveSolicitudPC_NewRecord_Success() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SaveSolicitudPC_NewRecord_Success" & vbCrLf
+        resultado = resultado & "? Test_SaveSolicitudPC_NewRecord_Success" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SaveSolicitudPC_NewRecord_Success" & vbCrLf
+        resultado = resultado & "? Test_SaveSolicitudPC_NewRecord_Success" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SaveSolicitudPC_UpdateRecord_Success() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SaveSolicitudPC_UpdateRecord_Success" & vbCrLf
+        resultado = resultado & "? Test_SaveSolicitudPC_UpdateRecord_Success" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SaveSolicitudPC_UpdateRecord_Success" & vbCrLf
+        resultado = resultado & "? Test_SaveSolicitudPC_UpdateRecord_Success" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SaveSolicitudPC_TransactionFail_Rollback() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SaveSolicitudPC_TransactionFail_Rollback" & vbCrLf
+        resultado = resultado & "? Test_SaveSolicitudPC_TransactionFail_Rollback" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SaveSolicitudPC_TransactionFail_Rollback" & vbCrLf
+        resultado = resultado & "? Test_SaveSolicitudPC_TransactionFail_Rollback" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SaveSolicitudPC_InvalidData_HandlesError() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SaveSolicitudPC_InvalidData_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_SaveSolicitudPC_InvalidData_HandlesError" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SaveSolicitudPC_InvalidData_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_SaveSolicitudPC_InvalidData_HandlesError" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SolicitudExists_ValidID_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SolicitudExists_ValidID_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_SolicitudExists_ValidID_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SolicitudExists_ValidID_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_SolicitudExists_ValidID_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SolicitudExists_InvalidID_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SolicitudExists_InvalidID_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_SolicitudExists_InvalidID_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SolicitudExists_InvalidID_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_SolicitudExists_InvalidID_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SolicitudExists_ZeroID_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SolicitudExists_ZeroID_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_SolicitudExists_ZeroID_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SolicitudExists_ZeroID_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_SolicitudExists_ZeroID_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SolicitudExists_DatabaseError_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SolicitudExists_DatabaseError_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_SolicitudExists_DatabaseError_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SolicitudExists_DatabaseError_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_SolicitudExists_DatabaseError_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Integration_SaveAndRetrieve() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Integration_SaveAndRetrieve" & vbCrLf
+        resultado = resultado & "? Test_Integration_SaveAndRetrieve" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Integration_SaveAndRetrieve" & vbCrLf
+        resultado = resultado & "? Test_Integration_SaveAndRetrieve" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Integration_SaveUpdateSave() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Integration_SaveUpdateSave" & vbCrLf
+        resultado = resultado & "? Test_Integration_SaveUpdateSave" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Integration_SaveUpdateSave" & vbCrLf
+        resultado = resultado & "? Test_Integration_SaveUpdateSave" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Integration_ErrorHandling() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Integration_ErrorHandling" & vbCrLf
+        resultado = resultado & "? Test_Integration_ErrorHandling" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Integration_ErrorHandling" & vbCrLf
+        resultado = resultado & "? Test_Integration_ErrorHandling" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_EdgeCase_LargeDataset() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_EdgeCase_LargeDataset" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_LargeDataset" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_EdgeCase_LargeDataset" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_LargeDataset" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_EdgeCase_VeryLongStrings() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_EdgeCase_VeryLongStrings" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_VeryLongStrings" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_EdgeCase_VeryLongStrings" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_VeryLongStrings" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_EdgeCase_SpecialCharacters() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_EdgeCase_SpecialCharacters" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_SpecialCharacters" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_EdgeCase_SpecialCharacters" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_SpecialCharacters" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_EdgeCase_ConcurrentOperations() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_EdgeCase_ConcurrentOperations" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_ConcurrentOperations" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_EdgeCase_ConcurrentOperations" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_ConcurrentOperations" & vbCrLf
     End If
     
     ' Resumen
@@ -825,3 +827,14 @@ Public Function RunDatabaseTests() As String
     
     RunDatabaseTests = resultado
 End Function
+
+
+
+
+
+
+
+
+
+
+

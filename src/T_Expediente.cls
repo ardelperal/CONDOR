@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,6 +7,11 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Compare Database
+
+
+Option Explicit
+
 '******************************************************************************
 ' CLASE: T_Expediente
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de expedientes
@@ -15,8 +20,6 @@ Attribute VB_Exposed = False
 ' NOTA: Propiedades definidas basándose en CExpedienteService.cls y CMockExpedienteService.cls como fuente de verdad
 '******************************************************************************
 
-Option Compare Database
-Option Explicit
 
 '******************************************************************************
 ' PROPIEDADES PÚBLICAS
@@ -24,7 +27,7 @@ Option Explicit
 '******************************************************************************
 
 ' Identificador único del expediente
-Public IDExpediente As Long
+Public idExpediente As Long
 
 ' Nemotécnico del expediente
 Public Nemotecnico As String
@@ -80,7 +83,7 @@ Public UltimaActualizacion As Date
 Public ID As Long
 
 ' Fecha de creación usado en Test_CExpedienteService.bas
-Public FechaCreacion As Date
+Public fechaCreacion As Date
 
 ' Estado usado en Test_CExpedienteService.bas
 Public Estado As String
@@ -95,3 +98,14 @@ Public Function EsValido() As Boolean
                 Len(ResponsableCalidad) > 0 And _
                 Len(EmailResponsable) > 0)
 End Function
+
+
+
+
+
+
+
+
+
+
+

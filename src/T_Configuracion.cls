@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,6 +7,11 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Compare Database
+
+
+Option Explicit
+
 '******************************************************************************
 ' CLASE: T_Configuracion
 ' DESCRIPCIÓN: Tipo de datos para almacenar configuración del sistema
@@ -15,8 +20,6 @@ Attribute VB_Exposed = False
 ' NOTA: Propiedades definidas basándose en TbConfiguracion y CConfig
 '******************************************************************************
 
-Option Compare Database
-Option Explicit
 
 '******************************************************************************
 ' PROPIEDADES PÚBLICAS
@@ -51,7 +54,7 @@ Public DataPath As String
 Public ExpedientesPath As String
 
 ' Fecha de creación
-Public FechaCreacion As Date
+Public fechaCreacion As Date
 
 ' Indica si está activo
 Public Activo As Boolean
@@ -120,3 +123,14 @@ Public Function EsConfiguracionIntegracion() As Boolean
                                  Categoria = "RAC" Or _
                                  InStr(Clave, "SERVICE_") > 0)
 End Function
+
+
+
+
+
+
+
+
+
+
+

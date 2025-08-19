@@ -8,6 +8,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
+
+
 Option Explicit
 
 Public Property Get idSolicitud() As Long
@@ -16,28 +18,28 @@ End Property
 Public Property Let idSolicitud(ByVal RHS As Long)
 End Property
 
-Public Property Get IDExpediente() As String
+Public Property Get idExpediente() As String
 End Property
 
-Public Property Let IDExpediente(ByVal RHS As String)
+Public Property Let idExpediente(ByVal RHS As String)
 End Property
 
-Public Property Get TipoSolicitud() As String
+Public Property Get tipoSolicitud() As String
 End Property
 
-Public Property Let TipoSolicitud(ByVal RHS As String)
+Public Property Let tipoSolicitud(ByVal RHS As String)
 End Property
 
-Public Property Get CodigoSolicitud() As String
+Public Property Get codigoSolicitud() As String
 End Property
 
-Public Property Let CodigoSolicitud(ByVal RHS As String)
+Public Property Let codigoSolicitud(ByVal RHS As String)
 End Property
 
-Public Property Get EstadoInterno() As String
+Public Property Get estadoInterno() As String
 End Property
 
-Public Property Let EstadoInterno(ByVal RHS As String)
+Public Property Let estadoInterno(ByVal RHS As String)
 End Property
 
 Public Function Load(ByVal ID As Long) As Boolean
@@ -48,6 +50,12 @@ End Function
 
 Public Function ChangeState(ByVal newState As String) As Boolean
 End Function
+
+
+
+
+
+
 
 
 

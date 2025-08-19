@@ -1,4 +1,9 @@
-Attribute VB_Name = "Test_WorkflowService"
+﻿Attribute VB_Name = "Test_WorkflowService"
+Option Compare Database
+
+
+Option Explicit
+
 '******************************************************************************
 ' MÓDULO: Test_WorkflowService
 ' DESCRIPCIÓN: Pruebas unitarias para el servicio de workflow y estados
@@ -9,8 +14,6 @@ Attribute VB_Name = "Test_WorkflowService"
 '        - Lección 4: Estructura AAA (Arrange-Act-Assert)
 '******************************************************************************
 
-Option Compare Database
-Option Explicit
 
 #If DEV_MODE Then
 
@@ -41,25 +44,25 @@ Public Function RunAll() As String
     totalTests = totalTests + 1
     If Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue" & vbCrLf
     End If
     
     ' ========================================
@@ -69,25 +72,25 @@ Public Function RunAll() As String
     totalTests = totalTests + 1
     If Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_InvalidTransition_NonExistentState_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_InvalidTransition_NonExistentState_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_InvalidTransition_NonExistentState_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_InvalidTransition_NonExistentState_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_InvalidTransition_NonExistentState_ReturnsFalse" & vbCrLf
     End If
     
     ' ========================================
@@ -97,25 +100,25 @@ Public Function RunAll() As String
     totalTests = totalTests + 1
     If Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidatePermission_EmptyRole_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidatePermission_EmptyRole_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidatePermission_EmptyRole_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidatePermission_EmptyRole_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidatePermission_EmptyRole_ReturnsFalse" & vbCrLf
     End If
     
     ' ========================================
@@ -125,17 +128,17 @@ Public Function RunAll() As String
     totalTests = totalTests + 1
     If Test_GetAvailableStates_ForTipoPC_ReturnsCollection() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetAvailableStates_ForTipoPC_ReturnsCollection" & vbCrLf
+        resultado = resultado & "? Test_GetAvailableStates_ForTipoPC_ReturnsCollection" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetAvailableStates_ForTipoPC_ReturnsCollection" & vbCrLf
+        resultado = resultado & "? Test_GetAvailableStates_ForTipoPC_ReturnsCollection" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetNextStates_FromBorrador_ReturnsValidStates() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetNextStates_FromBorrador_ReturnsValidStates" & vbCrLf
+        resultado = resultado & "? Test_GetNextStates_FromBorrador_ReturnsValidStates" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetNextStates_FromBorrador_ReturnsValidStates" & vbCrLf
+        resultado = resultado & "? Test_GetNextStates_FromBorrador_ReturnsValidStates" & vbCrLf
     End If
     
     ' ========================================
@@ -145,9 +148,9 @@ Public Function RunAll() As String
     totalTests = totalTests + 1
     If Test_RecordStateChange_ValidTransition_CreatesHistoryRecord() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_RecordStateChange_ValidTransition_CreatesHistoryRecord" & vbCrLf
+        resultado = resultado & "? Test_RecordStateChange_ValidTransition_CreatesHistoryRecord" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_RecordStateChange_ValidTransition_CreatesHistoryRecord" & vbCrLf
+        resultado = resultado & "? Test_RecordStateChange_ValidTransition_CreatesHistoryRecord" & vbCrLf
     End If
     
     ' ========================================
@@ -160,9 +163,9 @@ Public Function RunAll() As String
     resultado = resultado & "Pruebas fallidas: " & (totalTests - passedTests) & vbCrLf
     
     If passedTests = totalTests Then
-        resultado = resultado & "✓ TODAS LAS PRUEBAS DE WORKFLOW SERVICE PASARON" & vbCrLf
+        resultado = resultado & "? TODAS LAS PRUEBAS DE WORKFLOW SERVICE PASARON" & vbCrLf
     Else
-        resultado = resultado & "✗ ALGUNAS PRUEBAS DE WORKFLOW SERVICE FALLARON" & vbCrLf
+        resultado = resultado & "? ALGUNAS PRUEBAS DE WORKFLOW SERVICE FALLARON" & vbCrLf
     End If
     
     RunAll = resultado
@@ -174,7 +177,7 @@ End Function
 
 Public Function Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -182,14 +185,14 @@ Public Function Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue() As Bool
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "Borrador"
     estadoDestino = "EnProceso"
     tipoSolicitud = "PC"
     usuarioRol = "Usuario"
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue = resultado
@@ -197,7 +200,7 @@ End Function
 
 Public Function Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -205,14 +208,14 @@ Public Function Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue() As Bool
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "EnProceso"
     estadoDestino = "Aprobado"
     tipoSolicitud = "PC"
     usuarioRol = "Aprobador"
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue = resultado
@@ -220,7 +223,7 @@ End Function
 
 Public Function Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -228,14 +231,14 @@ Public Function Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue() As Boo
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "EnProceso"
     estadoDestino = "Rechazado"
     tipoSolicitud = "PC"
     usuarioRol = "Aprobador"
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue = resultado
@@ -247,7 +250,7 @@ End Function
 
 Public Function Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -255,14 +258,14 @@ Public Function Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse() As Bo
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "Borrador"
     estadoDestino = "Aprobado"
     tipoSolicitud = "PC"
     usuarioRol = "Usuario"
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse = Not resultado
@@ -270,7 +273,7 @@ End Function
 
 Public Function Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -278,14 +281,14 @@ Public Function Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse() As Bo
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "Aprobado"
     estadoDestino = "Borrador"
     tipoSolicitud = "PC"
     usuarioRol = "Usuario"
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse = Not resultado
@@ -293,7 +296,7 @@ End Function
 
 Public Function Test_InvalidTransition_NonExistentState_ReturnsFalse() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -301,14 +304,14 @@ Public Function Test_InvalidTransition_NonExistentState_ReturnsFalse() As Boolea
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "EstadoInexistente"
     estadoDestino = "OtroEstadoInexistente"
     tipoSolicitud = "PC"
     usuarioRol = "Usuario"
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_InvalidTransition_NonExistentState_ReturnsFalse = Not resultado
@@ -320,7 +323,7 @@ End Function
 
 Public Function Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -328,14 +331,14 @@ Public Function Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue()
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "EnProceso"
     estadoDestino = "Aprobado"
     tipoSolicitud = "PC"
     usuarioRol = "Administrador"
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue = resultado
@@ -343,7 +346,7 @@ End Function
 
 Public Function Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -351,14 +354,14 @@ Public Function Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse()
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "EnProceso"
     estadoDestino = "Aprobado"
     tipoSolicitud = "PC"
     usuarioRol = "Usuario"
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse = Not resultado
@@ -366,7 +369,7 @@ End Function
 
 Public Function Test_ValidatePermission_EmptyRole_ReturnsFalse() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
     Dim tipoSolicitud As String
@@ -374,14 +377,14 @@ Public Function Test_ValidatePermission_EmptyRole_ReturnsFalse() As Boolean
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoOrigen = "Borrador"
     estadoDestino = "EnProceso"
     tipoSolicitud = "PC"
     usuarioRol = ""
     
     ' Act
-    resultado = workflowService.ValidateTransition(solicitudId, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
+    resultado = workflowService.ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
     
     ' Assert
     Test_ValidatePermission_EmptyRole_ReturnsFalse = Not resultado
@@ -435,7 +438,7 @@ End Function
 
 Public Function Test_RecordStateChange_ValidTransition_CreatesHistoryRecord() As Boolean
     ' Arrange
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     Dim estadoAnterior As String
     Dim estadoNuevo As String
     Dim usuario As String
@@ -443,17 +446,22 @@ Public Function Test_RecordStateChange_ValidTransition_CreatesHistoryRecord() As
     Dim resultado As Boolean
     
     Set workflowService = New CWorkflowService
-    solicitudId = 1
+    SolicitudID = 1
     estadoAnterior = "Borrador"
     estadoNuevo = "EnProceso"
     usuario = "TestUser"
     comentarios = "Transición de prueba"
     
     ' Act
-    resultado = workflowService.RecordStateChange(solicitudId, estadoAnterior, estadoNuevo, usuario, comentarios)
+    resultado = workflowService.RecordStateChange(SolicitudID, estadoAnterior, estadoNuevo, usuario, comentarios)
     
     ' Assert
     Test_RecordStateChange_ValidTransition_CreatesHistoryRecord = resultado
 End Function
 
 #End If
+
+
+
+
+

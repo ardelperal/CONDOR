@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_ExpedienteService"
+﻿Attribute VB_Name = "Test_ExpedienteService"
 Option Compare Database
+
+
 Option Explicit
 
 ' =====================================================
@@ -104,8 +106,8 @@ Public Function Test_ObtenerExpedientePorID() As Boolean
     ' Arrange
     Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
-    Dim expedienteID As Long
-    expedienteID = 1
+    Dim expedienteId As Long
+    expedienteId = 1
     
     ' Act - Simular obtencion de expediente por ID
     Dim expedienteEncontrado As Boolean
@@ -119,8 +121,8 @@ Public Function Test_CrearNuevoExpediente() As Boolean
     ' Arrange
     Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
-    Dim numeroExpediente As String
-    numeroExpediente = "EXP-2025-001"
+    Dim NumeroExpediente As String
+    NumeroExpediente = "EXP-2025-001"
     
     ' Act - Simular creacion de nuevo expediente
     Dim expedienteCreado As Boolean
@@ -134,8 +136,8 @@ Public Function Test_ActualizarExpediente() As Boolean
     ' Arrange
     Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
-    Dim expedienteID As Long
-    expedienteID = 1
+    Dim expedienteId As Long
+    expedienteId = 1
     
     ' Act - Simular actualizacion de expediente
     Dim expedienteActualizado As Boolean
@@ -149,8 +151,8 @@ Public Function Test_EliminarExpediente() As Boolean
     ' Arrange
     Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
-    Dim expedienteID As Long
-    expedienteID = 1
+    Dim expedienteId As Long
+    expedienteId = 1
     
     ' Act - Simular eliminacion de expediente
     Dim expedienteEliminado As Boolean
@@ -179,8 +181,8 @@ Public Function Test_ValidarDatosExpediente() As Boolean
     ' Arrange
     Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
-    Dim numeroExpediente As String
-    numeroExpediente = "EXP-2025-001"
+    Dim NumeroExpediente As String
+    NumeroExpediente = "EXP-2025-001"
     
     ' Act - Simular validacion de datos de expediente
     Dim datosValidos As Boolean
@@ -194,9 +196,9 @@ Public Function Test_CambiarEstadoExpediente() As Boolean
     ' Arrange
     Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
-    Dim expedienteID As Long
+    Dim expedienteId As Long
     Dim nuevoEstado As String
-    expedienteID = 1
+    expedienteId = 1
     nuevoEstado = "En Proceso"
     
     ' Act - Simular cambio de estado de expediente
@@ -211,8 +213,8 @@ Public Function Test_ObtenerHistorialExpediente() As Boolean
     ' Arrange
     Dim expedienteService As IExpedienteService
     Set expedienteService = New CExpedienteService
-    Dim expedienteID As Long
-    expedienteID = 1
+    Dim expedienteId As Long
+    expedienteId = 1
     
     ' Act - Simular obtencion de historial de expediente
     Dim historialObtenido As Boolean
@@ -221,6 +223,12 @@ Public Function Test_ObtenerHistorialExpediente() As Boolean
     ' Assert
     Test_ObtenerHistorialExpediente = historialObtenido
 End Function
+
+
+
+
+
+
 
 
 

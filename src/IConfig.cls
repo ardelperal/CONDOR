@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -8,6 +8,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
+
+
 Option Explicit
 
 ' Interfaz: IConfig
@@ -112,6 +114,12 @@ End Function
 Public Function TestCConfig() As String
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
+
+
+
+
+
+
 
 
 

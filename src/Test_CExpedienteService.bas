@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_CExpedienteService"
+﻿Attribute VB_Name = "Test_CExpedienteService"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -11,9 +13,9 @@ Option Explicit
 
 ' Mock para simular datos de expediente
 Private Type T_MockExpedienteData
-    IdExpediente As Long
+    idExpediente As Long
     NumeroExpediente As String
-    FechaCreacion As Date
+    fechaCreacion As Date
     Estado As String
     Descripcion As String
     IdUsuarioCreador As Long
@@ -27,9 +29,9 @@ Private m_MockExpediente As T_MockExpedienteData
 ' ============================================================================
 
 Private Sub SetupValidExpedienteMock()
-    m_MockExpediente.IdExpediente = 12345
+    m_MockExpediente.idExpediente = 12345
     m_MockExpediente.NumeroExpediente = "EXP-2025-001"
-    m_MockExpediente.FechaCreacion = Date
+    m_MockExpediente.fechaCreacion = Date
     m_MockExpediente.Estado = "Activo"
     m_MockExpediente.Descripcion = "Expediente de prueba para testing"
     m_MockExpediente.IdUsuarioCreador = 1
@@ -37,9 +39,9 @@ Private Sub SetupValidExpedienteMock()
 End Sub
 
 Private Sub SetupInvalidExpedienteMock()
-    m_MockExpediente.IdExpediente = 0
+    m_MockExpediente.idExpediente = 0
     m_MockExpediente.NumeroExpediente = ""
-    m_MockExpediente.FechaCreacion = #1/1/1900#
+    m_MockExpediente.fechaCreacion = #1/1/1900#
     m_MockExpediente.Estado = ""
     m_MockExpediente.Descripcion = ""
     m_MockExpediente.IdUsuarioCreador = 0
@@ -47,9 +49,9 @@ Private Sub SetupInvalidExpedienteMock()
 End Sub
 
 Private Sub SetupLargeExpedienteMock()
-    m_MockExpediente.IdExpediente = 999999
+    m_MockExpediente.idExpediente = 999999
     m_MockExpediente.NumeroExpediente = "EXP-2025-999999"
-    m_MockExpediente.FechaCreacion = Date
+    m_MockExpediente.fechaCreacion = Date
     m_MockExpediente.Estado = "Cerrado"
     m_MockExpediente.Descripcion = String(1000, "X") ' Descripción muy larga
     m_MockExpediente.IdUsuarioCreador = 999
@@ -148,10 +150,10 @@ Public Function Test_GetExpediente_ValidId_ReturnsExpediente() As Boolean
     
     ' Act
     Dim expediente As T_Expediente
-    expediente = expedienteService.GetExpediente(m_MockExpediente.IdExpediente)
+    expediente = expedienteService.GetExpediente(m_MockExpediente.idExpediente)
     
     ' Assert
-    Test_GetExpediente_ValidId_ReturnsExpediente = (expediente.IDExpediente > 0)
+    Test_GetExpediente_ValidId_ReturnsExpediente = (expediente.idExpediente > 0)
     
     Exit Function
     
@@ -171,7 +173,7 @@ Public Function Test_GetExpediente_InvalidId_HandlesGracefully() As Boolean
     expediente = expedienteService.GetExpediente(-1)
     
     ' Assert
-    Test_GetExpediente_InvalidId_HandlesGracefully = (expediente.IDExpediente = 0)
+    Test_GetExpediente_InvalidId_HandlesGracefully = (expediente.idExpediente = 0)
     
     Exit Function
     
@@ -191,7 +193,7 @@ Public Function Test_GetExpediente_ZeroId_HandlesGracefully() As Boolean
     expediente = expedienteService.GetExpediente(0)
     
     ' Assert
-    Test_GetExpediente_ZeroId_HandlesGracefully = (expediente.IDExpediente = 0)
+    Test_GetExpediente_ZeroId_HandlesGracefully = (expediente.idExpediente = 0)
     
     Exit Function
     
@@ -285,7 +287,7 @@ Public Function Test_UpdateExpediente_ValidData_ReturnsTrue() As Boolean
     
     ' Act
     Dim result As Boolean
-    result = expedienteService.UpdateExpediente(m_MockExpediente.IdExpediente, _
+    result = expedienteService.UpdateExpediente(m_MockExpediente.idExpediente, _
                                               "Nueva descripción", _
                                               "Actualizado")
     
@@ -333,7 +335,7 @@ Public Function Test_DeleteExpediente_ValidId_ReturnsTrue() As Boolean
     
     ' Act
     Dim result As Boolean
-    result = expedienteService.DeleteExpediente(m_MockExpediente.IdExpediente)
+    result = expedienteService.DeleteExpediente(m_MockExpediente.idExpediente)
     
     ' Assert
     ' Servicio real devuelve False (TODO no implementado)
@@ -467,7 +469,7 @@ Public Function Test_ValidateExpediente_ValidData_ReturnsTrue() As Boolean
     
     ' Act
     Dim expediente As T_Expediente
-    expediente.IDExpediente = m_MockExpediente.IdExpediente
+    expediente.idExpediente = m_MockExpediente.idExpediente
     expediente.Titulo = m_MockExpediente.Descripcion
     
     Dim result As Boolean
@@ -492,7 +494,7 @@ Public Function Test_ValidateExpediente_InvalidData_ReturnsFalse() As Boolean
     
     ' Act
     Dim expediente As T_Expediente
-    expediente.IDExpediente = m_MockExpediente.IdExpediente
+    expediente.idExpediente = m_MockExpediente.idExpediente
     expediente.Titulo = m_MockExpediente.Descripcion
     
     Dim result As Boolean
@@ -529,7 +531,7 @@ Public Function Test_CExpedienteService_IntegrationCreate_GetById() As Boolean
     
     ' Assert
     ' La implementación actual devuelve 0 para CreateExpediente y expediente vacío para GetExpediente
-    Test_CExpedienteService_IntegrationCreate_GetById = (newId = 0) And (retrievedExpediente.IDExpediente = 0)
+    Test_CExpedienteService_IntegrationCreate_GetById = (newId = 0) And (retrievedExpediente.idExpediente = 0)
     
     Exit Function
     
@@ -547,11 +549,11 @@ Public Function Test_CExpedienteService_IntegrationUpdate_Validate() As Boolean
     
     ' Act
     Dim expediente As T_Expediente
-    expediente.IDExpediente = 1
+    expediente.idExpediente = 1
     expediente.Titulo = "Expediente Actualizado"
     
     Dim updateResult As Boolean
-    updateResult = expedienteService.UpdateExpediente(expediente.IDExpediente, "Nueva descripción", "Actualizado")
+    updateResult = expedienteService.UpdateExpediente(expediente.idExpediente, "Nueva descripción", "Actualizado")
     
     Dim validationResult As Boolean
     validationResult = expedienteService.ValidateExpediente(expediente)
@@ -639,169 +641,169 @@ Public Function RunCExpedienteServiceTests() As String
     totalTests = totalTests + 1
     If Test_CExpedienteService_Creation_Success() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CExpedienteService_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_Creation_Success" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CExpedienteService_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_Creation_Success" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CExpedienteService_ImplementsIExpedienteService() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetExpediente_ValidId_ReturnsExpediente() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetExpediente_ValidId_ReturnsExpediente" & vbCrLf
+        resultado = resultado & "? Test_GetExpediente_ValidId_ReturnsExpediente" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetExpediente_ValidId_ReturnsExpediente" & vbCrLf
+        resultado = resultado & "? Test_GetExpediente_ValidId_ReturnsExpediente" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetExpediente_InvalidId_HandlesGracefully() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetExpediente_InvalidId_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetExpediente_InvalidId_HandlesGracefully" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetExpediente_InvalidId_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetExpediente_InvalidId_HandlesGracefully" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetExpediente_ZeroId_HandlesGracefully() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetExpediente_ZeroId_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetExpediente_ZeroId_HandlesGracefully" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetExpediente_ZeroId_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetExpediente_ZeroId_HandlesGracefully" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CreateExpediente_ValidData_ReturnsId() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CreateExpediente_ValidData_ReturnsId" & vbCrLf
+        resultado = resultado & "? Test_CreateExpediente_ValidData_ReturnsId" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CreateExpediente_ValidData_ReturnsId" & vbCrLf
+        resultado = resultado & "? Test_CreateExpediente_ValidData_ReturnsId" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CreateExpediente_EmptyNumber_HandlesError() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CreateExpediente_EmptyNumber_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateExpediente_EmptyNumber_HandlesError" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CreateExpediente_EmptyNumber_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateExpediente_EmptyNumber_HandlesError" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CreateExpediente_InvalidUserId_HandlesError() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CreateExpediente_InvalidUserId_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateExpediente_InvalidUserId_HandlesError" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CreateExpediente_InvalidUserId_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateExpediente_InvalidUserId_HandlesError" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_UpdateExpediente_ValidData_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_UpdateExpediente_ValidData_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_UpdateExpediente_ValidData_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_UpdateExpediente_ValidData_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_UpdateExpediente_ValidData_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_UpdateExpediente_InvalidId_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_UpdateExpediente_InvalidId_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_UpdateExpediente_InvalidId_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_UpdateExpediente_InvalidId_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_UpdateExpediente_InvalidId_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_DeleteExpediente_ValidId_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_DeleteExpediente_ValidId_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_DeleteExpediente_ValidId_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_DeleteExpediente_ValidId_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_DeleteExpediente_ValidId_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_DeleteExpediente_InvalidId_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_DeleteExpediente_InvalidId_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_DeleteExpediente_InvalidId_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_DeleteExpediente_InvalidId_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_DeleteExpediente_InvalidId_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SearchExpedientes_ValidCriteria_ReturnsResults() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SearchExpedientes_ValidCriteria_ReturnsResults" & vbCrLf
+        resultado = resultado & "? Test_SearchExpedientes_ValidCriteria_ReturnsResults" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SearchExpedientes_ValidCriteria_ReturnsResults" & vbCrLf
+        resultado = resultado & "? Test_SearchExpedientes_ValidCriteria_ReturnsResults" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SearchExpedientes_EmptyCriteria_ReturnsAll() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SearchExpedientes_EmptyCriteria_ReturnsAll" & vbCrLf
+        resultado = resultado & "? Test_SearchExpedientes_EmptyCriteria_ReturnsAll" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SearchExpedientes_EmptyCriteria_ReturnsAll" & vbCrLf
+        resultado = resultado & "? Test_SearchExpedientes_EmptyCriteria_ReturnsAll" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetExpedientesByUser_ValidUserId_ReturnsResults() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetExpedientesByUser_ValidUserId_ReturnsResults" & vbCrLf
+        resultado = resultado & "? Test_GetExpedientesByUser_ValidUserId_ReturnsResults" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetExpedientesByUser_ValidUserId_ReturnsResults" & vbCrLf
+        resultado = resultado & "? Test_GetExpedientesByUser_ValidUserId_ReturnsResults" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidateExpediente_ValidData_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidateExpediente_ValidData_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidateExpediente_ValidData_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidateExpediente_ValidData_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidateExpediente_ValidData_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidateExpediente_InvalidData_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidateExpediente_InvalidData_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidateExpediente_InvalidData_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidateExpediente_InvalidData_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidateExpediente_InvalidData_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CExpedienteService_IntegrationCreate_GetById() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CExpedienteService_IntegrationCreate_GetById" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_IntegrationCreate_GetById" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CExpedienteService_IntegrationCreate_GetById" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_IntegrationCreate_GetById" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CExpedienteService_IntegrationUpdate_Validate() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CExpedienteService_IntegrationUpdate_Validate" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_IntegrationUpdate_Validate" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CExpedienteService_IntegrationUpdate_Validate" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_IntegrationUpdate_Validate" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CExpedienteService_LargeDataset_Performance() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CExpedienteService_LargeDataset_Performance" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_LargeDataset_Performance" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CExpedienteService_LargeDataset_Performance" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_LargeDataset_Performance" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CExpedienteService_ConcurrentAccess_ThreadSafety() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CExpedienteService_ConcurrentAccess_ThreadSafety" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_ConcurrentAccess_ThreadSafety" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CExpedienteService_ConcurrentAccess_ThreadSafety" & vbCrLf
+        resultado = resultado & "? Test_CExpedienteService_ConcurrentAccess_ThreadSafety" & vbCrLf
     End If
     
     ' Resumen
@@ -809,3 +811,14 @@ Public Function RunCExpedienteServiceTests() As String
     
     RunCExpedienteServiceTests = resultado
 End Function
+
+
+
+
+
+
+
+
+
+
+

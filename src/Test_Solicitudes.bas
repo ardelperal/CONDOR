@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_Solicitudes"
+﻿Attribute VB_Name = "Test_Solicitudes"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -50,5 +52,11 @@ Private Function Test_Factory_Crea_PC() As Boolean
 ErrorHandler:
     Test_Factory_Crea_PC = False
 End Function
+
+
+
+
+
+
 
 

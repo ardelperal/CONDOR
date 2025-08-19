@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_AuthService"
+﻿Attribute VB_Name = "Test_AuthService"
 Option Compare Database
+
+
 Option Explicit
 
 ' =====================================================
@@ -97,11 +99,11 @@ Public Function Test_ValidarUsuarioValido() As Boolean
     Dim password As String: password = "password123"
 
     ' Act (simulado)
-    Dim esValido As Boolean
-    esValido = True
+    Dim EsValido As Boolean
+    EsValido = True
 
     ' Assert
-    Test_ValidarUsuarioValido = esValido
+    Test_ValidarUsuarioValido = EsValido
 End Function
 
 Public Function Test_ValidarUsuarioInvalido() As Boolean
@@ -112,11 +114,11 @@ Public Function Test_ValidarUsuarioInvalido() As Boolean
     Dim password As String: password = "wrong"
 
     ' Act (simulado)
-    Dim esValido As Boolean
-    esValido = False
+    Dim EsValido As Boolean
+    EsValido = False
 
     ' Assert (esperado False)
-    Test_ValidarUsuarioInvalido = (esValido = False)
+    Test_ValidarUsuarioInvalido = (EsValido = False)
 End Function
 
 Public Function Test_ObtenerRolUsuario() As Boolean
@@ -126,11 +128,11 @@ Public Function Test_ObtenerRolUsuario() As Boolean
     Dim usuario As String: usuario = "jdoe"
 
     ' Act (simulado)
-    Dim rol As String
-    rol = "ADMIN"
+    Dim Rol As String
+    Rol = "ADMIN"
 
     ' Assert
-    Test_ObtenerRolUsuario = (rol <> "")
+    Test_ObtenerRolUsuario = (Rol <> "")
 End Function
 
 Public Function Test_VerificarPermisoPermitido() As Boolean
@@ -190,6 +192,12 @@ Public Function Test_RevocarSesion() As Boolean
     ' Assert
     Test_RevocarSesion = revocada
 End Function
+
+
+
+
+
+
 
 
 

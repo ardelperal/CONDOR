@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,6 +7,11 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Compare Database
+
+
+Option Explicit
+
 '******************************************************************************
 ' CLASE: T_RespuestaRAC
 ' DESCRIPCIÓN: Tipo de datos para respuestas del Sistema RAC
@@ -15,8 +20,6 @@ Attribute VB_Exposed = False
 ' NOTA: Propiedades definidas basándose en Especificaciones_Integracion_CONDOR.md
 '******************************************************************************
 
-Option Compare Database
-Option Explicit
 
 '******************************************************************************
 ' PROPIEDADES PÚBLICAS
@@ -114,3 +117,14 @@ Public Function PuedeReintentar() As Boolean
                       CodigoError <> 401 And _
                       CodigoError <> 403)
 End Function
+
+
+
+
+
+
+
+
+
+
+

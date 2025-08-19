@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -8,6 +8,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
+
+
 Option Explicit
 
 ' Implementaci?n del Servicio de Solicitudes
@@ -66,12 +68,12 @@ Private Function ISolicitudService_GetSolicitud(ByVal ID As Long) As ISolicitud
     Set ISolicitudService_GetSolicitud = Nothing
 End Function
 
-Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As Long, ByVal tipo As String, ByVal descripcion As String, ByVal idUsuario As Long) As Long
+Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As Long, ByVal tipo As String, ByVal Descripcion As String, ByVal idUsuario As Long) As Long
     ' TODO: Implementar lógica de creación de solicitud
     ISolicitudService_CreateSolicitud = 0
 End Function
 
-Private Function ISolicitudService_UpdateSolicitud(ByVal ID As Long, ByVal descripcion As String, ByVal estado As String) As Boolean
+Private Function ISolicitudService_UpdateSolicitud(ByVal ID As Long, ByVal Descripcion As String, ByVal Estado As String) As Boolean
     ' TODO: Implementar lógica de actualización de solicitud
     ISolicitudService_UpdateSolicitud = False
 End Function
@@ -91,7 +93,7 @@ Private Function ISolicitudService_GetSolicitudesByTipo(ByVal tipo As String) As
     Set ISolicitudService_GetSolicitudesByTipo = New Collection
 End Function
 
-Private Function ISolicitudService_GetSolicitudesByEstado(ByVal estado As String) As Collection
+Private Function ISolicitudService_GetSolicitudesByEstado(ByVal Estado As String) As Collection
     ' TODO: Implementar lógica de búsqueda por estado
     Set ISolicitudService_GetSolicitudesByEstado = New Collection
 End Function
@@ -105,6 +107,12 @@ Private Function ISolicitudService_ValidateSolicitud(solicitud As ISolicitud) As
     ' TODO: Implementar lógica de validación
     ISolicitudService_ValidateSolicitud = True
 End Function
+
+
+
+
+
+
 
 
 

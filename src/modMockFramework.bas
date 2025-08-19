@@ -1,5 +1,7 @@
-Attribute VB_Name = "modMockFramework"
+﻿Attribute VB_Name = "modMockFramework"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -43,8 +45,8 @@ Type T_MockSolicitudesDB
     IsConnected As Boolean
     ShouldFail As Boolean
     SolicitudExists As Boolean
-    SolicitudData As T_Solicitud
-    PCData As T_Datos_PC
+    solicitudData As T_Solicitud
+    pcData As T_Datos_PC
     LastInsertedID As Long
     TransactionActive As Boolean
     ErrorNumber As Long
@@ -62,7 +64,7 @@ Type T_MockFileSystem
     DirectoryExists As Boolean
     LastReadContent As String
     LastWrittenContent As String
-    FilePath As String
+    filePath As String
     ErrorOnAccess As Boolean
     AccessAttempts As Long
 End Type
@@ -100,7 +102,7 @@ Type T_MockRecordset
     RecordCount As Long
     CurrentRecord As Long
     FieldCount As Integer
-    FieldNames As Variant
+    fieldNames As Variant
     FieldValues As Variant
     CanEdit As Boolean
     ShouldFailOperation As Boolean
@@ -175,7 +177,7 @@ Public Sub InitializeExpedientesMock()
         ' Inicializar datos de expediente por defecto
         With .ExpedienteData
             .ID = 123
-            .IDExpediente = 123
+            .idExpediente = 123
             .Nemotecnico = "EXP-2024-001"
             .Titulo = "Expediente de prueba"
             .ResponsableCalidad = "usuario.prueba@empresa.com"
@@ -200,30 +202,30 @@ Public Sub InitializeSolicitudesMock()
         .RecordsAffected = 1
         
         ' Inicializar datos de solicitud por defecto
-        With .SolicitudData
+        With .solicitudData
             .ID = 456
             .NumeroExpediente = "EXP-2024-001"
-            .TipoSolicitud = "PC"
-            .EstadoInterno = "Borrador"
+            .tipoSolicitud = "PC"
+            .estadoInterno = "Borrador"
             .EstadoRAC = "Pendiente"
-            .Usuario = "usuario.prueba@empresa.com"
-            .FechaCreacion = Date
+            .usuario = "usuario.prueba@empresa.com"
+            .fechaCreacion = Date
             .Observaciones = "Solicitud de prueba"
             .Activo = True
         End With
         
         ' Inicializar datos PC por defecto
-        With .PCData
+        With .pcData
             .ID = 789
             .SolicitudID = 456
             .NumeroExpediente = "EXP-2024-001"
-            .TipoSolicitud = "PC"
-            .DescripcionCambio = "Descripción de prueba"
+            .tipoSolicitud = "PC"
+            .descripcionCambio = "Descripción de prueba"
             .JustificacionCambio = "Justificación de prueba"
             .ImpactoSeguridad = "Bajo"
-            .ImpactoCalidad = "Medio"
+            .impactoCalidad = "Medio"
             .Estado = "Activo"
-            .FechaCreacion = Date
+            .fechaCreacion = Date
             .Activo = True
         End With
     End With
@@ -238,7 +240,7 @@ Public Sub InitializeFileSystemMock()
         .DirectoryExists = True
         .LastReadContent = ""
         .LastWrittenContent = ""
-        .FilePath = ""
+        .filePath = ""
         .ErrorOnAccess = False
         .AccessAttempts = 0
     End With
@@ -282,7 +284,7 @@ Public Sub InitializeRecordsetMock()
         .RecordCount = 1
         .CurrentRecord = 1
         .FieldCount = 5
-        .FieldNames = Array("ID", "Nombre", "Email", "Fecha", "Activo")
+        .fieldNames = Array("ID", "Nombre", "Email", "Fecha", "Activo")
         .FieldValues = Array(123, "Usuario Prueba", "usuario@test.com", Date, True)
         .CanEdit = True
         .ShouldFailOperation = False
@@ -433,24 +435,24 @@ End Function
 ' FUNCIONES DE CONFIGURACIÓN ESPECÍFICA
 ' ============================================================================
 
-Public Sub SetLanzaderaUser(email As String, role As String, exists As Boolean)
+Public Sub SetLanzaderaUser(Email As String, role As String, exists As Boolean)
     ' Configurar usuario específico en mock de Lanzadera
     With g_MockLanzadera
-        .UserEmail = email
+        .UserEmail = Email
         .UserRole = role
         .UserExists = exists
         .RecordCount = IIf(exists, 1, 0)
     End With
 End Sub
 
-Public Sub SetExpedienteData(id As Long, nemotecnico As String, titulo As String, responsableCalidad As String)
+Public Sub SetExpedienteData(ID As Long, Nemotecnico As String, Titulo As String, ResponsableCalidad As String)
     ' Configurar datos específicos de expediente
     With g_MockExpedientes.ExpedienteData
-        .ID = id
-        .IDExpediente = id
-        .Nemotecnico = nemotecnico
-        .Titulo = titulo
-        .ResponsableCalidad = responsableCalidad
+        .ID = ID
+        .idExpediente = ID
+        .Nemotecnico = Nemotecnico
+        .Titulo = Titulo
+        .ResponsableCalidad = ResponsableCalidad
         .ResponsableTecnico = "jefe.proyecto@empresa.com"
         .Pecal = "PECAL-001"
     End With
@@ -458,28 +460,28 @@ Public Sub SetExpedienteData(id As Long, nemotecnico As String, titulo As String
     g_MockExpedientes.RecordCount = 1
 End Sub
 
-Public Sub SetSolicitudData(id As Long, expediente As String, tipo As String, estado As String)
+Public Sub SetSolicitudData(ID As Long, expediente As String, tipo As String, Estado As String)
     ' Configurar datos específicos de solicitud
-    With g_MockSolicitudes.SolicitudData
-        .ID = id
+    With g_MockSolicitudes.solicitudData
+        .ID = ID
         .NumeroExpediente = expediente
-        .TipoSolicitud = tipo
-        .EstadoInterno = estado
-        .FechaCreacion = Date
+        .tipoSolicitud = tipo
+        .estadoInterno = Estado
+        .fechaCreacion = Date
         .Activo = True
     End With
     g_MockSolicitudes.SolicitudExists = True
     g_MockSolicitudes.RecordCount = 1
 End Sub
 
-Public Sub SetPCData(id As Long, solicitudId As Long, descripcion As String, justificacion As String)
+Public Sub SetPCData(ID As Long, SolicitudID As Long, Descripcion As String, justificacion As String)
     ' Configurar datos específicos de PC
-    With g_MockSolicitudes.PCData
-        .ID = id
-        .SolicitudID = solicitudId
-        .DescripcionCambio = descripcion
+    With g_MockSolicitudes.pcData
+        .ID = ID
+        .SolicitudID = SolicitudID
+        .descripcionCambio = Descripcion
         .JustificacionCambio = justificacion
-        .FechaCreacion = Date
+        .fechaCreacion = Date
         .Activo = True
     End With
 End Sub
@@ -487,7 +489,7 @@ End Sub
 Public Sub SetFileSystemPath(filePath As String, exists As Boolean, canRead As Boolean, canWrite As Boolean)
     ' Configurar ruta específica en sistema de archivos
     With g_MockFileSystem
-        .FilePath = filePath
+        .filePath = filePath
         .FileExists = exists
         .CanReadFile = canRead
         .CanWriteFile = canWrite
@@ -495,14 +497,14 @@ Public Sub SetFileSystemPath(filePath As String, exists As Boolean, canRead As B
     End With
 End Sub
 
-Public Sub SetRecordsetData(fieldNames As Variant, fieldValues As Variant, recordCount As Long)
+Public Sub SetRecordsetData(fieldNames As Variant, FieldValues As Variant, RecordCount As Long)
     ' Configurar datos específicos de Recordset
     With g_MockRecordset
-        .FieldNames = fieldNames
-        .FieldValues = fieldValues
-        .RecordCount = recordCount
+        .fieldNames = fieldNames
+        .FieldValues = FieldValues
+        .RecordCount = RecordCount
         .FieldCount = UBound(fieldNames) + 1
-        .IsEOF = (recordCount = 0)
+        .IsEOF = (RecordCount = 0)
         .IsOpen = True
     End With
 End Sub
@@ -526,7 +528,7 @@ End Sub
 Public Sub SimulateFileAccess(filePath As String, operation As String, content As String)
     ' Simular acceso a archivo
     With g_MockFileSystem
-        .FilePath = filePath
+        .filePath = filePath
         .AccessAttempts = .AccessAttempts + 1
         
         Select Case UCase(operation)
@@ -598,7 +600,7 @@ End Function
 Public Function VerifyFileAccessed(ByVal expectedPath As String, ByVal expectedOperation As String) As Boolean
     ' Verificar que se accedió al archivo esperado
     With g_MockFileSystem
-        VerifyFileAccessed = (.FilePath = expectedPath) And (.AccessAttempts > 0)
+        VerifyFileAccessed = (.filePath = expectedPath) And (.AccessAttempts > 0)
     End With
 End Function
 
@@ -687,3 +689,14 @@ Public Sub LogMockActivity(activity As String)
     ' Registrar actividad de mock para debugging
     Debug.Print Format(Now(), "hh:nn:ss") & " - MOCK: " & activity
 End Sub
+
+
+
+
+
+
+
+
+
+
+

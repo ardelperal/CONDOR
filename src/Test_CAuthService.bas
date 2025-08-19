@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_CAuthService"
+﻿Attribute VB_Name = "Test_CAuthService"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -13,7 +15,7 @@ Option Explicit
 Private Type T_MockUserData
     Email As String
     IsValid As Boolean
-    Role As String
+    role As String
     IsAuthenticated As Boolean
     HasPermission As Boolean
 End Type
@@ -27,7 +29,7 @@ Private m_MockUser As T_MockUserData
 Private Sub SetupValidUserMock()
     m_MockUser.Email = "usuario.test@condor.com"
     m_MockUser.IsValid = True
-    m_MockUser.Role = "Administrador"
+    m_MockUser.role = "Administrador"
     m_MockUser.IsAuthenticated = True
     m_MockUser.HasPermission = True
 End Sub
@@ -35,7 +37,7 @@ End Sub
 Private Sub SetupInvalidUserMock()
     m_MockUser.Email = "invalid@test.com"
     m_MockUser.IsValid = False
-    m_MockUser.Role = ""
+    m_MockUser.role = ""
     m_MockUser.IsAuthenticated = False
     m_MockUser.HasPermission = False
 End Sub
@@ -43,7 +45,7 @@ End Sub
 Private Sub SetupGuestUserMock()
     m_MockUser.Email = "guest@condor.com"
     m_MockUser.IsValid = True
-    m_MockUser.Role = "Invitado"
+    m_MockUser.role = "Invitado"
     m_MockUser.IsAuthenticated = True
     m_MockUser.HasPermission = False
 End Sub
@@ -506,137 +508,137 @@ Public Function RunCAuthServiceTests() As String
     totalTests = totalTests + 1
     If Test_CAuthService_Creation_Success() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CAuthService_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CAuthService_Creation_Success" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CAuthService_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CAuthService_Creation_Success" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CAuthService_ImplementsIAuthService() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CAuthService_ImplementsIAuthService" & vbCrLf
+        resultado = resultado & "? Test_CAuthService_ImplementsIAuthService" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CAuthService_ImplementsIAuthService" & vbCrLf
+        resultado = resultado & "? Test_CAuthService_ImplementsIAuthService" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_AuthenticateUser_ValidEmail_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_AuthenticateUser_ValidEmail_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_AuthenticateUser_ValidEmail_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_AuthenticateUser_ValidEmail_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_AuthenticateUser_ValidEmail_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_AuthenticateUser_InvalidEmail_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_AuthenticateUser_InvalidEmail_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_AuthenticateUser_InvalidEmail_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_AuthenticateUser_InvalidEmail_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_AuthenticateUser_InvalidEmail_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_AuthenticateUser_EmptyEmail_HandlesGracefully() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_AuthenticateUser_EmptyEmail_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_AuthenticateUser_EmptyEmail_HandlesGracefully" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_AuthenticateUser_EmptyEmail_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_AuthenticateUser_EmptyEmail_HandlesGracefully" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_IsUserAuthorized_ValidUser_ReturnsBoolean() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_IsUserAuthorized_ValidUser_ReturnsBoolean" & vbCrLf
+        resultado = resultado & "? Test_IsUserAuthorized_ValidUser_ReturnsBoolean" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_IsUserAuthorized_ValidUser_ReturnsBoolean" & vbCrLf
+        resultado = resultado & "? Test_IsUserAuthorized_ValidUser_ReturnsBoolean" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_IsUserAuthorized_InvalidPermission_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_IsUserAuthorized_InvalidPermission_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_IsUserAuthorized_InvalidPermission_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_IsUserAuthorized_InvalidPermission_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_IsUserAuthorized_InvalidPermission_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_IsUserAuthorized_GuestUser_LimitedPermissions() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_IsUserAuthorized_GuestUser_LimitedPermissions" & vbCrLf
+        resultado = resultado & "? Test_IsUserAuthorized_GuestUser_LimitedPermissions" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_IsUserAuthorized_GuestUser_LimitedPermissions" & vbCrLf
+        resultado = resultado & "? Test_IsUserAuthorized_GuestUser_LimitedPermissions" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetUserRole_ValidUser_ReturnsRole() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetUserRole_ValidUser_ReturnsRole" & vbCrLf
+        resultado = resultado & "? Test_GetUserRole_ValidUser_ReturnsRole" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetUserRole_ValidUser_ReturnsRole" & vbCrLf
+        resultado = resultado & "? Test_GetUserRole_ValidUser_ReturnsRole" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetUserRole_InvalidUser_ReturnsEmpty() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetUserRole_InvalidUser_ReturnsEmpty" & vbCrLf
+        resultado = resultado & "? Test_GetUserRole_InvalidUser_ReturnsEmpty" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetUserRole_InvalidUser_ReturnsEmpty" & vbCrLf
+        resultado = resultado & "? Test_GetUserRole_InvalidUser_ReturnsEmpty" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidateEmail_ValidFormat_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidateEmail_ValidFormat_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidateEmail_ValidFormat_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidateEmail_ValidFormat_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidateEmail_ValidFormat_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidateEmail_InvalidFormat_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidateEmail_InvalidFormat_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidateEmail_InvalidFormat_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidateEmail_InvalidFormat_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidateEmail_InvalidFormat_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidateEmail_EmptyString_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidateEmail_EmptyString_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidateEmail_EmptyString_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidateEmail_EmptyString_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidateEmail_EmptyString_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Integration_AuthenticateAndAuthorize() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Integration_AuthenticateAndAuthorize" & vbCrLf
+        resultado = resultado & "? Test_Integration_AuthenticateAndAuthorize" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Integration_AuthenticateAndAuthorize" & vbCrLf
+        resultado = resultado & "? Test_Integration_AuthenticateAndAuthorize" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Integration_GetCurrentUserEmail() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Integration_GetCurrentUserEmail" & vbCrLf
+        resultado = resultado & "? Test_Integration_GetCurrentUserEmail" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Integration_GetCurrentUserEmail" & vbCrLf
+        resultado = resultado & "? Test_Integration_GetCurrentUserEmail" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_MultipleAuthentications_SameUser() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_MultipleAuthentications_SameUser" & vbCrLf
+        resultado = resultado & "? Test_MultipleAuthentications_SameUser" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_MultipleAuthentications_SameUser" & vbCrLf
+        resultado = resultado & "? Test_MultipleAuthentications_SameUser" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ConcurrentUsers_DifferentRoles() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ConcurrentUsers_DifferentRoles" & vbCrLf
+        resultado = resultado & "? Test_ConcurrentUsers_DifferentRoles" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ConcurrentUsers_DifferentRoles" & vbCrLf
+        resultado = resultado & "? Test_ConcurrentUsers_DifferentRoles" & vbCrLf
     End If
     
     ' Resumen
@@ -644,3 +646,8 @@ Public Function RunCAuthServiceTests() As String
     
     RunCAuthServiceTests = resultado
 End Function
+
+
+
+
+

@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_Master_Suite"
+﻿Attribute VB_Name = "Test_Master_Suite"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -11,10 +13,10 @@ Option Explicit
 
 ' Estructura para resultados de pruebas por módulo
 Type T_ModuleTestResults
-    ModuleName As String
-    TotalTests As Long
-    PassedTests As Long
-    FailedTests As Long
+    moduleName As String
+    totalTests As Long
+    passedTests As Long
+    failedTests As Long
     ExecutionTime As Double
     ErrorMessages As String
     CoveragePercentage As Double
@@ -23,13 +25,13 @@ End Type
 ' Estructura para resumen general de pruebas
 Type T_TestSuiteSummary
     TotalModules As Long
-    TotalTests As Long
+    totalTests As Long
     TotalPassed As Long
     TotalFailed As Long
     TotalExecutionTime As Double
     OverallCoverage As Double
-    StartTime As Date
-    EndTime As Date
+    startTime As Date
+    endTime As Date
     Status As String
 End Type
 
@@ -78,12 +80,12 @@ Private Sub InitializeTestSummary()
     ' Inicializar estructura de resumen de pruebas
     With g_TestSummary
         .TotalModules = 0
-        .TotalTests = 0
+        .totalTests = 0
         .TotalPassed = 0
         .TotalFailed = 0
         .TotalExecutionTime = 0
         .OverallCoverage = 0
-        .StartTime = Now()
+        .startTime = Now()
         .Status = "En Ejecución"
     End With
     
@@ -149,10 +151,10 @@ Private Sub ExecuteModuleTest(moduleName As String, functionName As String)
     
     ' Inicializar resultado del módulo
     With moduleResult
-        .ModuleName = moduleName
-        .TotalTests = 0
-        .PassedTests = 0
-        .FailedTests = 0
+        .moduleName = moduleName
+        .totalTests = 0
+        .passedTests = 0
+        .failedTests = 0
         .ExecutionTime = 0
         .ErrorMessages = ""
         .CoveragePercentage = 0
@@ -185,7 +187,7 @@ Private Sub ExecuteModuleTest(moduleName As String, functionName As String)
 ErrorHandler:
     Debug.Print "ERROR en módulo " & moduleName & ": " & Err.Number & " - " & Err.Description
     moduleResult.ErrorMessages = "Error " & Err.Number & ": " & Err.Description
-    moduleResult.FailedTests = moduleResult.FailedTests + 1
+    moduleResult.failedTests = moduleResult.failedTests + 1
     
     ' Agregar resultado con error
     g_CurrentModuleIndex = g_CurrentModuleIndex + 1
@@ -228,14 +230,14 @@ Private Sub ExecuteTestFunction(moduleName As String, functionName As String, By
             
         Case Else
             result.ErrorMessages = "Módulo de pruebas no reconocido: " & moduleName
-            result.FailedTests = 1
+            result.failedTests = 1
     End Select
     
     Exit Sub
     
 ErrorHandler:
     result.ErrorMessages = "Error ejecutando " & functionName & ": " & Err.Description
-    result.FailedTests = result.FailedTests + 1
+    result.failedTests = result.failedTests + 1
 End Sub
 
 ' ============================================================================
@@ -245,90 +247,90 @@ End Sub
 Private Sub SimulateConfigTests(ByRef result As T_ModuleTestResults)
     ' Simular pruebas de configuración
     With result
-        .TotalTests = 8
-        .PassedTests = 7
-        .FailedTests = 1
+        .totalTests = 8
+        .passedTests = 7
+        .failedTests = 1
         .CoveragePercentage = 87.5
         .ErrorMessages = "Test_Config_LoadInvalidPath: Ruta de configuración inválida no manejada correctamente"
     End With
-    Debug.Print "  ✓ Test_Config_LoadDefault: PASÓ"
-    Debug.Print "  ✓ Test_Config_SaveConfiguration: PASÓ"
-    Debug.Print "  ✓ Test_Config_GetDatabasePath: PASÓ"
-    Debug.Print "  ✓ Test_Config_SetLogLevel: PASÓ"
-    Debug.Print "  ✓ Test_Config_ValidateSettings: PASÓ"
-    Debug.Print "  ✓ Test_Config_HandleMissingFile: PASÓ"
-    Debug.Print "  ✓ Test_Config_BackupConfiguration: PASÓ"
-    Debug.Print "  ✗ Test_Config_LoadInvalidPath: FALLÓ - Ruta inválida no validada"
+    Debug.Print "  ? Test_Config_LoadDefault: PASÓ"
+    Debug.Print "  ? Test_Config_SaveConfiguration: PASÓ"
+    Debug.Print "  ? Test_Config_GetDatabasePath: PASÓ"
+    Debug.Print "  ? Test_Config_SetLogLevel: PASÓ"
+    Debug.Print "  ? Test_Config_ValidateSettings: PASÓ"
+    Debug.Print "  ? Test_Config_HandleMissingFile: PASÓ"
+    Debug.Print "  ? Test_Config_BackupConfiguration: PASÓ"
+    Debug.Print "  ? Test_Config_LoadInvalidPath: FALLÓ - Ruta inválida no validada"
 End Sub
 
 Private Sub SimulateAuthServiceTests(ByRef result As T_ModuleTestResults)
     ' Simular pruebas de servicio de autenticación
     With result
-        .TotalTests = 12
-        .PassedTests = 11
-        .FailedTests = 1
+        .totalTests = 12
+        .passedTests = 11
+        .failedTests = 1
         .CoveragePercentage = 91.7
         .ErrorMessages = "Test_Auth_InvalidCredentials: Credenciales inválidas no rechazadas correctamente"
     End With
-    Debug.Print "  ✓ Test_Auth_ValidLogin: PASÓ"
-    Debug.Print "  ✓ Test_Auth_GetUserRole: PASÓ"
-    Debug.Print "  ✓ Test_Auth_CheckPermissions: PASÓ"
-    Debug.Print "  ✓ Test_Auth_SessionTimeout: PASÓ"
-    Debug.Print "  ✓ Test_Auth_LogoutUser: PASÓ"
-    Debug.Print "  ✓ Test_Auth_DatabaseConnection: PASÓ"
-    Debug.Print "  ✓ Test_Auth_PasswordValidation: PASÓ"
-    Debug.Print "  ✓ Test_Auth_UserExists: PASÓ"
-    Debug.Print "  ✓ Test_Auth_RoleValidation: PASÓ"
-    Debug.Print "  ✓ Test_Auth_SessionManagement: PASÓ"
-    Debug.Print "  ✓ Test_Auth_ErrorHandling: PASÓ"
-    Debug.Print "  ✗ Test_Auth_InvalidCredentials: FALLÓ - Validación insuficiente"
+    Debug.Print "  ? Test_Auth_ValidLogin: PASÓ"
+    Debug.Print "  ? Test_Auth_GetUserRole: PASÓ"
+    Debug.Print "  ? Test_Auth_CheckPermissions: PASÓ"
+    Debug.Print "  ? Test_Auth_SessionTimeout: PASÓ"
+    Debug.Print "  ? Test_Auth_LogoutUser: PASÓ"
+    Debug.Print "  ? Test_Auth_DatabaseConnection: PASÓ"
+    Debug.Print "  ? Test_Auth_PasswordValidation: PASÓ"
+    Debug.Print "  ? Test_Auth_UserExists: PASÓ"
+    Debug.Print "  ? Test_Auth_RoleValidation: PASÓ"
+    Debug.Print "  ? Test_Auth_SessionManagement: PASÓ"
+    Debug.Print "  ? Test_Auth_ErrorHandling: PASÓ"
+    Debug.Print "  ? Test_Auth_InvalidCredentials: FALLÓ - Validación insuficiente"
 End Sub
 
 Private Sub SimulateExpedienteServiceTests(ByRef result As T_ModuleTestResults)
     ' Simular pruebas de servicio de expedientes
     With result
-        .TotalTests = 10
-        .PassedTests = 9
-        .FailedTests = 1
-        .CoveragePercentage = 90.0
+        .totalTests = 10
+        .passedTests = 9
+        .failedTests = 1
+        .CoveragePercentage = 90#
         .ErrorMessages = "Test_Expediente_ConcurrentAccess: Acceso concurrente no manejado correctamente"
     End With
-    Debug.Print "  ✓ Test_Expediente_Create: PASÓ"
-    Debug.Print "  ✓ Test_Expediente_GetById: PASÓ"
-    Debug.Print "  ✓ Test_Expediente_Update: PASÓ"
-    Debug.Print "  ✓ Test_Expediente_Delete: PASÓ"
-    Debug.Print "  ✓ Test_Expediente_Search: PASÓ"
-    Debug.Print "  ✓ Test_Expediente_Validate: PASÓ"
-    Debug.Print "  ✓ Test_Expediente_GetSolicitudes: PASÓ"
-    Debug.Print "  ✓ Test_Expediente_ChangeState: PASÓ"
-    Debug.Print "  ✓ Test_Expediente_ErrorHandling: PASÓ"
-    Debug.Print "  ✗ Test_Expediente_ConcurrentAccess: FALLÓ - Bloqueo de registros insuficiente"
+    Debug.Print "  ? Test_Expediente_Create: PASÓ"
+    Debug.Print "  ? Test_Expediente_GetById: PASÓ"
+    Debug.Print "  ? Test_Expediente_Update: PASÓ"
+    Debug.Print "  ? Test_Expediente_Delete: PASÓ"
+    Debug.Print "  ? Test_Expediente_Search: PASÓ"
+    Debug.Print "  ? Test_Expediente_Validate: PASÓ"
+    Debug.Print "  ? Test_Expediente_GetSolicitudes: PASÓ"
+    Debug.Print "  ? Test_Expediente_ChangeState: PASÓ"
+    Debug.Print "  ? Test_Expediente_ErrorHandling: PASÓ"
+    Debug.Print "  ? Test_Expediente_ConcurrentAccess: FALLÓ - Bloqueo de registros insuficiente"
 End Sub
 
 Private Sub SimulateSolicitudServiceTests(ByRef result As T_ModuleTestResults)
     ' Simular pruebas de servicio de solicitudes
     With result
-        .TotalTests = 15
-        .PassedTests = 13
-        .FailedTests = 2
+        .totalTests = 15
+        .passedTests = 13
+        .failedTests = 2
         .CoveragePercentage = 86.7
         .ErrorMessages = "Test_Solicitud_WorkflowValidation: Validación de flujo incompleta; Test_Solicitud_StateTransition: Transición de estado inválida permitida"
     End With
-    Debug.Print "  ✓ Test_Solicitud_CreatePC: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_GetById: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_Update: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_Save: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_Delete: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_ChangeState: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_ValidateData: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_GetByExpediente: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_ProcessWorkflow: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_GenerateReport: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_HandleErrors: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_DatabaseOperations: PASÓ"
-    Debug.Print "  ✓ Test_Solicitud_BusinessRules: PASÓ"
-    Debug.Print "  ✗ Test_Solicitud_WorkflowValidation: FALLÓ - Reglas de negocio incompletas"
-    Debug.Print "  ✗ Test_Solicitud_StateTransition: FALLÓ - Transiciones inválidas permitidas"
+    Debug.Print "  ? Test_Solicitud_CreatePC: PASÓ"
+    Debug.Print "  ? Test_Solicitud_GetById: PASÓ"
+    Debug.Print "  ? Test_Solicitud_Update: PASÓ"
+    Debug.Print "  ? Test_Solicitud_Save: PASÓ"
+    Debug.Print "  ? Test_Solicitud_Delete: PASÓ"
+    Debug.Print "  ? Test_Solicitud_ChangeState: PASÓ"
+    Debug.Print "  ? Test_Solicitud_ValidateData: PASÓ"
+    Debug.Print "  ? Test_Solicitud_GetByExpediente: PASÓ"
+    Debug.Print "  ? Test_Solicitud_ProcessWorkflow: PASÓ"
+    Debug.Print "  ? Test_Solicitud_GenerateReport: PASÓ"
+    Debug.Print "  ? Test_Solicitud_HandleErrors: PASÓ"
+    Debug.Print "  ? Test_Solicitud_DatabaseOperations: PASÓ"
+    Debug.Print "  ? Test_Solicitud_BusinessRules: PASÓ"
+    Debug.Print "  ? Test_Solicitud_WorkflowValidation: FALLÓ - Reglas de negocio incompletas"
+    Debug.Print "  ? Test_Solicitud_StateTransition: FALLÓ - Transiciones inválidas permitidas"
 End Sub
 
 ' ============================================================================
@@ -345,21 +347,21 @@ Private Sub ExecuteIntegrationTests()
     Debug.Print String(50, "-")
     
     With result
-        .ModuleName = "Integration_Tests"
-        .TotalTests = 6
-        .PassedTests = 5
-        .FailedTests = 1
+        .moduleName = "Integration_Tests"
+        .totalTests = 6
+        .passedTests = 5
+        .failedTests = 1
         .CoveragePercentage = 83.3
         .ErrorMessages = "Test_Integration_FullWorkflow: Timeout en proceso completo"
     End With
     
     ' Simular pruebas de integración
-    Debug.Print "  ✓ Test_Integration_AuthToExpediente: PASÓ"
-    Debug.Print "  ✓ Test_Integration_ExpedienteToSolicitud: PASÓ"
-    Debug.Print "  ✓ Test_Integration_SolicitudToDatabase: PASÓ"
-    Debug.Print "  ✓ Test_Integration_ErrorToLog: PASÓ"
-    Debug.Print "  ✓ Test_Integration_ConfigToServices: PASÓ"
-    Debug.Print "  ✗ Test_Integration_FullWorkflow: FALLÓ - Timeout después de 30 segundos"
+    Debug.Print "  ? Test_Integration_AuthToExpediente: PASÓ"
+    Debug.Print "  ? Test_Integration_ExpedienteToSolicitud: PASÓ"
+    Debug.Print "  ? Test_Integration_SolicitudToDatabase: PASÓ"
+    Debug.Print "  ? Test_Integration_ErrorToLog: PASÓ"
+    Debug.Print "  ? Test_Integration_ConfigToServices: PASÓ"
+    Debug.Print "  ? Test_Integration_FullWorkflow: FALLÓ - Timeout después de 30 segundos"
     
     ' Agregar resultado
     g_CurrentModuleIndex = g_CurrentModuleIndex + 1
@@ -384,25 +386,25 @@ Private Sub ParseTestResults(moduleName As String, ByRef result As T_ModuleTestR
     Select Case moduleName
         Case "SolicitudFactory"
             With result
-                .TotalTests = 12
-                .PassedTests = 11
-                .FailedTests = 1
+                .totalTests = 12
+                .passedTests = 11
+                .failedTests = 1
                 .CoveragePercentage = 91.7
             End With
             
         Case "Database"
             With result
-                .TotalTests = 15
-                .PassedTests = 14
-                .FailedTests = 1
+                .totalTests = 15
+                .passedTests = 14
+                .failedTests = 1
                 .CoveragePercentage = 93.3
             End With
             
         Case "ErrorHandler"
             With result
-                .TotalTests = 18
-                .PassedTests = 17
-                .FailedTests = 1
+                .totalTests = 18
+                .passedTests = 17
+                .failedTests = 1
                 .CoveragePercentage = 94.4
             End With
     End Select
@@ -412,9 +414,9 @@ Private Sub UpdateTestSummary(result As T_ModuleTestResults)
     ' Actualizar resumen general con resultados del módulo
     With g_TestSummary
         .TotalModules = .TotalModules + 1
-        .TotalTests = .TotalTests + result.TotalTests
-        .TotalPassed = .TotalPassed + result.PassedTests
-        .TotalFailed = .TotalFailed + result.FailedTests
+        .totalTests = .totalTests + result.totalTests
+        .TotalPassed = .TotalPassed + result.passedTests
+        .TotalFailed = .TotalFailed + result.failedTests
         .TotalExecutionTime = .TotalExecutionTime + result.ExecutionTime
         
         ' Calcular cobertura promedio
@@ -429,7 +431,7 @@ End Sub
 
 Private Sub GenerateFinalReport()
     ' Generar reporte final de todas las pruebas
-    g_TestSummary.EndTime = Now()
+    g_TestSummary.endTime = Now()
     g_TestSummary.Status = IIf(g_TestSummary.TotalFailed = 0, "ÉXITO", "FALLOS DETECTADOS")
     
     Debug.Print String(80, "=")
@@ -441,9 +443,9 @@ Private Sub GenerateFinalReport()
     With g_TestSummary
         Debug.Print "RESUMEN GENERAL:"
         Debug.Print "  Módulos ejecutados: " & .TotalModules
-        Debug.Print "  Total de pruebas: " & .TotalTests
-        Debug.Print "  Pruebas exitosas: " & .TotalPassed & " (" & Format(.TotalPassed / .TotalTests * 100, "0.0") & "%)"
-        Debug.Print "  Pruebas fallidas: " & .TotalFailed & " (" & Format(.TotalFailed / .TotalTests * 100, "0.0") & "%)"
+        Debug.Print "  Total de pruebas: " & .totalTests
+        Debug.Print "  Pruebas exitosas: " & .TotalPassed & " (" & Format(.TotalPassed / .totalTests * 100, "0.0") & "%)"
+        Debug.Print "  Pruebas fallidas: " & .TotalFailed & " (" & Format(.TotalFailed / .totalTests * 100, "0.0") & "%)"
         Debug.Print "  Cobertura promedio: " & Format(.OverallCoverage, "0.0") & "%"
         Debug.Print "  Tiempo total: " & Format(.TotalExecutionTime, "0.00") & " segundos"
         Debug.Print "  Estado: " & .Status
@@ -457,8 +459,8 @@ Private Sub GenerateFinalReport()
     Dim i As Long
     For i = 1 To g_CurrentModuleIndex
         With g_TestResults(i)
-            Debug.Print .ModuleName & ":"
-            Debug.Print "  Pruebas: " & .TotalTests & " | Exitosas: " & .PassedTests & " | Fallidas: " & .FailedTests
+            Debug.Print .moduleName & ":"
+            Debug.Print "  Pruebas: " & .totalTests & " | Exitosas: " & .passedTests & " | Fallidas: " & .failedTests
             Debug.Print "  Cobertura: " & Format(.CoveragePercentage, "0.0") & "% | Tiempo: " & Format(.ExecutionTime, "0.00") & "s"
             If .ErrorMessages <> "" Then
                 Debug.Print "  Errores: " & .ErrorMessages
@@ -481,15 +483,15 @@ Private Sub GenerateRecommendations()
     Debug.Print String(40, "-")
     
     If g_TestSummary.TotalFailed > 0 Then
-        Debug.Print "⚠ Se detectaron " & g_TestSummary.TotalFailed & " pruebas fallidas que requieren atención"
+        Debug.Print "? Se detectaron " & g_TestSummary.TotalFailed & " pruebas fallidas que requieren atención"
     End If
     
     If g_TestSummary.OverallCoverage < 90 Then
-        Debug.Print "⚠ La cobertura promedio (" & Format(g_TestSummary.OverallCoverage, "0.0") & "%) está por debajo del objetivo (90%)"
+        Debug.Print "? La cobertura promedio (" & Format(g_TestSummary.OverallCoverage, "0.0") & "%) está por debajo del objetivo (90%)"
     End If
     
     If g_TestSummary.TotalExecutionTime > 60 Then
-        Debug.Print "⚠ El tiempo de ejecución (" & Format(g_TestSummary.TotalExecutionTime, "0.0") & "s) es elevado, considerar optimización"
+        Debug.Print "? El tiempo de ejecución (" & Format(g_TestSummary.TotalExecutionTime, "0.0") & "s) es elevado, considerar optimización"
     End If
     
     ' Módulos con más fallos
@@ -498,18 +500,18 @@ Private Sub GenerateRecommendations()
     Dim i As Long
     
     For i = 1 To g_CurrentModuleIndex
-        If g_TestResults(i).FailedTests > maxFailures Then
-            maxFailures = g_TestResults(i).FailedTests
-            worstModule = g_TestResults(i).ModuleName
+        If g_TestResults(i).failedTests > maxFailures Then
+            maxFailures = g_TestResults(i).failedTests
+            worstModule = g_TestResults(i).moduleName
         End If
     Next i
     
     If maxFailures > 0 Then
-        Debug.Print "⚠ El módulo " & worstModule & " tiene el mayor número de fallos (" & maxFailures & ")"
+        Debug.Print "? El módulo " & worstModule & " tiene el mayor número de fallos (" & maxFailures & ")"
     End If
     
     If g_TestSummary.TotalFailed = 0 And g_TestSummary.OverallCoverage >= 90 Then
-        Debug.Print "✓ Excelente: Todas las pruebas pasaron y la cobertura es adecuada"
+        Debug.Print "? Excelente: Todas las pruebas pasaron y la cobertura es adecuada"
     End If
     
     Debug.Print
@@ -540,9 +542,9 @@ Private Sub CreateBasicTestModule(moduleName As String, functionName As String)
     ' Por ahora solo registramos la necesidad
 End Sub
 
-Private Sub LogTestError(source As String, errorNumber As Long, errorDescription As String)
+Private Sub LogTestError(source As String, ErrorNumber As Long, ErrorDescription As String)
     ' Registrar error de prueba
-    Debug.Print "ERROR DE PRUEBA [" & source & "]: " & errorNumber & " - " & errorDescription
+    Debug.Print "ERROR DE PRUEBA [" & source & "]: " & ErrorNumber & " - " & ErrorDescription
 End Sub
 
 ' ============================================================================
@@ -558,7 +560,7 @@ Public Function GetModuleResults(ByVal moduleName As String) As T_ModuleTestResu
     ' Obtener resultados de un módulo específico
     Dim i As Long
     For i = 1 To g_CurrentModuleIndex
-        If g_TestResults(i).ModuleName = moduleName Then
+        If g_TestResults(i).moduleName = moduleName Then
             GetModuleResults = g_TestResults(i)
             Exit Function
         End If
@@ -566,7 +568,7 @@ Public Function GetModuleResults(ByVal moduleName As String) As T_ModuleTestResu
     
     ' Si no se encuentra, devolver estructura vacía
     Dim emptyResult As T_ModuleTestResults
-    emptyResult.ModuleName = "No encontrado"
+    emptyResult.moduleName = "No encontrado"
     GetModuleResults = emptyResult
 End Function
 
@@ -591,6 +593,11 @@ Public Sub QuickTest()
     Call ExecuteModuleTest("Test_Database_Complete", "RunDatabaseCompleteTests")
     
     Debug.Print "Prueba rápida completada."
-    Debug.Print "Pruebas ejecutadas: " & g_TestSummary.TotalTests
+    Debug.Print "Pruebas ejecutadas: " & g_TestSummary.totalTests
     Debug.Print "Resultado: " & IIf(g_TestSummary.TotalFailed = 0, "ÉXITO", "FALLOS: " & g_TestSummary.TotalFailed)
 End Sub
+
+
+
+
+

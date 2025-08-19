@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,13 +7,16 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Compare Database
+
+
+Option Explicit
+
 ' CNotificationService.cls
 ' Implementación del servicio de notificaciones asíncrono
 ' Basado en las Especificaciones de Integración - Sección 2
 ' Encola correos en la base de datos Correos_datos.accdb
 
-Option Compare Database
-Option Explicit
 
 ' Implementa la interfaz INotificationService
 Implements INotificationService
@@ -37,7 +40,6 @@ Private Function INotificationService_EnviarNotificacion( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
-    Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
     
     On Error GoTo ErrorHandler
@@ -100,3 +102,14 @@ ErrorHandler:
     End If
     INotificationService_EnviarNotificacion = False
 End Function
+
+
+
+
+
+
+
+
+
+
+

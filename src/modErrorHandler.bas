@@ -1,4 +1,9 @@
-Attribute VB_Name = "modErrorHandler"
+﻿Attribute VB_Name = "modErrorHandler"
+Option Compare Database
+
+
+Option Explicit
+
 ' ===============================================================================
 ' Módulo: modErrorHandler
 ' Descripción: Sistema centralizado de manejo de errores para CONDOR
@@ -6,8 +11,6 @@ Attribute VB_Name = "modErrorHandler"
 ' Fecha: 2024
 ' ===============================================================================
 
-Option Compare Database
-Option Explicit
 
 ' ===============================================================================
 ' FUNCIÓN PRINCIPAL DE REGISTRO DE ERRORES
@@ -43,7 +46,7 @@ End Sub
 
 ' Obtiene la ruta de la base de datos de datos
 Private Function GetDatabasePath() As String
-    GetDatabasePath = CurrentProject.Path & "\CONDOR_datos.accdb"
+    GetDatabasePath = CurrentProject.path & "\CONDOR_datos.accdb"
 End Function
 
 ' Determina si un error es crítico y requiere notificación al administrador
@@ -122,12 +125,12 @@ Private Sub WriteToLocalLog(mensaje As String)
     On Error Resume Next
     
     Dim fileNum As Integer
-    Dim logPath As String
+    Dim LogPath As String
     
-    logPath = CurrentProject.Path & "\condor_error.log"
+    LogPath = CurrentProject.path & "\condor_error.log"
     fileNum = FreeFile
     
-    Open logPath For Append As #fileNum
+    Open LogPath For Append As #fileNum
     Print #fileNum, Format(Now(), "yyyy-mm-dd hh:nn:ss") & " - " & mensaje
     Close #fileNum
 End Sub
@@ -169,3 +172,14 @@ ErrorHandler:
         Set db = Nothing
     End If
 End Sub
+
+
+
+
+
+
+
+
+
+
+

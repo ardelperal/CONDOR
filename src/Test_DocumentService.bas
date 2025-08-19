@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_DocumentService"
+﻿Attribute VB_Name = "Test_DocumentService"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -12,8 +14,8 @@ Option Explicit
 
 ' Mock para simular datos de solicitud para generación de documentos
 Private Type T_MockDocumentData
-    IdSolicitud As Long
-    TipoSolicitud As String
+    idSolicitud As Long
+    tipoSolicitud As String
     PlantillaEsperada As String
     RutaPlantilla As String
     CamposEsperados As String
@@ -29,8 +31,8 @@ Private m_MockDocument As T_MockDocumentData
 
 ' Configura un mock para solicitud PC con plantilla correcta
 Private Sub SetupValidPCDocumentMock()
-    m_MockDocument.IdSolicitud = 12345
-    m_MockDocument.TipoSolicitud = "PC"
+    m_MockDocument.idSolicitud = 12345
+    m_MockDocument.tipoSolicitud = "PC"
     m_MockDocument.PlantillaEsperada = "PC_template.docx"
     m_MockDocument.RutaPlantilla = "C:\Proyectos\CONDOR\back\recursos\Plantillas\PC_template.docx"
     m_MockDocument.CamposEsperados = "NumeroExpediente,FechaSolicitud,TipoSolicitud"
@@ -40,8 +42,8 @@ End Sub
 
 ' Configura un mock para solicitud inválida
 Private Sub SetupInvalidDocumentMock()
-    m_MockDocument.IdSolicitud = 0
-    m_MockDocument.TipoSolicitud = ""
+    m_MockDocument.idSolicitud = 0
+    m_MockDocument.tipoSolicitud = ""
     m_MockDocument.PlantillaEsperada = ""
     m_MockDocument.RutaPlantilla = ""
     m_MockDocument.CamposEsperados = ""
@@ -84,7 +86,7 @@ Public Function Test_GenerarDocumento_PC_UsaPlantillaCorrecta() As String
     ' Act
     ' Nota: Este test verifica que el servicio intenta usar la plantilla correcta
     ' La implementación real verificará la lógica de selección de plantilla
-    resultado = documentService.ObtenerNombrePlantilla(m_MockDocument.TipoSolicitud)
+    resultado = documentService.ObtenerNombrePlantilla(m_MockDocument.tipoSolicitud)
     
     ' Assert
     If resultado = esperado Then
@@ -111,13 +113,13 @@ Public Function Test_GenerarDocumento_ValidaSolicitudAntesProcesar() As String
     
     Dim solicitud As T_Solicitud
     Set solicitud = New T_Solicitud
-    solicitud.IdSolicitud = m_MockDocument.IdSolicitud
+    solicitud.idSolicitud = m_MockDocument.idSolicitud
     
-    Dim mensajeError As String
+    Dim MensajeError As String
     Dim resultado As Boolean
     
     ' Act
-    resultado = validationService.ValidarSolicitud(solicitud, mensajeError)
+    resultado = validationService.ValidarSolicitud(solicitud, MensajeError)
     
     ' Assert
     If resultado = False Then
@@ -159,7 +161,7 @@ Public Function Test_GenerarDocumento_ObtieneMapeoCampos() As String
     Dim resultado As String
     
     ' Act
-    resultado = documentService.ObtenerMapeoCampos(m_MockDocument.TipoSolicitud)
+    resultado = documentService.ObtenerMapeoCampos(m_MockDocument.tipoSolicitud)
     
     ' Assert
     If Len(resultado) > 0 Then
@@ -221,3 +223,8 @@ Public Function Test_DocumentService_RunAll() As String
     
     Test_DocumentService_RunAll = resultado
 End Function
+
+
+
+
+

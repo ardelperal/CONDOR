@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,88 +7,169 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-'******************************************************************************
-' CLASE: T_Datos_PC
-' DESCRIPCIÓN: Tipo de datos para almacenar información específica de Propuestas de Cambio (PC)
-' AUTOR: Sistema CONDOR
-' FECHA: 2024
-' NOTA: Propiedades definidas basándose en Test_SolicitudFactory.bas como especificación
-'******************************************************************************
-
 Option Compare Database
+
+
 Option Explicit
 
-'******************************************************************************
-' PROPIEDADES PÚBLICAS
-' Basadas en la función Test_CSolicitudPC_DatosPC_SetAndGet
-'******************************************************************************
+' Clase de tipo de datos para tbDatosPC
+' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 
-' Identificador único del registro de datos PC
-Public ID As Long
+Private m_idDatosPC As Long
+Private m_refContratoInspeccionOficial As String
+Private m_refContratoInspeccionOficialNuevo As String
+Private m_refSuministrador As String
+Private m_refSuministradorNuevo As String
+Private m_refSubSuministrador As String
+Private m_refSubSuministradorNuevo As String
+Private m_importeOriginal As Currency
+Private m_importeNuevo As Currency
+Private m_justificacion As String
+Private m_descripcionCambio As String
+Private m_impactoCalidad As String
+Private m_impactoCoste As String
+Private m_impactoPlazos As String
+Private m_requiereModificacionContrato As Boolean
+Private m_efectoFechaEntrega As String
+Private m_observacionesAdicionales As String
 
-' Referencia a la solicitud padre
-Public IDSolicitud As Long
+Public Property Get idDatosPC() As Long
+    idDatosPC = m_idDatosPC
+End Property
 
-' Título de la Propuesta de Cambio
-Public TituloPC As String
+Public Property Let idDatosPC(ByVal value As Long)
+    m_idDatosPC = value
+End Property
 
-' Descripción detallada de la Propuesta de Cambio
-Public DescripcionPC As String
+Public Property Get refContratoInspeccionOficial() As String
+    refContratoInspeccionOficial = m_refContratoInspeccionOficial
+End Property
 
-' Justificación de la Propuesta de Cambio
-Public JustificacionPC As String
+Public Property Let refContratoInspeccionOficial(ByVal value As String)
+    m_refContratoInspeccionOficial = value
+End Property
 
-' Análisis de impacto de la Propuesta de Cambio
-Public ImpactoPC As String
+Public Property Get refContratoInspeccionOficialNuevo() As String
+    refContratoInspeccionOficialNuevo = m_refContratoInspeccionOficialNuevo
+End Property
 
-' Fecha de creación del registro
-Public FechaCreacion As Date
+Public Property Let refContratoInspeccionOficialNuevo(ByVal value As String)
+    m_refContratoInspeccionOficialNuevo = value
+End Property
 
-' Usuario que creó el registro
-Public CreadoPor As String
+Public Property Get refSuministrador() As String
+    refSuministrador = m_refSuministrador
+End Property
 
-'******************************************************************************
-' PROPIEDADES ADICIONALES IDENTIFICADAS EN OTROS ARCHIVOS
-' (Para compatibilidad con el sistema existente)
-'******************************************************************************
+Public Property Let refSuministrador(ByVal value As String)
+    m_refSuministrador = value
+End Property
 
-' Propiedades técnicas específicas (identificadas en CMockSolicitudRepository)
-Public Procesador As String
-Public RAM As String
-Public Almacenamiento As String
-Public SistemaOperativo As String
+Public Property Get refSuministradorNuevo() As String
+    refSuministradorNuevo = m_refSuministradorNuevo
+End Property
 
-'******************************************************************************
-' PROPIEDADES IDENTIFICADAS EN modDatabase.bas
-' (Utilizadas en la función SaveSolicitudPC)
-'******************************************************************************
+Public Property Let refSuministradorNuevo(ByVal value As String)
+    m_refSuministradorNuevo = value
+End Property
 
-' ID de la solicitud padre (usado en SaveSolicitudPC)
-Public SolicitudID As Long
+Public Property Get refSubSuministrador() As String
+    refSubSuministrador = m_refSubSuministrador
+End Property
 
-' Número de expediente (copiado desde solicitud)
-Public NumeroExpediente As String
+Public Property Let refSubSuministrador(ByVal value As String)
+    m_refSubSuministrador = value
+End Property
 
-' Tipo de solicitud (copiado desde solicitud)
-Public TipoSolicitud As String
+Public Property Get refSubSuministradorNuevo() As String
+    refSubSuministradorNuevo = m_refSubSuministradorNuevo
+End Property
 
-' Descripción del cambio propuesto
-Public DescripcionCambio As String
+Public Property Let refSubSuministradorNuevo(ByVal value As String)
+    m_refSubSuministradorNuevo = value
+End Property
 
-' Justificación del cambio propuesto
-Public JustificacionCambio As String
+Public Property Get importeOriginal() As Currency
+    importeOriginal = m_importeOriginal
+End Property
 
-' Impacto en seguridad
-Public ImpactoSeguridad As String
+Public Property Let importeOriginal(ByVal value As Currency)
+    m_importeOriginal = value
+End Property
 
-' Impacto en calidad
-Public ImpactoCalidad As String
+Public Property Get importeNuevo() As Currency
+    importeNuevo = m_importeNuevo
+End Property
 
-' Fecha de última modificación
-Public FechaUltimaModificacion As Date
+Public Property Let importeNuevo(ByVal value As Currency)
+    m_importeNuevo = value
+End Property
 
-' Estado del registro de datos PC
-Public Estado As String
+Public Property Get justificacion() As String
+    justificacion = m_justificacion
+End Property
 
-' Indica si el registro está activo
-Public Activo As Boolean
+Public Property Let justificacion(ByVal value As String)
+    m_justificacion = value
+End Property
+
+Public Property Get descripcionCambio() As String
+    descripcionCambio = m_descripcionCambio
+End Property
+
+Public Property Let descripcionCambio(ByVal value As String)
+    m_descripcionCambio = value
+End Property
+
+Public Property Get impactoCalidad() As String
+    impactoCalidad = m_impactoCalidad
+End Property
+
+Public Property Let impactoCalidad(ByVal value As String)
+    m_impactoCalidad = value
+End Property
+
+Public Property Get impactoCoste() As String
+    impactoCoste = m_impactoCoste
+End Property
+
+Public Property Let impactoCoste(ByVal value As String)
+    m_impactoCoste = value
+End Property
+
+Public Property Get impactoPlazos() As String
+    impactoPlazos = m_impactoPlazos
+End Property
+
+Public Property Let impactoPlazos(ByVal value As String)
+    m_impactoPlazos = value
+End Property
+
+Public Property Get requiereModificacionContrato() As Boolean
+    requiereModificacionContrato = m_requiereModificacionContrato
+End Property
+
+Public Property Let requiereModificacionContrato(ByVal value As Boolean)
+    m_requiereModificacionContrato = value
+End Property
+
+Public Property Get efectoFechaEntrega() As String
+    efectoFechaEntrega = m_efectoFechaEntrega
+End Property
+
+Public Property Let efectoFechaEntrega(ByVal value As String)
+    m_efectoFechaEntrega = value
+End Property
+
+Public Property Get observacionesAdicionales() As String
+    observacionesAdicionales = m_observacionesAdicionales
+End Property
+
+Public Property Let observacionesAdicionales(ByVal value As String)
+    m_observacionesAdicionales = value
+End Property
+
+
+
+
+

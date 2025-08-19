@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_ErrorHandler"
+﻿Attribute VB_Name = "Test_ErrorHandler"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -21,7 +23,7 @@ End Type
 ' Mock para simular el sistema de archivos
 Private Type T_MockFileSystem
     FileExists As Boolean
-    CanWrite As Boolean
+    canWrite As Boolean
     ShouldFailWrite As Boolean
     LastWrittenContent As String
     WriteCallCount As Long
@@ -134,9 +136,9 @@ Public Function RunErrorHandlerTests() As String
     resultado = resultado & "Pruebas fallidas: " & (testsTotal - testsPassed) & vbCrLf
     
     If testsPassed = testsTotal Then
-        resultado = resultado & "RESULTADO: ✓ TODAS LAS PRUEBAS PASARON" & vbCrLf
+        resultado = resultado & "RESULTADO: ? TODAS LAS PRUEBAS PASARON" & vbCrLf
     Else
-        resultado = resultado & "RESULTADO: ✗ ALGUNAS PRUEBAS FALLARON" & vbCrLf
+        resultado = resultado & "RESULTADO: ? ALGUNAS PRUEBAS FALLARON" & vbCrLf
     End If
     
     RunErrorHandlerTests = resultado
@@ -173,7 +175,7 @@ End Sub
 Private Sub SetupMockFileSystem()
     With m_MockFS
         .FileExists = True
-        .CanWrite = True
+        .canWrite = True
         .ShouldFailWrite = False
         .LastWrittenContent = ""
         .WriteCallCount = 0
@@ -271,8 +273,8 @@ ErrorHandler:
 End Sub
 
 ' Función auxiliar para determinar si un error es crítico (mock)
-Private Function IsCriticalErrorMock(ByVal errorNumber As Long) As Boolean
-    Select Case errorNumber
+Private Function IsCriticalErrorMock(ByVal ErrorNumber As Long) As Boolean
+    Select Case ErrorNumber
         Case 3001, 3024, 3044, 3051, 3078, 3343 ' Errores de base de datos
             IsCriticalErrorMock = True
         Case 7, 9, 11, 13 ' Errores de memoria
@@ -304,7 +306,7 @@ Private Sub SimularErrorPrimario()
     Err.Raise 1001, "SimularErrorPrimario", "Error primario en la cadena"
 ErrorHandler:
     Call modErrorHandler.LogError(Err.Number, Err.Description, "SimularErrorPrimario")
-    Err.Raise Err.Number, Err.Source, Err.Description ' Re-lanzar el error
+    Err.Raise Err.Number, Err.source, Err.Description ' Re-lanzar el error
 End Sub
 
 Private Sub SimularErrorSecundario()
@@ -312,7 +314,7 @@ Private Sub SimularErrorSecundario()
     Err.Raise 1002, "SimularErrorSecundario", "Error secundario causado por el primario"
 ErrorHandler:
     Call modErrorHandler.LogError(Err.Number, Err.Description, "SimularErrorSecundario")
-    Err.Raise Err.Number, Err.Source, Err.Description
+    Err.Raise Err.Number, Err.source, Err.Description
 End Sub
 
 Private Sub SimularErrorTerciario()
@@ -420,7 +422,7 @@ Public Function Test_LogError_DatabaseFail_WritesToLocalLog() As Boolean
     
     ' Act - Simular fallo de base de datos que debe escribir a log local
     Dim result As Boolean
-    If m_MockDB.ShouldFail And m_MockFS.CanWrite Then
+    If m_MockDB.ShouldFail And m_MockFS.canWrite Then
         m_MockFS.WriteCallCount = m_MockFS.WriteCallCount + 1
         m_MockFS.LastWrittenContent = "ERROR EN modErrorHandler.LogError"
         result = True
@@ -506,7 +508,7 @@ Public Function Test_WriteToLocalLog_ValidMessage_Success() As Boolean
     
     ' Act - Simular escritura exitosa a log local
     Dim result As Boolean
-    If m_MockFS.CanWrite And Not m_MockFS.ShouldFailWrite Then
+    If m_MockFS.canWrite And Not m_MockFS.ShouldFailWrite Then
         m_MockFS.WriteCallCount = m_MockFS.WriteCallCount + 1
         m_MockFS.LastWrittenContent = testMessage
         result = True
@@ -632,11 +634,11 @@ Private Sub Test_LogError_RegistraCorrectamente()
     testErrorSource = "Test_ErrorHandler.Test_LogError_RegistraCorrectamente"
     
     ' Conectar a la base de datos
-    Set db = OpenDatabase(CurrentProject.Path & "\CONDOR_datos.accdb")
+    Set db = OpenDatabase(CurrentProject.path & "\CONDOR_datos.accdb")
     
     ' Contar registros antes
     Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Log_Errores WHERE Descripcion_Error LIKE '*Error de prueba para Test_ErrorHandler*'", dbOpenSnapshot)
-    countBefore = rs!Total
+    countBefore = rs!total
     rs.Close
     
     ' Llamar a LogError
@@ -644,7 +646,7 @@ Private Sub Test_LogError_RegistraCorrectamente()
     
     ' Contar registros después
     Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Log_Errores WHERE Descripcion_Error LIKE '*Error de prueba para Test_ErrorHandler*'", dbOpenSnapshot)
-    countAfter = rs!Total
+    countAfter = rs!total
     rs.Close
     
     ' Verificar que se agregó un registro
@@ -664,7 +666,7 @@ ErrorHandler:
     If Not db Is Nothing Then db.Close
     Set rs = Nothing
     Set db = Nothing
-    Err.Raise Err.Number, Err.Source, Err.Description
+    Err.Raise Err.Number, Err.source, Err.Description
 End Sub
 
 ' Prueba una función diseñada para fallar y verificar que el error se registra
@@ -677,11 +679,11 @@ Private Sub Test_FuncionConError_RegistraError()
     Dim countAfter As Long
     
     ' Conectar a la base de datos
-    Set db = OpenDatabase(CurrentProject.Path & "\CONDOR_datos.accdb")
+    Set db = OpenDatabase(CurrentProject.path & "\CONDOR_datos.accdb")
     
     ' Contar registros antes
     Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Log_Errores WHERE Origen_Error LIKE '*FuncionQueFalla*'", dbOpenSnapshot)
-    countBefore = rs!Total
+    countBefore = rs!total
     rs.Close
     
     ' Llamar a la función que falla
@@ -689,7 +691,7 @@ Private Sub Test_FuncionConError_RegistraError()
     
     ' Contar registros después
     Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Log_Errores WHERE Origen_Error LIKE '*FuncionQueFalla*'", dbOpenSnapshot)
-    countAfter = rs!Total
+    countAfter = rs!total
     rs.Close
     
     ' Verificar que se agregó un registro
@@ -709,7 +711,7 @@ ErrorHandler:
     If Not db Is Nothing Then db.Close
     Set rs = Nothing
     Set db = Nothing
-    Err.Raise Err.Number, Err.Source, Err.Description
+    Err.Raise Err.Number, Err.source, Err.Description
 End Sub
 
 ' Prueba que los errores críticos crean notificaciones
@@ -722,13 +724,13 @@ Private Sub Test_ErrorCritico_CreaNotificacion()
     Dim countAfter As Long
     
     ' Conectar a la base de datos
-    Set db = OpenDatabase(CurrentProject.Path & "\CONDOR_datos.accdb")
+    Set db = OpenDatabase(CurrentProject.path & "\CONDOR_datos.accdb")
     
     ' Contar notificaciones antes (si existe la tabla)
     On Error Resume Next
     Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Cola_Correos WHERE Asunto LIKE '*ERROR CRÍTICO*'", dbOpenSnapshot)
     If Err.Number = 0 Then
-        countBefore = rs!Total
+        countBefore = rs!total
         rs.Close
         On Error GoTo ErrorHandler
         
@@ -737,7 +739,7 @@ Private Sub Test_ErrorCritico_CreaNotificacion()
         
         ' Contar notificaciones después
         Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Cola_Correos WHERE Asunto LIKE '*ERROR CRÍTICO*'", dbOpenSnapshot)
-        countAfter = rs!Total
+        countAfter = rs!total
         rs.Close
         
         ' Verificar que se creó una notificación
@@ -761,7 +763,7 @@ ErrorHandler:
     If Not db Is Nothing Then db.Close
     Set rs = Nothing
     Set db = Nothing
-    Err.Raise Err.Number, Err.Source, Err.Description
+    Err.Raise Err.Number, Err.source, Err.Description
 End Sub
 
 ' Prueba la función de limpieza de logs antiguos
@@ -773,7 +775,7 @@ Private Sub Test_CleanOldLogs_FuncionaCorrectamente()
     Dim strSQL As String
     Dim fechaAntigua As String
     
-    Set db = OpenDatabase(CurrentProject.Path & "\CONDOR_datos.accdb")
+    Set db = OpenDatabase(CurrentProject.path & "\CONDOR_datos.accdb")
     
     ' Crear un registro antiguo (45 días atrás)
     fechaAntigua = Format(DateAdd("d", -45, Date), "yyyy-mm-dd hh:nn:ss")
@@ -803,7 +805,7 @@ Private Sub Test_CleanOldLogs_FuncionaCorrectamente()
     Dim rs As DAO.Recordset
     Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Log_Errores WHERE Descripcion_Error = 'Log antiguo de prueba'", dbOpenSnapshot)
     
-    If rs!Total > 0 Then
+    If rs!total > 0 Then
         rs.Close
         db.Close
         Err.Raise 9994, "Test_CleanOldLogs_FuncionaCorrectamente", "Los logs antiguos no fueron eliminados correctamente"
@@ -821,7 +823,7 @@ ErrorHandler:
     If Not db Is Nothing Then db.Close
     Set rs = Nothing
     Set db = Nothing
-    Err.Raise Err.Number, Err.Source, Err.Description
+    Err.Raise Err.Number, Err.source, Err.Description
 End Sub
 
 ' ============================================================================
@@ -844,3 +846,14 @@ ErrorHandler:
     Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandler.FuncionQueFalla", "Ejecutando división por cero intencional")
     ' No re-lanzar el error para que la prueba pueda verificar el registro
 End Sub
+
+
+
+
+
+
+
+
+
+
+
