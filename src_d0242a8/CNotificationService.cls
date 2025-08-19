@@ -7,16 +7,13 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-Option Compare Database
-
-
-Option Explicit
-
 ' CNotificationService.cls
-' Implementación del servicio de notificaciones asíncrono
-' Basado en las Especificaciones de Integración - Sección 2
+' Implementaci├│n del servicio de notificaciones as├¡ncrono
+' Basado en las Especificaciones de Integraci├│n - Secci├│n 2
 ' Encola correos en la base de datos Correos_datos.accdb
 
+Option Compare Database
+Option Explicit
 
 ' Implementa la interfaz INotificationService
 Implements INotificationService
@@ -35,7 +32,7 @@ Private Sub Class_Terminate()
     Set m_configService = Nothing
 End Sub
 
-' Implementación del método EnviarNotificacion de la interfaz
+' Implementaci├│n del m├®todo EnviarNotificacion de la interfaz
 Private Function INotificationService_EnviarNotificacion( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
@@ -45,7 +42,7 @@ Private Function INotificationService_EnviarNotificacion( _
     
     On Error GoTo ErrorHandler
     
-    ' Validar parámetros
+    ' Validar par├ímetros
     If Len(Trim(destinatarios)) = 0 Or Len(Trim(asunto)) = 0 Or Len(Trim(cuerpoHTML)) = 0 Then
         INotificationService_EnviarNotificacion = False
         Exit Function
@@ -88,7 +85,7 @@ Private Function INotificationService_EnviarNotificacion( _
     
     db.Execute sql
     
-    ' Cerrar conexión
+    ' Cerrar conexi├│n
     db.Close
     Set db = Nothing
     
@@ -103,25 +100,3 @@ ErrorHandler:
     End If
     INotificationService_EnviarNotificacion = False
 End Function
-
-' Implementación pública del método EnviarNotificacion
-Public Function EnviarNotificacion( _
-    ByVal destinatarios As String, _
-    ByVal asunto As String, _
-    ByVal cuerpoHTML As String, _
-    Optional ByVal urlAdjunto As String = "" _
-) As Boolean
-    ' Delegar a la implementación de la interfaz
-    EnviarNotificacion = INotificationService_EnviarNotificacion(destinatarios, asunto, cuerpoHTML, urlAdjunto)
-End Function
-
-
-
-
-
-
-
-
-
-
-

@@ -1,29 +1,26 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
 Attribute VB_Name = "CWorkflowService"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
+Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-Option Compare Database
-
-
-Option Explicit
-
 '******************************************************************************
 ' CLASE: CWorkflowService
-' DESCRIPCIÓN: Implementación concreta del servicio de workflow y estados
+' DESCRIPCI├ôN: Implementaci├│n concreta del servicio de workflow y estados
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
-' NOTAS: Lección 1 - Implementa la interfaz IWorkflowService
-'        Lección 3 - Sigue la arquitectura de 3 capas (Capa de Servicios)
-'        Lección 6 - Utiliza módulos de acceso a datos como especificación
+' NOTAS: Lecci├│n 1 - Implementa la interfaz IWorkflowService
+'        Lecci├│n 3 - Sigue la arquitectura de 3 capas (Capa de Servicios)
+'        Lecci├│n 6 - Utiliza m├│dulos de acceso a datos como especificaci├│n
 '******************************************************************************
 
+Option Compare Database
+Option Explicit
 
-' Lección 1: Implementar la interfaz
+' Lecci├│n 1: Implementar la interfaz
 Implements IWorkflowService
 
 '******************************************************************************
@@ -41,10 +38,10 @@ Private Const ROL_APROBADOR As String = "Aprobador"
 Private Const ROL_ADMINISTRADOR As String = "Administrador"
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN DE TRANSICIONES
+' IMPLEMENTACI├ôN DE M├ëTODOS DE VALIDACI├ôN DE TRANSICIONES
 '******************************************************************************
 
-Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, _
+Private Function IWorkflowService_ValidateTransition(ByVal solicitudId As Long, _
                                                     ByVal estadoOrigen As String, _
                                                     ByVal estadoDestino As String, _
                                                     ByVal tipoSolicitud As String, _
@@ -53,31 +50,31 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
     Dim resultado As Boolean
     resultado = False
     
-    ' Validar parámetros de entrada
+    ' Validar par├ímetros de entrada
     If Len(Trim(estadoOrigen)) = 0 Or Len(Trim(estadoDestino)) = 0 Or _
        Len(Trim(tipoSolicitud)) = 0 Or Len(Trim(usuarioRol)) = 0 Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Verificar si la transición existe en TbTransiciones
+    ' Verificar si la transici├│n existe en TbTransiciones
     If Not TransitionExists(estadoOrigen, estadoDestino, tipoSolicitud) Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Verificar permisos del usuario para esta transición
+    ' Verificar permisos del usuario para esta transici├│n
     If Not IWorkflowService_HasTransitionPermission(usuarioRol, estadoOrigen, estadoDestino, tipoSolicitud) Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Si llegamos aquí, la transición es válida
+    ' Si llegamos aqu├¡, la transici├│n es v├ílida
     IWorkflowService_ValidateTransition = True
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE MÉTODOS DE OBTENCIÓN DE ESTADOS
+' IMPLEMENTACI├ôN DE M├ëTODOS DE OBTENCI├ôN DE ESTADOS
 '******************************************************************************
 
 Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As String) As Collection
@@ -96,7 +93,7 @@ Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As Stri
     Set rs = db.OpenRecordset(sql)
     
     Do While Not rs.EOF
-        estados.Add rs("CodigoEstado").value, rs("CodigoEstado").value
+        estados.Add rs("CodigoEstado").Value, rs("CodigoEstado").Value
         rs.MoveNext
     Loop
     
@@ -118,7 +115,7 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, _
     
     Set db = CurrentDb
     
-    ' Consultar transiciones válidas desde el estado actual
+    ' Consultar transiciones v├ílidas desde el estado actual
     sql = "SELECT DISTINCT t.EstadoDestinoID, e.CodigoEstado, e.NombreEstado " & _
           "FROM TbTransiciones t INNER JOIN TbEstados e ON t.EstadoDestinoID = e.ID " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
@@ -131,7 +128,7 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, _
     Set rs = db.OpenRecordset(sql)
     
     Do While Not rs.EOF
-        estadosSiguientes.Add rs("CodigoEstado").value, rs("CodigoEstado").value
+        estadosSiguientes.Add rs("CodigoEstado").Value, rs("CodigoEstado").Value
         rs.MoveNext
     Loop
     
@@ -157,7 +154,7 @@ Private Function IWorkflowService_GetInitialState(ByVal tipoSolicitud As String)
     Set rs = db.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        resultado = rs("CodigoEstado").value
+        resultado = rs("CodigoEstado").Value
     Else
         resultado = ESTADO_BORRADOR ' Estado por defecto
     End If
@@ -187,7 +184,7 @@ Private Function IWorkflowService_IsStateFinal(ByVal estadoCodigo As String, _
     Set rs = db.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        resultado = CBool(rs("EsEstadoFinal").value)
+        resultado = CBool(rs("EsEstadoFinal").Value)
     Else
         resultado = False
     End If
@@ -200,10 +197,10 @@ Private Function IWorkflowService_IsStateFinal(ByVal estadoCodigo As String, _
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE MÉTODOS DE HISTORIAL DE ESTADOS
+' IMPLEMENTACI├ôN DE M├ëTODOS DE HISTORIAL DE ESTADOS
 '******************************************************************************
 
-Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
+Private Function IWorkflowService_RecordStateChange(ByVal solicitudId As Long, _
                                                    ByVal estadoAnterior As String, _
                                                    ByVal estadoNuevo As String, _
                                                    ByVal usuario As String, _
@@ -219,7 +216,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     
     ' Insertar registro en TbHistorialEstados (asumiendo que existe esta tabla)
     sql = "INSERT INTO TbHistorialEstados (SolicitudID, EstadoAnterior, EstadoNuevo, Usuario, Comentarios, FechaCambio) " & _
-          "VALUES (" & SolicitudID & ", '" & estadoAnterior & "', '" & estadoNuevo & "', '" & usuario & "', '" & comentarios & "', Now())"
+          "VALUES (" & solicitudId & ", '" & estadoAnterior & "', '" & estadoNuevo & "', '" & usuario & "', '" & comentarios & "', Now())"
     
     db.Execute sql
     
@@ -233,7 +230,7 @@ ErrorHandler:
     IWorkflowService_RecordStateChange = False
 End Function
 
-Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As Collection
+Private Function IWorkflowService_GetStateHistory(ByVal solicitudId As Long) As Collection
     Dim historial As New Collection
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -244,16 +241,16 @@ Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As 
     
     sql = "SELECT EstadoAnterior, EstadoNuevo, Usuario, Comentarios, FechaCambio " & _
           "FROM TbHistorialEstados " & _
-          "WHERE SolicitudID = " & SolicitudID & " " & _
+          "WHERE SolicitudID = " & solicitudId & " " & _
           "ORDER BY FechaCambio DESC"
     
     Set rs = db.OpenRecordset(sql)
     
     Do While Not rs.EOF
-        registro = rs("FechaCambio").value & " - " & rs("Usuario").value & ": " & _
-                  rs("EstadoAnterior").value & " ? " & rs("EstadoNuevo").value
-        If Not IsNull(rs("Comentarios").value) And Len(Trim(rs("Comentarios").value)) > 0 Then
-            registro = registro & " (" & rs("Comentarios").value & ")"
+        registro = rs("FechaCambio").Value & " - " & rs("Usuario").Value & ": " & _
+                  rs("EstadoAnterior").Value & " ÔåÆ " & rs("EstadoNuevo").Value
+        If Not IsNull(rs("Comentarios").Value) And Len(Trim(rs("Comentarios").Value)) > 0 Then
+            registro = registro & " (" & rs("Comentarios").Value & ")"
         End If
         historial.Add registro
         rs.MoveNext
@@ -267,7 +264,7 @@ Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As 
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN DE PERMISOS
+' IMPLEMENTACI├ôN DE M├ëTODOS DE VALIDACI├ôN DE PERMISOS
 '******************************************************************************
 
 Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As String, _
@@ -282,7 +279,7 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
     
     Set db = CurrentDb
     
-    ' Consultar si existe la transición y si el rol tiene permisos
+    ' Consultar si existe la transici├│n y si el rol tiene permisos
     sql = "SELECT t.RolRequerido FROM TbTransiciones t " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
           "INNER JOIN TbEstados ed ON t.EstadoDestinoID = ed.ID " & _
@@ -295,12 +292,12 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
     
     If Not rs.EOF Then
         Dim rolRequerido As String
-        rolRequerido = Nz(rs("RolRequerido").value, "")
+        rolRequerido = Nz(rs("RolRequerido").Value, "")
         
-        ' Si no hay rol requerido específico, cualquier usuario puede hacer la transición
+        ' Si no hay rol requerido espec├¡fico, cualquier usuario puede hacer la transici├│n
         If Len(Trim(rolRequerido)) = 0 Then
             resultado = True
-        ' Si el usuario es administrador, puede hacer cualquier transición
+        ' Si el usuario es administrador, puede hacer cualquier transici├│n
         ElseIf usuarioRol = ROL_ADMINISTRADOR Then
             resultado = True
         ' Verificar si el rol del usuario coincide con el requerido
@@ -340,7 +337,7 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
     Set rs = db.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        resultado = CBool(rs("RequiereAprobacion").value)
+        resultado = CBool(rs("RequiereAprobacion").Value)
     Else
         resultado = False
     End If
@@ -353,7 +350,7 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
 End Function
 
 '******************************************************************************
-' MÉTODOS AUXILIARES PRIVADOS
+' M├ëTODOS AUXILIARES PRIVADOS
 '******************************************************************************
 
 Private Function TransitionExists(ByVal estadoOrigen As String, _
@@ -378,7 +375,7 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     Set rs = db.OpenRecordset(sql)
     
     If Not rs.EOF Then
-        resultado = (rs("Total").value > 0)
+        resultado = (rs("Total").Value > 0)
     Else
         resultado = False
     End If
@@ -389,70 +386,3 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     
     TransitionExists = resultado
 End Function
-
-'******************************************************************************
-' MÉTODOS PÚBLICOS - DELEGACIÓN A LA INTERFAZ
-'******************************************************************************
-
-Public Function ValidateTransition(ByVal SolicitudID As Long, _
-                                  ByVal estadoOrigen As String, _
-                                  ByVal estadoDestino As String, _
-                                  ByVal tipoSolicitud As String, _
-                                  ByVal usuarioRol As String) As Boolean
-    ValidateTransition = IWorkflowService_ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
-End Function
-
-Public Function GetAvailableStates(ByVal tipoSolicitud As String) As Collection
-    Set GetAvailableStates = IWorkflowService_GetAvailableStates(tipoSolicitud)
-End Function
-
-Public Function GetNextStates(ByVal estadoActual As String, _
-                             ByVal tipoSolicitud As String, _
-                             ByVal usuarioRol As String) As Collection
-    Set GetNextStates = IWorkflowService_GetNextStates(estadoActual, tipoSolicitud, usuarioRol)
-End Function
-
-Public Function GetInitialState(ByVal tipoSolicitud As String) As String
-    GetInitialState = IWorkflowService_GetInitialState(tipoSolicitud)
-End Function
-
-Public Function IsStateFinal(ByVal estadoCodigo As String, _
-                            ByVal tipoSolicitud As String) As Boolean
-    IsStateFinal = IWorkflowService_IsStateFinal(estadoCodigo, tipoSolicitud)
-End Function
-
-Public Function RecordStateChange(ByVal SolicitudID As Long, _
-                                 ByVal estadoAnterior As String, _
-                                 ByVal estadoNuevo As String, _
-                                 ByVal usuario As String, _
-                                 ByVal comentarios As String) As Boolean
-    RecordStateChange = IWorkflowService_RecordStateChange(SolicitudID, estadoAnterior, estadoNuevo, usuario, comentarios)
-End Function
-
-Public Function GetStateHistory(ByVal SolicitudID As Long) As Collection
-    Set GetStateHistory = IWorkflowService_GetStateHistory(SolicitudID)
-End Function
-
-Public Function HasTransitionPermission(ByVal usuarioRol As String, _
-                                       ByVal estadoOrigen As String, _
-                                       ByVal estadoDestino As String, _
-                                       ByVal tipoSolicitud As String) As Boolean
-    HasTransitionPermission = IWorkflowService_HasTransitionPermission(usuarioRol, estadoOrigen, estadoDestino, tipoSolicitud)
-End Function
-
-Public Function RequiresApproval(ByVal estadoOrigen As String, _
-                                ByVal estadoDestino As String, _
-                                ByVal tipoSolicitud As String) As Boolean
-    RequiresApproval = IWorkflowService_RequiresApproval(estadoOrigen, estadoDestino, tipoSolicitud)
-End Function
-
-
-
-
-
-
-
-
-
-
-

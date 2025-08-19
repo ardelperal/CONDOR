@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 '******************************************************************************
 ' CLASE: CMockSolicitudRepository
-' DESCRIPCIÓN: Mock del repositorio de solicitudes PC para pruebas
+' DESCRIPCI├ôN: Mock del repositorio de solicitudes PC para pruebas
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
 '******************************************************************************
@@ -40,7 +40,7 @@ Private Sub Class_Terminate()
 End Sub
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE INTERFAZ ISolicitudRepository
+' IMPLEMENTACI├ôN DE INTERFAZ ISolicitudRepository
 '******************************************************************************
 
 Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Long
@@ -55,14 +55,14 @@ Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Lon
         solicitudClone.idSolicitud = mNextId
         mNextId = mNextId + 1
     Else
-        ' Si ya existe, eliminar la versión anterior
+        ' Si ya existe, eliminar la versi├│n anterior
         keyToRemove = "ID_" & solicitudClone.idSolicitud
         On Error Resume Next
         mSolicitudes.Remove keyToRemove
         On Error GoTo 0
     End If
     
-    ' Agregar a la colección
+    ' Agregar a la colecci├│n
     mSolicitudes.Add solicitudClone, "ID_" & solicitudClone.idSolicitud
     
     ISolicitudRepository_SavePC = solicitudClone.idSolicitud
@@ -87,14 +87,14 @@ Private Function ISolicitudRepository_LoadPC(ByVal solicitudId As Long) As CSoli
 End Function
 
 '******************************************************************************
-' MÉTODOS AUXILIARES PARA PRUEBAS
+' M├ëTODOS AUXILIARES PARA PRUEBAS
 '******************************************************************************
 
 Private Function CloneSolicitud(original As CSolicitudPC) As CSolicitudPC
     Dim clon As CSolicitudPC
     Set clon = New CSolicitudPC
     
-    ' Copiar propiedades básicas
+    ' Copiar propiedades b├ísicas
     clon.idSolicitud = original.idSolicitud
     clon.IDExpediente = original.IDExpediente
     clon.TipoSolicitud = original.TipoSolicitud

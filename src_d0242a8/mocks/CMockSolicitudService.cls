@@ -1,4 +1,4 @@
-Attribute VB_Name = "CMockSolicitudService"
+﻿Attribute VB_Name = "CMockSolicitudService"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
@@ -11,41 +11,41 @@ Option Explicit
 Implements ISolicitudService
 
 Private Function ISolicitudService_CreateNuevaSolicitud(ByVal tipo As String) As ISolicitud
-    ' Simula la creación de una nueva solicitud.
+    ' Simula la creaci├│n de una nueva solicitud.
     ' Devolvemos una instancia de la clase de solicitud concreta para PC.
     Set ISolicitudService_CreateNuevaSolicitud = New CSolicitudPC
 End Function
 
 Private Function ISolicitudService_GetSolicitudPorID(ByVal ID As Long) As ISolicitud
-    ' Simula la obtención de una solicitud.
+    ' Simula la obtenci├│n de una solicitud.
     ' Devolvemos un objeto para que la prueba no falle.
     Set ISolicitudService_GetSolicitudPorID = New CSolicitudPC
 End Function
 
 Private Function ISolicitudService_SaveSolicitud(solicitud As ISolicitud) As Boolean
-    ' Simula el guardado, siempre devuelve éxito.
+    ' Simula el guardado, siempre devuelve ├®xito.
     ISolicitudService_SaveSolicitud = True
 End Function
 
 Private Function ISolicitudService_GetAllSolicitudes() As Collection
-    ' Simula la obtención de todas las solicitudes.
-    ' Devuelve una colección con al menos un objeto.
+    ' Simula la obtenci├│n de todas las solicitudes.
+    ' Devuelve una colecci├│n con al menos un objeto.
     Dim col As New Collection
     col.Add New CSolicitudPC
     Set ISolicitudService_GetAllSolicitudes = col
 End Function
 
 Private Function ISolicitudService_DeleteSolicitud(ByVal ID As Long) As Boolean
-    ' Simula el borrado, siempre devuelve éxito.
+    ' Simula el borrado, siempre devuelve ├®xito.
     ISolicitudService_DeleteSolicitud = True
 End Function
 
 Private Function ISolicitudService_UpdateEstadoSolicitud(ByVal ID As Long, ByVal nuevoEstado As String) As Boolean
-    ' Simula la actualización de estado, siempre devuelve éxito.
+    ' Simula la actualizaci├│n de estado, siempre devuelve ├®xito.
     ISolicitudService_UpdateEstadoSolicitud = True
 End Function
 
-' Métodos adicionales requeridos por ISolicitudService
+' M├®todos adicionales requeridos por ISolicitudService
 Private Function ISolicitudService_GetSolicitud(ByVal ID As Long) As ISolicitud
     Set ISolicitudService_GetSolicitud = New CSolicitudPC
 End Function

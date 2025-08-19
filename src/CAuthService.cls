@@ -43,6 +43,23 @@ Private Function IAuthService_ValidateEmail(ByVal Email As String) As Boolean
     IAuthService_ValidateEmail = (InStr(Email, "@") > 1 And InStr(Email, ".") > InStr(Email, "@"))
 End Function
 
+' Implementaciones públicas de los métodos de la interfaz
+Public Function AuthenticateUser(ByVal Email As String) As Boolean
+    AuthenticateUser = IAuthService_AuthenticateUser(Email)
+End Function
+
+Public Function GetUserRole(ByVal Email As String) As E_UserRole
+    GetUserRole = IAuthService_GetUserRole(Email)
+End Function
+
+Public Function IsUserAuthorized(ByVal Email As String, ByVal permission As String) As Boolean
+    IsUserAuthorized = IAuthService_IsUserAuthorized(Email, permission)
+End Function
+
+Public Function ValidateEmail(ByVal Email As String) As Boolean
+    ValidateEmail = IAuthService_ValidateEmail(Email)
+End Function
+
 
 
 

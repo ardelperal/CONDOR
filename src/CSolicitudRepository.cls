@@ -414,6 +414,34 @@ Private Function CargarDatosCDCASUB(ByVal db As DAO.Database, ByVal idSolicitud 
     Set CargarDatosCDCASUB = datosCDCASUB
 End Function
 
+'******************************************************************************
+' MÉTODOS PÚBLICOS - DELEGACIÓN A LA INTERFAZ
+'******************************************************************************
+
+Public Function GuardarSolicitud(ByVal solicitud As T_Solicitud) As Long
+    GuardarSolicitud = ISolicitudRepository_GuardarSolicitud(solicitud)
+End Function
+
+Public Function ObtenerSolicitudPorId(ByVal idSolicitud As Long) As T_Solicitud
+    Set ObtenerSolicitudPorId = ISolicitudRepository_ObtenerSolicitudPorId(idSolicitud)
+End Function
+
+Public Function ObtenerSolicitudPorCodigo(ByVal codigoSolicitud As String) As T_Solicitud
+    Set ObtenerSolicitudPorCodigo = ISolicitudRepository_ObtenerSolicitudPorCodigo(codigoSolicitud)
+End Function
+
+Public Function EliminarSolicitud(ByVal idSolicitud As Long) As Boolean
+    EliminarSolicitud = ISolicitudRepository_EliminarSolicitud(idSolicitud)
+End Function
+
+Public Function ObtenerSolicitudesPorExpediente(ByVal idExpediente As String) As Collection
+    Set ObtenerSolicitudesPorExpediente = ISolicitudRepository_ObtenerSolicitudesPorExpediente(idExpediente)
+End Function
+
+Public Function ExisteSolicitudConCodigo(ByVal codigoSolicitud As String) As Boolean
+    ExisteSolicitudConCodigo = ISolicitudRepository_ExisteSolicitudConCodigo(codigoSolicitud)
+End Function
+
 
 
 

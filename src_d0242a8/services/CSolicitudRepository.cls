@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 '******************************************************************************
 ' CLASE: CSolicitudRepository
-' DESCRIPCIÓN: Implementación real del repositorio de solicitudes PC
+' DESCRIPCI├ôN: Implementaci├│n real del repositorio de solicitudes PC
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
 '******************************************************************************
@@ -18,7 +18,7 @@ Option Explicit
 Implements ISolicitudRepository
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE INTERFAZ ISolicitudRepository
+' IMPLEMENTACI├ôN DE INTERFAZ ISolicitudRepository
 '******************************************************************************
 
 Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Long
@@ -28,7 +28,7 @@ Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Lon
     Dim ws As DAO.Workspace
     Dim solicitudId As Long
     
-    ' Iniciar transacción
+    ' Iniciar transacci├│n
     Set ws = DBEngine.Workspaces(0)
     Set db = CurrentDb
     ws.BeginTrans
@@ -48,7 +48,7 @@ Private Function ISolicitudRepository_SavePC(solicitudPC As CSolicitudPC) As Lon
         solicitudId = InsertNewSolicitud(solicitudPC)
     End If
     
-    ' Confirmar transacción
+    ' Confirmar transacci├│n
     ws.CommitTrans
     ISolicitudRepository_SavePC = solicitudId
     
@@ -86,7 +86,7 @@ Private Function ISolicitudRepository_LoadPC(ByVal solicitudId As Long) As CSoli
         solicitud.CodigoSolicitud = rs("Codigo_Solicitud")
         solicitud.EstadoInterno = rs("Estado_Interno")
         
-        ' Cargar datos específicos de PC
+        ' Cargar datos espec├¡ficos de PC
         Dim datosPC As T_Datos_PC
         datosPC.Procesador = rs("Procesador")
         datosPC.RAM = rs("RAM")
@@ -108,7 +108,7 @@ ErrorHandler:
 End Function
 
 '******************************************************************************
-' MÉTODOS AUXILIARES PRIVADOS
+' M├ëTODOS AUXILIARES PRIVADOS
 '******************************************************************************
 
 Private Function SolicitudExists(ByVal ID As Long) As Boolean
