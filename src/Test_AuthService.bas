@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_AuthService"
+Attribute VB_Name = "Test_AuthService"
 Option Compare Database
 
 
@@ -94,7 +94,10 @@ End Function
 Public Function Test_ValidarUsuarioValido() As Boolean
     ' Arrange
     Dim svc As IAuthService
+    Dim mockConfig As IConfig
+    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
     Set svc = New CAuthService
+    svc.Class_Initialize mockConfig
     Dim usuario As String: usuario = "jdoe"
     Dim password As String: password = "password123"
 
@@ -109,7 +112,10 @@ End Function
 Public Function Test_ValidarUsuarioInvalido() As Boolean
     ' Arrange
     Dim svc As IAuthService
+    Dim mockConfig As IConfig
+    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
     Set svc = New CAuthService
+    svc.Class_Initialize mockConfig
     Dim usuario As String: usuario = "baduser"
     Dim password As String: password = "wrong"
 
@@ -124,7 +130,10 @@ End Function
 Public Function Test_ObtenerRolUsuario() As Boolean
     ' Arrange
     Dim svc As IAuthService
+    Dim mockConfig As IConfig
+    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
     Set svc = New CAuthService
+    svc.Class_Initialize mockConfig
     Dim usuario As String: usuario = "jdoe"
 
     ' Act (simulado)
@@ -138,7 +147,10 @@ End Function
 Public Function Test_VerificarPermisoPermitido() As Boolean
     ' Arrange
     Dim svc As IAuthService
+    Dim mockConfig As IConfig
+    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
     Set svc = New CAuthService
+    svc.Class_Initialize mockConfig
     Dim usuario As String: usuario = "jdoe"
     Dim permiso As String: permiso = "EXPEDIENTE_VER"
 
@@ -153,7 +165,10 @@ End Function
 Public Function Test_VerificarPermisoDenegado() As Boolean
     ' Arrange
     Dim svc As IAuthService
+    Dim mockConfig As IConfig
+    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
     Set svc = New CAuthService
+    svc.Class_Initialize mockConfig
     Dim usuario As String: usuario = "jdoe"
     Dim permiso As String: permiso = "ADMIN_SUPER"
 
@@ -168,7 +183,10 @@ End Function
 Public Function Test_ExpiracionSesion() As Boolean
     ' Arrange
     Dim svc As IAuthService
+    Dim mockConfig As IConfig
+    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
     Set svc = New CAuthService
+    svc.Class_Initialize mockConfig
     Dim usuario As String: usuario = "jdoe"
 
     ' Act (simulado)
@@ -182,7 +200,10 @@ End Function
 Public Function Test_RevocarSesion() As Boolean
     ' Arrange
     Dim svc As IAuthService
+    Dim mockConfig As IConfig
+    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
     Set svc = New CAuthService
+    svc.Class_Initialize mockConfig
     Dim usuario As String: usuario = "jdoe"
 
     ' Act (simulado)

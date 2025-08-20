@@ -16,9 +16,8 @@ Implements IAuthService
 'prueba del cambio para 
 Private configSvc As IConfig
 
-Private Sub Class_Initialize()
-    ' TODO: Usar un Factory para CConfig cuando exista
-    Set configSvc = New CConfig
+Private Sub Class_Initialize(ByVal config As IConfig)
+    Set configSvc = config
 End Sub
 
 Private Function IAuthService_AuthenticateUser(ByVal Email As String) As Boolean
@@ -37,8 +36,8 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRo
 
     role = Rol_Desconocido
 
-    dbPath = AppConfig.GetValue("LANZADERADBPATH")
-    dbPassword = AppConfig.GetValue("DATABASEPASSWORD")
+    dbPath = configSvc.GetValue("LANZADERADBPATH")
+    dbPassword = configSvc.GetValue("DATABASEPASSWORD")
 
     If dbPath = "" Or dbPassword = "" Then
         Call modErrorHandler.LogWarning("La configuración para la base de datos de Lanzadera no fue encontrada.", "CAuthService.GetUserRole")

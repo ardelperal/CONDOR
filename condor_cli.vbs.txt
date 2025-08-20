@@ -29,7 +29,7 @@ If objArgs.Count = 0 Or LCase(objArgs(0)) = "help" Then
     WScript.Echo "  export     - Exportar modulos VBA a /src (con codificacion ANSI)"
     WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
     WScript.Echo "  test       - Ejecutar suite de pruebas unitarias"
-    WScript.Echo "  update     - Actualizacion selectiva de modulos especificos"
+    WScript.Echo "  update     - Sincronizacion inteligente: automatica (sin args) o selectiva (con args)"
     WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
     WScript.Echo "  compile    - Compilar todos los modulos VBA del proyecto"
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
@@ -40,18 +40,38 @@ If objArgs.Count = 0 Or LCase(objArgs(0)) = "help" Then
     WScript.Echo "  relink --all - Re-vincular todas las bases en ./back automaticamente"
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
-    WScript.Echo "  1. cscript condor_cli.vbs update [modulos]  (actualizacion selectiva)"
-    WScript.Echo "  2. cscript condor_cli.vbs rebuild           (reconstruccion completa si hay problemas)"
+    WScript.Echo "  1. cscript condor_cli.vbs update            (sincronizacion automatica)"
+    WScript.Echo "  2. cscript condor_cli.vbs update [modulos]  (actualizacion selectiva)"
+    WScript.Echo "  3. cscript condor_cli.vbs rebuild           (reconstruccion completa si hay problemas)"
     WScript.Echo ""
-    WScript.Echo "EJEMPLOS DE UPDATE:"
-    WScript.Echo "  cscript condor_cli.vbs update CAuthService,modUtils  (modulos especificos)"
-    WScript.Echo "  cscript condor_cli.vbs update                        (todos los modulos)"
+    WScript.Echo "MODOS DEL COMANDO UPDATE:"
+    WScript.Echo ""
+    WScript.Echo "  MODO AUTOMATICO (sin argumentos):"
+    WScript.Echo "    cscript condor_cli.vbs update"
+    WScript.Echo "    - Sincronizacion incremental inteligente"
+    WScript.Echo "    - Detecta archivos nuevos, modificados y eliminados"
+    WScript.Echo "    - Compara fechas de modificacion automaticamente"
+    WScript.Echo "    - Usa carpeta temporal .vba_cache para comparacion"
+    WScript.Echo ""
+    WScript.Echo "  MODO SELECTIVO (con argumentos):"
+    WScript.Echo "    cscript condor_cli.vbs update CAuthService           (un solo modulo)"
+    WScript.Echo "    cscript condor_cli.vbs update CAuthService,modUtils  (multiples modulos)"
+    WScript.Echo "    cscript condor_cli.vbs update CConfig,CSolicitudService,modDatabase"
+    WScript.Echo "    - Actualizacion rapida de modulos especificos"
+    WScript.Echo "    - Elimina y reimporta solo los modulos indicados"
+    WScript.Echo "    - Ideal para cambios puntuales durante desarrollo"
+    WScript.Echo ""
+    WScript.Echo "NOTAS IMPORTANTES:"
+    WScript.Echo "  - MODO AUTOMATICO: Recomendado para sincronizacion diaria"
+    WScript.Echo "  - MODO SELECTIVO: Separar nombres con comas (sin espacios)"
+    WScript.Echo "  - No incluir extension (.bas/.cls) en los nombres"
+    WScript.Echo "  - Solo se procesan modulos que existen en /src"
     WScript.Echo ""
     WScript.Echo "OPCIONES ESPECIALES:"
     WScript.Echo "  --dry-run  - Simular operacion sin modificar Access (solo con import)"
     WScript.Echo "  --verbose  - Mostrar informacion detallada durante la operacion"
     WScript.Echo ""
-    WScript.Echo "EJEMPLOS:"
+    WScript.Echo "OTROS EJEMPLOS:"
     WScript.Echo "  cscript condor_cli.vbs validate"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
     WScript.Echo "  cscript condor_cli.vbs rebuild"
@@ -1365,8 +1385,9 @@ End Function
 ' Subrutina para reconstruir completamente el proyecto VBA
 ' ===================================================================
 ' SUBRUTINA: UpdateProject
-' Descripción: Actualización selectiva - solo actualiza módulos especificados
-' Parámetros: strModuleList - lista de módulos separados por comas (opcional)
+' Descripción: Lógica híbrida - modo automático (sin argumentos) o selectivo (con argumentos)
+' Modo Automático: Sincronización incremental automática usando .vba_cache
+' Modo Selectivo: Actualización rápida de módulos específicos
 ' ===================================================================
 Sub UpdateProject()
     Dim strModuleList
@@ -1378,23 +1399,474 @@ Sub UpdateProject()
     End If
     
     If strModuleList = "" Then
-        WScript.Echo "=== ACTUALIZACION SELECTIVA DEL PROYECTO VBA ==="
-        WScript.Echo "Uso: condor_cli.vbs update [lista_modulos]"
-        WScript.Echo "Ejemplo: condor_cli.vbs update CAuthService,modUtils,CConfig"
-        WScript.Echo "Si no se especifica lista, se actualizaran TODOS los modulos"
-        WScript.Echo ""
-        
-        ' Si no hay lista específica, actualizar todos
-        Call UpdateAllModules()
+        ' Modo Automático: Sincronización incremental automática
+        Call UpdateAutomaticMode()
     Else
-        ' Actualizar solo los módulos especificados
-        Call UpdateSpecificModules(strModuleList)
+        ' Modo Selectivo: Actualización rápida y selectiva
+        Call UpdateSelectiveMode(strModuleList)
     End If
 End Sub
 
 ' ===================================================================
-' SUBRUTINA: UpdateSpecificModules
-' Descripción: Actualiza solo los módulos especificados en la lista
+' SUBRUTINA: UpdateAutomaticMode
+' Descripción: Modo Automático - Sincronización incremental automática
+' Lógica: Crear .vba_cache, exportar estado actual, comparar por fecha, sincronizar
+' ===================================================================
+Sub UpdateAutomaticMode()
+    WScript.Echo "=== MODO AUTOMATICO: SINCRONIZACION INCREMENTAL ==="
+    WScript.Echo "Iniciando sincronización automática basada en fechas de modificación..."
+    
+    On Error Resume Next
+    
+    Dim strCachePath, vbProject
+    Dim objCacheFolder, objFile, objSrcFile
+    Dim strModuleName, strCacheFile, strSrcFile
+    Dim dtCacheDate, dtSrcDate
+    Dim syncCount, newCount, modifiedCount, deletedCount
+    
+    ' Paso 1: Crear carpeta temporal .vba_cache
+    strCachePath = objFSO.BuildPath(objFSO.GetParentFolderName(strSourcePath), ".vba_cache")
+    WScript.Echo "Creando carpeta temporal: " & strCachePath
+    
+    If objFSO.FolderExists(strCachePath) Then
+        objFSO.DeleteFolder strCachePath, True
+    End If
+    objFSO.CreateFolder strCachePath
+    
+    ' Paso 2: Exportar estado actual de módulos VBA a .vba_cache
+    WScript.Echo "Exportando estado actual de módulos VBA..."
+    Set vbProject = objAccess.VBE.ActiveVBProject
+    
+    Dim vbComponent, exportPath
+    For Each vbComponent In vbProject.VBComponents
+        If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' Módulos estándar y clases
+            If vbComponent.Type = 1 Then
+                exportPath = objFSO.BuildPath(strCachePath, vbComponent.Name & ".bas")
+            Else
+                exportPath = objFSO.BuildPath(strCachePath, vbComponent.Name & ".cls")
+            End If
+            
+            vbComponent.Export exportPath
+            If Err.Number <> 0 Then
+                WScript.Echo "Advertencia al exportar " & vbComponent.Name & ": " & Err.Description
+                Err.Clear
+            End If
+        End If
+    Next
+    
+    ' Paso 3: Comparar archivos de /src con .vba_cache por fecha de modificación
+    WScript.Echo "Comparando archivos por fecha de modificación..."
+    
+    syncCount = 0
+    newCount = 0
+    modifiedCount = 0
+    deletedCount = 0
+    
+    ' Verificar archivos nuevos y modificados en /src
+    If objFSO.FolderExists(strSourcePath) Then
+        Set objCacheFolder = objFSO.GetFolder(strSourcePath)
+        
+        For Each objSrcFile In objCacheFolder.Files
+            If LCase(objFSO.GetExtensionName(objSrcFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objSrcFile.Name)) = "cls" Then
+                strCacheFile = objFSO.BuildPath(strCachePath, objSrcFile.Name)
+                
+                If objFSO.FileExists(strCacheFile) Then
+                    ' Archivo existe en cache, comparar fechas
+                    Set objFile = objFSO.GetFile(strCacheFile)
+                    If objSrcFile.DateLastModified > objFile.DateLastModified Then
+                        ' Archivo modificado en /src
+                        WScript.Echo "  Modificado: " & objSrcFile.Name
+                        Call UpdateSingleModule(objSrcFile.Name)
+                        modifiedCount = modifiedCount + 1
+                        syncCount = syncCount + 1
+                    End If
+                Else
+                    ' Archivo nuevo en /src
+                    WScript.Echo "  Nuevo: " & objSrcFile.Name
+                    Call UpdateSingleModule(objSrcFile.Name)
+                    newCount = newCount + 1
+                    syncCount = syncCount + 1
+                End If
+            End If
+        Next
+    End If
+    
+    ' Verificar archivos eliminados (existen en cache pero no en /src)
+    If objFSO.FolderExists(strCachePath) Then
+        Set objCacheFolder = objFSO.GetFolder(strCachePath)
+        
+        For Each objFile In objCacheFolder.Files
+            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+                strSrcFile = objFSO.BuildPath(strSourcePath, objFile.Name)
+                
+                If Not objFSO.FileExists(strSrcFile) Then
+                    ' Archivo eliminado de /src, eliminar de VBA
+                    strModuleName = objFSO.GetBaseName(objFile.Name)
+                    WScript.Echo "  Eliminado: " & objFile.Name
+                    Call RemoveSingleModule(strModuleName)
+                    deletedCount = deletedCount + 1
+                    syncCount = syncCount + 1
+                End If
+            End If
+        Next
+    End If
+    
+    ' Paso 4: Eliminar carpeta temporal .vba_cache
+    WScript.Echo "Eliminando carpeta temporal..."
+    If objFSO.FolderExists(strCachePath) Then
+        objFSO.DeleteFolder strCachePath, True
+    End If
+    
+    ' Guardar cambios
+    If syncCount > 0 Then
+        WScript.Echo "Guardando cambios en Access..."
+        For Each vbComponent In vbProject.VBComponents
+            If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
+                objAccess.DoCmd.Save 5, vbComponent.Name  ' acModule = 5
+                If Err.Number <> 0 Then
+                    WScript.Echo "Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
+                    Err.Clear
+                End If
+            ElseIf vbComponent.Type = 2 Then  ' vbext_ct_ClassModule
+                objAccess.DoCmd.Save 7, vbComponent.Name  ' acClassModule = 7
+                If Err.Number <> 0 Then
+                    WScript.Echo "Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
+                    Err.Clear
+                End If
+            End If
+        Next
+    End If
+    
+    WScript.Echo "=== SINCRONIZACION AUTOMATICA COMPLETADA ==="
+    WScript.Echo "Archivos nuevos: " & newCount
+    WScript.Echo "Archivos modificados: " & modifiedCount
+    WScript.Echo "Archivos eliminados: " & deletedCount
+    WScript.Echo "Total sincronizado: " & syncCount
+    
+    If syncCount = 0 Then
+        WScript.Echo "✓ Todos los módulos estaban sincronizados"
+    Else
+        WScript.Echo "✓ Sincronización automática exitosa"
+    End If
+    
+    On Error GoTo 0
+End Sub
+
+' ===================================================================
+' SUBRUTINA: UpdateSelectiveMode
+' Descripción: Modo Selectivo - Actualización rápida de módulos específicos
+' ===================================================================
+Sub UpdateSelectiveMode(strModuleList)
+    WScript.Echo "=== MODO SELECTIVO: ACTUALIZACION RAPIDA ==="
+    WScript.Echo "Módulos a actualizar: " & strModuleList
+    
+    On Error Resume Next
+    
+    Dim arrModules, i
+    Dim strModuleName
+    Dim updatedCount, processedCount
+    
+    ' Dividir la lista de módulos
+    arrModules = Split(strModuleList, ",")
+    
+    updatedCount = 0
+    processedCount = 0
+    
+    ' Procesar cada módulo de la lista
+    For i = 0 To UBound(arrModules)
+        strModuleName = Trim(arrModules(i))
+        
+        If strModuleName <> "" Then
+            processedCount = processedCount + 1
+            WScript.Echo "Procesando módulo: " & strModuleName
+            
+            ' Eliminar el componente y reimportarlo
+            If UpdateSingleModuleSelective(strModuleName) Then
+                updatedCount = updatedCount + 1
+            End If
+        End If
+    Next
+    
+    WScript.Echo "=== MODO SELECTIVO COMPLETADO ==="
+    WScript.Echo "Módulos procesados: " & processedCount
+    WScript.Echo "Módulos actualizados: " & updatedCount
+    
+    If updatedCount = 0 Then
+        WScript.Echo "⚠️ Ningún módulo fue actualizado"
+    Else
+        WScript.Echo "✓ Actualización selectiva exitosa"
+    End If
+    
+    On Error GoTo 0
+End Sub
+
+' ===================================================================
+' SUBRUTINA: UpdateSingleModule
+' Descripción: Actualiza un solo módulo (usado por modo automático)
+' ===================================================================
+Sub UpdateSingleModule(strFileName)
+    On Error Resume Next
+    
+    Dim strModuleName, strFilePath, fileExtension
+    Dim vbProject, vbComponent, componentFound
+    Dim cleanedContent
+    
+    strModuleName = objFSO.GetBaseName(strFileName)
+    strFilePath = objFSO.BuildPath(strSourcePath, strFileName)
+    fileExtension = LCase(objFSO.GetExtensionName(strFileName))
+    
+    If Not objFSO.FileExists(strFilePath) Then
+        WScript.Echo "    ⚠️ Archivo no encontrado: " & strFileName
+        Exit Sub
+    End If
+    
+    Set vbProject = objAccess.VBE.ActiveVBProject
+    
+    ' Buscar y eliminar el componente existente (solo si existe)
+    componentFound = False
+    For Each vbComponent In vbProject.VBComponents
+        If vbComponent.Name = strModuleName Then
+            componentFound = True
+            WScript.Echo "    Eliminando componente existente: " & strModuleName
+            vbProject.VBComponents.Remove vbComponent
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "    ❌ Error eliminando componente: " & Err.Description
+                Err.Clear
+            Else
+                WScript.Echo "    ✓ Componente eliminado correctamente"
+            End If
+            Exit For
+        End If
+    Next
+    
+    If Not componentFound Then
+        WScript.Echo "    -> Componente no existe en destino, creando nuevo"
+    End If
+    
+    ' Leer y limpiar el contenido del archivo
+    cleanedContent = ReadAndCleanVBAFile(strFilePath)
+    
+    ' Importar el módulo
+    If fileExtension = "bas" Then
+        Set vbComponent = vbProject.VBComponents.Import(strFilePath)
+    ElseIf fileExtension = "cls" Then
+        Set vbComponent = vbProject.VBComponents.Import(strFilePath)
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "    ⚠️ Error al importar " & strFileName & ": " & Err.Description
+        Err.Clear
+    Else
+        WScript.Echo "    ✓ Actualizado: " & strModuleName
+    End If
+    
+    On Error GoTo 0
+End Sub
+
+' ===================================================================
+' SUBRUTINA: RemoveSingleModule
+' Descripción: Elimina un solo módulo (usado por modo automático)
+' ===================================================================
+Sub RemoveSingleModule(strModuleName)
+    On Error Resume Next
+    
+    Dim vbProject, vbComponent
+    
+    Set vbProject = objAccess.VBE.ActiveVBProject
+    
+    ' Buscar y eliminar el componente
+    For Each vbComponent In vbProject.VBComponents
+        If vbComponent.Name = strModuleName Then
+            vbProject.VBComponents.Remove vbComponent
+            WScript.Echo "    ✓ Eliminado: " & strModuleName
+            Exit Sub
+        End If
+    Next
+    
+    WScript.Echo "    ⚠️ Módulo no encontrado para eliminar: " & strModuleName
+    
+    On Error GoTo 0
+End Sub
+
+' ===================================================================
+' SUBRUTINA: UpdateSingleModuleSelective
+' Descripción: Actualiza un solo módulo para modo selectivo (retorna éxito)
+' CORREGIDO: Implementa secuencia correcta "eliminar y luego importar"
+' ===================================================================
+Function UpdateSingleModuleSelective(strModuleName)
+    On Error Resume Next
+    
+    Dim strFileName, strFilePath, fileExtension
+    Dim vbProject, vbComponent, componentFound
+    Dim cleanedContent
+    
+    UpdateSingleModuleSelective = False
+    
+    ' Buscar el archivo correspondiente (.bas o .cls)
+    strFileName = ""
+    If objFSO.FileExists(objFSO.BuildPath(strSourcePath, strModuleName & ".bas")) Then
+        strFileName = objFSO.BuildPath(strSourcePath, strModuleName & ".bas")
+        fileExtension = "bas"
+    ElseIf objFSO.FileExists(objFSO.BuildPath(strSourcePath, strModuleName & ".cls")) Then
+        strFileName = objFSO.BuildPath(strSourcePath, strModuleName & ".cls")
+        fileExtension = "cls"
+    End If
+    
+    If strFileName = "" Then
+        WScript.Echo "    ⚠️ Archivo no encontrado: " & strModuleName & ".bas/.cls"
+        Exit Function
+    End If
+    
+    WScript.Echo "    -> Archivo encontrado: " & objFSO.GetFileName(strFileName)
+    
+    Set vbProject = objAccess.VBE.ActiveVBProject
+    
+    ' PASO 1: Buscar y eliminar el componente existente (solo si existe)
+    componentFound = False
+    For Each vbComponent In vbProject.VBComponents
+        If vbComponent.Name = strModuleName Then
+            componentFound = True
+            WScript.Echo "    Eliminando componente existente: " & strModuleName
+            vbProject.VBComponents.Remove vbComponent
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "    ❌ Error eliminando componente: " & Err.Description
+                Err.Clear
+                Exit Function
+            Else
+                WScript.Echo "    ✓ Componente eliminado correctamente"
+            End If
+            Exit For
+        End If
+    Next
+    
+    If Not componentFound Then
+        WScript.Echo "    -> Componente no existe en destino, creando nuevo"
+    End If
+    
+    ' PASO 2: Leer y limpiar el contenido del archivo
+    cleanedContent = CleanVBAFile(strFileName, fileExtension)
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "    ❌ Error al limpiar archivo: " & Err.Description
+        Err.Clear
+        Exit Function
+    End If
+    
+    ' PASO 3: Importar el módulo usando ImportModuleWithAnsiEncoding
+    WScript.Echo "    Importando módulo..."
+    Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "    ❌ Error al importar " & strModuleName & ": " & Err.Description
+        Err.Clear
+        Exit Function
+    Else
+        WScript.Echo "    ✓ Módulo actualizado exitosamente: " & strModuleName
+        UpdateSingleModuleSelective = True
+    End If
+    
+    On Error GoTo 0
+End Function
+
+' ===================================================================
+' SUBRUTINA: SyncModules
+' Descripción: Subrutina genérica para sincronizar módulos VBA
+' Parámetros: moduleNames - Array o colección de nombres de módulos
+' ===================================================================
+Sub SyncModules(moduleNames)
+    On Error Resume Next
+    
+    Dim vbProject, vbComponent, componentFound
+    Dim strModuleName, strFileName, fileExtension
+    Dim cleanedContent
+    Dim i, moduleCount
+    
+    Set vbProject = objAccess.VBE.ActiveVBProject
+    
+    ' Determinar si es un array o una colección
+    If IsArray(moduleNames) Then
+        moduleCount = UBound(moduleNames)
+    Else
+        moduleCount = moduleNames.Count - 1
+    End If
+    
+    ' Procesar cada módulo
+    For i = 0 To moduleCount
+        If IsArray(moduleNames) Then
+            strModuleName = Trim(moduleNames(i))
+        Else
+            strModuleName = Trim(moduleNames(i + 1))
+        End If
+        
+        If strModuleName <> "" Then
+            WScript.Echo "Sincronizando módulo: " & strModuleName
+            
+            ' PASO 1: Buscar y eliminar el componente VBA existente (solo si existe)
+            componentFound = False
+            For Each vbComponent In vbProject.VBComponents
+                If vbComponent.Name = strModuleName Then
+                    componentFound = True
+                    WScript.Echo "    Eliminando componente existente: " & strModuleName
+                    vbProject.VBComponents.Remove vbComponent
+                    
+                    If Err.Number <> 0 Then
+                        WScript.Echo "    ❌ Error eliminando componente: " & Err.Description
+                        Err.Clear
+                    Else
+                        WScript.Echo "    ✓ Componente eliminado correctamente"
+                    End If
+                    Exit For
+                End If
+            Next
+            
+            If Not componentFound Then
+                WScript.Echo "    -> Componente no existe en destino, creando nuevo"
+            End If
+            
+            ' PASO 2: Localizar el fichero fuente (.bas o .cls) en /src
+            strFileName = ""
+            If objFSO.FileExists(objFSO.BuildPath(strSourcePath, strModuleName & ".bas")) Then
+                strFileName = objFSO.BuildPath(strSourcePath, strModuleName & ".bas")
+                fileExtension = "bas"
+            ElseIf objFSO.FileExists(objFSO.BuildPath(strSourcePath, strModuleName & ".cls")) Then
+                strFileName = objFSO.BuildPath(strSourcePath, strModuleName & ".cls")
+                fileExtension = "cls"
+            End If
+            
+            If strFileName = "" Then
+                WScript.Echo "    ⚠️ Archivo no encontrado: " & strModuleName & ".bas/.cls"
+            Else
+                WScript.Echo "    -> Archivo encontrado: " & objFSO.GetFileName(strFileName)
+                
+                ' PASO 3: Limpiar el contenido del fichero
+                cleanedContent = CleanVBAFile(strFileName, fileExtension)
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "    ❌ Error al limpiar archivo: " & Err.Description
+                    Err.Clear
+                Else
+                    ' PASO 4: Importar el módulo con contenido limpio
+                    WScript.Echo "    Importando módulo..."
+                    Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
+                    
+                    If Err.Number <> 0 Then
+                        WScript.Echo "    ❌ Error al importar " & strModuleName & ": " & Err.Description
+                        Err.Clear
+                    Else
+                        WScript.Echo "    ✓ Módulo sincronizado exitosamente: " & strModuleName
+                    End If
+                End If
+            End If
+        End If
+    Next
+    
+    On Error GoTo 0
+End Sub
+
+' ===================================================================
+' SUBRUTINA LEGACY: UpdateSpecificModules (mantenida para compatibilidad)
 ' ===================================================================
 Sub UpdateSpecificModules(strModuleList)
     WScript.Echo "=== ACTUALIZACION SELECTIVA DE MODULOS ==="
@@ -1402,12 +1874,9 @@ Sub UpdateSpecificModules(strModuleList)
     
     On Error Resume Next
     
-    Dim arrModules, i
-    Dim strModuleName, strFileName, fileExtension
+    Dim arrModules
     Dim vbProject, vbComponent
     Dim updatedCount, processedCount
-    Dim cleanedContent
-    Dim componentFound
     
     ' Dividir la lista de módulos
     arrModules = Split(strModuleList, ",")
@@ -1419,71 +1888,23 @@ Sub UpdateSpecificModules(strModuleList)
         WScript.Quit 1
     End If
     
-    updatedCount = 0
-    processedCount = 0
+    ' Llamar a la nueva subrutina genérica SyncModules
+    Call SyncModules(arrModules)
     
-    ' Procesar cada módulo de la lista
+    ' Contar módulos procesados para estadísticas
+    processedCount = 0
+    updatedCount = 0
+    Dim i
     For i = 0 To UBound(arrModules)
-        strModuleName = Trim(arrModules(i))
-        
-        If strModuleName <> "" Then
+        If Trim(arrModules(i)) <> "" Then
             processedCount = processedCount + 1
-            WScript.Echo "Procesando modulo: " & strModuleName
-            
-            ' Buscar el archivo correspondiente (.bas o .cls)
-            strFileName = ""
-            If objFSO.FileExists(objFSO.BuildPath(strSourcePath, strModuleName & ".bas")) Then
-                strFileName = objFSO.BuildPath(strSourcePath, strModuleName & ".bas")
-                fileExtension = "bas"
-            ElseIf objFSO.FileExists(objFSO.BuildPath(strSourcePath, strModuleName & ".cls")) Then
-                strFileName = objFSO.BuildPath(strSourcePath, strModuleName & ".cls")
-                fileExtension = "cls"
-            End If
-            
-            If strFileName = "" Then
-                WScript.Echo "  ❌ Archivo no encontrado: " & strModuleName & ".bas/.cls"
-            Else
-                WScript.Echo "  -> Archivo encontrado: " & objFSO.GetFileName(strFileName)
-                
-                ' Buscar el componente VBA correspondiente
-                Set vbComponent = Nothing
-                componentFound = False
-                
-                For Each vbComponent In vbProject.VBComponents
-                    If vbComponent.Name = strModuleName Then
-                        componentFound = True
-                        Exit For
-                    End If
-                Next
-                
-                ' Eliminar componente existente si existe
-                If componentFound Then
-                    WScript.Echo "    Eliminando componente existente..."
-                    vbProject.VBComponents.Remove vbComponent
-                    
-                    If Err.Number <> 0 Then
-                        WScript.Echo "    ❌ Error eliminando componente: " & Err.Description
-                        Err.Clear
-                    Else
-                        WScript.Echo "    ✓ Componente eliminado"
-                    End If
-                End If
-                
-                ' Limpiar archivo antes de importar
-                cleanedContent = CleanVBAFile(strFileName, fileExtension)
-                
-                ' Importar el archivo
-                WScript.Echo "    Importando archivo..."
-                Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
-                
-                If Err.Number <> 0 Then
-                    WScript.Echo "    ❌ Error al importar: " & Err.Description
-                    Err.Clear
-                Else
-                    WScript.Echo "    ✓ Modulo actualizado exitosamente"
+            ' Verificar si el módulo existe en el proyecto VBA
+            For Each vbComponent In vbProject.VBComponents
+                If vbComponent.Name = Trim(arrModules(i)) Then
                     updatedCount = updatedCount + 1
+                    Exit For
                 End If
-            End If
+            Next
         End If
     Next
     
@@ -1729,11 +2150,11 @@ Sub RebuildProject()
     
     ' Integrar lógica de importación directamente
     Dim objFolder, objFile
-    Dim strModuleName, strFileName, strContent
-    Dim srcModules
     Dim moduleExists
     Dim validationResult
     Dim totalFiles, validFiles, invalidFiles
+    Dim allModuleNames()
+    Dim moduleCount
     
     If Not objFSO.FolderExists(strSourcePath) Then
         WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
@@ -1772,34 +2193,25 @@ Sub RebuildProject()
     
     WScript.Echo "✓ Validacion completada: " & validFiles & " archivos validos"
     
-    ' PASO 4.2: Procesar archivos de modulos
-    Set objFolder = objFSO.GetFolder(strSourcePath)
+    ' PASO 4.2: Crear colección con todos los nombres de módulos
+    moduleCount = 0
+    ReDim allModuleNames(totalFiles - 1)
     
     For Each objFile In objFolder.Files
         If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-            strFileName = objFile.Path
-            strModuleName = objFSO.GetBaseName(objFile.Name)
-            
-            WScript.Echo "Procesando modulo: " & strModuleName
-            
-            ' Determinar tipo de archivo
-            Dim fileExtension
-            fileExtension = LCase(objFSO.GetExtensionName(objFile.Name))
-            
-            ' Limpiar archivo antes de importar (eliminar metadatos Attribute)
-            Dim cleanedContent
-            cleanedContent = CleanVBAFile(strFileName, fileExtension)
-            
-            ' Importar usando contenido limpio
-            WScript.Echo "  Importando modulo (con limpieza): " & strFileName
-            Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "Error al importar modulo " & strModuleName & ": " & Err.Description
-                Err.Clear
-            End If
+            allModuleNames(moduleCount) = objFSO.GetBaseName(objFile.Name)
+            moduleCount = moduleCount + 1
         End If
     Next
+    
+    ' Redimensionar el array al tamaño correcto
+    If moduleCount > 0 Then
+        ReDim Preserve allModuleNames(moduleCount - 1)
+        
+        ' PASO 4.3: Llamar a SyncModules con todos los módulos
+        WScript.Echo "Sincronizando todos los modulos usando SyncModules..."
+        Call SyncModules(allModuleNames)
+    End If
     
     ' PASO 4.3: Guardar cada modulo individualmente
     WScript.Echo "Guardando modulos individualmente..."
