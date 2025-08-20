@@ -1,8 +1,8 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
-' M?dulo: Test_Services
-' Descripci?n: Pruebas unitarias para las clases de servicio
+' Módulo: Test_Services
+' Descripción: Pruebas unitarias para las clases de servicio
 '              CAuthService, CExpedienteService, CSolicitudService
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
@@ -50,7 +50,7 @@ Private g_MockExpedientes As T_MockExpedientesDB
 Private g_MockSolicitudSvc As T_MockSolicitudService
 
 ' ============================================================================
-' FUNCIONES DE CONFIGURACI?N DE MOCKS
+' FUNCIONES DE CONFIGURACIÓN DE MOCKS
 ' ============================================================================
 
 Private Sub SetupMockLanzaderaDB()
@@ -90,8 +90,8 @@ Private Sub SetupMockExpedientesDB()
             .idExpediente = 123
             .Nemotecnico = "TEST-001"
             .Titulo = "Expediente de Prueba"
-            .ResponsableCalidad = "Juan P?rez"
-            .ResponsableTecnico = "Mar?a Garc?a"
+            .ResponsableCalidad = "Juan Pérez"
+            .ResponsableTecnico = "María García"
             .Pecal = "PECAL-001"
         End With
     End With
@@ -137,16 +137,16 @@ Private Function Test_CAuthService_GetUserRole_Admin() As Boolean
     Dim authService As IAuthService
     Set authService = New CAuthService
     
-    ' En un entorno real, esto llamar?a a IAuthService_GetUserRole
+    ' En un entorno real, esto llamaría a IAuthService_GetUserRole
     ' Por ahora simulamos el resultado esperado
     Test_CAuthService_GetUserRole_Admin = (g_MockLanzadera.UserRole = Rol_Admin)
     
-    Debug.Print "? Test_CAuthService_GetUserRole_Admin: PASADO"
+    Debug.Print "✓ Test_CAuthService_GetUserRole_Admin: PASADO"
     Exit Function
     
 ErrorHandler:
     Test_CAuthService_GetUserRole_Admin = False
-    Debug.Print "? Test_CAuthService_GetUserRole_Admin: FALLIDO - " & Err.Description
+    Debug.Print "✗ Test_CAuthService_GetUserRole_Admin: FALLIDO - " & Err.Description
 End Function
 
 ' Prueba: GetUserRole con usuario de calidad
@@ -162,15 +162,15 @@ Private Function Test_CAuthService_GetUserRole_Calidad() As Boolean
     
     Test_CAuthService_GetUserRole_Calidad = (g_MockLanzadera.UserRole = Rol_Calidad)
     
-    Debug.Print "? Test_CAuthService_GetUserRole_Calidad: PASADO"
+    Debug.Print "✓ Test_CAuthService_GetUserRole_Calidad: PASADO"
     Exit Function
     
 ErrorHandler:
     Test_CAuthService_GetUserRole_Calidad = False
-    Debug.Print "? Test_CAuthService_GetUserRole_Calidad: FALLIDO - " & Err.Description
+    Debug.Print "✗ Test_CAuthService_GetUserRole_Calidad: FALLIDO - " & Err.Description
 End Function
 
-' Prueba: GetUserRole con usuario t?cnico
+' Prueba: GetUserRole con usuario técnico
 Private Function Test_CAuthService_GetUserRole_Tecnico() As Boolean
     On Error GoTo ErrorHandler
     
@@ -183,12 +183,12 @@ Private Function Test_CAuthService_GetUserRole_Tecnico() As Boolean
     
     Test_CAuthService_GetUserRole_Tecnico = (g_MockLanzadera.UserRole = Rol_Tecnico)
     
-    Debug.Print "? Test_CAuthService_GetUserRole_Tecnico: PASADO"
+    Debug.Print "✓ Test_CAuthService_GetUserRole_Tecnico: PASADO"
     Exit Function
     
 ErrorHandler:
     Test_CAuthService_GetUserRole_Tecnico = False
-    Debug.Print "? Test_CAuthService_GetUserRole_Tecnico: FALLIDO - " & Err.Description
+    Debug.Print "✗ Test_CAuthService_GetUserRole_Tecnico: FALLIDO - " & Err.Description
 End Function
 
 ' Prueba: GetUserRole con usuario inexistente
@@ -204,15 +204,15 @@ Private Function Test_CAuthService_GetUserRole_UsuarioInexistente() As Boolean
     
     Test_CAuthService_GetUserRole_UsuarioInexistente = (g_MockLanzadera.UserRole = Rol_Desconocido)
     
-    Debug.Print "? Test_CAuthService_GetUserRole_UsuarioInexistente: PASADO"
+    Debug.Print "✓ Test_CAuthService_GetUserRole_UsuarioInexistente: PASADO"
     Exit Function
     
 ErrorHandler:
     Test_CAuthService_GetUserRole_UsuarioInexistente = False
-    Debug.Print "? Test_CAuthService_GetUserRole_UsuarioInexistente: FALLIDO - " & Err.Description
+    Debug.Print "✗ Test_CAuthService_GetUserRole_UsuarioInexistente: FALLIDO - " & Err.Description
 End Function
 
-' Prueba: GetUserRole con email vac?o
+' Prueba: GetUserRole con email vacío
 Private Function Test_CAuthService_GetUserRole_EmailVacio() As Boolean
     On Error GoTo ErrorHandler
     
@@ -309,19 +309,19 @@ Private Function Test_CExpedienteService_GetExpedienteById_ErrorBD() As Boolean
     
     Test_CExpedienteService_GetExpedienteById_ErrorBD = g_MockExpedientes.ShouldFail
     
-    Debug.Print "? Test_CExpedienteService_GetExpedienteById_ErrorBD: PASADO"
+    Debug.Print "✓ Test_CExpedienteService_GetExpedienteById_ErrorBD: PASADO"
     Exit Function
     
 ErrorHandler:
     Test_CExpedienteService_GetExpedienteById_ErrorBD = False
-    Debug.Print "? Test_CExpedienteService_GetExpedienteById_ErrorBD: FALLIDO - " & Err.Description
+    Debug.Print "✗ Test_CExpedienteService_GetExpedienteById_ErrorBD: FALLIDO - " & Err.Description
 End Function
 
 ' ============================================================================
 ' PRUEBAS PARA CSolicitudService
 ' ============================================================================
 
-' Prueba: CreateNuevaSolicitud con tipo v?lido
+' Prueba: CreateNuevaSolicitud con tipo válido
 Private Function Test_CSolicitudService_CreateNuevaSolicitud_TipoValido() As Boolean
     On Error GoTo ErrorHandler
     
@@ -331,10 +331,10 @@ Private Function Test_CSolicitudService_CreateNuevaSolicitud_TipoValido() As Boo
     Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
-    ' Por ahora la implementaci?n retorna Nothing, pero verificamos que no falle
+    ' Por ahora la implementación retorna Nothing, pero verificamos que no falle
     Test_CSolicitudService_CreateNuevaSolicitud_TipoValido = (g_MockSolicitudSvc.LastCreatedType = "PC")
     
-    Debug.Print "? Test_CSolicitudService_CreateNuevaSolicitud_TipoValido: PASADO"
+    Debug.Print "✓ Test_CSolicitudService_CreateNuevaSolicitud_TipoValido: PASADO"
     Exit Function
     
 ErrorHandler:
@@ -400,10 +400,10 @@ Private Function Test_CSolicitudService_GetAllSolicitudes() As Boolean
     
 ErrorHandler:
     Test_CSolicitudService_GetAllSolicitudes = False
-    Debug.Print "? Test_CSolicitudService_GetAllSolicitudes: FALLIDO - " & Err.Description
+    Debug.Print "✗ Test_CSolicitudService_GetAllSolicitudes: FALLIDO - " & Err.Description
 End Function
 
-' Prueba: DeleteSolicitud con ID v?lido
+' Prueba: DeleteSolicitud con ID válido
 Private Function Test_CSolicitudService_DeleteSolicitud_IDValido() As Boolean
     On Error GoTo ErrorHandler
     
@@ -415,15 +415,15 @@ Private Function Test_CSolicitudService_DeleteSolicitud_IDValido() As Boolean
     
     Test_CSolicitudService_DeleteSolicitud_IDValido = (g_MockSolicitudSvc.LastDeletedID = 123)
     
-    Debug.Print "? Test_CSolicitudService_DeleteSolicitud_IDValido: PASADO"
+    Debug.Print "✓ Test_CSolicitudService_DeleteSolicitud_IDValido: PASADO"
     Exit Function
     
 ErrorHandler:
     Test_CSolicitudService_DeleteSolicitud_IDValido = False
-    Debug.Print "? Test_CSolicitudService_DeleteSolicitud_IDValido: FALLIDO - " & Err.Description
+    Debug.Print "✗ Test_CSolicitudService_DeleteSolicitud_IDValido: FALLIDO - " & Err.Description
 End Function
 
-' Prueba: UpdateEstadoSolicitud con par?metros v?lidos
+' Prueba: UpdateEstadoSolicitud con parámetros válidos
 Private Function Test_CSolicitudService_UpdateEstadoSolicitud_Valido() As Boolean
     On Error GoTo ErrorHandler
     
@@ -437,7 +437,7 @@ Private Function Test_CSolicitudService_UpdateEstadoSolicitud_Valido() As Boolea
     Test_CSolicitudService_UpdateEstadoSolicitud_Valido = (g_MockSolicitudSvc.LastUpdatedID = 123) And _
                                                          (g_MockSolicitudSvc.LastUpdatedEstado = "Aprobado")
     
-    Debug.Print "? Test_CSolicitudService_UpdateEstadoSolicitud_Valido: PASADO"
+    Debug.Print "✓ Test_CSolicitudService_UpdateEstadoSolicitud_Valido: PASADO"
     Exit Function
     
 ErrorHandler:
@@ -703,9 +703,9 @@ Public Function RunServicesTests() As Boolean
     Debug.Print ""
     
     ' ============================================================================
-    ' PRUEBAS DE INTEGRACI?N
+    ' PRUEBAS DE INTEGRACIÓN
     ' ============================================================================
-    Debug.Print "--- Pruebas de Integraci?n ---"
+    Debug.Print "--- Pruebas de Integración ---"
     
     totalTests = totalTests + 1
     If Test_Integration_AuthAndExpediente() Then passedTests = passedTests + 1
@@ -721,14 +721,14 @@ Public Function RunServicesTests() As Boolean
     Debug.Print "Total de pruebas ejecutadas: " & totalTests
     Debug.Print "Pruebas exitosas: " & passedTests
     Debug.Print "Pruebas fallidas: " & (totalTests - passedTests)
-    Debug.Print "Porcentaje de ?xito: " & Format((passedTests / totalTests) * 100, "0.00") & "%"
+    Debug.Print "Porcentaje de éxito: " & Format((passedTests / totalTests) * 100, "0.00") & "%"
     Debug.Print "============================================================================"
     
     If passedTests = totalTests Then
-        Debug.Print "? TODAS LAS PRUEBAS PASARON CORRECTAMENTE"
+        Debug.Print "🎉 TODAS LAS PRUEBAS PASARON CORRECTAMENTE"
         RunServicesTests = True
     Else
-        Debug.Print "? ALGUNAS PRUEBAS FALLARON - Revisar implementación"
+        Debug.Print "⚠️ ALGUNAS PRUEBAS FALLARON - Revisar implementación"
         RunServicesTests = False
     End If
     
@@ -736,7 +736,7 @@ Public Function RunServicesTests() As Boolean
 End Function
 
 ' ============================================================================
-' FUNCI?N DE PRUEBA R?PIDA
+' FUNCIÓN DE PRUEBA RÁPIDA
 ' ============================================================================
 
 Public Sub TestServices()

@@ -7,13 +7,13 @@ Implements IExpedienteService
 
 ' ============================================================================
 ' Clase: CExpedienteService
-' Descripci?n: Implementaci?n real del servicio de expedientes
+' Descripción: Implementación real del servicio de expedientes
 '              Conecta con la aplicaci?n de Expedientes existente
 ' Autor: CONDOR-Expert
 ' Fecha: Diciembre 2024
 ' ============================================================================
 
-' Implementaci?n de la interfaz IExpedienteService
+' Implementación de la interfaz IExpedienteService
 ' Obtiene un expediente por su ID desde la base de datos de expedientes (método principal)
 Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
     ' Wrapper que llama al método principal GetExpediente

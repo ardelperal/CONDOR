@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ===================================================================
 ' Módulo: Test_ValidationService
@@ -72,17 +72,17 @@ Public Function Test_ValidarSolicitud_ConDatosCompletos_RetornaExito() As Boolea
     
     ' Assert
     If resultado = True And MensajeError = "" Then
-        Debug.Print "? PASS: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito"
+        Debug.Print "✓ PASS: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito"
         Test_ValidarSolicitud_ConDatosCompletos_RetornaExito = True
     Else
-        Debug.Print "? FAIL: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito - Resultado: " & resultado & ", Error: " & MensajeError
+        Debug.Print "✗ FAIL: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito - Resultado: " & resultado & ", Error: " & MensajeError
         Test_ValidarSolicitud_ConDatosCompletos_RetornaExito = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "? ERROR: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito - " & Err.Description
+    Debug.Print "✗ ERROR: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito - " & Err.Description
     Test_ValidarSolicitud_ConDatosCompletos_RetornaExito = False
 End Function
 
@@ -112,17 +112,17 @@ Public Function Test_ValidarSolicitud_SinExpediente_RetornaFallo() As Boolean
     
     ' Assert
     If resultado = False And InStr(MensajeError, "expediente") > 0 Then
-        Debug.Print "? PASS: Test_ValidarSolicitud_SinExpediente_RetornaFallo - Error: " & MensajeError
+        Debug.Print "✓ PASS: Test_ValidarSolicitud_SinExpediente_RetornaFallo - Error: " & MensajeError
         Test_ValidarSolicitud_SinExpediente_RetornaFallo = True
     Else
-        Debug.Print "? FAIL: Test_ValidarSolicitud_SinExpediente_RetornaFallo - Resultado: " & resultado & ", Error: " & MensajeError
+        Debug.Print "✗ FAIL: Test_ValidarSolicitud_SinExpediente_RetornaFallo - Resultado: " & resultado & ", Error: " & MensajeError
         Test_ValidarSolicitud_SinExpediente_RetornaFallo = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "? ERROR: Test_ValidarSolicitud_SinExpediente_RetornaFallo - " & Err.Description
+    Debug.Print "✗ ERROR: Test_ValidarSolicitud_SinExpediente_RetornaFallo - " & Err.Description
     Test_ValidarSolicitud_SinExpediente_RetornaFallo = False
 End Function
 

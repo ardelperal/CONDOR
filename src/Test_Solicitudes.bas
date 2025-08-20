@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
@@ -12,9 +12,9 @@ Public Function Test_Solicitudes_RunAll() As String
     On Error GoTo ErrorHandler
     
     If Test_Factory_Crea_PC() Then
-        resultado = resultado & "? Test_Factory_Crea_PC: PASÓ" & vbCrLf
+        resultado = resultado & "✓ Test_Factory_Crea_PC: PASÓ" & vbCrLf
     Else
-        resultado = resultado & "? Test_Factory_Crea_PC: FALLÓ" & vbCrLf
+        resultado = resultado & "✗ Test_Factory_Crea_PC: FALLÓ" & vbCrLf
     End If
     
     resultado = resultado & "=== RESUMEN ===" & vbCrLf
@@ -26,7 +26,7 @@ Public Function Test_Solicitudes_RunAll() As String
     Exit Function
     
 ErrorHandler:
-    resultado = resultado & "? Test_Factory_Crea_PC: FALLÓ - " & Err.Description & vbCrLf
+    resultado = resultado & "✗ Test_Factory_Crea_PC: FALLÓ - " & Err.Description & vbCrLf
     resultado = resultado & "=== RESUMEN ===" & vbCrLf
     resultado = resultado & "Total de pruebas: 1" & vbCrLf
     resultado = resultado & "Pruebas exitosas: 0" & vbCrLf
