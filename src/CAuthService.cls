@@ -13,7 +13,7 @@ Option Compare Database
 Option Explicit
 
 Implements IAuthService
-
+'prueba del cambio para 
 Private configSvc As IConfig
 
 Private Sub Class_Initialize()
@@ -30,7 +30,7 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRo
     On Error GoTo ErrorHandler
 
     Dim role As E_UserRole
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.Recordset ' Variable para recordset de consulta
     Dim sql As String
     Dim dbPath As String
     Dim dbPassword As String
