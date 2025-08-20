@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_WorkflowService"
+Attribute VB_Name = "Test_WorkflowService"
 Option Compare Database
 
 
@@ -15,7 +15,8 @@ Option Explicit
 '******************************************************************************
 
 
-#If DEV_MODE Then
+' Compilación condicional removida para evitar errores
+' #If DEV_MODE Then
 
 '******************************************************************************
 ' VARIABLES PRIVADAS DEL MÓDULO
@@ -459,7 +460,7 @@ Public Function Test_RecordStateChange_ValidTransition_CreatesHistoryRecord() As
     Test_RecordStateChange_ValidTransition_CreatesHistoryRecord = resultado
 End Function
 
-#End If
+' #End If
 
 
 

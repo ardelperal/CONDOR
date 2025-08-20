@@ -916,6 +916,7 @@ Sub ExecuteTests()
     Dim strLogPath, objLogFile, strLine, testsFailed
     strLogPath = "C:\Proyectos\CONDOR\logs\test_results.log"
 
+
     ' 1. Limpiar log anterior
     If objFSO.FileExists(strLogPath) Then objFSO.DeleteFile(strLogPath)
 

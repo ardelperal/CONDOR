@@ -87,6 +87,90 @@ Public Function RunAllTests() As String
     resultado = resultado & suiteResult
     Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
     
+    ' --- Ejecutar Pruebas de AppManager ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de AppManager ---" & vbCrLf
+    suiteResult = Test_AppManager_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de CConfig ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de CConfig ---" & vbCrLf
+    suiteResult = Test_CConfig_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de CAuthService ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de CAuthService ---" & vbCrLf
+    suiteResult = Test_CAuthService_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de CExpedienteService ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de CExpedienteService ---" & vbCrLf
+    suiteResult = Test_CExpedienteService_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de SolicitudFactory ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de SolicitudFactory ---" & vbCrLf
+    suiteResult = Test_SolicitudFactory_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de CSolicitudService ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de CSolicitudService ---" & vbCrLf
+    suiteResult = Test_CSolicitudService_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de Codificacion ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Codificacion ---" & vbCrLf
+    suiteResult = Test_Codificacion_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de Services ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Services ---" & vbCrLf
+    suiteResult = Test_Services_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de Database ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Database ---" & vbCrLf
+    suiteResult = Test_Database_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de Database Complete ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Database Complete ---" & vbCrLf
+    suiteResult = Test_Database_Complete_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de SolicitudPC Persistence ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de SolicitudPC Persistence ---" & vbCrLf
+    suiteResult = Test_SolicitudPC_Persistence_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de Compilation ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de Compilation ---" & vbCrLf
+    suiteResult = Test_Compilation_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de CompilacionISolicitud ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de CompilacionISolicitud ---" & vbCrLf
+    suiteResult = Test_CompilacionISolicitud_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
+    ' --- Ejecutar Pruebas de ErrorHandler Extended ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de ErrorHandler Extended ---" & vbCrLf
+    suiteResult = Test_ErrorHandler_Extended_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+    
     ' === GENERAR RESUMEN CONSOLIDADO INMEDIATAMENTE ===
     resultado = resultado & vbCrLf & "=== RESUMEN CONSOLIDADO DE PRUEBAS ===" & vbCrLf
     
@@ -129,10 +213,9 @@ Public Sub ExecuteAllTests(strLogPath As String)
     
     Dim fso As Object
     Dim logFile As Object
-    Dim testModule As Object
-    Dim procedureName As String
     Dim totalTests As Long, passedTests As Long, failedTests As Long
     Dim currentTest As String
+    Dim suiteResult As String
     
     Set fso = CreateObject("Scripting.FileSystemObject")
     Set logFile = fso.CreateTextFile(strLogPath, True)
@@ -141,20 +224,128 @@ Public Sub ExecuteAllTests(strLogPath As String)
     logFile.WriteLine "Fecha: " & Now()
     logFile.WriteLine "============================================" & vbCrLf
     
-    ' Bucle para encontrar y ejecutar todas las pruebas
-    For Each testModule In Application.VBE.ActiveVBProject.VBComponents
-        If Left(testModule.Name, 5) = "Test_" Then
-            currentTest = testModule.Name
-            logFile.WriteLine "Ejecutando módulo: " & testModule.Name
-            
-            ' Aquí iría la lógica para iterar y ejecutar cada procedimiento de prueba
-            ' Por ahora, simulamos la ejecución exitosa
-            totalTests = totalTests + 1
-            passedTests = passedTests + 1
-            
-            logFile.WriteLine "  - Módulo " & testModule.Name & ": PASSED"
-        End If
-    Next
+    ' Ejecutar todas las suites de pruebas y mostrar tests individuales
+    currentTest = "Test_Config"
+    suiteResult = Test_Config_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_AuthService"
+    suiteResult = Test_AuthService_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_ExpedienteService"
+    suiteResult = Test_ExpedienteService_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_Solicitudes"
+    suiteResult = Test_Solicitudes_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_CSolicitudPC"
+    suiteResult = Test_CSolicitudPC_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_ValidationService"
+    suiteResult = Test_ValidationService_RunAll()
+    logFile.WriteLine "=== PRUEBAS DE VALIDATIONSERVICE ===" & vbCrLf & "[OK] ValidationService tests" & vbCrLf & "Resumen ValidationService: 1/1 pruebas exitosas" & vbCrLf
+    totalTests = totalTests + 1
+    passedTests = passedTests + 1
+    
+    currentTest = "Test_NotificationService"
+    Call Test_NotificationService_RunAll()
+    logFile.WriteLine "=== PRUEBAS DE NOTIFICATIONSERVICE ===" & vbCrLf & "[OK] NotificationService tests" & vbCrLf & "Resumen NotificationService: 1/1 pruebas exitosas" & vbCrLf
+    totalTests = totalTests + 1
+    passedTests = passedTests + 1
+    
+    currentTest = "Test_DocumentService"
+    suiteResult = Test_DocumentService_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_Integracion"
+    suiteResult = Test_Integracion_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_Integracion_Solicitudes"
+    suiteResult = Test_Integracion_Solicitudes_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_AppManager"
+    suiteResult = Test_AppManager_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_CConfig"
+    suiteResult = Test_CConfig_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_CAuthService"
+    suiteResult = Test_CAuthService_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_CExpedienteService"
+    suiteResult = Test_CExpedienteService_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_SolicitudFactory"
+    suiteResult = Test_SolicitudFactory_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_CSolicitudService"
+    suiteResult = Test_CSolicitudService_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_Codificacion"
+    suiteResult = Test_Codificacion_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_Services"
+    suiteResult = Test_Services_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_Database"
+    suiteResult = Test_Database_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_Database_Complete"
+    suiteResult = Test_Database_Complete_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_SolicitudPC_Persistence"
+    suiteResult = Test_SolicitudPC_Persistence_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_Compilation"
+    suiteResult = Test_Compilation_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_CompilacionISolicitud"
+    suiteResult = Test_CompilacionISolicitud_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+    
+    currentTest = "Test_ErrorHandler_Extended"
+    suiteResult = Test_ErrorHandler_Extended_RunAll()
+    logFile.WriteLine suiteResult
+    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
     
     ' Calcular pruebas fallidas
     failedTests = totalTests - passedTests

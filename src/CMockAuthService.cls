@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -12,7 +12,8 @@ Option Compare Database
 
 Option Explicit
 
-#If DEV_MODE Then
+' Compilación condicional removida para evitar errores
+' #If DEV_MODE Then
 Implements IAuthService
 
 Private Function IAuthService_AuthenticateUser(ByVal Email As String) As Boolean
@@ -51,7 +52,7 @@ Private Function IAuthService_ValidateEmail(ByVal Email As String) As Boolean
     ' Lógica MOCK simple para validación
     IAuthService_ValidateEmail = (Email <> "email_invalido")
 End Function
-#End If
+' #End If
 
 
 

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -12,7 +12,8 @@ Option Compare Database
 
 Option Explicit
 
-#If DEV_MODE Then
+' Compilación condicional removida para evitar errores
+' #If DEV_MODE Then
 
 ' ============================================================================
 ' Interfaz: IExpedienteService
@@ -50,7 +51,7 @@ End Function
 Public Function ValidateExpediente(expediente As T_Expediente) As Boolean
 End Function
 
-#End If
+' #End If
 
 
 

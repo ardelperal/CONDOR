@@ -12,7 +12,8 @@ Option Compare Database
 
 Option Explicit
 
-#If DEV_MODE Then
+' Compilación condicional removida para evitar errores
+' #If DEV_MODE Then
 
 Implements IExpedienteService
 
@@ -132,7 +133,7 @@ Private Function IExpedienteService_ValidateExpediente(expediente As T_Expedient
     IExpedienteService_ValidateExpediente = True
 End Function
 
-#End If
+' #End If
 
 
 

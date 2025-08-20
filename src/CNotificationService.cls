@@ -22,12 +22,12 @@ Option Explicit
 Implements INotificationService
 
 ' Variables privadas
-Private m_configService As IConfigService
+Private m_configService As IConfig
 
 ' Constructor
 Private Sub Class_Initialize()
     ' Inicializar dependencias
-    Set m_configService = New CConfigService
+    Set m_configService = New CConfig
 End Sub
 
 ' Destructor

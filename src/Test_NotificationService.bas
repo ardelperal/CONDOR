@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_NotificationService"
+Attribute VB_Name = "Test_NotificationService"
 Option Compare Database
 
 
@@ -11,7 +11,7 @@ Option Explicit
 
 
 ' Variables de módulo para el mock
-Private mockNotificationService As CMockNotificationService
+Private mockNotificationService As INotificationService
 
 ' Función principal para ejecutar todas las pruebas del módulo
 Public Sub Test_NotificationService_RunAll()

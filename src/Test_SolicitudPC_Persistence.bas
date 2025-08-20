@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_SolicitudPC_Persistence"
+Attribute VB_Name = "Test_SolicitudPC_Persistence"
 Option Compare Database
 
 
@@ -11,7 +11,8 @@ Option Explicit
 ' FECHA: 2024
 '******************************************************************************
 
-#If DEV_MODE Then
+' Compilación condicional removida para evitar errores
+' #If DEV_MODE Then
 
 
 '******************************************************************************
@@ -179,7 +180,7 @@ Public Sub EJECUTAR_PRUEBAS_PERSISTENCIA_PC()
     Debug.Print "=== PRUEBAS DE PERSISTENCIA PC COMPLETADAS ==="
 End Sub
 
-#End If
+' #End If
 
 
 
