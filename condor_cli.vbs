@@ -741,7 +741,7 @@ Function ReadFileWithAnsiEncoding(filePath)
     
     On Error Resume Next
     
-    ' Leer contenido del archivo usando ADODB.Stream con UTF-8
+    ' Leer contenido del archivo usando ADODB.Stream con UTF-8 y convertir a ANSI
     Set objStream = CreateObject("ADODB.Stream")
     objStream.Type = 2 ' adTypeText
     objStream.Charset = "UTF-8"
@@ -749,6 +749,24 @@ Function ReadFileWithAnsiEncoding(filePath)
     objStream.LoadFromFile filePath
     strContent = objStream.ReadText
     objStream.Close
+    
+    ' Convertir caracteres UTF-8 a ANSI para compatibilidad con VBA
+    ' Preservar caracteres especiales del español
+    strContent = Replace(strContent, "á", "á")
+    strContent = Replace(strContent, "é", "é")
+    strContent = Replace(strContent, "í", "í")
+    strContent = Replace(strContent, "ó", "ó")
+    strContent = Replace(strContent, "ú", "ú")
+    strContent = Replace(strContent, "ñ", "ñ")
+    strContent = Replace(strContent, "Á", "Á")
+    strContent = Replace(strContent, "É", "É")
+    strContent = Replace(strContent, "Í", "Í")
+    strContent = Replace(strContent, "Ó", "Ó")
+    strContent = Replace(strContent, "Ú", "Ú")
+    strContent = Replace(strContent, "Ñ", "Ñ")
+    strContent = Replace(strContent, "ü", "ü")
+    strContent = Replace(strContent, "Ü", "Ü")
+    
     Set objStream = Nothing
     
     If Err.Number <> 0 Then
@@ -768,7 +786,7 @@ Function CleanVBAFile(filePath, fileType)
     Dim objStream, strContent, arrLines, i, cleanedContent
     Dim strLine
     
-    ' Leer el archivo como UTF-8
+    ' Leer el archivo como UTF-8 y convertir a ANSI para VBA
     Set objStream = CreateObject("ADODB.Stream")
     objStream.Type = 2 ' adTypeText
     objStream.Charset = "UTF-8"
@@ -776,6 +794,24 @@ Function CleanVBAFile(filePath, fileType)
     objStream.LoadFromFile filePath
     strContent = objStream.ReadText
     objStream.Close
+    
+    ' Convertir caracteres UTF-8 a ANSI para compatibilidad con VBA
+    ' Preservar caracteres especiales del español
+    strContent = Replace(strContent, "á", "á")
+    strContent = Replace(strContent, "é", "é")
+    strContent = Replace(strContent, "í", "í")
+    strContent = Replace(strContent, "ó", "ó")
+    strContent = Replace(strContent, "ú", "ú")
+    strContent = Replace(strContent, "ñ", "ñ")
+    strContent = Replace(strContent, "Á", "Á")
+    strContent = Replace(strContent, "É", "É")
+    strContent = Replace(strContent, "Í", "Í")
+    strContent = Replace(strContent, "Ó", "Ó")
+    strContent = Replace(strContent, "Ú", "Ú")
+    strContent = Replace(strContent, "Ñ", "Ñ")
+    strContent = Replace(strContent, "ü", "ü")
+    strContent = Replace(strContent, "Ü", "Ü")
+    
     Set objStream = Nothing
     
     ' Dividir el contenido en un array de líneas
