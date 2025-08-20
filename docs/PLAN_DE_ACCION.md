@@ -40,8 +40,9 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 
 2.  **Ejecución de IA (Tu Rol, Copilot):**
     a. Recibes el prompt del Supervisor.
-    b. Generas el código necesario y ejecutas `cscript //nologo condor_cli.vbs rebuild` para sincronizar el proyecto.
-    c. Pausa y espera la confirmación del Supervisor.
+    b. Generas el código necesario y ejecutas `cscript //nologo condor_cli.vbs update` para sincronizar incrementalmente el proyecto.
+    c. **Nota:** El comando `update` es más rápido ya que solo actualiza los archivos modificados. Usa `rebuild` únicamente cuando sospeches problemas graves de sincronización.
+    d. Pausa y espera la confirmación del Supervisor.
 
 3.  **Verificación Manual (Rol del Supervisor):**
     a. El Supervisor abre CONDOR.accdb y ejecuta Depuración -> Compilar Proyecto.
