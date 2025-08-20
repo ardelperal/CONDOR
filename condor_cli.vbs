@@ -1536,12 +1536,9 @@ Sub RebuildProject()
         End If
     Next
     
-    ' PASO 4.4: Verificacion de integridad y compilacion
+    ' PASO 4.4: Verificacion de integridad
     WScript.Echo "Verificando integridad de nombres de modulos..."
     Call VerifyModuleNames()
-    
-    WScript.Echo "Iniciando compilacion condicional..."
-    Call CompileModulesConditionally()
     
     WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
     WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
