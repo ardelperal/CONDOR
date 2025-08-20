@@ -86,7 +86,7 @@ Para cambiar el entorno de ejecución durante el desarrollo:
    - `ForzarLocal`: Para trabajar con datos locales de desarrollo
    - `ForzarRemoto`: Para depurar con datos reales de la red
    - `ForzarNinguno`: Para usar el comportamiento automático
-4. **Reconstruir** el proyecto: `cscript condor_cli.vbs rebuild`
+4. **Actualizar** el proyecto: `cscript condor_cli.vbs update` (o `rebuild` si hay problemas)
 
 ### Casos de Uso Típicos
 
@@ -159,6 +159,24 @@ CONDOR incluye una herramienta de línea de comandos (`condor_cli.vbs`) que faci
 
 ### Comandos Disponibles
 
+#### Actualización Selectiva de Módulos (Recomendado)
+```bash
+# Actualizar un solo módulo
+cscript condor_cli.vbs update CAuthService
+
+# Actualizar múltiples módulos específicos
+cscript condor_cli.vbs update CAuthService,modUtils,CConfig
+
+# Actualizar todos los módulos (equivalente a rebuild pero más eficiente)
+cscript condor_cli.vbs update
+```
+- **Nuevo comando optimizado** para actualizaciones incrementales
+- Solo procesa los módulos especificados, no toda la base de datos
+- Elimina e importa únicamente los módulos indicados
+- **Sintaxis**: Los nombres de módulos se separan con comas (sin espacios)
+- **Nota**: No incluir extensiones (.bas/.cls) en los nombres
+- **Ventaja**: Mucho más rápido que `rebuild` para cambios específicos
+
 #### Exportación de Módulos
 ```bash
 cscript condor_cli.vbs export
@@ -167,7 +185,7 @@ cscript condor_cli.vbs export
 - Útil para sincronizar cambios realizados directamente en Access hacia el control de versiones
 - Mantiene la estructura del código y comentarios
 
-#### Reconstrucción del Proyecto
+#### Reconstrucción Completa del Proyecto
 ```bash
 cscript condor_cli.vbs rebuild
 ```
@@ -175,6 +193,7 @@ cscript condor_cli.vbs rebuild
 - Importa todos los archivos `.bas` del directorio `src/` hacia la base de datos Access
 - Compila automáticamente los módulos después de la importación
 - Garantiza un estado 100% limpio y compilado
+- **Usar solo cuando `update` no sea suficiente** (problemas de sincronización graves)
 - Muestra advertencias de compilación si las hay
 
 #### Ayuda de Comandos
@@ -191,8 +210,16 @@ Después de que el agente autónomo complete una tarea y suba los cambios, el su
 - Abrir una terminal en la raíz del proyecto.
 - Ejecutar `git pull` para descargar los últimos cambios.
 
-**Paso 2: Reconstruir la Base de Datos de Desarrollo**
-- En la misma terminal, ejecutar el comando de reconstrucción completa:
+**Paso 2: Actualizar la Base de Datos de Desarrollo**
+- **Opción A (Recomendada)**: Actualización selectiva si conoces los módulos modificados:
+```bash
+cscript //nologo condor_cli.vbs update CAuthService,modUtils
+```
+- **Opción B**: Actualización completa (más lenta pero segura):
+```bash
+cscript //nologo condor_cli.vbs update
+```
+- **Opción C**: Solo usar si hay problemas graves de sincronización:
 ```bash
 cscript //nologo condor_cli.vbs rebuild
 ```
@@ -387,16 +414,23 @@ Consulta el **[Plan de Acción](PLAN_DE_ACCION.md)** para ver el roadmap complet
 
 **Flujo Recomendado (3 pasos):**
 1. **Desarrollo Local**: Modificar archivos `.bas` en el directorio `src/`
-2. **Reconstrucción**: `cscript condor_cli.vbs rebuild` para aplicar cambios y compilar módulos
+2. **Actualización Selectiva**: `cscript condor_cli.vbs update [módulos]` para aplicar cambios específicos
 3. **Verificación Manual**: Abrir `CONDOR.accdb`, ejecutar macro `_EJECUTAR_TODAS_LAS_PRUEBAS` (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G)
 4. **Exportación**: `cscript condor_cli.vbs export` para sincronizar cambios desde Access (opcional)
 
-**Comando de Reconstrucción:**
+**Comandos de Actualización:**
 ```bash
+# Actualización selectiva (recomendado)
+cscript condor_cli.vbs update CAuthService,modUtils
+
+# Actualización completa (alternativa)
+cscript condor_cli.vbs update
+
+# Reconstrucción completa (solo si hay problemas)
 cscript condor_cli.vbs rebuild
 ```
 
-**⚠️ Importante**: Las pruebas requieren que los módulos estén compilados. Siempre ejecute `rebuild` antes de ejecutar las pruebas manualmente para garantizar un estado limpio y compilado.
+**⚠️ Importante**: Las pruebas requieren que los módulos estén compilados. Siempre ejecute `update` o `rebuild` antes de ejecutar las pruebas manualmente para garantizar un estado limpio y compilado.
 
 ### Configuración
 
