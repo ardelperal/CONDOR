@@ -1,4 +1,9 @@
-Attribute VB_Name = "Test_ValidationService"
+﻿Attribute VB_Name = "Test_ValidationService"
+Option Compare Database
+
+
+Option Explicit
+
 ' ===================================================================
 ' Módulo: Test_ValidationService
 ' Descripción: Pruebas unitarias para el servicio de validaciones de negocio
@@ -6,7 +11,6 @@ Attribute VB_Name = "Test_ValidationService"
 ' Fecha: 2024
 ' ===================================================================
 
-Option Explicit
 
 ' Declaraciones a nivel de módulo
 Private validationService As IValidationService
@@ -55,34 +59,34 @@ Public Function Test_ValidarSolicitud_ConDatosCompletos_RetornaExito() As Boolea
     
     With mockSolicitud
         .NumeroExpediente = "EXP-2024-001"
-        .TipoSolicitud = "PC"
+        .tipoSolicitud = "PC"
         .Descripcion = "Solicitud de cambio de precio válida"
-        .Justificacion = "Incremento de materiales según índice ICCP"
-        .ImporteOriginal = 1500000
-        .ImporteNuevo = 1725000
+        .justificacion = "Incremento de materiales según índice ICCP"
+        .importeOriginal = 1500000
+        .importeNuevo = 1725000
         .Estado = "Borrador"
-        .FechaCreacion = Now
+        .fechaCreacion = Now
         .UsuarioCreador = "test.user@empresa.com"
     End With
     
     ' Act
     Dim resultado As Boolean
-    Dim mensajeError As String
-    resultado = validationService.ValidarSolicitud(mockSolicitud, mensajeError)
+    Dim MensajeError As String
+    resultado = validationService.ValidarSolicitud(mockSolicitud, MensajeError)
     
     ' Assert
-    If resultado = True And mensajeError = "" Then
-        Debug.Print "✓ PASS: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito"
+    If resultado = True And MensajeError = "" Then
+        Debug.Print "? PASS: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito"
         Test_ValidarSolicitud_ConDatosCompletos_RetornaExito = True
     Else
-        Debug.Print "✗ FAIL: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito - Resultado: " & resultado & ", Error: " & mensajeError
+        Debug.Print "? FAIL: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito - Resultado: " & resultado & ", Error: " & MensajeError
         Test_ValidarSolicitud_ConDatosCompletos_RetornaExito = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "✗ ERROR: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito - " & Err.Description
+    Debug.Print "? ERROR: Test_ValidarSolicitud_ConDatosCompletos_RetornaExito - " & Err.Description
     Test_ValidarSolicitud_ConDatosCompletos_RetornaExito = False
 End Function
 
@@ -95,33 +99,38 @@ Public Function Test_ValidarSolicitud_SinExpediente_RetornaFallo() As Boolean
     
     With mockSolicitud
         .NumeroExpediente = ""  ' Campo vacío - debe fallar
-        .TipoSolicitud = "PC"
+        .tipoSolicitud = "PC"
         .Descripcion = "Solicitud sin expediente"
-        .Justificacion = "Test de validación"
-        .ImporteOriginal = 1500000
-        .ImporteNuevo = 1725000
+        .justificacion = "Test de validación"
+        .importeOriginal = 1500000
+        .importeNuevo = 1725000
         .Estado = "Borrador"
-        .FechaCreacion = Now
+        .fechaCreacion = Now
         .UsuarioCreador = "test.user@empresa.com"
     End With
     
     ' Act
     Dim resultado As Boolean
-    Dim mensajeError As String
-    resultado = validationService.ValidarSolicitud(mockSolicitud, mensajeError)
+    Dim MensajeError As String
+    resultado = validationService.ValidarSolicitud(mockSolicitud, MensajeError)
     
     ' Assert
-    If resultado = False And InStr(mensajeError, "expediente") > 0 Then
-        Debug.Print "✓ PASS: Test_ValidarSolicitud_SinExpediente_RetornaFallo - Error: " & mensajeError
+    If resultado = False And InStr(MensajeError, "expediente") > 0 Then
+        Debug.Print "? PASS: Test_ValidarSolicitud_SinExpediente_RetornaFallo - Error: " & MensajeError
         Test_ValidarSolicitud_SinExpediente_RetornaFallo = True
     Else
-        Debug.Print "✗ FAIL: Test_ValidarSolicitud_SinExpediente_RetornaFallo - Resultado: " & resultado & ", Error: " & mensajeError
+        Debug.Print "? FAIL: Test_ValidarSolicitud_SinExpediente_RetornaFallo - Resultado: " & resultado & ", Error: " & MensajeError
         Test_ValidarSolicitud_SinExpediente_RetornaFallo = False
     End If
     
     Exit Function
     
 ErrorHandler:
-    Debug.Print "✗ ERROR: Test_ValidarSolicitud_SinExpediente_RetornaFallo - " & Err.Description
+    Debug.Print "? ERROR: Test_ValidarSolicitud_SinExpediente_RetornaFallo - " & Err.Description
     Test_ValidarSolicitud_SinExpediente_RetornaFallo = False
 End Function
+
+
+
+
+

@@ -1,5 +1,7 @@
-Attribute VB_Name = "modTypes"
+﻿Attribute VB_Name = "modTypes"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -13,7 +15,7 @@ Option Explicit
 ' con la aplicaci?n de Expedientes existente
 Public Type T_Expediente
     ID As Long                    ' Propiedad usada en modMockFramework
-    IDExpediente As Long
+    idExpediente As Long
     Nemotecnico As String
     Titulo As String
     ResponsableCalidad As String
@@ -26,12 +28,12 @@ End Type
 Public Type T_Solicitud
     ID As Long                    ' Propiedad usada en modMockFramework
     NumeroExpediente As String
-    TipoSolicitud As String
-    EstadoInterno As String
+    tipoSolicitud As String
+    estadoInterno As String
     EstadoRAC As String
-    FechaCreacion As Date
+    fechaCreacion As Date
     FechaUltimaModificacion As Date
-    Usuario As String
+    usuario As String
     Observaciones As String
     Activo As Boolean
 End Type
@@ -42,12 +44,12 @@ Public Type T_Datos_PC
     ID As Long                    ' Propiedad usada en modMockFramework
     SolicitudID As Long           ' Propiedad usada en modMockFramework
     NumeroExpediente As String    ' Propiedad usada en modMockFramework
-    TipoSolicitud As String       ' Propiedad usada en modMockFramework
-    DescripcionCambio As String   ' Propiedad usada en modMockFramework
+    tipoSolicitud As String       ' Propiedad usada en modMockFramework
+    descripcionCambio As String   ' Propiedad usada en modMockFramework
     JustificacionCambio As String ' Propiedad usada en modMockFramework
     ImpactoSeguridad As String    ' Propiedad usada en modMockFramework
-    ImpactoCalidad As String      ' Propiedad usada en modMockFramework
-    FechaCreacion As Date         ' Propiedad usada en modMockFramework
+    impactoCalidad As String      ' Propiedad usada en modMockFramework
+    fechaCreacion As Date         ' Propiedad usada en modMockFramework
     FechaUltimaModificacion As Date
     Estado As String              ' Propiedad usada en modMockFramework
     Activo As Boolean             ' Propiedad usada en modMockFramework
@@ -59,13 +61,13 @@ Public Type T_Datos_CD_CA
     ID As Long
     SolicitudID As Long
     NumeroExpediente As String
-    TipoSolicitud As String
+    tipoSolicitud As String
     DescripcionDesviacion As String
     JustificacionDesviacion As String
     ImpactoSeguridad As String
-    ImpactoCalidad As String
+    impactoCalidad As String
     MedidasCorrectivas As String
-    FechaCreacion As Date
+    fechaCreacion As Date
     FechaUltimaModificacion As Date
     Estado As String
     Activo As Boolean
@@ -77,18 +79,24 @@ Public Type T_Datos_CD_CA_SUB
     ID As Long
     SolicitudID As Long
     NumeroExpediente As String
-    TipoSolicitud As String
+    tipoSolicitud As String
     NombreSubsuministrador As String
     DescripcionDesviacion As String
     JustificacionDesviacion As String
     ImpactoSeguridad As String
-    ImpactoCalidad As String
+    impactoCalidad As String
     MedidasCorrectivas As String
-    FechaCreacion As Date
+    fechaCreacion As Date
     FechaUltimaModificacion As Date
     Estado As String
     Activo As Boolean
 End Type
+
+
+
+
+
+
 
 
 

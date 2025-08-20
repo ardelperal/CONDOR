@@ -1,5 +1,7 @@
 ﻿Attribute VB_Name = "modTest"
 Option Compare Database
+
+
 Option Explicit
 
 ' M?dulo de prueba para verificar la implementaci?n de la interfaz
@@ -17,14 +19,14 @@ Public Sub TestInterface()
     
     ' Probar propiedades
     solicitud.idSolicitud = 1
-    solicitud.IDExpediente = "EXP-001"
-    solicitud.TipoSolicitud = "PC"
-    solicitud.EstadoInterno = "Borrador"
+    solicitud.idExpediente = "EXP-001"
+    solicitud.tipoSolicitud = "PC"
+    solicitud.estadoInterno = "Borrador"
     
     Debug.Print "Test exitoso: ID=" & solicitud.idSolicitud
-    Debug.Print "Test exitoso: Expediente=" & solicitud.IDExpediente
-    Debug.Print "Test exitoso: Tipo=" & solicitud.TipoSolicitud
-    Debug.Print "Test exitoso: Estado=" & solicitud.EstadoInterno
+    Debug.Print "Test exitoso: Expediente=" & solicitud.idExpediente
+    Debug.Print "Test exitoso: Tipo=" & solicitud.tipoSolicitud
+    Debug.Print "Test exitoso: Estado=" & solicitud.estadoInterno
     
     ' Limpiar objetos
     Set solicitud = Nothing
@@ -38,6 +40,12 @@ ErrorHandler:
     Set solicitud = Nothing
     Set solicitudPC = Nothing
 End Sub
+
+
+
+
+
+
 
 
 

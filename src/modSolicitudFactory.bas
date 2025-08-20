@@ -1,5 +1,7 @@
 ﻿Attribute VB_Name = "modSolicitudFactory"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -64,6 +66,12 @@ End Function
 ' TODO: Agregar funciones para otros tipos de solicitud cuando se implementen
 ' Private Function CreateSolicitudCD_CA(ByVal idSolicitud As Long) As ISolicitud
 ' Private Function CreateSolicitudCD_CA_SUB(ByVal idSolicitud As Long) As ISolicitud
+
+
+
+
+
+
 
 
 

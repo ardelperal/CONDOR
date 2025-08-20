@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_Codificacion"
+﻿Attribute VB_Name = "Test_Codificacion"
 Option Compare Database
+
+
 Option Explicit
 
 ' Módulo de prueba para verificar la codificación UTF-8
@@ -59,4 +61,10 @@ Public Function Test_Codificacion_RunAll() As String
     
     Test_Codificacion_RunAll = resultado
 End Function
+
+
+
+
+
+
 

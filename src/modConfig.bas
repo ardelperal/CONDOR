@@ -1,5 +1,7 @@
-Attribute VB_Name = "modConfig"
+﻿Attribute VB_Name = "modConfig"
 Option Compare Database
+
+
 Option Explicit
 
 ' Modulo de Configuracion del Sistema CONDOR - Factory/Singleton
@@ -114,6 +116,12 @@ Public Function TestModConfig() As String
     Set configInstance = config()
     TestModConfig = configInstance.TestCConfig()
 End Function
+
+
+
+
+
+
 
 
 

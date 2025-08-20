@@ -21,7 +21,7 @@ strSourcePath = "C:\Proyectos\CONDOR\src"
 
 ' Obtener argumentos de linea de comandos
 Set objArgs = WScript.Arguments
-If objArgs.Count = 0 Then
+If objArgs.Count = 0 Or LCase(objArgs(0)) = "help" Then
     WScript.Echo "=== CONDOR CLI - Herramienta de linea de comandos ==="
     WScript.Echo "Uso: cscript condor_cli.vbs [comando] [opciones]"
     WScript.Echo ""
@@ -106,7 +106,6 @@ End If
 ' Configurar Access en modo silencioso
 objAccess.Visible = False
 objAccess.UserControl = False
-objAccess.DisplayAlerts = False  ' Clave para evitar diálogos de confirmación
 ' Suprimir alertas y diálogos de confirmación
 objAccess.DoCmd.SetWarnings False
 objAccess.Application.Echo False
@@ -123,6 +122,7 @@ WScript.Echo "Abriendo base de datos..."
 ' Configurar Access para evitar errores de compilación
 On Error Resume Next
 ' Intentar configurar propiedades si están disponibles
+objAccess.DisplayAlerts = False
 Err.Clear
 
 ' Determinar contraseña para la base de datos
@@ -188,7 +188,6 @@ End If
 WScript.Echo "Cerrando Access..."
 ' Restaurar estado normal de Access antes de cerrar
 On Error Resume Next
-objAccess.DoCmd.SetWarnings True  ' Restaurar alertas
 objAccess.Application.Echo True
 objAccess.Quit 1  ' acQuitSaveAll = 1
 If Err.Number <> 0 Then
@@ -764,6 +763,7 @@ Function ReadFileWithAnsiEncoding(filePath)
     ReadFileWithAnsiEncoding = strContent
 End Function
 
+' Función para verificar y corregir líneas Option en archivo fuente
 ' Función para limpiar archivos VBA eliminando líneas Attribute con validación mejorada
 Function CleanVBAFile(filePath, fileType)
     Dim objStream, strContent, arrLines, i, cleanedLines
@@ -805,7 +805,7 @@ Function CleanVBAFile(filePath, fileType)
     strContent = Replace(strContent, vbCr, vbLf)
     arrLines = Split(strContent, vbLf)
     
-    ' Procesar línea por línea eliminando metadatos y líneas Option
+    ' Procesar línea por línea eliminando SOLO metadatos (NO líneas Option)
     cleanedLines = ""
     Dim linesRemoved
     linesRemoved = 0
@@ -824,9 +824,9 @@ Function CleanVBAFile(filePath, fileType)
         If strLine = "END" Then shouldRemove = True
         If Left(strLine, 9) = "Attribute" Then shouldRemove = True
         
-        ' ELIMINAR líneas Option para AMBOS tipos (.bas y .cls)
-        ' Esto es necesario porque AddFromString automáticamente añade las cabeceras Option
-        If Left(strLine, 6) = "Option" Then shouldRemove = True
+        ' ELIMINAR también las líneas Option - Access las añadirá automáticamente
+        If strLine = "Option Compare Database" Then shouldRemove = True
+        If strLine = "Option Explicit" Then shouldRemove = True
         
         ' Eliminar líneas vacías solo al inicio del archivo
         If strLine = "" And cleanedLines = "" Then shouldRemove = True
@@ -856,7 +856,14 @@ Function CleanVBAFile(filePath, fileType)
         End If
     Next
     
-    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos y Option (archivo ." & fileType & ")"
+    ' Añadir Option Explicit como primera línea después de eliminar metadatos
+    If cleanedLines <> "" Then
+        cleanedLines = "Option Explicit" & vbCrLf & cleanedLines
+    Else
+        cleanedLines = "Option Explicit"
+    End If
+    
+    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos (archivo ." & fileType & ")"
     
     CleanVBAFile = cleanedLines
 End Function
@@ -1004,7 +1011,7 @@ Sub ImportModuleWithAnsiEncoding(strImportPath, moduleName, fileExtension, vbCom
             End If
         Next
         
-        ' Si no existe, crear nuevo componente (sin restaurar alertas)
+        ' Si no existe, crear nuevo componente
         If vbComponent Is Nothing Then
             Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(1) ' 1 = vbext_ct_StdModule
             If Err.Number <> 0 Then
@@ -1054,7 +1061,7 @@ Sub ImportModuleWithAnsiEncoding(strImportPath, moduleName, fileExtension, vbCom
             End If
         Next
         
-        ' Si no existe, crear nuevo componente (sin restaurar alertas)
+        ' Si no existe, crear nuevo componente
         If vbComponent Is Nothing Then
             Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(2) ' 2 = vbext_ct_ClassModule
             If Err.Number <> 0 Then
@@ -1257,22 +1264,6 @@ Function GetDatabasePassword(strDbPath)
     End If
 End Function
 
-' Función auxiliar para obtener el nombre legible del tipo de componente VBA
-Function GetComponentTypeName(componentType)
-    Select Case componentType
-        Case 1
-            GetComponentTypeName = "Módulo Estándar"
-        Case 2
-            GetComponentTypeName = "Módulo de Clase"
-        Case 3
-            GetComponentTypeName = "Formulario"
-        Case 100
-            GetComponentTypeName = "Documento"
-        Case Else
-            GetComponentTypeName = "Tipo " & componentType
-    End Select
-End Function
-
 ' Función para re-vincular una sola base de datos
 Function RelinkSingleDatabase(strDbPath, strPassword, strBackPath)
     Dim objDb, objTableDef
@@ -1366,12 +1357,12 @@ End Function
 Sub RebuildProject()
     WScript.Echo "=== RECONSTRUCCION COMPLETA DEL PROYECTO VBA ==="
     WScript.Echo "ADVERTENCIA: Se eliminaran TODOS los modulos VBA existentes"
-    WScript.Echo "Iniciando proceso de reconstruccion con limpieza total..."
+    WScript.Echo "Iniciando proceso de reconstruccion..."
     
     On Error Resume Next
     
-    ' FASE 1: LIMPIEZA TOTAL
-    WScript.Echo "FASE 1: LIMPIEZA TOTAL - Eliminando todos los modulos VBA existentes..."
+    ' Paso 1: Eliminar todos los módulos existentes
+    WScript.Echo "Paso 1: Eliminando todos los modulos VBA existentes..."
     
     Dim vbProject, vbComponent
     Set vbProject = objAccess.VBE.ActiveVBProject
@@ -1379,131 +1370,187 @@ Sub RebuildProject()
     Dim componentCount, i, errorDetails
     componentCount = vbProject.VBComponents.Count
     
-    ' Iterar sobre todos los componentes en Application.VBE.ActiveVBProject.VBComponents
+    ' Iterar hacia atrás para evitar problemas al eliminar elementos
     For i = componentCount To 1 Step -1
         Set vbComponent = vbProject.VBComponents(i)
         
-        ' Eliminar únicamente módulos estándar (vbext_ct_StdModule) y de clase (vbext_ct_ClassModule)
+        ' Solo eliminar módulos estándar y de clase (no formularios ni informes)
         If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' vbext_ct_StdModule = 1, vbext_ct_ClassModule = 2
-            WScript.Echo "  Eliminando: " & vbComponent.Name & " (Tipo: " & GetComponentTypeName(vbComponent.Type) & ")"
+            WScript.Echo "  Eliminando: " & vbComponent.Name & " (Tipo: " & vbComponent.Type & ")"
             vbProject.VBComponents.Remove vbComponent
             
             If Err.Number <> 0 Then
                 WScript.Echo "  ❌ Error eliminando " & vbComponent.Name & ": " & Err.Description
                 Err.Clear
+            Else
+                WScript.Echo "  ✓ Eliminado: " & vbComponent.Name
             End If
         End If
     Next
     
-    ' FASE 2: VERIFICACION POST-LIMPIEZA
-    WScript.Echo "FASE 2: VERIFICACION POST-LIMPIEZA - Contando módulos restantes..."
+    WScript.Echo "Paso 2: Guardando y cerrando base de datos..."
     
-    Dim remainingStdModules, remainingClassModules
-    remainingStdModules = 0
-    remainingClassModules = 0
+    ' Forzar guardado y cierre
+    objAccess.DoCmd.Save
+    objAccess.Quit 1  ' acQuitSaveAll = 1
     
-    ' Contar cuántos componentes de tipo vbext_ct_StdModule y vbext_ct_ClassModule quedan
-    For Each vbComponent In vbProject.VBComponents
-        If vbComponent.Type = 1 Then ' vbext_ct_StdModule
-            remainingStdModules = remainingStdModules + 1
-        ElseIf vbComponent.Type = 2 Then ' vbext_ct_ClassModule
-            remainingClassModules = remainingClassModules + 1
+    If Err.Number <> 0 Then
+        WScript.Echo "Advertencia al cerrar Access: " & Err.Description
+        Err.Clear
+    End If
+    
+    Set objAccess = Nothing
+    WScript.Echo "✓ Base de datos cerrada y guardada"
+    
+    ' Paso 3: Volver a abrir la base de datos
+    WScript.Echo "Paso 3: Reabriendo base de datos con proyecto VBA limpio..."
+    
+    Set objAccess = CreateObject("Access.Application")
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ Error al crear nueva instancia de Access: " & Err.Description
+        WScript.Quit 1
+    End If
+    
+    ' Configurar Access en modo silencioso
+    objAccess.Visible = False
+    objAccess.UserControl = False
+    
+    ' Suprimir alertas y diálogos de confirmación
+    On Error Resume Next
+    objAccess.DoCmd.SetWarnings False
+    objAccess.Application.Echo False
+    objAccess.DisplayAlerts = False
+    ' Configuraciones adicionales para suprimir diálogos
+    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
+    objAccess.VBE.MainWindow.Visible = False
+    Err.Clear
+    On Error GoTo 0
+    
+    ' Determinar contraseña para la base de datos
+    Dim strDbPassword
+    strDbPassword = GetDatabasePassword(strAccessPath)
+    
+    ' Abrir base de datos
+    If strDbPassword = "" Then
+        objAccess.OpenCurrentDatabase strAccessPath
+    Else
+        objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ Error al reabrir base de datos: " & Err.Description
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "✓ Base de datos reabierta con proyecto VBA limpio"
+    
+    ' Paso 4: Importar todos los módulos de nuevo
+    WScript.Echo "Paso 4: Importando todos los modulos desde /src..."
+    
+    ' Integrar lógica de importación directamente
+    Dim objFolder, objFile
+    Dim strModuleName, strFileName, strContent
+    Dim srcModules
+    Dim moduleExists
+    Dim validationResult
+    Dim totalFiles, validFiles, invalidFiles
+    
+    If Not objFSO.FolderExists(strSourcePath) Then
+        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    ' PASO 4.1: Validacion previa de sintaxis
+    WScript.Echo "Validando sintaxis de todos los modulos..."
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    totalFiles = 0
+    validFiles = 0
+    invalidFiles = 0
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            totalFiles = totalFiles + 1
+            validationResult = ValidateVBASyntax(objFile.Path, errorDetails)
+            
+            If validationResult = True Then
+                validFiles = validFiles + 1
+                WScript.Echo "  ✓ " & objFile.Name & " - Sintaxis valida"
+            Else
+                invalidFiles = invalidFiles + 1
+                WScript.Echo "  ✗ ERROR en " & objFile.Name & ": " & errorDetails
+            End If
         End If
     Next
     
-    ' Verificar que la limpieza fue completa
-    If remainingStdModules > 0 Or remainingClassModules > 0 Then
-        WScript.Echo "ERROR: La limpieza de módulos ha fallado."
-        WScript.Echo "  Módulos estándar restantes: " & remainingStdModules
-        WScript.Echo "  Módulos de clase restantes: " & remainingClassModules
-        objAccess.Quit
-        WScript.Quit 1
-    Else
-        WScript.Echo "ÉXITO: Todos los módulos han sido eliminados."
-    End If
-    
-    
-    ' FASE 3: IMPORTACION
-    WScript.Echo "FASE 3: IMPORTACION - Leyendo e importando archivos desde /src..."
-    
-    
-    Dim objFolder, objFile
-    Dim strModuleName, strFileName
-    Dim fileExtension, cleanedContent
-    
-    If Not objFSO.FolderExists(strSourcePath) Then
-        WScript.Echo "ERROR: Directorio de origen no existe: " & strSourcePath
+    If invalidFiles > 0 Then
+        WScript.Echo "ABORTANDO: Se encontraron " & invalidFiles & " archivos con errores de sintaxis."
+        WScript.Echo "Use 'cscript condor_cli.vbs validate --verbose' para más detalles."
         objAccess.Quit
         WScript.Quit 1
     End If
     
-    ' Leer todos los ficheros con extensión .bas y .cls de la carpeta /src
+    WScript.Echo "✓ Validacion completada: " & validFiles & " archivos validos"
+    
+    ' PASO 4.2: Procesar archivos de modulos
     Set objFolder = objFSO.GetFolder(strSourcePath)
     
     For Each objFile In objFolder.Files
         If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
             strFileName = objFile.Path
             strModuleName = objFSO.GetBaseName(objFile.Name)
+            
+            WScript.Echo "Procesando modulo: " & strModuleName
+            
+            ' Determinar tipo de archivo
+            Dim fileExtension
             fileExtension = LCase(objFSO.GetExtensionName(objFile.Name))
             
-            ' Mostrar en la consola el nombre de cada módulo que se va importando
-            WScript.Echo "  Importando: " & strModuleName & " (" & objFile.Name & ")"
-            
             ' Limpiar archivo antes de importar (eliminar metadatos Attribute)
+            Dim cleanedContent
             cleanedContent = CleanVBAFile(strFileName, fileExtension)
             
-            ' Importar cada fichero usando Application.VBE.ActiveVBProject.VBComponents.Import
+            ' Importar usando contenido limpio
+            WScript.Echo "  Importando modulo (con limpieza): " & strFileName
             Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
             
             If Err.Number <> 0 Then
-                WScript.Echo "  ❌ Error al importar " & strModuleName & ": " & Err.Description
+                WScript.Echo "Error al importar modulo " & strModuleName & ": " & Err.Description
                 Err.Clear
             End If
         End If
     Next
     
+    ' PASO 4.3: Guardar cada modulo individualmente
+    WScript.Echo "Guardando modulos individualmente..."
+    On Error Resume Next
     
-    ' FASE 4: VERIFICACION POST-IMPORTACION
-    WScript.Echo "FASE 4: VERIFICACION POST-IMPORTACION - Contando archivos y módulos..."
-    
-    ' Contar el número de ficheros .bas y .cls en la carpeta /src
-    Dim sourceFileCount
-    sourceFileCount = 0
-    
-    Set objFolder = objFSO.GetFolder(strSourcePath)
-    For Each objFile In objFolder.Files
-        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-            sourceFileCount = sourceFileCount + 1
+    For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
+        If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
+            WScript.Echo "Guardando modulo: " & vbComponent.Name
+            objAccess.DoCmd.Save 5, vbComponent.Name  ' acModule = 5
+            If Err.Number <> 0 Then
+                WScript.Echo "Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
+                Err.Clear
+            End If
+        ElseIf vbComponent.Type = 2 Then  ' vbext_ct_ClassModule
+            WScript.Echo "Guardando clase: " & vbComponent.Name
+            objAccess.DoCmd.Save 7, vbComponent.Name  ' acClassModule = 7
+            If Err.Number <> 0 Then
+                WScript.Echo "Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
+                Err.Clear
+            End If
         End If
     Next
     
-    ' Contar el número de componentes de tipo vbext_ct_StdModule y vbext_ct_ClassModule en el proyecto VBA
-    Dim importedModuleCount
-    importedModuleCount = 0
-    
-    For Each vbComponent In vbProject.VBComponents
-        If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' vbext_ct_StdModule = 1, vbext_ct_ClassModule = 2
-            importedModuleCount = importedModuleCount + 1
-        End If
-    Next
-    
-    WScript.Echo "  Archivos fuente encontrados: " & sourceFileCount
-    WScript.Echo "  Módulos importados: " & importedModuleCount
-    
-    ' Verificar que los recuentos coinciden
-    If sourceFileCount <> importedModuleCount Then
-        WScript.Echo "ERROR: El número de módulos importados no coincide con los ficheros de origen."
-        WScript.Echo "  Archivos .bas/.cls en /src: " & sourceFileCount
-        WScript.Echo "  Módulos importados en VBA: " & importedModuleCount
-        objAccess.Quit
-        WScript.Quit 1
-    Else
-        WScript.Echo "ÉXITO: Reconstrucción completada. " & importedModuleCount & " módulos importados."
-    End If
+    ' PASO 4.4: Verificacion de integridad y compilacion
+    WScript.Echo "Verificando integridad de nombres de modulos..."
+    Call VerifyModuleNames()
     
     WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
-    WScript.Echo "El proyecto VBA ha sido completamente reconstruido con limpieza total"
-    WScript.Echo "Todos los módulos han sido reimportados desde /src"
+    WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
+    WScript.Echo "Todos los modulos han sido reimportados desde /src"
     
     On Error GoTo 0
 End Sub

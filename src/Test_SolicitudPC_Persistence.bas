@@ -1,4 +1,9 @@
-Attribute VB_Name = "Test_SolicitudPC_Persistence"
+﻿Attribute VB_Name = "Test_SolicitudPC_Persistence"
+Option Compare Database
+
+
+Option Explicit
+
 '******************************************************************************
 ' MODULO: Test_SolicitudPC_Persistence
 ' DESCRIPCION: Pruebas unitarias para la persistencia de CSolicitudPC
@@ -8,7 +13,6 @@ Attribute VB_Name = "Test_SolicitudPC_Persistence"
 
 #If DEV_MODE Then
 
-Option Explicit
 
 '******************************************************************************
 ' PRUEBAS DE PERSISTENCIA
@@ -25,16 +29,16 @@ Public Function Test_Save_PC_ShouldDelegateToRepository() As Boolean
     Set mockRepo = modRepositoryFactory.CreateSolicitudRepository()
     
     ' Configurar datos de prueba
-    solicitud.IDExpediente = 1001
-    solicitud.TipoSolicitud = "PC"
-    solicitud.CodigoSolicitud = "PC-TEST-001"
-    solicitud.EstadoInterno = "Pendiente"
+    solicitud.idExpediente = 1001
+    solicitud.tipoSolicitud = "PC"
+    solicitud.codigoSolicitud = "PC-TEST-001"
+    solicitud.estadoInterno = "Pendiente"
     
     datosPC.Procesador = "Intel i7-12700K"
     datosPC.RAM = "32GB DDR4"
     datosPC.Almacenamiento = "1TB NVMe SSD"
     datosPC.SistemaOperativo = "Windows 11 Pro"
-    solicitud.DatosPC = datosPC
+    solicitud.datosPC = datosPC
     
     ' Act
     resultado = solicitud.Save
@@ -62,12 +66,12 @@ Public Function Test_Load_PC_ShouldPopulateObjectFromRepository() As Boolean
     resultado = solicitud.Load(999)
     
     ' Assert
-    If resultado And solicitud.idSolicitud = 999 And solicitud.CodigoSolicitud = "PC-TEST-001" Then
+    If resultado And solicitud.idSolicitud = 999 And solicitud.codigoSolicitud = "PC-TEST-001" Then
         Debug.Print "Test_Load_PC_ShouldPopulateObjectFromRepository: PASO"
         Test_Load_PC_ShouldPopulateObjectFromRepository = True
     Else
         Debug.Print "Test_Load_PC_ShouldPopulateObjectFromRepository: FALLO - No se cargo correctamente"
-        Debug.Print "  ID: " & solicitud.idSolicitud & ", Codigo: " & solicitud.CodigoSolicitud
+        Debug.Print "  ID: " & solicitud.idSolicitud & ", Codigo: " & solicitud.codigoSolicitud
         Test_Load_PC_ShouldPopulateObjectFromRepository = False
     End If
 End Function
@@ -86,16 +90,16 @@ Public Function Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity() As Boolean
     Set mockRepo = modRepositoryFactory.CreateSolicitudRepository()
     
     ' Configurar datos de prueba
-    solicitudOriginal.IDExpediente = 2002
-    solicitudOriginal.TipoSolicitud = "PC"
-    solicitudOriginal.CodigoSolicitud = "PC-INTEGRATION-001"
-    solicitudOriginal.EstadoInterno = "En Proceso"
+    solicitudOriginal.idExpediente = 2002
+    solicitudOriginal.tipoSolicitud = "PC"
+    solicitudOriginal.codigoSolicitud = "PC-INTEGRATION-001"
+    solicitudOriginal.estadoInterno = "En Proceso"
     
     datosPC.Procesador = "AMD Ryzen 9 5900X"
     datosPC.RAM = "64GB DDR4"
     datosPC.Almacenamiento = "2TB NVMe SSD"
     datosPC.SistemaOperativo = "Windows 11 Enterprise"
-    solicitudOriginal.DatosPC = datosPC
+    solicitudOriginal.datosPC = datosPC
     
     ' La inyeccion es automatica a traves del Factory en Class_Initialize
     
@@ -105,15 +109,15 @@ Public Function Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity() As Boolean
     
     ' Assert
     If loadResult And _
-       solicitudCargada.IDExpediente = solicitudOriginal.IDExpediente And _
-       solicitudCargada.CodigoSolicitud = solicitudOriginal.CodigoSolicitud And _
-       solicitudCargada.DatosPC.Procesador = solicitudOriginal.DatosPC.Procesador Then
+       solicitudCargada.idExpediente = solicitudOriginal.idExpediente And _
+       solicitudCargada.codigoSolicitud = solicitudOriginal.codigoSolicitud And _
+       solicitudCargada.datosPC.Procesador = solicitudOriginal.datosPC.Procesador Then
         Debug.Print "Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity: PASO"
         Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity = True
     Else
         Debug.Print "Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity: FALLO - Integridad de datos comprometida"
-        Debug.Print "  Original ID Expediente: " & solicitudOriginal.IDExpediente & ", Cargado: " & solicitudCargada.IDExpediente
-        Debug.Print "  Original Codigo: " & solicitudOriginal.CodigoSolicitud & ", Cargado: " & solicitudCargada.CodigoSolicitud
+        Debug.Print "  Original ID Expediente: " & solicitudOriginal.idExpediente & ", Cargado: " & solicitudCargada.idExpediente
+        Debug.Print "  Original Codigo: " & solicitudOriginal.codigoSolicitud & ", Cargado: " & solicitudCargada.codigoSolicitud
         Test_SaveAndLoad_PC_ShouldMaintainDataIntegrity = False
     End If
 End Function
@@ -176,3 +180,14 @@ Public Sub EJECUTAR_PRUEBAS_PERSISTENCIA_PC()
 End Sub
 
 #End If
+
+
+
+
+
+
+
+
+
+
+

@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_CSolicitudService"
+﻿Attribute VB_Name = "Test_CSolicitudService"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -12,11 +14,11 @@ Option Explicit
 
 ' Mock para simular datos de solicitud
 Private Type T_MockSolicitudData
-    IdSolicitud As Long
-    IdExpediente As Long
-    TipoSolicitud As String
-    CodigoSolicitud As String
-    FechaCreacion As Date
+    idSolicitud As Long
+    idExpediente As Long
+    tipoSolicitud As String
+    codigoSolicitud As String
+    fechaCreacion As Date
     Estado As String
     Descripcion As String
     IdUsuarioCreador As Long
@@ -31,11 +33,11 @@ Private m_MockSolicitud As T_MockSolicitudData
 
 ' Configura un mock de solicitud con datos válidos
 Private Sub SetupValidSolicitudMock()
-    m_MockSolicitud.IdSolicitud = 54321
-    m_MockSolicitud.IdExpediente = 12345
-    m_MockSolicitud.TipoSolicitud = "PC"
-    m_MockSolicitud.CodigoSolicitud = "SOL-PC-2025-001"
-    m_MockSolicitud.FechaCreacion = Date
+    m_MockSolicitud.idSolicitud = 54321
+    m_MockSolicitud.idExpediente = 12345
+    m_MockSolicitud.tipoSolicitud = "PC"
+    m_MockSolicitud.codigoSolicitud = "SOL-PC-2025-001"
+    m_MockSolicitud.fechaCreacion = Date
     m_MockSolicitud.Estado = "Pendiente"
     m_MockSolicitud.Descripcion = "Solicitud de PC para testing"
     m_MockSolicitud.IdUsuarioCreador = 1
@@ -44,11 +46,11 @@ End Sub
 
 ' Configura un mock de solicitud con datos inválidos
 Private Sub SetupInvalidSolicitudMock()
-    m_MockSolicitud.IdSolicitud = 0
-    m_MockSolicitud.IdExpediente = 0
-    m_MockSolicitud.TipoSolicitud = ""
-    m_MockSolicitud.CodigoSolicitud = ""
-    m_MockSolicitud.FechaCreacion = #1/1/1900#
+    m_MockSolicitud.idSolicitud = 0
+    m_MockSolicitud.idExpediente = 0
+    m_MockSolicitud.tipoSolicitud = ""
+    m_MockSolicitud.codigoSolicitud = ""
+    m_MockSolicitud.fechaCreacion = #1/1/1900#
     m_MockSolicitud.Estado = ""
     m_MockSolicitud.Descripcion = ""
     m_MockSolicitud.IdUsuarioCreador = 0
@@ -57,11 +59,11 @@ End Sub
 
 ' Configura un mock de solicitud con estado completado
 Private Sub SetupCompletedSolicitudMock()
-    m_MockSolicitud.IdSolicitud = 99999
-    m_MockSolicitud.IdExpediente = 12345
-    m_MockSolicitud.TipoSolicitud = "PC"
-    m_MockSolicitud.CodigoSolicitud = "SOL-PC-2025-999"
-    m_MockSolicitud.FechaCreacion = DateAdd("d", -30, Date)
+    m_MockSolicitud.idSolicitud = 99999
+    m_MockSolicitud.idExpediente = 12345
+    m_MockSolicitud.tipoSolicitud = "PC"
+    m_MockSolicitud.codigoSolicitud = "SOL-PC-2025-999"
+    m_MockSolicitud.fechaCreacion = DateAdd("d", -30, Date)
     m_MockSolicitud.Estado = "Completada"
     m_MockSolicitud.Descripcion = "Solicitud completada para testing"
     m_MockSolicitud.IdUsuarioCreador = 1
@@ -74,11 +76,11 @@ Private Function CreateMockSolicitud() As ISolicitud
     Set solicitud = New CSolicitudPC
     
     ' Configurar propiedades usando los datos del mock
-    solicitud.idSolicitud = m_MockSolicitud.IdSolicitud
-    solicitud.IDExpediente = CStr(m_MockSolicitud.IdExpediente)
-    solicitud.TipoSolicitud = m_MockSolicitud.TipoSolicitud
-    solicitud.CodigoSolicitud = m_MockSolicitud.CodigoSolicitud
-    solicitud.EstadoInterno = m_MockSolicitud.Estado
+    solicitud.idSolicitud = m_MockSolicitud.idSolicitud
+    solicitud.idExpediente = CStr(m_MockSolicitud.idExpediente)
+    solicitud.tipoSolicitud = m_MockSolicitud.tipoSolicitud
+    solicitud.codigoSolicitud = m_MockSolicitud.codigoSolicitud
+    solicitud.estadoInterno = m_MockSolicitud.Estado
     
     Set CreateMockSolicitud = solicitud
 End Function
@@ -177,7 +179,7 @@ Public Function Test_GetSolicitud_ValidId_ReturnsSolicitud() As Boolean
     
     ' Act
     Dim solicitud As ISolicitud
-    Set solicitud = solicitudService.GetSolicitud(m_MockSolicitud.IdSolicitud)
+    Set solicitud = solicitudService.GetSolicitud(m_MockSolicitud.idSolicitud)
     
     ' Assert - CSolicitudService.GetSolicitud retorna Nothing en implementación actual (TODO)
     Test_GetSolicitud_ValidId_ReturnsSolicitud = (solicitud Is Nothing)
@@ -245,8 +247,8 @@ Public Function Test_CreateSolicitud_ValidData_ReturnsId() As Boolean
     
     ' Act
     Dim newId As Long
-    newId = solicitudService.CreateSolicitud(m_MockSolicitud.IdExpediente, _
-                                           m_MockSolicitud.TipoSolicitud, _
+    newId = solicitudService.CreateSolicitud(m_MockSolicitud.idExpediente, _
+                                           m_MockSolicitud.tipoSolicitud, _
                                            m_MockSolicitud.Descripcion, _
                                            m_MockSolicitud.IdUsuarioCreador)
     
@@ -337,7 +339,7 @@ Public Function Test_UpdateSolicitud_ValidData_ReturnsTrue() As Boolean
     
     ' Act
     Dim result As Boolean
-    result = solicitudService.UpdateSolicitud(m_MockSolicitud.IdSolicitud, _
+    result = solicitudService.UpdateSolicitud(m_MockSolicitud.idSolicitud, _
                                             "Nueva descripción", _
                                             "En Proceso")
     
@@ -386,7 +388,7 @@ Public Function Test_ChangeEstado_ValidTransition_ReturnsTrue() As Boolean
     
     ' Act
     Dim result As Boolean
-    result = solicitudService.ChangeEstado(m_MockSolicitud.IdSolicitud, "En Proceso")
+    result = solicitudService.ChangeEstado(m_MockSolicitud.idSolicitud, "En Proceso")
     
     ' Assert - Implementación actual retorna False (TODO)
     Test_ChangeEstado_ValidTransition_ReturnsTrue = Not result ' Ajustado para implementación actual
@@ -408,7 +410,7 @@ Public Function Test_ChangeEstado_InvalidTransition_ReturnsFalse() As Boolean
     
     ' Act
     Dim result As Boolean
-    result = solicitudService.ChangeEstado(m_MockSolicitud.IdSolicitud, "Pendiente")
+    result = solicitudService.ChangeEstado(m_MockSolicitud.idSolicitud, "Pendiente")
     
     ' Assert - Cambiar de Completada a Pendiente debería ser inválido
     Test_ChangeEstado_InvalidTransition_ReturnsFalse = Not result
@@ -430,7 +432,7 @@ Public Function Test_ChangeEstado_EmptyEstado_ReturnsFalse() As Boolean
     
     ' Act
     Dim result As Boolean
-    result = solicitudService.ChangeEstado(m_MockSolicitud.IdSolicitud, "")
+    result = solicitudService.ChangeEstado(m_MockSolicitud.idSolicitud, "")
     
     ' Assert - Estado vacío debería retornar False
     Test_ChangeEstado_EmptyEstado_ReturnsFalse = Not result
@@ -456,7 +458,7 @@ Public Function Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection() As B
     
     ' Act
     Dim results As Collection
-    Set results = solicitudService.GetSolicitudesByExpediente(m_MockSolicitud.IdExpediente)
+    Set results = solicitudService.GetSolicitudesByExpediente(m_MockSolicitud.idExpediente)
     
     ' Assert - Debería retornar una collection válida
     Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection = Not (results Is Nothing)
@@ -597,7 +599,7 @@ Public Function Test_Integration_WithSolicitudFactory() As Boolean
     
     ' Act - Probamos la integración con el factory
     Dim solicitudObj As ISolicitud
-    Set solicitudObj = modSolicitudFactory.CreateSolicitud(m_MockSolicitud.IdSolicitud)
+    Set solicitudObj = modSolicitudFactory.CreateSolicitud(m_MockSolicitud.idSolicitud)
     
     ' Assert - El factory debería crear una instancia válida
     Test_Integration_WithSolicitudFactory = Not (solicitudObj Is Nothing)
@@ -645,8 +647,8 @@ Public Function Test_ConcurrentOperations_MultipleUpdates() As Boolean
     ' Act - Simulamos múltiples actualizaciones concurrentes
     Dim result1 As Boolean
     Dim result2 As Boolean
-    result1 = solicitudService.UpdateSolicitud(m_MockSolicitud.IdSolicitud, "Desc1", "Estado1")
-    result2 = solicitudService.UpdateSolicitud(m_MockSolicitud.IdSolicitud, "Desc2", "Estado2")
+    result1 = solicitudService.UpdateSolicitud(m_MockSolicitud.idSolicitud, "Desc1", "Estado1")
+    result2 = solicitudService.UpdateSolicitud(m_MockSolicitud.idSolicitud, "Desc2", "Estado2")
     
     ' Assert - Las operaciones deberían ejecutarse sin fallar
     Test_ConcurrentOperations_MultipleUpdates = True
@@ -701,17 +703,17 @@ Public Function RunCSolicitudServiceTests() As String
     totalTests = totalTests + 1
     If Test_CSolicitudService_Creation_Success() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CSolicitudService_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudService_Creation_Success" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CSolicitudService_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudService_Creation_Success" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudService_ImplementsISolicitudService() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CSolicitudService_ImplementsISolicitudService" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudService_ImplementsISolicitudService" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CSolicitudService_ImplementsISolicitudService" & vbCrLf
+        resultado = resultado & "? Test_CSolicitudService_ImplementsISolicitudService" & vbCrLf
     End If
     
     ' ========================================
@@ -721,25 +723,25 @@ Public Function RunCSolicitudServiceTests() As String
     totalTests = totalTests + 1
     If Test_GetSolicitud_ValidId_ReturnsSolicitud() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitud_ValidId_ReturnsSolicitud" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitud_ValidId_ReturnsSolicitud" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitud_ValidId_ReturnsSolicitud" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitud_ValidId_ReturnsSolicitud" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetSolicitud_InvalidId_HandlesGracefully() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitud_InvalidId_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitud_InvalidId_HandlesGracefully" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitud_InvalidId_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitud_InvalidId_HandlesGracefully" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetSolicitud_ZeroId_HandlesGracefully() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitud_ZeroId_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitud_ZeroId_HandlesGracefully" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitud_ZeroId_HandlesGracefully" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitud_ZeroId_HandlesGracefully" & vbCrLf
     End If
     
     ' ========================================
@@ -749,33 +751,33 @@ Public Function RunCSolicitudServiceTests() As String
     totalTests = totalTests + 1
     If Test_CreateSolicitud_ValidData_ReturnsId() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CreateSolicitud_ValidData_ReturnsId" & vbCrLf
+        resultado = resultado & "? Test_CreateSolicitud_ValidData_ReturnsId" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CreateSolicitud_ValidData_ReturnsId" & vbCrLf
+        resultado = resultado & "? Test_CreateSolicitud_ValidData_ReturnsId" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CreateSolicitud_InvalidExpedienteId_HandlesError() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CreateSolicitud_InvalidExpedienteId_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateSolicitud_InvalidExpedienteId_HandlesError" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CreateSolicitud_InvalidExpedienteId_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateSolicitud_InvalidExpedienteId_HandlesError" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CreateSolicitud_EmptyTipo_HandlesError() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CreateSolicitud_EmptyTipo_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateSolicitud_EmptyTipo_HandlesError" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CreateSolicitud_EmptyTipo_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateSolicitud_EmptyTipo_HandlesError" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CreateSolicitud_InvalidUserId_HandlesError() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CreateSolicitud_InvalidUserId_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateSolicitud_InvalidUserId_HandlesError" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CreateSolicitud_InvalidUserId_HandlesError" & vbCrLf
+        resultado = resultado & "? Test_CreateSolicitud_InvalidUserId_HandlesError" & vbCrLf
     End If
     
     ' ========================================
@@ -785,17 +787,17 @@ Public Function RunCSolicitudServiceTests() As String
     totalTests = totalTests + 1
     If Test_UpdateSolicitud_ValidData_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_UpdateSolicitud_ValidData_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_UpdateSolicitud_ValidData_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_UpdateSolicitud_ValidData_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_UpdateSolicitud_ValidData_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_UpdateSolicitud_InvalidId_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_UpdateSolicitud_InvalidId_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_UpdateSolicitud_InvalidId_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_UpdateSolicitud_InvalidId_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_UpdateSolicitud_InvalidId_ReturnsFalse" & vbCrLf
     End If
     
     ' ========================================
@@ -805,25 +807,25 @@ Public Function RunCSolicitudServiceTests() As String
     totalTests = totalTests + 1
     If Test_ChangeEstado_ValidTransition_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ChangeEstado_ValidTransition_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ChangeEstado_ValidTransition_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ChangeEstado_ValidTransition_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ChangeEstado_ValidTransition_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ChangeEstado_InvalidTransition_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ChangeEstado_InvalidTransition_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ChangeEstado_InvalidTransition_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ChangeEstado_InvalidTransition_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ChangeEstado_InvalidTransition_ReturnsFalse" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ChangeEstado_EmptyEstado_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ChangeEstado_EmptyEstado_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ChangeEstado_EmptyEstado_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ChangeEstado_EmptyEstado_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ChangeEstado_EmptyEstado_ReturnsFalse" & vbCrLf
     End If
     
     ' ========================================
@@ -833,33 +835,33 @@ Public Function RunCSolicitudServiceTests() As String
     totalTests = totalTests + 1
     If Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection" & vbCrLf
+        resultado = resultado & "? Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_SearchSolicitudes_ValidCriteria_ReturnsResults() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_SearchSolicitudes_ValidCriteria_ReturnsResults" & vbCrLf
+        resultado = resultado & "? Test_SearchSolicitudes_ValidCriteria_ReturnsResults" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_SearchSolicitudes_ValidCriteria_ReturnsResults" & vbCrLf
+        resultado = resultado & "? Test_SearchSolicitudes_ValidCriteria_ReturnsResults" & vbCrLf
     End If
     
     ' ========================================
@@ -869,17 +871,17 @@ Public Function RunCSolicitudServiceTests() As String
     totalTests = totalTests + 1
     If Test_ValidateSolicitud_ValidData_ReturnsTrue() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidateSolicitud_ValidData_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidateSolicitud_ValidData_ReturnsTrue" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidateSolicitud_ValidData_ReturnsTrue" & vbCrLf
+        resultado = resultado & "? Test_ValidateSolicitud_ValidData_ReturnsTrue" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ValidateSolicitud_InvalidData_ReturnsFalse() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ValidateSolicitud_InvalidData_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidateSolicitud_InvalidData_ReturnsFalse" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ValidateSolicitud_InvalidData_ReturnsFalse" & vbCrLf
+        resultado = resultado & "? Test_ValidateSolicitud_InvalidData_ReturnsFalse" & vbCrLf
     End If
     
     ' ========================================
@@ -889,33 +891,33 @@ Public Function RunCSolicitudServiceTests() As String
     totalTests = totalTests + 1
     If Test_Integration_WithSolicitudFactory() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Integration_WithSolicitudFactory" & vbCrLf
+        resultado = resultado & "? Test_Integration_WithSolicitudFactory" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Integration_WithSolicitudFactory" & vbCrLf
+        resultado = resultado & "? Test_Integration_WithSolicitudFactory" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_LargeDataHandling_ManyResults() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_LargeDataHandling_ManyResults" & vbCrLf
+        resultado = resultado & "? Test_LargeDataHandling_ManyResults" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_LargeDataHandling_ManyResults" & vbCrLf
+        resultado = resultado & "? Test_LargeDataHandling_ManyResults" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_ConcurrentOperations_MultipleUpdates() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_ConcurrentOperations_MultipleUpdates" & vbCrLf
+        resultado = resultado & "? Test_ConcurrentOperations_MultipleUpdates" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_ConcurrentOperations_MultipleUpdates" & vbCrLf
+        resultado = resultado & "? Test_ConcurrentOperations_MultipleUpdates" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_EdgeCase_VeryLongDescription() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_EdgeCase_VeryLongDescription" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_VeryLongDescription" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_EdgeCase_VeryLongDescription" & vbCrLf
+        resultado = resultado & "? Test_EdgeCase_VeryLongDescription" & vbCrLf
     End If
     
     ' ========================================
@@ -925,10 +927,21 @@ Public Function RunCSolicitudServiceTests() As String
     resultado = resultado & vbCrLf & "Resultado: " & passedTests & "/" & totalTests & " pruebas exitosas" & vbCrLf
     
     If passedTests = totalTests Then
-        resultado = resultado & "🎉 TODAS LAS PRUEBAS PASARON CORRECTAMENTE" & vbCrLf
+        resultado = resultado & "?? TODAS LAS PRUEBAS PASARON CORRECTAMENTE" & vbCrLf
     Else
-        resultado = resultado & "⚠️  " & (totalTests - passedTests) & " pruebas fallaron" & vbCrLf
+        resultado = resultado & "??  " & (totalTests - passedTests) & " pruebas fallaron" & vbCrLf
     End If
     
     RunCSolicitudServiceTests = resultado
 End Function
+
+
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -8,17 +8,19 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
+
+
 Option Explicit
 
 Implements ISolicitud
 
-Private m_IdSolicitud As Long
-Private m_IdExpediente As String
-Private m_TipoSolicitud As String
-Private m_CodigoSolicitud As String
-Private m_EstadoInterno As String
+Private m_idSolicitud As Long
+Private m_idExpediente As String
+Private m_tipoSolicitud As String
+Private m_codigoSolicitud As String
+Private m_estadoInterno As String
 
-Private m_DatosPC As T_Datos_PC
+Private m_datosPC As T_Datos_PC
 Private mRepository As ISolicitudRepository
 
 '******************************************************************************
@@ -36,44 +38,44 @@ End Sub
 ' --- 1. Implementación PRIVADA de la Interfaz ---
 '     Satisface el contrato "Implements".
 Private Property Get ISolicitud_idSolicitud() As Long
-    ISolicitud_idSolicitud = m_IdSolicitud
+    ISolicitud_idSolicitud = m_idSolicitud
 End Property
 
 Private Property Let ISolicitud_idSolicitud(ByVal RHS As Long)
-    m_IdSolicitud = RHS
+    m_idSolicitud = RHS
 End Property
 
 Private Property Get ISolicitud_IDExpediente() As String
-    ISolicitud_IDExpediente = m_IdExpediente
+    ISolicitud_IDExpediente = m_idExpediente
 End Property
 
 Private Property Let ISolicitud_IDExpediente(ByVal RHS As String)
-    m_IdExpediente = RHS
+    m_idExpediente = RHS
 End Property
 
 ' Interfaz ISolicitud - Propiedades
 Private Property Get ISolicitud_TipoSolicitud() As String
-    ISolicitud_TipoSolicitud = m_TipoSolicitud
+    ISolicitud_TipoSolicitud = m_tipoSolicitud
 End Property
 
 Private Property Let ISolicitud_TipoSolicitud(ByVal RHS As String)
-    m_TipoSolicitud = RHS
+    m_tipoSolicitud = RHS
 End Property
 
 Private Property Get ISolicitud_CodigoSolicitud() As String
-    ISolicitud_CodigoSolicitud = m_CodigoSolicitud
+    ISolicitud_CodigoSolicitud = m_codigoSolicitud
 End Property
 
 Private Property Let ISolicitud_CodigoSolicitud(ByVal RHS As String)
-    m_CodigoSolicitud = RHS
+    m_codigoSolicitud = RHS
 End Property
 
 Private Property Get ISolicitud_EstadoInterno() As String
-    ISolicitud_EstadoInterno = m_EstadoInterno
+    ISolicitud_EstadoInterno = m_estadoInterno
 End Property
 
 Private Property Let ISolicitud_EstadoInterno(ByVal RHS As String)
-    m_EstadoInterno = RHS
+    m_estadoInterno = RHS
 End Property
 
 Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
@@ -82,12 +84,12 @@ Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
         Set loadedSolicitud = mRepository.LoadPC(ID)
         If Not loadedSolicitud Is Nothing Then
             ' Copiar propiedades del objeto cargado
-            m_IdSolicitud = loadedSolicitud.idSolicitud
-            m_IdExpediente = loadedSolicitud.IDExpediente
-            m_TipoSolicitud = loadedSolicitud.TipoSolicitud
-            m_CodigoSolicitud = loadedSolicitud.CodigoSolicitud
-            m_EstadoInterno = loadedSolicitud.EstadoInterno
-            m_DatosPC = loadedSolicitud.DatosPC
+            m_idSolicitud = loadedSolicitud.idSolicitud
+            m_idExpediente = loadedSolicitud.idExpediente
+            m_tipoSolicitud = loadedSolicitud.tipoSolicitud
+            m_codigoSolicitud = loadedSolicitud.codigoSolicitud
+            m_estadoInterno = loadedSolicitud.estadoInterno
+            m_datosPC = loadedSolicitud.datosPC
             ISolicitud_Load = True
         Else
             ISolicitud_Load = False
@@ -102,7 +104,7 @@ Private Function ISolicitud_Save() As Boolean
         Dim savedId As Long
         savedId = mRepository.SavePC(Me)
         If savedId > 0 Then
-            m_IdSolicitud = savedId
+            m_idSolicitud = savedId
             ISolicitud_Save = True
         Else
             ISolicitud_Save = False
@@ -128,35 +130,35 @@ Public Property Let idSolicitud(ByVal val As Long)
     ISolicitud_idSolicitud = val
 End Property
 
-Public Property Get IDExpediente() As String
-    IDExpediente = ISolicitud_IDExpediente
+Public Property Get idExpediente() As String
+    idExpediente = ISolicitud_IDExpediente
 End Property
 
-Public Property Let IDExpediente(ByVal val As String)
+Public Property Let idExpediente(ByVal val As String)
     ISolicitud_IDExpediente = val
 End Property
 
-Public Property Get TipoSolicitud() As String
-    TipoSolicitud = ISolicitud_TipoSolicitud
+Public Property Get tipoSolicitud() As String
+    tipoSolicitud = ISolicitud_TipoSolicitud
 End Property
 
-Public Property Let TipoSolicitud(ByVal val As String)
+Public Property Let tipoSolicitud(ByVal val As String)
     ISolicitud_TipoSolicitud = val
 End Property
 
-Public Property Get CodigoSolicitud() As String
-    CodigoSolicitud = ISolicitud_CodigoSolicitud
+Public Property Get codigoSolicitud() As String
+    codigoSolicitud = ISolicitud_CodigoSolicitud
 End Property
 
-Public Property Let CodigoSolicitud(ByVal val As String)
+Public Property Let codigoSolicitud(ByVal val As String)
     ISolicitud_CodigoSolicitud = val
 End Property
 
-Public Property Get EstadoInterno() As String
-    EstadoInterno = ISolicitud_EstadoInterno
+Public Property Get estadoInterno() As String
+    estadoInterno = ISolicitud_EstadoInterno
 End Property
 
-Public Property Let EstadoInterno(ByVal val As String)
+Public Property Let estadoInterno(ByVal val As String)
     ISolicitud_EstadoInterno = val
 End Property
 
@@ -169,7 +171,7 @@ Public Function Save() As Boolean
         Dim savedId As Long
         savedId = mRepository.SavePC(Me)
         If savedId > 0 Then
-            m_IdSolicitud = savedId
+            m_idSolicitud = savedId
             Save = True
         Else
             Save = False
@@ -184,13 +186,19 @@ Public Function ChangeState(ByVal newState As String) As Boolean
 End Function
 
 ' --- Propiedades específicas de PC ---
-Public Property Get DatosPC() As T_Datos_PC
-    Set DatosPC = m_DatosPC
+Public Property Get datosPC() As T_Datos_PC
+    Set datosPC = m_datosPC
 End Property
 
-Public Property Set DatosPC(ByRef val As T_Datos_PC)
-    Set m_DatosPC = val
+Public Property Set datosPC(ByRef val As T_Datos_PC)
+    Set m_datosPC = val
 End Property
+
+
+
+
+
+
 
 
 

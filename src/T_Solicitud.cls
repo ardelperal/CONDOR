@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,85 +7,136 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-'******************************************************************************
-' CLASE: T_Solicitud
-' DESCRIPCIÓN: Tipo de datos para almacenar información de solicitudes
-' AUTOR: Sistema CONDOR
-' FECHA: 2024
-' NOTA: Propiedades definidas basándose en modDatabase.bas como fuente de verdad
-'******************************************************************************
-
 Option Compare Database
+
+
 Option Explicit
 
-'******************************************************************************
-' PROPIEDADES PÚBLICAS
-' Basadas en el análisis de modDatabase.bas función SaveSolicitudPC
-'******************************************************************************
+' Clase de tipo de datos para tbSolicitudes
+' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 
-' Identificador único de la solicitud
-Public ID As Long
+Private m_idSolicitud As Long
+Private m_idExpediente As String
+Private m_tipoSolicitud As String
+Private m_subTipoSolicitud As String
+Private m_codigoSolicitud As String
+Private m_estadoInterno As String
+Private m_fechaCreacion As Date
+Private m_usuarioCreacion As String
+Private m_fechaPaseTecnico As Date
+Private m_fechaCompletadoTecnico As Date
 
-' Número de expediente asociado
-Public NumeroExpediente As String
+' Propiedades para datos específicos según tipo de solicitud
+Private m_datosPC As T_Datos_PC
+Private m_datosCDCA As T_Datos_CD_CA
+Private m_datosCDCASUB As T_Datos_CD_CA_SUB
 
-' Tipo de solicitud (PC, CD/CA, etc.)
-Public TipoSolicitud As String
+Public Property Get idSolicitud() As Long
+    idSolicitud = m_idSolicitud
+End Property
 
-' Estado interno de la solicitud
-Public EstadoInterno As String
+Public Property Let idSolicitud(ByVal value As Long)
+    m_idSolicitud = value
+End Property
 
-' Estado en el sistema RAC
-Public EstadoRAC As String
+Public Property Get idExpediente() As String
+    idExpediente = m_idExpediente
+End Property
 
-' Fecha de creación de la solicitud
-Public FechaCreacion As Date
+Public Property Let idExpediente(ByVal value As String)
+    m_idExpediente = value
+End Property
 
-' Fecha de última modificación
-Public FechaUltimaModificacion As Date
+Public Property Get tipoSolicitud() As String
+    tipoSolicitud = m_tipoSolicitud
+End Property
 
-' Usuario que maneja la solicitud
-Public Usuario As String
+Public Property Let tipoSolicitud(ByVal value As String)
+    m_tipoSolicitud = value
+End Property
 
-' Observaciones de la solicitud
-Public Observaciones As String
+Public Property Get subTipoSolicitud() As String
+    subTipoSolicitud = m_subTipoSolicitud
+End Property
 
-' Indica si la solicitud está activa
-Public Activo As Boolean
+Public Property Let subTipoSolicitud(ByVal value As String)
+    m_subTipoSolicitud = value
+End Property
 
-'******************************************************************************
-' PROPIEDADES ADICIONALES IDENTIFICADAS EN GetSolicitudData
-'******************************************************************************
+Public Property Get codigoSolicitud() As String
+    codigoSolicitud = m_codigoSolicitud
+End Property
 
-' Código de la solicitud (identificado en CSolicitudPC)
-Public CodigoSolicitud As String
+Public Property Let codigoSolicitud(ByVal value As String)
+    m_codigoSolicitud = value
+End Property
 
-' Referencia al expediente (identificado en CSolicitudPC como IDExpediente)
-Public IDExpediente As String
+Public Property Get estadoInterno() As String
+    estadoInterno = m_estadoInterno
+End Property
 
-' PROPIEDAD CRÍTICA IDENTIFICADA EN TESTS
-' Identificador de solicitud usado en CSolicitudPC y tests
-Public idSolicitud As Long
+Public Property Let estadoInterno(ByVal value As String)
+    m_estadoInterno = value
+End Property
 
-'******************************************************************************
-' PROPIEDADES ADICIONALES REQUERIDAS POR TEST_VALIDATIONSERVICE
-' Basadas en la Lección 6: Los tests actúan como especificación
-'******************************************************************************
+Public Property Get fechaCreacion() As Date
+    fechaCreacion = m_fechaCreacion
+End Property
 
-' Descripción de la solicitud
-Public Descripcion As String
+Public Property Let fechaCreacion(ByVal value As Date)
+    m_fechaCreacion = value
+End Property
 
-' Justificación de la solicitud
-Public Justificacion As String
+Public Property Get usuarioCreacion() As String
+    usuarioCreacion = m_usuarioCreacion
+End Property
 
-' Importe original (para solicitudes PC)
-Public ImporteOriginal As Currency
+Public Property Let usuarioCreacion(ByVal value As String)
+    m_usuarioCreacion = value
+End Property
 
-' Importe nuevo propuesto (para solicitudes PC)
-Public ImporteNuevo As Currency
+Public Property Get fechaPaseTecnico() As Date
+    fechaPaseTecnico = m_fechaPaseTecnico
+End Property
 
-' Estado de la solicitud (diferente de EstadoInterno)
-Public Estado As String
+Public Property Let fechaPaseTecnico(ByVal value As Date)
+    m_fechaPaseTecnico = value
+End Property
 
-' Usuario creador de la solicitud
-Public UsuarioCreador As String
+Public Property Get fechaCompletadoTecnico() As Date
+    fechaCompletadoTecnico = m_fechaCompletadoTecnico
+End Property
+
+Public Property Let fechaCompletadoTecnico(ByVal value As Date)
+    m_fechaCompletadoTecnico = value
+End Property
+
+' Propiedades para objetos de datos específicos
+Public Property Get datosPC() As T_Datos_PC
+    Set datosPC = m_datosPC
+End Property
+
+Public Property Set datosPC(ByVal value As T_Datos_PC)
+    Set m_datosPC = value
+End Property
+
+Public Property Get datosCDCA() As T_Datos_CD_CA
+    Set datosCDCA = m_datosCDCA
+End Property
+
+Public Property Set datosCDCA(ByVal value As T_Datos_CD_CA)
+    Set m_datosCDCA = value
+End Property
+
+Public Property Get datosCDCASUB() As T_Datos_CD_CA_SUB
+    Set datosCDCASUB = m_datosCDCASUB
+End Property
+
+Public Property Set datosCDCASUB(ByVal value As T_Datos_CD_CA_SUB)
+    Set m_datosCDCASUB = value
+End Property
+
+
+
+
+

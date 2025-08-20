@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_Integracion"
+﻿Attribute VB_Name = "Test_Integracion"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -108,9 +110,9 @@ Public Function Test_Integracion_RunAll() As String
     resultado = resultado & "Pruebas fallidas: " & (testsTotal - testsPassed) & vbCrLf
     
     If testsPassed = testsTotal Then
-        resultado = resultado & "RESULTADO: ✓ TODAS LAS PRUEBAS PASARON" & vbCrLf
+        resultado = resultado & "RESULTADO: ? TODAS LAS PRUEBAS PASARON" & vbCrLf
     Else
-        resultado = resultado & "RESULTADO: ✗ ALGUNAS PRUEBAS FALLARON" & vbCrLf
+        resultado = resultado & "RESULTADO: ? ALGUNAS PRUEBAS FALLARON" & vbCrLf
     End If
     
     Test_Integracion_RunAll = resultado
@@ -140,13 +142,13 @@ Public Function Test_FlujoTrabajoCompletoAAA() As Boolean
     ' Arrange
     Dim flujoExitoso As Boolean
     Dim expedienteId As Long
-    Dim solicitudId As Long
+    Dim SolicitudID As Long
     
     expedienteId = 1001
-    solicitudId = 2001
+    SolicitudID = 2001
     
     ' Act
-    flujoExitoso = SimularFlujoCompleto(expedienteId, solicitudId)
+    flujoExitoso = SimularFlujoCompleto(expedienteId, SolicitudID)
     
     ' Assert
     Test_FlujoTrabajoCompletoAAA = flujoExitoso
@@ -277,9 +279,9 @@ Private Function SimularTransicionEstados(ByVal estadoInicial As String, ByVal e
     End If
 End Function
 
-Private Function SimularFlujoCompleto(ByVal expedienteId As Long, ByVal solicitudId As Long) As Boolean
+Private Function SimularFlujoCompleto(ByVal expedienteId As Long, ByVal SolicitudID As Long) As Boolean
     ' Simula flujo de trabajo completo exitoso
-    If expedienteId > 0 And solicitudId > 0 Then
+    If expedienteId > 0 And SolicitudID > 0 Then
         SimularFlujoCompleto = True
     Else
         SimularFlujoCompleto = False
@@ -460,6 +462,12 @@ Public Function Test_RecuperacionErrores() As Boolean
         Err.Raise 6009, , "Error: Fallo en la recuperación de errores"
     End If
 End Function
+
+
+
+
+
+
 
 
 

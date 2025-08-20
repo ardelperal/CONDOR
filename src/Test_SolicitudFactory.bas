@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_SolicitudFactory"
+﻿Attribute VB_Name = "Test_SolicitudFactory"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -12,7 +14,7 @@ Option Explicit
 ' Mock para simular datos de solicitud
 Private Type T_MockSolicitudData
     ID As Long
-    TipoSolicitud As String
+    tipoSolicitud As String
     IsValid As Boolean
     ShouldFailLoad As Boolean
 End Type
@@ -25,7 +27,7 @@ Private m_MockData As T_MockSolicitudData
 
 Private Sub SetupMockSolicitudData()
     m_MockData.ID = 123
-    m_MockData.TipoSolicitud = "PC"
+    m_MockData.tipoSolicitud = "PC"
     m_MockData.IsValid = True
     m_MockData.ShouldFailLoad = False
 End Sub
@@ -318,17 +320,17 @@ Public Function Test_CSolicitudPC_Properties_SetAndGet() As Boolean
     
     ' Act
     solicitud.idSolicitud = 123
-    solicitud.IDExpediente = "EXP-001"
-    solicitud.TipoSolicitud = "PC"
-    solicitud.CodigoSolicitud = "PC-2024-001"
-    solicitud.EstadoInterno = "Borrador"
+    solicitud.idExpediente = "EXP-001"
+    solicitud.tipoSolicitud = "PC"
+    solicitud.codigoSolicitud = "PC-2024-001"
+    solicitud.estadoInterno = "Borrador"
     
     ' Assert
     Test_CSolicitudPC_Properties_SetAndGet = (solicitud.idSolicitud = 123) And _
-                                            (solicitud.IDExpediente = "EXP-001") And _
-                                            (solicitud.TipoSolicitud = "PC") And _
-                                            (solicitud.CodigoSolicitud = "PC-2024-001") And _
-                                            (solicitud.EstadoInterno = "Borrador")
+                                            (solicitud.idExpediente = "EXP-001") And _
+                                            (solicitud.tipoSolicitud = "PC") And _
+                                            (solicitud.codigoSolicitud = "PC-2024-001") And _
+                                            (solicitud.estadoInterno = "Borrador")
     
     Exit Function
     
@@ -408,22 +410,22 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     
     Dim datosPC As T_Datos_PC
     datosPC.ID = 456
-    datosPC.IDSolicitud = 123
+    datosPC.idSolicitud = 123
     datosPC.TituloPC = "Propuesta de Cambio de Prueba"
     datosPC.DescripcionPC = "Descripci?n de la propuesta"
     datosPC.JustificacionPC = "Justificaci?n de la propuesta"
     datosPC.ImpactoPC = "Impacto esperado"
-    datosPC.FechaCreacion = Now
+    datosPC.fechaCreacion = Now
     datosPC.CreadoPor = "usuario.prueba@empresa.com"
     
     ' Act
-    solicitud.DatosPC = datosPC
+    solicitud.datosPC = datosPC
     Dim retrievedDatos As T_Datos_PC
-    retrievedDatos = solicitud.DatosPC
+    retrievedDatos = solicitud.datosPC
     
     ' Assert
     Test_CSolicitudPC_DatosPC_SetAndGet = (retrievedDatos.ID = 456) And _
-                                         (retrievedDatos.IDSolicitud = 123) And _
+                                         (retrievedDatos.idSolicitud = 123) And _
                                          (retrievedDatos.TituloPC = "Propuesta de Cambio de Prueba")
     
     Exit Function
@@ -465,12 +467,12 @@ Public Function Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly() As Boolea
     Set solicitud = New CSolicitudPC
     
     ' Act
-    solicitud.CodigoSolicitud = "PC-2024-001_??@#$%"
-    solicitud.IDExpediente = "EXP-001-???"
+    solicitud.codigoSolicitud = "PC-2024-001_??@#$%"
+    solicitud.idExpediente = "EXP-001-???"
     
     ' Assert
-    Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly = (InStr(solicitud.CodigoSolicitud, "??@") > 0) And _
-                                                          (InStr(solicitud.IDExpediente, "???") > 0)
+    Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly = (InStr(solicitud.codigoSolicitud, "??@") > 0) And _
+                                                          (InStr(solicitud.idExpediente, "???") > 0)
     
     Exit Function
     
@@ -500,55 +502,55 @@ Public Function RunSolicitudFactoryTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC() Then
-        Debug.Print "✓ Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC: PASÓ"
+        Debug.Print "? Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC: FALLÓ"
+        Debug.Print "? Test_CreateSolicitud_ValidID_ReturnsCSolicitudPC: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CreateSolicitud_InvalidID_ReturnsNothing() Then
-        Debug.Print "✓ Test_CreateSolicitud_InvalidID_ReturnsNothing: PASÓ"
+        Debug.Print "? Test_CreateSolicitud_InvalidID_ReturnsNothing: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CreateSolicitud_InvalidID_ReturnsNothing: FALLÓ"
+        Debug.Print "? Test_CreateSolicitud_InvalidID_ReturnsNothing: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CreateSolicitud_ZeroID_ReturnsNothing() Then
-        Debug.Print "✓ Test_CreateSolicitud_ZeroID_ReturnsNothing: PASÓ"
+        Debug.Print "? Test_CreateSolicitud_ZeroID_ReturnsNothing: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CreateSolicitud_ZeroID_ReturnsNothing: FALLÓ"
+        Debug.Print "? Test_CreateSolicitud_ZeroID_ReturnsNothing: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_GetTipoSolicitud_DefaultsToPC() Then
-        Debug.Print "✓ Test_GetTipoSolicitud_DefaultsToPC: PASÓ"
+        Debug.Print "? Test_GetTipoSolicitud_DefaultsToPC: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_GetTipoSolicitud_DefaultsToPC: FALLÓ"
+        Debug.Print "? Test_GetTipoSolicitud_DefaultsToPC: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_Factory_CreatesValidISolicitudInterface() Then
-        Debug.Print "✓ Test_Factory_CreatesValidISolicitudInterface: PASÓ"
+        Debug.Print "? Test_Factory_CreatesValidISolicitudInterface: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_Factory_CreatesValidISolicitudInterface: FALLÓ"
+        Debug.Print "? Test_Factory_CreatesValidISolicitudInterface: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_Factory_HandlesDatabaseErrors() Then
-        Debug.Print "✓ Test_Factory_HandlesDatabaseErrors: PASÓ"
+        Debug.Print "? Test_Factory_HandlesDatabaseErrors: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_Factory_HandlesDatabaseErrors: FALLÓ"
+        Debug.Print "? Test_Factory_HandlesDatabaseErrors: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -557,46 +559,46 @@ Public Function RunSolicitudFactoryTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_Properties_SetAndGet() Then
-        Debug.Print "✓ Test_CSolicitudPC_Properties_SetAndGet: PASÓ"
+        Debug.Print "? Test_CSolicitudPC_Properties_SetAndGet: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CSolicitudPC_Properties_SetAndGet: FALLÓ"
+        Debug.Print "? Test_CSolicitudPC_Properties_SetAndGet: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_Load_ReturnsTrue() Then
-        Debug.Print "✓ Test_CSolicitudPC_Load_ReturnsTrue: PASÓ"
+        Debug.Print "? Test_CSolicitudPC_Load_ReturnsTrue: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CSolicitudPC_Load_ReturnsTrue: FALLÓ"
+        Debug.Print "? Test_CSolicitudPC_Load_ReturnsTrue: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_Save_ReturnsTrue() Then
-        Debug.Print "✓ Test_CSolicitudPC_Save_ReturnsTrue: PASÓ"
+        Debug.Print "? Test_CSolicitudPC_Save_ReturnsTrue: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CSolicitudPC_Save_ReturnsTrue: FALLÓ"
+        Debug.Print "? Test_CSolicitudPC_Save_ReturnsTrue: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_ChangeState_ReturnsTrue() Then
-        Debug.Print "✓ Test_CSolicitudPC_ChangeState_ReturnsTrue: PASÓ"
+        Debug.Print "? Test_CSolicitudPC_ChangeState_ReturnsTrue: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CSolicitudPC_ChangeState_ReturnsTrue: FALLÓ"
+        Debug.Print "? Test_CSolicitudPC_ChangeState_ReturnsTrue: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_DatosPC_SetAndGet() Then
-        Debug.Print "✓ Test_CSolicitudPC_DatosPC_SetAndGet: PASÓ"
+        Debug.Print "? Test_CSolicitudPC_DatosPC_SetAndGet: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CSolicitudPC_DatosPC_SetAndGet: FALLÓ"
+        Debug.Print "? Test_CSolicitudPC_DatosPC_SetAndGet: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -605,19 +607,19 @@ Public Function RunSolicitudFactoryTests() As Boolean
     
     totalTests = totalTests + 1
     If Test_CreateSolicitud_LargeID_HandlesCorrectly() Then
-        Debug.Print "✓ Test_CreateSolicitud_LargeID_HandlesCorrectly: PASÓ"
+        Debug.Print "? Test_CreateSolicitud_LargeID_HandlesCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CreateSolicitud_LargeID_HandlesCorrectly: FALLÓ"
+        Debug.Print "? Test_CreateSolicitud_LargeID_HandlesCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
     totalTests = totalTests + 1
     If Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly() Then
-        Debug.Print "✓ Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly: PASÓ"
+        Debug.Print "? Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly: PASÓ"
         passedTests = passedTests + 1
     Else
-        Debug.Print "✗ Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly: FALLÓ"
+        Debug.Print "? Test_CSolicitudPC_SpecialCharacters_HandlesCorrectly: FALLÓ"
         failedTests = failedTests + 1
     End If
     
@@ -631,12 +633,23 @@ Public Function RunSolicitudFactoryTests() As Boolean
     Debug.Print "Porcentaje de éxito: " & Format((passedTests / totalTests) * 100, "0.00") & "%"
     
     If failedTests = 0 Then
-        Debug.Print "\n🎉 ¡TODAS LAS PRUEBAS PASARON!"
+        Debug.Print "\n?? ¡TODAS LAS PRUEBAS PASARON!"
         RunSolicitudFactoryTests = True
     Else
-        Debug.Print "\n⚠️  ALGUNAS PRUEBAS FALLARON. Revisar implementación."
+        Debug.Print "\n??  ALGUNAS PRUEBAS FALLARON. Revisar implementación."
         RunSolicitudFactoryTests = False
     End If
     
     Debug.Print "============================================================================"
 End Function
+
+
+
+
+
+
+
+
+
+
+

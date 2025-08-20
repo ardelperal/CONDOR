@@ -177,6 +177,12 @@ cscript condor_cli.vbs rebuild
 - Garantiza un estado 100% limpio y compilado
 - Muestra advertencias de compilación si las hay
 
+#### Ayuda de Comandos
+```bash
+cscript condor_cli.vbs help
+```
+- Muestra una lista detallada de todos los comandos disponibles y su descripción.
+
 #### Flujo de Trabajo de Verificación Manual (Post-push de la IA)
 
 Después de que el agente autónomo complete una tarea y suba los cambios, el supervisor humano debe realizar el siguiente proceso de control de calidad para validar el trabajo:

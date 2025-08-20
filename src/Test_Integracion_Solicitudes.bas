@@ -1,5 +1,7 @@
-Attribute VB_Name = "Test_Integracion_Solicitudes"
+﻿Attribute VB_Name = "Test_Integracion_Solicitudes"
 Option Compare Database
+
+
 Option Explicit
 
 ' =====================================================
@@ -79,10 +81,10 @@ Public Function Test_SaveAndLoad_PC() As Boolean
     Set solicitudService = New CSolicitudService
     Dim solicitudPC As ISolicitud
     Set solicitudPC = New CSolicitudPC
-    solicitudPC.IDExpediente = "EXP-TEST-001"
-    solicitudPC.CodigoSolicitud = "PC-TEST-001"
-    solicitudPC.TipoSolicitud = "PC"
-    solicitudPC.EstadoInterno = "BORRADOR"
+    solicitudPC.idExpediente = "EXP-TEST-001"
+    solicitudPC.codigoSolicitud = "PC-TEST-001"
+    solicitudPC.tipoSolicitud = "PC"
+    solicitudPC.estadoInterno = "BORRADOR"
     
     ' Act (simulado)
     Dim guardadoExitoso As Boolean: guardadoExitoso = True
@@ -102,7 +104,7 @@ Public Function Test_FlujoCompletoSolicitud() As Boolean
     Set solicitudService = New CSolicitudService
     Dim solicitud As ISolicitud
     Set solicitud = New CSolicitudPC
-    solicitud.EstadoInterno = "BORRADOR"
+    solicitud.estadoInterno = "BORRADOR"
     
     ' Act (simulado)
     Dim creacionExitosa As Boolean: creacionExitosa = True
@@ -144,7 +146,7 @@ Public Function Test_ValidacionEstados() As Boolean
     Set solicitud = New CSolicitudPC
     
     ' Estado inicial: BORRADOR
-    solicitud.EstadoInterno = "BORRADOR"
+    solicitud.estadoInterno = "BORRADOR"
     
     ' Transicion valida: BORRADOR -> EN_REVISION
     Dim transicion1Valida As Boolean
@@ -184,6 +186,12 @@ Public Function Test_TransaccionesBaseDatos() As Boolean
 ErrorHandler:
     Test_TransaccionesBaseDatos = False
 End Function
+
+
+
+
+
+
 
 
 

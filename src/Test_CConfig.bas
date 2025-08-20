@@ -1,11 +1,13 @@
-Attribute VB_Name = "Test_CConfig"
+﻿Attribute VB_Name = "Test_CConfig"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
 ' Módulo: Test_CConfig
 ' Descripción: Pruebas unitarias para CConfig.cls
-' Autor: CONDOR-Expert  
+' Autor: CONDOR-Expert
 ' Fecha: Enero 2025
 ' ============================================================================
 ' Notas:
@@ -366,11 +368,11 @@ Public Function Test_GetActiveEnvironment_ReturnsString() As Boolean
     Set config = New CConfig
     
     ' Act
-    Dim entorno As String
-    entorno = config.GetActiveEnvironment()
+    Dim Entorno As String
+    Entorno = config.GetActiveEnvironment()
     
     ' Assert - Verificar que retorna un string válido
-    Test_GetActiveEnvironment_ReturnsString = (Len(entorno) >= 0)
+    Test_GetActiveEnvironment_ReturnsString = (Len(Entorno) >= 0)
     
     Exit Function
     
@@ -388,11 +390,11 @@ Public Function Test_EnvironmentOverride_ForzarLocal_Works() As Boolean
     Set config = New CConfig
     
     ' Act
-    Dim entorno As String
-    entorno = config.GetActiveEnvironment()
+    Dim Entorno As String
+    Entorno = config.GetActiveEnvironment()
     
     ' Assert - En modo desarrollo, debería estar configurado correctamente
-    Test_EnvironmentOverride_ForzarLocal_Works = (entorno = "Local" Or entorno <> "")
+    Test_EnvironmentOverride_ForzarLocal_Works = (Entorno = "Local" Or Entorno <> "")
     
     Exit Function
     
@@ -605,113 +607,113 @@ Public Function RunCConfigTests() As String
     totalTests = totalTests + 1
     If Test_CConfig_Creation_Success() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CConfig_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CConfig_Creation_Success" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CConfig_Creation_Success" & vbCrLf
+        resultado = resultado & "? Test_CConfig_Creation_Success" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_CConfig_ImplementsIConfig() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_CConfig_ImplementsIConfig" & vbCrLf
+        resultado = resultado & "? Test_CConfig_ImplementsIConfig" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_CConfig_ImplementsIConfig" & vbCrLf
+        resultado = resultado & "? Test_CConfig_ImplementsIConfig" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_InitializeEnvironment_ReturnsBoolean() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_InitializeEnvironment_ReturnsBoolean" & vbCrLf
+        resultado = resultado & "? Test_InitializeEnvironment_ReturnsBoolean" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_InitializeEnvironment_ReturnsBoolean" & vbCrLf
+        resultado = resultado & "? Test_InitializeEnvironment_ReturnsBoolean" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetActiveEnvironment_ReturnsString() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetActiveEnvironment_ReturnsString" & vbCrLf
+        resultado = resultado & "? Test_GetActiveEnvironment_ReturnsString" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetActiveEnvironment_ReturnsString" & vbCrLf
+        resultado = resultado & "? Test_GetActiveEnvironment_ReturnsString" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_EnvironmentOverride_ForzarLocal_Works() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_EnvironmentOverride_ForzarLocal_Works" & vbCrLf
+        resultado = resultado & "? Test_EnvironmentOverride_ForzarLocal_Works" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_EnvironmentOverride_ForzarLocal_Works" & vbCrLf
+        resultado = resultado & "? Test_EnvironmentOverride_ForzarLocal_Works" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetDatabasePath_ReturnsValidPath() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetDatabasePath_ReturnsValidPath" & vbCrLf
+        resultado = resultado & "? Test_GetDatabasePath_ReturnsValidPath" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetDatabasePath_ReturnsValidPath" & vbCrLf
+        resultado = resultado & "? Test_GetDatabasePath_ReturnsValidPath" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetDataPath_ReturnsValidPath() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetDataPath_ReturnsValidPath" & vbCrLf
+        resultado = resultado & "? Test_GetDataPath_ReturnsValidPath" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetDataPath_ReturnsValidPath" & vbCrLf
+        resultado = resultado & "? Test_GetDataPath_ReturnsValidPath" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_GetExpedientesPath_ReturnsValidPath() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_GetExpedientesPath_ReturnsValidPath" & vbCrLf
+        resultado = resultado & "? Test_GetExpedientesPath_ReturnsValidPath" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_GetExpedientesPath_ReturnsValidPath" & vbCrLf
+        resultado = resultado & "? Test_GetExpedientesPath_ReturnsValidPath" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Integration_modConfig_Factory() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Integration_modConfig_Factory" & vbCrLf
+        resultado = resultado & "? Test_Integration_modConfig_Factory" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Integration_modConfig_Factory" & vbCrLf
+        resultado = resultado & "? Test_Integration_modConfig_Factory" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Integration_InitializeEnvironment() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Integration_InitializeEnvironment" & vbCrLf
+        resultado = resultado & "? Test_Integration_InitializeEnvironment" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Integration_InitializeEnvironment" & vbCrLf
+        resultado = resultado & "? Test_Integration_InitializeEnvironment" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_DEV_MODE_Constant_IsBoolean() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_DEV_MODE_Constant_IsBoolean" & vbCrLf
+        resultado = resultado & "? Test_DEV_MODE_Constant_IsBoolean" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_DEV_MODE_Constant_IsBoolean" & vbCrLf
+        resultado = resultado & "? Test_DEV_MODE_Constant_IsBoolean" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_IDAplicacion_CONDOR_Constant_IsLong() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_IDAplicacion_CONDOR_Constant_IsLong" & vbCrLf
+        resultado = resultado & "? Test_IDAplicacion_CONDOR_Constant_IsLong" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_IDAplicacion_CONDOR_Constant_IsLong" & vbCrLf
+        resultado = resultado & "? Test_IDAplicacion_CONDOR_Constant_IsLong" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_MultipleInstances_Singleton_Behavior() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_MultipleInstances_Singleton_Behavior" & vbCrLf
+        resultado = resultado & "? Test_MultipleInstances_Singleton_Behavior" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_MultipleInstances_Singleton_Behavior" & vbCrLf
+        resultado = resultado & "? Test_MultipleInstances_Singleton_Behavior" & vbCrLf
     End If
     
     totalTests = totalTests + 1
     If Test_Configuration_HandlesInvalidPaths() Then
         passedTests = passedTests + 1
-        resultado = resultado & "✓ Test_Configuration_HandlesInvalidPaths" & vbCrLf
+        resultado = resultado & "? Test_Configuration_HandlesInvalidPaths" & vbCrLf
     Else
-        resultado = resultado & "✗ Test_Configuration_HandlesInvalidPaths" & vbCrLf
+        resultado = resultado & "? Test_Configuration_HandlesInvalidPaths" & vbCrLf
     End If
     
     ' Resumen
@@ -719,3 +721,8 @@ Public Function RunCConfigTests() As String
     
     RunCConfigTests = resultado
 End Function
+
+
+
+
+

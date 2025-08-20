@@ -1,5 +1,7 @@
 ﻿Attribute VB_Name = "modDatabase"
 Option Compare Database
+
+
 Option Explicit
 
 ' ============================================================================
@@ -93,12 +95,12 @@ Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData
     ' Asignar valores a Tb_Solicitudes
     With rsSolicitud
         !NumeroExpediente = solicitudData.NumeroExpediente
-        !TipoSolicitud = solicitudData.TipoSolicitud
-        !EstadoInterno = solicitudData.EstadoInterno
+        !tipoSolicitud = solicitudData.tipoSolicitud
+        !estadoInterno = solicitudData.estadoInterno
         !EstadoRAC = solicitudData.EstadoRAC
-        !FechaCreacion = IIf(isNewRecord, Now(), solicitudData.FechaCreacion)
+        !fechaCreacion = IIf(isNewRecord, Now(), solicitudData.fechaCreacion)
         !FechaUltimaModificacion = Now()
-        !Usuario = solicitudData.Usuario
+        !usuario = solicitudData.usuario
         !Observaciones = solicitudData.Observaciones
         !Activo = solicitudData.Activo
         .Update
@@ -137,12 +139,12 @@ Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData
     With rsPC
         !SolicitudID = pcData.SolicitudID
         !NumeroExpediente = pcData.NumeroExpediente
-        !TipoSolicitud = pcData.TipoSolicitud
-        !DescripcionCambio = pcData.DescripcionCambio
+        !tipoSolicitud = pcData.tipoSolicitud
+        !descripcionCambio = pcData.descripcionCambio
         !JustificacionCambio = pcData.JustificacionCambio
         !ImpactoSeguridad = pcData.ImpactoSeguridad
-        !ImpactoCalidad = pcData.ImpactoCalidad
-        !FechaCreacion = IIf(pcData.ID = 0, Now(), pcData.FechaCreacion)
+        !impactoCalidad = pcData.impactoCalidad
+        !fechaCreacion = IIf(pcData.ID = 0, Now(), pcData.fechaCreacion)
         !FechaUltimaModificacion = Now()
         !Estado = pcData.Estado
         !Activo = pcData.Activo
@@ -188,7 +190,7 @@ Public Function SolicitudExists(ByVal idSolicitud As Long) As Boolean
     Set db = CurrentDb()
     Set rs = db.OpenRecordset("SELECT COUNT(*) as Total FROM Tb_Solicitudes WHERE ID = " & idSolicitud & " AND Activo = True", dbOpenSnapshot)
     
-    SolicitudExists = (rs!Total > 0)
+    SolicitudExists = (rs!total > 0)
     
     rs.Close
     db.Close
@@ -201,6 +203,58 @@ ErrorHandler:
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
 End Function
+
+' ============================================================================
+' FUNCIONES EXTERNAS
+' ============================================================================
+
+' Funci?n gen?rica para ejecutar una consulta SELECT en una BBDD externa protegida
+' Par?metros:
+'   sql: La consulta SQL a ejecutar
+'   dbPath: Ruta completa a la base de datos .accdb
+'   dbPassword: Contrase?a de la base de datos
+' Retorna: Recordset con los resultados, o Nothing si hay error
+Public Function ExecuteExternalQuery(ByVal sql As String, ByVal dbPath As String, ByVal dbPassword As String) As DAO.Recordset
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    
+    ' Validar que la ruta del archivo exista
+    If Dir(dbPath) = "" Then
+        Call modErrorHandler.LogError(vbObjectError + 513, "La base de datos externa no se encontr?: " & dbPath, "modDatabase.ExecuteExternalQuery")
+        Set ExecuteExternalQuery = Nothing
+        Exit Function
+    End If
+    
+    ' Conectar a la base de datos externa con contrase?a
+    Set db = DBEngine.OpenDatabase(dbPath, False, True, "MS Access;PWD=" & dbPassword)
+    
+    ' Ejecutar la consulta
+    Set ExecuteExternalQuery = db.OpenRecordset(sql, dbOpenSnapshot)
+    
+    db.Close
+    Set db = Nothing
+    
+    Exit Function
+
+ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modDatabase.ExecuteExternalQuery")
+    Set ExecuteExternalQuery = Nothing
+    If Not db Is Nothing Then db.Close
+End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

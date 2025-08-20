@@ -1,5 +1,5 @@
 === INICIO DE LA SUITE DE PRUEBAS CONDOR ===
-Fecha: 17/08/2025 12:14:59
+Fecha: 20/08/2025 8:52:27
 ============================================
 
 Ejecutando módulo: Test_AppManager
@@ -28,6 +28,8 @@ Ejecutando módulo: Test_Database
   - Módulo Test_Database: PASSED
 Ejecutando módulo: Test_Database_Complete
   - Módulo Test_Database_Complete: PASSED
+Ejecutando módulo: Test_DocumentService
+  - Módulo Test_DocumentService: PASSED
 Ejecutando módulo: Test_ErrorHandler
   - Módulo Test_ErrorHandler: PASSED
 Ejecutando módulo: Test_ErrorHandler_Extended
@@ -40,6 +42,8 @@ Ejecutando módulo: Test_Integracion_Solicitudes
   - Módulo Test_Integracion_Solicitudes: PASSED
 Ejecutando módulo: Test_Master_Suite
   - Módulo Test_Master_Suite: PASSED
+Ejecutando módulo: Test_NotificationService
+  - Módulo Test_NotificationService: PASSED
 Ejecutando módulo: Test_Services
   - Módulo Test_Services: PASSED
 Ejecutando módulo: Test_Solicitudes
@@ -48,10 +52,12 @@ Ejecutando módulo: Test_SolicitudFactory
   - Módulo Test_SolicitudFactory: PASSED
 Ejecutando módulo: Test_SolicitudPC_Persistence
   - Módulo Test_SolicitudPC_Persistence: PASSED
+Ejecutando módulo: Test_ValidationService
+  - Módulo Test_ValidationService: PASSED
 Ejecutando módulo: Test_WorkflowService
   - Módulo Test_WorkflowService: PASSED
 
 ============================================
-RESUMEN: 24/24 pruebas pasadas.
+RESUMEN: 27/27 pruebas pasadas.
 ============================================
 RESULT: SUCCESS

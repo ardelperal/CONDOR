@@ -8,6 +8,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
+
+
 Option Explicit
 
 #If DEV_MODE Then
@@ -24,13 +26,13 @@ Implements IExpedienteService
 
 ' Implementaci?n de la interfaz IExpedienteService
 ' Obtiene un expediente por su ID desde la base de datos de expedientes (método principal)
-Private Function IExpedienteService_GetExpedienteById(ByVal IDExpediente As Long) As T_Expediente
+Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
     ' Wrapper que llama al método principal GetExpediente
-    IExpedienteService_GetExpedienteById = IExpedienteService_GetExpediente(IDExpediente)
+    IExpedienteService_GetExpedienteById = IExpedienteService_GetExpediente(idExpediente)
 End Function
 
 ' Método alternativo para compatibilidad
-Private Function IExpedienteService_GetExpediente(ByVal IDExpediente As Long) As T_Expediente
+Private Function IExpedienteService_GetExpediente(ByVal idExpediente As Long) As T_Expediente
     Dim resultado As T_Expediente
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -39,7 +41,7 @@ Private Function IExpedienteService_GetExpediente(ByVal IDExpediente As Long) As
     On Error GoTo ErrorHandler
     
     ' Inicializar resultado vac?o
-    resultado.IDExpediente = 0
+    resultado.idExpediente = 0
     resultado.Nemotecnico = ""
     resultado.Titulo = ""
     resultado.ResponsableCalidad = ""
@@ -56,7 +58,9 @@ Private Function IExpedienteService_GetExpediente(ByVal IDExpediente As Long) As
     End If
     
     ' Abrir conexi?n a la base de datos de expedientes
-    Set db = DBEngine.OpenDatabase(rutaExpedientes)
+    Dim config As CConfig
+    Set config = New CConfig
+    Set db = DBEngine.OpenDatabase(rutaExpedientes, False, False, ";PWD=" & config.GetDatabasePassword())
     
     ' Construir la consulta SQL con filtro por ID
     sql = "SELECT TbExpedientes.IDExpediente, TbExpedientes.Nemotecnico, TbExpedientes.Titulo, " & _
@@ -66,14 +70,14 @@ Private Function IExpedienteService_GetExpediente(ByVal IDExpediente As Long) As
           "FROM ((TbExpedientes INNER JOIN TbExpedientesResponsables ON TbExpedientes.IDExpediente = TbExpedientesResponsables.IdExpediente) " & _
           "LEFT JOIN TbUsuariosAplicaciones ON TbExpedientesResponsables.IdUsuario = TbUsuariosAplicaciones.Id) " & _
           "LEFT JOIN TbUsuariosAplicaciones AS TbUsuariosAplicaciones_1 ON TbExpedientes.IDResponsableCalidad = TbUsuariosAplicaciones_1.Id " & _
-          "WHERE (((TbExpedientesResponsables.EsJefeProyecto)='S?') AND ((TbExpedientes.IDExpediente)=" & IDExpediente & "));"
+          "WHERE (((TbExpedientesResponsables.EsJefeProyecto)='S?') AND ((TbExpedientes.IDExpediente)=" & idExpediente & "));"
     
     ' Ejecutar la consulta
     Set rs = db.OpenRecordset(sql, dbOpenSnapshot)
     
     ' Si encontramos un resultado, llenar la estructura
     If Not rs.EOF Then
-        resultado.IDExpediente = rs("IDExpediente")
+        resultado.idExpediente = rs("IDExpediente")
         resultado.Nemotecnico = Nz(rs("Nemotecnico"), "")
         resultado.Titulo = Nz(rs("Titulo"), "")
         resultado.ResponsableCalidad = Nz(rs("ResponsableCalidad"), "")
@@ -98,12 +102,12 @@ End Function
 
 
 
-Private Function IExpedienteService_CreateExpediente(ByVal numeroExpediente As String, ByVal descripcion As String, ByVal idUsuario As Long) As Long
+Private Function IExpedienteService_CreateExpediente(ByVal NumeroExpediente As String, ByVal Descripcion As String, ByVal idUsuario As Long) As Long
     ' TODO: Implementar lógica de creación de expediente
     IExpedienteService_CreateExpediente = 0
 End Function
 
-Private Function IExpedienteService_UpdateExpediente(ByVal ID As Long, ByVal descripcion As String, ByVal estado As String) As Boolean
+Private Function IExpedienteService_UpdateExpediente(ByVal ID As Long, ByVal Descripcion As String, ByVal Estado As String) As Boolean
     ' TODO: Implementar lógica de actualización de expediente
     IExpedienteService_UpdateExpediente = False
 End Function
@@ -129,6 +133,18 @@ Private Function IExpedienteService_ValidateExpediente(expediente As T_Expedient
 End Function
 
 #End If
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
