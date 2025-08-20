@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_CConfig"
+Attribute VB_Name = "Test_CConfig"
 Option Compare Database
 
 
@@ -199,6 +199,22 @@ Public Function Test_CConfig_RunAll() As String
         testsPassed = testsPassed + 1
     Else
         resultado = resultado & "[FAIL] Test_CConfig_ResetToDefaults_Success" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_CConfig_InitializeEnvironment_FailsWithMissingTemplates() Then
+        resultado = resultado & "[OK] Test_CConfig_InitializeEnvironment_FailsWithMissingTemplates" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_CConfig_InitializeEnvironment_FailsWithMissingTemplates" & vbCrLf
+    End If
+    
+    testsTotal = testsTotal + 1
+    If Test_Configuracion_TodasLasClavesExisten() Then
+        resultado = resultado & "[OK] Test_Configuracion_TodasLasClavesExisten" & vbCrLf
+        testsPassed = testsPassed + 1
+    Else
+        resultado = resultado & "[FAIL] Test_Configuracion_TodasLasClavesExisten" & vbCrLf
     End If
     
     ' Agregar resumen
@@ -720,6 +736,98 @@ Public Function RunCConfigTests() As String
     resultado = resultado & vbCrLf & "Resultado: " & passedTests & "/" & totalTests & " pruebas exitosas" & vbCrLf
     
     RunCConfigTests = resultado
+End Function
+
+' ============================================================================
+' TEST: InitializeEnvironment falla cuando las plantillas no existen
+' ============================================================================
+Public Function Test_CConfig_InitializeEnvironment_FailsWithMissingTemplates() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange - Configurar mock para carpeta vacía
+    Dim config As IConfig
+    Set config = New CConfig
+    
+    ' Crear una carpeta temporal vacía para las plantillas
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    Dim tempPlantillasPath As String
+    tempPlantillasPath = Environ("TEMP") & "\CONDOR_TEST_EMPTY_" & Format(Now, "yyyymmddhhnnss")
+    
+    ' Crear la carpeta vacía
+    fso.CreateFolder tempPlantillasPath
+    
+    ' Configurar el mock para que apunte a la carpeta vacía
+    Call config.SetValue("PLANTILLASPATH", tempPlantillasPath)
+    
+    ' Act - Intentar inicializar el entorno
+    Dim result As Boolean
+    result = config.InitializeEnvironment()
+    
+    ' Assert - Verificar que la inicialización falla
+    Test_CConfig_InitializeEnvironment_FailsWithMissingTemplates = (result = False)
+    
+    ' Cleanup - Limpiar la carpeta temporal
+    If fso.FolderExists(tempPlantillasPath) Then
+        fso.DeleteFolder tempPlantillasPath, True
+    End If
+    Set fso = Nothing
+    
+    Exit Function
+    
+TestFail:
+    ' Cleanup en caso de error
+    If Not fso Is Nothing Then
+        If fso.FolderExists(tempPlantillasPath) Then
+            fso.DeleteFolder tempPlantillasPath, True
+        End If
+        Set fso = Nothing
+    End If
+    Test_CConfig_InitializeEnvironment_FailsWithMissingTemplates = False
+ End Function
+
+' ============================================================================
+' TEST: Verificar que todas las claves de configuración existen y son accesibles
+' ============================================================================
+Public Function Test_Configuracion_TodasLasClavesExisten() As Boolean
+    On Error GoTo ErrorHandler
+
+    Dim configSvc As IConfig
+    Set configSvc = New CConfig
+    configSvc.InitializeEnvironment
+
+    Dim expectedKeys As Variant
+    expectedKeys = Array( _
+        "DATABASEPATH", "DATAPATH", "EXPEDIENTESPATH", "PLANTILLASPATH", _
+        "PLANTILLAPCPATH", "PLANTILLACDCAPATH", "PLANTILLACDCASUBPATH", _
+        "LANZADERADBPATH", "LOGPATH", "DATABASEPASSWORD", "ENTORNOACTIVO", _
+        "ISINITIALIZED", "IDAPLICACION_CONDOR" _
+    )
+
+    Dim key As Variant
+    Dim allKeysExist As Boolean
+    allKeysExist = True
+
+    For Each key In expectedKeys
+        If Not configSvc.HasKey(CStr(key)) Then
+            Debug.Print "FAIL: La clave de configuración '" & key & "' no existe."
+            allKeysExist = False
+        Else
+            ' Verificar que el valor no sea nulo (excepto para claves que podrían serlo)
+            If IsNull(configSvc.GetValue(CStr(key))) Then
+                 Debug.Print "FAIL: El valor para la clave '" & key & "' es Nulo."
+                 allKeysExist = False
+            End If
+        End If
+    Next key
+
+    Test_Configuracion_TodasLasClavesExisten = allKeysExist
+    Exit Function
+
+ErrorHandler:
+    Test_Configuracion_TodasLasClavesExisten = False
+    Debug.Print "ERROR en Test_Configuracion_TodasLasClavesExisten: " & Err.Description
 End Function
 
 

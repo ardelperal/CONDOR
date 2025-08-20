@@ -63,7 +63,14 @@ Public Sub App_Start()
     ' 3. Determinar el rol del usuario y guardarlo en la variable global
     g_CurrentUserRole = authService.GetUserRole(userEmail)
 
-    ' 4. Continuar con la inicializacion de la aplicacion segun el rol
+    ' 4. Verificar que la configuración se haya cargado correctamente
+    If Not AppConfig.GetValue("IsInitialized") Then
+        ' El error específico ya ha sido logueado por CConfig.ValidateConfiguration
+        ' Simplemente detenemos la ejecución para prevenir que la app se abra en un estado inválido.
+        Exit Sub
+    End If
+
+    ' 5. Continuar con la inicializacion de la aplicacion segun el rol
     Select Case g_CurrentUserRole
         Case Rol_Admin
             Debug.Print "Usuario autenticado como Administrador."

@@ -41,6 +41,9 @@ Private Type T_AppConfig
     DataPath As String
     ExpedientesPath As String 'Anadido para la BBDD de Expedientes
     PlantillasPath As String 'Anadido para las plantillas Word
+    plantillaPCPath As String 'Ruta completa a PC.docx
+    plantillaCDCAPath As String 'Ruta completa a CD_CA.docx
+    plantillaCDCASUBPath As String 'Ruta completa a CD_CA_SUB.docx
     LanzaderaDbPath As String 'Anadido para la BBDD de Lanzadera (gestion de roles)
     LogPath As String
     DatabasePassword As String 'Contraseña para bases de datos back
@@ -66,6 +69,12 @@ Private Function IConfig_GetValue(ByVal key As String) As Variant
             IConfig_GetValue = m_AppConfig.ExpedientesPath
         Case "PLANTILLASPATH"
             IConfig_GetValue = m_AppConfig.PlantillasPath
+        Case "PLANTILLAPCPATH"
+            IConfig_GetValue = m_AppConfig.plantillaPCPath
+        Case "PLANTILLACDCAPATH"
+            IConfig_GetValue = m_AppConfig.plantillaCDCAPath
+        Case "PLANTILLACDCASUBPATH"
+            IConfig_GetValue = m_AppConfig.plantillaCDCASUBPath
         Case "LANZADERADBPATH"
             IConfig_GetValue = m_AppConfig.LanzaderaDbPath
         Case "LOGPATH"
@@ -94,6 +103,12 @@ Private Sub IConfig_SetValue(ByVal key As String, ByVal value As Variant)
             m_AppConfig.ExpedientesPath = CStr(value)
         Case "PLANTILLASPATH"
             m_AppConfig.PlantillasPath = CStr(value)
+        Case "PLANTILLAPCPATH"
+            m_AppConfig.plantillaPCPath = CStr(value)
+        Case "PLANTILLACDCAPATH"
+            m_AppConfig.plantillaCDCAPath = CStr(value)
+        Case "PLANTILLACDCASUBPATH"
+            m_AppConfig.plantillaCDCASUBPath = CStr(value)
         Case "LANZADERADBPATH"
             m_AppConfig.LanzaderaDbPath = CStr(value)
         Case "LOGPATH"
@@ -157,9 +172,21 @@ Private Function IConfig_InitializeEnvironment() As Boolean
         m_AppConfig.DatabasePassword = "dpddpd"
     End If
     
+    ' Construir rutas completas a las plantillas
+    m_AppConfig.plantillaPCPath = m_AppConfig.PlantillasPath & "\PC.docx"
+    m_AppConfig.plantillaCDCAPath = m_AppConfig.PlantillasPath & "\CD_CA.docx"
+    m_AppConfig.plantillaCDCASUBPath = m_AppConfig.PlantillasPath & "\CD_CA_SUB.docx"
+    
     ' Crear directorios si no existen
     Call CreateDirectoriesIfNeeded
     
+    ' Validar la configuración cargada
+    If Not ValidateConfiguration() Then
+        m_AppConfig.IsInitialized = False
+        IConfig_InitializeEnvironment = False
+        Exit Function
+    End If
+
     ' Marcar como inicializado
     m_AppConfig.IsInitialized = True
     
@@ -268,6 +295,9 @@ Private Sub ResetConfiguration()
     m_AppConfig.DataPath = ""
     m_AppConfig.ExpedientesPath = ""
     m_AppConfig.PlantillasPath = ""
+    m_AppConfig.plantillaPCPath = ""
+    m_AppConfig.plantillaCDCAPath = ""
+    m_AppConfig.plantillaCDCASUBPath = ""
     m_AppConfig.LanzaderaDbPath = ""
     m_AppConfig.LogPath = ""
     m_AppConfig.DatabasePassword = ""
@@ -423,6 +453,57 @@ End Function
 
 Public Function TestCConfig() As String
     TestCConfig = IConfig_TestCConfig()
+End Function
+
+Private Function ValidateConfiguration() As Boolean
+    ' Comprueba que las rutas esenciales han sido cargadas
+    ValidateConfiguration = True ' Asumir éxito por defecto
+
+    If IsNull(m_AppConfig.DatabasePath) Or m_AppConfig.DatabasePath = "" Then
+        Call modErrorHandler.LogCriticalError(vbObjectError + 1001, "Error de configuración: La ruta 'DatabasePath' no está definida.", "CConfig.ValidateConfiguration")
+        ValidateConfiguration = False
+        Exit Function
+    End If
+    
+    If IsNull(m_AppConfig.LanzaderaDbPath) Or m_AppConfig.LanzaderaDbPath = "" Then
+        Call modErrorHandler.LogCriticalError(vbObjectError + 1002, "Error de configuración: La ruta 'LanzaderaDbPath' no está definida.", "CConfig.ValidateConfiguration")
+        ValidateConfiguration = False
+        Exit Function
+    End If
+    
+    If IsNull(m_AppConfig.ExpedientesPath) Or m_AppConfig.ExpedientesPath = "" Then
+        Call modErrorHandler.LogCriticalError(vbObjectError + 1003, "Error de configuración: La ruta 'ExpedientesPath' no está definida.", "CConfig.ValidateConfiguration")
+        ValidateConfiguration = False
+        Exit Function
+    End If
+    
+    ' Validar existencia de plantillas
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    If Not fso.FileExists(m_AppConfig.plantillaPCPath) Then
+        Call modErrorHandler.LogCriticalError(vbObjectError + 1004, "Error de configuración: La plantilla PC.docx no existe en la ruta: " & m_AppConfig.plantillaPCPath, "CConfig.ValidateConfiguration")
+        ValidateConfiguration = False
+        Set fso = Nothing
+        Exit Function
+    End If
+    
+    If Not fso.FileExists(m_AppConfig.plantillaCDCAPath) Then
+        Call modErrorHandler.LogCriticalError(vbObjectError + 1005, "Error de configuración: La plantilla CD_CA.docx no existe en la ruta: " & m_AppConfig.plantillaCDCAPath, "CConfig.ValidateConfiguration")
+        ValidateConfiguration = False
+        Set fso = Nothing
+        Exit Function
+    End If
+    
+    If Not fso.FileExists(m_AppConfig.plantillaCDCASUBPath) Then
+        Call modErrorHandler.LogCriticalError(vbObjectError + 1006, "Error de configuración: La plantilla CD_CA_SUB.docx no existe en la ruta: " & m_AppConfig.plantillaCDCASUBPath, "CConfig.ValidateConfiguration")
+        ValidateConfiguration = False
+        Set fso = Nothing
+        Exit Function
+    End If
+    
+    Set fso = Nothing
+    
 End Function
 
 
