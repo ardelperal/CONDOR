@@ -1,17 +1,5 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "T_Usuario"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 '******************************************************************************
 ' CLASE: T_Usuario
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de usuarios del sistema
@@ -93,6 +81,8 @@ Public Function PuedeConsultarSolicitudes() As Boolean
                                 EsUsuarioCalidad Or Rol = Rol_Calidad Or _
                                 TienePermisosAdmin())
 End Function
+
+
 
 
 

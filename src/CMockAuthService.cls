@@ -1,17 +1,5 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CMockAuthService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Compilación condicional removida para evitar errores
 ' #If DEV_MODE Then
 Implements IAuthService
@@ -53,6 +41,7 @@ Private Function IAuthService_ValidateEmail(ByVal Email As String) As Boolean
     IAuthService_ValidateEmail = (Email <> "email_invalido")
 End Function
 ' #End If
+
 
 
 

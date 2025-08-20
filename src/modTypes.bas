@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "modTypes"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' M?dulo: modTypes
 ' Descripci?n: Definici?n de tipos de datos personalizados para CONDOR
@@ -91,6 +87,7 @@ Public Type T_Datos_CD_CA_SUB
     Estado As String
     Activo As Boolean
 End Type
+
 
 
 

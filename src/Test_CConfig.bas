@@ -1,9 +1,5 @@
-Attribute VB_Name = "Test_CConfig"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_CConfig
 ' Descripción: Pruebas unitarias para CConfig.cls
@@ -829,6 +825,8 @@ ErrorHandler:
     Test_Configuracion_TodasLasClavesExisten = False
     Debug.Print "ERROR en Test_Configuracion_TodasLasClavesExisten: " & Err.Description
 End Function
+
+
 
 
 

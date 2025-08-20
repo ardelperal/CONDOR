@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "modMockFramework"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: modMockFramework
 ' Descripción: Framework centralizado de mocks para pruebas unitarias CONDOR
@@ -77,7 +73,7 @@ Type T_MockConfiguration
     MaxRetries As Integer
     TimeoutSeconds As Integer
     EnableNotifications As Boolean
-    AdminEmail As String
+    adminEmail As String
     ShouldFailLoad As Boolean
     ErrorMessage As String
 End Type
@@ -255,7 +251,7 @@ Public Sub InitializeConfigurationMock()
         .MaxRetries = 3
         .TimeoutSeconds = 30
         .EnableNotifications = True
-        .AdminEmail = "admin@condor.local"
+        .adminEmail = "admin@condor.local"
         .ShouldFailLoad = False
         .ErrorMessage = ""
     End With
@@ -689,6 +685,8 @@ Public Sub LogMockActivity(activity As String)
     ' Registrar actividad de mock para debugging
     Debug.Print Format(Now(), "hh:nn:ss") & " - MOCK: " & activity
 End Sub
+
+
 
 
 

@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Master_Suite"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_Master_Suite
 ' Descripción: Suite maestro de pruebas unitarias para el proyecto CONDOR
@@ -596,6 +592,7 @@ Public Sub QuickTest()
     Debug.Print "Pruebas ejecutadas: " & g_TestSummary.totalTests
     Debug.Print "Resultado: " & IIf(g_TestSummary.TotalFailed = 0, "ÉXITO", "FALLOS: " & g_TestSummary.TotalFailed)
 End Sub
+
 
 
 

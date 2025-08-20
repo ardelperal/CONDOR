@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "modConfig"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Modulo de Configuracion del Sistema CONDOR - Factory/Singleton
 ' Proporciona acceso a la instancia ?nica del servicio de configuraci?n
 ' Version: 3.0 (refactorizado para arquitectura de clases)
@@ -116,6 +112,7 @@ Public Function TestModConfig() As String
     Set configInstance = config()
     TestModConfig = configInstance.TestCConfig()
 End Function
+
 
 
 

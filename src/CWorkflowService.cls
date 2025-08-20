@@ -1,17 +1,5 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CWorkflowService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 '******************************************************************************
 ' CLASE: CWorkflowService
 ' DESCRIPCIÓN: Implementación concreta del servicio de workflow y estados
@@ -445,6 +433,8 @@ Public Function RequiresApproval(ByVal estadoOrigen As String, _
                                 ByVal tipoSolicitud As String) As Boolean
     RequiresApproval = IWorkflowService_RequiresApproval(estadoOrigen, estadoDestino, tipoSolicitud)
 End Function
+
+
 
 
 

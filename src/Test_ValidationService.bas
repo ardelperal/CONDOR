@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_ValidationService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ===================================================================
 ' Módulo: Test_ValidationService
 ' Descripción: Pruebas unitarias para el servicio de validaciones de negocio
@@ -129,6 +125,7 @@ ErrorHandler:
     Debug.Print "? ERROR: Test_ValidarSolicitud_SinExpediente_RetornaFallo - " & Err.Description
     Test_ValidarSolicitud_SinExpediente_RetornaFallo = False
 End Function
+
 
 
 

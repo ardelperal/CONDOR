@@ -1,9 +1,5 @@
-Attribute VB_Name = "Test_NotificationService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Test_NotificationService.bas
 ' Módulo de pruebas para el servicio de notificaciones
 ' Sigue el patrón TDD y las lecciones aprendidas del proyecto CONDOR
@@ -175,6 +171,7 @@ ErrorEsperado:
     
     On Error GoTo 0
 End Sub
+
 
 
 

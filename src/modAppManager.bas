@@ -1,9 +1,5 @@
-Attribute VB_Name = "modAppManager"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Definir constante de compilacion condicional para modo desarrollo
 #Const DEV_MODE = 1
 
@@ -48,10 +44,10 @@ Public Sub App_Start()
     On Error GoTo ErrorHandler
 
     ' 1. Obtener el email del usuario actual
-    Dim userEmail As String
-    userEmail = GetCurrentUserEmail()
+    Dim UserEmail As String
+    UserEmail = GetCurrentUserEmail()
 
-    If userEmail = "" Then
+    If UserEmail = "" Then
         Call modErrorHandler.LogCriticalError(vbObjectError + 514, "No se pudo obtener el email del usuario para la autenticación.", "modAppManager.App_Start")
         Exit Sub
     End If
@@ -61,7 +57,7 @@ Public Sub App_Start()
     Set authService = New CAuthService
 
     ' 3. Determinar el rol del usuario y guardarlo en la variable global
-    g_CurrentUserRole = authService.GetUserRole(userEmail)
+    g_CurrentUserRole = authService.GetUserRole(UserEmail)
 
     ' 4. Verificar que la configuración se haya cargado correctamente
     If Not AppConfig.GetValue("IsInitialized") Then
@@ -82,7 +78,7 @@ Public Sub App_Start()
             Debug.Print "Usuario autenticado como Técnico."
             ' TODO: Implementar inicialización específica para Técnico
         Case Rol_Desconocido
-            Call modErrorHandler.LogCriticalError(vbObjectError + 515, "El usuario '" & userEmail & "' no tiene un rol definido en el sistema.", "modAppManager.App_Start")
+            Call modErrorHandler.LogCriticalError(vbObjectError + 515, "El usuario '" & UserEmail & "' no tiene un rol definido en el sistema.", "modAppManager.App_Start")
     End Select
     
     Exit Sub
@@ -117,6 +113,7 @@ End Sub
 Public Function OBTENER_RESULTADOS_PRUEBAS() As String
     OBTENER_RESULTADOS_PRUEBAS = modTestRunner.RunAllTests()
 End Function
+
 
 
 

@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Database_Complete"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' M?dulo: Test_Database_Complete
 ' Descripci?n: Pruebas unitarias completas para modDatabase.bas
@@ -709,6 +705,7 @@ Public Function RunDatabaseCompleteTests() As Boolean
     ' Retornar True si todas las pruebas pasaron
     RunDatabaseCompleteTests = (failedTests = 0)
 End Function
+
 
 
 

@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_SolicitudFactory"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' M?dulo: Test_SolicitudFactory
 ' Descripci?n: Pruebas unitarias para modSolicitudFactory.bas
@@ -642,6 +638,8 @@ Public Function RunSolicitudFactoryTests() As Boolean
     
     Debug.Print "============================================================================"
 End Function
+
+
 
 
 

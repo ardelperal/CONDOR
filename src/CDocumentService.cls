@@ -1,17 +1,5 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CDocumentService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Clase: CDocumentService
 ' Descripción: Implementación del servicio de generación de documentos
@@ -541,6 +529,8 @@ End Function
 Public Sub ClearLastError()
     m_LastError = ""
 End Sub
+
+
 
 
 

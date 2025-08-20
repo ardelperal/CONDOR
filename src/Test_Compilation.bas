@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Compilation"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' M?dulo de prueba para verificar compilaci?n
 
 ' ============================================================================
@@ -51,6 +47,7 @@ ErrorHandler:
     Debug.Print "Error de compilaci?n: " & Err.Description
     Debug.Print "N?mero de error: " & Err.Number
 End Function
+
 
 
 

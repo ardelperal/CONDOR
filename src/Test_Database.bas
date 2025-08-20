@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Database"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' M?dulo: Test_Database
 ' Descripci?n: Pruebas unitarias para modDatabase.bas
@@ -827,6 +823,8 @@ Public Function RunDatabaseTests() As String
     
     RunDatabaseTests = resultado
 End Function
+
+
 
 
 

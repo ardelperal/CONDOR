@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_ErrorHandler"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' TIPOS Y VARIABLES PARA MOCKS
 ' ============================================================================
@@ -846,6 +842,8 @@ ErrorHandler:
     Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandler.FuncionQueFalla", "Ejecutando división por cero intencional")
     ' No re-lanzar el error para que la prueba pueda verificar el registro
 End Sub
+
+
 
 
 

@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_ExpedienteService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' =====================================================
 ' MODULO: Test_ExpedienteService
 ' PROPOSITO: Pruebas unitarias para CExpedienteService
@@ -223,6 +219,7 @@ Public Function Test_ObtenerHistorialExpediente() As Boolean
     ' Assert
     Test_ObtenerHistorialExpediente = historialObtenido
 End Function
+
 
 
 

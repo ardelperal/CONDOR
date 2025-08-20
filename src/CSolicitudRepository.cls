@@ -1,17 +1,5 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CSolicitudRepository"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Implementación del repositorio de solicitudes
 ' Maneja la persistencia en las tablas tbSolicitud, tbDatosPC, tbDatosCDCA y tbDatosCDCASUB
 
@@ -441,6 +429,7 @@ End Function
 Public Function ExisteSolicitudConCodigo(ByVal codigoSolicitud As String) As Boolean
     ExisteSolicitudConCodigo = ISolicitudRepository_ExisteSolicitudConCodigo(codigoSolicitud)
 End Function
+
 
 
 

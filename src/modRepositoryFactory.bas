@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "modRepositoryFactory"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 '******************************************************************************
 ' MÓDULO: modRepositoryFactory
 ' DESCRIPCIÓN: Factory para la inyección de dependencias del repositorio de solicitudes
@@ -26,6 +22,7 @@ Public Function CreateSolicitudRepository() As ISolicitudRepository
     ' TODO: Implementar lógica para alternar entre Mock y Real según configuración
     Set CreateSolicitudRepository = New CMockSolicitudRepository
 End Function
+
 
 
 

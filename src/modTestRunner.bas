@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "modTestRunner"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' M?dulo: modTestRunner
 ' Descripci?n: Motor principal para ejecutar todas las suites de pruebas del proyecto.
 
@@ -257,7 +253,7 @@ Public Sub ExecuteAllTests(strLogPath As String)
     passedTests = passedTests + 1
     
     currentTest = "Test_NotificationService"
-    Call Test_NotificationService_RunAll()
+    Call Test_NotificationService_RunAll
     logFile.WriteLine "=== PRUEBAS DE NOTIFICATIONSERVICE ===" & vbCrLf & "[OK] NotificationService tests" & vbCrLf & "Resumen NotificationService: 1/1 pruebas exitosas" & vbCrLf
     totalTests = totalTests + 1
     passedTests = passedTests + 1
@@ -464,6 +460,7 @@ Private Function ExtractTestName(line As String) As String
         ExtractTestName = "Prueba desconocida"
     End If
 End Function
+
 
 
 

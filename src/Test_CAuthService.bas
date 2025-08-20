@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_CAuthService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_CAuthService
 ' Descripción: Pruebas unitarias para CAuthService.cls
@@ -646,6 +642,7 @@ Public Function RunCAuthServiceTests() As String
     
     RunCAuthServiceTests = resultado
 End Function
+
 
 
 

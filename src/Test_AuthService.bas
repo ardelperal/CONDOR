@@ -1,9 +1,5 @@
-Attribute VB_Name = "Test_AuthService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' =====================================================
 ' MODULO: Test_AuthService
 ' PROPOSITO: Pruebas unitarias para autenticacion y autorizacion
@@ -213,6 +209,7 @@ Public Function Test_RevocarSesion() As Boolean
     ' Assert
     Test_RevocarSesion = revocada
 End Function
+
 
 
 

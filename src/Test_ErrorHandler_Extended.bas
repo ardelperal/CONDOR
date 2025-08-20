@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_ErrorHandler_Extended"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_ErrorHandler_Extended
 ' Descripción: Pruebas unitarias extendidas para modErrorHandler.bas
@@ -988,6 +984,7 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     ' Devolver resultado basado en si todas las pruebas pasaron
     RunErrorHandlerExtendedTests = (failedTests = 0)
 End Function
+
 
 
 

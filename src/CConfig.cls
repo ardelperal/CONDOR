@@ -1,17 +1,5 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CConfig"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Clase: CConfig
 ' Descripci?n: Implementaci?n concreta del servicio de configuraci?n del sistema CONDOR
 ' Arquitectura: Capa de Servicios - Implementaci?n
@@ -153,7 +141,7 @@ Private Function IConfig_InitializeEnvironment() As Boolean
     If usarRutasLocales Then
         ' Configuracion para entorno de desarrollo LOCAL
         Dim basePath As String
-        basePath = CurrentProject.Path & "\.."
+        basePath = CurrentProject.path & "\.."
         m_AppConfig.DatabasePath = basePath & "back\Desarrollo\CONDOR.accdb"
         m_AppConfig.DataPath = basePath & "back\CONDOR_datos.accdb"
         m_AppConfig.ExpedientesPath = basePath & "back\Expedientes_datos.accdb"
@@ -505,6 +493,8 @@ Private Function ValidateConfiguration() As Boolean
     Set fso = Nothing
     
 End Function
+
+
 
 
 

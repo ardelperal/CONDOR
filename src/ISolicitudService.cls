@@ -1,17 +1,5 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "ISolicitudService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Interfaz para el Servicio de Solicitudes
 ' Define los m?todos principales para manejar solicitudes en el sistema CONDOR
 ' Version: 1.0
@@ -69,6 +57,7 @@ End Function
 
 Public Function ValidateSolicitud(solicitud As ISolicitud) As Boolean
 End Function
+
 
 
 

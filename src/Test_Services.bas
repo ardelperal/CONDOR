@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Services"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' M?dulo: Test_Services
 ' Descripci?n: Pruebas unitarias para las clases de servicio
@@ -746,6 +742,8 @@ End Function
 Public Sub TestServices()
     Call RunServicesTests
 End Sub
+
+
 
 
 

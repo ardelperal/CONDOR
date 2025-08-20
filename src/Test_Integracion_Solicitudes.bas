@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Integracion_Solicitudes"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' =====================================================
 ' MODULO: Test_Integracion_Solicitudes
 ' PROPOSITO: Pruebas de integracion para solicitudes
@@ -186,6 +182,7 @@ Public Function Test_TransaccionesBaseDatos() As Boolean
 ErrorHandler:
     Test_TransaccionesBaseDatos = False
 End Function
+
 
 
 

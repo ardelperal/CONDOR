@@ -1,17 +1,5 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "T_RespuestaRAC"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 '******************************************************************************
 ' CLASE: T_RespuestaRAC
 ' DESCRIPCIÓN: Tipo de datos para respuestas del Sistema RAC
@@ -117,6 +105,8 @@ Public Function PuedeReintentar() As Boolean
                       CodigoError <> 401 And _
                       CodigoError <> 403)
 End Function
+
+
 
 
 

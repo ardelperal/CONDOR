@@ -1,9 +1,5 @@
-Attribute VB_Name = "modErrorHandler"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ===============================================================================
 ' Módulo: modErrorHandler
 ' Descripción: Sistema centralizado de manejo de errores para CONDOR
@@ -176,6 +172,8 @@ ErrorHandler:
         Set db = Nothing
     End If
 End Sub
+
+
 
 
 

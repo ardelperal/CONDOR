@@ -1,17 +1,5 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "T_Expediente"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 '******************************************************************************
 ' CLASE: T_Expediente
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de expedientes
@@ -98,6 +86,8 @@ Public Function EsValido() As Boolean
                 Len(ResponsableCalidad) > 0 And _
                 Len(EmailResponsable) > 0)
 End Function
+
+
 
 
 

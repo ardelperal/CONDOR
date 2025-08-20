@@ -1,17 +1,5 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "IExpedienteService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Compilación condicional removida para evitar errores
 ' #If DEV_MODE Then
 
@@ -52,6 +40,7 @@ Public Function ValidateExpediente(expediente As T_Expediente) As Boolean
 End Function
 
 ' #End If
+
 
 
 

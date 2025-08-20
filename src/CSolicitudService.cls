@@ -1,17 +1,5 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CSolicitudService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' Implementaci?n del Servicio de Solicitudes
 ' Maneja las operaciones CRUD de solicitudes en el sistema CONDOR
 ' Version: 1.0
@@ -107,6 +95,7 @@ Private Function ISolicitudService_ValidateSolicitud(solicitud As ISolicitud) As
     ' TODO: Implementar lógica de validación
     ISolicitudService_ValidateSolicitud = True
 End Function
+
 
 
 

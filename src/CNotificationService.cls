@@ -1,17 +1,5 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CNotificationService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' CNotificationService.cls
 ' Implementación del servicio de notificaciones asíncrono
 ' Basado en las Especificaciones de Integración - Sección 2
@@ -116,6 +104,8 @@ Public Function EnviarNotificacion( _
     ' Delegar a la implementación de la interfaz
     EnviarNotificacion = INotificationService_EnviarNotificacion(destinatarios, asunto, cuerpoHTML, urlAdjunto)
 End Function
+
+
 
 
 

@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Config"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' MÓDULO DE PRUEBAS PARA SISTEMA DE CONFIGURACIÓN
 ' ============================================================================
@@ -663,6 +659,8 @@ Public Function RunConfigTestsComplete() As Boolean
     ' Retornar True si todas las pruebas pasaron
     RunConfigTestsComplete = (passedTests = totalTests)
 End Function
+
+
 
 
 

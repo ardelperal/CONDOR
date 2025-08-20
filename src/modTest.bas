@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "modTest"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' M?dulo de prueba para verificar la implementaci?n de la interfaz
 Public Sub TestInterface()
     On Error GoTo ErrorHandler
@@ -40,6 +36,7 @@ ErrorHandler:
     Set solicitud = Nothing
     Set solicitudPC = Nothing
 End Sub
+
 
 
 

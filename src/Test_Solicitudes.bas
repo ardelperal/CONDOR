@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Solicitudes"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
 ' ============================================================================
@@ -52,6 +48,7 @@ Private Function Test_Factory_Crea_PC() As Boolean
 ErrorHandler:
     Test_Factory_Crea_PC = False
 End Function
+
 
 
 

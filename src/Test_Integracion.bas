@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_Integracion"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_Integracion
 ' Descripción: Pruebas de integración del sistema CONDOR
@@ -462,6 +458,7 @@ Public Function Test_RecuperacionErrores() As Boolean
         Err.Raise 6009, , "Error: Fallo en la recuperación de errores"
     End If
 End Function
+
 
 
 

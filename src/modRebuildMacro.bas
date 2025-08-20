@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "modRebuildMacro"
 Option Compare Database
-
-
 Option Explicit
-
 ' Macro VBA para reconstrucción completa del proyecto
 ' Esta macro puede ser ejecutada desde VBScript usando objAccess.Run "RebuildProject"
 Public Sub RebuildProject()
@@ -130,6 +126,7 @@ Private Function GetComponentTypeName(componentType As Integer) As String
         Case Else: GetComponentTypeName = "Desconocido (" & componentType & ")"
     End Select
 End Function
+
 
 
 

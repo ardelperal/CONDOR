@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "modDatabase"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' M?dulo: modDatabase
 ' Descripci?n: Servicio de acceso a datos para solicitudes
@@ -242,6 +238,8 @@ ErrorHandler:
     Set ExecuteExternalQuery = Nothing
     If Not db Is Nothing Then db.Close
 End Function
+
+
 
 
 

@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_CExpedienteService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_CExpedienteService
 ' Descripción: Pruebas unitarias para CExpedienteService.cls
@@ -811,6 +807,8 @@ Public Function RunCExpedienteServiceTests() As String
     
     RunCExpedienteServiceTests = resultado
 End Function
+
+
 
 
 

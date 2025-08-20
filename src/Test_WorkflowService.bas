@@ -1,9 +1,5 @@
-Attribute VB_Name = "Test_WorkflowService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 '******************************************************************************
 ' MÓDULO: Test_WorkflowService
 ' DESCRIPCIÓN: Pruebas unitarias para el servicio de workflow y estados
@@ -461,6 +457,7 @@ Public Function Test_RecordStateChange_ValidTransition_CreatesHistoryRecord() As
 End Function
 
 ' #End If
+
 
 
 

@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_AppManager"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_AppManager
 ' Descripción: Pruebas unitarias para modAppManager.bas
@@ -803,6 +799,8 @@ Public Function RunAppManagerTests() As String
     
     RunAppManagerTests = resultado
 End Function
+
+
 
 
 

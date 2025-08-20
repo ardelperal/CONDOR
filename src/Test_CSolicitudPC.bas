@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_CSolicitudPC"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' M?dulo: Test_CSolicitudPC
 ' Descripci?n: Pruebas unitarias para CSolicitudPC.cls
@@ -710,6 +706,8 @@ Public Function RunCSolicitudPCTests() As String
     
     RunCSolicitudPCTests = resultado
 End Function
+
+
 
 
 

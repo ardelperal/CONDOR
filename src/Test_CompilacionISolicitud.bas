@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_CompilacionISolicitud"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' M?dulo: Test_CompilacionISolicitud
 ' Descripci?n: Prueba de compilaci?n para verificar la implementaci?n de ISolicitud
@@ -105,6 +101,7 @@ Public Function Test_CompilacionISolicitud_RunAll() As String
     
     Test_CompilacionISolicitud_RunAll = resultado
 End Function
+
 
 
 

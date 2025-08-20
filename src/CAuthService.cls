@@ -1,19 +1,7 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CAuthService"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 Implements IAuthService
-'prueba del cambio para 
+'prueba del cambio para
 Private configSvc As IConfig
 
 Private Sub Class_Initialize(ByVal config As IConfig)
@@ -25,7 +13,7 @@ Private Function IAuthService_AuthenticateUser(ByVal Email As String) As Boolean
     IAuthService_AuthenticateUser = (Trim(Email) <> "")
 End Function
 
-Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRole
+Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRole
     On Error GoTo ErrorHandler
 
     Dim role As E_UserRole
@@ -45,7 +33,7 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRo
         Exit Function
     End If
 
-    sql = "SELECT EsAdministrador FROM TbUsuariosAplicaciones WHERE CorreoUsuario = '" & userEmail & "'"
+    sql = "SELECT EsAdministrador FROM TbUsuariosAplicaciones WHERE CorreoUsuario = '" & UserEmail & "'"
     Set rs = ExecuteExternalQuery(sql, dbPath, dbPassword)
 
     If Not rs Is Nothing Then
@@ -64,7 +52,7 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRo
 
     sql = "SELECT EsUsuarioAdministrador, EsUsuarioCalidad, EsUsuarioTecnico " & _
           "FROM TbUsuariosAplicacionesPermisos " & _
-          "WHERE CorreoUsuario = '" & userEmail & "' AND IDAplicacion = 231"
+          "WHERE CorreoUsuario = '" & UserEmail & "' AND IDAplicacion = 231"
     Set rs = ExecuteExternalQuery(sql, dbPath, dbPassword)
 
     If Not rs Is Nothing Then
@@ -116,6 +104,8 @@ End Function
 Public Function ValidateEmail(ByVal Email As String) As Boolean
     ValidateEmail = IAuthService_ValidateEmail(Email)
 End Function
+
+
 
 
 

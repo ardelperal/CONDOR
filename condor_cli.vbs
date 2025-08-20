@@ -765,7 +765,7 @@ End Function
 
 ' Función para limpiar archivos VBA eliminando líneas Attribute con validación mejorada
 Function CleanVBAFile(filePath, fileType)
-    Dim objStream, strContent, arrLines, i, cleanedLines
+    Dim objStream, strContent, arrLines, i, cleanedContent
     Dim strLine
     
     ' Leer el archivo como UTF-8
@@ -778,68 +778,37 @@ Function CleanVBAFile(filePath, fileType)
     objStream.Close
     Set objStream = Nothing
     
-    ' Normalizar saltos de línea
+    ' Dividir el contenido en un array de líneas
     strContent = Replace(strContent, vbCrLf, vbLf)
     strContent = Replace(strContent, vbCr, vbLf)
     arrLines = Split(strContent, vbLf)
     
-    Dim cleanedLinesArray()
-    ReDim cleanedLinesArray(UBound(arrLines))
-    Dim cleanedCount, linesRemoved
-    cleanedCount = 0
-    linesRemoved = 0
+    ' Crear un nuevo string vacío llamado cleanedContent
+    cleanedContent = ""
     
-    Dim inBeginBlock
-    inBeginBlock = False
-    
+    ' Iterar sobre el array de líneas original
     For i = 0 To UBound(arrLines)
-        strLine = Trim(arrLines(i))
-        Dim shouldRemove
-        shouldRemove = False
+        strLine = arrLines(i)
         
-        ' Bloques BEGIN ... END (metadatos de clase)
-        If UCase(strLine) = "BEGIN" Then
-            inBeginBlock = True
-            shouldRemove = True
-        ElseIf UCase(strLine) = "END" And inBeginBlock Then
-            inBeginBlock = False
-            shouldRemove = True
-        ElseIf inBeginBlock Then
-            shouldRemove = True
-        End If
-        
-        ' Eliminar opciones duplicadas (se añaden al inicio)
-        If LCase(strLine) = "option compare database" Then shouldRemove = True
-        If LCase(strLine) = "option explicit" Then shouldRemove = True
-        
-        ' Eliminar atributos/metadatos
-        If LCase(Left(strLine, 11)) = "attribute vb" Then shouldRemove = True
-        If LCase(Left(strLine, 7)) = "version" Then shouldRemove = True
-        
-        ' Eliminar líneas vacías iniciales
-        If strLine = "" And cleanedCount = 0 Then shouldRemove = True
-        
-        If Not shouldRemove Then
-            cleanedLinesArray(cleanedCount) = arrLines(i)
-            cleanedCount = cleanedCount + 1
-        Else
-            linesRemoved = linesRemoved + 1
+        ' Aplicar las reglas para descartar contenido no deseado
+        ' Una línea se descarta si cumple cualquiera de estas condiciones:
+        If Not (Left(strLine, 12) = "Attribute VB_" Or _
+                Left(strLine, 17) = "VERSION 1.0 CLASS" Or _
+                strLine = "BEGIN" Or _
+                Left(strLine, 10) = "MultiUse =" Or _
+                strLine = "END" Or _
+                strLine = "Option Compare Database" Or _
+                strLine = "Option Explicit") Then
+            
+            ' Si no cumple ninguna condición, es código VBA válido
+            ' Se añade al cleanedContent seguida de un salto de línea
+            cleanedContent = cleanedContent & strLine & vbCrLf
         End If
     Next
     
-    ' Reconstruir contenido limpio
-    cleanedLines = ""
-    For i = 0 To cleanedCount - 1
-        If i > 0 Then cleanedLines = cleanedLines & vbCrLf
-        cleanedLines = cleanedLines & cleanedLinesArray(i)
-    Next
-    
-    ' Cabeceras fijas al inicio
-    cleanedLines = "Option Compare Database" & vbCrLf & "Option Explicit" & vbCrLf & cleanedLines
-    
-    WScript.Echo "  Eliminadas " & linesRemoved & " líneas de metadatos (." & fileType & ")"
-    
-    CleanVBAFile = cleanedLines
+    ' La función devuelve cleanedContent directamente
+    ' No añade ninguna cabecera Option manualmente
+    CleanVBAFile = cleanedContent
 End Function
 
 
@@ -969,7 +938,110 @@ Sub ExecuteTests()
 End Sub
 
 ' Función para importar módulo con conversión UTF-8 -> ANSI
-Sub ImportModuleWithAnsiEncoding(strImportPath, moduleName, fileExtension, vbComponent, cleanedContent) ' Declarar variables locales Dim tempFolderPath, tempFileName, tempFilePath Dim objTempFile Dim importError, renameError, existingComponent If fileExtension = "bas" Then ' Lógica corregida para módulos estándar (.bas) - usar Add(1) On Error Resume Next ' Buscar si ya existe un componente con este nombre Set vbComponent = Nothing For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents If existingComponent.Name = moduleName Then Set vbComponent = existingComponent Exit For End If Next ' Si no existe, crear nuevo componente If vbComponent Is Nothing Then Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(1) ' 1 = vbext_ct_StdModule If Err.Number <> 0 Then WScript.Echo "❌ ERROR: No se pudo crear componente estándar para " & moduleName & ": " & Err.Description On Error GoTo 0 Exit Sub End If ' Renombrar inmediatamente después de crear vbComponent.Name = moduleName renameError = Err.Number If renameError <> 0 Then WScript.Echo "❌ ERROR: No se pudo renombrar el módulo nuevo a '" & moduleName & "': " & Err.Description & " (Código: " & Err.Number & ")" On Error GoTo 0 Exit Sub End If Else ' Si existe, limpiar el código existente If vbComponent.CodeModule.CountOfLines > 0 Then vbComponent.CodeModule.DeleteLines 1, vbComponent.CodeModule.CountOfLines End If End If ' Insertar el contenido limpio en el módulo de código vbComponent.CodeModule.AddFromString cleanedContent If Err.Number <> 0 Then WScript.Echo "❌ ERROR: No se pudo insertar código en el módulo " & moduleName & ": " & Err.Description On Error GoTo 0 Exit Sub End If On Error GoTo 0 ' Confirmar éxito WScript.Echo "✅ Módulo " & moduleName & " importado correctamente" ElseIf fileExtension = "cls" Then ' Lógica específica para módulos de clase (.cls) On Error Resume Next ' Buscar si ya existe un componente con este nombre Set vbComponent = Nothing For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents If existingComponent.Name = moduleName Then Set vbComponent = existingComponent Exit For End If Next ' Si no existe, crear nuevo componente If vbComponent Is Nothing Then Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(2) ' 2 = vbext_ct_ClassModule If Err.Number <> 0 Then WScript.Echo "❌ ERROR: No se pudo crear componente de clase para " & moduleName & ": " & Err.Description On Error GoTo 0 Exit Sub End If ' Renombrar inmediatamente después de crear vbComponent.Name = moduleName renameError = Err.Number If renameError <> 0 Then WScript.Echo "❌ ERROR: No se pudo renombrar la clase nueva a '" & moduleName & "': " & Err.Description & " (Código: " & Err.Number & ")" On Error GoTo 0 Exit Sub End If Else ' Si existe, limpiar el código existente If vbComponent.CodeModule.CountOfLines > 0 Then vbComponent.CodeModule.DeleteLines 1, vbComponent.CodeModule.CountOfLines End If End If ' Insertar el contenido limpio en el módulo de código vbComponent.CodeModule.AddFromString cleanedContent If Err.Number <> 0 Then WScript.Echo "❌ ERROR: No se pudo insertar código en la clase " & moduleName & ": " & Err.Description On Error GoTo 0 Exit Sub End If On Error GoTo 0 ' Confirmar éxito WScript.Echo "✅ Clase " & moduleName & " importada correctamente" End If End Sub
+Sub ImportModuleWithAnsiEncoding(strImportPath, moduleName, fileExtension, vbComponent, cleanedContent)
+    ' Declarar variables locales
+    Dim tempFolderPath, tempFileName, tempFilePath
+    Dim objTempFile
+    Dim importError, renameError, existingComponent
+    
+    If fileExtension = "bas" Then
+        ' Lógica corregida para módulos estándar (.bas) - usar Add(1)
+        On Error Resume Next
+        
+        ' Buscar si ya existe un componente con este nombre
+        Set vbComponent = Nothing
+        For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents
+            If existingComponent.Name = moduleName Then
+                Set vbComponent = existingComponent
+                Exit For
+            End If
+        Next
+        
+        ' Si no existe, crear nuevo componente
+        If vbComponent Is Nothing Then
+            Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(1) ' 1 = vbext_ct_StdModule
+            If Err.Number <> 0 Then
+                WScript.Echo "❌ ERROR: No se pudo crear componente estándar para " & moduleName & ": " & Err.Description
+                On Error GoTo 0
+                Exit Sub
+            End If
+            
+            ' Renombrar inmediatamente después de crear
+            vbComponent.Name = moduleName
+            renameError = Err.Number
+            If renameError <> 0 Then
+                WScript.Echo "❌ ERROR: No se pudo renombrar el módulo nuevo a '" & moduleName & "': " & Err.Description & " (Código: " & Err.Number & ")"
+                On Error GoTo 0
+                Exit Sub
+            End If
+        Else
+            ' Si existe, limpiar el código existente
+            If vbComponent.CodeModule.CountOfLines > 0 Then
+                vbComponent.CodeModule.DeleteLines 1, vbComponent.CodeModule.CountOfLines
+            End If
+        End If
+        
+        ' Insertar el contenido limpio en el módulo de código
+        vbComponent.CodeModule.AddFromString cleanedContent
+        If Err.Number <> 0 Then
+            WScript.Echo "❌ ERROR: No se pudo insertar código en el módulo " & moduleName & ": " & Err.Description
+            On Error GoTo 0
+            Exit Sub
+        End If
+        
+        On Error GoTo 0
+        ' Confirmar éxito
+        WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
+        
+    ElseIf fileExtension = "cls" Then
+        ' Lógica específica para módulos de clase (.cls)
+        On Error Resume Next
+        
+        ' Buscar si ya existe un componente con este nombre
+        Set vbComponent = Nothing
+        For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents
+            If existingComponent.Name = moduleName Then
+                Set vbComponent = existingComponent
+                Exit For
+            End If
+        Next
+        
+        ' Si no existe, crear nuevo componente
+        If vbComponent Is Nothing Then
+            Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(2) ' 2 = vbext_ct_ClassModule
+            If Err.Number <> 0 Then
+                WScript.Echo "❌ ERROR: No se pudo crear componente de clase para " & moduleName & ": " & Err.Description
+                On Error GoTo 0
+                Exit Sub
+            End If
+            
+            ' Renombrar inmediatamente después de crear
+            vbComponent.Name = moduleName
+            renameError = Err.Number
+            If renameError <> 0 Then
+                WScript.Echo "❌ ERROR: No se pudo renombrar la clase nueva a '" & moduleName & "': " & Err.Description & " (Código: " & Err.Number & ")"
+                On Error GoTo 0
+                Exit Sub
+            End If
+        Else
+            ' Si existe, limpiar el código existente
+            If vbComponent.CodeModule.CountOfLines > 0 Then
+                vbComponent.CodeModule.DeleteLines 1, vbComponent.CodeModule.CountOfLines
+            End If
+        End If
+        
+        ' Insertar el contenido limpio en el módulo de código
+        vbComponent.CodeModule.AddFromString cleanedContent
+        If Err.Number <> 0 Then
+            WScript.Echo "❌ ERROR: No se pudo insertar código en la clase " & moduleName & ": " & Err.Description
+            On Error GoTo 0
+            Exit Sub
+        End If
+        
+        On Error GoTo 0
+        ' Confirmar éxito
+        WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
+    End If End Sub
 
 
 ' Subrutina para re-vincular tablas de Access

@@ -1,9 +1,5 @@
-Attribute VB_Name = "Test_SolicitudPC_Persistence"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 '******************************************************************************
 ' MODULO: Test_SolicitudPC_Persistence
 ' DESCRIPCION: Pruebas unitarias para la persistencia de CSolicitudPC
@@ -181,6 +177,8 @@ Public Sub EJECUTAR_PRUEBAS_PERSISTENCIA_PC()
 End Sub
 
 ' #End If
+
+
 
 
 

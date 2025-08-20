@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_CSolicitudService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_CSolicitudService
 ' Descripción: Pruebas unitarias para CSolicitudService.cls
@@ -934,6 +930,8 @@ Public Function RunCSolicitudServiceTests() As String
     
     RunCSolicitudServiceTests = resultado
 End Function
+
+
 
 
 

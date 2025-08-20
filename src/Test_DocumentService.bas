@@ -1,9 +1,5 @@
-﻿Attribute VB_Name = "Test_DocumentService"
-Option Compare Database
-
-
+﻿Option Compare Database
 Option Explicit
-
 ' ============================================================================
 ' Módulo: Test_DocumentService
 ' Descripción: Pruebas unitarias para CDocumentService.cls
@@ -223,6 +219,7 @@ Public Function Test_DocumentService_RunAll() As String
     
     Test_DocumentService_RunAll = resultado
 End Function
+
 
 
 
