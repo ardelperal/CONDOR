@@ -282,48 +282,40 @@ End Function
 ' PRUEBAS DE ROLES DE USUARIO
 ' ============================================================================
 
-Public Function Test_GetUserRole_ValidUser_ReturnsRole() As Boolean
+Public Function Test_GetUserRole_RolesEspecificos() As Boolean
     On Error GoTo TestFail
     
-    ' Arrange
-    SetupValidUserMock
     Dim authService As IAuthService
     Set authService = New CAuthService
     
+    Dim adminEmail As String
+    Dim calidadEmail As String
+    adminEmail = "andres.romandelperal@telefonica.com"
+    calidadEmail = "sergio.garciamontalvo@telefonica.com"
+    
+    Dim adminRole As E_UserRole
+    Dim calidadRole As E_UserRole
+    
     ' Act
-    Dim role As String
-    role = authService.GetUserRole(m_MockUser.Email)
+    adminRole = authService.GetUserRole(adminEmail)
+    calidadRole = authService.GetUserRole(calidadEmail)
     
     ' Assert
-    ' Verificamos que retorna un string (rol)
-    Test_GetUserRole_ValidUser_ReturnsRole = (Len(role) >= 0)
+    If adminRole <> Rol_Admin Then
+        Debug.Print "FALLO: Se esperaba Rol_Admin para '" & adminEmail & "' pero se obtuvo " & adminRole
+        GoTo TestFail
+    End If
     
+    If calidadRole <> Rol_Calidad Then
+        Debug.Print "FALLO: Se esperaba Rol_Calidad para '" & calidadEmail & "' pero se obtuvo " & calidadRole
+        GoTo TestFail
+    End If
+    
+    Test_GetUserRole_RolesEspecificos = True
     Exit Function
-    
-TestFail:
-    Test_GetUserRole_ValidUser_ReturnsRole = False
-End Function
 
-Public Function Test_GetUserRole_InvalidUser_ReturnsEmpty() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupInvalidUserMock
-    Dim authService As IAuthService
-    Set authService = New CAuthService
-    
-    ' Act
-    Dim role As String
-    role = authService.GetUserRole(m_MockUser.Email)
-    
-    ' Assert
-    ' Para usuarios inválidos, esperamos string vacío o manejo de error
-    Test_GetUserRole_InvalidUser_ReturnsEmpty = True
-    
-    Exit Function
-    
 TestFail:
-    Test_GetUserRole_InvalidUser_ReturnsEmpty = False
+    Test_GetUserRole_RolesEspecificos = False
 End Function
 
 ' ============================================================================
@@ -639,6 +631,14 @@ Public Function RunCAuthServiceTests() As String
         resultado = resultado & "? Test_ConcurrentUsers_DifferentRoles" & vbCrLf
     Else
         resultado = resultado & "? Test_ConcurrentUsers_DifferentRoles" & vbCrLf
+    End If
+    
+    totalTests = totalTests + 1
+    If Test_GetUserRole_RolesEspecificos() Then
+        passedTests = passedTests + 1
+        resultado = resultado & "? Test_GetUserRole_RolesEspecificos" & vbCrLf
+    Else
+        resultado = resultado & "? Test_GetUserRole_RolesEspecificos" & vbCrLf
     End If
     
     ' Resumen

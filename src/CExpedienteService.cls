@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -58,7 +58,9 @@ Private Function IExpedienteService_GetExpediente(ByVal idExpediente As Long) As
     End If
     
     ' Abrir conexi?n a la base de datos de expedientes
-    Set db = DBEngine.OpenDatabase(rutaExpedientes)
+    Dim config As CConfig
+    Set config = New CConfig
+    Set db = DBEngine.OpenDatabase(rutaExpedientes, False, False, ";PWD=" & config.GetDatabasePassword())
     
     ' Construir la consulta SQL con filtro por ID
     sql = "SELECT TbExpedientes.IDExpediente, TbExpedientes.Nemotecnico, TbExpedientes.Titulo, " & _

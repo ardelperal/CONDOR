@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modErrorHandler"
+Attribute VB_Name = "modErrorHandler"
 Option Compare Database
 
 
@@ -82,7 +82,9 @@ Private Sub CreateAdminNotification(errNumber As Long, errDescription As String,
                  "Por favor, revise el sistema lo antes posible."
     
     ' Conectar a la base de datos
-    Set db = OpenDatabase(GetDatabasePath())
+    Dim config As CConfig
+    Set config = New CConfig
+    Set db = OpenDatabase(GetDatabasePath(), False, False, ";PWD=" & config.GetDatabasePassword())
     
     ' Insertar en la cola de correos (si existe la tabla)
     strSQL = "INSERT INTO Tb_Cola_Correos (" & _
@@ -154,7 +156,9 @@ Public Sub CleanOldLogs()
     
     fechaLimite = Format(DateAdd("d", -30, Date), "yyyy-mm-dd")
     
-    Set db = OpenDatabase(GetDatabasePath())
+    Dim config As CConfig
+    Set config = New CConfig
+    Set db = OpenDatabase(GetDatabasePath(), False, False, ";PWD=" & config.GetDatabasePassword())
     
     strSQL = "DELETE FROM Tb_Log_Errores WHERE Fecha_Hora < '" & fechaLimite & "'"
     db.Execute strSQL

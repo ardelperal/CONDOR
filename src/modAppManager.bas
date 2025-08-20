@@ -44,32 +44,45 @@ End Function
 ' =====================================================
 ' FLUJO DE ARRANQUE DE LA APLICACION
 ' =====================================================
-' El flujo de arranque tipico en una subrutina principal App_Start() seria:
-'
-' Sub App_Start()
-'     ' 1. Obtener el email del usuario actual
-'     Dim userEmail As String
-'     userEmail = GetCurrentUserEmail()
-'
-'     ' 2. Crear instancia del servicio de autenticacion
-'     Dim authService As IAuthService
-'     Set authService = New CAuthService
-'
-'     ' 3. Determinar el rol del usuario
-'     Dim currentUserRole As E_UserRole
-'     currentUserRole = authService.GetUserRole(userEmail)
-'
-'     ' 4. Guardar el rol en variable global para uso en toda la aplicacion
-'     g_CurrentUserRole = currentUserRole
-'
-'     ' 5. Continuar con la inicializacion de la aplicacion segun el rol
-'     Select Case g_CurrentUserRole
-'         Case Rol_Admin
-'             ' Inicializar funcionalidades de administrador
-'         Case Rol_Calidad
-'             ' Inicializar funcionalidades de calidad
-'         Case Rol_Tecnico
-' TODO: Implementar inicialización específica por rol cuando sea necesario
+Public Sub App_Start()
+    On Error GoTo ErrorHandler
+
+    ' 1. Obtener el email del usuario actual
+    Dim userEmail As String
+    userEmail = GetCurrentUserEmail()
+
+    If userEmail = "" Then
+        Call modErrorHandler.LogCriticalError(vbObjectError + 514, "No se pudo obtener el email del usuario para la autenticación.", "modAppManager.App_Start")
+        Exit Sub
+    End If
+
+    ' 2. Crear instancia del servicio de autenticacion
+    Dim authService As IAuthService
+    Set authService = New CAuthService
+
+    ' 3. Determinar el rol del usuario y guardarlo en la variable global
+    g_CurrentUserRole = authService.GetUserRole(userEmail)
+
+    ' 4. Continuar con la inicializacion de la aplicacion segun el rol
+    Select Case g_CurrentUserRole
+        Case Rol_Admin
+            Debug.Print "Usuario autenticado como Administrador."
+            ' TODO: Implementar inicialización específica para Admin
+        Case Rol_Calidad
+            Debug.Print "Usuario autenticado como Calidad."
+            ' TODO: Implementar inicialización específica para Calidad
+        Case Rol_Tecnico
+            Debug.Print "Usuario autenticado como Técnico."
+            ' TODO: Implementar inicialización específica para Técnico
+        Case Rol_Desconocido
+            Call modErrorHandler.LogCriticalError(vbObjectError + 515, "El usuario '" & userEmail & "' no tiene un rol definido en el sistema.", "modAppManager.App_Start")
+    End Select
+    
+    Exit Sub
+    
+ErrorHandler:
+    Call modErrorHandler.LogCriticalError(Err.Number, Err.Description, "modAppManager.App_Start")
+End Sub
 
 ' =====================================================
 ' FUNCION: Ping

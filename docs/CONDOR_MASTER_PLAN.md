@@ -78,7 +78,11 @@ Generación de Documentos: Calidad utiliza CONDOR para generar la plantilla Word
 
 Interacción Externa (Fuera de CONDOR): Calidad gestiona la comunicación con los agentes externos (suministradores, etc.) por correo electrónico, enviando y recibiendo las plantillas Word.
 
-Actualización de Datos: A medida que recibe las plantillas actualizadas, Calidad utiliza la funcionalidad de sincronización de CONDOR para leer los datos del documento Word y actualizar los campos correspondientes en la base de datos.
+Actualización de Datos (Sincronización): A medida que recibe las plantillas actualizadas de agentes externos, Calidad utiliza una funcionalidad específica en la interfaz de CONDOR (p. ej., un botón "Sincronizar desde Documento"). Al activarla, la aplicación:
+            1.  Abre un selector de archivos para que el usuario elija el documento `.docx` actualizado.
+            2.  Lee el contenido del documento Word, extrae los datos de los campos relevantes (según el mapeo del Anexo B).
+            3.  Actualiza automáticamente los campos correspondientes en la base de datos de CONDOR.
+            Este proceso evita la entrada manual de datos, reduce errores y asegura la consistencia.
 
 Cierre: El proceso continúa hasta que la solicitud es finalmente aprobada o denegada, momento en el cual Calidad actualiza el estado final en el sistema.
 
@@ -169,6 +173,9 @@ WHERE
     E.Adjudicado='Sí' AND E.Pecal='Sí' AND ER.EsJefeProyecto='Sí'
 ORDER BY
     E.IDExpediente DESC, E.ContratistaPrincipal DESC;
+
+**Definición de Términos Clave:**
+*   **PECAL (Publicaciones Españolas de Calidad):** Se refiere a un conjunto de normas que establecen los requisitos de aseguramiento de la calidad para empresas que suministran bienes y servicios al Ministerio de Defensa español. Estas normas son la adaptación nacional de las normas AQAP (Allied Quality Assurance Publications) de la OTAN. La condición `Pecal='Sí'` en una consulta asegura que solo se procesan expedientes que cumplen con estos estándares de calidad.
 
 4.2.4. Alcance de la Integración
 La interacción de CONDOR con la base de datos de expedientes es de solo lectura. Las únicas operaciones permitidas son:

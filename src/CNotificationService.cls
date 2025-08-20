@@ -62,7 +62,9 @@ Private Function INotificationService_EnviarNotificacion( _
     
     ' Conectar a la base de datos de correos
     Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(rutaCorreosDB)
+    Dim config As CConfig
+    Set config = New CConfig
+    Set db = DBEngine.OpenDatabase(rutaCorreosDB, False, False, ";PWD=" & config.GetDatabasePassword())
     
     ' Calcular nuevo IDCorreo
     Dim nuevoID As Long

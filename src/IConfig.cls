@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -85,27 +85,15 @@ Public Function GetLanzaderaDbPath() As String
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
 
-' Obtiene la ruta de c?digo fuente
-' @return: Ruta de c?digo fuente
-Public Function GetSourcePath() As String
-    ' Esta es una interfaz - debe ser implementada por las clases concretas
-End Function
-
-' Obtiene la ruta de backups
-' @return: Ruta de backups
-Public Function GetBackupPath() As String
-    ' Esta es una interfaz - debe ser implementada por las clases concretas
-End Function
-
 ' Obtiene la ruta de logs
 ' @return: Ruta de logs
 Public Function GetLogPath() As String
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
 
-' Obtiene la ruta temporal
-' @return: Ruta temporal
-Public Function GetTempPath() As String
+' Obtiene la contraseña de bases de datos
+' @return: Contraseña de bases de datos
+Public Function GetDatabasePassword() As String
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
 

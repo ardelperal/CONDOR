@@ -204,6 +204,46 @@ ErrorHandler:
     If Not db Is Nothing Then db.Close
 End Function
 
+' ============================================================================
+' FUNCIONES EXTERNAS
+' ============================================================================
+
+' Funci?n gen?rica para ejecutar una consulta SELECT en una BBDD externa protegida
+' Par?metros:
+'   sql: La consulta SQL a ejecutar
+'   dbPath: Ruta completa a la base de datos .accdb
+'   dbPassword: Contrase?a de la base de datos
+' Retorna: Recordset con los resultados, o Nothing si hay error
+Public Function ExecuteExternalQuery(ByVal sql As String, ByVal dbPath As String, ByVal dbPassword As String) As DAO.Recordset
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    
+    ' Validar que la ruta del archivo exista
+    If Dir(dbPath) = "" Then
+        Call modErrorHandler.LogError(vbObjectError + 513, "La base de datos externa no se encontr?: " & dbPath, "modDatabase.ExecuteExternalQuery")
+        Set ExecuteExternalQuery = Nothing
+        Exit Function
+    End If
+    
+    ' Conectar a la base de datos externa con contrase?a
+    Set db = DBEngine.OpenDatabase(dbPath, False, True, "MS Access;PWD=" & dbPassword)
+    
+    ' Ejecutar la consulta
+    Set ExecuteExternalQuery = db.OpenRecordset(sql, dbOpenSnapshot)
+    
+    db.Close
+    Set db = Nothing
+    
+    Exit Function
+
+ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modDatabase.ExecuteExternalQuery")
+    Set ExecuteExternalQuery = Nothing
+    If Not db Is Nothing Then db.Close
+End Function
+
+
 
 
 

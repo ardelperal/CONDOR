@@ -90,9 +90,9 @@ def docx_to_markdown(docx_path, output_path=None):
     
     # Guardar archivo Markdown
     try:
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, 'w', encoding='utf-8', errors='replace') as f:
             f.write(markdown_content)
-        print(f"✓ Conversión completada: {output_path}")
+        print(f"Conversion completada: {output_path}")
         return True
     
     except Exception as e:

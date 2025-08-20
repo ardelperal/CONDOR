@@ -26,10 +26,68 @@ Private Function IAuthService_AuthenticateUser(ByVal Email As String) As Boolean
     IAuthService_AuthenticateUser = (Trim(Email) <> "")
 End Function
 
-Private Function IAuthService_GetUserRole(ByVal Email As String) As E_UserRole
-    ' Lógica para obtener el rol...
-    ' (El contenido detallado de la función va aquí)
-    IAuthService_GetUserRole = Rol_Desconocido ' Valor por defecto
+Private Function IAuthService_GetUserRole(ByVal userEmail As String) As E_UserRole
+    On Error GoTo ErrorHandler
+
+    Dim role As E_UserRole
+    Dim rs As DAO.Recordset
+    Dim sql As String
+    Dim dbPath As String
+    Dim dbPassword As String
+
+    role = Rol_Desconocido
+
+    dbPath = AppConfig.GetValue("LANZADERADBPATH")
+    dbPassword = AppConfig.GetValue("DATABASEPASSWORD")
+
+    If dbPath = "" Or dbPassword = "" Then
+        Call modErrorHandler.LogWarning("La configuración para la base de datos de Lanzadera no fue encontrada.", "CAuthService.GetUserRole")
+        IAuthService_GetUserRole = Rol_Desconocido
+        Exit Function
+    End If
+
+    sql = "SELECT EsAdministrador FROM TbUsuariosAplicaciones WHERE CorreoUsuario = '" & userEmail & "'"
+    Set rs = ExecuteExternalQuery(sql, dbPath, dbPassword)
+
+    If Not rs Is Nothing Then
+        If Not rs.EOF Then
+            If rs!EsAdministrador = "Sí" Then
+                role = Rol_Admin
+            End If
+        End If
+        rs.Close
+    End If
+
+    If role = Rol_Admin Then
+        IAuthService_GetUserRole = Rol_Admin
+        Exit Function
+    End If
+
+    sql = "SELECT EsUsuarioAdministrador, EsUsuarioCalidad, EsUsuarioTecnico " & _
+          "FROM TbUsuariosAplicacionesPermisos " & _
+          "WHERE CorreoUsuario = '" & userEmail & "' AND IDAplicacion = 231"
+    Set rs = ExecuteExternalQuery(sql, dbPath, dbPassword)
+
+    If Not rs Is Nothing Then
+        If Not rs.EOF Then
+            If rs!EsUsuarioAdministrador = "Sí" Then
+                role = Rol_Admin
+            ElseIf rs!EsUsuarioCalidad = "Sí" Then
+                role = Rol_Calidad
+            ElseIf rs!EsUsuarioTecnico = "Sí" Then
+                role = Rol_Tecnico
+            End If
+        End If
+        rs.Close
+    End If
+
+    IAuthService_GetUserRole = role
+    Exit Function
+
+ErrorHandler:
+    IAuthService_GetUserRole = Rol_Desconocido
+    If Not rs Is Nothing Then Set rs = Nothing
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "CAuthService.GetUserRole")
 End Function
 
 Private Function IAuthService_IsUserAuthorized(ByVal Email As String, ByVal permission As String) As Boolean

@@ -42,10 +42,8 @@ Private Type T_AppConfig
     ExpedientesPath As String 'Anadido para la BBDD de Expedientes
     PlantillasPath As String 'Anadido para las plantillas Word
     LanzaderaDbPath As String 'Anadido para la BBDD de Lanzadera (gestion de roles)
-    SourcePath As String
-    BackupPath As String
     LogPath As String
-    TempPath As String
+    DatabasePassword As String 'Contraseña para bases de datos back
     IsInitialized As Boolean
     EntornoActivo As String ' Para saber que configuracion se cargo
 End Type
@@ -70,14 +68,10 @@ Private Function IConfig_GetValue(ByVal key As String) As Variant
             IConfig_GetValue = m_AppConfig.PlantillasPath
         Case "LANZADERADBPATH"
             IConfig_GetValue = m_AppConfig.LanzaderaDbPath
-        Case "SOURCEPATH"
-            IConfig_GetValue = m_AppConfig.SourcePath
-        Case "BACKUPPATH"
-            IConfig_GetValue = m_AppConfig.BackupPath
         Case "LOGPATH"
             IConfig_GetValue = m_AppConfig.LogPath
-        Case "TEMPPATH"
-            IConfig_GetValue = m_AppConfig.TempPath
+        Case "DATABASEPASSWORD"
+            IConfig_GetValue = m_AppConfig.DatabasePassword
         Case "ENTORNOACTIVO"
             IConfig_GetValue = m_AppConfig.EntornoActivo
         Case "ISINITIALIZED"
@@ -102,14 +96,10 @@ Private Sub IConfig_SetValue(ByVal key As String, ByVal value As Variant)
             m_AppConfig.PlantillasPath = CStr(value)
         Case "LANZADERADBPATH"
             m_AppConfig.LanzaderaDbPath = CStr(value)
-        Case "SOURCEPATH"
-            m_AppConfig.SourcePath = CStr(value)
-        Case "BACKUPPATH"
-            m_AppConfig.BackupPath = CStr(value)
         Case "LOGPATH"
             m_AppConfig.LogPath = CStr(value)
-        Case "TEMPPATH"
-            m_AppConfig.TempPath = CStr(value)
+        Case "DATABASEPASSWORD"
+            m_AppConfig.DatabasePassword = CStr(value)
         Case "ENTORNOACTIVO"
             m_AppConfig.EntornoActivo = CStr(value)
         Case "ISINITIALIZED"
@@ -147,15 +137,15 @@ Private Function IConfig_InitializeEnvironment() As Boolean
     ' Configurar rutas segun la decision tomada
     If usarRutasLocales Then
         ' Configuracion para entorno de desarrollo LOCAL
-        m_AppConfig.DatabasePath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
-        m_AppConfig.DataPath = "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
-        m_AppConfig.ExpedientesPath = "C:\Proyectos\CONDOR\back\Expedientes_datos.accdb"
-        m_AppConfig.PlantillasPath = "C:\Proyectos\CONDOR\back\recursos\Plantillas"
-        m_AppConfig.LanzaderaDbPath = "C:\Proyectos\CONDOR\back\Lanzadera_Datos.accdb"
-        m_AppConfig.SourcePath = "C:\Proyectos\CONDOR\src"
-        m_AppConfig.BackupPath = "C:\Proyectos\CONDOR\back\backups"
-        m_AppConfig.LogPath = "C:\Proyectos\CONDOR\logs"
-        m_AppConfig.TempPath = "C:\Proyectos\CONDOR\temp"
+        Dim basePath As String
+        basePath = CurrentProject.Path & "\.."
+        m_AppConfig.DatabasePath = basePath & "back\Desarrollo\CONDOR.accdb"
+        m_AppConfig.DataPath = basePath & "back\CONDOR_datos.accdb"
+        m_AppConfig.ExpedientesPath = basePath & "back\Expedientes_datos.accdb"
+        m_AppConfig.PlantillasPath = basePath & "back\recursos\Plantillas"
+        m_AppConfig.LanzaderaDbPath = basePath & "back\Lanzadera_Datos.accdb"
+        m_AppConfig.LogPath = basePath & "logs"
+        m_AppConfig.DatabasePassword = "dpddpd"
     Else
         ' Configuracion para entorno de produccion/REMOTO
         m_AppConfig.DatabasePath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\0Lanzadera\CONDOR.accde"
@@ -163,10 +153,8 @@ Private Function IConfig_InitializeEnvironment() As Boolean
         m_AppConfig.ExpedientesPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\EXPEDIENTES\EXPEDIENTES_be.accdb"
         m_AppConfig.PlantillasPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR Prueba\Plantillas"
         m_AppConfig.LanzaderaDbPath = "\\datoste\aplicaciones_dys\Aplicaciones PpD\0Lanzadera\Lanzadera_Datos.accdb"
-        m_AppConfig.SourcePath = "C:\Ruta\Invalida\En\Produccion"
-        m_AppConfig.BackupPath = Environ("APPDATA") & "\CONDOR\Backups"
         m_AppConfig.LogPath = Environ("APPDATA") & "\CONDOR\Logs"
-        m_AppConfig.TempPath = Environ("TEMP")
+        m_AppConfig.DatabasePassword = "dpddpd"
     End If
     
     ' Crear directorios si no existen
@@ -245,20 +233,6 @@ Private Function IConfig_GetLanzaderaDbPath() As String
     IConfig_GetLanzaderaDbPath = m_AppConfig.LanzaderaDbPath
 End Function
 
-Private Function IConfig_GetSourcePath() As String
-    If Not m_AppConfig.IsInitialized Then
-        Call IConfig_InitializeEnvironment
-    End If
-    IConfig_GetSourcePath = m_AppConfig.SourcePath
-End Function
-
-Private Function IConfig_GetBackupPath() As String
-    If Not m_AppConfig.IsInitialized Then
-        Call IConfig_InitializeEnvironment
-    End If
-    IConfig_GetBackupPath = m_AppConfig.BackupPath
-End Function
-
 Private Function IConfig_GetLogPath() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
@@ -281,11 +255,11 @@ Private Function IConfig_GetLogPath() As String
     End If
 End Function
 
-Private Function IConfig_GetTempPath() As String
+Private Function IConfig_GetDatabasePassword() As String
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
-    IConfig_GetTempPath = m_AppConfig.TempPath
+    IConfig_GetDatabasePassword = m_AppConfig.DatabasePassword
 End Function
 
 ' M?todos privados de soporte
@@ -295,10 +269,8 @@ Private Sub ResetConfiguration()
     m_AppConfig.ExpedientesPath = ""
     m_AppConfig.PlantillasPath = ""
     m_AppConfig.LanzaderaDbPath = ""
-    m_AppConfig.SourcePath = ""
-    m_AppConfig.BackupPath = ""
     m_AppConfig.LogPath = ""
-    m_AppConfig.TempPath = ""
+    m_AppConfig.DatabasePassword = ""
     m_AppConfig.IsInitialized = False
     m_AppConfig.EntornoActivo = ""
 End Sub
@@ -310,16 +282,8 @@ Private Sub CreateDirectoriesIfNeeded()
     Set fso = CreateObject("Scripting.FileSystemObject")
     
     ' Crear directorios locales si no existen
-    If Not fso.FolderExists(m_AppConfig.BackupPath) Then
-        fso.CreateFolder m_AppConfig.BackupPath
-    End If
-    
     If Not fso.FolderExists(m_AppConfig.LogPath) Then
         fso.CreateFolder m_AppConfig.LogPath
-    End If
-    
-    If Not fso.FolderExists(m_AppConfig.TempPath) Then
-        fso.CreateFolder m_AppConfig.TempPath
     End If
     
     Set fso = Nothing
@@ -449,20 +413,12 @@ Public Function GetLanzaderaDbPath() As String
     GetLanzaderaDbPath = IConfig_GetLanzaderaDbPath()
 End Function
 
-Public Function GetSourcePath() As String
-    GetSourcePath = IConfig_GetSourcePath()
-End Function
-
-Public Function GetBackupPath() As String
-    GetBackupPath = IConfig_GetBackupPath()
-End Function
-
 Public Function GetLogPath() As String
     GetLogPath = IConfig_GetLogPath()
 End Function
 
-Public Function GetTempPath() As String
-    GetTempPath = IConfig_GetTempPath()
+Public Function GetDatabasePassword() As String
+    GetDatabasePassword = IConfig_GetDatabasePassword()
 End Function
 
 Public Function TestCConfig() As String

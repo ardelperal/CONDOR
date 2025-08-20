@@ -21,7 +21,7 @@ strSourcePath = "C:\Proyectos\CONDOR\src"
 
 ' Obtener argumentos de linea de comandos
 Set objArgs = WScript.Arguments
-If objArgs.Count = 0 Then
+If objArgs.Count = 0 Or LCase(objArgs(0)) = "help" Then
     WScript.Echo "=== CONDOR CLI - Herramienta de linea de comandos ==="
     WScript.Echo "Uso: cscript condor_cli.vbs [comando] [opciones]"
     WScript.Echo ""
