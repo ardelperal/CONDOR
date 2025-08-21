@@ -893,6 +893,39 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
     On Error GoTo 0
 End Sub
 
+' Nueva función que usa DoCmd.LoadFromText para evitar confirmaciones
+Sub ImportModuleWithLoadFromText(strSourceFile, moduleName, fileExtension)
+    On Error Resume Next
+    
+    ' Determinar el tipo de objeto Access para DoCmd.LoadFromText
+    Dim objectType
+    If fileExtension = "bas" Then
+        objectType = 5  ' acModule para módulos estándar
+    ElseIf fileExtension = "cls" Then
+        objectType = 5  ' acModule también para módulos de clase
+    Else
+        WScript.Echo "  ❌ Error: Tipo de archivo no soportado: " & fileExtension
+        Exit Sub
+    End If
+    
+    ' Usar DoCmd.LoadFromText para importar el módulo
+    objAccess.DoCmd.LoadFromText objectType, moduleName, strSourceFile
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error al importar módulo " & moduleName & " con LoadFromText: " & Err.Description
+        Err.Clear
+        Exit Sub
+    End If
+    
+    If fileExtension = "cls" Then
+        WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
+    Else
+        WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
+    End If
+    
+    On Error GoTo 0
+End Sub
+
 ' Subrutina para ejecutar la suite de pruebas unitarias
 Sub ExecuteTests()
     WScript.Echo "=== INICIANDO EJECUCION DE PRUEBAS ==="
@@ -1959,9 +1992,9 @@ Sub ImportSingleModuleOptimized(moduleName)
     
     WScript.Echo "  ✓ Contenido limpiado"
     
-    ' Paso 4: Importar el módulo usando la misma lógica que rebuild (sin confirmaciones)
+    ' Paso 4: Importar el módulo usando DoCmd.LoadFromText (sin confirmaciones)
     WScript.Echo "  Importando módulo: " & moduleName
-    Call ImportModuleWithAnsiEncoding(strSourceFile, moduleName, fileExtension, Nothing, cleanedContent)
+    Call ImportModuleWithLoadFromText(strSourceFile, moduleName, fileExtension)
     
     If Err.Number <> 0 Then
         WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
