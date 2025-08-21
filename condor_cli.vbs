@@ -199,7 +199,7 @@ WScript.Echo "Cerrando Access..."
 ' Restaurar estado normal de Access antes de cerrar
 On Error Resume Next
 objAccess.Application.Echo True
-objAccess.Quit 1  ' acQuitSaveAll = 1
+objAccess.Quit 2  ' acQuitSaveNone = 2
 If Err.Number <> 0 Then
     ' Intentar cerrar sin guardar si hay problemas
     objAccess.Quit 2  ' acQuitSaveNone = 2
@@ -1810,85 +1810,7 @@ Sub SyncSingleModule(moduleName)
     
     On Error Resume Next
     
-    ' Paso 1: Buscar y eliminar el componente VBA existente con ese nombre
-    Dim vbProject, vbComponent, componentFound
-    Set vbProject = objAccess.VBE.ActiveVBProject
-    componentFound = False
-    
-    For Each vbComponent In vbProject.VBComponents
-        If vbComponent.Name = moduleName Then
-            If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' Solo módulos estándar y de clase
-                WScript.Echo "  Eliminando componente existente: " & moduleName
-                vbProject.VBComponents.Remove vbComponent
-                
-                If Err.Number <> 0 Then
-                    WScript.Echo "  ❌ Error eliminando " & moduleName & ": " & Err.Description
-                    Err.Clear
-                    Exit Sub
-                Else
-                    WScript.Echo "  ✓ Componente eliminado: " & moduleName
-                    componentFound = True
-                End If
-            End If
-            Exit For
-        End If
-    Next
-    
-    ' Paso 1.5: Cerrar y reabrir la base de datos para evitar confirmaciones (como hace rebuild)
-    WScript.Echo "  Cerrando base de datos para evitar confirmaciones..."
-    
-    ' Cerrar sin guardar explícitamente para evitar confirmaciones
-    objAccess.Quit 1  ' acQuitSaveAll = 1
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "  Advertencia al cerrar Access: " & Err.Description
-        Err.Clear
-    End If
-    
-    Set objAccess = Nothing
-    WScript.Echo "  ✓ Base de datos cerrada y guardada"
-    
-    ' Reabrir la base de datos
-    WScript.Echo "  Reabriendo base de datos..."
-    
-    Set objAccess = CreateObject("Access.Application")
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "  ❌ Error al crear nueva instancia de Access: " & Err.Description
-        WScript.Quit 1
-    End If
-    
-    ' Configurar Access en modo silencioso
-    objAccess.Visible = False
-    objAccess.UserControl = False
-    
-    ' Suprimir alertas y diálogos de confirmación
-    objAccess.DoCmd.SetWarnings False
-    objAccess.Application.Echo False
-    objAccess.DisplayAlerts = False
-    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
-    objAccess.VBE.MainWindow.Visible = False
-    Err.Clear
-    
-    ' Determinar contraseña para la base de datos
-    Dim strDbPassword
-    strDbPassword = GetDatabasePassword(strAccessPath)
-    
-    ' Abrir base de datos
-    If strDbPassword = "" Then
-        objAccess.OpenCurrentDatabase strAccessPath
-    Else
-        objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "  ❌ Error al reabrir base de datos: " & Err.Description
-        WScript.Quit 1
-    End If
-    
-    WScript.Echo "  ✓ Base de datos reabierta"
-    
-    ' Paso 2: Verificar que el fichero fuente (.bas o .cls) existe en la carpeta /src
+    ' --- Paso 1: Verificar que existe el archivo fuente ---
     Dim strBasFile, strClsFile, strSourceFile, fileExtension
     strBasFile = objFSO.BuildPath(strSourcePath, moduleName & ".bas")
     strClsFile = objFSO.BuildPath(strSourcePath, moduleName & ".cls")
@@ -1900,39 +1822,42 @@ Sub SyncSingleModule(moduleName)
         strSourceFile = strClsFile
         fileExtension = "cls"
     Else
-        WScript.Echo "  ❌ Error: No se encontró el archivo fuente para " & moduleName
-        WScript.Echo "      Buscado: " & strBasFile
-        WScript.Echo "      Buscado: " & strClsFile
+        WScript.Echo "  ❌ No se encontró archivo fuente para " & moduleName
         Exit Sub
     End If
     
     WScript.Echo "  ✓ Archivo fuente encontrado: " & strSourceFile
     
-    ' Paso 3: Validar sintaxis del archivo
-    Dim errorDetails, validationResult
-    validationResult = ValidateVBASyntax(strSourceFile, errorDetails)
+    ' --- Paso 2: Eliminar módulo existente (si lo hay) ---
+    Dim vbProject, vbComponent
+    Set vbProject = objAccess.VBE.ActiveVBProject
     
-    If validationResult <> True Then
-        WScript.Echo "  ❌ Error de sintaxis en " & moduleName & ": " & errorDetails
+    For Each vbComponent In vbProject.VBComponents
+        If vbComponent.Name = moduleName Then
+            WScript.Echo "  Eliminando módulo existente: " & moduleName
+            vbProject.VBComponents.Remove vbComponent
+            Exit For
+        End If
+    Next
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error eliminando módulo: " & Err.Description
+        Err.Clear
         Exit Sub
     End If
     
-    WScript.Echo "  ✓ Sintaxis válida"
+    WScript.Echo "  ✓ Módulo eliminado (si existía)"
     
-    ' Paso 4: Limpiar el contenido del fichero utilizando CleanVBAFile
-    Dim cleanedContent
-    cleanedContent = CleanVBAFile(strSourceFile, fileExtension)
-    
-    If cleanedContent = "" Then
-        WScript.Echo "  ❌ Error: No se pudo leer o limpiar el contenido del archivo"
-        Exit Sub
-    End If
-    
-    WScript.Echo "  ✓ Contenido limpiado"
-    
-    ' Paso 5: Importar el módulo usando la misma lógica que rebuild (sin confirmaciones)
-    WScript.Echo "  Importando módulo: " & moduleName
-    Call ImportModuleWithAnsiEncoding(strSourceFile, moduleName, fileExtension, Nothing, cleanedContent)
+    ' --- Paso 3: Importar con DoCmd.LoadFromText ---
+    Select Case LCase(fileExtension)
+        Case "bas"
+            objAccess.DoCmd.LoadFromText 1, moduleName, strSourceFile  ' 1 = acModule
+        Case "cls"
+            objAccess.DoCmd.LoadFromText 2, moduleName, strSourceFile  ' 2 = acClassModule
+        Case Else
+            WScript.Echo "  ❌ Tipo de archivo no soportado: " & fileExtension
+            Exit Sub
+    End Select
     
     If Err.Number <> 0 Then
         WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
@@ -2053,8 +1978,8 @@ Sub UpdateProject()
             End If
         Next
         
-        ' Paso 2: Cerrar base de datos una sola vez
-        WScript.Echo "Cerrando base de datos para evitar confirmaciones..."
+        ' Paso 2: Cerrar base de datos guardando cambios
+        WScript.Echo "Cerrando base de datos guardando cambios..."
         
         ' Guardar todos los cambios pendientes antes de cerrar
         On Error Resume Next
@@ -2064,41 +1989,148 @@ Sub UpdateProject()
         On Error GoTo 0
         
         objAccess.DoCmd.Close
-        objAccess.Quit 1  ' Cerrar sin guardar explícitamente
+        objAccess.Quit 1  ' Cerrar guardando
         Set objAccess = Nothing
         WScript.Echo "  ✓ Base de datos cerrada y guardada"
         
-        ' Paso 3: Reabrir base de datos
-        WScript.Echo "Reabriendo base de datos..."
+        ' Paso 3: Reabrir base de datos en modo seguro y oculto
+        WScript.Echo "Reabriendo base de datos en modo seguro..."
         Set objAccess = CreateObject("Access.Application")
         objAccess.Visible = False
         objAccess.UserControl = False
-        objAccess.OpenCurrentDatabase strAccessPath
         
-        ' Configurar modo silencioso
+        ' Determinar contraseña para la base de datos
+        Dim strDbPassword
+        strDbPassword = GetDatabasePassword(strAccessPath)
+        
+        ' Abrir base de datos
+        If strDbPassword = "" Then
+            objAccess.OpenCurrentDatabase strAccessPath
+        Else
+            objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
+        End If
+        
+        ' Configurar modo silencioso y seguro
         On Error Resume Next
         objAccess.DoCmd.SetWarnings False
         objAccess.Application.Echo False
         objAccess.DisplayAlerts = False
-        objAccess.Application.AutomationSecurity = 1
+        objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
         objAccess.VBE.MainWindow.Visible = False
         objAccess.Application.Interactive = False
         objAccess.VBE.CommandBars.AdaptiveMenus = False
         Err.Clear
         On Error GoTo 0
-        WScript.Echo "  ✓ Base de datos reabierta"
+        WScript.Echo "  ✓ Base de datos reabierta en modo seguro"
         
-        ' Paso 4: Importar todos los módulos
-        WScript.Echo "Importando módulos..."
+        ' Paso 4: Importar todos los módulos validando sintaxis
+        WScript.Echo "Importando módulos con validación de sintaxis..."
+        
         For i = 0 To UBound(moduleNames)
             moduleName = Trim(moduleNames(i))
             
             If moduleName <> "" Then
                 WScript.Echo ""
                 WScript.Echo "=== IMPORTANDO MODULO: " & moduleName & " ==="
-                Call ImportSingleModuleOptimized(moduleName)
+                
+                ' Verificar que el fichero fuente existe
+                Dim strBasFile, strClsFile, strSourceFile, fileExtension
+                strBasFile = objFSO.BuildPath(strSourcePath, moduleName & ".bas")
+                strClsFile = objFSO.BuildPath(strSourcePath, moduleName & ".cls")
+                
+                If objFSO.FileExists(strBasFile) Then
+                    strSourceFile = strBasFile
+                    fileExtension = "bas"
+                ElseIf objFSO.FileExists(strClsFile) Then
+                    strSourceFile = strClsFile
+                    fileExtension = "cls"
+                Else
+                    WScript.Echo "  ❌ Error: No se encontró el archivo fuente para " & moduleName
+                    WScript.Echo "      Buscado: " & strBasFile
+                    WScript.Echo "      Buscado: " & strClsFile
+                    Exit Sub
+                End If
+                
+                WScript.Echo "  ✓ Archivo fuente encontrado: " & strSourceFile
+                
+                ' Validar sintaxis del archivo
+                Dim errorDetails, validationResult
+                validationResult = ValidateVBASyntax(strSourceFile, errorDetails)
+                
+                If validationResult <> True Then
+                    WScript.Echo "  ❌ Error de sintaxis en " & moduleName & ": " & errorDetails
+                    Exit Sub
+                End If
+                
+                WScript.Echo "  ✓ Sintaxis válida"
+                
+                ' Limpiar el contenido del fichero
+                Dim cleanedContent
+                cleanedContent = CleanVBAFile(strSourceFile, fileExtension)
+                
+                If cleanedContent = "" Then
+                    WScript.Echo "  ❌ Error: No se pudo leer o limpiar el contenido del archivo"
+                    Exit Sub
+                End If
+                
+                WScript.Echo "  ✓ Contenido limpiado"
+                
+                ' Importar el módulo
+                WScript.Echo "Importando modulo: " & moduleName
+                Call ImportModuleWithAnsiEncoding(strSourceFile, moduleName, fileExtension, Nothing, cleanedContent)
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
+                    Err.Clear
+                    Exit Sub
+                End If
+                
+                ' Guardar el módulo individualmente
+                On Error Resume Next
+                objAccess.DoCmd.Save , moduleName
+                If Err.Number <> 0 Then
+                    WScript.Echo "  ⚠️ Advertencia al guardar " & moduleName & ": " & Err.Description
+                    Err.Clear
+                Else
+                    WScript.Echo "  ✓ Módulo guardado: " & moduleName
+                End If
+                On Error GoTo 0
+                
+                If fileExtension = "cls" Then
+                    WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
+                Else
+                    WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
+                End If
             End If
         Next
+        
+        ' Paso 5: Verificar integridad de nombres de módulos
+        WScript.Echo "Verificando integridad de nombres de módulos..."
+        Call VerifyModuleNames()
+        
+        ' Paso 6: Cerrar Access sin confirmaciones
+        WScript.Echo "Cerrando Access sin confirmaciones..."
+        
+        ' Configurar para cerrar sin confirmaciones
+        On Error Resume Next
+        objAccess.DoCmd.SetWarnings False
+        objAccess.Application.Echo False
+        objAccess.DisplayAlerts = False
+        objAccess.Application.Interactive = False
+        
+        ' Guardar todo antes de cerrar
+        objAccess.DoCmd.Save
+        objAccess.DoCmd.RunCommand 2040  ' acCmdSaveAll
+        
+        ' Cerrar sin confirmaciones
+        objAccess.DoCmd.Close
+        objAccess.Quit 1  ' acQuitSaveAll
+        Set objAccess = Nothing
+        
+        Err.Clear
+        On Error GoTo 0
+        
+        WScript.Echo "  ✓ Access cerrado sin confirmaciones"
         
     Else
         ' Modo automático: sincronizar solo archivos modificados
