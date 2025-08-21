@@ -848,8 +848,229 @@ Function CleanVBAFile(filePath, fileType)
     CleanVBAFile = cleanedContent
 End Function
 
+' Función para calcular hash MD5 de un fichero
+Function GetFileHash(filePath)
+    Dim objStream, objHasher, arrBytes, strHash, i
+    
+    On Error Resume Next
+    
+    ' Verificar que el archivo existe
+    If Not objFSO.FileExists(filePath) Then
+        GetFileHash = ""
+        Exit Function
+    End If
+    
+    ' Leer el archivo como binario
+    Set objStream = CreateObject("ADODB.Stream")
+    objStream.Type = 1 ' adTypeBinary
+    objStream.Open
+    objStream.LoadFromFile filePath
+    arrBytes = objStream.Read
+    objStream.Close
+    Set objStream = Nothing
+    
+    If Err.Number <> 0 Then
+        GetFileHash = ""
+        Err.Clear
+        On Error GoTo 0
+        Exit Function
+    End If
+    
+    ' Crear objeto para calcular hash MD5
+    Set objHasher = CreateObject("System.Security.Cryptography.MD5CryptoServiceProvider")
+    
+    If Err.Number <> 0 Then
+        ' Si no está disponible .NET, usar método alternativo con CAPICOM
+        Err.Clear
+        Set objHasher = CreateObject("CAPICOM.HashedData")
+        objHasher.Algorithm = 3 ' CAPICOM_HASH_ALGORITHM_MD5
+        objHasher.Hash arrBytes
+        strHash = objHasher.Value
+        Set objHasher = Nothing
+    Else
+        ' Usar .NET MD5
+        arrBytes = objHasher.ComputeHash_2(arrBytes)
+        Set objHasher = Nothing
+        
+        ' Convertir bytes a string hexadecimal
+        strHash = ""
+        For i = 0 To UBound(arrBytes)
+            strHash = strHash & Right("0" & Hex(arrBytes(i)), 2)
+        Next
+        strHash = LCase(strHash)
+    End If
+    
+    If Err.Number <> 0 Then
+        GetFileHash = ""
+        Err.Clear
+    Else
+        GetFileHash = strHash
+    End If
+    
+    On Error GoTo 0
+End Function
 
+' Función para obtener la ruta del caché persistente
+Function GetCachePath()
+    Dim strProjectRoot
+    strProjectRoot = objFSO.GetParentFolderName(strSourcePath)
+    GetCachePath = objFSO.BuildPath(strProjectRoot, ".vba_cache")
+End Function
 
+' Función para inicializar el caché persistente
+Sub InitializePersistentCache()
+    Dim strCachePath
+    strCachePath = GetCachePath()
+    
+    If Not objFSO.FolderExists(strCachePath) Then
+        objFSO.CreateFolder strCachePath
+        WScript.Echo "Caché persistente inicializado: " & strCachePath
+    End If
+End Sub
+
+' Función para copiar un fichero al caché persistente
+Sub CopyFileToCache(sourceFile, moduleName, fileExtension)
+    Dim strCachePath, strCacheFile
+    
+    On Error Resume Next
+    
+    strCachePath = GetCachePath()
+    Call InitializePersistentCache()
+    
+    strCacheFile = objFSO.BuildPath(strCachePath, moduleName & "." & fileExtension)
+    
+    ' Copiar el archivo al caché
+    objFSO.CopyFile sourceFile, strCacheFile, True
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  ⚠️ Advertencia: No se pudo copiar " & moduleName & " al caché: " & Err.Description
+        Err.Clear
+    End If
+    
+    On Error GoTo 0
+End Sub
+
+' Función para eliminar un fichero del caché persistente
+Sub RemoveFileFromCache(moduleName, fileExtension)
+    Dim strCachePath, strCacheFile
+    
+    On Error Resume Next
+    
+    strCachePath = GetCachePath()
+    strCacheFile = objFSO.BuildPath(strCachePath, moduleName & "." & fileExtension)
+    
+    If objFSO.FileExists(strCacheFile) Then
+        objFSO.DeleteFile strCacheFile, True
+        
+        If Err.Number <> 0 Then
+            WScript.Echo "  ⚠️ Advertencia: No se pudo eliminar " & moduleName & " del caché: " & Err.Description
+            Err.Clear
+        End If
+    End If
+    
+    On Error GoTo 0
+End Sub
+
+' Función para comparar hashes entre /src y caché
+Function CompareFileHashes(srcFile, cacheFile)
+    Dim srcHash, cacheHash
+    
+    srcHash = GetFileHash(srcFile)
+    cacheHash = GetFileHash(cacheFile)
+    
+    ' Si algún hash está vacío, considerar como diferentes
+    If srcHash = "" Or cacheHash = "" Then
+        CompareFileHashes = False
+    Else
+        CompareFileHashes = (srcHash = cacheHash)
+    End If
+End Function
+
+' Función para comparar y sincronizar módulos usando hashes
+Sub CompareAndSyncModulesWithHashes()
+    Dim strCachePath, objSrcFolder, objCacheFolder
+    Dim objSrcFile, objCacheFile
+    Dim srcFiles, cacheFiles
+    Dim moduleName, fileExtension
+    Dim srcFilePath, cacheFilePath
+    Dim modulesToUpdate, modulesToDelete
+    Dim updatedCount, deletedCount
+    
+    On Error Resume Next
+    
+    strCachePath = GetCachePath()
+    updatedCount = 0
+    deletedCount = 0
+    
+    ' Crear diccionarios para archivos de /src y caché
+    Set srcFiles = CreateObject("Scripting.Dictionary")
+    Set cacheFiles = CreateObject("Scripting.Dictionary")
+    
+    ' Recopilar archivos de /src
+    Set objSrcFolder = objFSO.GetFolder(strSourcePath)
+    For Each objSrcFile In objSrcFolder.Files
+        If LCase(objFSO.GetExtensionName(objSrcFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objSrcFile.Name)) = "cls" Then
+            moduleName = objFSO.GetBaseName(objSrcFile.Name)
+            srcFiles.Add moduleName, objSrcFile.Path
+        End If
+    Next
+    
+    ' Recopilar archivos del caché
+    If objFSO.FolderExists(strCachePath) Then
+        Set objCacheFolder = objFSO.GetFolder(strCachePath)
+        For Each objCacheFile In objCacheFolder.Files
+            If LCase(objFSO.GetExtensionName(objCacheFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objCacheFile.Name)) = "cls" Then
+                moduleName = objFSO.GetBaseName(objCacheFile.Name)
+                cacheFiles.Add moduleName, objCacheFile.Path
+            End If
+        Next
+    End If
+    
+    ' Comparar archivos y detectar cambios
+    Dim srcModuleNames, i
+    srcModuleNames = srcFiles.Keys
+    
+    For i = 0 To UBound(srcModuleNames)
+        moduleName = srcModuleNames(i)
+        srcFilePath = srcFiles(moduleName)
+        fileExtension = LCase(objFSO.GetExtensionName(srcFilePath))
+        cacheFilePath = objFSO.BuildPath(strCachePath, moduleName & "." & fileExtension)
+        
+        ' Verificar si el módulo necesita actualización
+        If Not cacheFiles.Exists(moduleName) Or Not CompareFileHashes(srcFilePath, cacheFilePath) Then
+            WScript.Echo "  📝 Actualizando módulo: " & moduleName
+            Call UpdateSingleModule(moduleName)
+            updatedCount = updatedCount + 1
+        End If
+    Next
+    
+    ' Detectar módulos eliminados (existen en caché pero no en /src)
+    Dim cacheModuleNames
+    cacheModuleNames = cacheFiles.Keys
+    
+    For i = 0 To UBound(cacheModuleNames)
+        moduleName = cacheModuleNames(i)
+        If Not srcFiles.Exists(moduleName) Then
+            WScript.Echo "  🗑️ Eliminando módulo: " & moduleName
+            Call RemoveVBAComponent(moduleName)
+            fileExtension = LCase(objFSO.GetExtensionName(cacheFiles(moduleName)))
+            Call RemoveFileFromCache(moduleName, fileExtension)
+            deletedCount = deletedCount + 1
+        End If
+    Next
+    
+    ' Mostrar resumen
+    WScript.Echo ""
+    WScript.Echo "=== RESUMEN DE SINCRONIZACIÓN ==="
+    WScript.Echo "Módulos actualizados: " & updatedCount
+    WScript.Echo "Módulos eliminados: " & deletedCount
+    
+    If updatedCount = 0 And deletedCount = 0 Then
+        WScript.Echo "✅ Proyecto ya está sincronizado"
+    End If
+    
+    On Error GoTo 0
+End Sub
 
 ' Función para exportar módulo con conversión ANSI -> UTF-8 usando ADODB.Stream
 Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
@@ -1613,6 +1834,9 @@ Sub RebuildProject()
     ' Paso 4: Importar todos los módulos de nuevo
     WScript.Echo "Paso 4: Importando todos los modulos desde /src..."
     
+    ' Inicializar caché persistente
+    Call InitializePersistentCache()
+    
     ' Integrar lógica de importación directamente
     Dim objFolder, objFile
     Dim strModuleName, strFileName, strContent
@@ -1677,12 +1901,15 @@ Sub RebuildProject()
             cleanedContent = CleanVBAFile(strFileName, fileExtension)
             
             ' Importar usando contenido limpio
-            WScript.Echo "  Clase " & strModuleName & " importada correctamente"
             Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
             
             If Err.Number <> 0 Then
                 WScript.Echo "Error al importar modulo " & strModuleName & ": " & Err.Description
                 Err.Clear
+            Else
+                WScript.Echo "  ✓ Módulo " & strModuleName & " importado correctamente"
+                ' Copiar al caché persistente después de importar exitosamente
+                Call CopyFileToCache(strFileName, strModuleName, fileExtension)
             End If
         End If
     Next
@@ -2021,6 +2248,9 @@ Sub UpdateProject()
         ' Paso 4: Importar todos los módulos validando sintaxis
         WScript.Echo "Importando módulos con validación de sintaxis..."
         
+        ' Inicializar caché persistente
+        Call InitializePersistentCache()
+        
         For i = 0 To UBound(moduleNames)
             moduleName = Trim(moduleNames(i))
             
@@ -2078,6 +2308,10 @@ Sub UpdateProject()
                     WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
                     Err.Clear
                     Exit Sub
+                Else
+                    WScript.Echo "  ✓ Módulo " & moduleName & " importado correctamente"
+                    ' Copiar al caché persistente después de importar exitosamente
+                    Call CopyFileToCache(strSourceFile, moduleName, fileExtension)
                 End If
                 
                 ' Guardar el módulo individualmente
@@ -2128,31 +2362,15 @@ Sub UpdateProject()
         WScript.Echo "  ✓ Access cerrado sin confirmaciones"
         
     Else
-        ' Modo automático: sincronizar solo archivos modificados
+        ' Modo automático: sincronizar solo archivos modificados usando caché persistente
         WScript.Echo "Modo automático: sincronizando archivos modificados..."
         
-        ' Paso 1: Crear carpeta temporal .vba_cache
-        Dim strCachePath
-        strCachePath = objFSO.BuildPath(objFSO.GetParentFolderName(strSourcePath), ".vba_cache")
+        ' Paso 1: Inicializar caché persistente
+        Call InitializePersistentCache()
         
-        If objFSO.FolderExists(strCachePath) Then
-            objFSO.DeleteFolder strCachePath, True
-        End If
-        objFSO.CreateFolder strCachePath
-        
-        WScript.Echo "Carpeta temporal creada: " & strCachePath
-        
-        ' Paso 2: Exportar estado actual de módulos VBA a .vba_cache
-        WScript.Echo "Exportando estado actual de módulos VBA..."
-        Call ExportModulesToCache(strCachePath)
-        
-        ' Paso 3: Comparar archivos de /src con los de .vba_cache
+        ' Paso 2: Comparar archivos de /src con los de .vba_cache usando hashes
         WScript.Echo "Comparando archivos para detectar cambios..."
-        Call CompareAndSyncModules(strCachePath)
-        
-        ' Paso 4: Eliminar carpeta .vba_cache
-        WScript.Echo "Limpiando carpeta temporal..."
-        objFSO.DeleteFolder strCachePath, True
+        Call CompareAndSyncModulesWithHashes()
         
     End If
     
@@ -2286,6 +2504,16 @@ Sub RemoveVBAComponent(moduleName)
                     Err.Clear
                 Else
                     WScript.Echo "    ✓ Componente eliminado: " & moduleName
+                    
+                    ' También eliminar del caché persistente
+                    Dim fileExtension
+                    If vbComponent.Type = 1 Then
+                        fileExtension = "bas"
+                    Else
+                        fileExtension = "cls"
+                    End If
+                    
+                    Call RemoveFileFromCache(moduleName, fileExtension)
                 End If
             End If
             Exit For
