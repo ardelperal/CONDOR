@@ -199,8 +199,8 @@ Para un detalle exhaustivo de la estructura de las tablas, consultar el Anexo A.
 
 Para el mapeo de campos específico para la generación de documentos, consultar el Anexo B.
 
-6. Ciclo de Trabajo de Desarrollo (TDD Asistido)
-   Este es el proceso estándar para cualquier tarea de desarrollo o corrección.
+6. Ciclo de Trabajo de Desarrollo (TDD Asistido con Sincronización Discrecional)
+   Este es el proceso estándar para cualquier tarea de desarrollo o corrección, optimizado para permitir actualizaciones selectivas de módulos.
 
 Análisis y Prompt (Oráculo): El Arquitecto (CONDOR-Expert) genera un prompt detallado.
 
@@ -208,11 +208,21 @@ Revisión de Lecciones Aprendidas (IA): La IA debe revisar Lecciones_aprendidas.
 
 Desarrollo (IA): La IA implementa la funcionalidad siguiendo TDD (Tests primero).
 
-rebuild y Pausa (IA): La IA ejecuta cscript //nologo condor_cli.vbs rebuild y se detiene.
+Sincronización Selectiva y Pausa (IA): La IA ejecuta:
+   - `cscript //nologo condor_cli.vbs update [módulos_específicos]` para cambios puntuales
+   - `cscript //nologo condor_cli.vbs update` para cambios múltiples
+   - `cscript //nologo condor_cli.vbs rebuild` solo si hay problemas graves de sincronización
+   Luego se detiene y espera confirmación.
 
 Verificación Manual (Supervisor): El Supervisor compila el proyecto en Access.
 
 Pruebas y Commit (IA): Tras la luz verde, la IA ejecuta los tests y, si pasan, prepara el commit.
+
+**Ventajas de la Sincronización Discrecional:**
+- **Eficiencia**: Solo actualiza los módulos modificados, reduciendo el tiempo de sincronización
+- **Estabilidad**: Minimiza el riesgo de afectar módulos no relacionados con los cambios
+- **Desarrollo Iterativo**: Facilita ciclos rápidos de desarrollo-prueba-corrección
+- **Flexibilidad**: Permite trabajar en funcionalidades específicas sin impactar el proyecto completo
 
 7. Lecciones Aprendidas (Resumen)
    Interfaces en VBA: La firma de los métodos debe ser idéntica.

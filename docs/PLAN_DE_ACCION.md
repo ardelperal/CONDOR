@@ -43,11 +43,12 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 1. **Iniciativa (CONDOR-Architect):** El Arquitecto le proporciona al Supervisor un prompt detallado para la tarea.
 2. **Ejecución de IA (Tu Rol, Copilot):**
    a. Recibes el prompt del Supervisor.
-   b. Generas el código necesario y ejecutas:
+   b. Generas el código necesario y ejecutas sincronización discrecional:
 
-   - `cscript //nologo condor_cli.vbs update [modulos]` para actualizar módulos específicos
-   - `cscript //nologo condor_cli.vbs update` para actualizar todos los módulos
-     c. **Nota:** El comando `update` permite actualización selectiva de módulos específicos o completa. Usa `rebuild` únicamente cuando sospeches problemas graves de sincronización.
+   - `cscript //nologo condor_cli.vbs update [modulos]` para sincronizar módulos específicos (recomendado)
+   - `cscript //nologo condor_cli.vbs update` para sincronizar todos los módulos
+   - `cscript //nologo condor_cli.vbs rebuild` únicamente para problemas graves de sincronización
+     c. **Ventaja de la Sincronización Discrecional:** Permite actualizar solo los archivos modificados, mejorando la eficiencia y reduciendo el riesgo de afectar módulos no relacionados.
      d. Pausa y espera la confirmación del Supervisor.
 3. **Verificación Manual (Rol del Supervisor):**
    a. El Supervisor abre CONDOR.accdb y ejecuta Depuración -> Compilar Proyecto.
@@ -57,6 +58,50 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
    a. Tras la confirmación del Supervisor, ejecutas la secuencia final: `cscript //nologo condor_cli.vbs compile` y luego `cscript //nologo condor_cli.vbs test`.
    b. Si las pruebas pasan, preparas el commit y ejecutas el push.
 5. **Informe Final (Tu Rol, Copilot):** Notificas al Supervisor que la tarea se ha completado con éxito.
+
+---
+
+### **SINCRONIZACIÓN DISCRECIONAL DE ARCHIVOS**
+
+CONDOR implementa un sistema avanzado de sincronización que permite actualizar módulos específicos sin afectar el proyecto completo, optimizando el flujo de desarrollo.
+
+**Características Principales:**
+
+1. **Actualización Selectiva:** Permite sincronizar únicamente los módulos que han sido modificados
+2. **Eficiencia Mejorada:** Reduce significativamente el tiempo de sincronización al evitar procesar módulos innecesarios
+3. **Estabilidad:** Minimiza el riesgo de introducir errores en módulos no relacionados con los cambios
+4. **Flexibilidad de Desarrollo:** Facilita el trabajo en funcionalidades específicas sin impactar otras áreas del proyecto
+
+**Comandos de Sincronización:**
+
+```bash
+# Sincronización de módulo único
+cscript //nologo condor_cli.vbs update CAuthService
+
+# Sincronización de múltiples módulos específicos
+cscript //nologo condor_cli.vbs update CAuthService,modConfig,CValidationService
+
+# Sincronización completa (todos los módulos)
+cscript //nologo condor_cli.vbs update
+
+# Reconstrucción completa (solo para problemas graves)
+cscript //nologo condor_cli.vbs rebuild
+```
+
+**Casos de Uso Recomendados:**
+
+- **Desarrollo Iterativo:** Usar sincronización selectiva durante el desarrollo de funcionalidades específicas
+- **Correcciones Puntuales:** Actualizar solo los módulos afectados por un bug fix
+- **Pruebas Incrementales:** Sincronizar módulos individuales para pruebas focalizadas
+- **Integración Continua:** Reducir el tiempo de sincronización en ciclos de desarrollo rápidos
+
+**Implementación Técnica:**
+
+La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específicos, eliminando la necesidad de cerrar y reabrir la base de datos Access, lo que resulta en:
+
+- **Mayor Velocidad:** Eliminación del overhead de apertura/cierre de la base de datos
+- **Mejor Estabilidad:** Reducción de posibles errores de sincronización
+- **Proceso Simplificado:** Menos pasos en el flujo de actualización
 
 ---
 
@@ -73,6 +118,7 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 - [X] Servicios de autenticación y configuración
 - [X] Framework de testing completo con reportes
 - [X] Método manual de ejecución de pruebas (_EJECUTAR_TODAS_LAS_PRUEBAS)
+- [X] Sistema de sincronización discrecional de archivos (comando update optimizado)
 
 ## 1. ARQUITECTURA Y ESTRUCTURA BASE
 

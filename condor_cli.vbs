@@ -1828,36 +1828,31 @@ Sub SyncSingleModule(moduleName)
     
     WScript.Echo "  ✓ Archivo fuente encontrado: " & strSourceFile
     
-    ' --- Paso 2: Eliminar módulo existente (si lo hay) ---
-    Dim vbProject, vbComponent
-    Set vbProject = objAccess.VBE.ActiveVBProject
+    ' --- Paso 2: Validar sintaxis del archivo ---
+    Dim errorDetails, validationResult
+    validationResult = ValidateVBASyntax(strSourceFile, errorDetails)
     
-    For Each vbComponent In vbProject.VBComponents
-        If vbComponent.Name = moduleName Then
-            WScript.Echo "  Eliminando módulo existente: " & moduleName
-            vbProject.VBComponents.Remove vbComponent
-            Exit For
-        End If
-    Next
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "  ❌ Error eliminando módulo: " & Err.Description
-        Err.Clear
+    If Not validationResult Then
+        WScript.Echo "  ❌ Error de sintaxis en " & moduleName & ":"
+        WScript.Echo "      " & errorDetails
         Exit Sub
     End If
     
-    WScript.Echo "  ✓ Módulo eliminado (si existía)"
+    WScript.Echo "  ✓ Sintaxis validada correctamente"
     
-    ' --- Paso 3: Importar con DoCmd.LoadFromText ---
-    Select Case LCase(fileExtension)
-        Case "bas"
-            objAccess.DoCmd.LoadFromText 1, moduleName, strSourceFile  ' 1 = acModule
-        Case "cls"
-            objAccess.DoCmd.LoadFromText 2, moduleName, strSourceFile  ' 2 = acClassModule
-        Case Else
-            WScript.Echo "  ❌ Tipo de archivo no soportado: " & fileExtension
-            Exit Sub
-    End Select
+    ' --- Paso 3: Limpiar contenido con conversión UTF-8 -> ANSI ---
+    Dim cleanedContent
+    cleanedContent = CleanVBAFile(strSourceFile, fileExtension)
+    
+    If cleanedContent = "" Then
+        WScript.Echo "  ❌ Error: No se pudo leer o limpiar el archivo " & strSourceFile
+        Exit Sub
+    End If
+    
+    WScript.Echo "  ✓ Contenido limpiado y convertido a ANSI"
+    
+    ' --- Paso 4: Importar usando ImportModuleWithAnsiEncoding ---
+    Call ImportModuleWithAnsiEncoding(strSourceFile, moduleName, fileExtension, Nothing, cleanedContent)
     
     If Err.Number <> 0 Then
         WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
@@ -1865,7 +1860,7 @@ Sub SyncSingleModule(moduleName)
         Exit Sub
     End If
     
-    WScript.Echo "  ✅ Módulo " & moduleName & " sincronizado correctamente"
+    WScript.Echo "  ✅ Módulo " & moduleName & " sincronizado correctamente con conversión de codificación"
     
     On Error GoTo 0
 End Sub

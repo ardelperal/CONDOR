@@ -170,12 +170,14 @@ cscript condor_cli.vbs update CAuthService,modUtils,CConfig
 # Actualizar todos los módulos (equivalente a rebuild pero más eficiente)
 cscript condor_cli.vbs update
 ```
-- **Nuevo comando optimizado** para actualizaciones incrementales
+- **Comando optimizado** para sincronización discrecional de archivos
+- Permite actualizar módulos específicos sin afectar el resto del proyecto
 - Solo procesa los módulos especificados, no toda la base de datos
-- Elimina e importa únicamente los módulos indicados
+- Elimina e importa únicamente los módulos indicados usando `DoCmd.LoadFromText`
 - **Sintaxis**: Los nombres de módulos se separan con comas (sin espacios)
 - **Nota**: No incluir extensiones (.bas/.cls) en los nombres
 - **Ventaja**: Mucho más rápido que `rebuild` para cambios específicos
+- **Flexibilidad**: Ideal para desarrollo iterativo y correcciones puntuales
 
 #### Exportación de Módulos
 ```bash
@@ -412,23 +414,29 @@ Consulta el **[Plan de Acción](PLAN_DE_ACCION.md)** para ver el roadmap complet
 
 ### Flujo de Desarrollo
 
-**Flujo Recomendado (3 pasos):**
+**Flujo Recomendado (Sincronización Discrecional):**
 1. **Desarrollo Local**: Modificar archivos `.bas` en el directorio `src/`
-2. **Actualización Selectiva**: `cscript condor_cli.vbs update [módulos]` para aplicar cambios específicos
+2. **Sincronización Selectiva**: `cscript condor_cli.vbs update [módulos]` para sincronizar solo los archivos modificados
 3. **Verificación Manual**: Abrir `CONDOR.accdb`, ejecutar macro `_EJECUTAR_TODAS_LAS_PRUEBAS` (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G)
 4. **Exportación**: `cscript condor_cli.vbs export` para sincronizar cambios desde Access (opcional)
 
-**Comandos de Actualización:**
+**Comandos de Sincronización:**
 ```bash
-# Actualización selectiva (recomendado)
+# Sincronización selectiva (recomendado para desarrollo iterativo)
 cscript condor_cli.vbs update CAuthService,modUtils
 
-# Actualización completa (alternativa)
+# Sincronización completa (cuando hay múltiples cambios)
 cscript condor_cli.vbs update
 
-# Reconstrucción completa (solo si hay problemas)
+# Reconstrucción completa (solo si hay problemas de sincronización)
 cscript condor_cli.vbs rebuild
 ```
+
+**Ventajas de la Sincronización Discrecional:**
+- **Eficiencia**: Solo actualiza los módulos que realmente han cambiado
+- **Velocidad**: Evita procesar toda la base de datos innecesariamente
+- **Flexibilidad**: Permite trabajar en módulos específicos sin afectar otros
+- **Desarrollo Iterativo**: Ideal para ciclos rápidos de desarrollo y prueba
 
 **⚠️ Importante**: Las pruebas requieren que los módulos estén compilados. Siempre ejecute `update` o `rebuild` antes de ejecutar las pruebas manualmente para garantizar un estado limpio y compilado.
 

@@ -1,7 +1,7 @@
 ﻿Option Compare Database
 Option Explicit
 Implements IAuthService
-'prueba del cambio para
+'prueba del cambio para holá
 Private configSvc As IConfig
 
 Private Sub Class_Initialize(ByVal config As IConfig)
