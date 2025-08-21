@@ -46,8 +46,10 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
    b. Generas el código necesario y ejecutas sincronización discrecional:
 
    - `cscript //nologo condor_cli.vbs update [modulos]` para sincronizar módulos específicos (recomendado)
-   - `cscript //nologo condor_cli.vbs update` para sincronizar todos los módulos
+   - `cscript //nologo condor_cli.vbs update` para sincronización automática optimizada (solo abre BD si hay cambios)
    - `cscript //nologo condor_cli.vbs rebuild` únicamente para problemas graves de sincronización
+   
+   **Nota:** Los comandos `update` y `rebuild` incluyen conversión automática de codificación UTF-8 a ANSI para soporte completo de caracteres especiales (ñ, tildes).
      c. **Ventaja de la Sincronización Discrecional:** Permite actualizar solo los archivos modificados, mejorando la eficiencia y reduciendo el riesgo de afectar módulos no relacionados.
      d. Pausa y espera la confirmación del Supervisor.
 3. **Verificación Manual (Rol del Supervisor):**

@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Clase: CConfig
 ' Descripci?n: Implementaci?n concreta del servicio de configuraci?n del sistema CONDOR

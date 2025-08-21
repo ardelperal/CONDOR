@@ -210,8 +210,10 @@ Desarrollo (IA): La IA implementa la funcionalidad siguiendo TDD (Tests primero)
 
 Sincronización Selectiva y Pausa (IA): La IA ejecuta:
    - `cscript //nologo condor_cli.vbs update [módulos_específicos]` para cambios puntuales
-   - `cscript //nologo condor_cli.vbs update` para cambios múltiples
+   - `cscript //nologo condor_cli.vbs update` para sincronización automática optimizada (solo abre BD si hay cambios)
    - `cscript //nologo condor_cli.vbs rebuild` solo si hay problemas graves de sincronización
+   
+   **Nota:** Todos los comandos incluyen conversión automática UTF-8 a ANSI para soporte completo de caracteres especiales.
    Luego se detiene y espera confirmación.
 
 Verificación Manual (Supervisor): El Supervisor compila el proyecto en Access.

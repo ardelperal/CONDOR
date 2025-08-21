@@ -167,10 +167,12 @@ cscript condor_cli.vbs update CAuthService
 # Actualizar múltiples módulos específicos
 cscript condor_cli.vbs update CAuthService,modUtils,CConfig
 
-# Actualizar todos los módulos (equivalente a rebuild pero más eficiente)
+# Sincronización automática optimizada (solo abre BD si hay cambios)
 cscript condor_cli.vbs update
 ```
 - **Comando optimizado** para sincronización discrecional de archivos
+- **Optimización de rendimiento**: El comando `update` sin parámetros verifica cambios antes de abrir la base de datos
+- **Conversión automática**: Incluye conversión UTF-8 a ANSI para soporte completo de caracteres especiales (ñ, tildes)
 - Permite actualizar módulos específicos sin afectar el resto del proyecto
 - Solo procesa los módulos especificados, no toda la base de datos
 - Elimina e importa únicamente los módulos indicados usando `DoCmd.LoadFromText`
@@ -197,6 +199,7 @@ cscript condor_cli.vbs rebuild
 - Garantiza un estado 100% limpio y compilado
 - **Usar solo cuando `update` no sea suficiente** (problemas de sincronización graves)
 - Muestra advertencias de compilación si las hay
+- **Conversión automática**: Incluye conversión UTF-8 a ANSI para soporte completo de caracteres especiales (ñ, tildes)
 
 #### Ayuda de Comandos
 ```bash
