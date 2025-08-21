@@ -1776,18 +1776,6 @@ End Sub
 Sub SyncSingleModule(moduleName)
     WScript.Echo "=== SINCRONIZANDO MODULO: " & moduleName & " ==="
     
-    ' Configurar Access en modo silencioso para evitar confirmaciones
-    On Error Resume Next
-    objAccess.DoCmd.SetWarnings False
-    objAccess.Application.Echo False
-    objAccess.DisplayAlerts = False
-    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
-    objAccess.VBE.MainWindow.Visible = False
-    ' Configuraciones adicionales para evitar popups
-    objAccess.Application.UserControl = False
-    objAccess.Application.Interactive = False
-    objAccess.VBE.CommandBars.AdaptiveMenus = False
-    Err.Clear
     On Error Resume Next
     
     ' Paso 1: Buscar y eliminar el componente VBA existente con ese nombre
@@ -1813,6 +1801,60 @@ Sub SyncSingleModule(moduleName)
             Exit For
         End If
     Next
+    
+    ' Paso 1.5: Cerrar y reabrir la base de datos para evitar confirmaciones (como hace rebuild)
+    WScript.Echo "  Cerrando base de datos para evitar confirmaciones..."
+    
+    ' Cerrar sin guardar explícitamente para evitar confirmaciones
+    objAccess.Quit 1  ' acQuitSaveAll = 1
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  Advertencia al cerrar Access: " & Err.Description
+        Err.Clear
+    End If
+    
+    Set objAccess = Nothing
+    WScript.Echo "  ✓ Base de datos cerrada y guardada"
+    
+    ' Reabrir la base de datos
+    WScript.Echo "  Reabriendo base de datos..."
+    
+    Set objAccess = CreateObject("Access.Application")
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error al crear nueva instancia de Access: " & Err.Description
+        WScript.Quit 1
+    End If
+    
+    ' Configurar Access en modo silencioso
+    objAccess.Visible = False
+    objAccess.UserControl = False
+    
+    ' Suprimir alertas y diálogos de confirmación
+    objAccess.DoCmd.SetWarnings False
+    objAccess.Application.Echo False
+    objAccess.DisplayAlerts = False
+    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
+    objAccess.VBE.MainWindow.Visible = False
+    Err.Clear
+    
+    ' Determinar contraseña para la base de datos
+    Dim strDbPassword
+    strDbPassword = GetDatabasePassword(strAccessPath)
+    
+    ' Abrir base de datos
+    If strDbPassword = "" Then
+        objAccess.OpenCurrentDatabase strAccessPath
+    Else
+        objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error al reabrir base de datos: " & Err.Description
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "  ✓ Base de datos reabierta"
     
     ' Paso 2: Verificar que el fichero fuente (.bas o .cls) existe en la carpeta /src
     Dim strBasFile, strClsFile, strSourceFile, fileExtension
@@ -1856,9 +1898,9 @@ Sub SyncSingleModule(moduleName)
     
     WScript.Echo "  ✓ Contenido limpiado"
     
-    ' Paso 5: Importar el módulo utilizando el contenido limpio (método desatendido)
+    ' Paso 5: Importar el módulo usando la misma lógica que rebuild (sin confirmaciones)
     WScript.Echo "  Importando módulo: " & moduleName
-    Call ImportModuleDesatendido(strSourceFile, moduleName, fileExtension, cleanedContent)
+    Call ImportModuleWithAnsiEncoding(strSourceFile, moduleName, fileExtension, Nothing, cleanedContent)
     
     If Err.Number <> 0 Then
         WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
@@ -1866,10 +1908,76 @@ Sub SyncSingleModule(moduleName)
         Exit Sub
     End If
     
-    ' Paso 6: El módulo se guarda automáticamente después de la importación
-    ' No es necesario guardado explícito para evitar diálogos
+    WScript.Echo "  ✅ Módulo " & moduleName & " sincronizado correctamente"
+    
+    On Error GoTo 0
+End Sub
+
+' Subrutina optimizada para importar un solo módulo (sin cerrar/abrir BD)
+Sub ImportSingleModuleOptimized(moduleName)
+    On Error Resume Next
+    
+    ' Paso 1: Verificar que el fichero fuente (.bas o .cls) existe en la carpeta /src
+    Dim strBasFile, strClsFile, strSourceFile, fileExtension
+    strBasFile = objFSO.BuildPath(strSourcePath, moduleName & ".bas")
+    strClsFile = objFSO.BuildPath(strSourcePath, moduleName & ".cls")
+    
+    If objFSO.FileExists(strBasFile) Then
+        strSourceFile = strBasFile
+        fileExtension = "bas"
+    ElseIf objFSO.FileExists(strClsFile) Then
+        strSourceFile = strClsFile
+        fileExtension = "cls"
+    Else
+        WScript.Echo "  ❌ Error: No se encontró el archivo fuente para " & moduleName
+        WScript.Echo "      Buscado: " & strBasFile
+        WScript.Echo "      Buscado: " & strClsFile
+        Exit Sub
+    End If
+    
+    WScript.Echo "  ✓ Archivo fuente encontrado: " & strSourceFile
+    
+    ' Paso 2: Validar sintaxis del archivo
+    Dim errorDetails, validationResult
+    validationResult = ValidateVBASyntax(strSourceFile, errorDetails)
+    
+    If validationResult <> True Then
+        WScript.Echo "  ❌ Error de sintaxis en " & moduleName & ": " & errorDetails
+        Exit Sub
+    End If
+    
+    WScript.Echo "  ✓ Sintaxis válida"
+    
+    ' Paso 3: Limpiar el contenido del fichero utilizando CleanVBAFile
+    Dim cleanedContent
+    cleanedContent = CleanVBAFile(strSourceFile, fileExtension)
+    
+    If cleanedContent = "" Then
+        WScript.Echo "  ❌ Error: No se pudo leer o limpiar el contenido del archivo"
+        Exit Sub
+    End If
+    
+    WScript.Echo "  ✓ Contenido limpiado"
+    
+    ' Paso 4: Importar el módulo usando la misma lógica que rebuild (sin confirmaciones)
+    WScript.Echo "  Importando módulo: " & moduleName
+    Call ImportModuleWithAnsiEncoding(strSourceFile, moduleName, fileExtension, Nothing, cleanedContent)
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
+        Err.Clear
+        Exit Sub
+    End If
+    
+    If fileExtension = "cls" Then
+        WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
+    Else
+        WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
+    End If
     
     WScript.Echo "  ✅ Módulo " & moduleName & " sincronizado correctamente"
+    
+    On Error GoTo 0
 End Sub
 
 ' Subrutina para actualizar proyecto VBA con sincronización selectiva
@@ -1901,13 +2009,62 @@ Sub UpdateProject()
         
         WScript.Echo "Módulos a sincronizar: " & UBound(moduleNames) + 1
         
+        ' Paso 1: Eliminar todos los módulos especificados
+        WScript.Echo "Eliminando módulos existentes..."
         For i = 0 To UBound(moduleNames)
             Dim moduleName
             moduleName = Trim(moduleNames(i))
             
             If moduleName <> "" Then
+                WScript.Echo "  Eliminando componente: " & moduleName
+                Call RemoveVBAComponent(moduleName)
+            End If
+        Next
+        
+        ' Paso 2: Cerrar base de datos una sola vez
+        WScript.Echo "Cerrando base de datos para evitar confirmaciones..."
+        
+        ' Guardar todos los cambios pendientes antes de cerrar
+        On Error Resume Next
+        objAccess.DoCmd.Save
+        objAccess.DoCmd.RunCommand 2040  ' acCmdSaveAll
+        Err.Clear
+        On Error GoTo 0
+        
+        objAccess.DoCmd.Close
+        objAccess.Quit 1  ' Cerrar sin guardar explícitamente
+        Set objAccess = Nothing
+        WScript.Echo "  ✓ Base de datos cerrada y guardada"
+        
+        ' Paso 3: Reabrir base de datos
+        WScript.Echo "Reabriendo base de datos..."
+        Set objAccess = CreateObject("Access.Application")
+        objAccess.Visible = False
+        objAccess.UserControl = False
+        objAccess.OpenCurrentDatabase strAccessPath
+        
+        ' Configurar modo silencioso
+        On Error Resume Next
+        objAccess.DoCmd.SetWarnings False
+        objAccess.Application.Echo False
+        objAccess.DisplayAlerts = False
+        objAccess.Application.AutomationSecurity = 1
+        objAccess.VBE.MainWindow.Visible = False
+        objAccess.Application.Interactive = False
+        objAccess.VBE.CommandBars.AdaptiveMenus = False
+        Err.Clear
+        On Error GoTo 0
+        WScript.Echo "  ✓ Base de datos reabierta"
+        
+        ' Paso 4: Importar todos los módulos
+        WScript.Echo "Importando módulos..."
+        For i = 0 To UBound(moduleNames)
+            moduleName = Trim(moduleNames(i))
+            
+            If moduleName <> "" Then
                 WScript.Echo ""
-                Call SyncSingleModule(moduleName)
+                WScript.Echo "=== IMPORTANDO MODULO: " & moduleName & " ==="
+                Call ImportSingleModuleOptimized(moduleName)
             End If
         Next
         
