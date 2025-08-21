@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Interfaz: IConfig
 ' Descripci?n: Define el contrato para servicios de configuraci?n del sistema CONDOR
@@ -88,6 +88,18 @@ End Function
 ' Funci?n de prueba de la configuraci?n
 ' @return: Resultado de la prueba
 Public Function TestCConfig() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Valida la configuraci?n cargada
+' @return: True si la configuraci?n es v?lida
+Public Function ValidateConfiguration() As Boolean
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Obtiene la instancia de configuraci?n
+' @return: Instancia de IConfig
+Public Function GetInstance() As IConfig
     ' Esta es una interfaz - debe ser implementada por las clases concretas
 End Function
 

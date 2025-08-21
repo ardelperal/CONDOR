@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' CNotificationService.cls
 ' Implementación del servicio de notificaciones asíncrono
@@ -11,16 +11,36 @@ Implements INotificationService
 
 ' Variables privadas
 Private m_configService As IConfig
+Private m_OperationLogger As IOperationLogger
 
 ' Constructor
 Private Sub Class_Initialize()
+    On Error GoTo ErrorHandler
+    
     ' Inicializar dependencias
     Set m_configService = New CConfig
+    
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.Class_Initialize"
 End Sub
 
 ' Destructor
 Private Sub Class_Terminate()
     Set m_configService = Nothing
+End Sub
+
+' Método de inicialización para inyectar dependencias
+Public Sub Initialize(operationLogger As IOperationLogger)
+    On Error GoTo ErrorHandler
+    
+    Set m_OperationLogger = operationLogger
+    
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.Initialize"
 End Sub
 
 ' Implementación del método EnviarNotificacion de la interfaz
@@ -86,23 +106,13 @@ Private Function INotificationService_EnviarNotificacion( _
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.EnviarNotificacion"
     ' Limpiar recursos en caso de error
     If Not db Is Nothing Then
         db.Close
         Set db = Nothing
     End If
     INotificationService_EnviarNotificacion = False
-End Function
-
-' Implementación pública del método EnviarNotificacion
-Public Function EnviarNotificacion( _
-    ByVal destinatarios As String, _
-    ByVal asunto As String, _
-    ByVal cuerpoHTML As String, _
-    Optional ByVal urlAdjunto As String = "" _
-) As Boolean
-    ' Delegar a la implementación de la interfaz
-    EnviarNotificacion = INotificationService_EnviarNotificacion(destinatarios, asunto, cuerpoHTML, urlAdjunto)
 End Function
 
 

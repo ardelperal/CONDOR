@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' CMockNotificationService.cls
 ' Mock del servicio de notificaciones para pruebas unitarias
@@ -24,6 +24,8 @@ Private Sub Class_Initialize()
     SimularError = False
     ValorRetorno = True
 End Sub
+
+
 
 ' Método para limpiar el historial de llamadas
 Public Sub LimpiarHistorial()

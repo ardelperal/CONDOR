@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 Implements ISolicitudRepository
 
@@ -7,6 +7,8 @@ Private m_storage As Collection
 Private Sub Class_Initialize()
     Set m_storage = New Collection
 End Sub
+
+
 
 
 
@@ -47,6 +49,18 @@ End Function
 Private Function ISolicitudRepository_ExisteSolicitudConCodigo(ByVal codigoSolicitud As String) As Boolean
     ' Mock: retorna False por defecto
     ISolicitudRepository_ExisteSolicitudConCodigo = False
+End Function
+
+' Implementación del método Load faltante
+Private Function ISolicitudRepository_Load(ByVal ID As Long) As Object
+    ' Mock: no hace nada, solo cumple el contrato
+    Set ISolicitudRepository_Load = Nothing
+End Function
+
+' Implementación del método Save faltante
+Private Function ISolicitudRepository_Save(ByVal solicitud As ISolicitud) As Long
+    ' Mock: simula guardado exitoso y retorna ID simulado
+    ISolicitudRepository_Save = m_storage.Count + 1
 End Function
 
 

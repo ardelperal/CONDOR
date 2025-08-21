@@ -1,8 +1,8 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' ============================================================================
-' Módulo: Test_AppManager
-' Descripción: Pruebas unitarias para modAppManager.bas
+' MÃ³dulo: Test_AppManager
+' DescripciÃ³n: Pruebas unitarias para modAppManager.bas
 ' Autor: CONDOR-Expert
 ' Fecha: Enero 2025
 ' ============================================================================
@@ -19,7 +19,7 @@ Private m_MockUser As T_MockUserData
 Private m_OriginalUserRole As E_UserRole
 
 ' ============================================================================
-' FUNCIONES DE CONFIGURACIÓN DE MOCKS
+' FUNCIONES DE CONFIGURACIÃ“N DE MOCKS
 ' ============================================================================
 
 Private Sub SetupValidAdminUserMock()
@@ -58,7 +58,7 @@ Private Sub SetupEmptyUserMock()
 End Sub
 
 ' ============================================================================
-' FUNCIONES DE CONFIGURACIÓN Y LIMPIEZA
+' FUNCIONES DE CONFIGURACIÃ“N Y LIMPIEZA
 ' ============================================================================
 
 Private Sub SaveCurrentUserRole()
@@ -70,7 +70,7 @@ Private Sub RestoreCurrentUserRole()
 End Sub
 
 ' ============================================================================
-' PRUEBAS DE FUNCIÓN GetCurrentUserEmail
+' PRUEBAS DE FUNCIÃ“N GetCurrentUserEmail
 ' ============================================================================
 
 Public Function Test_GetCurrentUserEmail_ReturnsString() As Boolean
@@ -81,12 +81,13 @@ Public Function Test_GetCurrentUserEmail_ReturnsString() As Boolean
     Email = GetCurrentUserEmail()
     
     ' Assert
-    ' Verificamos que retorna un string (puede estar vacío en modo desarrollo)
+    ' Verificamos que retorna un string (puede estar vacÃ­o en modo desarrollo)
     Test_GetCurrentUserEmail_ReturnsString = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetCurrentUserEmail_ReturnsString", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_GetCurrentUserEmail_ReturnsString = False
 End Function
 
@@ -104,11 +105,12 @@ Public Function Test_GetCurrentUserEmail_DevMode_HandlesCorrectly() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetCurrentUserEmail_DevMode_HandlesCorrectly", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_GetCurrentUserEmail_DevMode_HandlesCorrectly = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE FUNCIÓN Ping
+' PRUEBAS DE FUNCIÃ“N Ping
 ' ============================================================================
 
 Public Function Test_Ping_ReturnsPong() As Boolean
@@ -124,6 +126,7 @@ Public Function Test_Ping_ReturnsPong() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Ping_ReturnsPong", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_Ping_ReturnsPong = False
 End Function
 
@@ -142,6 +145,7 @@ Public Function Test_Ping_ConsistentResponse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Ping_ConsistentResponse", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_Ping_ConsistentResponse = False
 End Function
 
@@ -242,7 +246,7 @@ TestFail:
 End Function
 
 ' ============================================================================
-' PRUEBAS DE ENUMERACIÓN E_UserRole
+' PRUEBAS DE ENUMERACIÃ“N E_UserRole
 ' ============================================================================
 
 Public Function Test_UserRoleEnum_ValidValues() As Boolean
@@ -252,7 +256,7 @@ Public Function Test_UserRoleEnum_ValidValues() As Boolean
     Dim result As Boolean
     result = True
     
-    ' Verificar que los valores de la enumeración son correctos
+    ' Verificar que los valores de la enumeraciÃ³n son correctos
     result = result And (Rol_Desconocido = 0)
     result = result And (Rol_Tecnico = 1)
     result = result And (Rol_Calidad = 2)
@@ -263,6 +267,7 @@ Public Function Test_UserRoleEnum_ValidValues() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_UserRoleEnum_ValidValues", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_UserRoleEnum_ValidValues = False
 End Function
 
@@ -279,11 +284,12 @@ Public Function Test_UserRoleEnum_CanAssignToVariable() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_UserRoleEnum_CanAssignToVariable", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_UserRoleEnum_CanAssignToVariable = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE INTEGRACIÓN CON SERVICIOS
+' PRUEBAS DE INTEGRACIÃ“N CON SERVICIOS
 ' ============================================================================
 
 Public Function Test_Integration_WithAuthService() As Boolean
@@ -294,7 +300,7 @@ Public Function Test_Integration_WithAuthService() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -302,12 +308,13 @@ Public Function Test_Integration_WithAuthService() As Boolean
     UserRole = authService.GetUserRole(m_MockUser.Email)
     
     ' Assert
-    ' Verificamos que la integración funciona (no falla)
+    ' Verificamos que la integraciÃ³n funciona (no falla)
     Test_Integration_WithAuthService = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_WithAuthService", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_Integration_WithAuthService = False
 End Function
 
@@ -354,6 +361,7 @@ Public Function Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail = False
 End Function
 
@@ -365,12 +373,13 @@ Public Function Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString() As Boolean
     resultado = OBTENER_RESULTADOS_PRUEBAS()
     
     ' Assert
-    ' Verificamos que retorna un string (puede estar vacío)
+    ' Verificamos que retorna un string (puede estar vacÃ­o)
     Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString = False
 End Function
 
@@ -425,12 +434,13 @@ Public Function Test_EdgeCase_ConcurrentEmailCalls() As Boolean
     email3 = GetCurrentUserEmail()
     
     ' Assert
-    ' Verificamos que múltiples llamadas son consistentes
+    ' Verificamos que mÃºltiples llamadas son consistentes
     Test_EdgeCase_ConcurrentEmailCalls = (email1 = email2) And (email2 = email3)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_ConcurrentEmailCalls", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_EdgeCase_ConcurrentEmailCalls = False
 End Function
 
@@ -442,7 +452,7 @@ Public Function Test_EdgeCase_PingStressTest() As Boolean
     Dim allPassed As Boolean
     allPassed = True
     
-    ' Ejecutar Ping múltiples veces
+    ' Ejecutar Ping mÃºltiples veces
     For i = 1 To 100
         If Ping() <> "Pong" Then
             allPassed = False
@@ -456,19 +466,20 @@ Public Function Test_EdgeCase_PingStressTest() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_PingStressTest", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_EdgeCase_PingStressTest = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE CONSTANTES Y CONFIGURACIÓN
+' PRUEBAS DE CONSTANTES Y CONFIGURACIÃ“N
 ' ============================================================================
 
 Public Function Test_DevMode_ConstantExists() As Boolean
     On Error GoTo TestFail
     
     ' Arrange & Act & Assert
-    ' Verificamos que la constante DEV_MODE está definida
-    ' (esto se verifica implícitamente en GetCurrentUserEmail)
+    ' Verificamos que la constante DEV_MODE estÃ¡ definida
+    ' (esto se verifica implÃ­citamente en GetCurrentUserEmail)
     Dim Email As String
     Email = GetCurrentUserEmail()
     
@@ -477,11 +488,12 @@ Public Function Test_DevMode_ConstantExists() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_DevMode_ConstantExists", Err.Number, Err.Description, "Test_AppManager.bas"
     Test_DevMode_ConstantExists = False
 End Function
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' FUNCIÃ“N PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
 ' ============================================================================
 
 Public Function Test_AppManager_RunAll() As String
@@ -802,6 +814,7 @@ Public Function RunAppManagerTests() As String
     
     RunAppManagerTests = resultado
 End Function
+
 
 
 

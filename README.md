@@ -150,6 +150,19 @@ Esto mostrará valores como:
 - Uso de interfaces para facilitar tests unitarios.
 - Sistema de manejo de errores centralizado (`modErrorHandler.bas`) que registra todos los errores en la tabla `Tb_Log_Errores` de la base de datos.
 
+### Servicios y Factories Adicionales
+
+**Sistema de Logging de Operaciones:**
+Se ha implementado un nuevo sistema para registrar las operaciones importantes del usuario y del sistema, proporcionando trazabilidad y soporte para auditorías.
+- **Interfaz:** `IOperationLogger.cls`
+- **Implementación:** `COperationLogger.cls` (registra operaciones en `Tb_Operaciones_Log`)
+- **Mock:** `CMockOperationLogger.cls` (para pruebas)
+- **Factory:** `modOperationLoggerFactory.bas` (gestiona la creación de instancias del logger)
+
+**Factory de Configuración:**
+Se ha añadido un factory específico para la gestión de servicios de configuración, siguiendo el patrón de inyección de dependencias.
+- **Factory:** `modConfigFactory.bas` (proporciona instancias de `IConfig`)
+
 ## Estructura de Datos
 - Tablas principales: Expedientes, Solicitudes, Datos específicos y Mapeo de campos.
 
@@ -240,7 +253,7 @@ cscript //nologo condor_cli.vbs rebuild
 - Con el editor de VBA abierto, mostrar la Ventana Inmediato (`Ctrl + G`).
 - Para ejecutar todas las pruebas, escribir en la Ventana Inmediato y pulsar Enter:
 ```vb
-_EJECUTAR_TODAS_LAS_PRUEBAS
+EJECUTAR_TODAS_LAS_PRUEBAS
 ```
 
 **Paso 5: Analizar los Resultados y Notificar**
@@ -284,7 +297,7 @@ CONDOR incluye un motor de pruebas unitarias integrado que permite validar la fu
 #### Estructura de Pruebas
 
 - **Motor de Pruebas**: `modTestRunner.bas` - Ejecuta y reporta resultados de todas las pruebas
-- **Módulos de Prueba**: Archivos que contienen funciones de prueba (ej: `Test_Ejemplo.bas`, `Test_Integracion.bas`)
+- **Módulos de Prueba**: Archivos que contienen funciones de prueba (ej: `Test_Ejemplo.bas`, `Test_Integracion.bas`, `Test_OperationLogger.bas` para el nuevo sistema de logging de operaciones)
 - **Convención de Nombres**: Las funciones de prueba deben comenzar con `Test_`
 
 #### Tipos de Pruebas
@@ -420,7 +433,7 @@ Consulta el **[Plan de Acción](PLAN_DE_ACCION.md)** para ver el roadmap complet
 **Flujo Recomendado (Sincronización Discrecional):**
 1. **Desarrollo Local**: Modificar archivos `.bas` en el directorio `src/`
 2. **Sincronización Selectiva**: `cscript condor_cli.vbs update [módulos]` para sincronizar solo los archivos modificados
-3. **Verificación Manual**: Abrir `CONDOR.accdb`, ejecutar macro `_EJECUTAR_TODAS_LAS_PRUEBAS` (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G)
+3. **Verificación Manual**: Abrir `CONDOR.accdb`, ejecutar macro `EJECUTAR_TODAS_LAS_PRUEBAS` (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G)
 4. **Exportación**: `cscript condor_cli.vbs export` para sincronizar cambios desde Access (opcional)
 
 **Comandos de Sincronización:**

@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Test_NotificationService.bas
 ' Módulo de pruebas para el servicio de notificaciones
@@ -10,22 +10,30 @@ Option Explicit
 Private mockNotificationService As INotificationService
 
 ' Función principal para ejecutar todas las pruebas del módulo
-Public Sub Test_NotificationService_RunAll()
+Public Function Test_NotificationService_RunAll() As CTestSuiteResult
+    Dim suiteResult As New CTestSuiteResult
+    suiteResult.SuiteName = "Test_NotificationService"
+    
     Debug.Print "=== Iniciando Test_NotificationService ==="
     
     ' Ejecutar todas las pruebas
-    Test_EnviarNotificacion_ParametrosValidos
-    Test_EnviarNotificacion_ParametrosInvalidos
-    Test_EnviarNotificacion_ConAdjunto
-    Test_EnviarNotificacion_SinAdjunto
-    Test_EnviarNotificacion_SimularError
+    suiteResult.AddTest "Test_EnviarNotificacion_ParametrosValidos", Test_EnviarNotificacion_ParametrosValidos_Result()
+    suiteResult.AddTest "Test_EnviarNotificacion_ParametrosInvalidos", Test_EnviarNotificacion_ParametrosInvalidos_Result()
+    suiteResult.AddTest "Test_EnviarNotificacion_ConAdjunto", Test_EnviarNotificacion_ConAdjunto_Result()
+    suiteResult.AddTest "Test_EnviarNotificacion_SinAdjunto", Test_EnviarNotificacion_SinAdjunto_Result()
+    suiteResult.AddTest "Test_EnviarNotificacion_SimularError", Test_EnviarNotificacion_SimularError_Result()
     
     Debug.Print "=== Test_NotificationService Completado ==="
-End Sub
+    
+    Set Test_NotificationService_RunAll = suiteResult
+End Function
 
 ' Test: Verificar envío con parámetros válidos
-Public Sub Test_EnviarNotificacion_ParametrosValidos()
-    Debug.Print "Ejecutando: Test_EnviarNotificacion_ParametrosValidos"
+Private Function Test_EnviarNotificacion_ParametrosValidos_Result() As CTestResult
+    Dim result As New CTestResult
+    result.TestName = "Test_EnviarNotificacion_ParametrosValidos"
+    
+    On Error GoTo TestError
     
     ' Arrange
     Set mockNotificationService = New CMockNotificationService
@@ -47,27 +55,28 @@ Public Sub Test_EnviarNotificacion_ParametrosValidos()
     resultado = mockNotificationService.EnviarNotificacion(destinatarios, asunto, cuerpoHTML, urlAdjunto)
     
     ' Assert
-    If Not resultado Then
-        Debug.Print "ERROR: El método debe devolver True con parámetros válidos"
-        Exit Sub
-    End If
+    Assert.IsTrue resultado, "El método debe devolver True con parámetros válidos"
+    Assert.AreEqual 1, mockNotificationService.NumeroLlamadas, "Debe registrar exactamente 1 llamada"
+    Assert.IsTrue mockNotificationService.FueLlamadoCon(destinatarios, asunto, cuerpoHTML, urlAdjunto), "Los parámetros no coinciden con la llamada registrada"
     
-    If mockNotificationService.NumeroLlamadas <> 1 Then
-        Debug.Print "ERROR: Debe registrar exactamente 1 llamada"
-        Exit Sub
-    End If
+    result.Passed = True
+    result.Message = "Prueba exitosa: EnviarNotificacion con parámetros válidos"
     
-    If Not mockNotificationService.FueLlamadoCon(destinatarios, asunto, cuerpoHTML, urlAdjunto) Then
-        Debug.Print "ERROR: Los parámetros no coinciden con la llamada registrada"
-        Exit Sub
-    End If
+    Set Test_EnviarNotificacion_ParametrosValidos_Result = result
+    Exit Function
     
-    Debug.Print "ÉXITO: Test_EnviarNotificacion_ParametrosValidos"
-End Sub
+TestError:
+    result.Passed = False
+    result.Message = "Error en Test_EnviarNotificacion_ParametrosValidos: " & Err.Description
+    Set Test_EnviarNotificacion_ParametrosValidos_Result = result
+End Function
 
 ' Test: Verificar comportamiento con parámetros inválidos
-Public Sub Test_EnviarNotificacion_ParametrosInvalidos()
-    Debug.Print "Ejecutando: Test_EnviarNotificacion_ParametrosInvalidos"
+Private Function Test_EnviarNotificacion_ParametrosInvalidos_Result() As CTestResult
+    Dim result As New CTestResult
+    result.TestName = "Test_EnviarNotificacion_ParametrosInvalidos"
+    
+    On Error GoTo TestError
     
     ' Arrange
     Set mockNotificationService = New CMockNotificationService
@@ -78,17 +87,26 @@ Public Sub Test_EnviarNotificacion_ParametrosInvalidos()
     Dim resultado As Boolean
     resultado = mockNotificationService.EnviarNotificacion("", "Asunto", "<html>Cuerpo</html>")
     
-    If mockNotificationService.NumeroLlamadas <> 1 Then
-        Debug.Print "ERROR: Debe registrar la llamada aunque los parámetros sean inválidos"
-        Exit Sub
-    End If
+    Assert.AreEqual 1, mockNotificationService.NumeroLlamadas, "Debe registrar la llamada aunque los parámetros sean inválidos"
     
-    Debug.Print "ÉXITO: Test_EnviarNotificacion_ParametrosInvalidos"
-End Sub
+    result.Passed = True
+    result.Message = "Prueba exitosa: EnviarNotificacion con parámetros inválidos"
+    
+    Set Test_EnviarNotificacion_ParametrosInvalidos_Result = result
+    Exit Function
+    
+TestError:
+    result.Passed = False
+    result.Message = "Error en Test_EnviarNotificacion_ParametrosInvalidos: " & Err.Description
+    Set Test_EnviarNotificacion_ParametrosInvalidos_Result = result
+End Function
 
 ' Test: Verificar envío con adjunto
-Public Sub Test_EnviarNotificacion_ConAdjunto()
-    Debug.Print "Ejecutando: Test_EnviarNotificacion_ConAdjunto"
+Private Function Test_EnviarNotificacion_ConAdjunto_Result() As CTestResult
+    Dim result As New CTestResult
+    result.TestName = "Test_EnviarNotificacion_ConAdjunto"
+    
+    On Error GoTo TestError
     
     ' Arrange
     Set mockNotificationService = New CMockNotificationService
@@ -103,22 +121,27 @@ Public Sub Test_EnviarNotificacion_ConAdjunto()
     resultado = mockNotificationService.EnviarNotificacion("test@empresa.com", "Asunto", "<html>Cuerpo</html>", urlAdjunto)
     
     ' Assert
-    If Not resultado Then
-        Debug.Print "ERROR: El método debe devolver True con adjunto"
-        Exit Sub
-    End If
+    Assert.IsTrue resultado, "El método debe devolver True con adjunto"
+    Assert.AreEqual urlAdjunto, mockNotificationService.UltimaLlamada_URLAdjunto, "URL de adjunto no registrada correctamente"
     
-    If mockNotificationService.UltimaLlamada_URLAdjunto <> urlAdjunto Then
-        Debug.Print "ERROR: URL de adjunto no registrada correctamente"
-        Exit Sub
-    End If
+    result.Passed = True
+    result.Message = "Prueba exitosa: EnviarNotificacion con adjunto"
     
-    Debug.Print "ÉXITO: Test_EnviarNotificacion_ConAdjunto"
-End Sub
+    Set Test_EnviarNotificacion_ConAdjunto_Result = result
+    Exit Function
+    
+TestError:
+    result.Passed = False
+    result.Message = "Error en Test_EnviarNotificacion_ConAdjunto: " & Err.Description
+    Set Test_EnviarNotificacion_ConAdjunto_Result = result
+End Function
 
 ' Test: Verificar envío sin adjunto
-Public Sub Test_EnviarNotificacion_SinAdjunto()
-    Debug.Print "Ejecutando: Test_EnviarNotificacion_SinAdjunto"
+Private Function Test_EnviarNotificacion_SinAdjunto_Result() As CTestResult
+    Dim result As New CTestResult
+    result.TestName = "Test_EnviarNotificacion_SinAdjunto"
+    
+    On Error GoTo TestError
     
     ' Arrange
     Set mockNotificationService = New CMockNotificationService
@@ -130,22 +153,27 @@ Public Sub Test_EnviarNotificacion_SinAdjunto()
     resultado = mockNotificationService.EnviarNotificacion("test@empresa.com", "Asunto", "<html>Cuerpo</html>")
     
     ' Assert
-    If Not resultado Then
-        Debug.Print "ERROR: El método debe devolver True sin adjunto"
-        Exit Sub
-    End If
+    Assert.IsTrue resultado, "El método debe devolver True sin adjunto"
+    Assert.AreEqual "", mockNotificationService.UltimaLlamada_URLAdjunto, "URL de adjunto debe estar vacía cuando no se proporciona"
     
-    If mockNotificationService.UltimaLlamada_URLAdjunto <> "" Then
-        Debug.Print "ERROR: URL de adjunto debe estar vacía cuando no se proporciona"
-        Exit Sub
-    End If
+    result.Passed = True
+    result.Message = "Prueba exitosa: EnviarNotificacion sin adjunto"
     
-    Debug.Print "ÉXITO: Test_EnviarNotificacion_SinAdjunto"
-End Sub
+    Set Test_EnviarNotificacion_SinAdjunto_Result = result
+    Exit Function
+    
+TestError:
+    result.Passed = False
+    result.Message = "Error en Test_EnviarNotificacion_SinAdjunto: " & Err.Description
+    Set Test_EnviarNotificacion_SinAdjunto_Result = result
+End Function
 
 ' Test: Verificar manejo de errores
-Public Sub Test_EnviarNotificacion_SimularError()
-    Debug.Print "Ejecutando: Test_EnviarNotificacion_SimularError"
+Private Function Test_EnviarNotificacion_SimularError_Result() As CTestResult
+    Dim result As New CTestResult
+    result.TestName = "Test_EnviarNotificacion_SimularError"
+    
+    On Error GoTo TestError
     
     ' Arrange
     Set mockNotificationService = New CMockNotificationService
@@ -159,18 +187,29 @@ Public Sub Test_EnviarNotificacion_SimularError()
     resultado = mockNotificationService.EnviarNotificacion("test@empresa.com", "Asunto", "<html>Cuerpo</html>")
     
     ' Si llegamos aquí, no se produjo el error esperado
-    Debug.Print "ERROR: Se esperaba un error simulado"
-    Exit Sub
+    result.Passed = False
+    result.Message = "ERROR: Se esperaba un error simulado pero no ocurrió"
+    Set Test_EnviarNotificacion_SimularError_Result = result
+    Exit Function
     
 ErrorEsperado:
     If Err.Number = 9999 Then
-        Debug.Print "ÉXITO: Test_EnviarNotificacion_SimularError"
+        result.Passed = True
+        result.Message = "Prueba exitosa: Error simulado manejado correctamente"
     Else
-        Debug.Print "ERROR: Error inesperado: " & Err.Description
+        result.Passed = False
+        result.Message = "ERROR: Error inesperado: " & Err.Description
     End If
     
     On Error GoTo 0
-End Sub
+    Set Test_EnviarNotificacion_SimularError_Result = result
+    Exit Function
+    
+TestError:
+    result.Passed = False
+    result.Message = "Error en Test_EnviarNotificacion_SimularError: " & Err.Description
+    Set Test_EnviarNotificacion_SimularError_Result = result
+End Function
 
 
 

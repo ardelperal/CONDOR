@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ===================================================================
 ' Clase: CValidationService
@@ -11,12 +11,19 @@ Option Explicit
 ' Implementa la interfaz IValidationService
 Implements IValidationService
 
+Private m_OperationLogger As IOperationLogger
+
 ' ===================================================================
 ' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN PRINCIPAL
 ' ===================================================================
 
 Private Function IValidationService_ValidarSolicitud(ByVal solicitud As T_Solicitud, ByRef MensajeError As String) As Boolean
     On Error GoTo ErrorHandler
+    
+    ' Logging de auditoría: Inicio de validación
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "VALIDATION_START", "Iniciando validación solicitud ID: " & solicitud.idSolicitud & ", Tipo: " & solicitud.tipoSolicitud, "CValidationService.ValidarSolicitud"
+    End If
     
     MensajeError = ""
     
@@ -47,10 +54,19 @@ Private Function IValidationService_ValidarSolicitud(ByVal solicitud As T_Solici
     End If
     
     ' Si llegamos aquí, todas las validaciones pasaron
+    ' Logging de auditoría: Validación exitosa
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "VALIDATION_SUCCESS", "Validación exitosa para solicitud ID: " & solicitud.idSolicitud, "CValidationService.ValidarSolicitud"
+    End If
+    
     IValidationService_ValidarSolicitud = True
     Exit Function
     
 ErrorHandler:
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "VALIDATION_ERROR", "Error en validación solicitud ID: " & solicitud.idSolicitud & " - " & Err.Description, "CValidationService.ValidarSolicitud"
+    End If
+    modErrorHandler.LogError Err.Number, Err.Description, "CValidationService.ValidarSolicitud"
     MensajeError = "Error interno en validación: " & Err.Description
     IValidationService_ValidarSolicitud = False
 End Function
@@ -81,6 +97,7 @@ Private Function IValidationService_ValidarNumeroExpediente(ByVal NumeroExpedien
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CValidationService.ValidarNumeroExpediente"
     MensajeError = "Error validando número de expediente: " & Err.Description
     IValidationService_ValidarNumeroExpediente = False
 End Function
@@ -107,6 +124,7 @@ Private Function IValidationService_ValidarTipoSolicitud(ByVal tipoSolicitud As 
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CValidationService.ValidarTipoSolicitud"
     MensajeError = "Error validando tipo de solicitud: " & Err.Description
     IValidationService_ValidarTipoSolicitud = False
 End Function
@@ -147,6 +165,7 @@ Private Function IValidationService_ValidarCamposObligatorios(ByVal solicitud As
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CValidationService.ValidarCamposObligatorios"
     MensajeError = "Error validando campos obligatorios: " & Err.Description
     IValidationService_ValidarCamposObligatorios = False
 End Function
@@ -182,12 +201,18 @@ Private Function IValidationService_ValidarImportes(ByVal importeOriginal As Cur
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CValidationService.ValidarImportes"
     MensajeError = "Error validando importes: " & Err.Description
     IValidationService_ValidarImportes = False
 End Function
 
 Private Function IValidationService_ValidarTransicionEstado(ByVal estadoActual As String, ByVal estadoNuevo As String, ByRef MensajeError As String) As Boolean
     On Error GoTo ErrorHandler
+    
+    ' Logging de auditoría: Validación de transición de estado
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "VALIDATION_TRANSITION", "Validando transición de estado - Actual: " & estadoActual & ", Nuevo: " & estadoNuevo, "CValidationService.ValidarTransicionEstado"
+    End If
     
     ' Validar que los estados no estén vacíos
     If Trim(estadoActual) = "" Or Trim(estadoNuevo) = "" Then
@@ -235,12 +260,37 @@ Private Function IValidationService_ValidarTransicionEstado(ByVal estadoActual A
             IValidationService_ValidarTransicionEstado = False
     End Select
     
+    ' Logging de auditoría: Validación de transición exitosa
+    If Not m_OperationLogger Is Nothing Then
+        If IValidationService_ValidarTransicionEstado Then
+            m_OperationLogger.LogOperation "VALIDATION_TRANSITION_SUCCESS", "Transición válida - Actual: " & estadoActual & ", Nuevo: " & estadoNuevo, "CValidationService.ValidarTransicionEstado"
+        Else
+            m_OperationLogger.LogOperation "VALIDATION_TRANSITION_FAILED", "Transición inválida - Actual: " & estadoActual & ", Nuevo: " & estadoNuevo & ", Error: " & MensajeError, "CValidationService.ValidarTransicionEstado"
+        End If
+    End If
+    
     Exit Function
     
 ErrorHandler:
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "VALIDATION_ERROR", "Error validando transición - Actual: " & estadoActual & ", Nuevo: " & estadoNuevo & ", Error: " & Err.Description, "CValidationService.ValidarTransicionEstado"
+    End If
+    modErrorHandler.LogError Err.Number, Err.Description, "CValidationService.ValidarTransicionEstado"
     MensajeError = "Error validando transición de estado: " & Err.Description
     IValidationService_ValidarTransicionEstado = False
 End Function
+
+' Método de inicialización para inyectar dependencias
+Public Sub Initialize(operationLogger As IOperationLogger)
+    On Error GoTo ErrorHandler
+    
+    Set m_OperationLogger = operationLogger
+    
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CValidationService.Initialize"
+End Sub
 
 
 

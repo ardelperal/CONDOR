@@ -1,11 +1,11 @@
 ﻿Option Compare Database
 Option Explicit
 ' ============================================================================
-' Módulo: Test_CSolicitudService
-' Descripción: Pruebas unitarias para CSolicitudService.cls
+' MÃ³dulo: Test_CSolicitudService
+' DescripciÃ³n: Pruebas unitarias para CSolicitudService.cls
 ' Autor: CONDOR-Expert
 ' Fecha: Enero 2025
-' Versión: 2.0 - Refactorizado para usar interfaces y patrón AAA
+' VersiÃ³n: 2.0 - Refactorizado para usar interfaces y patrÃ³n AAA
 ' ============================================================================
 
 ' Mock para simular datos de solicitud
@@ -24,10 +24,10 @@ End Type
 Private m_MockSolicitud As T_MockSolicitudData
 
 ' ============================================================================
-' FUNCIONES DE CONFIGURACIÓN DE MOCKS
+' FUNCIONES DE CONFIGURACIÃ“N DE MOCKS
 ' ============================================================================
 
-' Configura un mock de solicitud con datos válidos
+' Configura un mock de solicitud con datos vÃ¡lidos
 Private Sub SetupValidSolicitudMock()
     m_MockSolicitud.idSolicitud = 54321
     m_MockSolicitud.idExpediente = 12345
@@ -40,7 +40,7 @@ Private Sub SetupValidSolicitudMock()
     m_MockSolicitud.IsValid = True
 End Sub
 
-' Configura un mock de solicitud con datos inválidos
+' Configura un mock de solicitud con datos invÃ¡lidos
 Private Sub SetupInvalidSolicitudMock()
     m_MockSolicitud.idSolicitud = 0
     m_MockSolicitud.idExpediente = 0
@@ -82,12 +82,12 @@ Private Function CreateMockSolicitud() As ISolicitud
 End Function
 
 ' ============================================================================
-' PRUEBAS DE CREACIÓN E INICIALIZACIÓN
+' PRUEBAS DE CREACIÃ“N E INICIALIZACIÃ“N
 ' ============================================================================
 
 ' Prueba: CSolicitudService se puede instanciar exitosamente
 ' ============================================================================
-' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' FUNCIÃ“N PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
 ' ============================================================================
 
 Public Function Test_CSolicitudService_RunAll() As String
@@ -136,6 +136,7 @@ Public Function Test_CSolicitudService_Creation_Success() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudService_Creation_Success", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_CSolicitudService_Creation_Success = False
 End Function
 
@@ -157,14 +158,15 @@ Public Function Test_CSolicitudService_ImplementsISolicitudService() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudService_ImplementsISolicitudService", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_CSolicitudService_ImplementsISolicitudService = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE OBTENCIÓN DE SOLICITUDES
+' PRUEBAS DE OBTENCIÃ“N DE SOLICITUDES
 ' ============================================================================
 
-' Prueba: GetSolicitud con ID válido retorna solicitud
+' Prueba: GetSolicitud con ID vÃ¡lido retorna solicitud
 Public Function Test_GetSolicitud_ValidId_ReturnsSolicitud() As Boolean
     On Error GoTo TestFail
     
@@ -177,16 +179,17 @@ Public Function Test_GetSolicitud_ValidId_ReturnsSolicitud() As Boolean
     Dim solicitud As ISolicitud
     Set solicitud = solicitudService.GetSolicitud(m_MockSolicitud.idSolicitud)
     
-    ' Assert - CSolicitudService.GetSolicitud retorna Nothing en implementación actual (TODO)
+    ' Assert - CSolicitudService.GetSolicitud retorna Nothing en implementaciÃ³n actual (TODO)
     Test_GetSolicitud_ValidId_ReturnsSolicitud = (solicitud Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetSolicitud_ValidId_ReturnsSolicitud", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_GetSolicitud_ValidId_ReturnsSolicitud = False
 End Function
 
-' Prueba: GetSolicitud con ID inválido maneja el error correctamente
+' Prueba: GetSolicitud con ID invÃ¡lido maneja el error correctamente
 Public Function Test_GetSolicitud_InvalidId_HandlesGracefully() As Boolean
     On Error GoTo TestFail
     
@@ -198,12 +201,13 @@ Public Function Test_GetSolicitud_InvalidId_HandlesGracefully() As Boolean
     Dim solicitud As ISolicitud
     Set solicitud = solicitudService.GetSolicitud(-1)
     
-    ' Assert - Debería manejar el ID inválido devolviendo Nothing
+    ' Assert - DeberÃ­a manejar el ID invÃ¡lido devolviendo Nothing
     Test_GetSolicitud_InvalidId_HandlesGracefully = (solicitud Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetSolicitud_InvalidId_HandlesGracefully", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_GetSolicitud_InvalidId_HandlesGracefully = False
 End Function
 
@@ -219,20 +223,21 @@ Public Function Test_GetSolicitud_ZeroId_HandlesGracefully() As Boolean
     Dim solicitud As ISolicitud
     Set solicitud = solicitudService.GetSolicitud(0)
     
-    ' Assert - Debería manejar el ID cero devolviendo Nothing
+    ' Assert - DeberÃ­a manejar el ID cero devolviendo Nothing
     Test_GetSolicitud_ZeroId_HandlesGracefully = (solicitud Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetSolicitud_ZeroId_HandlesGracefully", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_GetSolicitud_ZeroId_HandlesGracefully = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE CREACIÓN DE SOLICITUDES
+' PRUEBAS DE CREACIÃ“N DE SOLICITUDES
 ' ============================================================================
 
-' Prueba: CreateSolicitud con datos válidos retorna ID
+' Prueba: CreateSolicitud con datos vÃ¡lidos retorna ID
 Public Function Test_CreateSolicitud_ValidData_ReturnsId() As Boolean
     On Error GoTo TestFail
     
@@ -248,16 +253,17 @@ Public Function Test_CreateSolicitud_ValidData_ReturnsId() As Boolean
                                            m_MockSolicitud.Descripcion, _
                                            m_MockSolicitud.IdUsuarioCreador)
     
-    ' Assert - Implementación actual retorna 0 (TODO)
+    ' Assert - ImplementaciÃ³n actual retorna 0 (TODO)
     Test_CreateSolicitud_ValidData_ReturnsId = (newId >= 0)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateSolicitud_ValidData_ReturnsId", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_CreateSolicitud_ValidData_ReturnsId = False
 End Function
 
-' Prueba: CreateSolicitud con ID de expediente inválido maneja error
+' Prueba: CreateSolicitud con ID de expediente invÃ¡lido maneja error
 Public Function Test_CreateSolicitud_InvalidExpedienteId_HandlesError() As Boolean
     On Error GoTo TestFail
     
@@ -267,18 +273,19 @@ Public Function Test_CreateSolicitud_InvalidExpedienteId_HandlesError() As Boole
     
     ' Act
     Dim newId As Long
-    newId = solicitudService.CreateSolicitud(0, "PC", "Descripción", 1)
+    newId = solicitudService.CreateSolicitud(0, "PC", "DescripciÃ³n", 1)
     
-    ' Assert - Debería manejar el error sin fallar
+    ' Assert - DeberÃ­a manejar el error sin fallar
     Test_CreateSolicitud_InvalidExpedienteId_HandlesError = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateSolicitud_InvalidExpedienteId_HandlesError", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_CreateSolicitud_InvalidExpedienteId_HandlesError = False
 End Function
 
-' Prueba: CreateSolicitud con tipo vacío maneja error
+' Prueba: CreateSolicitud con tipo vacÃ­o maneja error
 Public Function Test_CreateSolicitud_EmptyTipo_HandlesError() As Boolean
     On Error GoTo TestFail
     
@@ -288,18 +295,19 @@ Public Function Test_CreateSolicitud_EmptyTipo_HandlesError() As Boolean
     
     ' Act
     Dim newId As Long
-    newId = solicitudService.CreateSolicitud(12345, "", "Descripción", 1)
+    newId = solicitudService.CreateSolicitud(12345, "", "DescripciÃ³n", 1)
     
-    ' Assert - Debería manejar el error sin fallar
+    ' Assert - DeberÃ­a manejar el error sin fallar
     Test_CreateSolicitud_EmptyTipo_HandlesError = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateSolicitud_EmptyTipo_HandlesError", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_CreateSolicitud_EmptyTipo_HandlesError = False
 End Function
 
-' Prueba: CreateSolicitud con ID de usuario inválido maneja error
+' Prueba: CreateSolicitud con ID de usuario invÃ¡lido maneja error
 Public Function Test_CreateSolicitud_InvalidUserId_HandlesError() As Boolean
     On Error GoTo TestFail
     
@@ -309,22 +317,23 @@ Public Function Test_CreateSolicitud_InvalidUserId_HandlesError() As Boolean
     
     ' Act
     Dim newId As Long
-    newId = solicitudService.CreateSolicitud(12345, "PC", "Descripción", 0)
+    newId = solicitudService.CreateSolicitud(12345, "PC", "DescripciÃ³n", 0)
     
-    ' Assert - Debería manejar el error sin fallar
+    ' Assert - DeberÃ­a manejar el error sin fallar
     Test_CreateSolicitud_InvalidUserId_HandlesError = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateSolicitud_InvalidUserId_HandlesError", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_CreateSolicitud_InvalidUserId_HandlesError = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE ACTUALIZACIÓN DE SOLICITUDES
+' PRUEBAS DE ACTUALIZACIÃ“N DE SOLICITUDES
 ' ============================================================================
 
-' Prueba: UpdateSolicitud con datos válidos retorna True
+' Prueba: UpdateSolicitud con datos vÃ¡lidos retorna True
 Public Function Test_UpdateSolicitud_ValidData_ReturnsTrue() As Boolean
     On Error GoTo TestFail
     
@@ -336,19 +345,20 @@ Public Function Test_UpdateSolicitud_ValidData_ReturnsTrue() As Boolean
     ' Act
     Dim result As Boolean
     result = solicitudService.UpdateSolicitud(m_MockSolicitud.idSolicitud, _
-                                            "Nueva descripción", _
+                                            "Nueva descripciÃ³n", _
                                             "En Proceso")
     
-    ' Assert - Implementación actual retorna False (TODO)
-    Test_UpdateSolicitud_ValidData_ReturnsTrue = Not result ' Ajustado para implementación actual
+    ' Assert - ImplementaciÃ³n actual retorna False (TODO)
+    Test_UpdateSolicitud_ValidData_ReturnsTrue = Not result ' Ajustado para implementaciÃ³n actual
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_UpdateSolicitud_ValidData_ReturnsTrue", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_UpdateSolicitud_ValidData_ReturnsTrue = False
 End Function
 
-' Prueba: UpdateSolicitud con ID inválido retorna False
+' Prueba: UpdateSolicitud con ID invÃ¡lido retorna False
 Public Function Test_UpdateSolicitud_InvalidId_ReturnsFalse() As Boolean
     On Error GoTo TestFail
     
@@ -358,14 +368,15 @@ Public Function Test_UpdateSolicitud_InvalidId_ReturnsFalse() As Boolean
     
     ' Act
     Dim result As Boolean
-    result = solicitudService.UpdateSolicitud(-1, "Descripción", "Estado")
+    result = solicitudService.UpdateSolicitud(-1, "DescripciÃ³n", "Estado")
     
-    ' Assert - Debería retornar False para ID inválido
+    ' Assert - DeberÃ­a retornar False para ID invÃ¡lido
     Test_UpdateSolicitud_InvalidId_ReturnsFalse = Not result
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_UpdateSolicitud_InvalidId_ReturnsFalse", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_UpdateSolicitud_InvalidId_ReturnsFalse = False
 End Function
 
@@ -373,7 +384,7 @@ End Function
 ' PRUEBAS DE CAMBIO DE ESTADO
 ' ============================================================================
 
-' Prueba: ChangeEstado con transición válida retorna True
+' Prueba: ChangeEstado con transiciÃ³n vÃ¡lida retorna True
 Public Function Test_ChangeEstado_ValidTransition_ReturnsTrue() As Boolean
     On Error GoTo TestFail
     
@@ -386,16 +397,17 @@ Public Function Test_ChangeEstado_ValidTransition_ReturnsTrue() As Boolean
     Dim result As Boolean
     result = solicitudService.ChangeEstado(m_MockSolicitud.idSolicitud, "En Proceso")
     
-    ' Assert - Implementación actual retorna False (TODO)
-    Test_ChangeEstado_ValidTransition_ReturnsTrue = Not result ' Ajustado para implementación actual
+    ' Assert - ImplementaciÃ³n actual retorna False (TODO)
+    Test_ChangeEstado_ValidTransition_ReturnsTrue = Not result ' Ajustado para implementaciÃ³n actual
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ChangeEstado_ValidTransition_ReturnsTrue", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_ChangeEstado_ValidTransition_ReturnsTrue = False
 End Function
 
-' Prueba: ChangeEstado con transición inválida retorna False
+' Prueba: ChangeEstado con transiciÃ³n invÃ¡lida retorna False
 Public Function Test_ChangeEstado_InvalidTransition_ReturnsFalse() As Boolean
     On Error GoTo TestFail
     
@@ -408,16 +420,17 @@ Public Function Test_ChangeEstado_InvalidTransition_ReturnsFalse() As Boolean
     Dim result As Boolean
     result = solicitudService.ChangeEstado(m_MockSolicitud.idSolicitud, "Pendiente")
     
-    ' Assert - Cambiar de Completada a Pendiente debería ser inválido
+    ' Assert - Cambiar de Completada a Pendiente deberÃ­a ser invÃ¡lido
     Test_ChangeEstado_InvalidTransition_ReturnsFalse = Not result
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ChangeEstado_InvalidTransition_ReturnsFalse", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_ChangeEstado_InvalidTransition_ReturnsFalse = False
 End Function
 
-' Prueba: ChangeEstado con estado vacío retorna False
+' Prueba: ChangeEstado con estado vacÃ­o retorna False
 Public Function Test_ChangeEstado_EmptyEstado_ReturnsFalse() As Boolean
     On Error GoTo TestFail
     
@@ -430,20 +443,21 @@ Public Function Test_ChangeEstado_EmptyEstado_ReturnsFalse() As Boolean
     Dim result As Boolean
     result = solicitudService.ChangeEstado(m_MockSolicitud.idSolicitud, "")
     
-    ' Assert - Estado vacío debería retornar False
+    ' Assert - Estado vacÃ­o deberÃ­a retornar False
     Test_ChangeEstado_EmptyEstado_ReturnsFalse = Not result
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ChangeEstado_EmptyEstado_ReturnsFalse", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_ChangeEstado_EmptyEstado_ReturnsFalse = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE BÚSQUEDA Y LISTADO
+' PRUEBAS DE BÃšSQUEDA Y LISTADO
 ' ============================================================================
 
-' Prueba: GetSolicitudesByExpediente con ID válido retorna Collection
+' Prueba: GetSolicitudesByExpediente con ID vÃ¡lido retorna Collection
 Public Function Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection() As Boolean
     On Error GoTo TestFail
     
@@ -456,16 +470,17 @@ Public Function Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection() As B
     Dim results As Collection
     Set results = solicitudService.GetSolicitudesByExpediente(m_MockSolicitud.idExpediente)
     
-    ' Assert - Debería retornar una collection válida
+    ' Assert - DeberÃ­a retornar una collection vÃ¡lida
     Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection = Not (results Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_GetSolicitudesByExpediente_ValidId_ReturnsCollection = False
 End Function
 
-' Prueba: GetSolicitudesByTipo con tipo válido retorna Collection
+' Prueba: GetSolicitudesByTipo con tipo vÃ¡lido retorna Collection
 Public Function Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection() As Boolean
     On Error GoTo TestFail
     
@@ -477,16 +492,17 @@ Public Function Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection() As Boole
     Dim results As Collection
     Set results = solicitudService.GetSolicitudesByTipo("PC")
     
-    ' Assert - Debería retornar una collection válida
+    ' Assert - DeberÃ­a retornar una collection vÃ¡lida
     Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection = Not (results Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_GetSolicitudesByTipo_ValidTipo_ReturnsCollection = False
 End Function
 
-' Prueba: GetSolicitudesByEstado con estado válido retorna Collection
+' Prueba: GetSolicitudesByEstado con estado vÃ¡lido retorna Collection
 Public Function Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection() As Boolean
     On Error GoTo TestFail
     
@@ -498,16 +514,17 @@ Public Function Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection() As B
     Dim results As Collection
     Set results = solicitudService.GetSolicitudesByEstado("Pendiente")
     
-    ' Assert - Debería retornar una collection válida
+    ' Assert - DeberÃ­a retornar una collection vÃ¡lida
     Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection = Not (results Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_GetSolicitudesByEstado_ValidEstado_ReturnsCollection = False
 End Function
 
-' Prueba: SearchSolicitudes con criterio válido retorna resultados
+' Prueba: SearchSolicitudes con criterio vÃ¡lido retorna resultados
 Public Function Test_SearchSolicitudes_ValidCriteria_ReturnsResults() As Boolean
     On Error GoTo TestFail
     
@@ -519,20 +536,21 @@ Public Function Test_SearchSolicitudes_ValidCriteria_ReturnsResults() As Boolean
     Dim results As Collection
     Set results = solicitudService.SearchSolicitudes("SOL")
     
-    ' Assert - Debería retornar una collection válida
+    ' Assert - DeberÃ­a retornar una collection vÃ¡lida
     Test_SearchSolicitudes_ValidCriteria_ReturnsResults = Not (results Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_SearchSolicitudes_ValidCriteria_ReturnsResults", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_SearchSolicitudes_ValidCriteria_ReturnsResults = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE VALIDACIÓN
+' PRUEBAS DE VALIDACIÃ“N
 ' ============================================================================
 
-' Prueba: ValidateSolicitud con datos válidos retorna True
+' Prueba: ValidateSolicitud con datos vÃ¡lidos retorna True
 Public Function Test_ValidateSolicitud_ValidData_ReturnsTrue() As Boolean
     On Error GoTo TestFail
     
@@ -547,16 +565,17 @@ Public Function Test_ValidateSolicitud_ValidData_ReturnsTrue() As Boolean
     Dim result As Boolean
     result = solicitudService.ValidateSolicitud(solicitud)
     
-    ' Assert - Implementación actual retorna True
+    ' Assert - ImplementaciÃ³n actual retorna True
     Test_ValidateSolicitud_ValidData_ReturnsTrue = result
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ValidateSolicitud_ValidData_ReturnsTrue", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_ValidateSolicitud_ValidData_ReturnsTrue = False
 End Function
 
-' Prueba: ValidateSolicitud con datos inválidos retorna False
+' Prueba: ValidateSolicitud con datos invÃ¡lidos retorna False
 Public Function Test_ValidateSolicitud_InvalidData_ReturnsFalse() As Boolean
     On Error GoTo TestFail
     
@@ -571,20 +590,21 @@ Public Function Test_ValidateSolicitud_InvalidData_ReturnsFalse() As Boolean
     Dim result As Boolean
     result = solicitudService.ValidateSolicitud(solicitud)
     
-    ' Assert - Para datos inválidos debería retornar False, pero implementación actual retorna True
-    Test_ValidateSolicitud_InvalidData_ReturnsFalse = result ' Ajustado para implementación actual
+    ' Assert - Para datos invÃ¡lidos deberÃ­a retornar False, pero implementaciÃ³n actual retorna True
+    Test_ValidateSolicitud_InvalidData_ReturnsFalse = result ' Ajustado para implementaciÃ³n actual
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ValidateSolicitud_InvalidData_ReturnsFalse", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_ValidateSolicitud_InvalidData_ReturnsFalse = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE INTEGRACIÓN CON FACTORY
+' PRUEBAS DE INTEGRACIÃ“N CON FACTORY
 ' ============================================================================
 
-' Prueba: Integración con SolicitudFactory funciona correctamente
+' Prueba: IntegraciÃ³n con SolicitudFactory funciona correctamente
 Public Function Test_Integration_WithSolicitudFactory() As Boolean
     On Error GoTo TestFail
     
@@ -593,16 +613,17 @@ Public Function Test_Integration_WithSolicitudFactory() As Boolean
     Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
-    ' Act - Probamos la integración con el factory
+    ' Act - Probamos la integraciÃ³n con el factory
     Dim solicitudObj As ISolicitud
     Set solicitudObj = modSolicitudFactory.CreateSolicitud(m_MockSolicitud.idSolicitud)
     
-    ' Assert - El factory debería crear una instancia válida
+    ' Assert - El factory deberÃ­a crear una instancia vÃ¡lida
     Test_Integration_WithSolicitudFactory = Not (solicitudObj Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_WithSolicitudFactory", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_Integration_WithSolicitudFactory = False
 End Function
 
@@ -610,7 +631,7 @@ End Function
 ' PRUEBAS DE CASOS EXTREMOS
 ' ============================================================================
 
-' Prueba: Manejo de grandes volúmenes de datos
+' Prueba: Manejo de grandes volÃºmenes de datos
 Public Function Test_LargeDataHandling_ManyResults() As Boolean
     On Error GoTo TestFail
     
@@ -618,20 +639,21 @@ Public Function Test_LargeDataHandling_ManyResults() As Boolean
     Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
-    ' Act - Simulamos búsqueda que podría retornar muchos resultados
+    ' Act - Simulamos bÃºsqueda que podrÃ­a retornar muchos resultados
     Dim results As Collection
     Set results = solicitudService.SearchSolicitudes("")
     
-    ' Assert - Debería manejar búsquedas amplias sin fallar
+    ' Assert - DeberÃ­a manejar bÃºsquedas amplias sin fallar
     Test_LargeDataHandling_ManyResults = Not (results Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_LargeDataHandling_ManyResults", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_LargeDataHandling_ManyResults = False
 End Function
 
-' Prueba: Operaciones concurrentes múltiples
+' Prueba: Operaciones concurrentes mÃºltiples
 Public Function Test_ConcurrentOperations_MultipleUpdates() As Boolean
     On Error GoTo TestFail
     
@@ -640,22 +662,23 @@ Public Function Test_ConcurrentOperations_MultipleUpdates() As Boolean
     Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     
-    ' Act - Simulamos múltiples actualizaciones concurrentes
+    ' Act - Simulamos mÃºltiples actualizaciones concurrentes
     Dim result1 As Boolean
     Dim result2 As Boolean
     result1 = solicitudService.UpdateSolicitud(m_MockSolicitud.idSolicitud, "Desc1", "Estado1")
     result2 = solicitudService.UpdateSolicitud(m_MockSolicitud.idSolicitud, "Desc2", "Estado2")
     
-    ' Assert - Las operaciones deberían ejecutarse sin fallar
+    ' Assert - Las operaciones deberÃ­an ejecutarse sin fallar
     Test_ConcurrentOperations_MultipleUpdates = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ConcurrentOperations_MultipleUpdates", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_ConcurrentOperations_MultipleUpdates = False
 End Function
 
-' Prueba: Caso extremo con descripción muy larga
+' Prueba: Caso extremo con descripciÃ³n muy larga
 Public Function Test_EdgeCase_VeryLongDescription() As Boolean
     On Error GoTo TestFail
     
@@ -663,23 +686,24 @@ Public Function Test_EdgeCase_VeryLongDescription() As Boolean
     Dim solicitudService As ISolicitudService
     Set solicitudService = New CSolicitudService
     Dim longDesc As String
-    longDesc = String(2000, "X") ' Descripción muy larga
+    longDesc = String(2000, "X") ' DescripciÃ³n muy larga
     
     ' Act
     Dim newId As Long
     newId = solicitudService.CreateSolicitud(12345, "PC", longDesc, 1)
     
-    ' Assert - Debería manejar descripciones largas sin fallar
+    ' Assert - DeberÃ­a manejar descripciones largas sin fallar
     Test_EdgeCase_VeryLongDescription = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_VeryLongDescription", Err.Number, Err.Description, "Test_CSolicitudService.bas"
     Test_EdgeCase_VeryLongDescription = False
 End Function
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
+' FUNCIÃ“N PRINCIPAL DE EJECUCIÃ“N DE PRUEBAS
 ' ============================================================================
 
 ' Ejecuta todas las pruebas unitarias de CSolicitudService y retorna el resultado
@@ -693,7 +717,7 @@ Public Function RunCSolicitudServiceTests() As String
     passedTests = 0
     
     ' ========================================
-    ' EJECUTAR PRUEBAS DE CREACIÓN
+    ' EJECUTAR PRUEBAS DE CREACIÃ“N
     ' ========================================
     
     totalTests = totalTests + 1
@@ -713,7 +737,7 @@ Public Function RunCSolicitudServiceTests() As String
     End If
     
     ' ========================================
-    ' EJECUTAR PRUEBAS DE OBTENCIÓN
+    ' EJECUTAR PRUEBAS DE OBTENCIÃ“N
     ' ========================================
     
     totalTests = totalTests + 1
@@ -741,7 +765,7 @@ Public Function RunCSolicitudServiceTests() As String
     End If
     
     ' ========================================
-    ' EJECUTAR PRUEBAS DE CREACIÓN DE SOLICITUDES
+    ' EJECUTAR PRUEBAS DE CREACIÃ“N DE SOLICITUDES
     ' ========================================
     
     totalTests = totalTests + 1
@@ -777,7 +801,7 @@ Public Function RunCSolicitudServiceTests() As String
     End If
     
     ' ========================================
-    ' EJECUTAR PRUEBAS DE ACTUALIZACIÓN
+    ' EJECUTAR PRUEBAS DE ACTUALIZACIÃ“N
     ' ========================================
     
     totalTests = totalTests + 1
@@ -825,7 +849,7 @@ Public Function RunCSolicitudServiceTests() As String
     End If
     
     ' ========================================
-    ' EJECUTAR PRUEBAS DE BÚSQUEDA Y LISTADO
+    ' EJECUTAR PRUEBAS DE BÃšSQUEDA Y LISTADO
     ' ========================================
     
     totalTests = totalTests + 1
@@ -861,7 +885,7 @@ Public Function RunCSolicitudServiceTests() As String
     End If
     
     ' ========================================
-    ' EJECUTAR PRUEBAS DE VALIDACIÓN
+    ' EJECUTAR PRUEBAS DE VALIDACIÃ“N
     ' ========================================
     
     totalTests = totalTests + 1
@@ -881,7 +905,7 @@ Public Function RunCSolicitudServiceTests() As String
     End If
     
     ' ========================================
-    ' EJECUTAR PRUEBAS DE INTEGRACIÓN Y CASOS EXTREMOS
+    ' EJECUTAR PRUEBAS DE INTEGRACIÃ“N Y CASOS EXTREMOS
     ' ========================================
     
     totalTests = totalTests + 1
@@ -930,6 +954,7 @@ Public Function RunCSolicitudServiceTests() As String
     
     RunCSolicitudServiceTests = resultado
 End Function
+
 
 
 

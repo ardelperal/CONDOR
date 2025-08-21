@@ -1,14 +1,14 @@
 ﻿Option Compare Database
 Option Explicit
 ' ============================================================================
-' Módulo: Test_CConfig
-' Descripción: Pruebas unitarias para CConfig.cls
+' MÃ³dulo: Test_CConfig
+' DescripciÃ³n: Pruebas unitarias para CConfig.cls
 ' Autor: CONDOR-Expert
 ' Fecha: Enero 2025
 ' ============================================================================
 ' Notas:
-' - Utiliza interfaz IConfig para cumplir principio de programación por contratos
-' - Implementa patrón AAA (Arrange-Act-Assert) en todas las pruebas
+' - Utiliza interfaz IConfig para cumplir principio de programaciÃ³n por contratos
+' - Implementa patrÃ³n AAA (Arrange-Act-Assert) en todas las pruebas
 ' - Manejo robusto de errores con etiquetas TestFail
 ' ============================================================================
 
@@ -30,10 +30,10 @@ End Type
 Private m_MockConfig As T_MockConfigData
 
 ' ============================================================================
-' FUNCIONES DE CONFIGURACIÓN DE MOCKS
+' FUNCIONES DE CONFIGURACIÃ“N DE MOCKS
 ' ============================================================================
 
-' Configura un mock válido con todas las rutas estándar del proyecto CONDOR
+' Configura un mock vÃ¡lido con todas las rutas estÃ¡ndar del proyecto CONDOR
 Private Sub SetupValidMockConfig()
     With m_MockConfig
         .DatabasePath = "C:\Proyectos\CONDOR\CONDOR.accdb"
@@ -50,7 +50,7 @@ Private Sub SetupValidMockConfig()
     End With
 End Sub
 
-' Configura un mock inválido para probar manejo de errores
+' Configura un mock invÃ¡lido para probar manejo de errores
 Private Sub SetupInvalidMockConfig()
     With m_MockConfig
         .DatabasePath = ""
@@ -68,12 +68,12 @@ Private Sub SetupInvalidMockConfig()
 End Sub
 
 ' ============================================================================
-' PRUEBAS DE CREACIÓN E INICIALIZACIÓN
+' PRUEBAS DE CREACIÃ“N E INICIALIZACIÃ“N
 ' ============================================================================
 
 ' Prueba: CConfig se puede instanciar exitosamente
 ' ============================================================================
-' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' FUNCIÃ“N PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
 ' ============================================================================
 
 Public Function Test_CConfig_RunAll() As String
@@ -232,6 +232,7 @@ Public Function Test_CConfig_Creation_Success() As Boolean
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_CConfig.Test_CConfig_Creation_Success")
     Test_CConfig_Creation_Success = False
 End Function
 
@@ -247,16 +248,17 @@ Public Function Test_CConfig_ImplementsIConfig() As Boolean
     Dim configInterface As IConfig
     Set configInterface = configConcrete
     
-    ' Assert - Verificar que la asignación de interfaz es exitosa
+    ' Assert - Verificar que la asignaciÃ³n de interfaz es exitosa
     Test_CConfig_ImplementsIConfig = Not (configInterface Is Nothing)
     
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_CConfig.Test_CConfig_ImplementsIConfig")
     Test_CConfig_ImplementsIConfig = False
 End Function
 
-' Prueba: GetValue con clave válida retorna el valor esperado
+' Prueba: GetValue con clave vÃ¡lida retorna el valor esperado
 Public Function Test_CConfig_GetValue_ValidKey_ReturnsValue() As Boolean
     On Error GoTo TestFail
     
@@ -277,72 +279,73 @@ Public Function Test_CConfig_GetValue_ValidKey_ReturnsValue() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CConfig_GetValue_ValidKey_ReturnsValue", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_CConfig_GetValue_ValidKey_ReturnsValue = False
 End Function
 
-' Prueba: GetValue con clave inválida retorna vacío
+' Prueba: GetValue con clave invÃ¡lida retorna vacÃ­o
 Public Function Test_CConfig_GetValue_InvalidKey_ReturnsEmpty() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_GetValue_InvalidKey_ReturnsEmpty = False
 End Function
 
-' Prueba: SetValue con clave válida es exitoso
+' Prueba: SetValue con clave vÃ¡lida es exitoso
 Public Function Test_CConfig_SetValue_ValidKey_Success() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_SetValue_ValidKey_Success = False
 End Function
 
-' Prueba: SetValue con clave vacía falla
+' Prueba: SetValue con clave vacÃ­a falla
 Public Function Test_CConfig_SetValue_EmptyKey_Fails() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_SetValue_EmptyKey_Fails = False
 End Function
 
 ' Prueba: LoadFromDatabase es exitoso
 Public Function Test_CConfig_LoadFromDatabase_Success() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_LoadFromDatabase_Success = False
 End Function
 
 ' Prueba: SaveToDatabase es exitoso
 Public Function Test_CConfig_SaveToDatabase_Success() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_SaveToDatabase_Success = False
 End Function
 
 ' Prueba: GetConnectionString retorna una cadena
 Public Function Test_CConfig_GetConnectionString_ReturnsString() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_GetConnectionString_ReturnsString = False
 End Function
 
 ' Prueba: GetLogLevel retorna un entero
 Public Function Test_CConfig_GetLogLevel_ReturnsInteger() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_GetLogLevel_ReturnsInteger = False
 End Function
 
 ' Prueba: IsDebugMode retorna un booleano
 Public Function Test_CConfig_IsDebugMode_ReturnsBoolean() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_IsDebugMode_ReturnsBoolean = False
 End Function
 
 ' Prueba: GetTimeout retorna un entero
 Public Function Test_CConfig_GetTimeout_ReturnsInteger() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_GetTimeout_ReturnsInteger = False
 End Function
 
 ' Prueba: ValidateConfiguration es exitoso
 Public Function Test_CConfig_ValidateConfiguration_Success() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_ValidateConfiguration_Success = False
 End Function
 
 ' Prueba: ResetToDefaults es exitoso
 Public Function Test_CConfig_ResetToDefaults_Success() As Boolean
-    ' TODO: Implementar lógica de la prueba
+    ' TODO: Implementar lÃ³gica de la prueba
     Test_CConfig_ResetToDefaults_Success = False
 End Function
 
@@ -358,20 +361,21 @@ Public Function Test_InitializeEnvironment_ReturnsBoolean() As Boolean
     Dim result As Boolean
     result = config.InitializeEnvironment()
     
-    ' Assert - Verificar que la función ejecuta sin errores y retorna booleano
+    ' Assert - Verificar que la funciÃ³n ejecuta sin errores y retorna booleano
     Test_InitializeEnvironment_ReturnsBoolean = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_InitializeEnvironment_ReturnsBoolean", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_InitializeEnvironment_ReturnsBoolean = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE CONFIGURACIÓN DE ENTORNO
+' PRUEBAS DE CONFIGURACIÃ“N DE ENTORNO
 ' ============================================================================
 
-' Prueba: GetActiveEnvironment retorna una cadena válida
+' Prueba: GetActiveEnvironment retorna una cadena vÃ¡lida
 Public Function Test_GetActiveEnvironment_ReturnsString() As Boolean
     On Error GoTo TestFail
     
@@ -383,12 +387,13 @@ Public Function Test_GetActiveEnvironment_ReturnsString() As Boolean
     Dim Entorno As String
     Entorno = config.GetActiveEnvironment()
     
-    ' Assert - Verificar que retorna un string válido
+    ' Assert - Verificar que retorna un string vÃ¡lido
     Test_GetActiveEnvironment_ReturnsString = (Len(Entorno) >= 0)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetActiveEnvironment_ReturnsString", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_GetActiveEnvironment_ReturnsString = False
 End Function
 
@@ -405,20 +410,21 @@ Public Function Test_EnvironmentOverride_ForzarLocal_Works() As Boolean
     Dim Entorno As String
     Entorno = config.GetActiveEnvironment()
     
-    ' Assert - En modo desarrollo, debería estar configurado correctamente
+    ' Assert - En modo desarrollo, deberÃ­a estar configurado correctamente
     Test_EnvironmentOverride_ForzarLocal_Works = (Entorno = "Local" Or Entorno <> "")
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EnvironmentOverride_ForzarLocal_Works", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_EnvironmentOverride_ForzarLocal_Works = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE RUTAS DE CONFIGURACIÓN
+' PRUEBAS DE RUTAS DE CONFIGURACIÃ“N
 ' ============================================================================
 
-' Prueba: GetDatabasePath retorna una ruta válida
+' Prueba: GetDatabasePath retorna una ruta vÃ¡lida
 Public Function Test_GetDatabasePath_ReturnsValidPath() As Boolean
     On Error GoTo TestFail
     
@@ -430,16 +436,17 @@ Public Function Test_GetDatabasePath_ReturnsValidPath() As Boolean
     Dim path As String
     path = config.GetDatabasePath()
     
-    ' Assert - Verificar que retorna una ruta no vacía
+    ' Assert - Verificar que retorna una ruta no vacÃ­a
     Test_GetDatabasePath_ReturnsValidPath = (Len(path) > 0)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetDatabasePath_ReturnsValidPath", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_GetDatabasePath_ReturnsValidPath = False
 End Function
 
-' Prueba: GetDataPath retorna una ruta válida
+' Prueba: GetDataPath retorna una ruta vÃ¡lida
 Public Function Test_GetDataPath_ReturnsValidPath() As Boolean
     On Error GoTo TestFail
     
@@ -451,16 +458,17 @@ Public Function Test_GetDataPath_ReturnsValidPath() As Boolean
     Dim path As String
     path = config.GetDataPath()
     
-    ' Assert - Verificar que retorna una ruta no vacía
+    ' Assert - Verificar que retorna una ruta no vacÃ­a
     Test_GetDataPath_ReturnsValidPath = (Len(path) > 0)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetDataPath_ReturnsValidPath", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_GetDataPath_ReturnsValidPath = False
 End Function
 
-' Prueba: GetExpedientesPath retorna una ruta válida
+' Prueba: GetExpedientesPath retorna una ruta vÃ¡lida
 Public Function Test_GetExpedientesPath_ReturnsValidPath() As Boolean
     On Error GoTo TestFail
     
@@ -473,20 +481,21 @@ Public Function Test_GetExpedientesPath_ReturnsValidPath() As Boolean
     Dim path As String
     path = "C:\Proyectos\CONDOR\Expedientes.accdb" ' Simulado
     
-    ' Assert - Verificar que retorna una ruta válida
+    ' Assert - Verificar que retorna una ruta vÃ¡lida
     Test_GetExpedientesPath_ReturnsValidPath = (Len(path) > 0)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetExpedientesPath_ReturnsValidPath", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_GetExpedientesPath_ReturnsValidPath = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE INTEGRACIÓN CON modConfig
+' PRUEBAS DE INTEGRACIÃ“N CON modConfig
 ' ============================================================================
 
-' Prueba: La función factory de modConfig retorna una instancia válida
+' Prueba: La funciÃ³n factory de modConfig retorna una instancia vÃ¡lida
 Public Function Test_Integration_modConfig_Factory() As Boolean
     On Error GoTo TestFail
     
@@ -494,12 +503,13 @@ Public Function Test_Integration_modConfig_Factory() As Boolean
     Dim config As IConfig
     Set config = modConfig.config()
     
-    ' Assert - Verificar que la factory retorna una instancia válida
+    ' Assert - Verificar que la factory retorna una instancia vÃ¡lida
     Test_Integration_modConfig_Factory = Not (config Is Nothing)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_modConfig_Factory", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_Integration_modConfig_Factory = False
 End Function
 
@@ -511,12 +521,13 @@ Public Function Test_Integration_InitializeEnvironment() As Boolean
     Dim result As Boolean
     result = modConfig.InitializeEnvironment()
     
-    ' Assert - Si no hay errores, la inicialización es exitosa
+    ' Assert - Si no hay errores, la inicializaciÃ³n es exitosa
     Test_Integration_InitializeEnvironment = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_InitializeEnvironment", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_Integration_InitializeEnvironment = False
 End Function
 
@@ -524,7 +535,7 @@ End Function
 ' PRUEBAS DE CONSTANTES
 ' ============================================================================
 
-' Prueba: La constante DEV_MODE está correctamente definida
+' Prueba: La constante DEV_MODE estÃ¡ correctamente definida
 Public Function Test_DEV_MODE_Constant_IsBoolean() As Boolean
     On Error GoTo TestFail
     
@@ -532,12 +543,13 @@ Public Function Test_DEV_MODE_Constant_IsBoolean() As Boolean
     Dim devMode As Boolean
     devMode = modConfig.DEV_MODE
     
-    ' Assert - Si llegamos aquí sin error, la constante está definida correctamente
+    ' Assert - Si llegamos aquÃ­ sin error, la constante estÃ¡ definida correctamente
     Test_DEV_MODE_Constant_IsBoolean = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_DEV_MODE_Constant_IsBoolean", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_DEV_MODE_Constant_IsBoolean = False
 End Function
 
@@ -555,6 +567,7 @@ Public Function Test_IDAplicacion_CONDOR_Constant_IsLong() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_IDAplicacion_CONDOR_Constant_IsLong", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_IDAplicacion_CONDOR_Constant_IsLong = False
 End Function
 
@@ -574,16 +587,17 @@ Public Function Test_MultipleInstances_Singleton_Behavior() As Boolean
     Set config1 = modConfig.config()
     Set config2 = modConfig.config()
     
-    ' Assert - Ambas instancias deben ser válidas (patrón singleton en VBA)
+    ' Assert - Ambas instancias deben ser vÃ¡lidas (patrÃ³n singleton en VBA)
     Test_MultipleInstances_Singleton_Behavior = (Not (config1 Is Nothing) And Not (config2 Is Nothing))
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_MultipleInstances_Singleton_Behavior", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_MultipleInstances_Singleton_Behavior = False
 End Function
 
-' Prueba: La configuración maneja rutas inválidas sin errores críticos
+' Prueba: La configuraciÃ³n maneja rutas invÃ¡lidas sin errores crÃ­ticos
 Public Function Test_Configuration_HandlesInvalidPaths() As Boolean
     On Error GoTo TestFail
     
@@ -592,17 +606,18 @@ Public Function Test_Configuration_HandlesInvalidPaths() As Boolean
     Dim config As IConfig
     Set config = New CConfig
     
-    ' Act & Assert - Verificar que maneja configuraciones inválidas sin fallar
+    ' Act & Assert - Verificar que maneja configuraciones invÃ¡lidas sin fallar
     Test_Configuration_HandlesInvalidPaths = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Configuration_HandlesInvalidPaths", Err.Number, Err.Description, "Test_CConfig.bas"
     Test_Configuration_HandlesInvalidPaths = False
 End Function
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
+' FUNCIÃ“N PRINCIPAL DE EJECUCIÃ“N DE PRUEBAS
 ' ============================================================================
 
 ' Ejecuta todas las pruebas unitarias de CConfig y retorna el resultado
@@ -740,28 +755,28 @@ End Function
 Public Function Test_CConfig_InitializeEnvironment_FailsWithMissingTemplates() As Boolean
     On Error GoTo TestFail
     
-    ' Arrange - Configurar mock para carpeta vacía
+    ' Arrange - Configurar mock para carpeta vacÃ­a
     Dim config As IConfig
     Set config = New CConfig
     
-    ' Crear una carpeta temporal vacía para las plantillas
+    ' Crear una carpeta temporal vacÃ­a para las plantillas
     Dim fso As Object
     Set fso = CreateObject("Scripting.FileSystemObject")
     
     Dim tempPlantillasPath As String
     tempPlantillasPath = Environ("TEMP") & "\CONDOR_TEST_EMPTY_" & Format(Now, "yyyymmddhhnnss")
     
-    ' Crear la carpeta vacía
+    ' Crear la carpeta vacÃ­a
     fso.CreateFolder tempPlantillasPath
     
-    ' Configurar el mock para que apunte a la carpeta vacía
+    ' Configurar el mock para que apunte a la carpeta vacÃ­a
     Call config.SetValue("PLANTILLASPATH", tempPlantillasPath)
     
     ' Act - Intentar inicializar el entorno
     Dim result As Boolean
     result = config.InitializeEnvironment()
     
-    ' Assert - Verificar que la inicialización falla
+    ' Assert - Verificar que la inicializaciÃ³n falla
     Test_CConfig_InitializeEnvironment_FailsWithMissingTemplates = (result = False)
     
     ' Cleanup - Limpiar la carpeta temporal
@@ -784,7 +799,7 @@ TestFail:
  End Function
 
 ' ============================================================================
-' TEST: Verificar que todas las claves de configuración existen y son accesibles
+' TEST: Verificar que todas las claves de configuraciÃ³n existen y son accesibles
 ' ============================================================================
 Public Function Test_Configuracion_TodasLasClavesExisten() As Boolean
     On Error GoTo ErrorHandler
@@ -807,10 +822,10 @@ Public Function Test_Configuracion_TodasLasClavesExisten() As Boolean
 
     For Each key In expectedKeys
         If Not configSvc.HasKey(CStr(key)) Then
-            Debug.Print "FAIL: La clave de configuración '" & key & "' no existe."
+            Debug.Print "FAIL: La clave de configuraciÃ³n '" & key & "' no existe."
             allKeysExist = False
         Else
-            ' Verificar que el valor no sea nulo (excepto para claves que podrían serlo)
+            ' Verificar que el valor no sea nulo (excepto para claves que podrÃ­an serlo)
             If IsNull(configSvc.GetValue(CStr(key))) Then
                  Debug.Print "FAIL: El valor para la clave '" & key & "' es Nulo."
                  allKeysExist = False
@@ -825,6 +840,7 @@ ErrorHandler:
     Test_Configuracion_TodasLasClavesExisten = False
     Debug.Print "ERROR en Test_Configuracion_TodasLasClavesExisten: " & Err.Description
 End Function
+
 
 
 

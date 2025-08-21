@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Contrato para los servicios de autenticación y autorización.
 
@@ -12,6 +12,12 @@ Public Function IsUserAuthorized(ByVal Email As String, ByVal permission As Stri
 End Function
 
 Public Function ValidateEmail(ByVal Email As String) As Boolean
+End Function
+
+Public Function IsUserAuthenticated() As Boolean
+End Function
+
+Public Function GetAuthenticatedUserEmail() As String
 End Function
 
 

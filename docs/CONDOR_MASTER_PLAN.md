@@ -9,7 +9,8 @@ Generación de Documentos (Escritura): Automatizar la generación de la document
 
 Sincronización de Documentos (Lectura): Permitir la actualización de los registros en la base de datos a partir de una plantilla Word que haya sido rellenada o modificada fuera de la aplicación, asegurando la consistencia de los datos.
 
-Trazabilidad de Estado: Proporcionar una visión clara y en tiempo real del estado en el que se encuentra cada solicitud a lo largo de su ciclo de vida, desde el registro hasta el cierre.
+- Trazabilidad de Estado: Proporcionar una visión clara y en tiempo real del estado en el que se encuentra cada solicitud a lo largo de su ciclo de vida, desde el registro hasta el cierre.
+- **Auditoría de Operaciones:** Registrar de forma detallada las acciones clave realizadas por los usuarios y el sistema para garantizar la trazabilidad y la rendición de cuentas.
 
 2. Arquitectura y Principios Fundamentales
    2.1. Arquitectura General
@@ -17,7 +18,7 @@ Trazabilidad de Estado: Proporcionar una visión clara y en tiempo real del esta
 
 Capa de Presentación: Formularios de Access (.accde).
 
-Capa de Lógica de Negocio: Clases y Módulos VBA con lógica de negocio.
+Capa de Lógica de Negocio: Clases y Módulos VBA con lógica de negocio, incluyendo servicios de autenticación, configuración, documentos, notificaciones y **logging de operaciones**.
 
 Capa de Datos: Módulos VBA que gestionan el acceso a la base de datos CONDOR_datos.accdb.
 
@@ -26,17 +27,21 @@ Inversión de Dependencias: Las clases de alto nivel deben depender de Interface
 
 Nomenclatura Estricta:
 
-Interfaces: IAuthService
+Interfaces: IAuthService, **IOperationLogger**
 
-Clases: CAuthService
+Clases: CAuthService, **COperationLogger**
 
-Módulos: modDatabase
+Módulos: modDatabase, **modOperationLoggerFactory**, **modConfigFactory**
 
 Tipos de Datos: T_Usuario
 
 Miembros: camelCase (sin guiones bajos).
 
 Testing contra la Interfaz: En los módulos de prueba (Test_*), las variables de servicio siempre se declaran del tipo de la interfaz.
+
+- **Manejo de Errores Centralizado:** Todo procedimiento susceptible de fallar debe implementar un bloque `On Error GoTo` que obligatoriamente registre el error a través del servicio central `modErrorHandler`. Los errores silenciosos están prohibidos.
+
+- **Auditoría de Operaciones:** Toda operación que represente una acción de negocio significativa (creación, cambio de estado, etc.) debe ser registrada a través del servicio `IOperationLogger`. La trazabilidad de las acciones es un requisito fundamental.
 
 3. Flujo de Trabajo y Gestión de Estados
    El flujo de trabajo de la aplicación se divide en fases gestionadas por los roles Calidad y Técnico. El rol Administrador tiene acceso a todas las funcionalidades.
@@ -240,6 +245,7 @@ Conversión Explícita: Usar siempre CLng, CStr, etc., desde Array Variant.
 Tests como Especificación: Los tests y el código de acceso a datos definen las propiedades de las clases de datos (T_*).
 
 Integración de Tests: Cada nuevo módulo de prueba (Test_*_RunAll) debe ser añadido a modTestRunner.bas.
+**Se ha añadido el módulo `Test_OperationLogger.bas` para las pruebas del sistema de logging de operaciones.**
 
 (Este es un resumen. El documento completo Lecciones_aprendidas.md contiene más detalles).
 
@@ -769,6 +775,8 @@ Tabla pre-poblada que contiene el mapeo entre los campos de las tablas de datos 
 tbLogCambios: Auditoría de cambios en el sistema.
 
 tbLogErrores: Registro de errores de la aplicación.
+
+tb_Operaciones_Log: Registro de operaciones clave del sistema para auditoría y trazabilidad.
 
 tbAdjuntos: Gestión de ficheros adjuntos a las solicitudes.
 

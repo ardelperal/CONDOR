@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Compilación condicional removida para evitar errores
 ' #If DEV_MODE Then
@@ -14,6 +14,10 @@ Option Explicit
 ' @param idExpediente: ID del expediente a buscar
 ' @return: Estructura T_Expediente con los datos del expediente
 Public Function GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
+    ' Esta función debe ser implementada por las clases concretas
+End Function
+
+Public Function GetExpedienteByNemotecnico(ByVal nemotecnico As String) As T_Expediente
     ' Esta función debe ser implementada por las clases concretas
 End Function
 

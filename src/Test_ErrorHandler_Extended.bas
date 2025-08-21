@@ -117,6 +117,7 @@ Public Function Test_LogError_StandardError_LogsSuccessfully() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_LogError_StandardError_LogsSuccessfully", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_LogError_StandardError_LogsSuccessfully = False
 End Function
 
@@ -144,6 +145,7 @@ Public Function Test_LogError_CriticalError_CreatesNotification() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_LogError_CriticalError_CreatesNotification", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_LogError_CriticalError_CreatesNotification = False
 End Function
 
@@ -170,6 +172,7 @@ Public Function Test_LogError_DatabaseFailure_WritesToLocalLog() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_LogError_DatabaseFailure_WritesToLocalLog", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_LogError_DatabaseFailure_WritesToLocalLog = False
 End Function
 
@@ -197,6 +200,7 @@ Public Function Test_LogError_SpecialCharacters_HandlesCorrectly() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_LogError_SpecialCharacters_HandlesCorrectly", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_LogError_SpecialCharacters_HandlesCorrectly = False
 End Function
 
@@ -229,6 +233,7 @@ Public Function Test_IsCriticalError_DatabaseErrors_ReturnsTrue() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_IsCriticalError_DatabaseErrors_ReturnsTrue", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_IsCriticalError_DatabaseErrors_ReturnsTrue = False
 End Function
 
@@ -257,6 +262,7 @@ Public Function Test_IsCriticalError_MemoryErrors_ReturnsTrue() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_IsCriticalError_MemoryErrors_ReturnsTrue", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_IsCriticalError_MemoryErrors_ReturnsTrue = False
 End Function
 
@@ -285,6 +291,7 @@ Public Function Test_IsCriticalError_StandardErrors_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_IsCriticalError_StandardErrors_ReturnsFalse", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_IsCriticalError_StandardErrors_ReturnsFalse = False
 End Function
 
@@ -316,6 +323,7 @@ Public Function Test_CreateAdminNotification_ValidData_CreatesNotification() As 
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateAdminNotification_ValidData_CreatesNotification", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_CreateAdminNotification_ValidData_CreatesNotification = False
 End Function
 
@@ -338,6 +346,7 @@ Public Function Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog() As 
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_CreateAdminNotification_DatabaseFail_WritesToLocalLog = False
 End Function
 
@@ -363,6 +372,7 @@ Public Function Test_WriteToLocalLog_ValidMessage_WritesSuccessfully() As Boolea
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_WriteToLocalLog_ValidMessage_WritesSuccessfully", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_WriteToLocalLog_ValidMessage_WritesSuccessfully = False
 End Function
 
@@ -385,6 +395,7 @@ Public Function Test_WriteToLocalLog_FileSystemError_HandlesGracefully() As Bool
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_WriteToLocalLog_FileSystemError_HandlesGracefully", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_WriteToLocalLog_FileSystemError_HandlesGracefully = False
 End Function
 
@@ -413,6 +424,7 @@ Public Function Test_LogCurrentError_WithValidError_LogsCorrectly() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_LogCurrentError_WithValidError_LogsCorrectly", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_LogCurrentError_WithValidError_LogsCorrectly = False
 End Function
 
@@ -441,6 +453,7 @@ Public Function Test_CleanOldLogs_ValidExecution_RemovesOldRecords() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CleanOldLogs_ValidExecution_RemovesOldRecords", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_CleanOldLogs_ValidExecution_RemovesOldRecords = False
 End Function
 
@@ -462,6 +475,7 @@ Public Function Test_CleanOldLogs_DatabaseError_WritesToLocalLog() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CleanOldLogs_DatabaseError_WritesToLocalLog", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_CleanOldLogs_DatabaseError_WritesToLocalLog = False
 End Function
 
@@ -488,6 +502,7 @@ Public Function Test_Integration_ErrorFlow_CompleteProcess() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_ErrorFlow_CompleteProcess", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_Integration_ErrorFlow_CompleteProcess = False
 End Function
 
@@ -510,6 +525,7 @@ Public Function Test_Integration_FallbackMechanism_WorksCorrectly() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_FallbackMechanism_WorksCorrectly", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_Integration_FallbackMechanism_WorksCorrectly = False
 End Function
 
@@ -538,6 +554,7 @@ Public Function Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_EdgeCase_VeryLongErrorMessage_HandlesCorrectly = False
 End Function
 
@@ -559,6 +576,7 @@ Public Function Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_EdgeCase_NullAndEmptyValues_HandlesCorrectly = False
 End Function
 
@@ -582,6 +600,7 @@ Public Function Test_EdgeCase_ConcurrentAccess_HandlesCorrectly() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_ConcurrentAccess_HandlesCorrectly", Err.Number, Err.Description, "Test_ErrorHandler_Extended.bas"
     Test_EdgeCase_ConcurrentAccess_HandlesCorrectly = False
 End Function
 
@@ -984,6 +1003,7 @@ Public Function RunErrorHandlerExtendedTests() As Boolean
     ' Devolver resultado basado en si todas las pruebas pasaron
     RunErrorHandlerExtendedTests = (failedTests = 0)
 End Function
+
 
 
 

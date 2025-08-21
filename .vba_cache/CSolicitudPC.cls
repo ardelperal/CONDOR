@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 Implements ISolicitud
 
@@ -10,17 +10,38 @@ Private m_estadoInterno As String
 
 Private m_datosPC As T_Datos_PC
 Private mRepository As ISolicitudRepository
+Private m_OperationLogger As IOperationLogger
 
 '******************************************************************************
 ' EVENTOS DE CLASE
 '******************************************************************************
 
 Private Sub Class_Initialize()
+    On Error GoTo ErrorHandler
+    
     Set mRepository = modRepositoryFactory.CreateSolicitudRepository
+    
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudPC.Class_Initialize"
 End Sub
 
 Private Sub Class_Terminate()
     Set mRepository = Nothing
+    Set m_OperationLogger = Nothing
+End Sub
+
+' Método de inicialización para inyectar dependencias
+Public Sub Initialize(operationLogger As IOperationLogger)
+    On Error GoTo ErrorHandler
+    
+    Set m_OperationLogger = operationLogger
+    
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudPC.Initialize"
 End Sub
 
 ' --- 1. Implementación PRIVADA de la Interfaz ---
@@ -33,11 +54,11 @@ Private Property Let ISolicitud_idSolicitud(ByVal RHS As Long)
     m_idSolicitud = RHS
 End Property
 
-Private Property Get ISolicitud_IDExpediente() As String
-    ISolicitud_IDExpediente = m_idExpediente
+Private Property Get ISolicitud_idExpediente() As String
+    ISolicitud_idExpediente = m_idExpediente
 End Property
 
-Private Property Let ISolicitud_IDExpediente(ByVal RHS As String)
+Private Property Let ISolicitud_idExpediente(ByVal RHS As String)
     m_idExpediente = RHS
 End Property
 
@@ -67,9 +88,11 @@ Private Property Let ISolicitud_EstadoInterno(ByVal RHS As String)
 End Property
 
 Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
+    On Error GoTo ErrorHandler
+    
     If Not mRepository Is Nothing Then
-        Dim loadedSolicitud As CSolicitudPC
-        Set loadedSolicitud = mRepository.LoadPC(ID)
+        Dim loadedSolicitud As Object
+        Set loadedSolicitud = mRepository.Load(ID)
         If Not loadedSolicitud Is Nothing Then
             ' Copiar propiedades del objeto cargado
             m_idSolicitud = loadedSolicitud.idSolicitud
@@ -85,12 +108,20 @@ Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
     Else
         ISolicitud_Load = False
     End If
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudPC.Load"
+    ISolicitud_Load = False
 End Function
 
 Private Function ISolicitud_Save() As Boolean
+    On Error GoTo ErrorHandler
+    
     If Not mRepository Is Nothing Then
         Dim savedId As Long
-        savedId = mRepository.SavePC(Me)
+        savedId = mRepository.Save(Me)
         If savedId > 0 Then
             m_idSolicitud = savedId
             ISolicitud_Save = True
@@ -100,11 +131,25 @@ Private Function ISolicitud_Save() As Boolean
     Else
         ISolicitud_Save = False
     End If
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudPC.Save"
+    ISolicitud_Save = False
 End Function
 
 Private Function ISolicitud_ChangeState(ByVal newState As String) As Boolean
+    On Error GoTo ErrorHandler
+    
     ' TODO: Implementar lógica de cambio de estado
     ISolicitud_ChangeState = True
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudPC.ChangeState"
+    ISolicitud_ChangeState = False
 End Function
 
 ' --- 2. Miembros PÚBLICOS de la Clase ---
@@ -119,11 +164,11 @@ Public Property Let idSolicitud(ByVal val As Long)
 End Property
 
 Public Property Get idExpediente() As String
-    idExpediente = ISolicitud_IDExpediente
+    idExpediente = ISolicitud_idExpediente
 End Property
 
 Public Property Let idExpediente(ByVal val As String)
-    ISolicitud_IDExpediente = val
+    ISolicitud_idExpediente = val
 End Property
 
 Public Property Get tipoSolicitud() As String
@@ -150,28 +195,11 @@ Public Property Let estadoInterno(ByVal val As String)
     ISolicitud_EstadoInterno = val
 End Property
 
-Public Function Load(ByVal ID As Long) As Boolean
-    Load = ISolicitud_Load(ID)
-End Function
 
-Public Function Save() As Boolean
-    If Not mRepository Is Nothing Then
-        Dim savedId As Long
-        savedId = mRepository.SavePC(Me)
-        If savedId > 0 Then
-            m_idSolicitud = savedId
-            Save = True
-        Else
-            Save = False
-        End If
-    Else
-        Save = False
-    End If
-End Function
 
-Public Function ChangeState(ByVal newState As String) As Boolean
-    ChangeState = ISolicitud_ChangeState(newState)
-End Function
+
+
+
 
 ' --- Propiedades específicas de PC ---
 Public Property Get datosPC() As T_Datos_PC

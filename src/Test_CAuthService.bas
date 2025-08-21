@@ -1,8 +1,8 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' ============================================================================
-' Módulo: Test_CAuthService
-' Descripción: Pruebas unitarias para CAuthService.cls
+' MÃ³dulo: Test_CAuthService
+' DescripciÃ³n: Pruebas unitarias para CAuthService.cls
 ' Autor: CONDOR-Expert
 ' Fecha: Enero 2025
 ' ============================================================================
@@ -19,7 +19,7 @@ End Type
 Private m_MockUser As T_MockUserData
 
 ' ============================================================================
-' FUNCIONES DE CONFIGURACIÓN DE MOCKS
+' FUNCIONES DE CONFIGURACIÃ“N DE MOCKS
 ' ============================================================================
 
 Private Sub SetupValidUserMock()
@@ -47,7 +47,7 @@ Private Sub SetupGuestUserMock()
 End Sub
 
 ' ============================================================================
-' PRUEBAS DE CREACIÓN E INICIALIZACIÓN
+' PRUEBAS DE CREACIÃ“N E INICIALIZACIÃ“N
 ' ============================================================================
 
 Public Function Test_CAuthService_Creation_Success() As Boolean
@@ -60,7 +60,7 @@ Public Function Test_CAuthService_Creation_Success() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Assert
@@ -69,6 +69,7 @@ Public Function Test_CAuthService_Creation_Success() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CAuthService_Creation_Success", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_CAuthService_Creation_Success = False
 End Function
 
@@ -80,7 +81,7 @@ Public Function Test_CAuthService_ImplementsIAuthService() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -93,15 +94,16 @@ Public Function Test_CAuthService_ImplementsIAuthService() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CAuthService_ImplementsIAuthService", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_CAuthService_ImplementsIAuthService = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE AUTENTICACIÓN
+' PRUEBAS DE AUTENTICACIÃ“N
 ' ============================================================================
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' FUNCIÃ“N PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
 ' ============================================================================
 
 Public Function Test_CAuthService_RunAll() As String
@@ -151,7 +153,7 @@ Public Function Test_AuthenticateUser_ValidEmail_ReturnsTrue() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -159,12 +161,13 @@ Public Function Test_AuthenticateUser_ValidEmail_ReturnsTrue() As Boolean
     result = authService.AuthenticateUser(m_MockUser.Email)
     
     ' Assert
-    ' En un entorno de pruebas, esperamos que la autenticación funcione
-    Test_AuthenticateUser_ValidEmail_ReturnsTrue = True ' Asumimos éxito si no hay errores
+    ' En un entorno de pruebas, esperamos que la autenticaciÃ³n funcione
+    Test_AuthenticateUser_ValidEmail_ReturnsTrue = True ' Asumimos Ã©xito si no hay errores
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_AuthenticateUser_ValidEmail_ReturnsTrue", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_AuthenticateUser_ValidEmail_ReturnsTrue = False
 End Function
 
@@ -176,7 +179,7 @@ Public Function Test_AuthenticateUser_InvalidEmail_ReturnsFalse() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -184,12 +187,13 @@ Public Function Test_AuthenticateUser_InvalidEmail_ReturnsFalse() As Boolean
     result = authService.AuthenticateUser(m_MockUser.Email)
     
     ' Assert
-    ' Para emails inválidos, esperamos False o manejo de error
-    Test_AuthenticateUser_InvalidEmail_ReturnsFalse = True ' Si no hay error crítico, es exitoso
+    ' Para emails invÃ¡lidos, esperamos False o manejo de error
+    Test_AuthenticateUser_InvalidEmail_ReturnsFalse = True ' Si no hay error crÃ­tico, es exitoso
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_AuthenticateUser_InvalidEmail_ReturnsFalse", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_AuthenticateUser_InvalidEmail_ReturnsFalse = False
 End Function
 
@@ -200,7 +204,7 @@ Public Function Test_AuthenticateUser_EmptyEmail_HandlesGracefully() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -208,17 +212,18 @@ Public Function Test_AuthenticateUser_EmptyEmail_HandlesGracefully() As Boolean
     result = authService.AuthenticateUser("")
     
     ' Assert
-    ' Verificamos que maneja emails vacíos sin errores críticos
+    ' Verificamos que maneja emails vacÃ­os sin errores crÃ­ticos
     Test_AuthenticateUser_EmptyEmail_HandlesGracefully = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_AuthenticateUser_EmptyEmail_HandlesGracefully", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_AuthenticateUser_EmptyEmail_HandlesGracefully = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE AUTORIZACIÓN
+' PRUEBAS DE AUTORIZACIÃ“N
 ' ============================================================================
 
 Public Function Test_IsUserAuthorized_ValidUser_ReturnsBoolean() As Boolean
@@ -229,7 +234,7 @@ Public Function Test_IsUserAuthorized_ValidUser_ReturnsBoolean() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -237,12 +242,13 @@ Public Function Test_IsUserAuthorized_ValidUser_ReturnsBoolean() As Boolean
     result = authService.IsUserAuthorized(m_MockUser.Email, "READ")
     
     ' Assert
-    ' Verificamos que la función retorna un valor booleano
+    ' Verificamos que la funciÃ³n retorna un valor booleano
     Test_IsUserAuthorized_ValidUser_ReturnsBoolean = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_IsUserAuthorized_ValidUser_ReturnsBoolean", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_IsUserAuthorized_ValidUser_ReturnsBoolean = False
 End Function
 
@@ -254,7 +260,7 @@ Public Function Test_IsUserAuthorized_InvalidPermission_ReturnsFalse() As Boolea
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -262,12 +268,13 @@ Public Function Test_IsUserAuthorized_InvalidPermission_ReturnsFalse() As Boolea
     result = authService.IsUserAuthorized(m_MockUser.Email, "INVALID_PERMISSION")
     
     ' Assert
-    ' Para permisos inválidos, esperamos False
+    ' Para permisos invÃ¡lidos, esperamos False
     Test_IsUserAuthorized_InvalidPermission_ReturnsFalse = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_IsUserAuthorized_InvalidPermission_ReturnsFalse", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_IsUserAuthorized_InvalidPermission_ReturnsFalse = False
 End Function
 
@@ -279,7 +286,7 @@ Public Function Test_IsUserAuthorized_GuestUser_LimitedPermissions() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -289,12 +296,13 @@ Public Function Test_IsUserAuthorized_GuestUser_LimitedPermissions() As Boolean
     writeResult = authService.IsUserAuthorized(m_MockUser.Email, "WRITE")
     
     ' Assert
-    ' Los usuarios invitados deberían tener permisos limitados
+    ' Los usuarios invitados deberÃ­an tener permisos limitados
     Test_IsUserAuthorized_GuestUser_LimitedPermissions = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_IsUserAuthorized_GuestUser_LimitedPermissions", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_IsUserAuthorized_GuestUser_LimitedPermissions = False
 End Function
 
@@ -308,7 +316,7 @@ Public Function Test_GetUserRole_RolesEspecificos() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     Dim adminEmail As String
@@ -338,11 +346,12 @@ Public Function Test_GetUserRole_RolesEspecificos() As Boolean
     Exit Function
 
 TestFail:
+    modErrorHandler.LogError "Test_GetUserRole_RolesEspecificos", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_GetUserRole_RolesEspecificos = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE VALIDACIÓN DE EMAIL
+' PRUEBAS DE VALIDACIÃ“N DE EMAIL
 ' ============================================================================
 
 Public Function Test_ValidateEmail_ValidFormat_ReturnsTrue() As Boolean
@@ -352,7 +361,7 @@ Public Function Test_ValidateEmail_ValidFormat_ReturnsTrue() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -365,6 +374,7 @@ Public Function Test_ValidateEmail_ValidFormat_ReturnsTrue() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ValidateEmail_ValidFormat_ReturnsTrue", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_ValidateEmail_ValidFormat_ReturnsTrue = False
 End Function
 
@@ -375,7 +385,7 @@ Public Function Test_ValidateEmail_InvalidFormat_ReturnsFalse() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -388,6 +398,7 @@ Public Function Test_ValidateEmail_InvalidFormat_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ValidateEmail_InvalidFormat_ReturnsFalse", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_ValidateEmail_InvalidFormat_ReturnsFalse = False
 End Function
 
@@ -398,7 +409,7 @@ Public Function Test_ValidateEmail_EmptyString_ReturnsFalse() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -411,11 +422,12 @@ Public Function Test_ValidateEmail_EmptyString_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ValidateEmail_EmptyString_ReturnsFalse", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_ValidateEmail_EmptyString_ReturnsFalse = False
 End Function
 
 ' ============================================================================
-' PRUEBAS DE INTEGRACIÓN
+' PRUEBAS DE INTEGRACIÃ“N
 ' ============================================================================
 
 Public Function Test_Integration_AuthenticateAndAuthorize() As Boolean
@@ -426,7 +438,7 @@ Public Function Test_Integration_AuthenticateAndAuthorize() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -442,6 +454,7 @@ Public Function Test_Integration_AuthenticateAndAuthorize() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_AuthenticateAndAuthorize", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_Integration_AuthenticateAndAuthorize = False
 End Function
 
@@ -449,19 +462,20 @@ Public Function Test_Integration_GetCurrentUserEmail() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    ' No hay configuración específica necesaria para esta prueba
+    ' No hay configuraciÃ³n especÃ­fica necesaria para esta prueba
     
     ' Act
     Dim currentEmail As String
     currentEmail = modAppManager.GetCurrentUserEmail()
     
     ' Assert
-    ' Verificamos que la función retorna un string
+    ' Verificamos que la funciÃ³n retorna un string
     Test_Integration_GetCurrentUserEmail = (Len(currentEmail) >= 0)
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_GetCurrentUserEmail", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_Integration_GetCurrentUserEmail = False
 End Function
 
@@ -477,7 +491,7 @@ Public Function Test_MultipleAuthentications_SameUser() As Boolean
     Dim authService As IAuthService
     Dim authServiceImpl As CAuthService
     Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuración
+    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
     Set authService = authServiceImpl
     
     ' Act
@@ -489,12 +503,13 @@ Public Function Test_MultipleAuthentications_SameUser() As Boolean
     result3 = authService.AuthenticateUser(m_MockUser.Email)
     
     ' Assert
-    ' Múltiples autenticaciones del mismo usuario deberían ser consistentes
+    ' MÃºltiples autenticaciones del mismo usuario deberÃ­an ser consistentes
     Test_MultipleAuthentications_SameUser = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_MultipleAuthentications_SameUser", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_MultipleAuthentications_SameUser = False
 End Function
 
@@ -512,17 +527,18 @@ Public Function Test_ConcurrentUsers_DifferentRoles() As Boolean
     guestRole = authService.GetUserRole("guest@condor.com")
     
     ' Assert
-    ' Verificamos que maneja múltiples usuarios sin conflictos
+    ' Verificamos que maneja mÃºltiples usuarios sin conflictos
     Test_ConcurrentUsers_DifferentRoles = True
     
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ConcurrentUsers_DifferentRoles", Err.Number, Err.Description, "Test_CAuthService.bas"
     Test_ConcurrentUsers_DifferentRoles = False
 End Function
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
+' FUNCIÃ“N PRINCIPAL DE EJECUCIÃ“N DE PRUEBAS
 ' ============================================================================
 
 Public Function RunCAuthServiceTests() As String
@@ -684,6 +700,7 @@ Public Function RunCAuthServiceTests() As String
     
     RunCAuthServiceTests = resultado
 End Function
+
 
 
 

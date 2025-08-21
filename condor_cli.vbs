@@ -839,13 +839,15 @@ Function CleanVBAFile(filePath, fileType)
         
         ' Aplicar las reglas para descartar contenido no deseado
         ' Una línea se descarta si cumple cualquiera de estas condiciones:
-        If Not (Left(strLine, 12) = "Attribute VB_" Or _
-                Left(strLine, 17) = "VERSION 1.0 CLASS" Or _
-                strLine = "BEGIN" Or _
-                Left(strLine, 10) = "MultiUse =" Or _
-                strLine = "END" Or _
-                strLine = "Option Compare Database" Or _
-                strLine = "Option Explicit") Then
+        ' CORRECCION CRITICA: Filtrar TODAS las líneas que empiecen con 'Attribute'
+        ' y todos los metadatos de archivos .cls
+        If Not (Left(Trim(strLine), 9) = "Attribute" Or _
+                Left(Trim(strLine), 17) = "VERSION 1.0 CLASS" Or _
+                Trim(strLine) = "BEGIN" Or _
+                Left(Trim(strLine), 8) = "MultiUse" Or _
+                Trim(strLine) = "END" Or _
+                Trim(strLine) = "Option Compare Database" Or _
+                Trim(strLine) = "Option Explicit") Then
             
             ' Si no cumple ninguna condición, es código VBA válido
             ' Se añade al cleanedContent seguida de un salto de línea

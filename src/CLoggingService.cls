@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 Implements ILoggingService
 
@@ -21,11 +21,43 @@ Private Sub Class_Terminate()
 End Sub
 
 Private Sub ILoggingService_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
+    On Error GoTo ErrorHandler
+    
     WriteToLog "ERROR", errDescription, moduleName, errNumber, context
+    
+    Exit Sub
+    
+ErrorHandler:
+    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
+    Debug.Print "Error en CLoggingService.ILoggingService_LogError: " & Err.Description
 End Sub
 
 Private Sub ILoggingService_LogInfo(ByVal message As String, Optional ByVal moduleName As String)
+    On Error GoTo ErrorHandler
+    
     WriteToLog "INFO", message, moduleName
+    
+    Exit Sub
+    
+ErrorHandler:
+    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
+    Debug.Print "Error en CLoggingService.ILoggingService_LogInfo: " & Err.Description
+End Sub
+
+Private Sub ILoggingService_LogWarning(ByVal message As String, Optional ByVal moduleName As String)
+    On Error GoTo ErrorHandler
+    
+    WriteToLog "WARNING", message, moduleName
+    
+    Exit Sub
+    
+ErrorHandler:
+    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
+    Debug.Print "Error en CLoggingService.ILoggingService_LogWarning: " & Err.Description
+End Sub
+
+Public Sub LogWarning(ByVal message As String, Optional ByVal moduleName As String)
+    ILoggingService_LogWarning message, moduleName
 End Sub
 
 Private Sub WriteToLog(level As String, message As String, moduleName As String, Optional errNumber As Long, Optional context As String)
@@ -56,6 +88,8 @@ Private Sub WriteToLog(level As String, message As String, moduleName As String,
 End Sub
 
 Private Function EscapeJSON(ByVal str As String) As String
+    On Error GoTo ErrorHandler
+    
     ' Función auxiliar para escapar caracteres en JSON
     Dim temp As String
     temp = Replace(str, "\", "\\")
@@ -64,6 +98,13 @@ Private Function EscapeJSON(ByVal str As String) As String
     temp = Replace(temp, vbCr, "\n")
     temp = Replace(temp, vbLf, "\n")
     EscapeJSON = temp
+    
+    Exit Function
+    
+ErrorHandler:
+    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
+    Debug.Print "Error en CLoggingService.EscapeJSON: " & Err.Description
+    EscapeJSON = str ' Devolver string original si falla el escape
 End Function
 
 

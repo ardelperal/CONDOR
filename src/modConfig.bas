@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Modulo de Configuracion del Sistema CONDOR - Factory/Singleton
 ' Proporciona acceso a la instancia ?nica del servicio de configuraci?n
@@ -21,6 +21,14 @@ Public Function config() As IConfig
         Set g_ConfigInstance = New CConfig
     End If
     Set config = g_ConfigInstance
+End Function
+
+' Funci?n p?blica para obtener instancia ?nica de CConfig (para inyecci?n de dependencias)
+Public Function GetInstance() As CConfig
+    If g_ConfigInstance Is Nothing Then
+        Set g_ConfigInstance = New CConfig
+    End If
+    Set GetInstance = g_ConfigInstance
 End Function
 
 ' Funci?n de inicializaci?n del entorno (delegada a CConfig)
@@ -80,16 +88,14 @@ End Function
 
 ' Funci?n para obtener la ruta de c?digo fuente
 Public Function GetSourcePath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetSourcePath = configInstance.GetSourcePath()
+    ' Implementaci?n directa ya que no existe en IConfig
+    GetSourcePath = Application.CurrentProject.Path & "\..\src"
 End Function
 
 ' Funci?n para obtener la ruta de backups
 Public Function GetBackupPath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetBackupPath = configInstance.GetBackupPath()
+    ' Implementaci?n directa ya que no existe en IConfig
+    GetBackupPath = Application.CurrentProject.Path & "\..\back"
 End Function
 
 ' Funci?n para obtener la ruta de logs
@@ -101,9 +107,8 @@ End Function
 
 ' Funci?n para obtener la ruta temporal
 Public Function GetTempPath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetTempPath = configInstance.GetTempPath()
+    ' Implementaci?n directa ya que no existe en IConfig
+    GetTempPath = Environ("TEMP")
 End Function
 
 ' Funci?n de prueba (delegada a CConfig)

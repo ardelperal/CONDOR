@@ -10,48 +10,116 @@ Option Explicit
 
 
 '******************************************************************************
-' PROPIEDADES PÚBLICAS
-' Basadas en la especificación funcional sección 2.1 y servicios de autenticación
+' VARIABLES MIEMBRO PRIVADAS
+'******************************************************************************
+Private m_ID As Long
+Private m_Email As String
+Private m_NombreCompleto As String
+Private m_Rol As E_UserRole
+Private m_Estado As String
+Private m_EsAdministrador As Boolean
+Private m_EsUsuarioCalidad As Boolean
+Private m_EsUsuarioTecnico As Boolean
+Private m_IDAplicacion As Long
+Private m_VersionInstalada As String
+Private m_UltimoAcceso As Date
+Private m_FechaRegistro As Date
+Private m_Permisos As String
+
+'******************************************************************************
+' PROPIEDADES PÚBLICAS (GET/LET)
 '******************************************************************************
 
-' Identificador único del usuario
-Public ID As Long
+Public Property Get ID() As Long
+    ID = m_ID
+End Property
+Public Property Let ID(ByVal value As Long)
+    m_ID = value
+End Property
 
-' Correo electrónico del usuario (identificador único)
-Public Email As String
+Public Property Get Email() As String
+    Email = m_Email
+End Property
+Public Property Let Email(ByVal value As String)
+    m_Email = value
+End Property
 
-' Nombre completo del usuario
-Public NombreCompleto As String
+Public Property Get NombreCompleto() As String
+    NombreCompleto = m_NombreCompleto
+End Property
+Public Property Let NombreCompleto(ByVal value As String)
+    m_NombreCompleto = value
+End Property
 
-' Rol del usuario en el sistema CONDOR
-Public Rol As E_UserRole
+Public Property Get Rol() As E_UserRole
+    Rol = m_Rol
+End Property
+Public Property Let Rol(ByVal value As E_UserRole)
+    m_Rol = value
+End Property
 
-' Estado del usuario (Activo/Inactivo)
-Public Estado As String
+Public Property Get Estado() As String
+    Estado = m_Estado
+End Property
+Public Property Let Estado(ByVal value As String)
+    m_Estado = value
+End Property
 
-' Indica si es administrador (campo EsAdministrador de TbUsuariosAplicaciones)
-Public EsAdministrador As Boolean
+Public Property Get EsAdministrador() As Boolean
+    EsAdministrador = m_EsAdministrador
+End Property
+Public Property Let EsAdministrador(ByVal value As Boolean)
+    m_EsAdministrador = value
+End Property
 
-' Indica si es usuario de calidad (campo EsUsuarioCalidad de TbUsuariosAplicacionesPermisos)
-Public EsUsuarioCalidad As Boolean
+Public Property Get EsUsuarioCalidad() As Boolean
+    EsUsuarioCalidad = m_EsUsuarioCalidad
+End Property
+Public Property Let EsUsuarioCalidad(ByVal value As Boolean)
+    m_EsUsuarioCalidad = value
+End Property
 
-' Indica si es usuario técnico (campo EsUsuarioTecnico de TbUsuariosAplicacionesPermisos)
-Public EsUsuarioTecnico As Boolean
+Public Property Get EsUsuarioTecnico() As Boolean
+    EsUsuarioTecnico = m_EsUsuarioTecnico
+End Property
+Public Property Let EsUsuarioTecnico(ByVal value As Boolean)
+    m_EsUsuarioTecnico = value
+End Property
 
-' ID de aplicación en sistema Lanzadera (231 para CONDOR)
-Public IDAplicacion As Long
+Public Property Get IDAplicacion() As Long
+    IDAplicacion = m_IDAplicacion
+End Property
+Public Property Let IDAplicacion(ByVal value As Long)
+    m_IDAplicacion = value
+End Property
 
-' Versión instalada de la aplicación
-Public VersionInstalada As String
+Public Property Get VersionInstalada() As String
+    VersionInstalada = m_VersionInstalada
+End Property
+Public Property Let VersionInstalada(ByVal value As String)
+    m_VersionInstalada = value
+End Property
 
-' Fecha del último acceso
-Public UltimoAcceso As Date
+Public Property Get UltimoAcceso() As Date
+    UltimoAcceso = m_UltimoAcceso
+End Property
+Public Property Let UltimoAcceso(ByVal value As Date)
+    m_UltimoAcceso = value
+End Property
 
-' Fecha de registro en el sistema
-Public FechaRegistro As Date
+Public Property Get FechaRegistro() As Date
+    FechaRegistro = m_FechaRegistro
+End Property
+Public Property Let FechaRegistro(ByVal value As Date)
+    m_FechaRegistro = value
+End Property
 
-' Permisos del usuario (para compatibilidad con mocks)
-Public Permisos As String
+Public Property Get Permisos() As String
+    Permisos = m_Permisos
+End Property
+Public Property Let Permisos(ByVal value As String)
+    m_Permisos = value
+End Property
 
 '******************************************************************************
 ' MÉTODOS PÚBLICOS

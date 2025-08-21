@@ -10,71 +10,156 @@ Option Explicit
 
 
 '******************************************************************************
-' PROPIEDADES PÚBLICAS
-' Basadas en el análisis de CExpedienteService.cls y CMockExpedienteService.cls
+' VARIABLES MIEMBRO PRIVADAS
 '******************************************************************************
-
-' Identificador único del expediente
-Public idExpediente As Long
-
-' Nemotécnico del expediente
-Public Nemotecnico As String
-
-' Título del expediente
-Public Titulo As String
-
-' Responsable de calidad del expediente
-Public ResponsableCalidad As String
-
-' Responsable técnico del expediente
-Public ResponsableTecnico As String
-
-' Código PECAL del expediente
-Public Pecal As String
-
-'******************************************************************************
-' PROPIEDADES ADICIONALES IDENTIFICADAS EN DOCUMENTACIÓN
-'******************************************************************************
-
-' Número de expediente (string)
-Public NumeroExpediente As String
-
-' Estado del expediente
-Public EstadoExpediente As String
-
-' Email del responsable
-Public EmailResponsable As String
-
-' Jefe de proyecto
-Public JefeProyecto As String
-
-' Contratista principal
-Public ContratistaPrincipal As String
-
-' Valor del contrato
-Public ValorContrato As Currency
-
-' Fecha de inicio
-Public FechaInicio As Date
-
-' Fecha de fin prevista
-Public FechaFinPrevista As Date
-
-' Última actualización
-Public UltimaActualizacion As Date
+Private m_idExpediente As Long
+Private m_Nemotecnico As String
+Private m_Titulo As String
+Private m_ResponsableCalidad As String
+Private m_ResponsableTecnico As String
+Private m_Pecal As String
+Private m_NumeroExpediente As String
+Private m_EstadoExpediente As String
+Private m_EmailResponsable As String
+Private m_JefeProyecto As String
+Private m_ContratistaPrincipal As String
+Private m_ValorContrato As Currency
+Private m_FechaInicio As Date
+Private m_FechaFinPrevista As Date
+Private m_UltimaActualizacion As Date
+Private m_ID As Long
+Private m_fechaCreacion As Date
+Private m_Estado As String
 
 '******************************************************************************
-' PROPIEDADES CRÍTICAS IDENTIFICADAS EN TESTS
+' PROPIEDADES PÚBLICAS (GET/LET)
 '******************************************************************************
 
-' Identificador único usado en modMockFramework
-Public ID As Long
+Public Property Get idExpediente() As Long
+    idExpediente = m_idExpediente
+End Property
+Public Property Let idExpediente(ByVal value As Long)
+    m_idExpediente = value
+End Property
 
-' Fecha de creación usado en Test_CExpedienteService.bas
-Public fechaCreacion As Date
+Public Property Get Nemotecnico() As String
+    Nemotecnico = m_Nemotecnico
+End Property
+Public Property Let Nemotecnico(ByVal value As String)
+    m_Nemotecnico = value
+End Property
 
-' Estado usado en Test_CExpedienteService.bas
-Public Estado As String
+Public Property Get Titulo() As String
+    Titulo = m_Titulo
+End Property
+Public Property Let Titulo(ByVal value As String)
+    m_Titulo = value
+End Property
+
+Public Property Get ResponsableCalidad() As String
+    ResponsableCalidad = m_ResponsableCalidad
+End Property
+Public Property Let ResponsableCalidad(ByVal value As String)
+    m_ResponsableCalidad = value
+End Property
+
+Public Property Get ResponsableTecnico() As String
+    ResponsableTecnico = m_ResponsableTecnico
+End Property
+Public Property Let ResponsableTecnico(ByVal value As String)
+    m_ResponsableTecnico = value
+End Property
+
+Public Property Get Pecal() As String
+    Pecal = m_Pecal
+End Property
+Public Property Let Pecal(ByVal value As String)
+    m_Pecal = value
+End Property
+
+Public Property Get NumeroExpediente() As String
+    NumeroExpediente = m_NumeroExpediente
+End Property
+Public Property Let NumeroExpediente(ByVal value As String)
+    m_NumeroExpediente = value
+End Property
+
+Public Property Get EstadoExpediente() As String
+    EstadoExpediente = m_EstadoExpediente
+End Property
+Public Property Let EstadoExpediente(ByVal value As String)
+    m_EstadoExpediente = value
+End Property
+
+Public Property Get EmailResponsable() As String
+    EmailResponsable = m_EmailResponsable
+End Property
+Public Property Let EmailResponsable(ByVal value As String)
+    m_EmailResponsable = value
+End Property
+
+Public Property Get JefeProyecto() As String
+    JefeProyecto = m_JefeProyecto
+End Property
+Public Property Let JefeProyecto(ByVal value As String)
+    m_JefeProyecto = value
+End Property
+
+Public Property Get ContratistaPrincipal() As String
+    ContratistaPrincipal = m_ContratistaPrincipal
+End Property
+Public Property Let ContratistaPrincipal(ByVal value As String)
+    m_ContratistaPrincipal = value
+End Property
+
+Public Property Get ValorContrato() As Currency
+    ValorContrato = m_ValorContrato
+End Property
+Public Property Let ValorContrato(ByVal value As Currency)
+    m_ValorContrato = value
+End Property
+
+Public Property Get FechaInicio() As Date
+    FechaInicio = m_FechaInicio
+End Property
+Public Property Let FechaInicio(ByVal value As Date)
+    m_FechaInicio = value
+End Property
+
+Public Property Get FechaFinPrevista() As Date
+    FechaFinPrevista = m_FechaFinPrevista
+End Property
+Public Property Let FechaFinPrevista(ByVal value As Date)
+    m_FechaFinPrevista = value
+End Property
+
+Public Property Get UltimaActualizacion() As Date
+    UltimaActualizacion = m_UltimaActualizacion
+End Property
+Public Property Let UltimaActualizacion(ByVal value As Date)
+    m_UltimaActualizacion = value
+End Property
+
+Public Property Get ID() As Long
+    ID = m_ID
+End Property
+Public Property Let ID(ByVal value As Long)
+    m_ID = value
+End Property
+
+Public Property Get fechaCreacion() As Date
+    fechaCreacion = m_fechaCreacion
+End Property
+Public Property Let fechaCreacion(ByVal value As Date)
+    m_fechaCreacion = value
+End Property
+
+Public Property Get Estado() As String
+    Estado = m_Estado
+End Property
+Public Property Let Estado(ByVal value As String)
+    m_Estado = value
+End Property
 
 '******************************************************************************
 ' MÉTODOS PÚBLICOS

@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Interfaz: IDocumentService
@@ -62,6 +62,12 @@ End Function
 ' Retorna: True si el guardado fue exitoso
 Public Function GuardarDocumento(ByVal rutaDestino As String, ByVal NombreArchivo As String) As Boolean
 End Function
+
+' ============================================================================
+' MÉTODO DE INICIALIZACIÓN
+' ============================================================================
+
+
 
 ' ============================================================================
 ' MÉTODOS DE CONSULTA DE DATOS

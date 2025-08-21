@@ -111,6 +111,7 @@ Public Sub RebuildProject()
     Exit Sub
     
 ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modRebuildMacro.RebuildProject")
     Debug.Print "Error en RebuildProject: " & Err.Description
     DoCmd.SetWarnings True
     Application.DisplayAlerts = True

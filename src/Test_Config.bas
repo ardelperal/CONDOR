@@ -322,6 +322,7 @@ Public Function Test_ModConfig_Singleton_ReturnsSameInstance() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ModConfig_Singleton_ReturnsSameInstance", Err.Number, Err.Description, "Test_Config.bas"
     Test_ModConfig_Singleton_ReturnsSameInstance = False
 End Function
 
@@ -339,6 +340,7 @@ Public Function Test_ModConfig_GetActiveEnvironment_ReturnsString() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ModConfig_GetActiveEnvironment_ReturnsString", Err.Number, Err.Description, "Test_Config.bas"
     Test_ModConfig_GetActiveEnvironment_ReturnsString = False
 End Function
 
@@ -356,6 +358,7 @@ Public Function Test_ModConfig_GetDatabasePath_ReturnsValidPath() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ModConfig_GetDatabasePath_ReturnsValidPath", Err.Number, Err.Description, "Test_Config.bas"
     Test_ModConfig_GetDatabasePath_ReturnsValidPath = False
 End Function
 
@@ -373,6 +376,7 @@ Public Function Test_ModConfig_GetDataPath_ReturnsValidPath() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ModConfig_GetDataPath_ReturnsValidPath", Err.Number, Err.Description, "Test_Config.bas"
     Test_ModConfig_GetDataPath_ReturnsValidPath = False
 End Function
 
@@ -390,6 +394,7 @@ Public Function Test_ModConfig_GetExpedientesPath_ReturnsValidPath() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ModConfig_GetExpedientesPath_ReturnsValidPath", Err.Number, Err.Description, "Test_Config.bas"
     Test_ModConfig_GetExpedientesPath_ReturnsValidPath = False
 End Function
 
@@ -427,6 +432,7 @@ Public Function Test_CConfig_GetValue_ValidKeys_ReturnsValues() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CConfig_GetValue_ValidKeys_ReturnsValues", Err.Number, Err.Description, "Test_Config.bas"
     Test_CConfig_GetValue_ValidKeys_ReturnsValues = False
 End Function
 
@@ -448,6 +454,7 @@ Public Function Test_CConfig_GetValue_InvalidKey_ReturnsNull() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CConfig_GetValue_InvalidKey_ReturnsNull", Err.Number, Err.Description, "Test_Config.bas"
     Test_CConfig_GetValue_InvalidKey_ReturnsNull = False
 End Function
 
@@ -471,6 +478,7 @@ Public Function Test_CConfig_HasKey_ValidAndInvalidKeys() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CConfig_HasKey_ValidAndInvalidKeys", Err.Number, Err.Description, "Test_Config.bas"
     Test_CConfig_HasKey_ValidAndInvalidKeys = False
 End Function
 
@@ -497,6 +505,7 @@ Public Function Test_CConfig_DevelopmentMode_Detection() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CConfig_DevelopmentMode_Detection", Err.Number, Err.Description, "Test_Config.bas"
     Test_CConfig_DevelopmentMode_Detection = False
 End Function
 
@@ -540,6 +549,7 @@ Public Function Test_Integration_CompleteConfigFlow() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_CompleteConfigFlow", Err.Number, Err.Description, "Test_Config.bas"
     Test_Integration_CompleteConfigFlow = False
 End Function
 
@@ -659,6 +669,7 @@ Public Function RunConfigTestsComplete() As Boolean
     ' Retornar True si todas las pruebas pasaron
     RunConfigTestsComplete = (passedTests = totalTests)
 End Function
+
 
 
 

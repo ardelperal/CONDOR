@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Interfaz: ILoggingService
 ' Descripción: Define el contrato para servicios de logging del sistema CONDOR
@@ -13,6 +13,9 @@ Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Opt
 End Sub
 
 Public Sub LogInfo(ByVal message As String, Optional ByVal moduleName As String)
+End Sub
+
+Public Sub LogWarning(ByVal message As String, Optional ByVal moduleName As String)
 End Sub
 
 

@@ -1,14 +1,27 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Implementación del repositorio de solicitudes
 ' Maneja la persistencia en las tablas tbSolicitud, tbDatosPC, tbDatosCDCA y tbDatosCDCASUB
 
 Implements ISolicitudRepository
 
+Private m_OperationLogger As IOperationLogger
+
 Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As T_Solicitud) As Long
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
     Dim idSolicitudGenerado As Long
+    
+    ' Logging de auditoría: Inicio de guardado en repositorio
+    If Not m_OperationLogger Is Nothing Then
+        Dim operationType As String
+        If solicitud.idSolicitud = 0 Then
+            operationType = "INSERT"
+        Else
+            operationType = "UPDATE"
+        End If
+        m_OperationLogger.LogOperation "REPO_SAVE_START", operationType & " solicitud ID: " & solicitud.idSolicitud & ", Expediente: " & solicitud.idExpediente, "CSolicitudRepository.GuardarSolicitud"
+    End If
     
     Set db = CurrentDb
     
@@ -69,18 +82,34 @@ Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As T_Soli
     ' Confirmar transacción
     db.CommitTrans
     
+    ' Logging de auditoría: Éxito en guardado
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "REPO_SAVE_SUCCESS", "Solicitud guardada exitosamente ID: " & idSolicitudGenerado & ", Expediente: " & solicitud.idExpediente, "CSolicitudRepository.GuardarSolicitud"
+    End If
+    
     ISolicitudRepository_GuardarSolicitud = idSolicitudGenerado
     Exit Function
     
 ErrorHandler:
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "REPO_SAVE_ERROR", "Error en guardado de solicitud: " & Err.Description, "CSolicitudRepository.GuardarSolicitud"
+    End If
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.GuardarSolicitud"
     db.Rollback
     Err.Raise Err.Number, "CSolicitudRepository.GuardarSolicitud", Err.Description
 End Function
 
 Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal idSolicitud As Long) As T_Solicitud
+    ' Logging de auditoría: Consulta de solicitud por ID
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "REPO_GET_SOLICITUD", "Consultando solicitud por ID: " & idSolicitud, "CSolicitudRepository.ObtenerSolicitudPorId"
+    End If
+    
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
     Dim solicitud As T_Solicitud
+    
+    On Error GoTo ErrorHandler
     
     Set db = CurrentDb
     Set rs = db.OpenRecordset("SELECT * FROM tbSolicitud WHERE idSolicitud = " & idSolicitud, dbOpenSnapshot)
@@ -109,7 +138,27 @@ Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal idSolicitud As
     End If
     
     rs.Close
+    
+    ' Logging de auditoría: Resultado de consulta
+    If Not m_OperationLogger Is Nothing Then
+        If Not solicitud Is Nothing Then
+            m_OperationLogger.LogOperation "REPO_SOLICITUD_FOUND", "Solicitud encontrada ID: " & idSolicitud & ", Expediente: " & solicitud.idExpediente, "CSolicitudRepository.ObtenerSolicitudPorId"
+        Else
+            m_OperationLogger.LogOperation "REPO_SOLICITUD_NOT_FOUND", "Solicitud no encontrada ID: " & idSolicitud, "CSolicitudRepository.ObtenerSolicitudPorId"
+        End If
+    End If
+    
     Set ISolicitudRepository_ObtenerSolicitudPorId = solicitud
+    Exit Function
+    
+ErrorHandler:
+    ' Logging de auditoría: Error en consulta
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "REPO_GET_SOLICITUD_ERROR", "Error consultando solicitud ID: " & idSolicitud & ". Error: " & Err.Description, "CSolicitudRepository.ObtenerSolicitudPorId"
+    End If
+    
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.ObtenerSolicitudPorId"
+    Set ISolicitudRepository_ObtenerSolicitudPorId = Nothing
 End Function
 
 Private Function ISolicitudRepository_ObtenerSolicitudPorCodigo(ByVal codigoSolicitud As String) As T_Solicitud
@@ -129,6 +178,11 @@ Private Function ISolicitudRepository_ObtenerSolicitudPorCodigo(ByVal codigoSoli
 End Function
 
 Private Function ISolicitudRepository_EliminarSolicitud(ByVal idSolicitud As Long) As Boolean
+    ' Logging de auditoría: Eliminación de solicitud
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "REPO_DELETE_SOLICITUD", "Eliminando solicitud ID: " & idSolicitud, "CSolicitudRepository.EliminarSolicitud"
+    End If
+    
     Dim db As DAO.Database
     
     Set db = CurrentDb
@@ -145,10 +199,22 @@ Private Function ISolicitudRepository_EliminarSolicitud(ByVal idSolicitud As Lon
     db.Execute "DELETE FROM tbSolicitud WHERE idSolicitud = " & idSolicitud
     
     db.CommitTrans
+    
+    ' Logging de auditoría: Solicitud eliminada exitosamente
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "REPO_SOLICITUD_DELETED", "Solicitud eliminada exitosamente ID: " & idSolicitud, "CSolicitudRepository.EliminarSolicitud"
+    End If
+    
     ISolicitudRepository_EliminarSolicitud = True
     Exit Function
     
 ErrorHandler:
+    ' Logging de auditoría: Error en eliminación
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "REPO_DELETE_ERROR", "Error eliminando solicitud ID: " & idSolicitud & ". Error: " & Err.Description, "CSolicitudRepository.EliminarSolicitud"
+    End If
+    
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.EliminarSolicitud"
     db.Rollback
     ISolicitudRepository_EliminarSolicitud = False
 End Function
@@ -402,33 +468,88 @@ Private Function CargarDatosCDCASUB(ByVal db As DAO.Database, ByVal idSolicitud 
     Set CargarDatosCDCASUB = datosCDCASUB
 End Function
 
-'******************************************************************************
-' MÉTODOS PÚBLICOS - DELEGACIÓN A LA INTERFAZ
-'******************************************************************************
+' Implementación del método genérico Load (Principio de Abstracción de Interfaces)
+Private Function ISolicitudRepository_Load(ByVal ID As Long) As ISolicitud
+    On Error GoTo ErrorHandler
+    
+    ' Obtener la solicitud completa usando el método existente
+    Dim solicitud As T_Solicitud
+    Set solicitud = ISolicitudRepository_ObtenerSolicitudPorId(ID)
+    
+    If Not solicitud Is Nothing Then
+        ' Crear la instancia apropiada según el tipo de solicitud
+        If solicitud.tipoSolicitud = "PC" Then
+            Dim solicitudPC As CSolicitudPC
+            Set solicitudPC = New CSolicitudPC
+            ' Copiar propiedades básicas
+            solicitudPC.idSolicitud = solicitud.idSolicitud
+            solicitudPC.idExpediente = solicitud.idExpediente
+            solicitudPC.tipoSolicitud = solicitud.tipoSolicitud
+            solicitudPC.codigoSolicitud = solicitud.codigoSolicitud
+            solicitudPC.estadoInterno = solicitud.estadoInterno
+            ' Asignar datos específicos
+            If Not solicitud.datosPC Is Nothing Then
+                Set solicitudPC.datosPC = solicitud.datosPC
+            End If
+            Set ISolicitudRepository_Load = solicitudPC
+        ' Aquí se añadirían otros tipos cuando existan las clases CSolicitudCDCA, etc.
+        Else
+            ' Para tipos no implementados, devolver Nothing
+            Set ISolicitudRepository_Load = Nothing
+        End If
+    Else
+         Set ISolicitudRepository_Load = Nothing
+     End If
+     
+     Exit Function
+     
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.Load"
+    Set ISolicitudRepository_Load = Nothing
+ End Function
 
-Public Function GuardarSolicitud(ByVal solicitud As T_Solicitud) As Long
-    GuardarSolicitud = ISolicitudRepository_GuardarSolicitud(solicitud)
+' Implementación del método genérico Save (Principio de Abstracción de Interfaces)
+Private Function ISolicitudRepository_Save(ByVal solicitud As ISolicitud) As Long
+    On Error GoTo ErrorHandler
+    
+    ' Determinar el tipo de solicitud y usar el método apropiado
+    If TypeOf solicitud Is CSolicitudPC Then
+        Dim solicitudPC As CSolicitudPC
+        Set solicitudPC = solicitud
+        ' Convertir CSolicitudPC a T_Solicitud y usar el método existente
+        Dim solicitudData As T_Solicitud
+        Set solicitudData = New T_Solicitud
+        solicitudData.idSolicitud = solicitudPC.idSolicitud
+        solicitudData.idExpediente = solicitudPC.idExpediente
+        solicitudData.tipoSolicitud = solicitudPC.tipoSolicitud
+        solicitudData.codigoSolicitud = solicitudPC.codigoSolicitud
+        solicitudData.estadoInterno = solicitudPC.estadoInterno
+        Set solicitudData.datosPC = solicitudPC.datosPC
+        ISolicitudRepository_Save = ISolicitudRepository_GuardarSolicitud(solicitudData)
+    ' Aquí se añadirían otros tipos cuando existan las clases CSolicitudCDCA, etc.
+    Else
+        ' Para tipos no soportados, devolver 0 (error)
+        ISolicitudRepository_Save = 0
+    End If
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.Save"
+    ISolicitudRepository_Save = 0
 End Function
 
-Public Function ObtenerSolicitudPorId(ByVal idSolicitud As Long) As T_Solicitud
-    Set ObtenerSolicitudPorId = ISolicitudRepository_ObtenerSolicitudPorId(idSolicitud)
-End Function
-
-Public Function ObtenerSolicitudPorCodigo(ByVal codigoSolicitud As String) As T_Solicitud
-    Set ObtenerSolicitudPorCodigo = ISolicitudRepository_ObtenerSolicitudPorCodigo(codigoSolicitud)
-End Function
-
-Public Function EliminarSolicitud(ByVal idSolicitud As Long) As Boolean
-    EliminarSolicitud = ISolicitudRepository_EliminarSolicitud(idSolicitud)
-End Function
-
-Public Function ObtenerSolicitudesPorExpediente(ByVal idExpediente As String) As Collection
-    Set ObtenerSolicitudesPorExpediente = ISolicitudRepository_ObtenerSolicitudesPorExpediente(idExpediente)
-End Function
-
-Public Function ExisteSolicitudConCodigo(ByVal codigoSolicitud As String) As Boolean
-    ExisteSolicitudConCodigo = ISolicitudRepository_ExisteSolicitudConCodigo(codigoSolicitud)
-End Function
+' Método de inicialización para inyectar dependencias
+Public Sub Initialize(operationLogger As IOperationLogger)
+    On Error GoTo ErrorHandler
+    
+    Set m_OperationLogger = operationLogger
+    
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.Initialize"
+End Sub
 
 
 

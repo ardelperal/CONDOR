@@ -13,8 +13,8 @@ Private Type T_MockSolicitudPCData
     NumeroExpediente As String
     tipoSolicitud As String
     descripcionCambio As String
-    JustificacionCambio As String
-    ImpactoSeguridad As String
+    justificacion As String
+    impactoCoste As String
     impactoCalidad As String
     estadoInterno As String
     IsValid As Boolean
@@ -32,8 +32,8 @@ Private Sub SetupValidMockData()
     m_MockData.NumeroExpediente = "EXP-2025-001"
     m_MockData.tipoSolicitud = "PC"
     m_MockData.descripcionCambio = "Cambio en el m?dulo de autenticaci?n"
-    m_MockData.JustificacionCambio = "Mejora de seguridad"
-    m_MockData.ImpactoSeguridad = "Bajo"
+    m_MockData.justificacion = "Mejora de seguridad"
+    m_MockData.impactoCoste = "Bajo"
     m_MockData.impactoCalidad = "Medio"
     m_MockData.estadoInterno = "Borrador"
     m_MockData.IsValid = True
@@ -45,8 +45,8 @@ Private Sub SetupInvalidMockData()
     m_MockData.NumeroExpediente = ""
     m_MockData.tipoSolicitud = ""
     m_MockData.descripcionCambio = ""
-    m_MockData.JustificacionCambio = ""
-    m_MockData.ImpactoSeguridad = ""
+    m_MockData.justificacion = ""
+    m_MockData.impactoCoste = ""
     m_MockData.impactoCalidad = ""
     m_MockData.estadoInterno = ""
     m_MockData.IsValid = False
@@ -58,7 +58,7 @@ End Sub
 ' ============================================================================
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
+' FUNCIÃ“N PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
 ' ============================================================================
 
 Public Function Test_CSolicitudPC_RunAll() As String
@@ -145,6 +145,7 @@ Public Function Test_CSolicitudPC_Creation_Success() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_Creation_Success", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_Creation_Success = False
 End Function
 
@@ -153,7 +154,9 @@ Public Function Test_CSolicitudPC_ImplementsISolicitud() As Boolean
     
     ' Arrange
     Dim solicitud As CSolicitudPC
+    Dim iSolicitud As ISolicitud
     Set solicitud = New CSolicitudPC
+    Set iSolicitud = solicitud
     
     ' Act
     Dim interfaz As ISolicitud
@@ -165,6 +168,7 @@ Public Function Test_CSolicitudPC_ImplementsISolicitud() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_ImplementsISolicitud", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_ImplementsISolicitud = False
 End Function
 
@@ -177,7 +181,9 @@ Public Function Test_ISolicitud_IdSolicitud_GetSet() As Boolean
     
     ' Arrange
     Dim solicitud As CSolicitudPC
+    Dim iSolicitud As ISolicitud
     Set solicitud = New CSolicitudPC
+    Set iSolicitud = solicitud
     Dim interfaz As ISolicitud
     Set interfaz = solicitud
     
@@ -193,6 +199,7 @@ Public Function Test_ISolicitud_IdSolicitud_GetSet() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ISolicitud_IdSolicitud_GetSet", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_ISolicitud_IdSolicitud_GetSet = False
 End Function
 
@@ -201,7 +208,9 @@ Public Function Test_ISolicitud_IdExpediente_GetSet() As Boolean
     
     ' Arrange
     Dim solicitud As CSolicitudPC
+    Dim iSolicitud As ISolicitud
     Set solicitud = New CSolicitudPC
+    Set iSolicitud = solicitud
     Dim interfaz As ISolicitud
     Set interfaz = solicitud
     
@@ -212,6 +221,7 @@ Public Function Test_ISolicitud_IdExpediente_GetSet() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ISolicitud_IdExpediente_GetSet", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_ISolicitud_IdExpediente_GetSet = False
 End Function
 
@@ -229,6 +239,7 @@ Public Function Test_ISolicitud_TipoSolicitud_GetSet() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ISolicitud_TipoSolicitud_GetSet", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_ISolicitud_TipoSolicitud_GetSet = False
 End Function
 
@@ -246,6 +257,7 @@ Public Function Test_ISolicitud_CodigoSolicitud_GetSet() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ISolicitud_CodigoSolicitud_GetSet", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_ISolicitud_CodigoSolicitud_GetSet = False
 End Function
 
@@ -274,6 +286,7 @@ Public Function Test_Load_ValidID_ReturnsTrue() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Load_ValidID_ReturnsTrue", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_Load_ValidID_ReturnsTrue = False
 End Function
 
@@ -296,6 +309,7 @@ Public Function Test_Load_InvalidID_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Load_InvalidID_ReturnsFalse", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_Load_InvalidID_ReturnsFalse = False
 End Function
 
@@ -318,6 +332,7 @@ Public Function Test_DatosPC_Structure_IsValid() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_DatosPC_Structure_IsValid", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_DatosPC_Structure_IsValid = False
 End Function
 
@@ -337,6 +352,7 @@ Public Function Test_DatosPC_DescripcionCambio_HandlesLongText() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_DatosPC_DescripcionCambio_HandlesLongText", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_DatosPC_DescripcionCambio_HandlesLongText = False
 End Function
 
@@ -362,6 +378,7 @@ Public Function Test_CSolicitudPC_IntegrationWithFactory() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_IntegrationWithFactory", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_IntegrationWithFactory = False
 End Function
 
@@ -383,6 +400,7 @@ Public Function Test_CSolicitudPC_HandlesEmptyStrings() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_HandlesEmptyStrings", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_HandlesEmptyStrings = False
 End Function
 
@@ -400,6 +418,7 @@ Public Function Test_CSolicitudPC_HandlesNullValues() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_HandlesNullValues", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_HandlesNullValues = False
 End Function
 
@@ -414,7 +433,7 @@ Public Function Test_CSolicitudPC_Properties_SetAndGet() As Boolean
     Dim solicitud As CSolicitudPC
     Set solicitud = New CSolicitudPC
     
-    ' Act & Assert - Probar propiedades básicas
+    ' Act & Assert - Probar propiedades bÃ¡sicas
     solicitud.idSolicitud = 123
     If solicitud.idSolicitud <> 123 Then GoTo TestFail
     
@@ -434,6 +453,7 @@ Public Function Test_CSolicitudPC_Properties_SetAndGet() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_Properties_SetAndGet", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_Properties_SetAndGet = False
 End Function
 
@@ -451,7 +471,7 @@ Public Function Test_CSolicitudPC_Load_Success() As Boolean
     solicitud.codigoSolicitud = "SOL-PC-002"
     solicitud.estadoInterno = "En Proceso"
     
-    ' Act - Simular carga exitosa (en un entorno real usaría datos de BD)
+    ' Act - Simular carga exitosa (en un entorno real usarÃ­a datos de BD)
     ' Por ahora verificamos que el objeto mantiene sus propiedades
     Dim result As Boolean
     result = (solicitud.idSolicitud = 456 And _
@@ -463,6 +483,7 @@ Public Function Test_CSolicitudPC_Load_Success() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_Load_Success", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_Load_Success = False
 End Function
 
@@ -473,7 +494,7 @@ Public Function Test_CSolicitudPC_Save_Success() As Boolean
     Dim solicitud As CSolicitudPC
     Set solicitud = New CSolicitudPC
     
-    ' Configurar datos válidos para guardar
+    ' Configurar datos vÃ¡lidos para guardar
     solicitud.idSolicitud = 789
     solicitud.idExpediente = "EXP-2025-003"
     solicitud.tipoSolicitud = "PC"
@@ -483,21 +504,22 @@ Public Function Test_CSolicitudPC_Save_Success() As Boolean
     ' Configurar datos PC
     Dim datosPC As T_Datos_PC
     Set datosPC = New T_Datos_PC
-    datosPC.TituloPC = "Cambio en módulo de autenticación"
-    datosPC.DescripcionPC = "Implementar autenticación de dos factores"
-    datosPC.JustificacionPC = "Mejora de seguridad requerida"
-    datosPC.ImpactoPC = "Bajo"
+    datosPC.descripcionCambio = "Implementar autenticaciÃ³n de dos factores"
+    datosPC.justificacion = "Mejora de seguridad requerida"
+    datosPC.impactoCalidad = "Bajo"
+    datosPC.refContratoInspeccionOficial = "CONT-2025-001"
     Set solicitud.datosPC = datosPC
     
     ' Act - Intentar guardar
     Dim result As Boolean
-    result = solicitud.Save()
+    result = iSolicitud.Save()
     
     ' Assert
     Test_CSolicitudPC_Save_Success = result
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_Save_Success", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_Save_Success = False
 End Function
 
@@ -516,14 +538,15 @@ Public Function Test_CSolicitudPC_ChangeState_Success() As Boolean
     
     ' Act - Cambiar estado
     Dim result As Boolean
-    result = solicitud.ChangeState("En Proceso")
+    result = iSolicitud.ChangeState("En Proceso")
     
     ' Assert - Verificar que el cambio fue exitoso
-    ' En la implementación actual, ChangeState siempre retorna True
+    ' En la implementaciÃ³n actual, ChangeState siempre retorna True
     Test_CSolicitudPC_ChangeState_Success = result
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_ChangeState_Success", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_ChangeState_Success = False
 End Function
 
@@ -540,23 +563,22 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     ' Act - Configurar datos PC completos
     datosPC.ID = 1
     datosPC.idSolicitud = 123
-    datosPC.TituloPC = "Actualización del sistema de reportes"
-    datosPC.DescripcionPC = "Implementar nuevos filtros y opciones de exportación"
-    datosPC.JustificacionPC = "Requerimiento del usuario para mejorar la funcionalidad"
-    datosPC.ImpactoPC = "Medio - Afecta módulo de reportes"
+    datosPC.descripcionCambio = "ActualizaciÃ³n del sistema de reportes"
+    datosPC.justificacion = "Implementar nuevos filtros y opciones de exportaciÃ³n"
+    datosPC.impactoCalidad = "Requerimiento del usuario para mejorar la funcionalidad"
+    datosPC.impactoCoste = "Medio - Afecta mÃ³dulo de reportes"
     datosPC.fechaCreacion = Now
     datosPC.CreadoPor = "Usuario Test"
     
-    ' Propiedades técnicas
-    datosPC.Procesador = "Intel i7"
-    datosPC.RAM = "16GB"
-    datosPC.Almacenamiento = "500GB SSD"
-    datosPC.SistemaOperativo = "Windows 11"
+    ' Propiedades tÃ©cnicas
+    datosPC.refContratoInspeccionOficial = "Intel i7"
+    datosPC.fechaCreacion = Now
+    datosPC.CreadoPor = "usuario.prueba@empresa.com"
+    datosPC.Estado = "Activo"
     
     ' Propiedades adicionales
     datosPC.descripcionCambio = "Cambio en interfaz de usuario"
-    datosPC.JustificacionCambio = "Mejora de usabilidad"
-    datosPC.ImpactoSeguridad = "Bajo"
+    ' Propiedades ya asignadas arriba
     datosPC.impactoCalidad = "Alto"
     datosPC.Estado = "Activo"
     datosPC.Activo = True
@@ -569,22 +591,23 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     Set datosRecuperados = solicitud.datosPC
     
     Dim result As Boolean
-    result = (datosRecuperados.TituloPC = "Actualización del sistema de reportes" And _
-              datosRecuperados.DescripcionPC = "Implementar nuevos filtros y opciones de exportación" And _
-              datosRecuperados.JustificacionPC = "Requerimiento del usuario para mejorar la funcionalidad" And _
-              datosRecuperados.ImpactoPC = "Medio - Afecta módulo de reportes" And _
-              datosRecuperados.Procesador = "Intel i7" And _
+    result = (datosRecuperados.descripcionCambio = "ActualizaciÃ³n del sistema de reportes" And _
+             datosRecuperados.justificacion = "Implementar nuevos filtros y opciones de exportaciÃ³n" And _
+             datosRecuperados.impactoCalidad = "Requerimiento del usuario para mejorar la funcionalidad" And _
+             datosRecuperados.impactoCoste = "Medio - Afecta mÃ³dulo de reportes" And _
+             datosRecuperados.refContratoInspeccionOficial = "Intel i7" And _
               datosRecuperados.Activo = True)
     
     Test_CSolicitudPC_DatosPC_SetAndGet = result
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CSolicitudPC_DatosPC_SetAndGet", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
     Test_CSolicitudPC_DatosPC_SetAndGet = False
 End Function
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
+' FUNCIÃ“N PRINCIPAL DE EJECUCIÃ“N DE PRUEBAS
 ' ============================================================================
 
 Public Function RunCSolicitudPCTests() As String
@@ -706,6 +729,7 @@ Public Function RunCSolicitudPCTests() As String
     
     RunCSolicitudPCTests = resultado
 End Function
+
 
 
 

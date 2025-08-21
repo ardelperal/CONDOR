@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Interfaz para el repositorio de solicitudes
 ' Define los métodos para la persistencia de solicitudes y sus datos asociados
@@ -25,6 +25,14 @@ End Function
 
 ' Verifica si existe una solicitud con el código dado
 Public Function ExisteSolicitudConCodigo(ByVal codigoSolicitud As String) As Boolean
+End Function
+
+' Método genérico para cargar una solicitud por ID (Principio de Abstracción de Interfaces)
+Public Function Load(ByVal ID As Long) As Object
+End Function
+
+' Método genérico para guardar una solicitud (Principio de Abstracción de Interfaces)
+Public Function Save(ByVal solicitud As Object) As Long
 End Function
 
 

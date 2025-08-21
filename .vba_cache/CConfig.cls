@@ -41,9 +41,29 @@ End Type
 
 ' Variable privada de configuracion
 Private m_AppConfig As T_AppConfig
+Private m_OperationLogger As IOperationLogger
+
+' Método de inicialización para inyectar dependencias
+Public Sub Initialize(operationLogger As IOperationLogger)
+    On Error GoTo ErrorHandler
+    
+    Set m_OperationLogger = operationLogger
+    
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.Initialize"
+End Sub
 
 ' Implementaci?n de IConfig.GetValue
 Private Function IConfig_GetValue(ByVal key As String) As Variant
+    On Error GoTo ErrorHandler
+    
+    ' Logging de auditoría: Acceso a configuración
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "CONFIG_ACCESS", "Accediendo a configuración clave: " & key, "CConfig.GetValue"
+    End If
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
@@ -77,11 +97,31 @@ Private Function IConfig_GetValue(ByVal key As String) As Variant
             IConfig_GetValue = IDAplicacion_CONDOR
         Case Else
             IConfig_GetValue = Null
+            ' Logging de auditoría: Clave no encontrada
+            If Not m_OperationLogger Is Nothing Then
+                m_OperationLogger.LogOperation "CONFIG_KEY_NOT_FOUND", "Clave de configuración no encontrada: " & key, "CConfig.GetValue"
+            End If
     End Select
+    
+    ' Logging de auditoría: Valor obtenido exitosamente
+    If Not m_OperationLogger Is Nothing And Not IsNull(IConfig_GetValue) Then
+        m_OperationLogger.LogOperation "CONFIG_VALUE_RETRIEVED", "Valor obtenido para clave: " & key, "CConfig.GetValue"
+    End If
+    
+    Exit Function
+    
+ErrorHandler:
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "CONFIG_ERROR", "Error accediendo configuración clave " & key & ": " & Err.Description, "CConfig.GetValue"
+    End If
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetValue"
+    IConfig_GetValue = Null
 End Function
 
 ' Implementaci?n de IConfig.SetValue
 Private Sub IConfig_SetValue(ByVal key As String, ByVal value As Variant)
+    On Error GoTo ErrorHandler
+    
     Select Case UCase(key)
         Case "DATABASEPATH"
             m_AppConfig.DatabasePath = CStr(value)
@@ -108,7 +148,16 @@ Private Sub IConfig_SetValue(ByVal key As String, ByVal value As Variant)
         Case "ISINITIALIZED"
             m_AppConfig.IsInitialized = CBool(value)
     End Select
+    
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.SetValue"
 End Sub
+
+Private Function IConfig_GetInstance() As IConfig
+    Set IConfig_GetInstance = Me
+End Function
 
 ' Implementaci?n de IConfig.InitializeEnvironment
 Private Function IConfig_InitializeEnvironment() As Boolean
@@ -182,12 +231,15 @@ Private Function IConfig_InitializeEnvironment() As Boolean
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.InitializeEnvironment"
     IConfig_InitializeEnvironment = False
     m_AppConfig.IsInitialized = False
 End Function
 
 ' Implementaci?n de IConfig.HasKey
 Private Function IConfig_HasKey(ByVal key As String) As Boolean
+    On Error GoTo ErrorHandler
+    
     Select Case UCase(key)
         Case "DATABASEPATH", "DATAPATH", "EXPEDIENTESPATH", "PLANTILLASPATH", _
              "LANZADERADBPATH", "SOURCEPATH", "BACKUPPATH", "LOGPATH", _
@@ -196,59 +248,123 @@ Private Function IConfig_HasKey(ByVal key As String) As Boolean
         Case Else
             IConfig_HasKey = False
     End Select
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.HasKey"
+    IConfig_HasKey = False
 End Function
 
 ' Implementaciones de la interfaz IConfig
 Private Function IConfig_GetActiveEnvironment() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
     IConfig_GetActiveEnvironment = m_AppConfig.EntornoActivo
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetActiveEnvironment"
+    IConfig_GetActiveEnvironment = ""
 End Function
 
 Private Function IConfig_GetDatabasePath() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
     IConfig_GetDatabasePath = m_AppConfig.DatabasePath
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetDatabasePath"
+    IConfig_GetDatabasePath = ""
 End Function
 
 Private Function IConfig_GetDataPath() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
     IConfig_GetDataPath = m_AppConfig.DataPath
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetDataPath"
+    IConfig_GetDataPath = ""
 End Function
 
 Private Function IConfig_GetExpedientesPath() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
     IConfig_GetExpedientesPath = m_AppConfig.ExpedientesPath
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetExpedientesPath"
+    IConfig_GetExpedientesPath = ""
 End Function
 
 Private Function IConfig_GetExpedientesDbPath() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
     IConfig_GetExpedientesDbPath = m_AppConfig.ExpedientesPath
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetExpedientesDbPath"
+    IConfig_GetExpedientesDbPath = ""
 End Function
 
 Private Function IConfig_GetPlantillasPath() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
     IConfig_GetPlantillasPath = m_AppConfig.PlantillasPath
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetPlantillasPath"
+    IConfig_GetPlantillasPath = ""
 End Function
 
 Private Function IConfig_GetLanzaderaDbPath() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
     IConfig_GetLanzaderaDbPath = m_AppConfig.LanzaderaDbPath
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetLanzaderaDbPath"
+    IConfig_GetLanzaderaDbPath = ""
 End Function
 
 Private Function IConfig_GetLogPath() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
@@ -268,13 +384,27 @@ Private Function IConfig_GetLogPath() As String
         If Dir(LogPath, vbDirectory) = "" Then MkDir LogPath
         IConfig_GetLogPath = LogPath & "condor_production.log"
     End If
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetLogPath"
+    IConfig_GetLogPath = ""
 End Function
 
 Private Function IConfig_GetDatabasePassword() As String
+    On Error GoTo ErrorHandler
+    
     If Not m_AppConfig.IsInitialized Then
         Call IConfig_InitializeEnvironment
     End If
     IConfig_GetDatabasePassword = m_AppConfig.DatabasePassword
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.GetDatabasePassword"
+    IConfig_GetDatabasePassword = ""
 End Function
 
 ' M?todos privados de soporte
@@ -294,7 +424,7 @@ Private Sub ResetConfiguration()
 End Sub
 
 Private Sub CreateDirectoriesIfNeeded()
-    On Error Resume Next
+    On Error GoTo ErrorHandler
     
     Dim fso As Object
     Set fso = CreateObject("Scripting.FileSystemObject")
@@ -305,7 +435,11 @@ Private Sub CreateDirectoriesIfNeeded()
     End If
     
     Set fso = Nothing
-    On Error GoTo 0
+    Exit Sub
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.CreateDirectoriesIfNeeded"
+    If Not fso Is Nothing Then Set fso = Nothing
 End Sub
 
 Private Function IsDevelopmentMode() As Boolean
@@ -338,6 +472,7 @@ Private Function IsDevelopmentMode() As Boolean
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.IsDevelopmentMode"
     ' En caso de error, asumir modo produccion por seguridad
     IsDevelopmentMode = False
     If Not fso Is Nothing Then Set fso = Nothing
@@ -345,6 +480,8 @@ End Function
 
 ' Implementaci?n de IConfig.TestCConfig
 Private Function IConfig_TestCConfig() As String
+    On Error GoTo ErrorHandler
+    
     Dim resultado As String
     resultado = "=== PRUEBA CCONFIG ===" & vbCrLf
     
@@ -381,6 +518,12 @@ Private Function IConfig_TestCConfig() As String
     
     resultado = resultado & "=== FIN PRUEBA ===" & vbCrLf
     IConfig_TestCConfig = resultado
+    
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.TestCConfig"
+    IConfig_TestCConfig = "Error en TestCConfig: " & Err.Description
 End Function
 
 '******************************************************************************
@@ -395,13 +538,7 @@ Public Sub SetValue(ByVal key As String, ByVal value As Variant)
     IConfig_SetValue key, value
 End Sub
 
-Public Function InitializeEnvironment() As Boolean
-    InitializeEnvironment = IConfig_InitializeEnvironment()
-End Function
 
-Public Function HasKey(ByVal key As String) As Boolean
-    HasKey = IConfig_HasKey(key)
-End Function
 
 Public Function GetActiveEnvironment() As String
     GetActiveEnvironment = IConfig_GetActiveEnvironment()
@@ -443,25 +580,27 @@ Public Function TestCConfig() As String
     TestCConfig = IConfig_TestCConfig()
 End Function
 
-Private Function ValidateConfiguration() As Boolean
+Private Function IConfig_ValidateConfiguration() As Boolean
+    On Error GoTo ErrorHandler
+    
     ' Comprueba que las rutas esenciales han sido cargadas
-    ValidateConfiguration = True ' Asumir éxito por defecto
+    IConfig_ValidateConfiguration = True ' Asumir éxito por defecto
 
     If IsNull(m_AppConfig.DatabasePath) Or m_AppConfig.DatabasePath = "" Then
         Call modErrorHandler.LogCriticalError(vbObjectError + 1001, "Error de configuración: La ruta 'DatabasePath' no está definida.", "CConfig.ValidateConfiguration")
-        ValidateConfiguration = False
+        IConfig_ValidateConfiguration = False
         Exit Function
     End If
     
     If IsNull(m_AppConfig.LanzaderaDbPath) Or m_AppConfig.LanzaderaDbPath = "" Then
         Call modErrorHandler.LogCriticalError(vbObjectError + 1002, "Error de configuración: La ruta 'LanzaderaDbPath' no está definida.", "CConfig.ValidateConfiguration")
-        ValidateConfiguration = False
+        IConfig_ValidateConfiguration = False
         Exit Function
     End If
     
     If IsNull(m_AppConfig.ExpedientesPath) Or m_AppConfig.ExpedientesPath = "" Then
         Call modErrorHandler.LogCriticalError(vbObjectError + 1003, "Error de configuración: La ruta 'ExpedientesPath' no está definida.", "CConfig.ValidateConfiguration")
-        ValidateConfiguration = False
+        IConfig_ValidateConfiguration = False
         Exit Function
     End If
     
@@ -471,27 +610,37 @@ Private Function ValidateConfiguration() As Boolean
     
     If Not fso.FileExists(m_AppConfig.plantillaPCPath) Then
         Call modErrorHandler.LogCriticalError(vbObjectError + 1004, "Error de configuración: La plantilla PC.docx no existe en la ruta: " & m_AppConfig.plantillaPCPath, "CConfig.ValidateConfiguration")
-        ValidateConfiguration = False
+        IConfig_ValidateConfiguration = False
         Set fso = Nothing
         Exit Function
     End If
     
     If Not fso.FileExists(m_AppConfig.plantillaCDCAPath) Then
         Call modErrorHandler.LogCriticalError(vbObjectError + 1005, "Error de configuración: La plantilla CD_CA.docx no existe en la ruta: " & m_AppConfig.plantillaCDCAPath, "CConfig.ValidateConfiguration")
-        ValidateConfiguration = False
+        IConfig_ValidateConfiguration = False
         Set fso = Nothing
         Exit Function
     End If
     
     If Not fso.FileExists(m_AppConfig.plantillaCDCASUBPath) Then
         Call modErrorHandler.LogCriticalError(vbObjectError + 1006, "Error de configuración: La plantilla CD_CA_SUB.docx no existe en la ruta: " & m_AppConfig.plantillaCDCASUBPath, "CConfig.ValidateConfiguration")
-        ValidateConfiguration = False
+        IConfig_ValidateConfiguration = False
         Set fso = Nothing
         Exit Function
     End If
     
     Set fso = Nothing
     
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CConfig.ValidateConfiguration"
+    IConfig_ValidateConfiguration = False
+    If Not fso Is Nothing Then Set fso = Nothing
+End Function
+
+Public Function ValidateConfiguration() As Boolean
+    ValidateConfiguration = IConfig_ValidateConfiguration()
 End Function
 
 

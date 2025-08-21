@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' M?dulo: modSolicitudFactory
@@ -33,6 +33,7 @@ Public Function CreateSolicitud(ByVal idSolicitud As Long) As ISolicitud
     Exit Function
     
 ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modSolicitudFactory.CreateSolicitud")
     Set CreateSolicitud = Nothing
 End Function
 

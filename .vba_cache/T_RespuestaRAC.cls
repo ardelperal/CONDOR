@@ -10,58 +10,132 @@ Option Explicit
 
 
 '******************************************************************************
-' PROPIEDADES PÚBLICAS
-' Basadas en la sección 2.4 de Especificaciones_Integracion_CONDOR.md
+' VARIABLES MIEMBRO PRIVADAS
 '******************************************************************************
-
-' Indica si la operación fue exitosa
-Public Exitoso As Boolean
-
-' Número de registro RAC asignado
-Public NumeroRAC As String
-
-' Fecha de registro en el sistema RAC
-Public FechaRegistro As Date
-
-' Estado actual en el sistema RAC
-Public EstadoRAC As String
-
-' Mensaje de error en caso de fallo
-Public MensajeError As String
-
-' Código de error específico
-Public CodigoError As Long
+Private m_Exitoso As Boolean
+Private m_NumeroRAC As String
+Private m_FechaRegistro As Date
+Private m_EstadoRAC As String
+Private m_MensajeError As String
+Private m_CodigoError As Long
+Private m_SolicitudID As String
+Private m_TiempoRespuesta As Long
+Private m_URLServicio As String
+Private m_TokenSeguimiento As String
+Private m_FechaRespuesta As Date
+Private m_VersionAPI As String
+Private m_DatosAdicionales As String
+Private m_NumeroIntentos As Long
+Private m_RequiereAccionManual As Boolean
 
 '******************************************************************************
-' PROPIEDADES ADICIONALES PARA INTEGRACIÓN COMPLETA
+' PROPIEDADES PÚBLICAS (GET/LET)
 '******************************************************************************
 
-' ID de la solicitud asociada
-Public SolicitudID As String
+Public Property Get Exitoso() As Boolean
+    Exitoso = m_Exitoso
+End Property
+Public Property Let Exitoso(ByVal value As Boolean)
+    m_Exitoso = value
+End Property
 
-' Tiempo de respuesta del servicio RAC (en milisegundos)
-Public TiempoRespuesta As Long
+Public Property Get NumeroRAC() As String
+    NumeroRAC = m_NumeroRAC
+End Property
+Public Property Let NumeroRAC(ByVal value As String)
+    m_NumeroRAC = value
+End Property
 
-' URL del servicio RAC utilizado
-Public URLServicio As String
+Public Property Get FechaRegistro() As Date
+    FechaRegistro = m_FechaRegistro
+End Property
+Public Property Let FechaRegistro(ByVal value As Date)
+    m_FechaRegistro = value
+End Property
 
-' Token de seguimiento para consultas posteriores
-Public TokenSeguimiento As String
+Public Property Get EstadoRAC() As String
+    EstadoRAC = m_EstadoRAC
+End Property
+Public Property Let EstadoRAC(ByVal value As String)
+    m_EstadoRAC = value
+End Property
 
-' Fecha y hora de la respuesta
-Public FechaRespuesta As Date
+Public Property Get MensajeError() As String
+    MensajeError = m_MensajeError
+End Property
+Public Property Let MensajeError(ByVal value As String)
+    m_MensajeError = value
+End Property
 
-' Versión de la API RAC utilizada
-Public VersionAPI As String
+Public Property Get CodigoError() As Long
+    CodigoError = m_CodigoError
+End Property
+Public Property Let CodigoError(ByVal value As Long)
+    m_CodigoError = value
+End Property
 
-' Datos adicionales en formato JSON
-Public DatosAdicionales As String
+Public Property Get SolicitudID() As String
+    SolicitudID = m_SolicitudID
+End Property
+Public Property Let SolicitudID(ByVal value As String)
+    m_SolicitudID = value
+End Property
 
-' Número de intentos realizados
-Public NumeroIntentos As Long
+Public Property Get TiempoRespuesta() As Long
+    TiempoRespuesta = m_TiempoRespuesta
+End Property
+Public Property Let TiempoRespuesta(ByVal value As Long)
+    m_TiempoRespuesta = value
+End Property
 
-' Indica si requiere acción manual
-Public RequiereAccionManual As Boolean
+Public Property Get URLServicio() As String
+    URLServicio = m_URLServicio
+End Property
+Public Property Let URLServicio(ByVal value As String)
+    m_URLServicio = value
+End Property
+
+Public Property Get TokenSeguimiento() As String
+    TokenSeguimiento = m_TokenSeguimiento
+End Property
+Public Property Let TokenSeguimiento(ByVal value As String)
+    m_TokenSeguimiento = value
+End Property
+
+Public Property Get FechaRespuesta() As Date
+    FechaRespuesta = m_FechaRespuesta
+End Property
+Public Property Let FechaRespuesta(ByVal value As Date)
+    m_FechaRespuesta = value
+End Property
+
+Public Property Get VersionAPI() As String
+    VersionAPI = m_VersionAPI
+End Property
+Public Property Let VersionAPI(ByVal value As String)
+    m_VersionAPI = value
+End Property
+
+Public Property Get DatosAdicionales() As String
+    DatosAdicionales = m_DatosAdicionales
+End Property
+Public Property Let DatosAdicionales(ByVal value As String)
+    m_DatosAdicionales = value
+End Property
+
+Public Property Get NumeroIntentos() As Long
+    NumeroIntentos = m_NumeroIntentos
+End Property
+Public Property Let NumeroIntentos(ByVal value As Long)
+    m_NumeroIntentos = value
+End Property
+
+Public Property Get RequiereAccionManual() As Boolean
+    RequiereAccionManual = m_RequiereAccionManual
+End Property
+Public Property Let RequiereAccionManual(ByVal value As Boolean)
+    m_RequiereAccionManual = value
+End Property
 
 '******************************************************************************
 ' MÉTODOS PÚBLICOS

@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 '******************************************************************************
 ' MÓDULO: Test_WorkflowService
@@ -174,6 +174,7 @@ End Function
 
 Public Function Test_ValidTransition_Borrador_To_EnProceso_ReturnsTrue() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -197,6 +198,7 @@ End Function
 
 Public Function Test_ValidTransition_EnProceso_To_Aprobado_ReturnsTrue() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -220,6 +222,7 @@ End Function
 
 Public Function Test_ValidTransition_EnProceso_To_Rechazado_ReturnsTrue() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -247,6 +250,7 @@ End Function
 
 Public Function Test_InvalidTransition_Borrador_To_Aprobado_ReturnsFalse() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -270,6 +274,7 @@ End Function
 
 Public Function Test_InvalidTransition_Aprobado_To_Borrador_ReturnsFalse() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -293,6 +298,7 @@ End Function
 
 Public Function Test_InvalidTransition_NonExistentState_ReturnsFalse() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -320,6 +326,7 @@ End Function
 
 Public Function Test_ValidatePermission_AdminRole_AllowsTransition_ReturnsTrue() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -343,6 +350,7 @@ End Function
 
 Public Function Test_ValidatePermission_UserRole_DeniesTransition_ReturnsFalse() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -366,6 +374,7 @@ End Function
 
 Public Function Test_ValidatePermission_EmptyRole_ReturnsFalse() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoOrigen As String
     Dim estadoDestino As String
@@ -393,6 +402,7 @@ End Function
 
 Public Function Test_GetAvailableStates_ForTipoPC_ReturnsCollection() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim tipoSolicitud As String
     Dim estados As Collection
     Dim resultado As Boolean
@@ -410,6 +420,7 @@ End Function
 
 Public Function Test_GetNextStates_FromBorrador_ReturnsValidStates() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim estadoActual As String
     Dim tipoSolicitud As String
     Dim usuarioRol As String
@@ -435,6 +446,7 @@ End Function
 
 Public Function Test_RecordStateChange_ValidTransition_CreatesHistoryRecord() As Boolean
     ' Arrange
+    Dim workflowService As CWorkflowService
     Dim SolicitudID As Long
     Dim estadoAnterior As String
     Dim estadoNuevo As String

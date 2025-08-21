@@ -109,6 +109,7 @@ Public Function Test_CExpedienteService_Creation_Success() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CExpedienteService_Creation_Success", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CExpedienteService_Creation_Success = False
 End Function
 
@@ -129,6 +130,7 @@ Public Function Test_CExpedienteService_ImplementsIExpedienteService() As Boolea
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CExpedienteService_ImplementsIExpedienteService", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CExpedienteService_ImplementsIExpedienteService = False
 End Function
 
@@ -154,6 +156,7 @@ Public Function Test_GetExpediente_ValidId_ReturnsExpediente() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetExpediente_ValidId_ReturnsExpediente", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_GetExpediente_ValidId_ReturnsExpediente = False
 End Function
 
@@ -174,6 +177,7 @@ Public Function Test_GetExpediente_InvalidId_HandlesGracefully() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetExpediente_InvalidId_HandlesGracefully", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_GetExpediente_InvalidId_HandlesGracefully = False
 End Function
 
@@ -194,6 +198,7 @@ Public Function Test_GetExpediente_ZeroId_HandlesGracefully() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetExpediente_ZeroId_HandlesGracefully", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_GetExpediente_ZeroId_HandlesGracefully = False
 End Function
 
@@ -222,6 +227,7 @@ Public Function Test_CreateExpediente_ValidData_ReturnsId() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateExpediente_ValidData_ReturnsId", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CreateExpediente_ValidData_ReturnsId = False
 End Function
 
@@ -244,6 +250,7 @@ Public Function Test_CreateExpediente_EmptyNumber_HandlesError() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateExpediente_EmptyNumber_HandlesError", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CreateExpediente_EmptyNumber_HandlesError = False
 End Function
 
@@ -266,6 +273,7 @@ Public Function Test_CreateExpediente_InvalidUserId_HandlesError() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CreateExpediente_InvalidUserId_HandlesError", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CreateExpediente_InvalidUserId_HandlesError = False
 End Function
 
@@ -294,6 +302,7 @@ Public Function Test_UpdateExpediente_ValidData_ReturnsTrue() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_UpdateExpediente_ValidData_ReturnsTrue", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_UpdateExpediente_ValidData_ReturnsTrue = False
 End Function
 
@@ -314,6 +323,7 @@ Public Function Test_UpdateExpediente_InvalidId_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_UpdateExpediente_InvalidId_ReturnsFalse", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_UpdateExpediente_InvalidId_ReturnsFalse = False
 End Function
 
@@ -340,6 +350,7 @@ Public Function Test_DeleteExpediente_ValidId_ReturnsTrue() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_DeleteExpediente_ValidId_ReturnsTrue", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_DeleteExpediente_ValidId_ReturnsTrue = False
 End Function
 
@@ -360,6 +371,7 @@ Public Function Test_DeleteExpediente_InvalidId_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_DeleteExpediente_InvalidId_ReturnsFalse", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_DeleteExpediente_InvalidId_ReturnsFalse = False
 End Function
 
@@ -385,6 +397,7 @@ Public Function Test_SearchExpedientes_ValidCriteria_ReturnsResults() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_SearchExpedientes_ValidCriteria_ReturnsResults", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_SearchExpedientes_ValidCriteria_ReturnsResults = False
 End Function
 
@@ -406,6 +419,7 @@ Public Function Test_SearchExpedientes_EmptyCriteria_ReturnsAll() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_SearchExpedientes_EmptyCriteria_ReturnsAll", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_SearchExpedientes_EmptyCriteria_ReturnsAll = False
 End Function
 
@@ -427,6 +441,7 @@ Public Function Test_ListAllExpedientes_EmptyDatabase_ReturnsEmptyArray() As Boo
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ListAllExpedientes_EmptyDatabase_ReturnsEmptyArray", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_ListAllExpedientes_EmptyDatabase_ReturnsEmptyArray = False
 End Function
 
@@ -448,6 +463,7 @@ Public Function Test_GetExpedientesByUser_ValidUserId_ReturnsResults() As Boolea
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_GetExpedientesByUser_ValidUserId_ReturnsResults", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_GetExpedientesByUser_ValidUserId_ReturnsResults = False
 End Function
 
@@ -477,6 +493,7 @@ Public Function Test_ValidateExpediente_ValidData_ReturnsTrue() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ValidateExpediente_ValidData_ReturnsTrue", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_ValidateExpediente_ValidData_ReturnsTrue = False
 End Function
 
@@ -503,6 +520,7 @@ Public Function Test_ValidateExpediente_InvalidData_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_ValidateExpediente_InvalidData_ReturnsFalse", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_ValidateExpediente_InvalidData_ReturnsFalse = False
 End Function
 
@@ -532,6 +550,7 @@ Public Function Test_CExpedienteService_IntegrationCreate_GetById() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CExpedienteService_IntegrationCreate_GetById", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CExpedienteService_IntegrationCreate_GetById = False
 End Function
 
@@ -561,6 +580,7 @@ Public Function Test_CExpedienteService_IntegrationUpdate_Validate() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CExpedienteService_IntegrationUpdate_Validate", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CExpedienteService_IntegrationUpdate_Validate = False
 End Function
 
@@ -595,6 +615,7 @@ Public Function Test_CExpedienteService_LargeDataset_Performance() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CExpedienteService_LargeDataset_Performance", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CExpedienteService_LargeDataset_Performance = False
 End Function
 
@@ -617,6 +638,7 @@ Public Function Test_CExpedienteService_ConcurrentAccess_ThreadSafety() As Boole
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_CExpedienteService_ConcurrentAccess_ThreadSafety", Err.Number, Err.Description, "Test_CExpedienteService.bas"
     Test_CExpedienteService_ConcurrentAccess_ThreadSafety = False
 End Function
 
@@ -807,6 +829,7 @@ Public Function RunCExpedienteServiceTests() As String
     
     RunCExpedienteServiceTests = resultado
 End Function
+
 
 
 

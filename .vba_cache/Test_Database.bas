@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' M?dulo: Test_Database
@@ -76,8 +76,8 @@ Private Sub SetupValidDatosPCData()
         .NumeroExpediente = "EXP-2025-001"
         .tipoSolicitud = "PC"
         .descripcionCambio = "Cambio en el proceso de validación"
-        .JustificacionCambio = "Mejora en la eficiencia del proceso"
-        .ImpactoSeguridad = "Bajo"
+        .justificacion = "Mejora en la eficiencia del proceso"
+        .impactoCoste = "Bajo"
         .impactoCalidad = "Medio"
         .fechaCreacion = Now()
         .FechaUltimaModificacion = Now()
@@ -272,6 +272,7 @@ Public Function Test_GetSolicitudData_ValidID_ReturnsRecordset() As Boolean
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_Database.Test_GetSolicitudData_ValidID_ReturnsRecordset")
     Test_GetSolicitudData_ValidID_ReturnsRecordset = False
 End Function
 
@@ -289,6 +290,7 @@ Public Function Test_GetSolicitudData_InvalidID_ReturnsNothing() As Boolean
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_Database.Test_GetSolicitudData_InvalidID_ReturnsNothing")
     Test_GetSolicitudData_InvalidID_ReturnsNothing = False
 End Function
 
@@ -304,6 +306,7 @@ Public Function Test_GetSolicitudData_DatabaseError_HandlesGracefully() As Boole
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_Database.Test_GetSolicitudData_DatabaseError_HandlesGracefully")
     Test_GetSolicitudData_DatabaseError_HandlesGracefully = False
 End Function
 
@@ -338,6 +341,7 @@ Public Function Test_SaveSolicitudPC_NewRecord_Success() As Boolean
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_Database.Test_SaveSolicitudPC_NewRecord_Success")
     Test_SaveSolicitudPC_NewRecord_Success = False
 End Function
 
@@ -366,6 +370,7 @@ Public Function Test_SaveSolicitudPC_UpdateRecord_Success() As Boolean
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_Database.Test_SaveSolicitudPC_UpdateRecord_Success")
     Test_SaveSolicitudPC_UpdateRecord_Success = False
 End Function
 
@@ -385,6 +390,7 @@ Public Function Test_SaveSolicitudPC_TransactionFail_Rollback() As Boolean
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_Database.Test_SaveSolicitudPC_TransactionFail_Rollback")
     Test_SaveSolicitudPC_TransactionFail_Rollback = False
 End Function
 
@@ -405,6 +411,7 @@ Public Function Test_SaveSolicitudPC_InvalidData_HandlesError() As Boolean
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_Database.Test_SaveSolicitudPC_InvalidData_HandlesError")
     Test_SaveSolicitudPC_InvalidData_HandlesError = False
 End Function
 
@@ -428,6 +435,7 @@ Public Function Test_SolicitudExists_ValidID_ReturnsTrue() As Boolean
     Exit Function
     
 TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_Database.Test_SolicitudExists_ValidID_ReturnsTrue")
     Test_SolicitudExists_ValidID_ReturnsTrue = False
 End Function
 
@@ -447,6 +455,7 @@ Public Function Test_SolicitudExists_InvalidID_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_SolicitudExists_InvalidID_ReturnsFalse", Err.Number, Err.Description, "Test_Database.bas"
     Test_SolicitudExists_InvalidID_ReturnsFalse = False
 End Function
 
@@ -466,6 +475,7 @@ Public Function Test_SolicitudExists_ZeroID_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_SolicitudExists_ZeroID_ReturnsFalse", Err.Number, Err.Description, "Test_Database.bas"
     Test_SolicitudExists_ZeroID_ReturnsFalse = False
 End Function
 
@@ -484,6 +494,7 @@ Public Function Test_SolicitudExists_DatabaseError_ReturnsFalse() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_SolicitudExists_DatabaseError_ReturnsFalse", Err.Number, Err.Description, "Test_Database.bas"
     Test_SolicitudExists_DatabaseError_ReturnsFalse = False
 End Function
 
@@ -514,6 +525,7 @@ Public Function Test_Integration_SaveAndRetrieve() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_SaveAndRetrieve", Err.Number, Err.Description, "Test_Database.bas"
     Test_Integration_SaveAndRetrieve = False
 End Function
 
@@ -542,6 +554,7 @@ Public Function Test_Integration_SaveUpdateSave() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_SaveUpdateSave", Err.Number, Err.Description, "Test_Database.bas"
     Test_Integration_SaveUpdateSave = False
 End Function
 
@@ -562,6 +575,7 @@ Public Function Test_Integration_ErrorHandling() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_Integration_ErrorHandling", Err.Number, Err.Description, "Test_Database.bas"
     Test_Integration_ErrorHandling = False
 End Function
 
@@ -584,6 +598,7 @@ Public Function Test_EdgeCase_LargeDataset() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_LargeDataset", Err.Number, Err.Description, "Test_Database.bas"
     Test_EdgeCase_LargeDataset = False
 End Function
 
@@ -598,7 +613,7 @@ Public Function Test_EdgeCase_VeryLongStrings() As Boolean
     ' Crear strings muy largos
     m_TestSolicitud.Observaciones = String(4000, "A")
     m_TestDatosPC.descripcionCambio = String(4000, "B")
-    m_TestDatosPC.JustificacionCambio = String(4000, "C")
+    m_TestDatosPC.justificacion = String(4000, "C")
     
     ' Act & Assert
     ' Verificar que el mock maneja strings largos
@@ -608,6 +623,7 @@ Public Function Test_EdgeCase_VeryLongStrings() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_VeryLongStrings", Err.Number, Err.Description, "Test_Database.bas"
     Test_EdgeCase_VeryLongStrings = False
 End Function
 
@@ -630,6 +646,7 @@ Public Function Test_EdgeCase_SpecialCharacters() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_SpecialCharacters", Err.Number, Err.Description, "Test_Database.bas"
     Test_EdgeCase_SpecialCharacters = False
 End Function
 
@@ -657,6 +674,7 @@ Public Function Test_EdgeCase_ConcurrentOperations() As Boolean
     Exit Function
     
 TestFail:
+    modErrorHandler.LogError "Test_EdgeCase_ConcurrentOperations", Err.Number, Err.Description, "Test_Database.bas"
     Test_EdgeCase_ConcurrentOperations = False
 End Function
 

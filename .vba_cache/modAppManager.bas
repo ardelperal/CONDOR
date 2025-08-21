@@ -52,16 +52,18 @@ Public Sub App_Start()
         Exit Sub
     End If
 
-    ' 2. Crear instancia del servicio de autenticacion
+    ' 2. Crear instancia del servicio de autenticacion usando el factory
     Dim authService As IAuthService
-    Set authService = New CAuthService
-    authService.Initialize AppConfig ' Inyectar dependencia de configuración
+    Set authService = modAuthFactory.CreateAuthService()
 
     ' 3. Determinar el rol del usuario y guardarlo en la variable global
     g_CurrentUserRole = authService.GetUserRole(UserEmail)
 
-    ' 4. Verificar que la configuración se haya cargado correctamente
-    If Not AppConfig.GetValue("IsInitialized") Then
+    ' 4. Obtener instancia de configuración y verificar que se haya cargado correctamente
+    Dim config As CConfig
+    Set config = modConfig.GetInstance()
+    
+    If Not config.GetValue("IsInitialized") Then
         ' El error específico ya ha sido logueado por CConfig.ValidateConfiguration
         ' Simplemente detenemos la ejecución para prevenir que la app se abra en un estado inválido.
         Exit Sub

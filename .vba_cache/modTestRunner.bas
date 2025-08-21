@@ -201,6 +201,7 @@ Public Function RunAllTests() As String
     Exit Function
     
 ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modTestRunner.RunAllTests")
     RunAllTests = resultado & vbCrLf & "[ERROR FATAL] El Test Runner falló: " & Err.Description
 End Function
 
@@ -367,6 +368,7 @@ Public Sub ExecuteAllTests(strLogPath As String)
     
 TestRunnerErrorHandler:
     ' Si ocurre cualquier error, se salta a esta sección
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modTestRunner.ExecuteAllTests", "Ejecutando prueba: " & currentTest)
     logFile.WriteLine vbCrLf & "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     logFile.WriteLine "!!      ERROR CRÍTICO DURANTE LA EJECUCIÓN      !!"
     logFile.WriteLine "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"

@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 '******************************************************************************
 ' CLASE: CWorkflowService
@@ -38,6 +38,11 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
                                                     ByVal tipoSolicitud As String, _
                                                     ByVal usuarioRol As String) As Boolean
     
+    ' Logging de auditoría: Validación de transición de estado
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATION", "Validando transición solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino & " por usuario rol: " & usuarioRol, "CWorkflowService.ValidateTransition"
+    End If
+    
     Dim resultado As Boolean
     resultado = False
     
@@ -62,6 +67,11 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
     
     ' Si llegamos aquí, la transición es válida
     IWorkflowService_ValidateTransition = True
+    
+    ' Logging de auditoría: Transición validada exitosamente
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATED", "Transición validada exitosamente para solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino, "CWorkflowService.ValidateTransition"
+    End If
 End Function
 
 '******************************************************************************
@@ -197,6 +207,11 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
                                                    ByVal usuario As String, _
                                                    ByVal comentarios As String) As Boolean
     
+    ' Logging de auditoría: Registro de cambio de estado
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "WORKFLOW_STATE_CHANGE", "Registrando cambio de estado para solicitud ID: " & SolicitudID & ", de " & estadoAnterior & " a " & estadoNuevo & " por usuario: " & usuario, "CWorkflowService.RecordStateChange"
+    End If
+    
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
     Dim sql As String
@@ -213,15 +228,28 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     
     Set db = Nothing
     
+    ' Logging de auditoría: Cambio de estado registrado exitosamente
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "WORKFLOW_STATE_RECORDED", "Cambio de estado registrado exitosamente para solicitud ID: " & SolicitudID & ", de " & estadoAnterior & " a " & estadoNuevo, "CWorkflowService.RecordStateChange"
+    End If
+    
     IWorkflowService_RecordStateChange = True
     Exit Function
     
 ErrorHandler:
+    ' Logging de auditoría: Error al registrar cambio de estado
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "WORKFLOW_STATE_RECORD_ERROR", "Error al registrar cambio de estado para solicitud ID: " & SolicitudID & ". Error: " & Err.Description, "CWorkflowService.RecordStateChange"
+    End If
+    
+    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.RecordStateChange"
     If Not db Is Nothing Then Set db = Nothing
     IWorkflowService_RecordStateChange = False
 End Function
 
 Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As Collection
+    On Error GoTo ErrorHandler
+    
     Dim historial As New Collection
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -252,6 +280,13 @@ Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As 
     Set db = Nothing
     
     Set IWorkflowService_GetStateHistory = historial
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.GetStateHistory"
+    If Not rs Is Nothing Then Set rs = Nothing
+    If Not db Is Nothing Then Set db = Nothing
+    Set IWorkflowService_GetStateHistory = New Collection
 End Function
 
 '******************************************************************************
@@ -262,6 +297,7 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
                                                          ByVal estadoOrigen As String, _
                                                          ByVal estadoDestino As String, _
                                                          ByVal tipoSolicitud As String) As Boolean
+    On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -304,11 +340,19 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
     Set db = Nothing
     
     IWorkflowService_HasTransitionPermission = resultado
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.HasTransitionPermission"
+    If Not rs Is Nothing Then Set rs = Nothing
+    If Not db Is Nothing Then Set db = Nothing
+    IWorkflowService_HasTransitionPermission = False
 End Function
 
 Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String, _
                                                   ByVal estadoDestino As String, _
                                                   ByVal tipoSolicitud As String) As Boolean
+    On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -338,6 +382,13 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
     Set db = Nothing
     
     IWorkflowService_RequiresApproval = resultado
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.RequiresApproval"
+    If Not rs Is Nothing Then Set rs = Nothing
+    If Not db Is Nothing Then Set db = Nothing
+    IWorkflowService_RequiresApproval = False
 End Function
 
 '******************************************************************************
@@ -347,6 +398,7 @@ End Function
 Private Function TransitionExists(ByVal estadoOrigen As String, _
                                  ByVal estadoDestino As String, _
                                  ByVal tipoSolicitud As String) As Boolean
+    On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -376,62 +428,13 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     Set db = Nothing
     
     TransitionExists = resultado
-End Function
-
-'******************************************************************************
-' MÉTODOS PÚBLICOS - DELEGACIÓN A LA INTERFAZ
-'******************************************************************************
-
-Public Function ValidateTransition(ByVal SolicitudID As Long, _
-                                  ByVal estadoOrigen As String, _
-                                  ByVal estadoDestino As String, _
-                                  ByVal tipoSolicitud As String, _
-                                  ByVal usuarioRol As String) As Boolean
-    ValidateTransition = IWorkflowService_ValidateTransition(SolicitudID, estadoOrigen, estadoDestino, tipoSolicitud, usuarioRol)
-End Function
-
-Public Function GetAvailableStates(ByVal tipoSolicitud As String) As Collection
-    Set GetAvailableStates = IWorkflowService_GetAvailableStates(tipoSolicitud)
-End Function
-
-Public Function GetNextStates(ByVal estadoActual As String, _
-                             ByVal tipoSolicitud As String, _
-                             ByVal usuarioRol As String) As Collection
-    Set GetNextStates = IWorkflowService_GetNextStates(estadoActual, tipoSolicitud, usuarioRol)
-End Function
-
-Public Function GetInitialState(ByVal tipoSolicitud As String) As String
-    GetInitialState = IWorkflowService_GetInitialState(tipoSolicitud)
-End Function
-
-Public Function IsStateFinal(ByVal estadoCodigo As String, _
-                            ByVal tipoSolicitud As String) As Boolean
-    IsStateFinal = IWorkflowService_IsStateFinal(estadoCodigo, tipoSolicitud)
-End Function
-
-Public Function RecordStateChange(ByVal SolicitudID As Long, _
-                                 ByVal estadoAnterior As String, _
-                                 ByVal estadoNuevo As String, _
-                                 ByVal usuario As String, _
-                                 ByVal comentarios As String) As Boolean
-    RecordStateChange = IWorkflowService_RecordStateChange(SolicitudID, estadoAnterior, estadoNuevo, usuario, comentarios)
-End Function
-
-Public Function GetStateHistory(ByVal SolicitudID As Long) As Collection
-    Set GetStateHistory = IWorkflowService_GetStateHistory(SolicitudID)
-End Function
-
-Public Function HasTransitionPermission(ByVal usuarioRol As String, _
-                                       ByVal estadoOrigen As String, _
-                                       ByVal estadoDestino As String, _
-                                       ByVal tipoSolicitud As String) As Boolean
-    HasTransitionPermission = IWorkflowService_HasTransitionPermission(usuarioRol, estadoOrigen, estadoDestino, tipoSolicitud)
-End Function
-
-Public Function RequiresApproval(ByVal estadoOrigen As String, _
-                                ByVal estadoDestino As String, _
-                                ByVal tipoSolicitud As String) As Boolean
-    RequiresApproval = IWorkflowService_RequiresApproval(estadoOrigen, estadoDestino, tipoSolicitud)
+    Exit Function
+    
+ErrorHandler:
+    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.TransitionExists"
+    If Not rs Is Nothing Then Set rs = Nothing
+    If Not db Is Nothing Then Set db = Nothing
+    TransitionExists = False
 End Function
 
 

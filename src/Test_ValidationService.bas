@@ -49,11 +49,14 @@ End Function
 Public Function Test_ValidarSolicitud_ConDatosCompletos_RetornaExito() As Boolean
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Set validationService = New CValidationService
-    Set mockSolicitud = New T_Solicitud
+    Dim localValidationService As IValidationService
+    Dim localMockSolicitud As T_Solicitud
     
-    With mockSolicitud
+    ' Arrange
+    Set localValidationService = New CValidationService
+    Set localMockSolicitud = New T_Solicitud
+    
+    With localMockSolicitud
         .NumeroExpediente = "EXP-2024-001"
         .tipoSolicitud = "PC"
         .Descripcion = "Solicitud de cambio de precio válida"
@@ -68,7 +71,7 @@ Public Function Test_ValidarSolicitud_ConDatosCompletos_RetornaExito() As Boolea
     ' Act
     Dim resultado As Boolean
     Dim MensajeError As String
-    resultado = validationService.ValidarSolicitud(mockSolicitud, MensajeError)
+    resultado = localValidationService.ValidarSolicitud(localMockSolicitud, MensajeError)
     
     ' Assert
     If resultado = True And MensajeError = "" Then
@@ -89,11 +92,14 @@ End Function
 Public Function Test_ValidarSolicitud_SinExpediente_RetornaFallo() As Boolean
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Set validationService = New CValidationService
-    Set mockSolicitud = New T_Solicitud
+    Dim localValidationService As IValidationService
+    Dim localMockSolicitud As T_Solicitud
     
-    With mockSolicitud
+    ' Arrange
+    Set localValidationService = New CValidationService
+    Set localMockSolicitud = New T_Solicitud
+    
+    With localMockSolicitud
         .NumeroExpediente = ""  ' Campo vacío - debe fallar
         .tipoSolicitud = "PC"
         .Descripcion = "Solicitud sin expediente"
@@ -108,7 +114,7 @@ Public Function Test_ValidarSolicitud_SinExpediente_RetornaFallo() As Boolean
     ' Act
     Dim resultado As Boolean
     Dim MensajeError As String
-    resultado = validationService.ValidarSolicitud(mockSolicitud, MensajeError)
+    resultado = localValidationService.ValidarSolicitud(localMockSolicitud, MensajeError)
     
     ' Assert
     If resultado = False And InStr(MensajeError, "expediente") > 0 Then

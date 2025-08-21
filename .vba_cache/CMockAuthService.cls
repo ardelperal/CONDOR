@@ -1,8 +1,14 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Compilación condicional removida para evitar errores
 ' #If DEV_MODE Then
 Implements IAuthService
+
+' Implementación de la interfaz IAuthService
+Public Sub Initialize(config As IConfig)
+    ' Mock no requiere configuración específica, pero mantiene la interfaz
+    ' para compatibilidad con el patrón de inyección de dependencias
+End Sub
 
 Private Function IAuthService_AuthenticateUser(ByVal Email As String) As Boolean
     Select Case LCase(Email)
@@ -39,6 +45,18 @@ End Function
 Private Function IAuthService_ValidateEmail(ByVal Email As String) As Boolean
     ' Lógica MOCK simple para validación
     IAuthService_ValidateEmail = (Email <> "email_invalido")
+End Function
+
+Private Function IAuthService_IsUserAuthenticated() As Boolean
+    ' Lógica MOCK para verificar si un usuario está autenticado.
+    ' Para propósitos de mock, asumimos que si se llamó a AuthenticateUser con éxito, está autenticado.
+    IAuthService_IsUserAuthenticated = True ' Simplificado para el mock
+End Function
+
+Private Function IAuthService_GetAuthenticatedUserEmail() As String
+    ' Lógica MOCK para obtener el email del usuario autenticado.
+    ' Para propósitos de mock, devolvemos un email de prueba.
+    IAuthService_GetAuthenticatedUserEmail = "mock.user@example.com"
 End Function
 ' #End If
 

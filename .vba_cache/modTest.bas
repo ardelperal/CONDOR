@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' M?dulo de prueba para verificar la implementaci?n de la interfaz
 Public Sub TestInterface()
@@ -32,6 +32,7 @@ Public Sub TestInterface()
     Exit Sub
     
 ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modTest.TestInterfazISolicitud")
     Debug.Print "Error en prueba de interfaz: " & Err.Description
     Set solicitud = Nothing
     Set solicitudPC = Nothing

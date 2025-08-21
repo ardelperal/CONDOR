@@ -8,85 +8,197 @@ Option Explicit
 ' NOTA: Propiedades definidas basándose en TbConfiguracion y CConfig
 '******************************************************************************
 
+'******************************************************************************
+' VARIABLES MIEMBRO PRIVADAS
+'******************************************************************************
+Private m_ID As Long
+Private m_Clave As String
+Private m_Valor As String
+Private m_Descripcion As String
+Private m_Categoria As String
+Private m_Entorno As String
+Private m_RutaBackend As String
+Private m_DataPath As String
+Private m_ExpedientesPath As String
+Private m_fechaCreacion As Date
+Private m_Activo As Boolean
+Private m_ExpedienteServiceURL As String
+Private m_ExpedienteServiceTimeout As Long
+Private m_ExpedienteServiceRetry As Long
+Private m_ExpedienteServiceAuth As String
+Private m_RACServiceURL As String
+Private m_RACAPIKey As String
+Private m_RACTimeout As Long
+Private m_RACAutoSend As Boolean
+Private m_RACRetryAttempts As Long
+Private m_LogLevel As String
+Private m_LogIntegraciones As Boolean
+Private m_AutoUpdate As Boolean
 
 '******************************************************************************
-' PROPIEDADES PÚBLICAS
-' Basadas en la estructura de TbConfiguracion y uso en CConfig
+' PROPIEDADES PÚBLICAS (GET/LET)
 '******************************************************************************
 
-' Identificador único de la configuración
-Public ID As Long
+Public Property Get ID() As Long
+    ID = m_ID
+End Property
+Public Property Let ID(ByVal value As Long)
+    m_ID = value
+End Property
 
-' Clave de configuración
-Public Clave As String
+Public Property Get Clave() As String
+    Clave = m_Clave
+End Property
+Public Property Let Clave(ByVal value As String)
+    m_Clave = value
+End Property
 
-' Valor de configuración
-Public Valor As String
+Public Property Get Valor() As String
+    Valor = m_Valor
+End Property
+Public Property Let Valor(ByVal value As String)
+    m_Valor = value
+End Property
 
-' Descripción de la configuración
-Public Descripcion As String
+Public Property Get Descripcion() As String
+    Descripcion = m_Descripcion
+End Property
+Public Property Let Descripcion(ByVal value As String)
+    m_Descripcion = value
+End Property
 
-' Categoría de la configuración
-Public Categoria As String
+Public Property Get Categoria() As String
+    Categoria = m_Categoria
+End Property
+Public Property Let Categoria(ByVal value As String)
+    m_Categoria = value
+End Property
 
-' Entorno al que aplica (Desarrollo, Producción)
-Public Entorno As String
+Public Property Get Entorno() As String
+    Entorno = m_Entorno
+End Property
+Public Property Let Entorno(ByVal value As String)
+    m_Entorno = value
+End Property
 
-' Ruta a la base de datos backend
-Public RutaBackend As String
+Public Property Get RutaBackend() As String
+    RutaBackend = m_RutaBackend
+End Property
+Public Property Let RutaBackend(ByVal value As String)
+    m_RutaBackend = value
+End Property
 
-' Ruta de datos
-Public DataPath As String
+Public Property Get DataPath() As String
+    DataPath = m_DataPath
+End Property
+Public Property Let DataPath(ByVal value As String)
+    m_DataPath = value
+End Property
 
-' Ruta de expedientes
-Public ExpedientesPath As String
+Public Property Get ExpedientesPath() As String
+    ExpedientesPath = m_ExpedientesPath
+End Property
+Public Property Let ExpedientesPath(ByVal value As String)
+    m_ExpedientesPath = value
+End Property
 
-' Fecha de creación
-Public fechaCreacion As Date
+Public Property Get fechaCreacion() As Date
+    fechaCreacion = m_fechaCreacion
+End Property
+Public Property Let fechaCreacion(ByVal value As Date)
+    m_fechaCreacion = value
+End Property
 
-' Indica si está activo
-Public Activo As Boolean
+Public Property Get Activo() As Boolean
+    Activo = m_Activo
+End Property
+Public Property Let Activo(ByVal value As Boolean)
+    m_Activo = value
+End Property
 
-'******************************************************************************
-' PROPIEDADES ESPECÍFICAS DE INTEGRACIÓN
-' Basadas en Especificaciones_Integracion_CONDOR.md
-'******************************************************************************
+Public Property Get ExpedienteServiceURL() As String
+    ExpedienteServiceURL = m_ExpedienteServiceURL
+End Property
+Public Property Let ExpedienteServiceURL(ByVal value As String)
+    m_ExpedienteServiceURL = value
+End Property
 
-' URL del servicio de expedientes
-Public ExpedienteServiceURL As String
+Public Property Get ExpedienteServiceTimeout() As Long
+    ExpedienteServiceTimeout = m_ExpedienteServiceTimeout
+End Property
+Public Property Let ExpedienteServiceTimeout(ByVal value As Long)
+    m_ExpedienteServiceTimeout = value
+End Property
 
-' Timeout para servicio de expedientes
-Public ExpedienteServiceTimeout As Long
+Public Property Get ExpedienteServiceRetry() As Long
+    ExpedienteServiceRetry = m_ExpedienteServiceRetry
+End Property
+Public Property Let ExpedienteServiceRetry(ByVal value As Long)
+    m_ExpedienteServiceRetry = value
+End Property
 
-' Número de reintentos para servicio de expedientes
-Public ExpedienteServiceRetry As Long
+Public Property Get ExpedienteServiceAuth() As String
+    ExpedienteServiceAuth = m_ExpedienteServiceAuth
+End Property
+Public Property Let ExpedienteServiceAuth(ByVal value As String)
+    m_ExpedienteServiceAuth = value
+End Property
 
-' Tipo de autenticación para servicio de expedientes
-Public ExpedienteServiceAuth As String
+Public Property Get RACServiceURL() As String
+    RACServiceURL = m_RACServiceURL
+End Property
+Public Property Let RACServiceURL(ByVal value As String)
+    m_RACServiceURL = value
+End Property
 
-' URL del servicio RAC
-Public RACServiceURL As String
+Public Property Get RACAPIKey() As String
+    RACAPIKey = m_RACAPIKey
+End Property
+Public Property Let RACAPIKey(ByVal value As String)
+    m_RACAPIKey = value
+End Property
 
-' Clave API para RAC
-Public RACAPIKey As String
+Public Property Get RACTimeout() As Long
+    RACTimeout = m_RACTimeout
+End Property
+Public Property Let RACTimeout(ByVal value As Long)
+    m_RACTimeout = value
+End Property
 
-' Timeout para RAC
-Public RACTimeout As Long
+Public Property Get RACAutoSend() As Boolean
+    RACAutoSend = m_RACAutoSend
+End Property
+Public Property Let RACAutoSend(ByVal value As Boolean)
+    m_RACAutoSend = value
+End Property
 
-' Envío automático a RAC
-Public RACAutoSend As Boolean
+Public Property Get RACRetryAttempts() As Long
+    RACRetryAttempts = m_RACRetryAttempts
+End Property
+Public Property Let RACRetryAttempts(ByVal value As Long)
+    m_RACRetryAttempts = value
+End Property
 
-' Intentos de reenvío RAC
-Public RACRetryAttempts As Long
+Public Property Get LogLevel() As String
+    LogLevel = m_LogLevel
+End Property
+Public Property Let LogLevel(ByVal value As String)
+    m_LogLevel = value
+End Property
 
-' Nivel de logging
-Public LogLevel As String
+Public Property Get LogIntegraciones() As Boolean
+    LogIntegraciones = m_LogIntegraciones
+End Property
+Public Property Let LogIntegraciones(ByVal value As Boolean)
+    m_LogIntegraciones = value
+End Property
 
-' Logging de integraciones activado
-Public LogIntegraciones As Boolean
-
-' Actualización automática activada
-Public AutoUpdate As Boolean
+Public Property Get AutoUpdate() As Boolean
+    AutoUpdate = m_AutoUpdate
+End Property
+Public Property Let AutoUpdate(ByVal value As Boolean)
+    m_AutoUpdate = value
+End Property
 
 '******************************************************************************
 ' MÉTODOS PÚBLICOS

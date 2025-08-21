@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Clase: CDocumentService
@@ -20,6 +20,7 @@ Private m_LastError As String
 ' Dependencias inyectadas
 Private m_ValidationService As IValidationService
 Private m_SolicitudRepository As ISolicitudRepository
+Private m_OperationLogger As IOperationLogger
 
 ' ============================================================================
 ' CONSTRUCTOR Y DESTRUCTOR
@@ -69,10 +70,15 @@ End Sub
 ' MÉTODO DE INICIALIZACIÓN CON DEPENDENCIAS
 ' ============================================================================
 
-Public Sub Initialize(ByVal validationService As IValidationService, ByVal solicitudRepository As ISolicitudRepository)
+' Método público para inicialización de dependencias
+Public Sub Initialize(ByVal validationService As IValidationService, ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger)
     Set m_ValidationService = validationService
     Set m_SolicitudRepository = solicitudRepository
+    Set m_OperationLogger = operationLogger
 End Sub
+
+' Método público para compatibilidad
+
 
 ' ============================================================================
 ' IMPLEMENTACIÓN DE IDocumentService - MÉTODOS PRINCIPALES
@@ -80,6 +86,11 @@ End Sub
 
 Private Function IDocumentService_GenerarDocumento(ByVal idSolicitud As Long) As String
     On Error GoTo ErrorHandler
+    
+    ' Logging de auditoría: Inicio de generación de documento
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "DOCUMENT_GENERATION_START", "Iniciando generación de documento para solicitud ID: " & idSolicitud, "CDocumentService.GenerarDocumento"
+    End If
     
     Dim tipoSolicitud As String
     Dim nombrePlantilla As String
@@ -97,7 +108,7 @@ Private Function IDocumentService_GenerarDocumento(ByVal idSolicitud As Long) As
     
     ' Obtener datos de la solicitud usando el repositorio
     Dim solicitudPC As CSolicitudPC
-    Set solicitudPC = m_SolicitudRepository.LoadPC(idSolicitud)
+    Set solicitudPC = m_SolicitudRepository.Load(idSolicitud)
     
     If solicitudPC Is Nothing Then
         m_LastError = "No se pudo cargar la solicitud con ID: " & idSolicitud
@@ -168,13 +179,25 @@ Private Function IDocumentService_GenerarDocumento(ByVal idSolicitud As Long) As
     ' Guardar documento
     If IDocumentService_GuardarDocumento(rutaDestino, nombreDocumento) Then
         IDocumentService_GenerarDocumento = rutaDestino & nombreDocumento
+        ' Logging de auditoría: Documento generado exitosamente
+        If Not m_OperationLogger Is Nothing Then
+            m_OperationLogger.LogOperation "DOCUMENT_GENERATION_SUCCESS", "Documento generado exitosamente para solicitud ID: " & idSolicitud & ", archivo: " & nombreDocumento, "CDocumentService.GenerarDocumento"
+        End If
     Else
         IDocumentService_GenerarDocumento = ""
+        ' Logging de auditoría: Fallo al guardar documento
+        If Not m_OperationLogger Is Nothing Then
+            m_OperationLogger.LogOperation "DOCUMENT_GENERATION_SAVE_FAILED", "Fallo al guardar documento para solicitud ID: " & idSolicitud, "CDocumentService.GenerarDocumento"
+        End If
     End If
     
     Exit Function
     
 ErrorHandler:
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "DOCUMENT_GENERATION_ERROR", "Error generando documento para solicitud ID: " & idSolicitud & ": " & Err.Description, "CDocumentService.GenerarDocumento"
+    End If
+    modErrorHandler.LogError "CDocumentService.IDocumentService_GenerarDocumento", Err.Number, Err.Description
     m_LastError = "Error en GenerarDocumento: " & Err.Description
     IDocumentService_GenerarDocumento = ""
 End Function
@@ -202,6 +225,7 @@ Private Function IDocumentService_ObtenerNombrePlantilla(ByVal tipoSolicitud As 
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_ObtenerNombrePlantilla", Err.Number, Err.Description
     m_LastError = "Error al obtener nombre de plantilla: " & Err.Description
     IDocumentService_ObtenerNombrePlantilla = tipoSolicitud & "_template.docx"
     If Not rs Is Nothing Then
@@ -242,6 +266,7 @@ Private Function IDocumentService_ObtenerMapeoCampos(ByVal tipoSolicitud As Stri
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_ObtenerMapeoCampos", Err.Number, Err.Description
     m_LastError = "Error al obtener mapeo de campos: " & Err.Description
     IDocumentService_ObtenerMapeoCampos = "NumeroExpediente,FechaSolicitud,TipoSolicitud"
     If Not rs Is Nothing Then
@@ -271,6 +296,7 @@ Private Function IDocumentService_AbrirPlantilla(ByVal RutaPlantilla As String) 
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_AbrirPlantilla", Err.Number, Err.Description
     m_LastError = "Error al abrir plantilla: " & Err.Description
     IDocumentService_AbrirPlantilla = False
 End Function
@@ -325,6 +351,7 @@ Private Function IDocumentService_ReemplazarCamposEnPlantilla(ByVal idSolicitud 
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_ReemplazarCamposEnPlantilla", Err.Number, Err.Description
     m_LastError = "Error al reemplazar campos: " & Err.Description
     IDocumentService_ReemplazarCamposEnPlantilla = False
     If Not rs Is Nothing Then
@@ -352,6 +379,7 @@ Private Function IDocumentService_GuardarDocumento(ByVal rutaDestino As String, 
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_GuardarDocumento", Err.Number, Err.Description
     m_LastError = "Error al guardar documento: " & Err.Description
     IDocumentService_GuardarDocumento = False
 End Function
@@ -377,6 +405,7 @@ Private Function IDocumentService_ObtenerDatosSolicitud(ByVal idSolicitud As Lon
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_ObtenerDatosSolicitud", Err.Number, Err.Description
     m_LastError = "Error al obtener datos de solicitud: " & Err.Description
     Set IDocumentService_ObtenerDatosSolicitud = Nothing
 End Function
@@ -393,6 +422,7 @@ Private Function IDocumentService_ObtenerConfiguracionMapeo(ByVal tipoSolicitud 
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_ObtenerConfiguracionMapeo", Err.Number, Err.Description
     m_LastError = "Error al obtener configuración de mapeo: " & Err.Description
     Set IDocumentService_ObtenerConfiguracionMapeo = Nothing
 End Function
@@ -410,6 +440,7 @@ Private Function IDocumentService_ValidarPlantilla(ByVal RutaPlantilla As String
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_ValidarPlantilla", Err.Number, Err.Description
     m_LastError = "Error al validar plantilla: " & Err.Description
     IDocumentService_ValidarPlantilla = False
 End Function
@@ -440,6 +471,7 @@ Private Function IDocumentService_GenerarNombreDocumento(ByVal idSolicitud As Lo
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.IDocumentService_GenerarNombreDocumento", Err.Number, Err.Description
     m_LastError = "Error al generar nombre de documento: " & Err.Description
     IDocumentService_GenerarNombreDocumento = "DOC-" & tipoSolicitud & "-" & idSolicitud & ".docx"
 End Function
@@ -488,6 +520,7 @@ Private Function GenerarNombreDocumentoConDatos(ByVal solicitudPC As CSolicitudP
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.GenerarNombreDocumentoConDatos", Err.Number, Err.Description
     m_LastError = "Error al generar nombre de documento: " & Err.Description
     GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.tipoSolicitud & "-" & solicitudPC.idSolicitud & ".docx"
 End Function
@@ -515,6 +548,7 @@ Private Function ObtenerValorCampo(ByRef rs As Object, ByVal NombreCampo As Stri
     Exit Function
     
 ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.ObtenerValorCampo", Err.Number, Err.Description
     ObtenerValorCampo = "[Error: " & NombreCampo & "]"
 End Function
 

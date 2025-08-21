@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Módulo: modMockFramework
@@ -217,8 +217,8 @@ Public Sub InitializeSolicitudesMock()
             .NumeroExpediente = "EXP-2024-001"
             .tipoSolicitud = "PC"
             .descripcionCambio = "Descripción de prueba"
-            .JustificacionCambio = "Justificación de prueba"
-            .ImpactoSeguridad = "Bajo"
+            .justificacion = "Justificación de prueba"
+        .impactoCoste = "Bajo"
             .impactoCalidad = "Medio"
             .Estado = "Activo"
             .fechaCreacion = Date
@@ -476,7 +476,7 @@ Public Sub SetPCData(ID As Long, SolicitudID As Long, Descripcion As String, jus
         .ID = ID
         .SolicitudID = SolicitudID
         .descripcionCambio = Descripcion
-        .JustificacionCambio = justificacion
+        .justificacion = justificacion
         .fechaCreacion = Date
         .Activo = True
     End With
