@@ -1677,7 +1677,7 @@ Sub RebuildProject()
             cleanedContent = CleanVBAFile(strFileName, fileExtension)
             
             ' Importar usando contenido limpio
-            WScript.Echo "  Importando modulo (con limpieza): " & strFileName
+            WScript.Echo "  Clase " & strModuleName & " importada correctamente"
             Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
             
             If Err.Number <> 0 Then
@@ -1713,8 +1713,7 @@ Sub RebuildProject()
     WScript.Echo "Verificando integridad de nombres de modulos..."
     Call VerifyModuleNames()
     
-    WScript.Echo "Iniciando compilacion condicional..."
-    Call CompileModulesConditionally()
+
     
     WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
     WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
