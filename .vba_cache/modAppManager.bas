@@ -105,17 +105,8 @@ End Function
 ' USO: Ejecutar desde la ventana de Macros (Alt+F8) y revisar resultados en Ventana Inmediato (Ctrl+G)
 ' =====================================================
 Public Sub EJECUTAR_TODAS_LAS_PRUEBAS()
-    Debug.Print modTestRunner.RunAllTests()
+    Call modTestRunner.EjecutarTodasLasPruebas
 End Sub
-
-' =====================================================
-' FUNCION: OBTENER_RESULTADOS_PRUEBAS
-' PROPOSITO: Obtener los resultados de todas las pruebas como string
-' RETORNA: String - Resultados de las pruebas
-' =====================================================
-Public Function OBTENER_RESULTADOS_PRUEBAS() As String
-    OBTENER_RESULTADOS_PRUEBAS = modTestRunner.RunAllTests()
-End Function
 
 
 

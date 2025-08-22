@@ -1,112 +1,268 @@
+Attribute VB_Name = "Test_AuthService"
 Option Compare Database
 Option Explicit
-' =====================================================
-' MODULO: Test_AuthService
-' PROPOSITO: Pruebas de integración para CAuthService
-' DESCRIPCION: Valida GetUserRole con mocks de base de datos
-'              Implementa patrón AAA (Arrange, Act, Assert)
-' =====================================================
 
-' --- FUNCIÓN PRINCIPAL DE LA SUITE ---
+' ============================================================================
+' MÓDULO DE PRUEBAS UNITARIAS PARA CAuthService
+' ============================================================================
+' Este módulo contiene pruebas unitarias aisladas para CAuthService
+' utilizando mocks para todas las dependencias externas.
+' Sigue la Lección 10: El Aislamiento de las Pruebas Unitarias con Mocks no es Negociable
+
+' Función principal que ejecuta todas las pruebas del módulo
 Public Function Test_AuthService_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.SuiteName = "Test_AuthService"
-
-    ' Añadir las dos pruebas de integración
-    suiteResult.AddTest "Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto", Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto()
-    suiteResult.AddTest "Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido", Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido()
-
+    suiteResult.Initialize "Test_AuthService"
+    
+    ' Ejecutar todas las pruebas unitarias
+    suiteResult.AddTestResult Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador()
+    suiteResult.AddTestResult Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad()
+    suiteResult.AddTestResult Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico()
+    suiteResult.AddTestResult Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido()
+    
     Set Test_AuthService_RunAll = suiteResult
 End Function
 
-' ==============================
-' PRUEBAS DE INTEGRACIÓN
-' ==============================
+' ============================================================================
+' PRUEBAS UNITARIAS PARA GetUserRole
+' ============================================================================
 
-' Prueba: GetUserRole con usuario válido devuelve rol correcto
-Public Function Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto() As CTestResult
+' Prueba que GetUserRole devuelve Rol_Administrador para usuario administrador
+Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador"
+    
     On Error GoTo ErrorHandler
     
-    Dim testResult As New CTestResult
-    testResult.TestName = "Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto"
-    
-    ' Arrange
+    ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
+    
+    ' Configurar mock config
+    mockConfig.SetValue "LANZADERADBPATH", "C:\\Test\\Lanzadera.accdb"
+    mockConfig.SetValue "DATABASEPASSWORD", "testpass"
+    
+    ' Crear recordset mock para usuario administrador
+    Dim mockRecordset As Object
+    Set mockRecordset = CreateMockUserRecordset("Sí", "No", "No")
+    mockRepository.SetMockRecordset mockRecordset
+    
+    ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    
-    ' Configurar mock para simular usuario con rol Calidad
-    Call mockConfig.SetValue("LANZADERADBPATH", "C:\Test\Lanzadera.accdb")
-    Call mockConfig.SetValue("DATABASEPASSWORD", "testpass")
-    
-    ' Configurar mock recordset para simular datos de usuario de Calidad
-    ' TODO: Crear recordset falso que simule EsUsuarioCalidad = "Sí"
-    ' mockRepository.SetMockRecordset(recordsetConDatosCalidad)
-    
-    ' Inicializar AuthService con dependencias mock
     authService.Initialize mockConfig, mockLogger, mockRepository
     
-    ' Act
+    ' Act - Ejecutar el método bajo prueba
     Dim userRole As E_UserRole
-    userRole = authService.GetUserRole("usuario.calidad@test.com")
+    userRole = authService.GetUserRole("admin@test.com")
     
-    ' Assert
-    Call modAssert.AssertEqual(Rol_Calidad, userRole, "GetUserRole debería devolver Rol_Calidad para usuario válido")
+    ' Assert - Verificar resultado
+    modAssert.AssertEquals Rol_Administrador, userRole, "GetUserRole debe devolver Rol_Administrador para usuario administrador"
     
-    testResult.Passed = True
-    testResult.Message = "Test completado exitosamente"
-    Set Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto = testResult
-    
-    Exit Function
+    testResult.Pass
+    GoTo CleanUp
     
 ErrorHandler:
-    testResult.Passed = False
-    testResult.Message = "Error en test: " & Err.Description
-    Set Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto = testResult
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    ' Limpiar recursos
+    If Not mockRecordset Is Nothing Then
+        mockRecordset.Close
+        Set mockRecordset = Nothing
+    End If
+    Set Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador = testResult
 End Function
 
-' Prueba: GetUserRole con usuario inválido devuelve rol desconocido
-Public Function Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido() As CTestResult
+' Prueba que GetUserRole devuelve Rol_Calidad para usuario de calidad
+Private Function Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad"
+    
     On Error GoTo ErrorHandler
     
-    Dim testResult As New CTestResult
-    testResult.TestName = "Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido"
-    
-    ' Arrange
+    ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
+    
+    ' Configurar mock config
+    mockConfig.SetValue "LANZADERADBPATH", "C:\\Test\\Lanzadera.accdb"
+    mockConfig.SetValue "DATABASEPASSWORD", "testpass"
+    
+    ' Crear recordset mock para usuario de calidad
+    Dim mockRecordset As Object
+    Set mockRecordset = CreateMockUserRecordset("No", "Sí", "No")
+    mockRepository.SetMockRecordset mockRecordset
+    
+    ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    
-    ' Configurar mock para simular base de datos sin datos
-    Call mockConfig.SetValue("LANZADERADBPATH", "C:\Test\Lanzadera.accdb")
-    Call mockConfig.SetValue("DATABASEPASSWORD", "testpass")
-    
-    ' Configurar mock recordset para simular recordset vacío (EOF = True)
-    ' TODO: Crear recordset falso vacío
-    ' mockRepository.SetMockRecordset(recordsetVacio)
-    
-    ' Inicializar AuthService con dependencias mock
     authService.Initialize mockConfig, mockLogger, mockRepository
     
-    ' Act
+    ' Act - Ejecutar el método bajo prueba
     Dim userRole As E_UserRole
-    userRole = authService.GetUserRole("usuario.inexistente@test.com")
+    userRole = authService.GetUserRole("calidad@test.com")
     
-    ' Assert
-    Call modAssert.AssertEqual(Rol_Desconocido, userRole, "GetUserRole debería devolver Rol_Desconocido para usuario inválido")
+    ' Assert - Verificar resultado
+    modAssert.AssertEquals Rol_Calidad, userRole, "GetUserRole debe devolver Rol_Calidad para usuario de calidad"
     
-    testResult.Passed = True
-    testResult.Message = "Test completado exitosamente"
-    Set Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido = testResult
-    
-    Exit Function
+    testResult.Pass
+    GoTo CleanUp
     
 ErrorHandler:
-    testResult.Passed = False
-    testResult.Message = "Error en test: " & Err.Description
-    Set Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido = testResult
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    ' Limpiar recursos
+    If Not mockRecordset Is Nothing Then
+        mockRecordset.Close
+        Set mockRecordset = Nothing
+    End If
+    Set Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad = testResult
+End Function
+
+' Prueba que GetUserRole devuelve Rol_Tecnico para usuario técnico
+Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange - Configurar mocks y datos de prueba
+    Dim mockConfig As New CMockConfig
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockRepository As New CMockSolicitudRepository
+    
+    ' Configurar mock config
+    mockConfig.SetValue "LANZADERADBPATH", "C:\\Test\\Lanzadera.accdb"
+    mockConfig.SetValue "DATABASEPASSWORD", "testpass"
+    
+    ' Crear recordset mock para usuario técnico
+    Dim mockRecordset As Object
+    Set mockRecordset = CreateMockUserRecordset("No", "No", "Sí")
+    mockRepository.SetMockRecordset mockRecordset
+    
+    ' Crear servicio con dependencias mock
+    Dim authService As New CAuthService
+    authService.Initialize mockConfig, mockLogger, mockRepository
+    
+    ' Act - Ejecutar el método bajo prueba
+    Dim userRole As E_UserRole
+    userRole = authService.GetUserRole("tecnico@test.com")
+    
+    ' Assert - Verificar resultado
+    modAssert.AssertEquals Rol_Tecnico, userRole, "GetUserRole debe devolver Rol_Tecnico para usuario técnico"
+    
+    testResult.Pass
+    GoTo CleanUp
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    ' Limpiar recursos
+    If Not mockRecordset Is Nothing Then
+        mockRecordset.Close
+        Set mockRecordset = Nothing
+    End If
+    Set Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico = testResult
+End Function
+
+' Prueba que GetUserRole devuelve Rol_Desconocido para usuario no encontrado
+Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange - Configurar mocks y datos de prueba
+    Dim mockConfig As New CMockConfig
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockRepository As New CMockSolicitudRepository
+    
+    ' Configurar mock config
+    mockConfig.SetValue "LANZADERADBPATH", "C:\\Test\\Lanzadera.accdb"
+    mockConfig.SetValue "DATABASEPASSWORD", "testpass"
+    
+    ' Crear recordset mock vacío (usuario no encontrado)
+    Dim mockRecordset As Object
+    Set mockRecordset = CreateEmptyUserRecordset()
+    mockRepository.SetMockRecordset mockRecordset
+    
+    ' Crear servicio con dependencias mock
+    Dim authService As New CAuthService
+    authService.Initialize mockConfig, mockLogger, mockRepository
+    
+    ' Act - Ejecutar el método bajo prueba
+    Dim userRole As E_UserRole
+    userRole = authService.GetUserRole("inexistente@test.com")
+    
+    ' Assert - Verificar resultado
+    modAssert.AssertEquals Rol_Desconocido, userRole, "GetUserRole debe devolver Rol_Desconocido para usuario no encontrado"
+    
+    testResult.Pass
+    GoTo CleanUp
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    ' Limpiar recursos
+    If Not mockRecordset Is Nothing Then
+        mockRecordset.Close
+        Set mockRecordset = Nothing
+    End If
+    Set Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido = testResult
+End Function
+
+' ============================================================================
+' FUNCIONES AUXILIARES PARA CREAR RECORDSETS MOCK
+' ============================================================================
+
+' Crea un recordset mock con datos de usuario para las pruebas de roles
+Private Function CreateMockUserRecordset(esAdmin As String, esCalidad As String, esTecnico As String) As Object
+    Dim rs As Object
+    
+    ' Crear recordset ADODB en memoria
+    Set rs = CreateObject("ADODB.Recordset")
+    
+    ' Definir campos del recordset que CAuthService espera de la Lanzadera
+    rs.Fields.Append "EsAdministrador", 202, 10 ' adVarWChar
+    rs.Fields.Append "EsUsuarioCalidad", 202, 10 ' adVarWChar
+    rs.Fields.Append "EsUsuarioTecnico", 202, 10 ' adVarWChar
+    
+    ' Abrir recordset en memoria
+    rs.Open
+    
+    ' Añadir registro con datos del usuario
+    rs.AddNew
+    rs.Fields("EsAdministrador").Value = esAdmin
+    rs.Fields("EsUsuarioCalidad").Value = esCalidad
+    rs.Fields("EsUsuarioTecnico").Value = esTecnico
+    rs.Update
+    
+    ' Mover al primer registro
+    rs.MoveFirst
+    
+    Set CreateMockUserRecordset = rs
+End Function
+
+' Crea un recordset vacío para simular usuario no encontrado
+Private Function CreateEmptyUserRecordset() As Object
+    Dim rs As Object
+    
+    ' Crear recordset ADODB en memoria
+    Set rs = CreateObject("ADODB.Recordset")
+    
+    ' Definir campos básicos para el recordset vacío
+    rs.Fields.Append "EsAdministrador", 202, 10 ' adVarWChar
+    rs.Fields.Append "EsUsuarioCalidad", 202, 10 ' adVarWChar
+    rs.Fields.Append "EsUsuarioTecnico", 202, 10 ' adVarWChar
+    
+    ' Abrir recordset en memoria (sin añadir registros, queda vacío)
+    rs.Open
+    
+    Set CreateEmptyUserRecordset = rs
 End Function
 
 

@@ -1,818 +1,191 @@
-﻿Option Compare Database
+' Test_AppManager.bas - Suite de Pruebas Unitarias para modAppManager
+' Refactorizado para usar pruebas unitarias aisladas con mocks
+
+Option Compare Database
 Option Explicit
-' ============================================================================
-' MÃ³dulo: Test_AppManager
-' DescripciÃ³n: Pruebas unitarias para modAppManager.bas
-' Autor: CONDOR-Expert
-' Fecha: Enero 2025
-' ============================================================================
-
-' Mock para simular datos de usuario y roles
-Private Type T_MockUserData
-    Email As String
-    role As E_UserRole
-    IsValid As Boolean
-    ShouldFailAuth As Boolean
-End Type
-
-Private m_MockUser As T_MockUserData
-Private m_OriginalUserRole As E_UserRole
 
 ' ============================================================================
-' FUNCIONES DE CONFIGURACIÃ“N DE MOCKS
+' SUITE DE PRUEBAS UNITARIAS PARA modAppManager
 ' ============================================================================
 
-Private Sub SetupValidAdminUserMock()
-    m_MockUser.Email = "admin@condor.com"
-    m_MockUser.role = Rol_Admin
-    m_MockUser.IsValid = True
-    m_MockUser.ShouldFailAuth = False
-End Sub
-
-Private Sub SetupValidCalidadUserMock()
-    m_MockUser.Email = "calidad@condor.com"
-    m_MockUser.role = Rol_Calidad
-    m_MockUser.IsValid = True
-    m_MockUser.ShouldFailAuth = False
-End Sub
-
-Private Sub SetupValidTecnicoUserMock()
-    m_MockUser.Email = "tecnico@condor.com"
-    m_MockUser.role = Rol_Tecnico
-    m_MockUser.IsValid = True
-    m_MockUser.ShouldFailAuth = False
-End Sub
-
-Private Sub SetupInvalidUserMock()
-    m_MockUser.Email = "invalid@condor.com"
-    m_MockUser.role = Rol_Desconocido
-    m_MockUser.IsValid = False
-    m_MockUser.ShouldFailAuth = True
-End Sub
-
-Private Sub SetupEmptyUserMock()
-    m_MockUser.Email = ""
-    m_MockUser.role = Rol_Desconocido
-    m_MockUser.IsValid = False
-    m_MockUser.ShouldFailAuth = True
-End Sub
-
-' ============================================================================
-' FUNCIONES DE CONFIGURACIÃ“N Y LIMPIEZA
-' ============================================================================
-
-Private Sub SaveCurrentUserRole()
-    m_OriginalUserRole = g_CurrentUserRole
-End Sub
-
-Private Sub RestoreCurrentUserRole()
-    g_CurrentUserRole = m_OriginalUserRole
-End Sub
-
-' ============================================================================
-' PRUEBAS DE FUNCIÃ“N GetCurrentUserEmail
-' ============================================================================
-
-Public Function Test_GetCurrentUserEmail_ReturnsString() As Boolean
-    On Error GoTo TestFail
+' Función principal de la suite de pruebas
+Public Function Test_AppManager_RunAll() As CTestSuiteResult
+    Dim suite As New CTestSuiteResult
+    suite.Initialize "Test_AppManager"
     
-    ' Arrange & Act
-    Dim Email As String
-    Email = GetCurrentUserEmail()
+    ' Ejecutar todas las pruebas unitarias
+    suite.AddTestResult Test_App_Start_AdminUser_SetsCorrectGlobalRole()
+    suite.AddTestResult Test_App_Start_CalidadUser_SetsCorrectGlobalRole()
+    suite.AddTestResult Test_App_Start_TecnicoUser_SetsCorrectGlobalRole()
+    suite.AddTestResult Test_App_Start_DesconocidoUser_SetsCorrectGlobalRole()
+    suite.AddTestResult Test_Ping_ReturnsPong()
     
-    ' Assert
-    ' Verificamos que retorna un string (puede estar vacÃ­o en modo desarrollo)
-    Test_GetCurrentUserEmail_ReturnsString = True
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_GetCurrentUserEmail_ReturnsString", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_GetCurrentUserEmail_ReturnsString = False
-End Function
-
-Public Function Test_GetCurrentUserEmail_DevMode_HandlesCorrectly() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act
-    Dim Email As String
-    Email = GetCurrentUserEmail()
-    
-    ' Assert
-    ' En modo desarrollo, puede usar VBA.Command o valor por defecto
-    Test_GetCurrentUserEmail_DevMode_HandlesCorrectly = True
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_GetCurrentUserEmail_DevMode_HandlesCorrectly", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_GetCurrentUserEmail_DevMode_HandlesCorrectly = False
+    Set Test_AppManager_RunAll = suite
 End Function
 
 ' ============================================================================
-' PRUEBAS DE FUNCIÃ“N Ping
+' PRUEBAS UNITARIAS PARA App_Start CON DIFERENTES ROLES
 ' ============================================================================
 
-Public Function Test_Ping_ReturnsPong() As Boolean
+Private Function Test_App_Start_AdminUser_SetsCorrectGlobalRole() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_App_Start_AdminUser_SetsCorrectGlobalRole"
+    
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Dim mockAuthService As New CMockAuthService
+    mockAuthService.SetMockUserRole Rol_Admin
+    modAuthFactory.SetMockAuthService mockAuthService
+    
+    ' Act
+    modAppManager.App_Start
+    
+    ' Assert
+    If modAppManager.g_CurrentUserRole = Rol_Admin Then
+        testResult.Pass
+    Else
+        testResult.Fail "Expected g_CurrentUserRole to be Rol_Admin, but was " & modAppManager.g_CurrentUserRole
+    End If
+    
+    ' CleanUp
+    modAuthFactory.ResetMock
+    
+    Set Test_App_Start_AdminUser_SetsCorrectGlobalRole = testResult
+    Exit Function
+    
+TestFail:
+    modAuthFactory.ResetMock
+    testResult.Fail "Error: " & Err.Number & " - " & Err.Description
+    Set Test_App_Start_AdminUser_SetsCorrectGlobalRole = testResult
+End Function
+
+Private Function Test_App_Start_CalidadUser_SetsCorrectGlobalRole() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_App_Start_CalidadUser_SetsCorrectGlobalRole"
+    
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Dim mockAuthService As New CMockAuthService
+    mockAuthService.SetMockUserRole Rol_Calidad
+    modAuthFactory.SetMockAuthService mockAuthService
+    
+    ' Act
+    modAppManager.App_Start
+    
+    ' Assert
+    If modAppManager.g_CurrentUserRole = Rol_Calidad Then
+        testResult.Pass
+    Else
+        testResult.Fail "Expected g_CurrentUserRole to be Rol_Calidad, but was " & modAppManager.g_CurrentUserRole
+    End If
+    
+    ' CleanUp
+    modAuthFactory.ResetMock
+    
+    Set Test_App_Start_CalidadUser_SetsCorrectGlobalRole = testResult
+    Exit Function
+    
+TestFail:
+    modAuthFactory.ResetMock
+    testResult.Fail "Error: " & Err.Number & " - " & Err.Description
+    Set Test_App_Start_CalidadUser_SetsCorrectGlobalRole = testResult
+End Function
+
+Private Function Test_App_Start_TecnicoUser_SetsCorrectGlobalRole() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_App_Start_TecnicoUser_SetsCorrectGlobalRole"
+    
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Dim mockAuthService As New CMockAuthService
+    mockAuthService.SetMockUserRole Rol_Tecnico
+    modAuthFactory.SetMockAuthService mockAuthService
+    
+    ' Act
+    modAppManager.App_Start
+    
+    ' Assert
+    If modAppManager.g_CurrentUserRole = Rol_Tecnico Then
+        testResult.Pass
+    Else
+        testResult.Fail "Expected g_CurrentUserRole to be Rol_Tecnico, but was " & modAppManager.g_CurrentUserRole
+    End If
+    
+    ' CleanUp
+    modAuthFactory.ResetMock
+    
+    Set Test_App_Start_TecnicoUser_SetsCorrectGlobalRole = testResult
+    Exit Function
+    
+TestFail:
+    modAuthFactory.ResetMock
+    testResult.Fail "Error: " & Err.Number & " - " & Err.Description
+    Set Test_App_Start_TecnicoUser_SetsCorrectGlobalRole = testResult
+End Function
+
+Private Function Test_App_Start_DesconocidoUser_SetsCorrectGlobalRole() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_App_Start_DesconocidoUser_SetsCorrectGlobalRole"
+    
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Dim mockAuthService As New CMockAuthService
+    mockAuthService.SetMockUserRole Rol_Desconocido
+    modAuthFactory.SetMockAuthService mockAuthService
+    
+    ' Act
+    modAppManager.App_Start
+    
+    ' Assert
+    If modAppManager.g_CurrentUserRole = Rol_Desconocido Then
+        testResult.Pass
+    Else
+        testResult.Fail "Expected g_CurrentUserRole to be Rol_Desconocido, but was " & modAppManager.g_CurrentUserRole
+    End If
+    
+    ' CleanUp
+    modAuthFactory.ResetMock
+    
+    Set Test_App_Start_DesconocidoUser_SetsCorrectGlobalRole = testResult
+    Exit Function
+    
+TestFail:
+    modAuthFactory.ResetMock
+    testResult.Fail "Error: " & Err.Number & " - " & Err.Description
+    Set Test_App_Start_DesconocidoUser_SetsCorrectGlobalRole = testResult
+End Function
+
+' ============================================================================
+' PRUEBAS UNITARIAS PARA FUNCIÓN Ping
+' ============================================================================
+
+Private Function Test_Ping_ReturnsPong() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_Ping_ReturnsPong"
+    
     On Error GoTo TestFail
     
     ' Arrange & Act
     Dim result As String
-    result = Ping()
+    result = modAppManager.Ping()
     
     ' Assert
-    Test_Ping_ReturnsPong = (result = "Pong")
+    If result = "Pong" Then
+        testResult.Pass
+    Else
+        testResult.Fail "Expected 'Pong', but got '" & result & "'"
+    End If
     
+    Set Test_Ping_ReturnsPong = testResult
     Exit Function
     
 TestFail:
-    modErrorHandler.LogError "Test_Ping_ReturnsPong", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_Ping_ReturnsPong = False
-End Function
-
-Public Function Test_Ping_ConsistentResponse() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act
-    Dim result1 As String
-    Dim result2 As String
-    result1 = Ping()
-    result2 = Ping()
-    
-    ' Assert
-    Test_Ping_ConsistentResponse = (result1 = result2) And (result1 = "Pong")
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_Ping_ConsistentResponse", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_Ping_ConsistentResponse = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE ROLES DE USUARIO
-' ============================================================================
-
-Public Function Test_UserRole_AdminRole_SetsCorrectly() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SaveCurrentUserRole
-    SetupValidAdminUserMock
-    
-    ' Act
-    g_CurrentUserRole = m_MockUser.role
-    
-    ' Assert
-    Test_UserRole_AdminRole_SetsCorrectly = (g_CurrentUserRole = Rol_Admin)
-    
-    ' Cleanup
-    RestoreCurrentUserRole
-    
-    Exit Function
-    
-TestFail:
-    RestoreCurrentUserRole
-    Test_UserRole_AdminRole_SetsCorrectly = False
-End Function
-
-Public Function Test_UserRole_CalidadRole_SetsCorrectly() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SaveCurrentUserRole
-    SetupValidCalidadUserMock
-    
-    ' Act
-    g_CurrentUserRole = m_MockUser.role
-    
-    ' Assert
-    Test_UserRole_CalidadRole_SetsCorrectly = (g_CurrentUserRole = Rol_Calidad)
-    
-    ' Cleanup
-    RestoreCurrentUserRole
-    
-    Exit Function
-    
-TestFail:
-    RestoreCurrentUserRole
-    Test_UserRole_CalidadRole_SetsCorrectly = False
-End Function
-
-Public Function Test_UserRole_TecnicoRole_SetsCorrectly() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SaveCurrentUserRole
-    SetupValidTecnicoUserMock
-    
-    ' Act
-    g_CurrentUserRole = m_MockUser.role
-    
-    ' Assert
-    Test_UserRole_TecnicoRole_SetsCorrectly = (g_CurrentUserRole = Rol_Tecnico)
-    
-    ' Cleanup
-    RestoreCurrentUserRole
-    
-    Exit Function
-    
-TestFail:
-    RestoreCurrentUserRole
-    Test_UserRole_TecnicoRole_SetsCorrectly = False
-End Function
-
-Public Function Test_UserRole_DesconocidoRole_SetsCorrectly() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SaveCurrentUserRole
-    SetupInvalidUserMock
-    
-    ' Act
-    g_CurrentUserRole = m_MockUser.role
-    
-    ' Assert
-    Test_UserRole_DesconocidoRole_SetsCorrectly = (g_CurrentUserRole = Rol_Desconocido)
-    
-    ' Cleanup
-    RestoreCurrentUserRole
-    
-    Exit Function
-    
-TestFail:
-    RestoreCurrentUserRole
-    Test_UserRole_DesconocidoRole_SetsCorrectly = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE ENUMERACIÃ“N E_UserRole
-' ============================================================================
-
-Public Function Test_UserRoleEnum_ValidValues() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act & Assert
-    Dim result As Boolean
-    result = True
-    
-    ' Verificar que los valores de la enumeraciÃ³n son correctos
-    result = result And (Rol_Desconocido = 0)
-    result = result And (Rol_Tecnico = 1)
-    result = result And (Rol_Calidad = 2)
-    result = result And (Rol_Admin = 3)
-    
-    Test_UserRoleEnum_ValidValues = result
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_UserRoleEnum_ValidValues", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_UserRoleEnum_ValidValues = False
-End Function
-
-Public Function Test_UserRoleEnum_CanAssignToVariable() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act
-    Dim testRole As E_UserRole
-    testRole = Rol_Admin
-    
-    ' Assert
-    Test_UserRoleEnum_CanAssignToVariable = (testRole = Rol_Admin)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_UserRoleEnum_CanAssignToVariable", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_UserRoleEnum_CanAssignToVariable = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE INTEGRACIÃ“N CON SERVICIOS
-' ============================================================================
-
-Public Function Test_Integration_WithAuthService() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupValidAdminUserMock
-    Dim authService As IAuthService
-    Dim authServiceImpl As CAuthService
-    Set authServiceImpl = New CAuthService
-    authServiceImpl.Initialize AppConfig ' Inyectar dependencia de configuraciÃ³n
-    Set authService = authServiceImpl
-    
-    ' Act
-    Dim UserRole As E_UserRole
-    UserRole = authService.GetUserRole(m_MockUser.Email)
-    
-    ' Assert
-    ' Verificamos que la integraciÃ³n funciona (no falla)
-    Test_Integration_WithAuthService = True
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_Integration_WithAuthService", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_Integration_WithAuthService = False
-End Function
-
-Public Function Test_Integration_EmailAndRoleConsistency() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupValidCalidadUserMock
-    SaveCurrentUserRole
-    
-    ' Act
-    Dim Email As String
-    Email = GetCurrentUserEmail()
-    g_CurrentUserRole = m_MockUser.role
-    
-    ' Assert
-    ' Verificamos que podemos obtener email y establecer rol sin conflictos
-    Test_Integration_EmailAndRoleConsistency = (g_CurrentUserRole = Rol_Calidad)
-    
-    ' Cleanup
-    RestoreCurrentUserRole
-    
-    Exit Function
-    
-TestFail:
-    RestoreCurrentUserRole
-    Test_Integration_EmailAndRoleConsistency = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE FUNCIONES DE PRUEBA
-' ============================================================================
-
-Public Function Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act
-    ' Ejecutamos la subrutina de pruebas (no podemos verificar el output directamente)
-    Call EJECUTAR_TODAS_LAS_PRUEBAS
-    
-    ' Assert
-    Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail = True
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail = False
-End Function
-
-Public Function Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act
-    Dim resultado As String
-    resultado = OBTENER_RESULTADOS_PRUEBAS()
-    
-    ' Assert
-    ' Verificamos que retorna un string (puede estar vacÃ­o)
-    Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString = True
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE CASOS EXTREMOS
-' ============================================================================
-
-Public Function Test_EdgeCase_MultipleRoleChanges() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SaveCurrentUserRole
-    
-    ' Act
-    g_CurrentUserRole = Rol_Admin
-    Dim role1 As E_UserRole
-    role1 = g_CurrentUserRole
-    
-    g_CurrentUserRole = Rol_Tecnico
-    Dim role2 As E_UserRole
-    role2 = g_CurrentUserRole
-    
-    g_CurrentUserRole = Rol_Calidad
-    Dim role3 As E_UserRole
-    role3 = g_CurrentUserRole
-    
-    ' Assert
-    Test_EdgeCase_MultipleRoleChanges = (role1 = Rol_Admin) And _
-                                       (role2 = Rol_Tecnico) And _
-                                       (role3 = Rol_Calidad)
-    
-    ' Cleanup
-    RestoreCurrentUserRole
-    
-    Exit Function
-    
-TestFail:
-    RestoreCurrentUserRole
-    Test_EdgeCase_MultipleRoleChanges = False
-End Function
-
-Public Function Test_EdgeCase_ConcurrentEmailCalls() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act
-    Dim email1 As String
-    Dim email2 As String
-    Dim email3 As String
-    
-    email1 = GetCurrentUserEmail()
-    email2 = GetCurrentUserEmail()
-    email3 = GetCurrentUserEmail()
-    
-    ' Assert
-    ' Verificamos que mÃºltiples llamadas son consistentes
-    Test_EdgeCase_ConcurrentEmailCalls = (email1 = email2) And (email2 = email3)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_EdgeCase_ConcurrentEmailCalls", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_EdgeCase_ConcurrentEmailCalls = False
-End Function
-
-Public Function Test_EdgeCase_PingStressTest() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act
-    Dim i As Integer
-    Dim allPassed As Boolean
-    allPassed = True
-    
-    ' Ejecutar Ping mÃºltiples veces
-    For i = 1 To 100
-        If Ping() <> "Pong" Then
-            allPassed = False
-            Exit For
-        End If
-    Next i
-    
-    ' Assert
-    Test_EdgeCase_PingStressTest = allPassed
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_EdgeCase_PingStressTest", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_EdgeCase_PingStressTest = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE CONSTANTES Y CONFIGURACIÃ“N
-' ============================================================================
-
-Public Function Test_DevMode_ConstantExists() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange & Act & Assert
-    ' Verificamos que la constante DEV_MODE estÃ¡ definida
-    ' (esto se verifica implÃ­citamente en GetCurrentUserEmail)
-    Dim Email As String
-    Email = GetCurrentUserEmail()
-    
-    Test_DevMode_ConstantExists = True
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_DevMode_ConstantExists", Err.Number, Err.Description, "Test_AppManager.bas"
-    Test_DevMode_ConstantExists = False
-End Function
-
-' ============================================================================
-' FUNCIÃ“N PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
-' ============================================================================
-
-Public Function Test_AppManager_RunAll() As String
-    Dim resultado As String
-    Dim testsPassed As Long, testsTotal As Long
-    
-    resultado = "=== PRUEBAS DE APPMANAGER ===" & vbCrLf
-    testsPassed = 0
-    testsTotal = 0
-    
-    ' Ejecutar todas las pruebas
-    testsTotal = testsTotal + 1
-    If Test_GetCurrentUserEmail_ReturnsString() Then
-        resultado = resultado & "[OK] Test_GetCurrentUserEmail_ReturnsString" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_GetCurrentUserEmail_ReturnsString" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_GetCurrentUserEmail_DevMode_HandlesCorrectly() Then
-        resultado = resultado & "[OK] Test_GetCurrentUserEmail_DevMode_HandlesCorrectly" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_GetCurrentUserEmail_DevMode_HandlesCorrectly" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_Ping_ReturnsPong() Then
-        resultado = resultado & "[OK] Test_Ping_ReturnsPong" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_Ping_ReturnsPong" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_Ping_ConsistentResponse() Then
-        resultado = resultado & "[OK] Test_Ping_ConsistentResponse" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_Ping_ConsistentResponse" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_UserRole_AdminRole_SetsCorrectly() Then
-        resultado = resultado & "[OK] Test_UserRole_AdminRole_SetsCorrectly" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_UserRole_AdminRole_SetsCorrectly" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_UserRole_CalidadRole_SetsCorrectly() Then
-        resultado = resultado & "[OK] Test_UserRole_CalidadRole_SetsCorrectly" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_UserRole_CalidadRole_SetsCorrectly" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_UserRole_TecnicoRole_SetsCorrectly() Then
-        resultado = resultado & "[OK] Test_UserRole_TecnicoRole_SetsCorrectly" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_UserRole_TecnicoRole_SetsCorrectly" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_UserRole_DesconocidoRole_SetsCorrectly() Then
-        resultado = resultado & "[OK] Test_UserRole_DesconocidoRole_SetsCorrectly" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_UserRole_DesconocidoRole_SetsCorrectly" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_UserRoleEnum_ValidValues() Then
-        resultado = resultado & "[OK] Test_UserRoleEnum_ValidValues" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_UserRoleEnum_ValidValues" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_UserRoleEnum_CanAssignToVariable() Then
-        resultado = resultado & "[OK] Test_UserRoleEnum_CanAssignToVariable" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_UserRoleEnum_CanAssignToVariable" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_Integration_WithAuthService() Then
-        resultado = resultado & "[OK] Test_Integration_WithAuthService" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_Integration_WithAuthService" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_Integration_EmailAndRoleConsistency() Then
-        resultado = resultado & "[OK] Test_Integration_EmailAndRoleConsistency" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_Integration_EmailAndRoleConsistency" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail() Then
-        resultado = resultado & "[OK] Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString() Then
-        resultado = resultado & "[OK] Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_EdgeCase_MultipleRoleChanges() Then
-        resultado = resultado & "[OK] Test_EdgeCase_MultipleRoleChanges" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_EdgeCase_MultipleRoleChanges" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_EdgeCase_ConcurrentEmailCalls() Then
-        resultado = resultado & "[OK] Test_EdgeCase_ConcurrentEmailCalls" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_EdgeCase_ConcurrentEmailCalls" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_EdgeCase_PingStressTest() Then
-        resultado = resultado & "[OK] Test_EdgeCase_PingStressTest" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_EdgeCase_PingStressTest" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_DevMode_ConstantExists() Then
-        resultado = resultado & "[OK] Test_DevMode_ConstantExists" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_DevMode_ConstantExists" & vbCrLf
-    End If
-    
-    ' Agregar resumen
-    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
-    
-    Test_AppManager_RunAll = resultado
-End Function
-
-Public Function RunAppManagerTests() As String
-    Dim resultado As String
-    Dim totalTests As Integer
-    Dim passedTests As Integer
-    
-    resultado = "=== PRUEBAS DE modAppManager ===" & vbCrLf
-    totalTests = 0
-    passedTests = 0
-    
-    ' Ejecutar todas las pruebas
-    totalTests = totalTests + 1
-    If Test_GetCurrentUserEmail_ReturnsString() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_GetCurrentUserEmail_ReturnsString" & vbCrLf
-    Else
-        resultado = resultado & "? Test_GetCurrentUserEmail_ReturnsString" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_GetCurrentUserEmail_DevMode_HandlesCorrectly() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_GetCurrentUserEmail_DevMode_HandlesCorrectly" & vbCrLf
-    Else
-        resultado = resultado & "? Test_GetCurrentUserEmail_DevMode_HandlesCorrectly" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_Ping_ReturnsPong() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_Ping_ReturnsPong" & vbCrLf
-    Else
-        resultado = resultado & "? Test_Ping_ReturnsPong" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_Ping_ConsistentResponse() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_Ping_ConsistentResponse" & vbCrLf
-    Else
-        resultado = resultado & "? Test_Ping_ConsistentResponse" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_UserRole_AdminRole_SetsCorrectly() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_UserRole_AdminRole_SetsCorrectly" & vbCrLf
-    Else
-        resultado = resultado & "? Test_UserRole_AdminRole_SetsCorrectly" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_UserRole_CalidadRole_SetsCorrectly() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_UserRole_CalidadRole_SetsCorrectly" & vbCrLf
-    Else
-        resultado = resultado & "? Test_UserRole_CalidadRole_SetsCorrectly" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_UserRole_TecnicoRole_SetsCorrectly() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_UserRole_TecnicoRole_SetsCorrectly" & vbCrLf
-    Else
-        resultado = resultado & "? Test_UserRole_TecnicoRole_SetsCorrectly" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_UserRole_DesconocidoRole_SetsCorrectly() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_UserRole_DesconocidoRole_SetsCorrectly" & vbCrLf
-    Else
-        resultado = resultado & "? Test_UserRole_DesconocidoRole_SetsCorrectly" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_UserRoleEnum_ValidValues() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_UserRoleEnum_ValidValues" & vbCrLf
-    Else
-        resultado = resultado & "? Test_UserRoleEnum_ValidValues" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_UserRoleEnum_CanAssignToVariable() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_UserRoleEnum_CanAssignToVariable" & vbCrLf
-    Else
-        resultado = resultado & "? Test_UserRoleEnum_CanAssignToVariable" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_Integration_WithAuthService() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_Integration_WithAuthService" & vbCrLf
-    Else
-        resultado = resultado & "? Test_Integration_WithAuthService" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_Integration_EmailAndRoleConsistency() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_Integration_EmailAndRoleConsistency" & vbCrLf
-    Else
-        resultado = resultado & "? Test_Integration_EmailAndRoleConsistency" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail" & vbCrLf
-    Else
-        resultado = resultado & "? Test_EJECUTAR_TODAS_LAS_PRUEBAS_DoesNotFail" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString" & vbCrLf
-    Else
-        resultado = resultado & "? Test_OBTENER_RESULTADOS_PRUEBAS_ReturnsString" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_EdgeCase_MultipleRoleChanges() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_EdgeCase_MultipleRoleChanges" & vbCrLf
-    Else
-        resultado = resultado & "? Test_EdgeCase_MultipleRoleChanges" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_EdgeCase_ConcurrentEmailCalls() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_EdgeCase_ConcurrentEmailCalls" & vbCrLf
-    Else
-        resultado = resultado & "? Test_EdgeCase_ConcurrentEmailCalls" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_EdgeCase_PingStressTest() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_EdgeCase_PingStressTest" & vbCrLf
-    Else
-        resultado = resultado & "? Test_EdgeCase_PingStressTest" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_DevMode_ConstantExists() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_DevMode_ConstantExists" & vbCrLf
-    Else
-        resultado = resultado & "? Test_DevMode_ConstantExists" & vbCrLf
-    End If
-    
-    ' Resumen
-    resultado = resultado & vbCrLf & "Resultado: " & passedTests & "/" & totalTests & " pruebas exitosas" & vbCrLf
-    
-    RunAppManagerTests = resultado
+    testResult.Fail "Error: " & Err.Number & " - " & Err.Description
+    Set Test_Ping_ReturnsPong = testResult
 End Function
 
 

@@ -8,13 +8,18 @@ Option Explicit
 Implements IOperationLogger
 
 Public LoggedOperations As Collection
+Public LogOperationCalled As Boolean
 
 Private Sub Class_Initialize()
     Set LoggedOperations = New Collection
+    LogOperationCalled = False
 End Sub
 
 Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
     On Error GoTo ErrorHandler
+    
+    ' Registrar que el método fue llamado
+    LogOperationCalled = True
     
     Dim logEntry As New Collection
     logEntry.Add operationType, "OperationType"

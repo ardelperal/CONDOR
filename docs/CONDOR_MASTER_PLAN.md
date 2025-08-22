@@ -244,8 +244,12 @@ Conversión Explícita: Usar siempre CLng, CStr, etc., desde Array Variant.
 
 Tests como Especificación: Los tests y el código de acceso a datos definen las propiedades de las clases de datos (T_*).
 
-Integración de Tests: Cada nuevo módulo de prueba (Test_*_RunAll) debe ser añadido a modTestRunner.bas.
-**Se ha añadido el módulo `Test_OperationLogger.bas` para las pruebas del sistema de logging de operaciones.**
+Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado aplicando el Principio de Responsabilidad Única (SRP):
+- **modTestRunner.bas**: Motor de ejecución puro, responsable únicamente de ejecutar suites registradas
+- **CTestReporter.cls**: Clase especializada en generar informes consolidados de resultados
+- **CTestSuiteResult.cls**: Encapsula los resultados de cada suite de pruebas
+- **Integración Simplificada**: Nuevos módulos de prueba se registran en `RegisterTestSuites()` siguiendo el patrón establecido
+**Arquitectura 100% orientada a objetos con separación clara de responsabilidades.**
 
 (Este es un resumen. El documento completo Lecciones_aprendidas.md contiene más detalles).
 

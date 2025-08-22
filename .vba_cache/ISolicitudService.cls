@@ -1,61 +1,21 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
-' Interfaz para el Servicio de Solicitudes
-' Define los m?todos principales para manejar solicitudes en el sistema CONDOR
-' Version: 1.0
-' Fecha: 2025-01-14
+' ============================================================================
+' Interface: ISolicitudService
+' Descripcion: Contrato para la logica de negocio de Solicitudes.
+' Version: 3.0
+' ============================================================================
 
-
-' M?todo para crear una nueva solicitud
-Public Function CreateNuevaSolicitud(ByVal tipo As String) As ISolicitud
+Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String, ByVal subTipo As String) As T_Solicitud
 End Function
 
-' M?todo para obtener una solicitud por su ID
-Public Function GetSolicitudPorID(ByVal ID As Long) As ISolicitud
+Public Function GetSolicitud(ByVal idSolicitud As Long) As T_Solicitud
 End Function
 
-' M?todo para guardar una solicitud
-Public Function SaveSolicitud(solicitud As ISolicitud) As Boolean
+Public Function SaveSolicitud(solicitud As T_Solicitud) As Boolean
 End Function
 
-' M?todo para obtener todas las solicitudes
-Public Function GetAllSolicitudes() As Collection
-End Function
-
-' M?todo para eliminar una solicitud
-Public Function DeleteSolicitud(ByVal ID As Long) As Boolean
-End Function
-
-' Método para actualizar el estado de una solicitud
-Public Function UpdateEstadoSolicitud(ByVal ID As Long, ByVal nuevoEstado As String) As Boolean
-End Function
-
-' Métodos adicionales identificados en las pruebas
-Public Function GetSolicitud(ByVal ID As Long) As ISolicitud
-End Function
-
-Public Function CreateSolicitud(ByVal idExpediente As Long, ByVal tipo As String, ByVal Descripcion As String, ByVal idUsuario As Long) As Long
-End Function
-
-Public Function UpdateSolicitud(ByVal ID As Long, ByVal Descripcion As String, ByVal Estado As String) As Boolean
-End Function
-
-Public Function ChangeEstado(ByVal ID As Long, ByVal nuevoEstado As String) As Boolean
-End Function
-
-Public Function GetSolicitudesByExpediente(ByVal idExpediente As Long) As Collection
-End Function
-
-Public Function GetSolicitudesByTipo(ByVal tipo As String) As Collection
-End Function
-
-Public Function GetSolicitudesByEstado(ByVal Estado As String) As Collection
-End Function
-
-Public Function SearchSolicitudes(ByVal criterio As String) As Collection
-End Function
-
-Public Function ValidateSolicitud(solicitud As ISolicitud) As Boolean
+Public Function ChangeState(ByVal idSolicitud As Long, ByVal newState As String) As Boolean
 End Function
 
 

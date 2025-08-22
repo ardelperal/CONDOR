@@ -296,8 +296,10 @@ CONDOR incluye un motor de pruebas unitarias integrado que permite validar la fu
 
 #### Estructura de Pruebas
 
-- **Motor de Pruebas**: `modTestRunner.bas` - Ejecuta y reporta resultados de todas las pruebas
-- **Módulos de Prueba**: Archivos que contienen funciones de prueba (ej: `Test_Ejemplo.bas`, `Test_Integracion.bas`, `Test_OperationLogger.bas` para el nuevo sistema de logging de operaciones)
+- **Motor de Ejecución**: `modTestRunner.bas` - Ejecuta todas las pruebas registradas aplicando el Principio de Responsabilidad Única (SRP)
+- **Generador de Informes**: `CTestReporter.cls` - Clase especializada en generar informes consolidados de resultados
+- **Gestión de Resultados**: `CTestSuiteResult.cls` - Clase que encapsula los resultados de cada suite de pruebas
+- **Módulos de Prueba**: Archivos que contienen funciones de prueba (ej: `Test_Ejemplo.bas`, `Test_Integracion.bas`, `Test_OperationLogger.bas`)
 - **Convención de Nombres**: Las funciones de prueba deben comenzar con `Test_`
 
 #### Tipos de Pruebas
@@ -335,13 +337,19 @@ Tiempo total de ejecucion: 0.02 segundos.
 ATENCION! HUBO ERRORES EN LAS PRUEBAS.
 ```
 
-#### Características del Motor de Pruebas
+#### Características del Framework de Pruebas
 
+**Motor de Ejecución (`modTestRunner.bas`):**
 - **Ejecución Silenciosa**: Desactiva avisos de Access durante las pruebas
+- **Registro de Suites**: Sistema centralizado para registrar y ejecutar todas las suites de pruebas
 - **Manejo de Errores**: Captura y reporta errores específicos con número y descripción
 - **Medición de Tiempo**: Calcula y muestra el tiempo total de ejecución
+
+**Generador de Informes (`CTestReporter.cls`):**
+- **Responsabilidad Única**: Clase dedicada exclusivamente a la generación de informes
 - **Formato Visual**: Utiliza caracteres ASCII compatibles con consolas Windows
 - **Resumen Detallado**: Muestra estadísticas completas de éxito/fallo
+- **Arquitectura Orientada a Objetos**: Implementación limpia siguiendo principios SOLID
 
 #### Pruebas de Integración Implementadas
 
@@ -375,7 +383,10 @@ Para crear nuevas pruebas:
 1. Crear un módulo VBA (ej: `Test_MiModulo.bas`)
 2. Definir funciones que comiencen con `Test_`
 3. Usar `On Error Resume Next` para manejo de errores
-4. Agregar la llamada en `modTestRunner.RunAllTests()`
+4. Crear una función `Test_MiModulo_RunAll()` que ejecute todas las pruebas del módulo
+5. Registrar la nueva suite en `modTestRunner.RegisterTestSuites()` siguiendo el patrón existente
+
+**Nota**: El framework utiliza un sistema de registro centralizado que facilita la integración de nuevas suites de pruebas.
 
 Ejemplo de función de prueba:
 ```vba

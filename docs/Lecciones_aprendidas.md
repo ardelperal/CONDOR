@@ -210,3 +210,18 @@ ErrorHandler:
     ' 5. Manejo de Errores
     Call modErrorHandler.LogError(Err.Number, Err.Description, "CWorkflowService.IWorkflowService_ChangeState")
 End Function
+
+Claro, aquí tienes el apartado en formato Markdown.
+
+---
+
+### Lección 12: La Eliminación Proactiva de Código Muerto es un Requisito de Mantenibilidad
+
+**Observación:** Durante la refactorización y evolución del proyecto, es común que funciones, subrutinas, variables o incluso clases enteras queden sin uso. Este "código muerto", aunque inofensivo en tiempo de ejecución, se convierte en una deuda técnica: aumenta la complejidad del código, confunde a los nuevos desarrolladores y puede ocultar lógica obsoleta que se reintroduce por error.
+
+**Regla Inquebrantable:** El código que no se utiliza, se elimina. No se debe mantener código comentado o sin referencias "por si acaso". El código fuente debe representar el estado actual y necesario de la aplicación, ni más ni menos. La limpieza proactiva es una responsabilidad, no una tarea opcional.
+
+**Acción Correctiva:**
+1.  **Auditoría en Refactorización:** Cualquier prompt que implique una refactorización o la eliminación de una funcionalidad debe incluir explícitamente un paso final: "Busca y elimina cualquier función, variable o clase de ayuda que haya quedado sin referencias tras este cambio".
+2.  **Revisión Manual Disciplinada:** Se debe utilizar la funcionalidad de búsqueda del editor de VBA para encontrar todas las referencias a un procedimiento antes de considerarlo "vivo". Si un procedimiento (que no sea un punto de entrada de evento) no tiene llamadas, debe ser cuestionado y, muy probablemente, eliminado.
+3.  **Principio de YAGNI ("You Ain't Gonna Need It"):** No se debe escribir código basado en funcionalidades futuras especulativas. Escribe solo el código necesario para la tarea actual, manteniendo la base de código lo más limpia y relevante posible.

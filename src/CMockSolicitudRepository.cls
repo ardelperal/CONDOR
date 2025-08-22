@@ -5,8 +5,15 @@ Implements ISolicitudRepository
 Private m_storage As Collection
 Private m_mockRecordset As DAO.Recordset
 
+' Propiedades públicas para verificación en pruebas unitarias
+Public GuardarSolicitudCalled As Boolean
+Public LastSavedSolicitud As T_Solicitud
+Public GuardarSolicitudReturnValue As Long
+
 Private Sub Class_Initialize()
     Set m_storage = New Collection
+    GuardarSolicitudCalled = False
+    GuardarSolicitudReturnValue = 1 ' Valor por defecto
 End Sub
 
 ' Método público para inyectar recordset mock en las pruebas
@@ -25,11 +32,15 @@ End Function
 
 ' Implementación del método GuardarSolicitud faltante
 Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As T_Solicitud) As Long
-    ' Mock: registra la llamada y retorna un ID simulado
-    Dim newId As Long
-    newId = m_storage.Count + 1
-    m_storage.Add solicitud, CStr(newId)
-    ISolicitudRepository_GuardarSolicitud = newId
+    ' Mock: registra la llamada y retorna el valor configurado
+    GuardarSolicitudCalled = True
+    Set LastSavedSolicitud = solicitud
+    
+    ' Almacenar en la colección interna para compatibilidad
+    m_storage.Add solicitud, CStr(GuardarSolicitudReturnValue)
+    
+    ' Retornar el valor configurado para las pruebas
+    ISolicitudRepository_GuardarSolicitud = GuardarSolicitudReturnValue
 End Function
 
 ' Implementación del método ObtenerSolicitudPorId
@@ -62,17 +73,7 @@ Private Function ISolicitudRepository_ExisteSolicitudConCodigo(ByVal codigoSolic
     ISolicitudRepository_ExisteSolicitudConCodigo = False
 End Function
 
-' Implementación del método Load faltante
-Private Function ISolicitudRepository_Load(ByVal ID As Long) As Object
-    ' Mock: no hace nada, solo cumple el contrato
-    Set ISolicitudRepository_Load = Nothing
-End Function
 
-' Implementación del método Save faltante
-Private Function ISolicitudRepository_Save(ByVal solicitud As Object) As Long
-    ' Mock: simula guardado exitoso y retorna ID simulado
-    ISolicitudRepository_Save = m_storage.Count + 1
-End Function
 
 ' Implementación del método ExecuteQuery
 Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String) As DAO.Recordset

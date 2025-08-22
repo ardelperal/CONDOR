@@ -13,5 +13,5 @@ Option Compare Database
 Option Explicit
 
 Public TestName As String
-Public Passed As Boolean
-Public Message As String
+Public Success As Boolean
+Public ErrorMessage As String

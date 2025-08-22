@@ -27,13 +27,7 @@ End Function
 Public Function ExisteSolicitudConCodigo(ByVal codigoSolicitud As String) As Boolean
 End Function
 
-' Método genérico para cargar una solicitud por ID (Principio de Abstracción de Interfaces)
-Public Function Load(ByVal ID As Long) As Object
-End Function
 
-' Método genérico para guardar una solicitud (Principio de Abstracción de Interfaces)
-Public Function Save(ByVal solicitud As Object) As Long
-End Function
 
 ' Ejecuta una consulta SQL y devuelve un recordset
 Public Function ExecuteQuery(ByVal sql As String) As DAO.Recordset

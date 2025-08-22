@@ -9,8 +9,17 @@ Option Explicit
 ' FECHA: 2024
 ' =====================================================
 
+' Variable privada para almacenar el mock de AuthService
+Private m_MockAuthService As IAuthService
+
 ' Función factory para crear y configurar el servicio de autenticación
 Public Function CreateAuthService() As IAuthService
+    ' Si hay un mock configurado, devolverlo
+    If Not m_MockAuthService Is Nothing Then
+        Set CreateAuthService = m_MockAuthService
+        Exit Function
+    End If
+    
     ' Obtener la instancia de configuración
     Dim config As CConfig: Set config = modConfig.GetInstance()
     
@@ -31,3 +40,13 @@ Public Function CreateAuthService() As IAuthService
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateAuthService = authServiceInstance
 End Function
+
+' Método para inyectar un mock de AuthService (usado en pruebas unitarias)
+Public Sub SetMockAuthService(mock As IAuthService)
+    Set m_MockAuthService = mock
+End Sub
+
+' Método para resetear el factory a su estado normal (usado en pruebas unitarias)
+Public Sub ResetMock()
+    Set m_MockAuthService = Nothing
+End Sub

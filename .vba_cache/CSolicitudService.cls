@@ -1,19 +1,22 @@
 Option Compare Database
 Option Explicit
-' Implementaci?n del Servicio de Solicitudes
-' Maneja las operaciones CRUD de solicitudes en el sistema CONDOR
-' Version: 1.0
+' Implementación del Servicio de Solicitudes
+' Centraliza toda la lógica de negocio para operaciones con solicitudes
+' Arquitectura: Capa de Lógica de Negocio con Inversión de Dependencias
+' Version: 2.0 - Refactorización Arquitectónica
 ' Fecha: 2025-01-14
 
 Implements ISolicitudService
 
-' Variables privadas para dependencias
+' Variables privadas para dependencias inyectadas
+Private m_SolicitudRepository As ISolicitudRepository
 Private m_OperationLogger As IOperationLogger
 
 ' Método de inicialización para inyectar dependencias
-Public Sub Initialize(operationLogger As IOperationLogger)
+Public Sub Initialize(solicitudRepository As ISolicitudRepository, operationLogger As IOperationLogger)
     On Error GoTo ErrorHandler
     
+    Set m_SolicitudRepository = solicitudRepository
     Set m_OperationLogger = operationLogger
     
     Exit Sub
@@ -22,275 +25,167 @@ ErrorHandler:
     modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.Initialize"
 End Sub
 
-' Implementaci?n: Crear una nueva solicitud
-Private Function ISolicitudService_CreateNuevaSolicitud(ByVal tipo As String) As ISolicitud
+' ============================================================================
+' MÉTODOS PÚBLICOS DE LÓGICA DE NEGOCIO
+' ============================================================================
+
+' Crea una nueva solicitud con lógica de negocio completa
+Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String, ByVal subTipo As String) As T_Solicitud
     On Error GoTo ErrorHandler
     
-    ' Logging de auditoría: Creación de nueva solicitud
+    ' Logging de auditoría: Inicio de creación
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "SOLICITUD_CREATE_START", "Iniciando creación de solicitud tipo: " & tipo, "CSolicitudService.CreateNuevaSolicitud"
+        m_OperationLogger.LogOperation "CREATE_SOLICITUD_START", "Creando solicitud - Expediente: " & idExpediente & ", Tipo: " & tipo, "CSolicitudService.CreateSolicitud"
     End If
     
-    ' TODO: Implementar l?gica de creaci?n de solicitud
-    ' Por ahora retorna Nothing para que compile
-    Set ISolicitudService_CreateNuevaSolicitud = Nothing
+    ' Crear nueva instancia de T_Solicitud
+    Dim nuevaSolicitud As T_Solicitud
+    Set nuevaSolicitud = New T_Solicitud
     
-    ' Logging de auditoría: Resultado de creación
-    If Not m_OperationLogger Is Nothing Then
-        If ISolicitudService_CreateNuevaSolicitud Is Nothing Then
-            m_OperationLogger.LogOperation "SOLICITUD_CREATE_FAILED", "Fallo en creación de solicitud tipo: " & tipo, "CSolicitudService.CreateNuevaSolicitud"
-        Else
-            m_OperationLogger.LogOperation "SOLICITUD_CREATE_SUCCESS", "Solicitud creada exitosamente tipo: " & tipo, "CSolicitudService.CreateNuevaSolicitud"
+    ' Asignar parámetros recibidos
+    nuevaSolicitud.idExpediente = idExpediente
+    nuevaSolicitud.tipoSolicitud = tipo
+    nuevaSolicitud.subTipoSolicitud = subTipo
+    
+    ' Generar código único de solicitud (simulado por ahora)
+    nuevaSolicitud.codigoSolicitud = "SOL-" & Format(Now(), "yyyymmddhhnnss")
+    
+    ' Establecer estado inicial
+    nuevaSolicitud.estadoInterno = "Borrador"
+    
+    ' Rellenar campos de auditoría
+    nuevaSolicitud.fechaCreacion = Now()
+    nuevaSolicitud.usuarioCreacion = Environ("USERNAME") ' Usuario actual del sistema
+    
+    ' Persistir usando el repositorio
+    Dim idGenerado As Long
+    idGenerado = m_SolicitudRepository.GuardarSolicitud(nuevaSolicitud)
+    
+    If idGenerado > 0 Then
+        nuevaSolicitud.idSolicitud = idGenerado
+        
+        ' Logging de auditoría: Éxito
+        If Not m_OperationLogger Is Nothing Then
+            m_OperationLogger.LogOperation "CREATE_SOLICITUD_SUCCESS", "Solicitud creada con ID: " & idGenerado, "CSolicitudService.CreateSolicitud"
         End If
+        
+        Set CreateSolicitud = nuevaSolicitud
+    Else
+        ' Logging de auditoría: Fallo
+        If Not m_OperationLogger Is Nothing Then
+            m_OperationLogger.LogOperation "CREATE_SOLICITUD_FAILED", "Error al persistir solicitud", "CSolicitudService.CreateSolicitud"
+        End If
+        Set CreateSolicitud = Nothing
     End If
     
     Exit Function
     
 ErrorHandler:
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "SOLICITUD_CREATE_ERROR", "Error creando solicitud: " & Err.Description, "CSolicitudService.CreateNuevaSolicitud"
+        m_OperationLogger.LogOperation "CREATE_SOLICITUD_ERROR", "Error: " & Err.Description, "CSolicitudService.CreateSolicitud"
     End If
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CreateNuevaSolicitud"
-    Set ISolicitudService_CreateNuevaSolicitud = Nothing
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CreateSolicitud"
+    Set CreateSolicitud = Nothing
 End Function
 
-' Implementaci?n: Obtener una solicitud por su ID
-Private Function ISolicitudService_GetSolicitudPorID(ByVal ID As Long) As ISolicitud
+' Obtiene una solicitud por su ID
+Public Function GetSolicitud(ByVal idSolicitud As Long) As T_Solicitud
     On Error GoTo ErrorHandler
     
-    ' TODO: Implementar consulta a base de datos
-    ' Por ahora retorna Nothing para que compile
-    Set ISolicitudService_GetSolicitudPorID = Nothing
+    ' Logging de auditoría
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "GET_SOLICITUD", "Obteniendo solicitud ID: " & idSolicitud, "CSolicitudService.GetSolicitud"
+    End If
+    
+    ' Delegar directamente al repositorio
+    Set GetSolicitud = m_SolicitudRepository.ObtenerSolicitudPorId(idSolicitud)
     
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.GetSolicitudPorID"
-    Set ISolicitudService_GetSolicitudPorID = Nothing
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "GET_SOLICITUD_ERROR", "Error: " & Err.Description, "CSolicitudService.GetSolicitud"
+    End If
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.GetSolicitud"
+    Set GetSolicitud = Nothing
 End Function
 
-' Implementaci?n: Guardar una solicitud
-Private Function ISolicitudService_SaveSolicitud(solicitud As ISolicitud) As Boolean
+' Guarda una solicitud existente
+Public Function SaveSolicitud(solicitud As T_Solicitud) As Boolean
     On Error GoTo ErrorHandler
     
-    ' Logging de auditoría: Guardado de solicitud
+    ' Logging de auditoría
     If Not m_OperationLogger Is Nothing Then
-        Dim solicitudInfo As String
-        If Not solicitud Is Nothing Then
-            solicitudInfo = "ID: " & solicitud.ID & ", Tipo: " & solicitud.TipoSolicitud
-        Else
-            solicitudInfo = "Solicitud nula"
-        End If
-        m_OperationLogger.LogOperation "SOLICITUD_SAVE_START", "Iniciando guardado de solicitud - " & solicitudInfo, "CSolicitudService.SaveSolicitud"
+        m_OperationLogger.LogOperation "SAVE_SOLICITUD", "Guardando solicitud ID: " & solicitud.idSolicitud, "CSolicitudService.SaveSolicitud"
     End If
     
-    ' TODO: Implementar l?gica de guardado
-    ' Por ahora retorna False para que compile
-    Dim resultado As Boolean
-    resultado = False
+    ' Delegar al repositorio y evaluar resultado
+    Dim idResultado As Long
+    idResultado = m_SolicitudRepository.GuardarSolicitud(solicitud)
     
-    ' Logging de auditoría: Resultado de guardado
-    If Not m_OperationLogger Is Nothing Then
-        If resultado Then
-            m_OperationLogger.LogOperation "SOLICITUD_SAVE_SUCCESS", "Solicitud guardada exitosamente - " & solicitudInfo, "CSolicitudService.SaveSolicitud"
-        Else
-            m_OperationLogger.LogOperation "SOLICITUD_SAVE_FAILED", "Fallo en guardado de solicitud - " & solicitudInfo, "CSolicitudService.SaveSolicitud"
-        End If
-    End If
-    
-    ISolicitudService_SaveSolicitud = resultado
+    SaveSolicitud = (idResultado > 0)
     
     Exit Function
     
 ErrorHandler:
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "SOLICITUD_SAVE_ERROR", "Error guardando solicitud: " & Err.Description, "CSolicitudService.SaveSolicitud"
+        m_OperationLogger.LogOperation "SAVE_SOLICITUD_ERROR", "Error: " & Err.Description, "CSolicitudService.SaveSolicitud"
     End If
     modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.SaveSolicitud"
-    ISolicitudService_SaveSolicitud = False
+    SaveSolicitud = False
 End Function
 
-' Implementaci?n: Obtener todas las solicitudes
-Private Function ISolicitudService_GetAllSolicitudes() As Collection
+' Cambia el estado de una solicitud con validación de transición
+Public Function ChangeState(ByVal idSolicitud As Long, ByVal newState As String) As Boolean
     On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar consulta de todas las solicitudes
-    ' Por ahora retorna colecci?n vac?a para que compile
-    Set ISolicitudService_GetAllSolicitudes = New Collection
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.GetAllSolicitudes"
-    Set ISolicitudService_GetAllSolicitudes = New Collection
-End Function
+    ' TODO: Implementar lógica de validación de transición aquí
 
-' Implementaci?n: Eliminar una solicitud
-Private Function ISolicitudService_DeleteSolicitud(ByVal ID As Long) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' Logging de auditoría: Eliminación de solicitud
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "SOLICITUD_DELETE_START", "Iniciando eliminación de solicitud ID: " & ID, "CSolicitudService.DeleteSolicitud"
+    Dim solicitud As T_Solicitud
+    Set solicitud = m_SolicitudRepository.ObtenerSolicitudPorId(idSolicitud)
+
+    If solicitud Is Nothing Then
+        ' La solicitud no existe
+        ChangeState = False
+        Exit Function
     End If
-    
-    ' TODO: Implementar l?gica de eliminaci?n
-    ' Por ahora retorna False para que compile
-    Dim resultado As Boolean
-    resultado = False
-    
-    ' Logging de auditoría: Resultado de eliminación
-    If Not m_OperationLogger Is Nothing Then
-        If resultado Then
-            m_OperationLogger.LogOperation "SOLICITUD_DELETE_SUCCESS", "Solicitud eliminada exitosamente ID: " & ID, "CSolicitudService.DeleteSolicitud"
-        Else
-            m_OperationLogger.LogOperation "SOLICITUD_DELETE_FAILED", "Fallo en eliminación de solicitud ID: " & ID, "CSolicitudService.DeleteSolicitud"
-        End If
+
+    ' Validar si la transición del estado actual al nuevo es válida
+    ' If Not IsValidTransition(solicitud.estadoInterno, newState) Then
+    '     ChangeState = False
+    '     Exit Function
+    ' End If
+
+    solicitud.estadoInterno = newState
+    ChangeState = Me.SaveSolicitud(solicitud)
+
+    If ChangeState Then
+        m_OperationLogger.LogOperation "CHANGE_STATE", "Estado de Solicitud " & idSolicitud & " cambiado a " & newState, "CSolicitudService"
     End If
-    
-    ISolicitudService_DeleteSolicitud = resultado
-    
+
     Exit Function
-    
 ErrorHandler:
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "SOLICITUD_DELETE_ERROR", "Error eliminando solicitud ID " & ID & ": " & Err.Description, "CSolicitudService.DeleteSolicitud"
-    End If
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.DeleteSolicitud"
-    ISolicitudService_DeleteSolicitud = False
+    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.ChangeState"
+    ChangeState = False
 End Function
 
-' Implementación: Actualizar el estado de una solicitud
-Private Function ISolicitudService_UpdateEstadoSolicitud(ByVal ID As Long, ByVal nuevoEstado As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de actualización de estado
-    ' Por ahora retorna False para que compile
-    ISolicitudService_UpdateEstadoSolicitud = False
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.UpdateEstadoSolicitud"
-    ISolicitudService_UpdateEstadoSolicitud = False
+' ============================================================================
+' IMPLEMENTACIONES DE LA INTERFAZ ISolicitudService
+' ============================================================================
+
+Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String, ByVal subTipo As String) As T_Solicitud
+    Set ISolicitudService_CreateSolicitud = CreateSolicitud(idExpediente, tipo, subTipo)
 End Function
 
-' Implementaciones adicionales identificadas en las pruebas
-Private Function ISolicitudService_GetSolicitud(ByVal ID As Long) As ISolicitud
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de obtención de solicitud
-    Set ISolicitudService_GetSolicitud = Nothing
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.GetSolicitud"
-    Set ISolicitudService_GetSolicitud = Nothing
+Private Function ISolicitudService_GetSolicitud(ByVal idSolicitud As Long) As T_Solicitud
+    Set ISolicitudService_GetSolicitud = GetSolicitud(idSolicitud)
 End Function
 
-Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As Long, ByVal tipo As String, ByVal Descripcion As String, ByVal idUsuario As Long) As Long
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de creación de solicitud
-    ISolicitudService_CreateSolicitud = 0
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CreateSolicitud"
-    ISolicitudService_CreateSolicitud = 0
+Private Function ISolicitudService_SaveSolicitud(solicitud As T_Solicitud) As Boolean
+    ISolicitudService_SaveSolicitud = SaveSolicitud(solicitud)
 End Function
 
-Private Function ISolicitudService_UpdateSolicitud(ByVal ID As Long, ByVal Descripcion As String, ByVal Estado As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de actualización de solicitud
-    ISolicitudService_UpdateSolicitud = False
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.UpdateSolicitud"
-    ISolicitudService_UpdateSolicitud = False
-End Function
-
-Private Function ISolicitudService_ChangeEstado(ByVal ID As Long, ByVal nuevoEstado As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de cambio de estado
-    ISolicitudService_ChangeEstado = False
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.ChangeEstado"
-    ISolicitudService_ChangeEstado = False
-End Function
-
-Private Function ISolicitudService_GetSolicitudesByExpediente(ByVal idExpediente As Long) As Collection
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de búsqueda por expediente
-    Set ISolicitudService_GetSolicitudesByExpediente = New Collection
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.GetSolicitudesByExpediente"
-    Set ISolicitudService_GetSolicitudesByExpediente = New Collection
-End Function
-
-Private Function ISolicitudService_GetSolicitudesByTipo(ByVal tipo As String) As Collection
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de búsqueda por tipo
-    Set ISolicitudService_GetSolicitudesByTipo = New Collection
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.GetSolicitudesByTipo"
-    Set ISolicitudService_GetSolicitudesByTipo = New Collection
-End Function
-
-Private Function ISolicitudService_GetSolicitudesByEstado(ByVal Estado As String) As Collection
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de búsqueda por estado
-    Set ISolicitudService_GetSolicitudesByEstado = New Collection
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.GetSolicitudesByEstado"
-    Set ISolicitudService_GetSolicitudesByEstado = New Collection
-End Function
-
-Private Function ISolicitudService_SearchSolicitudes(ByVal criterio As String) As Collection
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de búsqueda general
-    Set ISolicitudService_SearchSolicitudes = New Collection
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.SearchSolicitudes"
-    Set ISolicitudService_SearchSolicitudes = New Collection
-End Function
-
-Private Function ISolicitudService_ValidateSolicitud(solicitud As ISolicitud) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de validación
-    ISolicitudService_ValidateSolicitud = True
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.ValidateSolicitud"
-    ISolicitudService_ValidateSolicitud = False
+Private Function ISolicitudService_ChangeState(ByVal idSolicitud As Long, ByVal newState As String) As Boolean
+    ISolicitudService_ChangeState = ChangeState(idSolicitud, newState)
 End Function
 
 

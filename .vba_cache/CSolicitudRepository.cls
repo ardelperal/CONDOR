@@ -662,76 +662,7 @@ Private Function CargarDatosCDCASUB(ByVal db As DAO.Database, ByVal idSolicitud 
     Set CargarDatosCDCASUB = datosCDCASUB
 End Function
 
-' Implementación del método genérico Load (Principio de Abstracción de Interfaces)
-Private Function ISolicitudRepository_Load(ByVal ID As Long) As Object
-    On Error GoTo ErrorHandler
-    
-    ' Obtener la solicitud completa usando el método existente
-    Dim solicitud As T_Solicitud
-    Set solicitud = ISolicitudRepository_ObtenerSolicitudPorId(ID)
-    
-    If Not solicitud Is Nothing Then
-        ' Crear la instancia apropiada según el tipo de solicitud
-        If solicitud.tipoSolicitud = "PC" Then
-            Dim solicitudPC As CSolicitudPC
-            Set solicitudPC = New CSolicitudPC
-            ' Copiar propiedades básicas
-            solicitudPC.idSolicitud = solicitud.idSolicitud
-            solicitudPC.idExpediente = solicitud.idExpediente
-            solicitudPC.tipoSolicitud = solicitud.tipoSolicitud
-            solicitudPC.codigoSolicitud = solicitud.codigoSolicitud
-            solicitudPC.estadoInterno = solicitud.estadoInterno
-            ' Asignar datos específicos
-            If Not solicitud.datosPC Is Nothing Then
-                Set solicitudPC.datosPC = solicitud.datosPC
-            End If
-            Set ISolicitudRepository_Load = solicitudPC
-        ' Aquí se añadirían otros tipos cuando existan las clases CSolicitudCDCA, etc.
-        Else
-            ' Para tipos no implementados, devolver Nothing
-            Set ISolicitudRepository_Load = Nothing
-        End If
-    Else
-         Set ISolicitudRepository_Load = Nothing
-     End If
-     
-     Exit Function
-     
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.Load"
-    Set ISolicitudRepository_Load = Nothing
- End Function
 
-' Implementación del método genérico Save (Principio de Abstracción de Interfaces)
-Private Function ISolicitudRepository_Save(ByVal solicitud As Object) As Long
-    On Error GoTo ErrorHandler
-    
-    ' Determinar el tipo de solicitud y usar el método apropiado
-    If TypeOf solicitud Is CSolicitudPC Then
-        Dim solicitudPC As CSolicitudPC
-        Set solicitudPC = solicitud
-        ' Convertir CSolicitudPC a T_Solicitud y usar el método existente
-        Dim solicitudData As T_Solicitud
-        Set solicitudData = New T_Solicitud
-        solicitudData.idSolicitud = solicitudPC.idSolicitud
-        solicitudData.idExpediente = solicitudPC.idExpediente
-        solicitudData.tipoSolicitud = solicitudPC.tipoSolicitud
-        solicitudData.codigoSolicitud = solicitudPC.codigoSolicitud
-        solicitudData.estadoInterno = solicitudPC.estadoInterno
-        Set solicitudData.datosPC = solicitudPC.datosPC
-        ISolicitudRepository_Save = ISolicitudRepository_GuardarSolicitud(solicitudData)
-    ' Aquí se añadirían otros tipos cuando existan las clases CSolicitudCDCA, etc.
-    Else
-        ' Para tipos no soportados, devolver 0 (error)
-        ISolicitudRepository_Save = 0
-    End If
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.Save"
-    ISolicitudRepository_Save = 0
-End Function
 
 ' Método de inicialización para inyectar dependencias
 Public Sub Initialize(operationLogger As IOperationLogger)
