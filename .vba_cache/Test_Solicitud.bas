@@ -16,6 +16,8 @@ Public Function Test_Solicitud_RunAll() As CTestSuiteResult
     ' Ejecutar todas las pruebas unitarias
     result.AddTestResult Test_CreateSolicitud_Success()
     result.AddTestResult Test_SaveSolicitud_CallsRepository()
+    result.AddTestResult Test_ChangeState_ValidTransition_ReturnsTrue()
+    result.AddTestResult Test_ChangeState_InvalidTransition_ReturnsFalse()
     
     Set Test_Solicitud_RunAll = result
 End Function
@@ -33,8 +35,7 @@ Public Function Test_CreateSolicitud_Success() As CTestResult
     On Error GoTo TestError
     
     ' ARRANGE: Configurar el servicio y los mocks
-    Dim service As CSolicitudService
-    Set service = New CSolicitudService
+    Dim service As ISolicitudService
     
     ' Crear mocks
     Dim mockRepository As CMockSolicitudRepository
@@ -43,11 +44,19 @@ Public Function Test_CreateSolicitud_Success() As CTestResult
     Dim mockLogger As CMockOperationLogger
     Set mockLogger = New CMockOperationLogger
     
+    Dim mockWorkflowRepository As CMockWorkflowRepository
+    Set mockWorkflowRepository = New CMockWorkflowRepository
+    
     ' Configurar el mock del repositorio para devolver un ID válido
     mockRepository.GuardarSolicitudReturnValue = 123
     
-    ' Inyectar dependencias en el servicio
-    service.Initialize mockRepository, mockLogger
+    ' Inyectar mocks en los factories
+    modRepositoryFactory.SetMockRepository mockRepository
+    modOperationLoggerFactory.SetMockLogger mockLogger
+    modWorkflowRepositoryFactory.SetMockRepository mockWorkflowRepository
+    
+    ' Crear servicio usando el factory
+    Set service = modSolicitudServiceFactory.CreateSolicitudService()
     
     ' ACT: Ejecutar el método bajo prueba
     Dim resultado As T_Solicitud
@@ -119,8 +128,7 @@ Public Function Test_SaveSolicitud_CallsRepository() As CTestResult
     On Error GoTo TestError
     
     ' ARRANGE: Configurar el servicio y los mocks
-    Dim service As CSolicitudService
-    Set service = New CSolicitudService
+    Dim service As ISolicitudService
     
     ' Crear mocks
     Dim mockRepository As CMockSolicitudRepository
@@ -129,11 +137,19 @@ Public Function Test_SaveSolicitud_CallsRepository() As CTestResult
     Dim mockLogger As CMockOperationLogger
     Set mockLogger = New CMockOperationLogger
     
+    Dim mockWorkflowRepository As CMockWorkflowRepository
+    Set mockWorkflowRepository = New CMockWorkflowRepository
+    
     ' Configurar el mock del repositorio
     mockRepository.GuardarSolicitudReturnValue = 456
     
-    ' Inyectar dependencias
-    service.Initialize mockRepository, mockLogger
+    ' Inyectar mocks en los factories
+    modRepositoryFactory.SetMockRepository mockRepository
+    modOperationLoggerFactory.SetMockLogger mockLogger
+    modWorkflowRepositoryFactory.SetMockRepository mockWorkflowRepository
+    
+    ' Crear servicio usando el factory
+    Set service = modSolicitudServiceFactory.CreateSolicitudService()
     
     ' Crear un objeto T_Solicitud de prueba
     Dim miSolicitudDePrueba As T_Solicitud
@@ -195,4 +211,167 @@ TestError:
     testResult.Success = False
     testResult.ErrorMessage = "Error en la prueba: " & Err.Description
     Set Test_SaveSolicitud_CallsRepository = testResult
+End Function
+
+' Prueba TDD: ChangeState con transición válida debe devolver True
+Public Function Test_ChangeState_ValidTransition_ReturnsTrue() As CTestResult
+    Dim testResult As CTestResult
+    Set testResult = New CTestResult
+    testResult.TestName = "Test_ChangeState_ValidTransition_ReturnsTrue"
+    
+    On Error GoTo TestError
+    
+    ' ARRANGE: Configurar el servicio y los mocks
+    Dim service As ISolicitudService
+    
+    ' Crear mocks
+    Dim mockRepository As CMockSolicitudRepository
+    Set mockRepository = New CMockSolicitudRepository
+    
+    Dim mockLogger As CMockOperationLogger
+    Set mockLogger = New CMockOperationLogger
+    
+    Dim mockWorkflowRepository As CMockWorkflowRepository
+    Set mockWorkflowRepository = New CMockWorkflowRepository
+    
+    ' Configurar mock del repositorio de solicitudes
+    Dim solicitudExistente As T_Solicitud
+    Set solicitudExistente = New T_Solicitud
+    solicitudExistente.idSolicitud = 123
+    solicitudExistente.tipoSolicitud = "PC"
+    solicitudExistente.estadoInterno = "Borrador"
+    
+    mockRepository.ObtenerSolicitudReturnValue = solicitudExistente
+    mockRepository.GuardarSolicitudReturnValue = 123
+    
+    ' Configurar regla de transición válida en el mock de workflow
+    mockWorkflowRepository.AddRule "PC", "Borrador", "En Revisión"
+    
+    ' Inyectar mocks en los factories
+    modRepositoryFactory.SetMockRepository mockRepository
+    modOperationLoggerFactory.SetMockLogger mockLogger
+    modWorkflowRepositoryFactory.SetMockRepository mockWorkflowRepository
+    
+    ' Crear servicio usando el factory
+    Set service = modSolicitudServiceFactory.CreateSolicitudService()
+    
+    ' ACT: Ejecutar el método bajo prueba
+    Dim resultado As Boolean
+    resultado = service.ChangeState(123, "En Revisión")
+    
+    ' ASSERT: Verificar los resultados
+    
+    ' 1. Verificar que la función devuelve True
+    If Not resultado Then
+        testResult.Success = False
+        testResult.ErrorMessage = "ChangeState debería devolver True para una transición válida"
+        GoTo TestExit
+    End If
+    
+    ' 2. Verificar que GuardarSolicitud fue llamado
+    If Not mockRepository.GuardarSolicitudCalled Then
+        testResult.Success = False
+        testResult.ErrorMessage = "El método GuardarSolicitud del repositorio no fue llamado"
+        GoTo TestExit
+    End If
+    
+    ' 3. Verificar que la solicitud guardada tiene el nuevo estado
+    If mockRepository.LastSavedSolicitud Is Nothing Then
+        testResult.Success = False
+        testResult.ErrorMessage = "No se guardó ninguna solicitud en el mock del repositorio"
+        GoTo TestExit
+    End If
+    
+    If mockRepository.LastSavedSolicitud.estadoInterno <> "En Revisión" Then
+        testResult.Success = False
+        testResult.ErrorMessage = "El estado de la solicitud guardada no es el esperado. Esperado: 'En Revisión', Actual: '" & mockRepository.LastSavedSolicitud.estadoInterno & "'"
+        GoTo TestExit
+    End If
+    
+    ' Si llegamos aquí, la prueba fue exitosa
+    testResult.Success = True
+    testResult.ErrorMessage = ""
+    
+TestExit:
+    Set Test_ChangeState_ValidTransition_ReturnsTrue = testResult
+    Exit Function
+    
+TestError:
+    testResult.Success = False
+    testResult.ErrorMessage = "Error en la prueba: " & Err.Description
+    Set Test_ChangeState_ValidTransition_ReturnsTrue = testResult
+End Function
+
+' Prueba TDD: ChangeState con transición inválida debe devolver False
+Public Function Test_ChangeState_InvalidTransition_ReturnsFalse() As CTestResult
+    Dim testResult As CTestResult
+    Set testResult = New CTestResult
+    testResult.TestName = "Test_ChangeState_InvalidTransition_ReturnsFalse"
+    
+    On Error GoTo TestError
+    
+    ' ARRANGE: Configurar el servicio y los mocks
+    Dim service As ISolicitudService
+    
+    ' Crear mocks
+    Dim mockRepository As CMockSolicitudRepository
+    Set mockRepository = New CMockSolicitudRepository
+    
+    Dim mockLogger As CMockOperationLogger
+    Set mockLogger = New CMockOperationLogger
+    
+    Dim mockWorkflowRepository As CMockWorkflowRepository
+    Set mockWorkflowRepository = New CMockWorkflowRepository
+    
+    ' Configurar mock del repositorio de solicitudes
+    Dim solicitudExistente As T_Solicitud
+    Set solicitudExistente = New T_Solicitud
+    solicitudExistente.idSolicitud = 123
+    solicitudExistente.tipoSolicitud = "PC"
+    solicitudExistente.estadoInterno = "Borrador"
+    
+    mockRepository.ObtenerSolicitudReturnValue = solicitudExistente
+    
+    ' NO configurar la regla de transición "Borrador" -> "Aprobado" (transición inválida)
+    
+    ' Inyectar mocks en los factories
+    modRepositoryFactory.SetMockRepository mockRepository
+    modOperationLoggerFactory.SetMockLogger mockLogger
+    modWorkflowRepositoryFactory.SetMockRepository mockWorkflowRepository
+    
+    ' Crear servicio usando el factory
+    Set service = modSolicitudServiceFactory.CreateSolicitudService()
+    
+    ' ACT: Ejecutar el método bajo prueba
+    Dim resultado As Boolean
+    resultado = service.ChangeState(123, "Aprobado")
+    
+    ' ASSERT: Verificar los resultados
+    
+    ' 1. Verificar que la función devuelve False
+    If resultado Then
+        testResult.Success = False
+        testResult.ErrorMessage = "ChangeState debería devolver False para una transición inválida"
+        GoTo TestExit
+    End If
+    
+    ' 2. Verificar que GuardarSolicitud NO fue llamado
+    If mockRepository.GuardarSolicitudCalled Then
+        testResult.Success = False
+        testResult.ErrorMessage = "El método GuardarSolicitud no debería haber sido llamado para una transición inválida"
+        GoTo TestExit
+    End If
+    
+    ' Si llegamos aquí, la prueba fue exitosa
+    testResult.Success = True
+    testResult.ErrorMessage = ""
+    
+TestExit:
+    Set Test_ChangeState_InvalidTransition_ReturnsFalse = testResult
+    Exit Function
+    
+TestError:
+    testResult.Success = False
+    testResult.ErrorMessage = "Error en la prueba: " & Err.Description
+    Set Test_ChangeState_InvalidTransition_ReturnsFalse = testResult
 End Function

@@ -376,6 +376,28 @@ El módulo `Test_Integracion.bas` incluye las siguientes pruebas:
 - `Test_IntegracionManejoConcurrencia`: Acceso concurrente
 - `Test_IntegracionRecuperacionErrores`: Recuperación ante fallos
 
+#### Pruebas de Workflow de Estados
+
+El módulo `Test_Solicitud.bas` incluye pruebas específicas para el sistema de workflow:
+
+**Transiciones de Estado:**
+- `Test_ChangeState_ValidTransition_ReturnsTrue`: Valida transiciones permitidas entre estados
+- `Test_ChangeState_InvalidTransition_ReturnsFalse`: Verifica rechazo de transiciones no válidas
+
+**Arquitectura del Workflow:**
+- **IWorkflowRepository.cls**: Interfaz que define el contrato para gestión de reglas de transición
+- **CWorkflowRepository.cls**: Implementación real con inyección de dependencia IConfig para acceso a datos
+- **CMockWorkflowRepository.cls**: Implementación mock para pruebas con Collection interna y método AddRule
+- **CSolicitudService.cls**: Servicio que integra la validación de workflow en el método ChangeState
+- **modWorkflowRepositoryFactory.bas**: Factory que maneja la creación e inyección de dependencias
+
+**Pruebas de Integración del Workflow:**
+El módulo `Test_WorkflowRepository.bas` contiene pruebas de integración:
+- `Test_WorkflowRepository_ValidTransition_ReturnsTrue`: Prueba transiciones válidas con datos reales
+- `Test_WorkflowRepository_InvalidTransition_ReturnsFalse`: Prueba transiciones inválidas
+- `Test_WorkflowRepository_NonExistentType_ReturnsFalse`: Prueba tipos de solicitud inexistentes
+- `Test_WorkflowRepository_InactiveTransition_ReturnsFalse`: Prueba transiciones inactivas
+
 #### Creación de Pruebas
 
 Para crear nuevas pruebas:

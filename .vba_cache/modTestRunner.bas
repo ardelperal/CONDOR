@@ -46,6 +46,7 @@ Private Sub RegisterTestSuites()
     m_registeredSuites.Add "Test_CExpedienteService_RunAll"
     m_registeredSuites.Add "Test_OperationLogger_RunAll"
     m_registeredSuites.Add "Test_Solicitud_RunAll"
+    m_registeredSuites.Add "Test_WorkflowRepository_RunAll"
     m_registeredSuites.Add "Test_AppManager_RunAll"
 End Sub
 

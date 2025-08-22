@@ -20,12 +20,17 @@ Option Explicit
 Public Function CreateSolicitudRepository() As ISolicitudRepository
     On Error GoTo ErrorHandler
     
+    ' Si hay un mock configurado, devolverlo
+    If Not m_MockRepository Is Nothing Then
+        Set CreateSolicitudRepository = m_MockRepository
+        Exit Function
+    End If
+    
     ' Obtener la instancia del logger de operaciones
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
-    ' TODO: Implementar lógica para alternar entre Mock y Real según configuración
-    ' Por ahora usamos el repositorio real con inyección de dependencias
+    ' Usar el repositorio real con inyección de dependencias
     Dim repositoryInstance As New CSolicitudRepository
     
     ' Inyectar la dependencia del logger
@@ -39,6 +44,30 @@ ErrorHandler:
     Call modErrorHandler.LogError(Err.Number, Err.Description, "modRepositoryFactory.CreateSolicitudRepository")
     Set CreateSolicitudRepository = Nothing
 End Function
+
+'******************************************************************************
+' GESTIÓN DE MOCKS PARA PRUEBAS
+'******************************************************************************
+
+' Variable privada para almacenar el mock
+Private m_MockRepository As ISolicitudRepository
+
+'******************************************************************************
+' FUNCIÓN: SetMockRepository
+' DESCRIPCIÓN: Configura un mock para ser usado en lugar del repositorio real
+' PARÁMETROS: mockRepo - Instancia del mock a usar
+'******************************************************************************
+Public Sub SetMockRepository(mockRepo As ISolicitudRepository)
+    Set m_MockRepository = mockRepo
+End Sub
+
+'******************************************************************************
+' FUNCIÓN: ResetMock
+' DESCRIPCIÓN: Limpia el mock configurado, volviendo al comportamiento normal
+'******************************************************************************
+Public Sub ResetMock()
+    Set m_MockRepository = Nothing
+End Sub
 
 
 

@@ -11,13 +11,15 @@ Implements ISolicitudService
 ' Variables privadas para dependencias inyectadas
 Private m_SolicitudRepository As ISolicitudRepository
 Private m_OperationLogger As IOperationLogger
+Private m_WorkflowRepository As IWorkflowRepository
 
 ' Método de inicialización para inyectar dependencias
-Public Sub Initialize(solicitudRepository As ISolicitudRepository, operationLogger As IOperationLogger)
+Public Sub Initialize(solicitudRepository As ISolicitudRepository, operationLogger As IOperationLogger, workflowRepository As IWorkflowRepository)
     On Error GoTo ErrorHandler
     
     Set m_SolicitudRepository = solicitudRepository
     Set m_OperationLogger = operationLogger
+    Set m_WorkflowRepository = workflowRepository
     
     Exit Sub
     
@@ -138,32 +140,52 @@ End Function
 ' Cambia el estado de una solicitud con validación de transición
 Public Function ChangeState(ByVal idSolicitud As Long, ByVal newState As String) As Boolean
     On Error GoTo ErrorHandler
-    ' TODO: Implementar lógica de validación de transición aquí
+    
+    ' Logging de auditoría: Inicio de cambio de estado
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "CHANGE_STATE_START", "Iniciando cambio de estado - Solicitud: " & idSolicitud & ", Nuevo Estado: " & newState, "CSolicitudService.ChangeState"
+    End If
 
     Dim solicitud As T_Solicitud
     Set solicitud = m_SolicitudRepository.ObtenerSolicitudPorId(idSolicitud)
 
     If solicitud Is Nothing Then
         ' La solicitud no existe
+        If Not m_OperationLogger Is Nothing Then
+            m_OperationLogger.LogOperation "CHANGE_STATE_FAILED", "Solicitud no encontrada: " & idSolicitud, "CSolicitudService.ChangeState"
+        End If
         ChangeState = False
         Exit Function
     End If
 
-    ' Validar si la transición del estado actual al nuevo es válida
-    ' If Not IsValidTransition(solicitud.estadoInterno, newState) Then
-    '     ChangeState = False
-    '     Exit Function
-    ' End If
+    ' Validar si la transición del estado actual al nuevo es válida usando WorkflowRepository
+    If Not m_WorkflowRepository.IsValidTransition(solicitud.tipoSolicitud, solicitud.estadoInterno, newState) Then
+        If Not m_OperationLogger Is Nothing Then
+            m_OperationLogger.LogOperation "CHANGE_STATE_INVALID", "Transición inválida de " & solicitud.estadoInterno & " a " & newState & " para tipo " & solicitud.tipoSolicitud, "CSolicitudService.ChangeState"
+        End If
+        ChangeState = False
+        Exit Function
+    End If
 
+    ' Cambiar el estado y guardar
     solicitud.estadoInterno = newState
     ChangeState = Me.SaveSolicitud(solicitud)
 
     If ChangeState Then
-        m_OperationLogger.LogOperation "CHANGE_STATE", "Estado de Solicitud " & idSolicitud & " cambiado a " & newState, "CSolicitudService"
+        If Not m_OperationLogger Is Nothing Then
+            m_OperationLogger.LogOperation "CHANGE_STATE_SUCCESS", "Estado de Solicitud " & idSolicitud & " cambiado exitosamente a " & newState, "CSolicitudService.ChangeState"
+        End If
+    Else
+        If Not m_OperationLogger Is Nothing Then
+            m_OperationLogger.LogOperation "CHANGE_STATE_SAVE_FAILED", "Error al guardar solicitud " & idSolicitud & " con nuevo estado " & newState, "CSolicitudService.ChangeState"
+        End If
     End If
 
     Exit Function
 ErrorHandler:
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", "Error: " & Err.Description, "CSolicitudService.ChangeState"
+    End If
     modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.ChangeState"
     ChangeState = False
 End Function
