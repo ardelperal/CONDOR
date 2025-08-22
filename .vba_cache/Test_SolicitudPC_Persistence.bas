@@ -33,10 +33,11 @@ Public Function Test_Save_PC_ShouldDelegateToRepository() As Boolean
     solicitud.codigoSolicitud = "PC-TEST-001"
     solicitud.estadoInterno = "Pendiente"
     
-    datosPC.descripcionCambio = "Actualización de hardware del servidor"
-    datosPC.justificacion = "Mejora de rendimiento requerida"
-    datosPC.impactoCalidad = "Medio"
     datosPC.refContratoInspeccionOficial = "CONT-2025-002"
+    datosPC.refSuministrador = "PROV-001"
+    datosPC.refMaterialIdentificacion = "MAT-001"
+    datosPC.descripcionCambioSolicitado = "Actualización de hardware del servidor"
+    datosPC.justificacionCambio = "Mejora de rendimiento requerida"
     solicitud.datosPC = datosPC
     
     ' Act

@@ -87,6 +87,10 @@ Private Property Let ISolicitud_EstadoInterno(ByVal RHS As String)
     m_estadoInterno = RHS
 End Property
 
+Private Property Get ISolicitud_Datos() As Object
+    Set ISolicitud_Datos = m_datosPC
+End Property
+
 Private Function ISolicitud_Load(ByVal ID As Long) As Boolean
     On Error GoTo ErrorHandler
     

@@ -1,5 +1,6 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
+
 Public Property Get idSolicitud() As Long
 End Property
 
@@ -30,6 +31,9 @@ End Property
 Public Property Let estadoInterno(ByVal RHS As String)
 End Property
 
+Public Property Get Datos() As Object
+End Property
+
 Public Function Load(ByVal ID As Long) As Boolean
 End Function
 
@@ -38,14 +42,3 @@ End Function
 
 Public Function ChangeState(ByVal newState As String) As Boolean
 End Function
-
-
-
-
-
-
-
-
-
-
-

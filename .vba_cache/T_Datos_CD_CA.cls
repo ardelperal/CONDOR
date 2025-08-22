@@ -1,11 +1,21 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Clase de tipo de datos para tbDatosCDCA
-' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
+' Basada en el Anexo A del CONDOR_MASTER_PLAN.md - Sección 8.3
 
+'******************************************************************************
+' VARIABLES PRIVADAS
+'******************************************************************************
 Private m_idDatosCDCA As Long
+Private m_idSolicitud As Long
 Private m_refSuministrador As String
+Private m_numContrato As String
+Private m_identificacionMaterial As String
+Private m_numPlanoEspecificacion As String
+Private m_cantidadPeriodo As String
+Private m_numSerieLote As String
 Private m_descripcionImpactoNC As String
+Private m_descripcionImpactoNCCont As String
 Private m_refDesviacionesPrevias As String
 Private m_causaNC As String
 Private m_impactoCoste As String
@@ -23,12 +33,24 @@ Private m_observacionesFinales As String
 Private m_fechaFirmaDecisionFinal As Date
 Private m_cargoFirmanteFinal As String
 
+'******************************************************************************
+' PROPIEDADES PÚBLICAS
+'******************************************************************************
+
 Public Property Get idDatosCDCA() As Long
     idDatosCDCA = m_idDatosCDCA
 End Property
 
 Public Property Let idDatosCDCA(ByVal value As Long)
     m_idDatosCDCA = value
+End Property
+
+Public Property Get idSolicitud() As Long
+    idSolicitud = m_idSolicitud
+End Property
+
+Public Property Let idSolicitud(ByVal value As Long)
+    m_idSolicitud = value
 End Property
 
 Public Property Get refSuministrador() As String
@@ -39,12 +61,60 @@ Public Property Let refSuministrador(ByVal value As String)
     m_refSuministrador = value
 End Property
 
+Public Property Get numContrato() As String
+    numContrato = m_numContrato
+End Property
+
+Public Property Let numContrato(ByVal value As String)
+    m_numContrato = value
+End Property
+
+Public Property Get identificacionMaterial() As String
+    identificacionMaterial = m_identificacionMaterial
+End Property
+
+Public Property Let identificacionMaterial(ByVal value As String)
+    m_identificacionMaterial = value
+End Property
+
+Public Property Get numPlanoEspecificacion() As String
+    numPlanoEspecificacion = m_numPlanoEspecificacion
+End Property
+
+Public Property Let numPlanoEspecificacion(ByVal value As String)
+    m_numPlanoEspecificacion = value
+End Property
+
+Public Property Get cantidadPeriodo() As String
+    cantidadPeriodo = m_cantidadPeriodo
+End Property
+
+Public Property Let cantidadPeriodo(ByVal value As String)
+    m_cantidadPeriodo = value
+End Property
+
+Public Property Get numSerieLote() As String
+    numSerieLote = m_numSerieLote
+End Property
+
+Public Property Let numSerieLote(ByVal value As String)
+    m_numSerieLote = value
+End Property
+
 Public Property Get descripcionImpactoNC() As String
     descripcionImpactoNC = m_descripcionImpactoNC
 End Property
 
 Public Property Let descripcionImpactoNC(ByVal value As String)
     m_descripcionImpactoNC = value
+End Property
+
+Public Property Get descripcionImpactoNCCont() As String
+    descripcionImpactoNCCont = m_descripcionImpactoNCCont
+End Property
+
+Public Property Let descripcionImpactoNCCont(ByVal value As String)
+    m_descripcionImpactoNCCont = value
 End Property
 
 Public Property Get refDesviacionesPrevias() As String

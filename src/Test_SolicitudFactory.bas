@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' MÃ³dulo: Test_SolicitudFactory
@@ -423,10 +423,11 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     Dim datosPC As T_Datos_PC
     datosPC.ID = 456
     datosPC.idSolicitud = 123
-    datosPC.descripcionCambio = "Propuesta de Cambio de Prueba"
-    datosPC.justificacion = "DescripciÃ³n de la propuesta"
-    datosPC.impactoCalidad = "JustificaciÃ³n de la propuesta"
-    datosPC.impactoCoste = "Impacto esperado"
+    datosPC.refContratoInspeccionOficial = "CONT-2025-001"
+    datosPC.refSuministrador = "PROV-001"
+    datosPC.refMaterialIdentificacion = "MAT-001"
+    datosPC.descripcionCambioSolicitado = "Propuesta de Cambio de Prueba"
+    datosPC.justificacionCambio = "DescripciÃ³n de la propuesta"
     datosPC.fechaCreacion = Now
     datosPC.CreadoPor = "usuario.prueba@empresa.com"
     
@@ -438,7 +439,7 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     ' Assert
     Test_CSolicitudPC_DatosPC_SetAndGet = (retrievedDatos.ID = 456) And _
                                          (retrievedDatos.idSolicitud = 123) And _
-                                         (retrievedDatos.descripcionCambio = "Propuesta de Cambio de Prueba")
+                                         (retrievedDatos.descripcionCambioSolicitado = "Propuesta de Cambio de Prueba")
     
     Exit Function
     

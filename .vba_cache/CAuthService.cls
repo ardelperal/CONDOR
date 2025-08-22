@@ -1,64 +1,36 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CAuthService"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 Implements IAuthService
-'prueba del cambio para holá
+
 Private configSvc As IConfig
-Private m_config As CConfig
 Private m_OperationLogger As IOperationLogger
+Private m_SolicitudRepository As ISolicitudRepository
 
 Private Sub Class_Initialize()
     ' Inicialización sin dependencias
 End Sub
 
-Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger)
+Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, solicitudRepository As ISolicitudRepository)
     On Error GoTo ErrorHandler
     
     Set configSvc = config
     Set m_OperationLogger = operationLogger
-    If TypeOf config Is CConfig Then
-        Set m_config = config
-    End If
+    Set m_SolicitudRepository = solicitudRepository
     
     Exit Sub
     
 ErrorHandler:
     modErrorHandler.LogError Err.Number, Err.Description, "CAuthService.Initialize"
 End Sub
-
-
-
-Private Function IAuthService_AuthenticateUser(ByVal Email As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' Logging de auditoría: Intento de autenticación
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "AUTH_ATTEMPT", "Usuario: " & Email, "CAuthService.AuthenticateUser"
-    End If
-    
-    ' Lógica de autenticación...
-    Dim resultado As Boolean
-    resultado = (Trim(Email) <> "")
-    
-    ' Logging de auditoría: Resultado de autenticación
-    If Not m_OperationLogger Is Nothing Then
-        If resultado Then
-            m_OperationLogger.LogOperation "AUTH_SUCCESS", "Usuario autenticado: " & Email, "CAuthService.AuthenticateUser"
-        Else
-            m_OperationLogger.LogOperation "AUTH_FAILURE", "Fallo autenticación usuario: " & Email, "CAuthService.AuthenticateUser"
-        End If
-    End If
-    
-    IAuthService_AuthenticateUser = resultado
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CAuthService.AuthenticateUser"
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "AUTH_ERROR", "Error en autenticación: " & Err.Description, "CAuthService.AuthenticateUser"
-    End If
-    IAuthService_AuthenticateUser = False
-End Function
 
 Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRole
     On Error GoTo ErrorHandler
@@ -69,7 +41,7 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     End If
 
     Dim role As E_UserRole
-    Dim rs As DAO.Recordset ' Variable para recordset de consulta
+    Dim rs As DAO.Recordset
     Dim sql As String
     Dim dbPath As String
     Dim dbPassword As String
@@ -85,6 +57,7 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
         Exit Function
     End If
 
+    ' Verificar si es administrador global
     sql = "SELECT EsAdministrador FROM TbUsuariosAplicaciones WHERE CorreoUsuario = '" & UserEmail & "'"
     Set rs = ExecuteExternalQuery(sql, dbPath, dbPassword)
 
@@ -102,9 +75,10 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
         Exit Function
     End If
 
+    ' Consultar roles específicos de la aplicación
     sql = "SELECT EsUsuarioAdministrador, EsUsuarioCalidad, EsUsuarioTecnico " & _
           "FROM TbUsuariosAplicacionesPermisos " & _
-          "WHERE CorreoUsuario = '" & UserEmail & "' AND IDAplicacion = 231"
+          "WHERE CorreoUsuario = '" & UserEmail & "' AND IDAplicacion = " & modConfig.IDAplicacion_CONDOR
     Set rs = ExecuteExternalQuery(sql, dbPath, dbPassword)
 
     If Not rs Is Nothing Then
@@ -144,97 +118,9 @@ ErrorHandler:
     Call modErrorHandler.LogError(Err.Number, Err.Description, "CAuthService.GetUserRole")
 End Function
 
-Private Function IAuthService_IsUserAuthorized(ByVal Email As String, ByVal permission As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' Logging de auditoría: Verificación de autorización
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "AUTH_AUTHORIZATION", "Verificando autorización - Usuario: " & Email & ", Permiso: " & permission, "CAuthService.IsUserAuthorized"
-    End If
-    
-    ' TODO: Implementar la lógica real de autorización basada en roles y permisos.
-    ' Por ahora, devolvemos True para que compile y las pruebas básicas pasen.
-    IAuthService_IsUserAuthorized = True
-    
-    ' Logging de auditoría: Resultado de autorización
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "AUTH_AUTHORIZED", "Autorización concedida - Usuario: " & Email & ", Permiso: " & permission, "CAuthService.IsUserAuthorized"
-    End If
-    
-    Exit Function
-    
-ErrorHandler:
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "AUTH_ERROR", "Error en autorización - Usuario: " & Email & ", Permiso: " & permission & ", Error: " & Err.Description, "CAuthService.IsUserAuthorized"
-    End If
-    modErrorHandler.LogError Err.Number, Err.Description, "CAuthService.IsUserAuthorized"
-    IAuthService_IsUserAuthorized = False
-End Function
-
-Private Function IAuthService_ValidateEmail(ByVal Email As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' Lógica simple de validación de formato de email
-    IAuthService_ValidateEmail = (InStr(Email, "@") > 1 And InStr(Email, ".") > InStr(Email, "@"))
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CAuthService.ValidateEmail"
-    IAuthService_ValidateEmail = False
-End Function
-
-' Implementaciones públicas de los métodos de la interfaz
-Public Function AuthenticateUser(ByVal Email As String) As Boolean
-    AuthenticateUser = IAuthService_AuthenticateUser(Email)
-End Function
-
-Public Function GetUserRole(ByVal Email As String) As E_UserRole
-    GetUserRole = IAuthService_GetUserRole(Email)
-End Function
-
-Public Function IsUserAuthorized(ByVal Email As String, ByVal permission As String) As Boolean
-    IsUserAuthorized = IAuthService_IsUserAuthorized(Email, permission)
-End Function
-
-Public Function ValidateEmail(ByVal Email As String) As Boolean
-    ValidateEmail = IAuthService_ValidateEmail(Email)
-End Function
-
-Private Function IAuthService_IsUserAuthenticated() As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar la lógica real de verificación de autenticación.
-    ' Por ahora, devolvemos True para que compile y las pruebas básicas pasen.
-    IAuthService_IsUserAuthenticated = True
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CAuthService.IsUserAuthenticated"
-    IAuthService_IsUserAuthenticated = False
-End Function
-
-Public Function IsUserAuthenticated() As Boolean
-    IsUserAuthenticated = IAuthService_IsUserAuthenticated()
-End Function
-
-Private Function IAuthService_GetAuthenticatedUserEmail() As String
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar la lógica real para obtener el email del usuario autenticado.
-    ' Por ahora, devolvemos una cadena vacía.
-    IAuthService_GetAuthenticatedUserEmail = ""
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CAuthService.GetAuthenticatedUserEmail"
-    IAuthService_GetAuthenticatedUserEmail = ""
-End Function
-
-Public Function GetAuthenticatedUserEmail() As String
-    GetAuthenticatedUserEmail = IAuthService_GetAuthenticatedUserEmail()
+' Método público para acceso directo
+Public Function GetUserRole(ByVal UserEmail As String) As E_UserRole
+    GetUserRole = IAuthService_GetUserRole(UserEmail)
 End Function
 
 

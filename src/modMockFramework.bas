@@ -42,7 +42,8 @@ Type T_MockSolicitudesDB
     ShouldFail As Boolean
     SolicitudExists As Boolean
     solicitudData As T_Solicitud
-    pcData As T_Datos_PC
+    ' NOTA: pcData ahora debe ser manejado como objeto T_Datos_PC (clase)
+    ' en lugar de tipo. Se requiere Set/New para instanciar.
     LastInsertedID As Long
     TransactionActive As Boolean
     ErrorNumber As Long
@@ -172,10 +173,12 @@ Public Sub InitializeExpedientesMock()
         
         ' Inicializar datos de expediente por defecto
         With .ExpedienteData
-            .ID = 123
             .idExpediente = 123
             .Nemotecnico = "EXP-2024-001"
             .Titulo = "Expediente de prueba"
+            .FechaInicio = #1/1/2024#
+            .FechaFinContrato = #12/31/2024#
+            .FechaFinGarantia = #12/31/2026#
             .ResponsableCalidad = "usuario.prueba@empresa.com"
             .ResponsableTecnico = "jefe.proyecto@empresa.com"
             .Pecal = "PECAL-001"
@@ -203,7 +206,6 @@ Public Sub InitializeSolicitudesMock()
             .NumeroExpediente = "EXP-2024-001"
             .tipoSolicitud = "PC"
             .estadoInterno = "Borrador"
-            .EstadoRAC = "Pendiente"
             .usuario = "usuario.prueba@empresa.com"
             .fechaCreacion = Date
             .Observaciones = "Solicitud de prueba"
@@ -216,10 +218,11 @@ Public Sub InitializeSolicitudesMock()
             .SolicitudID = 456
             .NumeroExpediente = "EXP-2024-001"
             .tipoSolicitud = "PC"
-            .descripcionCambio = "Descripción de prueba"
-            .justificacion = "Justificación de prueba"
-        .impactoCoste = "Bajo"
-            .impactoCalidad = "Medio"
+            .refContratoInspeccionOficial = "CONT-2025-001"
+        .refSuministrador = "PROV-001"
+        .refMaterialIdentificacion = "MAT-001"
+        .descripcionCambioSolicitado = "Descripción de prueba"
+        .justificacionCambio = "Justificación de prueba"
             .Estado = "Activo"
             .fechaCreacion = Date
             .Activo = True
@@ -444,10 +447,12 @@ End Sub
 Public Sub SetExpedienteData(ID As Long, Nemotecnico As String, Titulo As String, ResponsableCalidad As String)
     ' Configurar datos específicos de expediente
     With g_MockExpedientes.ExpedienteData
-        .ID = ID
         .idExpediente = ID
         .Nemotecnico = Nemotecnico
         .Titulo = Titulo
+        .FechaInicio = #1/1/2024#
+        .FechaFinContrato = #12/31/2024#
+        .FechaFinGarantia = #12/31/2026#
         .ResponsableCalidad = ResponsableCalidad
         .ResponsableTecnico = "jefe.proyecto@empresa.com"
         .Pecal = "PECAL-001"
@@ -470,13 +475,16 @@ Public Sub SetSolicitudData(ID As Long, expediente As String, tipo As String, Es
     g_MockSolicitudes.RecordCount = 1
 End Sub
 
-Public Sub SetPCData(ID As Long, SolicitudID As Long, Descripcion As String, justificacion As String)
+Public Sub SetPCData(ID As Long, SolicitudID As Long, Descripcion As String, justificacionCambio As String)
     ' Configurar datos específicos de PC
     With g_MockSolicitudes.pcData
         .ID = ID
         .SolicitudID = SolicitudID
-        .descripcionCambio = Descripcion
-        .justificacion = justificacion
+        .refContratoInspeccionOficial = "CONT-2025-001"
+        .refSuministrador = "PROV-001"
+        .refMaterialIdentificacion = "MAT-001"
+        .descripcionCambioSolicitado = Descripcion
+        .justificacionCambio = justificacionCambio
         .fechaCreacion = Date
         .Activo = True
     End With

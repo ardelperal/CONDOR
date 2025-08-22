@@ -23,13 +23,10 @@ Private m_EstadoExpediente As String
 Private m_EmailResponsable As String
 Private m_JefeProyecto As String
 Private m_ContratistaPrincipal As String
-Private m_ValorContrato As Currency
 Private m_FechaInicio As Date
 Private m_FechaFinPrevista As Date
-Private m_UltimaActualizacion As Date
-Private m_ID As Long
-Private m_fechaCreacion As Date
-Private m_Estado As String
+Private m_FechaFinContrato As Date
+Private m_FechaFinGarantia As Date
 
 '******************************************************************************
 ' PROPIEDADES PÚBLICAS (GET/LET)
@@ -112,13 +109,6 @@ Public Property Let ContratistaPrincipal(ByVal value As String)
     m_ContratistaPrincipal = value
 End Property
 
-Public Property Get ValorContrato() As Currency
-    ValorContrato = m_ValorContrato
-End Property
-Public Property Let ValorContrato(ByVal value As Currency)
-    m_ValorContrato = value
-End Property
-
 Public Property Get FechaInicio() As Date
     FechaInicio = m_FechaInicio
 End Property
@@ -133,32 +123,18 @@ Public Property Let FechaFinPrevista(ByVal value As Date)
     m_FechaFinPrevista = value
 End Property
 
-Public Property Get UltimaActualizacion() As Date
-    UltimaActualizacion = m_UltimaActualizacion
+Public Property Get FechaFinContrato() As Date
+    FechaFinContrato = m_FechaFinContrato
 End Property
-Public Property Let UltimaActualizacion(ByVal value As Date)
-    m_UltimaActualizacion = value
-End Property
-
-Public Property Get ID() As Long
-    ID = m_ID
-End Property
-Public Property Let ID(ByVal value As Long)
-    m_ID = value
+Public Property Let FechaFinContrato(ByVal value As Date)
+    m_FechaFinContrato = value
 End Property
 
-Public Property Get fechaCreacion() As Date
-    fechaCreacion = m_fechaCreacion
+Public Property Get FechaFinGarantia() As Date
+    FechaFinGarantia = m_FechaFinGarantia
 End Property
-Public Property Let fechaCreacion(ByVal value As Date)
-    m_fechaCreacion = value
-End Property
-
-Public Property Get Estado() As String
-    Estado = m_Estado
-End Property
-Public Property Let Estado(ByVal value As String)
-    m_Estado = value
+Public Property Let FechaFinGarantia(ByVal value As Date)
+    m_FechaFinGarantia = value
 End Property
 
 '******************************************************************************

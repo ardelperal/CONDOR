@@ -250,539 +250,264 @@ Integración de Tests: Cada nuevo módulo de prueba (Test_*_RunAll) debe ser añ
 (Este es un resumen. El documento completo Lecciones_aprendidas.md contiene más detalles).
 
 8. Anexo A: Estructura Detallada de la Base de Datos
-   8.1. tbSolicitudes
-   Campo
 
-Tipo de Dato
+### 8.1. Tabla: tbSolicitudes
+**Descripción:** Tabla principal que almacena las solicitudes de cambios, concesiones y desviaciones.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idSolicitud | AutoNumber | - | No | PK | Identificador único de la solicitud |
+| idExpediente | Text | 50 | No | FK | Referencia al expediente asociado |
+| tipoSolicitud | Text | 20 | No | - | Tipo de solicitud: "PC", "CD/CA", "CD/CA-SUB" |
+| subTipoSolicitud | Text | 20 | Sí | - | Subtipo: "Desviación" o "Concesión" |
+| codigoSolicitud | Text | 50 | No | - | Código único autogenerado |
+| estadoInterno | Text | 30 | No | - | Estado actual en el workflow |
+| fechaCreacion | DateTime | - | No | - | Timestamp de creación del registro |
+| usuarioCreacion | Text | 100 | No | - | Email del usuario que creó la solicitud |
+| fechaPaseTecnico | DateTime | - | Sí | - | Fecha de envío a revisión técnica |
+| fechaCompletadoTecnico | DateTime | - | Sí | - | Fecha de finalización técnica |
+
+### 8.2. Tabla: tbDatosPC
+**Descripción:** Datos específicos para Propuestas de Cambio (Formulario F4203.11)
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idDatosPC | AutoNumber | - | No | PK | Identificador único del registro |
+| idSolicitud | Long | - | No | FK | Referencia a tbSolicitudes |
+| refContratoInspeccionOficial | Text | 100 | Sí | - | Referencia del contrato de inspección oficial |
+| refSuministrador | Text | 100 | Sí | - | Referencia del suministrador |
+| suministradorNombreDir | Memo | - | Sí | - | Nombre y dirección del suministrador |
+| objetoContrato | Memo | - | Sí | - | Descripción del objeto del contrato |
+| descripcionMaterialAfectado | Memo | - | Sí | - | Descripción del material afectado |
+| numPlanoEspecificacion | Text | 100 | Sí | - | Número de plano o especificación |
+| descripcionPropuestaCambio | Memo | - | Sí | - | Descripción de la propuesta de cambio |
+| descripcionPropuestaCambioCont | Memo | - | Sí | - | Continuación de la descripción |
+| motivoCorregirDeficiencias | Boolean | - | Sí | - | Motivo: Corregir deficiencias |
+| motivoMejorarCapacidad | Boolean | - | Sí | - | Motivo: Mejorar capacidad |
+| motivoAumentarNacionalizacion | Boolean | - | Sí | - | Motivo: Aumentar nacionalización |
+| motivoMejorarSeguridad | Boolean | - | Sí | - | Motivo: Mejorar seguridad |
+| motivoMejorarFiabilidad | Boolean | - | Sí | - | Motivo: Mejorar fiabilidad |
+| motivoMejorarCosteEficacia | Boolean | - | Sí | - | Motivo: Mejorar coste-eficacia |
+| motivoOtros | Boolean | - | Sí | - | Otros motivos |
+| motivoOtrosDetalle | Text | 255 | Sí | - | Detalle de otros motivos |
+| incidenciaCoste | Text | 50 | Sí | - | Incidencia en coste |
+| incidenciaPlazo | Text | 50 | Sí | - | Incidencia en plazo |
+| incidenciaSeguridad | Boolean | - | Sí | - | Incidencia en seguridad |
+| incidenciaFiabilidad | Boolean | - | Sí | - | Incidencia en fiabilidad |
+| incidenciaMantenibilidad | Boolean | - | Sí | - | Incidencia en mantenibilidad |
+| incidenciaIntercambiabilidad | Boolean | - | Sí | - | Incidencia en intercambiabilidad |
+| incidenciaVidaUtilAlmacen | Boolean | - | Sí | - | Incidencia en vida útil de almacén |
+| incidenciaFuncionamientoFuncion | Boolean | - | Sí | - | Incidencia en funcionamiento/función |
+| cambioAfectaMaterialEntregado | Boolean | - | Sí | - | El cambio afecta material ya entregado |
+| cambioAfectaMaterialPorEntregar | Boolean | - | Sí | - | El cambio afecta material por entregar |
+| firmaOficinaTecnicaNombre | Text | 100 | Sí | - | Nombre del firmante de oficina técnica |
+| firmaRepSuministradorNombre | Text | 100 | Sí | - | Nombre del representante del suministrador |
+| observacionesRACRef | Text | 100 | Sí | - | Referencia de observaciones RAC |
+| racCodigo | Text | 50 | Sí | - | Código RAC |
+| observacionesRAC | Memo | - | Sí | - | Observaciones del RAC |
+| fechaFirmaRAC | DateTime | - | Sí | - | Fecha de firma del RAC |
+| obsAprobacionAutoridadDiseno | Memo | - | Sí | - | Observaciones de aprobación de autoridad de diseño |
+| firmaAutoridadDisenoNombreCargo | Text | 100 | Sí | - | Nombre y cargo del firmante de autoridad de diseño |
+| fechaFirmaAutoridadDiseno | DateTime | - | Sí | - | Fecha de firma de autoridad de diseño |
+| decisionFinal | Text | 50 | Sí | - | Decisión final |
+| obsDecisionFinal | Memo | - | Sí | - | Observaciones de la decisión final |
+| cargoFirmanteFinal | Text | 100 | Sí | - | Cargo del firmante final |
+| fechaFirmaDecisionFinal | DateTime | - | Sí | - | Fecha de firma de decisión final |
+
+### 8.3. Tabla: tbDatosCDCA
+**Descripción:** Datos específicos para Concesiones/Desviaciones (Formulario F4203.10)
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idDatosCDCA | AutoNumber | - | No | PK | Identificador único del registro |
+| idSolicitud | Long | - | No | FK | Referencia a tbSolicitudes |
+| refSuministrador | Text | 100 | Sí | - | Referencia del suministrador |
+| numContrato | Text | 100 | Sí | - | Número de contrato |
+| identificacionMaterial | Memo | - | Sí | - | Identificación del material |
+| numPlanoEspecificacion | Text | 100 | Sí | - | Número de plano o especificación |
+| cantidadPeriodo | Text | 50 | Sí | - | Cantidad y período |
+| numSerieLote | Text | 100 | Sí | - | Número de serie o lote |
+| descripcionImpactoNC | Memo | - | Sí | - | Descripción del impacto de la no conformidad |
+| descripcionImpactoNCCont | Memo | - | Sí | - | Continuación de la descripción del impacto |
+| refDesviacionesPrevias | Text | 100 | Sí | - | Referencia a desviaciones previas |
+| causaNC | Memo | - | Sí | - | Causa de la no conformidad |
+| impactoCoste | Text | 50 | Sí | - | Impacto en coste |
+| clasificacionNC | Text | 50 | Sí | - | Clasificación de la no conformidad |
+| requiereModificacionContrato | Boolean | - | Sí | - | Requiere modificación de contrato |
+| efectoFechaEntrega | Memo | - | Sí | - | Efecto en fecha de entrega |
+| identificacionAutoridadDiseno | Text | 100 | Sí | - | Identificación de autoridad de diseño |
+| esSuministradorAD | Boolean | - | Sí | - | Es suministrador autoridad de diseño |
+| racRef | Text | 100 | Sí | - | Referencia RAC |
+| racCodigo | Text | 50 | Sí | - | Código RAC |
+| observacionesRAC | Memo | - | Sí | - | Observaciones del RAC |
+| fechaFirmaRAC | DateTime | - | Sí | - | Fecha de firma del RAC |
+| decisionFinal | Text | 50 | Sí | - | Decisión final |
+| observacionesFinales | Memo | - | Sí | - | Observaciones finales |
+| fechaFirmaDecisionFinal | DateTime | - | Sí | - | Fecha de firma de decisión final |
+| cargoFirmanteFinal | Text | 100 | Sí | - | Cargo del firmante final |
+
+### 8.4. Tabla: tbDatosCDCASUB
+**Descripción:** Datos específicos para Concesiones/Desviaciones de Sub-suministrador (Formulario F4203.101)
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idDatosCDCASUB | AutoNumber | - | No | PK | Identificador único del registro |
+| idSolicitud | Long | - | No | FK | Referencia a tbSolicitudes |
+| refSuministrador | Text | 100 | Sí | - | Referencia del suministrador |
+| refSubSuministrador | Text | 100 | Sí | - | Referencia del sub-suministrador |
+| suministradorPrincipalNombreDir | Memo | - | Sí | - | Nombre y dirección del suministrador principal |
+| subSuministradorNombreDir | Memo | - | Sí | - | Nombre y dirección del sub-suministrador |
+| identificacionMaterial | Memo | - | Sí | - | Identificación del material |
+| numPlanoEspecificacion | Text | 100 | Sí | - | Número de plano o especificación |
+| cantidadPeriodo | Text | 50 | Sí | - | Cantidad y período |
+| numSerieLote | Text | 100 | Sí | - | Número de serie o lote |
+| descripcionImpactoNC | Memo | - | Sí | - | Descripción del impacto de la no conformidad |
+| descripcionImpactoNCCont | Memo | - | Sí | - | Continuación de la descripción del impacto |
+| refDesviacionesPrevias | Text | 100 | Sí | - | Referencia a desviaciones previas |
+| causaNC | Memo | - | Sí | - | Causa de la no conformidad |
+| impactoCoste | Text | 50 | Sí | - | Impacto en coste |
+| clasificacionNC | Text | 50 | Sí | - | Clasificación de la no conformidad |
+| afectaPrestaciones | Boolean | - | Sí | - | Afecta a prestaciones |
+| afectaSeguridad | Boolean | - | Sí | - | Afecta a seguridad |
+| afectaFiabilidad | Boolean | - | Sí | - | Afecta a fiabilidad |
+| afectaVidaUtil | Boolean | - | Sí | - | Afecta a vida útil |
+| afectaMedioambiente | Boolean | - | Sí | - | Afecta al medio ambiente |
+| afectaIntercambiabilidad | Boolean | - | Sí | - | Afecta a intercambiabilidad |
+| afectaMantenibilidad | Boolean | - | Sí | - | Afecta a mantenibilidad |
+| afectaApariencia | Boolean | - | Sí | - | Afecta a apariencia |
+| afectaOtros | Boolean | - | Sí | - | Afecta a otros aspectos |
+| requiereModificacionContrato | Boolean | - | Sí | - | Requiere modificación de contrato |
+| efectoFechaEntrega | Memo | - | Sí | - | Efecto en fecha de entrega |
+| identificacionAutoridadDiseno | Text | 100 | Sí | - | Identificación de autoridad de diseño |
+| esSubSuministradorAD | Boolean | - | Sí | - | Es sub-suministrador autoridad de diseño |
+| nombreRepSubSuministrador | Text | 100 | Sí | - | Nombre del representante del sub-suministrador |
+| racRef | Text | 100 | Sí | - | Referencia RAC |
+| racCodigo | Text | 50 | Sí | - | Código RAC |
+| observacionesRAC | Memo | - | Sí | - | Observaciones del RAC |
+| fechaFirmaRAC | DateTime | - | Sí | - | Fecha de firma del RAC |
+| decisionSuministradorPrincipal | Text | 50 | Sí | - | Decisión del suministrador principal |
+| obsSuministradorPrincipal | Memo | - | Sí | - | Observaciones del suministrador principal |
+| fechaFirmaSuministradorPrincipal | DateTime | - | Sí | - | Fecha de firma del suministrador principal |
+| firmaSuministradorPrincipalNombreCargo | Text | 100 | Sí | - | Nombre y cargo del firmante del suministrador principal |
+| obsRACDelegador | Memo | - | Sí | - | Observaciones del RAC delegador |
+| fechaFirmaRACDelegador | DateTime | - | Sí | - | Fecha de firma del RAC delegador |
+
+### 8.5. Tabla: tbMapeoCampos
+**Descripción:** Mapeo entre campos de tablas de datos y marcadores en plantillas Word para generación de documentos.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idMapeo | AutoNumber | - | No | PK | Identificador único del mapeo |
+| nombrePlantilla | Text | 50 | No | - | Nombre de la plantilla Word |
+| nombreCampoTabla | Text | 100 | No | - | Nombre del campo en la tabla de datos |
+| valorAsociado | Text | 100 | Sí | - | Valor específico asociado al mapeo |
+| nombreCampoWord | Text | 100 | No | - | Nombre del marcador en el documento Word |
+
+### 8.6. Tablas de Soporte
+
+#### 8.6.1. Tabla: tbLogCambios
+**Descripción:** Auditoría de cambios realizados en el sistema.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idLogCambio | AutoNumber | - | No | PK | Identificador único del log |
+| fechaHora | DateTime | - | No | - | Timestamp del cambio |
+| usuario | Text | 100 | No | - | Usuario que realizó el cambio |
+| tabla | Text | 50 | No | - | Tabla afectada |
+| registro | Long | - | No | - | ID del registro modificado |
+| campo | Text | 50 | Sí | - | Campo modificado |
+| valorAnterior | Memo | - | Sí | - | Valor anterior |
+| valorNuevo | Memo | - | Sí | - | Valor nuevo |
+| tipoOperacion | Text | 20 | No | - | Tipo de operación (INSERT, UPDATE, DELETE) |
+
+#### 8.6.2. Tabla: tbLogErrores
+**Descripción:** Registro de errores de la aplicación.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idLogError | AutoNumber | - | No | PK | Identificador único del error |
+| fechaHora | DateTime | - | No | - | Timestamp del error |
+| usuario | Text | 100 | Sí | - | Usuario que experimentó el error |
+| modulo | Text | 100 | No | - | Módulo donde ocurrió el error |
+| procedimiento | Text | 100 | Sí | - | Procedimiento donde ocurrió el error |
+| numeroError | Long | - | No | - | Número del error VBA |
+| descripcionError | Memo | - | No | - | Descripción del error |
+| contexto | Memo | - | Sí | - | Contexto adicional del error |
+
+#### 8.6.3. Tabla: tb_Operaciones_Log
+**Descripción:** Registro de operaciones clave del sistema para auditoría y trazabilidad.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idOperacion | AutoNumber | - | No | PK | Identificador único de la operación |
+| fechaHora | DateTime | - | No | - | Timestamp de la operación |
+| usuario | Text | 100 | No | - | Usuario que realizó la operación |
+| tipoOperacion | Text | 50 | No | - | Tipo de operación realizada |
+| entidad | Text | 50 | No | - | Entidad afectada |
+| idEntidad | Long | - | Sí | - | ID de la entidad afectada |
+| descripcion | Memo | - | No | - | Descripción de la operación |
+| resultado | Text | 20 | No | - | Resultado de la operación (SUCCESS, ERROR) |
+| detalles | Memo | - | Sí | - | Detalles adicionales |
+
+#### 8.6.4. Tabla: tbAdjuntos
+**Descripción:** Gestión de ficheros adjuntos a las solicitudes.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idAdjunto | AutoNumber | - | No | PK | Identificador único del adjunto |
+| idSolicitud | Long | - | No | FK | Referencia a tbSolicitudes |
+| nombreArchivo | Text | 255 | No | - | Nombre del archivo |
+| rutaArchivo | Text | 500 | No | - | Ruta completa del archivo |
+| tipoArchivo | Text | 50 | Sí | - | Tipo de archivo |
+| tamanoBytes | Long | - | Sí | - | Tamaño del archivo en bytes |
+| fechaSubida | DateTime | - | No | - | Fecha de subida del archivo |
+| usuarioSubida | Text | 100 | No | - | Usuario que subió el archivo |
+| descripcion | Memo | - | Sí | - | Descripción del adjunto |
+
+#### 8.6.5. Tabla: tbEstados
+**Descripción:** Definición de los estados del workflow.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idEstado | AutoNumber | - | No | PK | Identificador único del estado |
+| nombreEstado | Text | 50 | No | - | Nombre del estado |
+| descripcion | Text | 255 | Sí | - | Descripción del estado |
+| esEstadoInicial | Boolean | - | No | - | Indica si es estado inicial |
+| esEstadoFinal | Boolean | - | No | - | Indica si es estado final |
+| color | Text | 7 | Sí | - | Color hexadecimal para visualización |
+| orden | Integer | - | Sí | - | Orden de visualización |
+
+#### 8.6.6. Tabla: tbTransiciones
+**Descripción:** Reglas para las transiciones de estado permitidas.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idTransicion | AutoNumber | - | No | PK | Identificador único de la transición |
+| idEstadoOrigen | Long | - | No | FK | Estado de origen |
+| idEstadoDestino | Long | - | No | FK | Estado de destino |
+| rolRequerido | Text | 20 | No | - | Rol requerido para la transición |
+| condiciones | Memo | - | Sí | - | Condiciones adicionales |
+| accionesPost | Memo | - | Sí | - | Acciones a ejecutar post-transición |
+| activa | Boolean | - | No | - | Indica si la transición está activa |
+
+#### 8.6.7. Tabla: tbConfiguracion
+**Descripción:** Configuración del sistema y parámetros de la aplicación.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idConfiguracion | AutoNumber | - | No | PK | Identificador único de configuración |
+| clave | Text | 100 | No | - | Clave de configuración |
+| valor | Memo | - | Sí | - | Valor de configuración |
+| descripcion | Text | 255 | Sí | - | Descripción de la configuración |
+| categoria | Text | 50 | Sí | - | Categoría de configuración |
+| tipoValor | Text | 20 | Sí | - | Tipo de valor (String, Number, Boolean, Date) |
+| valorPorDefecto | Memo | - | Sí | - | Valor por defecto |
+| esEditable | Boolean | - | No | - | Indica si es editable por el usuario |
+| fechaCreacion | DateTime | - | No | - | Fecha de creación |
+| fechaModificacion | DateTime | - | Sí | - | Fecha de última modificación |
+| usuarioModificacion | Text | 100 | Sí | - | Usuario que realizó la modificación |
 
-Descripción
 
-idSolicitud
-
-Autonumérico
-
-Clave Primaria
-
-idExpediente
-
-Texto Corto
-
-Clave Externa al sistema de expedientes
-
-tipoSolicitud
-
-Texto Corto
-
-"CD/CA", "CD/CA-SUB", "PC"
-
-subTipoSolicitud
-
-Texto Corto
-
-"Desviación" o "Concesión"
-
-codigoSolicitud
-
-Texto Corto
-
-Código autogenerado para la solicitud
-
-estadoInterno
-
-Texto Corto
-
-Estado actual del workflow
-
-fechaCreacion
-
-Fecha/Hora
-
-Timestamp de creación
-
-usuarioCreacion
-
-Texto Corto
-
-Email del usuario creador
-
-fechaPaseTecnico
-
-Fecha/Hora
-
-Timestamp de cuando Calidad envía la solicitud a un Técnico
-
-fechaCompletadoTecnico
-
-Fecha/Hora
-
-Timestamp de cuando el Técnico finaliza su parte
-
-8.2. tbDatosPC (Propuesta de Cambio - F4203.11)
-Campo
-
-Tipo de Dato
-
-idDatosPC
-
-Autonumérico
-
-idSolicitud
-
-Numérico
-
-refContratoInspeccionOficial
-
-Texto Corto
-
-refSuministrador
-
-Texto Corto
-
-suministradorNombreDir
-
-Memo
-
-objetoContrato
-
-Memo
-
-descripcionMaterialAfectado
-
-Memo
-
-numPlanoEspecificacion
-
-Texto Corto
-
-descripcionPropuestaCambio
-
-Memo
-
-descripcionPropuestaCambioCont
-
-Memo
-
-motivoCorregirDeficiencias
-
-Sí/No
-
-motivoMejorarCapacidad
-
-Sí/No
-
-motivoAumentarNacionalizacion
-
-Sí/No
-
-motivoMejorarSeguridad
-
-Sí/No
-
-motivoMejorarFiabilidad
-
-Sí/No
-
-motivoMejorarCosteEficacia
-
-Sí/No
-
-motivoOtros
-
-Sí/No
-
-motivoOtrosDetalle
-
-Texto Corto
-
-incidenciaCoste
-
-Texto Corto
-
-incidenciaPlazo
-
-Texto Corto
-
-incidenciaSeguridad
-
-Sí/No
-
-incidenciaFiabilidad
-
-Sí/No
-
-incidenciaMantenibilidad
-
-Sí/No
-
-incidenciaIntercambiabilidad
-
-Sí/No
-
-incidenciaVidaUtilAlmacen
-
-Sí/No
-
-incidenciaFuncionamientoFuncion
-
-Sí/No
-
-cambioAfectaMaterialEntregado
-
-Sí/No
-
-cambioAfectaMaterialPorEntregar
-
-Sí/No
-
-firmaOficinaTecnicaNombre
-
-Texto Corto
-
-firmaRepSuministradorNombre
-
-Texto Corto
-
-observacionesRACRef
-
-Texto Corto
-
-racCodigo
-
-Texto Corto
-
-observacionesRAC
-
-Memo
-
-fechaFirmaRAC
-
-Fecha/Hora
-
-obsAprobacionAutoridadDiseno
-
-Memo
-
-firmaAutoridadDisenoNombreCargo
-
-Texto Corto
-
-fechaFirmaAutoridadDiseno
-
-Fecha/Hora
-
-decisionFinal
-
-Texto Corto
-
-obsDecisionFinal
-
-Memo
-
-cargoFirmanteFinal
-
-Texto Corto
-
-fechaFirmaDecisionFinal
-
-Fecha/Hora
-
-8.3. tbDatosCDCA (Desviación / Concesión - F4203.10)
-Campo
-
-Tipo de Dato
-
-idDatosCDCA
-
-Autonumérico
-
-idSolicitud
-
-Numérico
-
-refSuministrador
-
-Texto Corto
-
-numContrato
-
-Texto Corto
-
-identificacionMaterial
-
-Memo
-
-numPlanoEspecificacion
-
-Texto Corto
-
-cantidadPeriodo
-
-Texto Corto
-
-numSerieLote
-
-Texto Corto
-
-descripcionImpactoNC
-
-Memo
-
-descripcionImpactoNCCont
-
-Memo
-
-refDesviacionesPrevias
-
-Texto Corto
-
-causaNC
-
-Memo
-
-impactoCoste
-
-Texto Corto
-
-clasificacionNC
-
-Texto Corto
-
-requiereModificacionContrato
-
-Sí/No
-
-efectoFechaEntrega
-
-Memo
-
-identificacionAutoridadDiseno
-
-Texto Corto
-
-esSuministradorAD
-
-Sí/No
-
-racRef
-
-Texto Corto
-
-racCodigo
-
-Texto Corto
-
-observacionesRAC
-
-Memo
-
-fechaFirmaRAC
-
-Fecha/Hora
-
-decisionFinal
-
-Texto Corto
-
-observacionesFinales
-
-Memo
-
-fechaFirmaDecisionFinal
-
-Fecha/Hora
-
-cargoFirmanteFinal
-
-Texto Corto
-
-8.4. tbDatosCDCASUB (Desviación / Concesión Sub-suministrador - F4203.101)
-Campo
-
-Tipo de Dato
-
-idDatosCDCASUB
-
-Autonumérico
-
-idSolicitud
-
-Numérico
-
-refSuministrador
-
-Texto Corto
-
-refSubSuministrador
-
-Texto Corto
-
-suministradorPrincipalNombreDir
-
-Memo
-
-subSuministradorNombreDir
-
-Memo
-
-identificacionMaterial
-
-Memo
-
-numPlanoEspecificacion
-
-Texto Corto
-
-cantidadPeriodo
-
-Texto Corto
-
-numSerieLote
-
-Texto Corto
-
-descripcionImpactoNC
-
-Memo
-
-descripcionImpactoNCCont
-
-Memo
-
-refDesviacionesPrevias
-
-Texto Corto
-
-causaNC
-
-Memo
-
-impactoCoste
-
-Texto Corto
-
-clasificacionNC
-
-Texto Corto
-
-afectaPrestaciones
-
-Sí/No
-
-afectaSeguridad
-
-Sí/No
-
-afectaFiabilidad
-
-Sí/No
-
-afectaVidaUtil
-
-Sí/No
-
-afectaMedioambiente
-
-Sí/No
-
-afectaIntercambiabilidad
-
-Sí/No
-
-afectaMantenibilidad
-
-Sí/No
-
-afectaApariencia
-
-Sí/No
-
-afectaOtros
-
-Sí/No
-
-requiereModificacionContrato
-
-Sí/No
-
-efectoFechaEntrega
-
-Memo
-
-identificacionAutoridadDiseno
-
-Texto Corto
-
-esSubSuministradorAD
-
-Sí/No
-
-nombreRepSubSuministrador
-
-Texto Corto
-
-racRef
-
-Texto Corto
-
-racCodigo
-
-Texto Corto
-
-observacionesRAC
-
-Memo
-
-fechaFirmaRAC
-
-Fecha/Hora
-
-decisionSuministradorPrincipal
-
-Texto Corto
-
-obsSuministradorPrincipal
-
-Memo
-
-fechaFirmaSuministradorPrincipal
-
-Fecha/Hora
-
-firmaSuministradorPrincipalNombreCargo
-
-Texto Corto
-
-obsRACDelegador
-
-Memo
-
-fechaFirmaRACDelegador
-
-Fecha/Hora
-
-8.5. tbMapeoCampos
-Tabla pre-poblada que contiene el mapeo entre los campos de las tablas de datos y los marcadores en las plantillas Word.
-
-| Campo            | Tipo de Dato  |
-| :--------------- | :------------ |
-| idMapeo          | Autonumérico |
-| nombrePlantilla  | Texto Corto   |
-| nombreCampoTabla | Texto Corto   |
-| valorAsociado    | Texto Corto   |
-| nombreCampoWord  | Texto Corto   |
-
-8.6. Tablas de Soporte
-tbLogCambios: Auditoría de cambios en el sistema.
-
-tbLogErrores: Registro de errores de la aplicación.
-
-tb_Operaciones_Log: Registro de operaciones clave del sistema para auditoría y trazabilidad.
-
-tbAdjuntos: Gestión de ficheros adjuntos a las solicitudes.
-
-tbEstados: Definición de los estados del workflow.
-
-tbTransiciones: Reglas para las transiciones de estado permitidas.
 
 9. Anexo B: Mapeo de Campos para Generación de Documentos
    9.1. Plantilla "PC" (F4203.11 - Propuesta de Cambio)

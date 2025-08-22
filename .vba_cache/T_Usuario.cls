@@ -16,11 +16,9 @@ Private m_ID As Long
 Private m_Email As String
 Private m_NombreCompleto As String
 Private m_Rol As E_UserRole
-Private m_Estado As String
 Private m_EsAdministrador As Boolean
 Private m_EsUsuarioCalidad As Boolean
 Private m_EsUsuarioTecnico As Boolean
-Private m_IDAplicacion As Long
 Private m_VersionInstalada As String
 Private m_UltimoAcceso As Date
 Private m_FechaRegistro As Date
@@ -58,13 +56,6 @@ Public Property Let Rol(ByVal value As E_UserRole)
     m_Rol = value
 End Property
 
-Public Property Get Estado() As String
-    Estado = m_Estado
-End Property
-Public Property Let Estado(ByVal value As String)
-    m_Estado = value
-End Property
-
 Public Property Get EsAdministrador() As Boolean
     EsAdministrador = m_EsAdministrador
 End Property
@@ -84,13 +75,6 @@ Public Property Get EsUsuarioTecnico() As Boolean
 End Property
 Public Property Let EsUsuarioTecnico(ByVal value As Boolean)
     m_EsUsuarioTecnico = value
-End Property
-
-Public Property Get IDAplicacion() As Long
-    IDAplicacion = m_IDAplicacion
-End Property
-Public Property Let IDAplicacion(ByVal value As Long)
-    m_IDAplicacion = value
 End Property
 
 Public Property Get VersionInstalada() As String
@@ -129,8 +113,7 @@ End Property
 Public Function EsValido() As Boolean
     EsValido = (Len(Email) > 0 And _
                 InStr(Email, "@") > 1 And _
-                Rol <> Rol_Desconocido And _
-                Estado = "Activo")
+                Rol <> Rol_Desconocido)
 End Function
 
 ' Determina si el usuario tiene permisos de administrador

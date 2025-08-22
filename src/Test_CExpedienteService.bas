@@ -1,833 +1,310 @@
-﻿Option Compare Database
+Attribute VB_Name = "Test_CExpedienteService"
+Option Compare Database
 Option Explicit
-' ============================================================================
-' Módulo: Test_CExpedienteService
-' Descripción: Pruebas unitarias para CExpedienteService.cls
-' Autor: CONDOR-Expert
-' Fecha: Enero 2025
-' ============================================================================
-
-' Mock para simular datos de expediente
-Private Type T_MockExpedienteData
-    idExpediente As Long
-    NumeroExpediente As String
-    fechaCreacion As Date
-    Estado As String
-    Descripcion As String
-    IdUsuarioCreador As Long
-    IsValid As Boolean
-End Type
-
-Private m_MockExpediente As T_MockExpedienteData
 
 ' ============================================================================
-' FUNCIONES DE CONFIGURACIÓN DE MOCKS
+' MÓDULO DE PRUEBAS UNITARIAS PARA CExpedienteService
 ' ============================================================================
+' Este módulo contiene pruebas unitarias aisladas para CExpedienteService
+' utilizando mocks para todas las dependencias externas.
+' Sigue la Lección 10: El Aislamiento de las Pruebas Unitarias con Mocks no es Negociable
 
-Private Sub SetupValidExpedienteMock()
-    m_MockExpediente.idExpediente = 12345
-    m_MockExpediente.NumeroExpediente = "EXP-2025-001"
-    m_MockExpediente.fechaCreacion = Date
-    m_MockExpediente.Estado = "Activo"
-    m_MockExpediente.Descripcion = "Expediente de prueba para testing"
-    m_MockExpediente.IdUsuarioCreador = 1
-    m_MockExpediente.IsValid = True
-End Sub
-
-Private Sub SetupInvalidExpedienteMock()
-    m_MockExpediente.idExpediente = 0
-    m_MockExpediente.NumeroExpediente = ""
-    m_MockExpediente.fechaCreacion = #1/1/1900#
-    m_MockExpediente.Estado = ""
-    m_MockExpediente.Descripcion = ""
-    m_MockExpediente.IdUsuarioCreador = 0
-    m_MockExpediente.IsValid = False
-End Sub
-
-Private Sub SetupLargeExpedienteMock()
-    m_MockExpediente.idExpediente = 999999
-    m_MockExpediente.NumeroExpediente = "EXP-2025-999999"
-    m_MockExpediente.fechaCreacion = Date
-    m_MockExpediente.Estado = "Cerrado"
-    m_MockExpediente.Descripcion = String(1000, "X") ' Descripción muy larga
-    m_MockExpediente.IdUsuarioCreador = 999
-    m_MockExpediente.IsValid = True
-End Sub
-
-' ============================================================================
-' PRUEBAS DE CREACIÓN E INICIALIZACIÓN
-' ============================================================================
-
-' ============================================================================
-' FUNCIÓN PRINCIPAL PARA EJECUTAR TODAS LAS PRUEBAS
-' ============================================================================
-
-Public Function Test_CExpedienteService_RunAll() As String
-    Dim resultado As String
-    Dim testsPassed As Long, testsTotal As Long
+' Función principal que ejecuta todas las pruebas del módulo
+Public Function Test_CExpedienteService_RunAll() As CTestSuiteResult
+    Dim suiteResult As New CTestSuiteResult
+    suiteResult.Initialize "Test_CExpedienteService"
     
-    resultado = "=== PRUEBAS DE CExpedienteService ===" & vbCrLf
-    testsPassed = 0
-    testsTotal = 0
+    ' Ejecutar todas las pruebas unitarias
+    suiteResult.AddTestResult Test_GetExpedienteById_Success()
+    suiteResult.AddTestResult Test_GetExpedienteById_NotFound()
+    suiteResult.AddTestResult Test_GetExpedientesParaSelector_Success()
+    suiteResult.AddTestResult Test_GetExpedientesParaSelector_EmptyResult()
     
-    ' Ejecutar todas las pruebas
-    testsTotal = testsTotal + 1
-    If Test_CExpedienteService_Creation_Success() Then
-        resultado = resultado & "[OK] Test_CExpedienteService_Creation_Success" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_CExpedienteService_Creation_Success" & vbCrLf
-    End If
-    
-    testsTotal = testsTotal + 1
-    If Test_CExpedienteService_ImplementsIExpedienteService() Then
-        resultado = resultado & "[OK] Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
-    End If
-    
-    ' Agregar resumen
-    resultado = resultado & vbCrLf & "RESUMEN: " & testsPassed & "/" & testsTotal & " pruebas pasadas" & vbCrLf
-    
-    Test_CExpedienteService_RunAll = resultado
-End Function
-
-Public Function Test_CExpedienteService_Creation_Success() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    ' No se requiere acción para esta prueba
-    
-    ' Assert
-    Test_CExpedienteService_Creation_Success = Not (expedienteService Is Nothing)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CExpedienteService_Creation_Success", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CExpedienteService_Creation_Success = False
-End Function
-
-Public Function Test_CExpedienteService_ImplementsIExpedienteService() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim interfaz As IExpedienteService
-    Set interfaz = expedienteService
-    
-    ' Assert
-    Test_CExpedienteService_ImplementsIExpedienteService = Not (interfaz Is Nothing)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CExpedienteService_ImplementsIExpedienteService", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CExpedienteService_ImplementsIExpedienteService = False
+    Set Test_CExpedienteService_RunAll = suiteResult
 End Function
 
 ' ============================================================================
-' PRUEBAS DE OBTENCIÓN DE EXPEDIENTES
+' PRUEBAS UNITARIAS PARA GetExpedienteById
 ' ============================================================================
 
-Public Function Test_GetExpediente_ValidId_ReturnsExpediente() As Boolean
-    On Error GoTo TestFail
+' Prueba que GetExpedienteById devuelve correctamente un expediente cuando existe
+Private Function Test_GetExpedienteById_Success() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetExpedienteById_Success"
     
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    On Error GoTo ErrorHandler
     
-    ' Act
-    Dim expediente As T_Expediente
-    expediente = expedienteService.GetExpediente(m_MockExpediente.idExpediente)
+    ' Arrange - Configurar mocks y datos de prueba
+    Dim mockConfig As New CMockConfig
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockRepository As New CMockSolicitudRepository
     
-    ' Assert
-    Test_GetExpediente_ValidId_ReturnsExpediente = (expediente.idExpediente > 0)
+    ' Crear recordset mock con datos de expediente
+    Dim mockRecordset As DAO.Recordset
+    Set mockRecordset = CreateMockExpedienteRecordset(123, "EXP-2024-001", "Expediente de Prueba", "Descripción de prueba", #1/15/2024#, "Activo", 1, "Juan Pérez")
+    mockRepository.SetMockRecordset mockRecordset
     
-    Exit Function
+    ' Crear servicio con dependencias mock
+    Dim expedienteService As New CExpedienteService
+    expedienteService.Initialize mockConfig, mockLogger, mockRepository
     
-TestFail:
-    modErrorHandler.LogError "Test_GetExpediente_ValidId_ReturnsExpediente", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_GetExpediente_ValidId_ReturnsExpediente = False
+    ' Act - Ejecutar el método bajo prueba
+    Dim resultado As T_Expediente
+    resultado = expedienteService.GetExpedienteById(123)
+    
+    ' Assert - Verificar resultados
+    modAssert.AssertEquals 123, resultado.idExpediente, "ID del expediente debe coincidir"
+    modAssert.AssertEquals "EXP-2024-001", resultado.NumeroExpediente, "Número del expediente debe coincidir"
+    modAssert.AssertEquals "Expediente de Prueba", resultado.Titulo, "Título del expediente debe coincidir"
+    modAssert.AssertEquals "Descripción de prueba", resultado.Descripcion, "Descripción del expediente debe coincidir"
+    modAssert.AssertEquals "Activo", resultado.Estado, "Estado del expediente debe coincidir"
+    modAssert.AssertEquals 1, resultado.IdUsuarioCreador, "ID del usuario creador debe coincidir"
+    modAssert.AssertEquals "Juan Pérez", resultado.NombreUsuarioCreador, "Nombre del usuario creador debe coincidir"
+    
+    testResult.Pass
+    GoTo CleanUp
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    ' Limpiar recursos
+    If Not mockRecordset Is Nothing Then
+        mockRecordset.Close
+        Set mockRecordset = Nothing
+    End If
+    Set Test_GetExpedienteById_Success = testResult
 End Function
 
-Public Function Test_GetExpediente_InvalidId_HandlesGracefully() As Boolean
-    On Error GoTo TestFail
+' Prueba que GetExpedienteById maneja correctamente cuando no se encuentra el expediente
+Private Function Test_GetExpedienteById_NotFound() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetExpedienteById_NotFound"
     
-    ' Arrange
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    On Error GoTo ErrorHandler
     
-    ' Act
-    Dim expediente As T_Expediente
-    expediente = expedienteService.GetExpediente(-1)
+    ' Arrange - Configurar mocks con recordset vacío
+    Dim mockConfig As New CMockConfig
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockRepository As New CMockSolicitudRepository
     
-    ' Assert
-    Test_GetExpediente_InvalidId_HandlesGracefully = (expediente.idExpediente = 0)
+    ' Crear recordset mock vacío (EOF = True)
+    Dim mockRecordset As DAO.Recordset
+    Set mockRecordset = CreateEmptyRecordset()
+    mockRepository.SetMockRecordset mockRecordset
     
-    Exit Function
+    ' Crear servicio con dependencias mock
+    Dim expedienteService As New CExpedienteService
+    expedienteService.Initialize mockConfig, mockLogger, mockRepository
     
-TestFail:
-    modErrorHandler.LogError "Test_GetExpediente_InvalidId_HandlesGracefully", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_GetExpediente_InvalidId_HandlesGracefully = False
-End Function
-
-Public Function Test_GetExpediente_ZeroId_HandlesGracefully() As Boolean
-    On Error GoTo TestFail
+    ' Act - Ejecutar el método bajo prueba
+    Dim resultado As T_Expediente
+    resultado = expedienteService.GetExpedienteById(999)
     
-    ' Arrange
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    ' Assert - Verificar que devuelve estructura vacía
+    modAssert.AssertEquals 0, resultado.idExpediente, "ID debe ser 0 para expediente no encontrado"
+    modAssert.AssertEquals "", resultado.NumeroExpediente, "Número debe estar vacío para expediente no encontrado"
+    modAssert.AssertEquals "", resultado.Titulo, "Título debe estar vacío para expediente no encontrado"
     
-    ' Act
-    Dim expediente As T_Expediente
-    expediente = expedienteService.GetExpediente(0)
+    testResult.Pass
+    GoTo CleanUp
     
-    ' Assert
-    Test_GetExpediente_ZeroId_HandlesGracefully = (expediente.idExpediente = 0)
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
     
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_GetExpediente_ZeroId_HandlesGracefully", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_GetExpediente_ZeroId_HandlesGracefully = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE CREACIÓN DE EXPEDIENTES
-' ============================================================================
-
-Public Function Test_CreateExpediente_ValidData_ReturnsId() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim newId As Long
-    newId = expedienteService.CreateExpediente(m_MockExpediente.NumeroExpediente, _
-                                             m_MockExpediente.Descripcion, _
-                                             m_MockExpediente.IdUsuarioCreador)
-    
-    ' Assert
-    ' CExpedienteService devuelve 0 (TODO no implementado)
-    Test_CreateExpediente_ValidData_ReturnsId = (newId = 0)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CreateExpediente_ValidData_ReturnsId", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CreateExpediente_ValidData_ReturnsId = False
-End Function
-
-Public Function Test_CreateExpediente_EmptyNumber_HandlesError() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupInvalidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim newId As Long
-    newId = expedienteService.CreateExpediente("", "Descripción", 1)
-    
-    ' Assert
-    ' Para datos inválidos, el servicio real retorna 0 (no creado)
-    Test_CreateExpediente_EmptyNumber_HandlesError = (newId = 0)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CreateExpediente_EmptyNumber_HandlesError", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CreateExpediente_EmptyNumber_HandlesError = False
-End Function
-
-Public Function Test_CreateExpediente_InvalidUserId_HandlesError() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupInvalidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim newId As Long
-    newId = expedienteService.CreateExpediente("EXP-TEST", "Descripción", 0)
-    
-    ' Assert
-    ' Para usuario inválido, se espera no creación (ID=0)
-    Test_CreateExpediente_InvalidUserId_HandlesError = (newId = 0)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CreateExpediente_InvalidUserId_HandlesError", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CreateExpediente_InvalidUserId_HandlesError = False
+CleanUp:
+    ' Limpiar recursos
+    If Not mockRecordset Is Nothing Then
+        mockRecordset.Close
+        Set mockRecordset = Nothing
+    End If
+    Set Test_GetExpedienteById_NotFound = testResult
 End Function
 
 ' ============================================================================
-' PRUEBAS DE ACTUALIZACIÓN DE EXPEDIENTES
+' PRUEBAS UNITARIAS PARA GetExpedientesParaSelector
 ' ============================================================================
 
-Public Function Test_UpdateExpediente_ValidData_ReturnsTrue() As Boolean
-    On Error GoTo TestFail
+' Prueba que GetExpedientesParaSelector devuelve correctamente una lista de expedientes
+Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetExpedientesParaSelector_Success"
     
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    On Error GoTo ErrorHandler
     
-    ' Act
-    Dim result As Boolean
-    result = expedienteService.UpdateExpediente(m_MockExpediente.idExpediente, _
-                                              "Nueva descripción", _
-                                              "Actualizado")
+    ' Arrange - Configurar mocks
+    Dim mockConfig As New CMockConfig
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockRepository As New CMockSolicitudRepository
     
-    ' Assert
-    ' Servicio real devuelve False (TODO no implementado)
-    Test_UpdateExpediente_ValidData_ReturnsTrue = (result = False)
+    ' Crear recordset mock con lista de expedientes
+    Dim mockRecordset As DAO.Recordset
+    Set mockRecordset = CreateMockExpedientesListRecordset()
+    mockRepository.SetMockRecordset mockRecordset
     
-    Exit Function
+    ' Crear servicio con dependencias mock
+    Dim expedienteService As New CExpedienteService
+    expedienteService.Initialize mockConfig, mockLogger, mockRepository
     
-TestFail:
-    modErrorHandler.LogError "Test_UpdateExpediente_ValidData_ReturnsTrue", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_UpdateExpediente_ValidData_ReturnsTrue = False
+    ' Act - Ejecutar el método bajo prueba
+    Dim resultado As Object
+    Set resultado = expedienteService.GetExpedientesParaSelector()
+    
+    ' Assert - Verificar que devuelve un recordset válido
+    modAssert.AssertNotNothing resultado, "El resultado no debe ser Nothing"
+    modAssert.AssertEquals "DAO.Recordset", TypeName(resultado), "El resultado debe ser un recordset"
+    
+    ' Verificar que el recordset tiene registros
+    Dim rs As DAO.Recordset
+    Set rs = resultado
+    modAssert.AssertFalse rs.EOF, "El recordset debe tener registros"
+    
+    testResult.Pass
+    GoTo CleanUp
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    Set Test_GetExpedientesParaSelector_Success = testResult
 End Function
 
-Public Function Test_UpdateExpediente_InvalidId_ReturnsFalse() As Boolean
-    On Error GoTo TestFail
+' Prueba que GetExpedientesParaSelector maneja correctamente cuando no hay expedientes
+Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetExpedientesParaSelector_EmptyResult"
     
-    ' Arrange
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    On Error GoTo ErrorHandler
     
-    ' Act
-    Dim result As Boolean
-    result = expedienteService.UpdateExpediente(-1, "Descripción", "Estado")
+    ' Arrange - Configurar mocks con recordset vacío
+    Dim mockConfig As New CMockConfig
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockRepository As New CMockSolicitudRepository
     
-    ' Assert
-    Test_UpdateExpediente_InvalidId_ReturnsFalse = (result = False)
+    ' Crear recordset mock vacío
+    Dim mockRecordset As DAO.Recordset
+    Set mockRecordset = CreateEmptyRecordset()
+    mockRepository.SetMockRecordset mockRecordset
     
-    Exit Function
+    ' Crear servicio con dependencias mock
+    Dim expedienteService As New CExpedienteService
+    expedienteService.Initialize mockConfig, mockLogger, mockRepository
     
-TestFail:
-    modErrorHandler.LogError "Test_UpdateExpediente_InvalidId_ReturnsFalse", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_UpdateExpediente_InvalidId_ReturnsFalse = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE ELIMINACIÓN DE EXPEDIENTES
-' ============================================================================
-
-Public Function Test_DeleteExpediente_ValidId_ReturnsTrue() As Boolean
-    On Error GoTo TestFail
+    ' Act - Ejecutar el método bajo prueba
+    Dim resultado As Object
+    Set resultado = expedienteService.GetExpedientesParaSelector()
     
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    ' Assert - Verificar que devuelve un recordset válido pero vacío
+    modAssert.AssertNotNothing resultado, "El resultado no debe ser Nothing"
     
-    ' Act
-    Dim result As Boolean
-    result = expedienteService.DeleteExpediente(m_MockExpediente.idExpediente)
+    Dim rs As DAO.Recordset
+    Set rs = resultado
+    modAssert.AssertTrue rs.EOF, "El recordset debe estar vacío"
     
-    ' Assert
-    ' Servicio real devuelve False (TODO no implementado)
-    Test_DeleteExpediente_ValidId_ReturnsTrue = (result = False)
+    testResult.Pass
+    GoTo CleanUp
     
-    Exit Function
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
     
-TestFail:
-    modErrorHandler.LogError "Test_DeleteExpediente_ValidId_ReturnsTrue", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_DeleteExpediente_ValidId_ReturnsTrue = False
-End Function
-
-Public Function Test_DeleteExpediente_InvalidId_ReturnsFalse() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim result As Boolean
-    result = expedienteService.DeleteExpediente(0)
-    
-    ' Assert
-    Test_DeleteExpediente_InvalidId_ReturnsFalse = (result = False)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_DeleteExpediente_InvalidId_ReturnsFalse", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_DeleteExpediente_InvalidId_ReturnsFalse = False
+CleanUp:
+    Set Test_GetExpedientesParaSelector_EmptyResult = testResult
 End Function
 
 ' ============================================================================
-' PRUEBAS DE BÚSQUEDA Y LISTADO
+' FUNCIONES AUXILIARES PARA CREAR RECORDSETS MOCK
 ' ============================================================================
 
-Public Function Test_SearchExpedientes_ValidCriteria_ReturnsResults() As Boolean
-    On Error GoTo TestFail
+' Crea un recordset mock con datos de un expediente específico
+Private Function CreateMockExpedienteRecordset(idExp As Long, numero As String, titulo As String, descripcion As String, fecha As Date, estado As String, idUsuario As Long, nombreUsuario As String) As Object
+    Dim rs As Object
     
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    ' Crear recordset ADODB en memoria
+    Set rs = CreateObject("ADODB.Recordset")
     
-    ' Act
-    ' Este método no está implementado en la interfaz actual
-    ' La prueba evalúa la existencia del servicio como proxy
+    ' Definir campos del recordset
+    rs.Fields.Append "idExpediente", 3 ' adInteger
+    rs.Fields.Append "NumeroExpediente", 202, 50 ' adVarWChar
+    rs.Fields.Append "Titulo", 202, 255 ' adVarWChar
+    rs.Fields.Append "Descripcion", 203 ' adLongVarWChar
+    rs.Fields.Append "FechaCreacion", 7 ' adDate
+    rs.Fields.Append "Estado", 202, 50 ' adVarWChar
+    rs.Fields.Append "IdUsuarioCreador", 3 ' adInteger
+    rs.Fields.Append "NombreUsuarioCreador", 202, 255 ' adVarWChar
     
-    ' Assert
-    Test_SearchExpedientes_ValidCriteria_ReturnsResults = Not (expedienteService Is Nothing)
+    ' Abrir recordset en memoria
+    rs.Open
     
-    Exit Function
+    ' Añadir fila de datos de prueba
+    rs.AddNew
+    rs.Fields("idExpediente").Value = idExp
+    rs.Fields("NumeroExpediente").Value = numero
+    rs.Fields("Titulo").Value = titulo
+    rs.Fields("Descripcion").Value = descripcion
+    rs.Fields("FechaCreacion").Value = fecha
+    rs.Fields("Estado").Value = estado
+    rs.Fields("IdUsuarioCreador").Value = idUsuario
+    rs.Fields("NombreUsuarioCreador").Value = nombreUsuario
+    rs.Update
     
-TestFail:
-    modErrorHandler.LogError "Test_SearchExpedientes_ValidCriteria_ReturnsResults", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_SearchExpedientes_ValidCriteria_ReturnsResults = False
+    ' Mover al primer registro
+    rs.MoveFirst
+    
+    Set CreateMockExpedienteRecordset = rs
 End Function
 
-Public Function Test_SearchExpedientes_EmptyCriteria_ReturnsAll() As Boolean
-    On Error GoTo TestFail
+' Crea un recordset mock con lista de expedientes para selector
+Private Function CreateMockExpedientesListRecordset() As Object
+    Dim rs As Object
     
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    ' Crear recordset ADODB en memoria
+    Set rs = CreateObject("ADODB.Recordset")
     
-    ' Act
-    ' Este método no está implementado en la interfaz actual
-    ' La prueba evalúa la existencia del servicio como proxy
+    ' Definir campos del recordset
+    rs.Fields.Append "idExpediente", 3 ' adInteger
+    rs.Fields.Append "NumeroExpediente", 202, 50 ' adVarWChar
+    rs.Fields.Append "Titulo", 202, 255 ' adVarWChar
+    rs.Fields.Append "Estado", 202, 50 ' adVarWChar
     
-    ' Assert
-    Test_SearchExpedientes_EmptyCriteria_ReturnsAll = Not (expedienteService Is Nothing)
+    ' Abrir recordset en memoria
+    rs.Open
     
-    Exit Function
+    ' Añadir primer registro de prueba
+    rs.AddNew
+    rs.Fields("idExpediente").Value = 1
+    rs.Fields("NumeroExpediente").Value = "EXP-2024-001"
+    rs.Fields("Titulo").Value = "Expediente Uno"
+    rs.Fields("Estado").Value = "Activo"
+    rs.Update
     
-TestFail:
-    modErrorHandler.LogError "Test_SearchExpedientes_EmptyCriteria_ReturnsAll", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_SearchExpedientes_EmptyCriteria_ReturnsAll = False
+    ' Añadir segundo registro de prueba
+    rs.AddNew
+    rs.Fields("idExpediente").Value = 2
+    rs.Fields("NumeroExpediente").Value = "EXP-2024-002"
+    rs.Fields("Titulo").Value = "Expediente Dos"
+    rs.Fields("Estado").Value = "En Proceso"
+    rs.Update
+    
+    ' Mover al primer registro
+    rs.MoveFirst
+    
+    Set CreateMockExpedientesListRecordset = rs
 End Function
 
-Public Function Test_ListAllExpedientes_EmptyDatabase_ReturnsEmptyArray() As Boolean
-    On Error GoTo TestFail
+' Crea un recordset vacío para simular casos donde no se encuentran datos
+Private Function CreateEmptyRecordset() As Object
+    Dim rs As Object
     
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
+    ' Crear recordset ADODB en memoria
+    Set rs = CreateObject("ADODB.Recordset")
     
-    ' Act
-    ' Este método no está implementado en la interfaz actual
-    ' La prueba evalúa la existencia del servicio como proxy
+    ' Definir un campo básico para el recordset vacío
+    rs.Fields.Append "id", 3 ' adInteger
     
-    ' Assert
-    Test_ListAllExpedientes_EmptyDatabase_ReturnsEmptyArray = Not (expedienteService Is Nothing)
+    ' Abrir recordset en memoria (sin añadir registros, queda vacío)
+    rs.Open
     
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_ListAllExpedientes_EmptyDatabase_ReturnsEmptyArray", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_ListAllExpedientes_EmptyDatabase_ReturnsEmptyArray = False
-End Function
-
-Public Function Test_GetExpedientesByUser_ValidUserId_ReturnsResults() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim results As Collection
-    Set results = expedienteService.GetExpedientesByUser(m_MockExpediente.IdUsuarioCreador)
-    
-    ' Assert
-    Test_GetExpedientesByUser_ValidUserId_ReturnsResults = Not (results Is Nothing)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_GetExpedientesByUser_ValidUserId_ReturnsResults", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_GetExpedientesByUser_ValidUserId_ReturnsResults = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE VALIDACIÓN
-' ============================================================================
-
-Public Function Test_ValidateExpediente_ValidData_ReturnsTrue() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim expediente As T_Expediente
-    expediente.idExpediente = m_MockExpediente.idExpediente
-    expediente.Titulo = m_MockExpediente.Descripcion
-    
-    Dim result As Boolean
-    result = expedienteService.ValidateExpediente(expediente)
-    
-    ' Assert
-    Test_ValidateExpediente_ValidData_ReturnsTrue = result
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_ValidateExpediente_ValidData_ReturnsTrue", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_ValidateExpediente_ValidData_ReturnsTrue = False
-End Function
-
-Public Function Test_ValidateExpediente_InvalidData_ReturnsFalse() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupInvalidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim expediente As T_Expediente
-    expediente.idExpediente = m_MockExpediente.idExpediente
-    expediente.Titulo = m_MockExpediente.Descripcion
-    
-    Dim result As Boolean
-    result = expedienteService.ValidateExpediente(expediente)
-    
-    ' Assert
-    ' Implementación actual retorna True (TODO), incluso con datos inválidos
-    Test_ValidateExpediente_InvalidData_ReturnsFalse = (result = True)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_ValidateExpediente_InvalidData_ReturnsFalse", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_ValidateExpediente_InvalidData_ReturnsFalse = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE INTEGRACIÓN
-' ============================================================================
-
-Public Function Test_CExpedienteService_IntegrationCreate_GetById() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim newId As Long
-    newId = expedienteService.CreateExpediente("EXP-INT-001", "Expediente Integración", 1)
-    
-    Dim retrievedExpediente As T_Expediente
-    retrievedExpediente = expedienteService.GetExpediente(newId)
-    
-    ' Assert
-    ' La implementación actual devuelve 0 para CreateExpediente y expediente vacío para GetExpediente
-    Test_CExpedienteService_IntegrationCreate_GetById = (newId = 0) And (retrievedExpediente.idExpediente = 0)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CExpedienteService_IntegrationCreate_GetById", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CExpedienteService_IntegrationCreate_GetById = False
-End Function
-
-Public Function Test_CExpedienteService_IntegrationUpdate_Validate() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim expediente As T_Expediente
-    expediente.idExpediente = 1
-    expediente.Titulo = "Expediente Actualizado"
-    
-    Dim updateResult As Boolean
-    updateResult = expedienteService.UpdateExpediente(expediente.idExpediente, "Nueva descripción", "Actualizado")
-    
-    Dim validationResult As Boolean
-    validationResult = expedienteService.ValidateExpediente(expediente)
-    
-    ' Assert
-    ' La implementación actual devuelve False para UpdateExpediente y True para ValidateExpediente
-    Test_CExpedienteService_IntegrationUpdate_Validate = (updateResult = False) And (validationResult = True)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CExpedienteService_IntegrationUpdate_Validate", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CExpedienteService_IntegrationUpdate_Validate = False
-End Function
-
-' ============================================================================
-' PRUEBAS DE CASOS EXTREMOS
-' ============================================================================
-
-Public Function Test_CExpedienteService_LargeDataset_Performance() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupLargeExpedienteMock
-    Dim expedienteService As IExpedienteService
-    Set expedienteService = New CExpedienteService
-    
-    ' Act
-    Dim i As Integer
-    Dim success As Boolean
-    success = True
-    
-    ' Simular creación masiva (solo evaluamos el servicio existe)
-    For i = 1 To 100
-        If expedienteService Is Nothing Then
-            success = False
-            Exit For
-        End If
-    Next i
-    
-    ' Assert
-    Test_CExpedienteService_LargeDataset_Performance = success
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CExpedienteService_LargeDataset_Performance", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CExpedienteService_LargeDataset_Performance = False
-End Function
-
-Public Function Test_CExpedienteService_ConcurrentAccess_ThreadSafety() As Boolean
-    On Error GoTo TestFail
-    
-    ' Arrange
-    SetupValidExpedienteMock
-    Dim expedienteService1 As IExpedienteService
-    Dim expedienteService2 As IExpedienteService
-    Set expedienteService1 = New CExpedienteService
-    Set expedienteService2 = New CExpedienteService
-    
-    ' Act
-    ' Simular acceso concurrente verificando que ambas instancias son válidas
-    
-    ' Assert
-    Test_CExpedienteService_ConcurrentAccess_ThreadSafety = Not (expedienteService1 Is Nothing) And Not (expedienteService2 Is Nothing)
-    
-    Exit Function
-    
-TestFail:
-    modErrorHandler.LogError "Test_CExpedienteService_ConcurrentAccess_ThreadSafety", Err.Number, Err.Description, "Test_CExpedienteService.bas"
-    Test_CExpedienteService_ConcurrentAccess_ThreadSafety = False
-End Function
-
-' ============================================================================
-' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
-' ============================================================================
-
-Public Function RunCExpedienteServiceTests() As String
-    Dim resultado As String
-    Dim totalTests As Integer
-    Dim passedTests As Integer
-    
-    resultado = "=== PRUEBAS DE CExpedienteService ===" & vbCrLf
-    totalTests = 0
-    passedTests = 0
-    
-    ' Ejecutar todas las pruebas
-    totalTests = totalTests + 1
-    If Test_CExpedienteService_Creation_Success() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CExpedienteService_Creation_Success" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CExpedienteService_Creation_Success" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_CExpedienteService_ImplementsIExpedienteService() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CExpedienteService_ImplementsIExpedienteService" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_GetExpediente_ValidId_ReturnsExpediente() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_GetExpediente_ValidId_ReturnsExpediente" & vbCrLf
-    Else
-        resultado = resultado & "? Test_GetExpediente_ValidId_ReturnsExpediente" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_GetExpediente_InvalidId_HandlesGracefully() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_GetExpediente_InvalidId_HandlesGracefully" & vbCrLf
-    Else
-        resultado = resultado & "? Test_GetExpediente_InvalidId_HandlesGracefully" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_GetExpediente_ZeroId_HandlesGracefully() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_GetExpediente_ZeroId_HandlesGracefully" & vbCrLf
-    Else
-        resultado = resultado & "? Test_GetExpediente_ZeroId_HandlesGracefully" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_CreateExpediente_ValidData_ReturnsId() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CreateExpediente_ValidData_ReturnsId" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CreateExpediente_ValidData_ReturnsId" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_CreateExpediente_EmptyNumber_HandlesError() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CreateExpediente_EmptyNumber_HandlesError" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CreateExpediente_EmptyNumber_HandlesError" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_CreateExpediente_InvalidUserId_HandlesError() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CreateExpediente_InvalidUserId_HandlesError" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CreateExpediente_InvalidUserId_HandlesError" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_UpdateExpediente_ValidData_ReturnsTrue() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_UpdateExpediente_ValidData_ReturnsTrue" & vbCrLf
-    Else
-        resultado = resultado & "? Test_UpdateExpediente_ValidData_ReturnsTrue" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_UpdateExpediente_InvalidId_ReturnsFalse() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_UpdateExpediente_InvalidId_ReturnsFalse" & vbCrLf
-    Else
-        resultado = resultado & "? Test_UpdateExpediente_InvalidId_ReturnsFalse" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_DeleteExpediente_ValidId_ReturnsTrue() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_DeleteExpediente_ValidId_ReturnsTrue" & vbCrLf
-    Else
-        resultado = resultado & "? Test_DeleteExpediente_ValidId_ReturnsTrue" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_DeleteExpediente_InvalidId_ReturnsFalse() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_DeleteExpediente_InvalidId_ReturnsFalse" & vbCrLf
-    Else
-        resultado = resultado & "? Test_DeleteExpediente_InvalidId_ReturnsFalse" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_SearchExpedientes_ValidCriteria_ReturnsResults() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_SearchExpedientes_ValidCriteria_ReturnsResults" & vbCrLf
-    Else
-        resultado = resultado & "? Test_SearchExpedientes_ValidCriteria_ReturnsResults" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_SearchExpedientes_EmptyCriteria_ReturnsAll() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_SearchExpedientes_EmptyCriteria_ReturnsAll" & vbCrLf
-    Else
-        resultado = resultado & "? Test_SearchExpedientes_EmptyCriteria_ReturnsAll" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_GetExpedientesByUser_ValidUserId_ReturnsResults() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_GetExpedientesByUser_ValidUserId_ReturnsResults" & vbCrLf
-    Else
-        resultado = resultado & "? Test_GetExpedientesByUser_ValidUserId_ReturnsResults" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_ValidateExpediente_ValidData_ReturnsTrue() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_ValidateExpediente_ValidData_ReturnsTrue" & vbCrLf
-    Else
-        resultado = resultado & "? Test_ValidateExpediente_ValidData_ReturnsTrue" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_ValidateExpediente_InvalidData_ReturnsFalse() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_ValidateExpediente_InvalidData_ReturnsFalse" & vbCrLf
-    Else
-        resultado = resultado & "? Test_ValidateExpediente_InvalidData_ReturnsFalse" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_CExpedienteService_IntegrationCreate_GetById() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CExpedienteService_IntegrationCreate_GetById" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CExpedienteService_IntegrationCreate_GetById" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_CExpedienteService_IntegrationUpdate_Validate() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CExpedienteService_IntegrationUpdate_Validate" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CExpedienteService_IntegrationUpdate_Validate" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_CExpedienteService_LargeDataset_Performance() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CExpedienteService_LargeDataset_Performance" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CExpedienteService_LargeDataset_Performance" & vbCrLf
-    End If
-    
-    totalTests = totalTests + 1
-    If Test_CExpedienteService_ConcurrentAccess_ThreadSafety() Then
-        passedTests = passedTests + 1
-        resultado = resultado & "? Test_CExpedienteService_ConcurrentAccess_ThreadSafety" & vbCrLf
-    Else
-        resultado = resultado & "? Test_CExpedienteService_ConcurrentAccess_ThreadSafety" & vbCrLf
-    End If
-    
-    ' Resumen
-    resultado = resultado & vbCrLf & "Resultado: " & passedTests & "/" & totalTests & " pruebas exitosas" & vbCrLf
-    
-    RunCExpedienteServiceTests = resultado
+    Set CreateEmptyRecordset = rs
 End Function
 
 

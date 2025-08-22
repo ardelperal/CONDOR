@@ -140,7 +140,7 @@ Private Function IValidationService_ValidarCamposObligatorios(ByVal solicitud As
     End If
     
     ' Validar justificación
-    If Trim(solicitud.justificacion) = "" Then
+    If Trim(solicitud.justificacionCambio) = "" Then
         MensajeError = "La justificación es obligatoria"
         IValidationService_ValidarCamposObligatorios = False
         Exit Function

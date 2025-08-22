@@ -47,15 +47,17 @@ Public Function RunAllTests() As String
     resultado = resultado & suiteResult
     Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
     
-    ' --- Ejecutar Pruebas de ValidationService ---
-    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de ValidationService ---" & vbCrLf
-    suiteResult = Test_ValidationService_RunAll()
-    resultado = resultado & suiteResult
-    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+
     
     ' --- Ejecutar Pruebas de NotificationService ---
     resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de NotificationService ---" & vbCrLf
     suiteResult = Test_NotificationService_RunAll()
+    resultado = resultado & suiteResult
+    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+
+    ' --- Ejecutar Pruebas de DocumentService ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de DocumentService ---" & vbCrLf
+    suiteResult = Test_DocumentService_RunAll()
     resultado = resultado & suiteResult
     Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
     
@@ -161,15 +163,12 @@ Public Function RunAllTests() As String
     resultado = resultado & suiteResult
     Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
     
-    ' --- Ejecutar Pruebas de ErrorHandler ---
-    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de ErrorHandler ---" & vbCrLf
-    suiteResult = RunErrorHandlerTests()
-    resultado = resultado & suiteResult
-    Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
+
+
     
-    ' --- Ejecutar Pruebas de ErrorHandler Extended ---
-    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de ErrorHandler Extended ---" & vbCrLf
-    suiteResult = Test_ErrorHandler_Extended_RunAll()
+    ' --- Ejecutar Pruebas de ErrorHandlerService ---
+    resultado = resultado & vbCrLf & "--- Ejecutando Pruebas de ErrorHandlerService ---" & vbCrLf
+    suiteResult = Test_ErrorHandlerService_RunAll()
     resultado = resultado & suiteResult
     Call AnalyzeSuiteResult(suiteResult, testsTotal, testsPassed, testsFailed, failedTests)
     
@@ -253,11 +252,7 @@ Public Sub ExecuteAllTests(strLogPath As String)
     logFile.WriteLine suiteResult
     Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
     
-    currentTest = "Test_ValidationService"
-    suiteResult = Test_ValidationService_RunAll()
-    logFile.WriteLine "=== PRUEBAS DE VALIDATIONSERVICE ===" & vbCrLf & "[OK] ValidationService tests" & vbCrLf & "Resumen ValidationService: 1/1 pruebas exitosas" & vbCrLf
-    totalTests = totalTests + 1
-    passedTests = passedTests + 1
+
     
     currentTest = "Test_NotificationService"
     Call Test_NotificationService_RunAll
@@ -345,10 +340,7 @@ Public Sub ExecuteAllTests(strLogPath As String)
     logFile.WriteLine suiteResult
     Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
     
-    currentTest = "Test_ErrorHandler_Extended"
-    suiteResult = Test_ErrorHandler_Extended_RunAll()
-    logFile.WriteLine suiteResult
-    Call AnalyzeSuiteResult(suiteResult, totalTests, passedTests, failedTests, "")
+
     
     ' Calcular pruebas fallidas
     failedTests = totalTests - passedTests

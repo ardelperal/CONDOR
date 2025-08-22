@@ -60,7 +60,6 @@ Private Sub SetupValidSolicitudData()
         .NumeroExpediente = "EXP-2025-001"
         .tipoSolicitud = "PC"
         .estadoInterno = "Borrador"
-        .EstadoRAC = "Pendiente"
         .fechaCreacion = Now()
         .FechaUltimaModificacion = Now()
         .usuario = "test@condor.com"
@@ -75,10 +74,11 @@ Private Sub SetupValidDatosPCData()
         .SolicitudID = 0 ' Se asignará después
         .NumeroExpediente = "EXP-2025-001"
         .tipoSolicitud = "PC"
-        .descripcionCambio = "Cambio en el proceso de validación"
-        .justificacion = "Mejora en la eficiencia del proceso"
-        .impactoCoste = "Bajo"
-        .impactoCalidad = "Medio"
+        .refContratoInspeccionOficial = "CONT-2025-001"
+        .refSuministrador = "PROV-001"
+        .refMaterialIdentificacion = "MAT-001"
+        .descripcionCambioSolicitado = "Cambio en el proceso de validación"
+        .justificacionCambio = "Mejora en la eficiencia del proceso"
         .fechaCreacion = Now()
         .FechaUltimaModificacion = Now()
         .Estado = "Activo"
@@ -612,13 +612,13 @@ Public Function Test_EdgeCase_VeryLongStrings() As Boolean
     
     ' Crear strings muy largos
     m_TestSolicitud.Observaciones = String(4000, "A")
-    m_TestDatosPC.descripcionCambio = String(4000, "B")
-    m_TestDatosPC.justificacion = String(4000, "C")
+    m_TestDatosPC.descripcionCambioSolicitado = String(4000, "B")
+    m_TestDatosPC.justificacionCambio = String(4000, "C")
     
     ' Act & Assert
     ' Verificar que el mock maneja strings largos
     Test_EdgeCase_VeryLongStrings = (Len(m_TestSolicitud.Observaciones) = 4000) And _
-                                  (Len(m_TestDatosPC.descripcionCambio) = 4000)
+                                  (Len(m_TestDatosPC.descripcionCambioSolicitado) = 4000)
     
     Exit Function
     
@@ -637,11 +637,11 @@ Public Function Test_EdgeCase_SpecialCharacters() As Boolean
     
     ' Usar caracteres especiales
     m_TestSolicitud.Observaciones = "Prueba con 'comillas' y ""comillas dobles"" y símbolos: @#$%^&*()"
-    m_TestDatosPC.descripcionCambio = "Descripción con ñ, á, é, í, ó, ú y ¿¡caracteres especiales!?"
+    m_TestDatosPC.descripcionCambioSolicitado = "Descripción con ñ, á, é, í, ó, ú y ¿¡caracteres especiales!?"
     
     ' Act & Assert
     Test_EdgeCase_SpecialCharacters = (InStr(m_TestSolicitud.Observaciones, "'") > 0) And _
-                                    (InStr(m_TestDatosPC.descripcionCambio, "ñ") > 0)
+                                    (InStr(m_TestDatosPC.descripcionCambioSolicitado, "ñ") > 0)
     
     Exit Function
     

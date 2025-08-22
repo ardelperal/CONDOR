@@ -35,6 +35,10 @@ End Function
 Public Function Save(ByVal solicitud As Object) As Long
 End Function
 
+' Ejecuta una consulta SQL y devuelve un recordset
+Public Function ExecuteQuery(ByVal sql As String) As DAO.Recordset
+End Function
+
 
 
 

@@ -12,10 +12,11 @@ Private Type T_MockSolicitudPCData
     ID As Long
     NumeroExpediente As String
     tipoSolicitud As String
-    descripcionCambio As String
-    justificacion As String
-    impactoCoste As String
-    impactoCalidad As String
+    refContratoInspeccionOficial As String
+    refSuministrador As String
+    refMaterialIdentificacion As String
+    descripcionCambioSolicitado As String
+    justificacionCambio As String
     estadoInterno As String
     IsValid As Boolean
     ShouldFailLoad As Boolean
@@ -31,10 +32,11 @@ Private Sub SetupValidMockData()
     m_MockData.ID = 123
     m_MockData.NumeroExpediente = "EXP-2025-001"
     m_MockData.tipoSolicitud = "PC"
-    m_MockData.descripcionCambio = "Cambio en el m?dulo de autenticaci?n"
-    m_MockData.justificacion = "Mejora de seguridad"
-    m_MockData.impactoCoste = "Bajo"
-    m_MockData.impactoCalidad = "Medio"
+    m_MockData.refContratoInspeccionOficial = "CONT-2025-001"
+    m_MockData.refSuministrador = "PROV-001"
+    m_MockData.refMaterialIdentificacion = "MAT-001"
+    m_MockData.descripcionCambioSolicitado = "Cambio en el m?dulo de autenticaci?n"
+    m_MockData.justificacionCambio = "Mejora de seguridad"
     m_MockData.estadoInterno = "Borrador"
     m_MockData.IsValid = True
     m_MockData.ShouldFailLoad = False
@@ -44,10 +46,11 @@ Private Sub SetupInvalidMockData()
     m_MockData.ID = -1
     m_MockData.NumeroExpediente = ""
     m_MockData.tipoSolicitud = ""
-    m_MockData.descripcionCambio = ""
-    m_MockData.justificacion = ""
-    m_MockData.impactoCoste = ""
-    m_MockData.impactoCalidad = ""
+    m_MockData.refContratoInspeccionOficial = ""
+    m_MockData.refSuministrador = ""
+    m_MockData.refMaterialIdentificacion = ""
+    m_MockData.descripcionCambioSolicitado = ""
+    m_MockData.justificacionCambio = ""
     m_MockData.estadoInterno = ""
     m_MockData.IsValid = False
     m_MockData.ShouldFailLoad = True
@@ -336,7 +339,7 @@ TestFail:
     Test_DatosPC_Structure_IsValid = False
 End Function
 
-Public Function Test_DatosPC_DescripcionCambio_HandlesLongText() As Boolean
+Public Function Test_DatosPC_DescripcionCambioSolicitado_HandlesLongText() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
@@ -347,13 +350,13 @@ Public Function Test_DatosPC_DescripcionCambio_HandlesLongText() As Boolean
     
     ' Act & Assert
     ' Verificamos que puede manejar textos largos
-    Test_DatosPC_DescripcionCambio_HandlesLongText = True
+    Test_DatosPC_DescripcionCambioSolicitado_HandlesLongText = True
     
     Exit Function
     
 TestFail:
-    modErrorHandler.LogError "Test_DatosPC_DescripcionCambio_HandlesLongText", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
-    Test_DatosPC_DescripcionCambio_HandlesLongText = False
+    modErrorHandler.LogError "Test_DatosPC_DescripcionCambioSolicitado_HandlesLongText", Err.Number, Err.Description, "Test_CSolicitudPC.bas"
+    Test_DatosPC_DescripcionCambioSolicitado_HandlesLongText = False
 End Function
 
 ' ============================================================================
@@ -492,7 +495,9 @@ Public Function Test_CSolicitudPC_Save_Success() As Boolean
     
     ' Arrange
     Dim solicitud As CSolicitudPC
+    Dim iSolicitud As ISolicitud
     Set solicitud = New CSolicitudPC
+    Set iSolicitud = solicitud
     
     ' Configurar datos vÃ¡lidos para guardar
     solicitud.idSolicitud = 789
@@ -504,10 +509,11 @@ Public Function Test_CSolicitudPC_Save_Success() As Boolean
     ' Configurar datos PC
     Dim datosPC As T_Datos_PC
     Set datosPC = New T_Datos_PC
-    datosPC.descripcionCambio = "Implementar autenticaciÃ³n de dos factores"
-    datosPC.justificacion = "Mejora de seguridad requerida"
-    datosPC.impactoCalidad = "Bajo"
     datosPC.refContratoInspeccionOficial = "CONT-2025-001"
+    datosPC.refSuministrador = "PROV-001"
+    datosPC.refMaterialIdentificacion = "MAT-001"
+    datosPC.descripcionCambioSolicitado = "Implementar autenticaciÃ³n de dos factores"
+    datosPC.justificacionCambio = "Mejora de seguridad requerida"
     Set solicitud.datosPC = datosPC
     
     ' Act - Intentar guardar
@@ -528,7 +534,9 @@ Public Function Test_CSolicitudPC_ChangeState_Success() As Boolean
     
     ' Arrange
     Dim solicitud As CSolicitudPC
+    Dim iSolicitud As ISolicitud
     Set solicitud = New CSolicitudPC
+    Set iSolicitud = solicitud
     
     ' Configurar solicitud inicial
     solicitud.idSolicitud = 101
@@ -561,27 +569,19 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     Set datosPC = New T_Datos_PC
     
     ' Act - Configurar datos PC completos
-    datosPC.ID = 1
+    datosPC.idDatosPC = 1
     datosPC.idSolicitud = 123
-    datosPC.descripcionCambio = "ActualizaciÃ³n del sistema de reportes"
-    datosPC.justificacion = "Implementar nuevos filtros y opciones de exportaciÃ³n"
-    datosPC.impactoCalidad = "Requerimiento del usuario para mejorar la funcionalidad"
-    datosPC.impactoCoste = "Medio - Afecta mÃ³dulo de reportes"
+    datosPC.refContratoInspeccionOficial = "CONT-2025-001"
+    datosPC.refSuministrador = "PROV-001"
+    datosPC.refMaterialIdentificacion = "MAT-001"
+    datosPC.descripcionCambioSolicitado = "ActualizaciÃ³n del sistema de reportes"
+    datosPC.justificacionCambio = "Implementar nuevos filtros y opciones de exportaciÃ³n"
     datosPC.fechaCreacion = Now
     datosPC.CreadoPor = "Usuario Test"
     
-    ' Propiedades tÃ©cnicas
-    datosPC.refContratoInspeccionOficial = "Intel i7"
-    datosPC.fechaCreacion = Now
-    datosPC.CreadoPor = "usuario.prueba@empresa.com"
-    datosPC.Estado = "Activo"
-    
     ' Propiedades adicionales
-    datosPC.descripcionCambio = "Cambio en interfaz de usuario"
-    ' Propiedades ya asignadas arriba
-    datosPC.impactoCalidad = "Alto"
-    datosPC.Estado = "Activo"
-    datosPC.Activo = True
+    datosPC.descripcionCambioSolicitado = "Cambio en interfaz de usuario"
+    datosPC.CreadoPor = "usuario.prueba@empresa.com"
     
     ' Asignar a la solicitud
     Set solicitud.datosPC = datosPC
@@ -591,11 +591,11 @@ Public Function Test_CSolicitudPC_DatosPC_SetAndGet() As Boolean
     Set datosRecuperados = solicitud.datosPC
     
     Dim result As Boolean
-    result = (datosRecuperados.descripcionCambio = "ActualizaciÃ³n del sistema de reportes" And _
-             datosRecuperados.justificacion = "Implementar nuevos filtros y opciones de exportaciÃ³n" And _
-             datosRecuperados.impactoCalidad = "Requerimiento del usuario para mejorar la funcionalidad" And _
-             datosRecuperados.impactoCoste = "Medio - Afecta mÃ³dulo de reportes" And _
-             datosRecuperados.refContratoInspeccionOficial = "Intel i7" And _
+    result = (datosRecuperados.descripcionCambioSolicitado = "Cambio en interfaz de usuario" And _
+             datosRecuperados.justificacionCambio = "Implementar nuevos filtros y opciones de exportaciÃ³n" And _
+             datosRecuperados.refContratoInspeccionOficial = "CONT-2025-001" And _
+             datosRecuperados.refSuministrador = "PROV-001" And _
+             datosRecuperados.refMaterialIdentificacion = "MAT-001" And _
               datosRecuperados.Activo = True)
     
     Test_CSolicitudPC_DatosPC_SetAndGet = result
@@ -693,11 +693,11 @@ Public Function RunCSolicitudPCTests() As String
     End If
     
     totalTests = totalTests + 1
-    If Test_DatosPC_DescripcionCambio_HandlesLongText() Then
+    If Test_DatosPC_DescripcionCambioSolicitado_HandlesLongText() Then
         passedTests = passedTests + 1
-        resultado = resultado & "? Test_DatosPC_DescripcionCambio_HandlesLongText" & vbCrLf
+        resultado = resultado & "? Test_DatosPC_DescripcionCambioSolicitado_HandlesLongText" & vbCrLf
     Else
-        resultado = resultado & "? Test_DatosPC_DescripcionCambio_HandlesLongText" & vbCrLf
+        resultado = resultado & "? Test_DatosPC_DescripcionCambioSolicitado_HandlesLongText" & vbCrLf
     End If
     
     totalTests = totalTests + 1

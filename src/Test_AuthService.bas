@@ -2,212 +2,111 @@ Option Compare Database
 Option Explicit
 ' =====================================================
 ' MODULO: Test_AuthService
-' PROPOSITO: Pruebas unitarias para autenticacion y autorizacion
-' DESCRIPCION: Valida usuario/contraseña, roles y permisos
+' PROPOSITO: Pruebas de integración para CAuthService
+' DESCRIPCION: Valida GetUserRole con mocks de base de datos
 '              Implementa patrón AAA (Arrange, Act, Assert)
 ' =====================================================
 
-Public Function Test_AuthService_RunAll() As String
-    Dim resultado As String
-    Dim testsPassed As Integer
-    Dim testsTotal As Integer
+' --- FUNCIÓN PRINCIPAL DE LA SUITE ---
+Public Function Test_AuthService_RunAll() As CTestSuiteResult
+    Dim suiteResult As New CTestSuiteResult
+    suiteResult.SuiteName = "Test_AuthService"
 
-    resultado = "=== PRUEBAS DE AUTHSERVICE ===" & vbCrLf
+    ' Añadir las dos pruebas de integración
+    suiteResult.AddTest "Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto", Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto()
+    suiteResult.AddTest "Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido", Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido()
 
-    ' 1) Validar usuario válido
-    testsTotal = testsTotal + 1
-    If Test_ValidarUsuarioValido() Then
-        resultado = resultado & "[OK] Test_ValidarUsuarioValido" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_ValidarUsuarioValido" & vbCrLf
-    End If
-
-    ' 2) Validar usuario inválido
-    testsTotal = testsTotal + 1
-    If Test_ValidarUsuarioInvalido() Then
-        resultado = resultado & "[OK] Test_ValidarUsuarioInvalido" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_ValidarUsuarioInvalido" & vbCrLf
-    End If
-
-    ' 3) Obtener rol usuario
-    testsTotal = testsTotal + 1
-    If Test_ObtenerRolUsuario() Then
-        resultado = resultado & "[OK] Test_ObtenerRolUsuario" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_ObtenerRolUsuario" & vbCrLf
-    End If
-
-    ' 4) Verificar permiso permitido
-    testsTotal = testsTotal + 1
-    If Test_VerificarPermisoPermitido() Then
-        resultado = resultado & "[OK] Test_VerificarPermisoPermitido" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_VerificarPermisoPermitido" & vbCrLf
-    End If
-
-    ' 5) Verificar permiso denegado
-    testsTotal = testsTotal + 1
-    If Test_VerificarPermisoDenegado() Then
-        resultado = resultado & "[OK] Test_VerificarPermisoDenegado" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_VerificarPermisoDenegado" & vbCrLf
-    End If
-
-    ' 6) Expiración de sesión
-    testsTotal = testsTotal + 1
-    If Test_ExpiracionSesion() Then
-        resultado = resultado & "[OK] Test_ExpiracionSesion" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_ExpiracionSesion" & vbCrLf
-    End If
-
-    ' 7) Revocar sesión
-    testsTotal = testsTotal + 1
-    If Test_RevocarSesion() Then
-        resultado = resultado & "[OK] Test_RevocarSesion" & vbCrLf
-        testsPassed = testsPassed + 1
-    Else
-        resultado = resultado & "[FAIL] Test_RevocarSesion" & vbCrLf
-    End If
-
-    ' Resumen
-    resultado = resultado & vbCrLf & "Resumen AuthService: " & testsPassed & "/" & testsTotal & " pruebas exitosas" & vbCrLf
-
-    Test_AuthService_RunAll = resultado
+    Set Test_AuthService_RunAll = suiteResult
 End Function
 
 ' ==============================
-' Pruebas individuales (AAA)
+' PRUEBAS DE INTEGRACIÓN
 ' ==============================
 
-Public Function Test_ValidarUsuarioValido() As Boolean
+' Prueba: GetUserRole con usuario válido devuelve rol correcto
+Public Function Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto() As CTestResult
+    On Error GoTo ErrorHandler
+    
+    Dim testResult As New CTestResult
+    testResult.TestName = "Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto"
+    
     ' Arrange
-    Dim svc As CAuthService
-    Dim mockConfig As IConfig
-    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
-    Set svc = New CAuthService
-    svc.Initialize mockConfig
-    Dim usuario As String: usuario = "jdoe"
-    Dim password As String: password = "password123"
-
-    ' Act (simulado)
-    Dim EsValido As Boolean
-    EsValido = True
-
+    Dim mockConfig As New CMockConfig
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockRepository As New CMockSolicitudRepository
+    Dim authService As New CAuthService
+    
+    ' Configurar mock para simular usuario con rol Calidad
+    Call mockConfig.SetValue("LANZADERADBPATH", "C:\Test\Lanzadera.accdb")
+    Call mockConfig.SetValue("DATABASEPASSWORD", "testpass")
+    
+    ' Configurar mock recordset para simular datos de usuario de Calidad
+    ' TODO: Crear recordset falso que simule EsUsuarioCalidad = "Sí"
+    ' mockRepository.SetMockRecordset(recordsetConDatosCalidad)
+    
+    ' Inicializar AuthService con dependencias mock
+    authService.Initialize mockConfig, mockLogger, mockRepository
+    
+    ' Act
+    Dim userRole As E_UserRole
+    userRole = authService.GetUserRole("usuario.calidad@test.com")
+    
     ' Assert
-    Test_ValidarUsuarioValido = EsValido
+    Call modAssert.AssertEqual(Rol_Calidad, userRole, "GetUserRole debería devolver Rol_Calidad para usuario válido")
+    
+    testResult.Passed = True
+    testResult.Message = "Test completado exitosamente"
+    Set Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto = testResult
+    
+    Exit Function
+    
+ErrorHandler:
+    testResult.Passed = False
+    testResult.Message = "Error en test: " & Err.Description
+    Set Test_GetUserRole_UsuarioValido_DevuelveRolCorrecto = testResult
 End Function
 
-Public Function Test_ValidarUsuarioInvalido() As Boolean
+' Prueba: GetUserRole con usuario inválido devuelve rol desconocido
+Public Function Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido() As CTestResult
+    On Error GoTo ErrorHandler
+    
+    Dim testResult As New CTestResult
+    testResult.TestName = "Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido"
+    
     ' Arrange
-    Dim svc As CAuthService
-    Dim mockConfig As IConfig
-    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
-    Set svc = New CAuthService
-    svc.Initialize mockConfig
-    Dim usuario As String: usuario = "baduser"
-    Dim password As String: password = "wrong"
-
-    ' Act (simulado)
-    Dim EsValido As Boolean
-    EsValido = False
-
-    ' Assert (esperado False)
-    Test_ValidarUsuarioInvalido = (EsValido = False)
-End Function
-
-Public Function Test_ObtenerRolUsuario() As Boolean
-    ' Arrange
-    Dim svc As CAuthService
-    Dim mockConfig As IConfig
-    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
-    Set svc = New CAuthService
-    svc.Initialize mockConfig
-    Dim usuario As String: usuario = "jdoe"
-
-    ' Act (simulado)
-    Dim Rol As String
-    Rol = "ADMIN"
-
+    Dim mockConfig As New CMockConfig
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockRepository As New CMockSolicitudRepository
+    Dim authService As New CAuthService
+    
+    ' Configurar mock para simular base de datos sin datos
+    Call mockConfig.SetValue("LANZADERADBPATH", "C:\Test\Lanzadera.accdb")
+    Call mockConfig.SetValue("DATABASEPASSWORD", "testpass")
+    
+    ' Configurar mock recordset para simular recordset vacío (EOF = True)
+    ' TODO: Crear recordset falso vacío
+    ' mockRepository.SetMockRecordset(recordsetVacio)
+    
+    ' Inicializar AuthService con dependencias mock
+    authService.Initialize mockConfig, mockLogger, mockRepository
+    
+    ' Act
+    Dim userRole As E_UserRole
+    userRole = authService.GetUserRole("usuario.inexistente@test.com")
+    
     ' Assert
-    Test_ObtenerRolUsuario = (Rol <> "")
-End Function
-
-Public Function Test_VerificarPermisoPermitido() As Boolean
-    ' Arrange
-    Dim svc As CAuthService
-    Dim mockConfig As IConfig
-    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
-    Set svc = New CAuthService
-    svc.Initialize mockConfig
-    Dim usuario As String: usuario = "jdoe"
-    Dim permiso As String: permiso = "EXPEDIENTE_VER"
-
-    ' Act (simulado)
-    Dim permitido As Boolean
-    permitido = True
-
-    ' Assert
-    Test_VerificarPermisoPermitido = permitido
-End Function
-
-Public Function Test_VerificarPermisoDenegado() As Boolean
-    ' Arrange
-    Dim svc As CAuthService
-    Dim mockConfig As IConfig
-    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
-    Set svc = New CAuthService
-    svc.Initialize mockConfig
-    Dim usuario As String: usuario = "jdoe"
-    Dim permiso As String: permiso = "ADMIN_SUPER"
-
-    ' Act (simulado)
-    Dim permitido As Boolean
-    permitido = False
-
-    ' Assert (esperado False)
-    Test_VerificarPermisoDenegado = (permitido = False)
-End Function
-
-Public Function Test_ExpiracionSesion() As Boolean
-    ' Arrange
-    Dim svc As CAuthService
-    Dim mockConfig As IConfig
-    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
-    Set svc = New CAuthService
-    svc.Initialize mockConfig
-    Dim usuario As String: usuario = "jdoe"
-
-    ' Act (simulado)
-    Dim expiro As Boolean
-    expiro = True
-
-    ' Assert
-    Test_ExpiracionSesion = expiro
-End Function
-
-Public Function Test_RevocarSesion() As Boolean
-    ' Arrange
-    Dim svc As CAuthService
-    Dim mockConfig As IConfig
-    Set mockConfig = New CMockAuthService ' TODO: Cambiar por CMockConfig cuando exista
-    Set svc = New CAuthService
-    svc.Initialize mockConfig
-    Dim usuario As String: usuario = "jdoe"
-
-    ' Act (simulado)
-    Dim revocada As Boolean
-    revocada = True
-
-    ' Assert
-    Test_RevocarSesion = revocada
+    Call modAssert.AssertEqual(Rol_Desconocido, userRole, "GetUserRole debería devolver Rol_Desconocido para usuario inválido")
+    
+    testResult.Passed = True
+    testResult.Message = "Test completado exitosamente"
+    Set Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido = testResult
+    
+    Exit Function
+    
+ErrorHandler:
+    testResult.Passed = False
+    testResult.Message = "Error en test: " & Err.Description
+    Set Test_GetUserRole_UsuarioInvalido_DevuelveRolDesconocido = testResult
 End Function
 
 

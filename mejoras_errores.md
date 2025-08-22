@@ -71,9 +71,6 @@ Se incluyen funciones/subs que realizan operaciones propensas a fallar (ej. acce
 - `Private Function GetTipoSolicitud(ByVal idSolicitud As Long) As String`: Actualmente es una implementación `TODO`. Necesitará manejo de errores una vez implementada.
 - `Private Function CreateSolicitudPC(ByVal idSolicitud As Long) As ISolicitud`: Llama a `New CSolicitudPC` y `solicitud.Load`.
 
-### `modTest.bas`
-- `Public Sub TestInterface()`: Tiene `On Error GoTo ErrorHandler` pero **NO llama a `modErrorHandler.LogError`** en su bloque `ErrorHandler`.
-
 ### `modTestRunner.bas`
 - `Public Function RunAllTests() As String`: Tiene `On Error GoTo ErrorHandler` pero **NO llama a `modErrorHandler.LogError`** en su bloque `ErrorHandler`.
 - `Public Sub ExecuteAllTests(strLogPath As String)`: Tiene `On Error GoTo TestRunnerErrorHandler` pero **NO llama a `modErrorHandler.LogError`** en su bloque `ErrorHandler`. Realiza operaciones de E/S de archivos.

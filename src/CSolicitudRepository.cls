@@ -26,7 +26,7 @@ Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As T_Soli
     Set db = CurrentDb
     
     ' Iniciar transacción
-    db.BeginTrans
+    DBEngine.BeginTrans
     
     On Error GoTo ErrorHandler
     
@@ -80,7 +80,7 @@ Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As T_Soli
     End If
     
     ' Confirmar transacción
-    db.CommitTrans
+    DBEngine.CommitTrans
     
     ' Logging de auditoría: Éxito en guardado
     If Not m_OperationLogger Is Nothing Then
@@ -95,7 +95,7 @@ ErrorHandler:
         m_OperationLogger.LogOperation "REPO_SAVE_ERROR", "Error en guardado de solicitud: " & Err.Description, "CSolicitudRepository.GuardarSolicitud"
     End If
     modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.GuardarSolicitud"
-    db.Rollback
+    DBEngine.Rollback
     Err.Raise Err.Number, "CSolicitudRepository.GuardarSolicitud", Err.Description
 End Function
 
@@ -186,7 +186,7 @@ Private Function ISolicitudRepository_EliminarSolicitud(ByVal idSolicitud As Lon
     Dim db As DAO.Database
     
     Set db = CurrentDb
-    db.BeginTrans
+    DBEngine.BeginTrans
     
     On Error GoTo ErrorHandler
     
@@ -198,7 +198,7 @@ Private Function ISolicitudRepository_EliminarSolicitud(ByVal idSolicitud As Lon
     ' Eliminar solicitud principal
     db.Execute "DELETE FROM tbSolicitud WHERE idSolicitud = " & idSolicitud
     
-    db.CommitTrans
+    DBEngine.CommitTrans
     
     ' Logging de auditoría: Solicitud eliminada exitosamente
     If Not m_OperationLogger Is Nothing Then
@@ -215,7 +215,7 @@ ErrorHandler:
     End If
     
     modErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.EliminarSolicitud"
-    db.Rollback
+    DBEngine.Rollback
     ISolicitudRepository_EliminarSolicitud = False
 End Function
 
@@ -266,16 +266,58 @@ Private Sub GuardarDatosPC(ByVal db As DAO.Database, ByVal idSolicitud As Long, 
         rs.Edit
     End If
     
+    ' Campos básicos
     rs("refContratoInspeccionOficial") = datosPC.refContratoInspeccionOficial
-    rs("refContratoInspeccionOficialNuevo") = datosPC.refContratoInspeccionOficialNuevo
     rs("refSuministrador") = datosPC.refSuministrador
-    rs("refSuministradorNuevo") = datosPC.refSuministradorNuevo
-    rs("refSubSuministrador") = datosPC.refSubSuministrador
-    rs("refSubSuministradorNuevo") = datosPC.refSubSuministradorNuevo
-    rs("importeOriginal") = datosPC.importeOriginal
-    rs("importeNuevo") = datosPC.importeNuevo
+    rs("suministradorNombreDir") = datosPC.suministradorNombreDir
+    rs("objetoContrato") = datosPC.objetoContrato
+    rs("descripcionMaterialAfectado") = datosPC.descripcionMaterialAfectado
+    rs("numPlanoEspecificacion") = datosPC.numPlanoEspecificacion
+    rs("descripcionPropuestaCambio") = datosPC.descripcionPropuestaCambio
+    rs("descripcionPropuestaCambioCont") = datosPC.descripcionPropuestaCambioCont
+    
+    ' Motivos (campos booleanos)
+    rs("motivoMejoraTecnica") = datosPC.motivoMejoraTecnica
+    rs("motivoReduccionCoste") = datosPC.motivoReduccionCoste
+    rs("motivoMejoraPlazo") = datosPC.motivoMejoraPlazo
+    rs("motivoSolucionProblema") = datosPC.motivoSolucionProblema
+    rs("motivoActualizacionNormativa") = datosPC.motivoActualizacionNormativa
+    rs("motivoObsolescencia") = datosPC.motivoObsolescencia
+    rs("motivoOtros") = datosPC.motivoOtros
+    
+    ' Incidencias
+    rs("incidenciaCalidad") = datosPC.incidenciaCalidad
+    rs("incidenciaSeguridad") = datosPC.incidenciaSeguridad
+    rs("incidenciaFuncional") = datosPC.incidenciaFuncional
+    rs("incidenciaOperacional") = datosPC.incidenciaOperacional
+    rs("incidenciaMantenimiento") = datosPC.incidenciaMantenimiento
+    
+    ' Cambios que afectan material
+    rs("cambioAfectaMaterialClaseSeguridad") = datosPC.cambioAfectaMaterialClaseSeguridad
+    rs("cambioAfectaMaterialImportanteSeguridad") = datosPC.cambioAfectaMaterialImportanteSeguridad
+    rs("cambioAfectaMaterialBasico") = datosPC.cambioAfectaMaterialBasico
+    
+    ' Campos de firma y autorización
+    rs("nombreRepSuministrador") = datosPC.nombreRepSuministrador
+    rs("cargoRepSuministrador") = datosPC.cargoRepSuministrador
+    rs("fechaFirmaSuministrador") = datosPC.fechaFirmaSuministrador
+    rs("identificacionAutoridadDiseno") = datosPC.identificacionAutoridadDiseno
+    rs("esSuministradorAD") = datosPC.esSuministradorAD
+    
+    ' Campos RAC
+    rs("racRef") = datosPC.racRef
+    rs("racCodigo") = datosPC.racCodigo
+    rs("observacionesRAC") = datosPC.observacionesRAC
+    rs("fechaFirmaRAC") = datosPC.fechaFirmaRAC
+    
+    ' Campos de decisión final
+    rs("decisionFinal") = datosPC.decisionFinal
+    rs("observacionesFinales") = datosPC.observacionesFinales
+    rs("fechaFirmaDecisionFinal") = datosPC.fechaFirmaDecisionFinal
+    rs("cargoFirmanteFinal") = datosPC.cargoFirmanteFinal
+    
+    ' Campos de impacto y justificación
     rs("justificacion") = datosPC.justificacion
-    rs("descripcionCambio") = datosPC.descripcionCambio
     rs("impactoCalidad") = datosPC.impactoCalidad
     rs("impactoCoste") = datosPC.impactoCoste
     rs("impactoPlazos") = datosPC.impactoPlazos
@@ -299,20 +341,37 @@ Private Sub GuardarDatosCDCA(ByVal db As DAO.Database, ByVal idSolicitud As Long
         rs.Edit
     End If
     
+    ' Campos básicos
     rs("refSuministrador") = datosCDCA.refSuministrador
+    rs("numContrato") = datosCDCA.numContrato
+    rs("identificacionMaterial") = datosCDCA.identificacionMaterial
+    rs("numPlanoEspecificacion") = datosCDCA.numPlanoEspecificacion
+    rs("cantidadPeriodo") = datosCDCA.cantidadPeriodo
+    rs("numSerieLote") = datosCDCA.numSerieLote
+    
+    ' Descripción del impacto
     rs("descripcionImpactoNC") = datosCDCA.descripcionImpactoNC
+    rs("descripcionImpactoNCCont") = datosCDCA.descripcionImpactoNCCont
+    
+    ' Referencias y clasificación
     rs("refDesviacionesPrevias") = datosCDCA.refDesviacionesPrevias
     rs("causaNC") = datosCDCA.causaNC
     rs("impactoCoste") = datosCDCA.impactoCoste
     rs("clasificacionNC") = datosCDCA.clasificacionNC
     rs("requiereModificacionContrato") = datosCDCA.requiereModificacionContrato
     rs("efectoFechaEntrega") = datosCDCA.efectoFechaEntrega
+    
+    ' Autoridad de diseño
     rs("identificacionAutoridadDiseno") = datosCDCA.identificacionAutoridadDiseno
     rs("esSuministradorAD") = datosCDCA.esSuministradorAD
+    
+    ' Campos RAC
     rs("racRef") = datosCDCA.racRef
     rs("racCodigo") = datosCDCA.racCodigo
     rs("observacionesRAC") = datosCDCA.observacionesRAC
     If datosCDCA.fechaFirmaRAC <> 0 Then rs("fechaFirmaRAC") = datosCDCA.fechaFirmaRAC
+    
+    ' Decisión final
     rs("decisionFinal") = datosCDCA.decisionFinal
     rs("observacionesFinales") = datosCDCA.observacionesFinales
     If datosCDCA.fechaFirmaDecisionFinal <> 0 Then rs("fechaFirmaDecisionFinal") = datosCDCA.fechaFirmaDecisionFinal
@@ -334,14 +393,41 @@ Private Sub GuardarDatosCDCASUB(ByVal db As DAO.Database, ByVal idSolicitud As L
         rs.Edit
     End If
     
+    ' Campos básicos
     rs("refSuministrador") = datosCDCASUB.refSuministrador
     rs("refSubSuministrador") = datosCDCASUB.refSubSuministrador
     rs("suministradorPrincipalNombreDir") = datosCDCASUB.suministradorPrincipalNombreDir
     rs("subSuministradorNombreDir") = datosCDCASUB.subSuministradorNombreDir
+    rs("numContrato") = datosCDCASUB.numContrato
     rs("identificacionMaterial") = datosCDCASUB.identificacionMaterial
     rs("numPlanoEspecificacion") = datosCDCASUB.numPlanoEspecificacion
     rs("cantidadPeriodo") = datosCDCASUB.cantidadPeriodo
     rs("numSerieLote") = datosCDCASUB.numSerieLote
+    
+    ' Descripción del impacto
+    rs("descripcionImpactoNC") = datosCDCASUB.descripcionImpactoNC
+    rs("descripcionImpactoNCCont") = datosCDCASUB.descripcionImpactoNCCont
+    
+    ' Referencias y clasificación
+    rs("refDesviacionesPrevias") = datosCDCASUB.refDesviacionesPrevias
+    rs("causaNC") = datosCDCASUB.causaNC
+    rs("impactoCoste") = datosCDCASUB.impactoCoste
+    rs("clasificacionNC") = datosCDCASUB.clasificacionNC
+    rs("requiereModificacionContrato") = datosCDCASUB.requiereModificacionContrato
+    rs("efectoFechaEntrega") = datosCDCASUB.efectoFechaEntrega
+    
+    ' Autoridad de diseño
+    rs("identificacionAutoridadDiseno") = datosCDCASUB.identificacionAutoridadDiseno
+    rs("esSubSuministradorAD") = datosCDCASUB.esSubSuministradorAD
+    rs("nombreRepSubSuministrador") = datosCDCASUB.nombreRepSubSuministrador
+    
+    ' Campos RAC
+    rs("racRef") = datosCDCASUB.racRef
+    rs("racCodigo") = datosCDCASUB.racCodigo
+    rs("observacionesRAC") = datosCDCASUB.observacionesRAC
+    If datosCDCASUB.fechaFirmaRAC <> 0 Then rs("fechaFirmaRAC") = datosCDCASUB.fechaFirmaRAC
+    
+    ' Campos de impacto en material
     rs("afectaPrestaciones") = datosCDCASUB.afectaPrestaciones
     rs("afectaSeguridad") = datosCDCASUB.afectaSeguridad
     rs("afectaFiabilidad") = datosCDCASUB.afectaFiabilidad
@@ -351,14 +437,22 @@ Private Sub GuardarDatosCDCASUB(ByVal db As DAO.Database, ByVal idSolicitud As L
     rs("afectaMantenibilidad") = datosCDCASUB.afectaMantenibilidad
     rs("afectaApariencia") = datosCDCASUB.afectaApariencia
     rs("afectaOtros") = datosCDCASUB.afectaOtros
-    rs("esSubSuministradorAD") = datosCDCASUB.esSubSuministradorAD
-    rs("nombreRepSubSuministrador") = datosCDCASUB.nombreRepSubSuministrador
+    
+    ' Decisión del suministrador principal
     rs("decisionSuministradorPrincipal") = datosCDCASUB.decisionSuministradorPrincipal
     rs("obsSuministradorPrincipal") = datosCDCASUB.obsSuministradorPrincipal
     If datosCDCASUB.fechaFirmaSuministradorPrincipal <> 0 Then rs("fechaFirmaSuministradorPrincipal") = datosCDCASUB.fechaFirmaSuministradorPrincipal
     rs("firmaSuministradorPrincipalNombreCargo") = datosCDCASUB.firmaSuministradorPrincipalNombreCargo
+    
+    ' RAC Delegador
     rs("obsRACDelegador") = datosCDCASUB.obsRACDelegador
     If datosCDCASUB.fechaFirmaRACDelegador <> 0 Then rs("fechaFirmaRACDelegador") = datosCDCASUB.fechaFirmaRACDelegador
+    
+    ' Decisión final
+    rs("decisionFinal") = datosCDCASUB.decisionFinal
+    rs("observacionesFinales") = datosCDCASUB.observacionesFinales
+    If datosCDCASUB.fechaFirmaDecisionFinal <> 0 Then rs("fechaFirmaDecisionFinal") = datosCDCASUB.fechaFirmaDecisionFinal
+    rs("cargoFirmanteFinal") = datosCDCASUB.cargoFirmanteFinal
     
     rs.Update
     rs.Close
@@ -372,17 +466,61 @@ Private Function CargarDatosPC(ByVal db As DAO.Database, ByVal idSolicitud As Lo
     
     If Not rs.EOF Then
         Set datosPC = New T_Datos_PC
+        
+        ' Campos básicos
         datosPC.idDatosPC = rs("idDatosPC")
+        datosPC.idSolicitud = rs("idSolicitud")
         datosPC.refContratoInspeccionOficial = rs("refContratoInspeccionOficial") & ""
-        datosPC.refContratoInspeccionOficialNuevo = rs("refContratoInspeccionOficialNuevo") & ""
         datosPC.refSuministrador = rs("refSuministrador") & ""
-        datosPC.refSuministradorNuevo = rs("refSuministradorNuevo") & ""
-        datosPC.refSubSuministrador = rs("refSubSuministrador") & ""
-        datosPC.refSubSuministradorNuevo = rs("refSubSuministradorNuevo") & ""
-        If Not IsNull(rs("importeOriginal")) Then datosPC.importeOriginal = rs("importeOriginal")
-        If Not IsNull(rs("importeNuevo")) Then datosPC.importeNuevo = rs("importeNuevo")
+        datosPC.suministradorNombreDir = rs("suministradorNombreDir") & ""
+        datosPC.objetoContrato = rs("objetoContrato") & ""
+        datosPC.descripcionMaterialAfectado = rs("descripcionMaterialAfectado") & ""
+        datosPC.numPlanoEspecificacion = rs("numPlanoEspecificacion") & ""
+        datosPC.descripcionPropuestaCambio = rs("descripcionPropuestaCambio") & ""
+        datosPC.descripcionPropuestaCambioCont = rs("descripcionPropuestaCambioCont") & ""
+        
+        ' Motivos (campos booleanos)
+        datosPC.motivoMejoraTecnica = rs("motivoMejoraTecnica")
+        datosPC.motivoReduccionCoste = rs("motivoReduccionCoste")
+        datosPC.motivoMejoraPlazo = rs("motivoMejoraPlazo")
+        datosPC.motivoSolucionProblema = rs("motivoSolucionProblema")
+        datosPC.motivoActualizacionNormativa = rs("motivoActualizacionNormativa")
+        datosPC.motivoObsolescencia = rs("motivoObsolescencia")
+        datosPC.motivoOtros = rs("motivoOtros")
+        
+        ' Incidencias
+        datosPC.incidenciaCalidad = rs("incidenciaCalidad") & ""
+        datosPC.incidenciaSeguridad = rs("incidenciaSeguridad") & ""
+        datosPC.incidenciaFuncional = rs("incidenciaFuncional") & ""
+        datosPC.incidenciaOperacional = rs("incidenciaOperacional") & ""
+        datosPC.incidenciaMantenimiento = rs("incidenciaMantenimiento") & ""
+        
+        ' Cambios que afectan material
+        datosPC.cambioAfectaMaterialClaseSeguridad = rs("cambioAfectaMaterialClaseSeguridad")
+        datosPC.cambioAfectaMaterialImportanteSeguridad = rs("cambioAfectaMaterialImportanteSeguridad")
+        datosPC.cambioAfectaMaterialBasico = rs("cambioAfectaMaterialBasico")
+        
+        ' Campos de firma y autorización
+        datosPC.nombreRepSuministrador = rs("nombreRepSuministrador") & ""
+        datosPC.cargoRepSuministrador = rs("cargoRepSuministrador") & ""
+        If Not IsNull(rs("fechaFirmaSuministrador")) Then datosPC.fechaFirmaSuministrador = rs("fechaFirmaSuministrador")
+        datosPC.identificacionAutoridadDiseno = rs("identificacionAutoridadDiseno") & ""
+        datosPC.esSuministradorAD = rs("esSuministradorAD")
+        
+        ' Campos RAC
+        datosPC.racRef = rs("racRef") & ""
+        datosPC.racCodigo = rs("racCodigo") & ""
+        datosPC.observacionesRAC = rs("observacionesRAC") & ""
+        If Not IsNull(rs("fechaFirmaRAC")) Then datosPC.fechaFirmaRAC = rs("fechaFirmaRAC")
+        
+        ' Campos de decisión final
+        datosPC.decisionFinal = rs("decisionFinal") & ""
+        datosPC.observacionesFinales = rs("observacionesFinales") & ""
+        If Not IsNull(rs("fechaFirmaDecisionFinal")) Then datosPC.fechaFirmaDecisionFinal = rs("fechaFirmaDecisionFinal")
+        datosPC.cargoFirmanteFinal = rs("cargoFirmanteFinal") & ""
+        
+        ' Campos de impacto y justificación
         datosPC.justificacion = rs("justificacion") & ""
-        datosPC.descripcionCambio = rs("descripcionCambio") & ""
         datosPC.impactoCalidad = rs("impactoCalidad") & ""
         datosPC.impactoCoste = rs("impactoCoste") & ""
         datosPC.impactoPlazos = rs("impactoPlazos") & ""
@@ -403,21 +541,40 @@ Private Function CargarDatosCDCA(ByVal db As DAO.Database, ByVal idSolicitud As 
     
     If Not rs.EOF Then
         Set datosCDCA = New T_Datos_CD_CA
+        
+        ' Campos básicos
         datosCDCA.idDatosCDCA = rs("idDatosCDCA")
+        datosCDCA.idSolicitud = rs("idSolicitud")
         datosCDCA.refSuministrador = rs("refSuministrador") & ""
+        datosCDCA.numContrato = rs("numContrato") & ""
+        datosCDCA.identificacionMaterial = rs("identificacionMaterial") & ""
+        datosCDCA.numPlanoEspecificacion = rs("numPlanoEspecificacion") & ""
+        datosCDCA.cantidadPeriodo = rs("cantidadPeriodo")
+        datosCDCA.numSerieLote = rs("numSerieLote") & ""
+        
+        ' Descripción del impacto
         datosCDCA.descripcionImpactoNC = rs("descripcionImpactoNC") & ""
+        datosCDCA.descripcionImpactoNCCont = rs("descripcionImpactoNCCont") & ""
+        
+        ' Referencias y clasificación
         datosCDCA.refDesviacionesPrevias = rs("refDesviacionesPrevias") & ""
         datosCDCA.causaNC = rs("causaNC") & ""
         datosCDCA.impactoCoste = rs("impactoCoste") & ""
         datosCDCA.clasificacionNC = rs("clasificacionNC") & ""
         datosCDCA.requiereModificacionContrato = rs("requiereModificacionContrato")
         datosCDCA.efectoFechaEntrega = rs("efectoFechaEntrega") & ""
+        
+        ' Autoridad de diseño
         datosCDCA.identificacionAutoridadDiseno = rs("identificacionAutoridadDiseno") & ""
         datosCDCA.esSuministradorAD = rs("esSuministradorAD")
+        
+        ' Campos RAC
         datosCDCA.racRef = rs("racRef") & ""
         datosCDCA.racCodigo = rs("racCodigo") & ""
         datosCDCA.observacionesRAC = rs("observacionesRAC") & ""
         If Not IsNull(rs("fechaFirmaRAC")) Then datosCDCA.fechaFirmaRAC = rs("fechaFirmaRAC")
+        
+        ' Decisión final
         datosCDCA.decisionFinal = rs("decisionFinal") & ""
         datosCDCA.observacionesFinales = rs("observacionesFinales") & ""
         If Not IsNull(rs("fechaFirmaDecisionFinal")) Then datosCDCA.fechaFirmaDecisionFinal = rs("fechaFirmaDecisionFinal")
@@ -436,15 +593,44 @@ Private Function CargarDatosCDCASUB(ByVal db As DAO.Database, ByVal idSolicitud 
     
     If Not rs.EOF Then
         Set datosCDCASUB = New T_Datos_CD_CA_SUB
+        
+        ' Campos básicos
         datosCDCASUB.idDatosCDCASUB = rs("idDatosCDCASUB")
+        datosCDCASUB.idSolicitud = rs("idSolicitud")
         datosCDCASUB.refSuministrador = rs("refSuministrador") & ""
         datosCDCASUB.refSubSuministrador = rs("refSubSuministrador") & ""
         datosCDCASUB.suministradorPrincipalNombreDir = rs("suministradorPrincipalNombreDir") & ""
         datosCDCASUB.subSuministradorNombreDir = rs("subSuministradorNombreDir") & ""
+        datosCDCASUB.numContrato = rs("numContrato") & ""
         datosCDCASUB.identificacionMaterial = rs("identificacionMaterial") & ""
         datosCDCASUB.numPlanoEspecificacion = rs("numPlanoEspecificacion") & ""
         datosCDCASUB.cantidadPeriodo = rs("cantidadPeriodo")
         datosCDCASUB.numSerieLote = rs("numSerieLote") & ""
+        
+        ' Descripción del impacto
+        datosCDCASUB.descripcionImpactoNC = rs("descripcionImpactoNC") & ""
+        datosCDCASUB.descripcionImpactoNCCont = rs("descripcionImpactoNCCont") & ""
+        
+        ' Referencias y clasificación
+        datosCDCASUB.refDesviacionesPrevias = rs("refDesviacionesPrevias") & ""
+        datosCDCASUB.causaNC = rs("causaNC") & ""
+        datosCDCASUB.impactoCoste = rs("impactoCoste") & ""
+        datosCDCASUB.clasificacionNC = rs("clasificacionNC") & ""
+        datosCDCASUB.requiereModificacionContrato = rs("requiereModificacionContrato")
+        datosCDCASUB.efectoFechaEntrega = rs("efectoFechaEntrega") & ""
+        
+        ' Autoridad de diseño
+        datosCDCASUB.identificacionAutoridadDiseno = rs("identificacionAutoridadDiseno") & ""
+        datosCDCASUB.esSubSuministradorAD = rs("esSubSuministradorAD")
+        datosCDCASUB.nombreRepSubSuministrador = rs("nombreRepSubSuministrador") & ""
+        
+        ' Campos RAC
+        datosCDCASUB.racRef = rs("racRef") & ""
+        datosCDCASUB.racCodigo = rs("racCodigo") & ""
+        datosCDCASUB.observacionesRAC = rs("observacionesRAC") & ""
+        If Not IsNull(rs("fechaFirmaRAC")) Then datosCDCASUB.fechaFirmaRAC = rs("fechaFirmaRAC")
+        
+        ' Campos de impacto en material
         datosCDCASUB.afectaPrestaciones = rs("afectaPrestaciones")
         datosCDCASUB.afectaSeguridad = rs("afectaSeguridad")
         datosCDCASUB.afectaFiabilidad = rs("afectaFiabilidad")
@@ -454,14 +640,22 @@ Private Function CargarDatosCDCASUB(ByVal db As DAO.Database, ByVal idSolicitud 
         datosCDCASUB.afectaMantenibilidad = rs("afectaMantenibilidad")
         datosCDCASUB.afectaApariencia = rs("afectaApariencia")
         datosCDCASUB.afectaOtros = rs("afectaOtros")
-        datosCDCASUB.esSubSuministradorAD = rs("esSubSuministradorAD")
-        datosCDCASUB.nombreRepSubSuministrador = rs("nombreRepSubSuministrador") & ""
+        
+        ' Decisión del suministrador principal
         datosCDCASUB.decisionSuministradorPrincipal = rs("decisionSuministradorPrincipal") & ""
         datosCDCASUB.obsSuministradorPrincipal = rs("obsSuministradorPrincipal") & ""
         If Not IsNull(rs("fechaFirmaSuministradorPrincipal")) Then datosCDCASUB.fechaFirmaSuministradorPrincipal = rs("fechaFirmaSuministradorPrincipal")
         datosCDCASUB.firmaSuministradorPrincipalNombreCargo = rs("firmaSuministradorPrincipalNombreCargo") & ""
+        
+        ' RAC Delegador
         datosCDCASUB.obsRACDelegador = rs("obsRACDelegador") & ""
         If Not IsNull(rs("fechaFirmaRACDelegador")) Then datosCDCASUB.fechaFirmaRACDelegador = rs("fechaFirmaRACDelegador")
+        
+        ' Decisión final
+        datosCDCASUB.decisionFinal = rs("decisionFinal") & ""
+        datosCDCASUB.observacionesFinales = rs("observacionesFinales") & ""
+        If Not IsNull(rs("fechaFirmaDecisionFinal")) Then datosCDCASUB.fechaFirmaDecisionFinal = rs("fechaFirmaDecisionFinal")
+        datosCDCASUB.cargoFirmanteFinal = rs("cargoFirmanteFinal") & ""
     End If
     
     rs.Close
@@ -469,7 +663,7 @@ Private Function CargarDatosCDCASUB(ByVal db As DAO.Database, ByVal idSolicitud 
 End Function
 
 ' Implementación del método genérico Load (Principio de Abstracción de Interfaces)
-Private Function ISolicitudRepository_Load(ByVal ID As Long) As ISolicitud
+Private Function ISolicitudRepository_Load(ByVal ID As Long) As Object
     On Error GoTo ErrorHandler
     
     ' Obtener la solicitud completa usando el método existente
@@ -509,7 +703,7 @@ ErrorHandler:
  End Function
 
 ' Implementación del método genérico Save (Principio de Abstracción de Interfaces)
-Private Function ISolicitudRepository_Save(ByVal solicitud As ISolicitud) As Long
+Private Function ISolicitudRepository_Save(ByVal solicitud As Object) As Long
     On Error GoTo ErrorHandler
     
     ' Determinar el tipo de solicitud y usar el método apropiado

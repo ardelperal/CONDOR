@@ -1,31 +1,24 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
-' Compilación condicional removida para evitar errores
-' #If DEV_MODE Then
 
 Implements IExpedienteService
 
-' Variables privadas para dependencias
+' Dependencias inyectadas
+Private m_Config As IConfig
 Private m_OperationLogger As IOperationLogger
+Private m_SolicitudRepository As ISolicitudRepository
 
 ' ============================================================================
-' Clase: CExpedienteService
-' Descripción: Implementación real del servicio de expedientes
-'              Conecta con la aplicaci?n de Expedientes existente
-' Autor: CONDOR-Expert
-' Fecha: Diciembre 2024
+' MÉTODOS DE INICIALIZACIÓN
 ' ============================================================================
 
-' Método de inicialización para inyectar dependencias
-Public Sub Initialize(operationLogger As IOperationLogger)
-    On Error GoTo ErrorHandler
-    
+' Inicializa el servicio con sus dependencias
+Public Sub Initialize(ByVal config As IConfig, _
+                     ByVal operationLogger As IOperationLogger, _
+                     ByVal solicitudRepository As ISolicitudRepository)
+    Set m_Config = config
     Set m_OperationLogger = operationLogger
-    
-    Exit Sub
-    
-ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.Initialize"
+    Set m_SolicitudRepository = solicitudRepository
 End Sub
 
 ' Implementación de la interfaz IExpedienteService
@@ -36,91 +29,75 @@ End Function
 
 ' Implementación de la interfaz para GetExpedienteById
 Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
-    ' Implementación basada en la lógica existente de IExpedienteService_GetExpediente
-    Dim resultado As T_Expediente
-    Dim db As DAO.Database
-    Dim rs As DAO.Recordset
-    Dim sql As String
-    
     On Error GoTo ErrorHandler
     
-    ' Logging de auditoría: Consulta de expediente por ID
+    ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "EXPEDIENTE_QUERY_BY_ID", "Consultando expediente por ID: " & idExpediente, "CExpedienteService.GetExpedienteById"
+        m_OperationLogger.LogOperation "ExpedienteService.GetExpedienteById", "Consultando expediente ID: " & idExpediente
     End If
     
-    ' Inicializar resultado vacío
-    Set resultado = New T_Expediente
-    resultado.idExpediente = 0
-    resultado.Nemotecnico = ""
-    resultado.Titulo = ""
-    resultado.ResponsableCalidad = ""
-    resultado.ResponsableTecnico = ""
-    resultado.Pecal = ""
+    ' Variables para la consulta
+    Dim rs As DAO.Recordset
+    Dim sql As String
+    Dim expediente As T_Expediente
     
-    ' Obtener la ruta de la base de datos de expedientes desde configuración
-    Dim rutaExpedientes As String
-    rutaExpedientes = GetExpedientesDbPath()
+    ' Construir la consulta SQL
+    sql = "SELECT e.idExpediente, e.NumeroExpediente, e.Titulo, e.Descripcion, " & _
+          "e.FechaCreacion, e.Estado, e.IdUsuarioCreador, " & _
+          "u.NombreCompleto as NombreUsuarioCreador " & _
+          "FROM tbExpedientes e " & _
+          "LEFT JOIN tbUsuarios u ON e.IdUsuarioCreador = u.idUsuario " & _
+          "WHERE e.idExpediente = " & idExpediente
     
-    If rutaExpedientes = "" Then
-        Debug.Print "Error: No se ha configurado la ruta de la base de datos de expedientes"
-        GoTo Cleanup
-    End If
+    ' Ejecutar consulta usando el repositorio inyectado
+    Set rs = m_SolicitudRepository.ExecuteQuery(sql)
     
-    ' Abrir conexión a la base de datos de expedientes
-    Dim config As CConfig
-    Set config = New CConfig
-    Set db = DBEngine.OpenDatabase(rutaExpedientes, False, False, ";PWD=" & config.GetDatabasePassword())
-    
-    ' Construir la consulta SQL con filtro por ID
-    sql = "SELECT TbExpedientes.IDExpediente, TbExpedientes.Nemotecnico, TbExpedientes.Titulo, " & _
-          "TbUsuariosAplicaciones_1.Nombre AS ResponsableCalidad, " & _
-          "TbUsuariosAplicaciones.Nombre AS ResponsableTecnico, " & _
-          "TbExpedientes.Pecal " & _
-          "FROM ((TbExpedientes INNER JOIN TbExpedientesResponsables ON TbExpedientes.IDExpediente = TbExpedientesResponsables.IdExpediente) " & _
-          "LEFT JOIN TbUsuariosAplicaciones ON TbExpedientesResponsables.IdUsuario = TbUsuariosAplicaciones.Id) " & _
-          "LEFT JOIN TbUsuariosAplicaciones AS TbUsuariosAplicaciones_1 ON TbExpedientes.IDResponsableCalidad = TbUsuariosAplicaciones_1.Id " & _
-          "WHERE (((TbExpedientesResponsables.EsJefeProyecto)='Sí') AND ((TbExpedientes.IDExpediente)=" & idExpediente & "));"
-    
-    ' Ejecutar la consulta
-    Set rs = db.OpenRecordset(sql, dbOpenSnapshot)
-    
-    ' Si encontramos un resultado, llenar la estructura
+    ' Verificar si se encontró el expediente
     If Not rs.EOF Then
-        resultado.idExpediente = rs("IDExpediente")
-        resultado.Nemotecnico = Nz(rs("Nemotecnico"), "")
-        resultado.Titulo = Nz(rs("Titulo"), "")
-        resultado.ResponsableCalidad = Nz(rs("ResponsableCalidad"), "")
-        resultado.ResponsableTecnico = Nz(rs("ResponsableTecnico"), "")
-        resultado.Pecal = Nz(rs("Pecal"), "")
+        ' Mapear los datos del recordset a la estructura T_Expediente
+        expediente.idExpediente = rs("idExpediente")
+        expediente.NumeroExpediente = rs("NumeroExpediente") & ""
+        expediente.Titulo = rs("Titulo") & ""
+        expediente.Descripcion = rs("Descripcion") & ""
+        expediente.FechaCreacion = rs("FechaCreacion")
+        expediente.Estado = rs("Estado") & ""
+        expediente.IdUsuarioCreador = rs("IdUsuarioCreador")
+        expediente.NombreUsuarioCreador = rs("NombreUsuarioCreador") & ""
+    Else
+        ' Expediente no encontrado - devolver estructura vacía
+        expediente.idExpediente = 0
+        expediente.NumeroExpediente = ""
+        expediente.Titulo = ""
+        expediente.Descripcion = ""
+        expediente.FechaCreacion = #1/1/1900#
+        expediente.Estado = ""
+        expediente.IdUsuarioCreador = 0
+        expediente.NombreUsuarioCreador = ""
     End If
     
-Cleanup:
     ' Limpiar recursos
-    If Not rs Is Nothing Then rs.Close
-    If Not db Is Nothing Then db.Close
+    rs.Close
     Set rs = Nothing
-    Set db = Nothing
     
-    Set IExpedienteService_GetExpedienteById = resultado
-    
-    ' Logging de auditoría: Resultado de consulta de expediente
-    If Not m_OperationLogger Is Nothing Then
-        If resultado.idExpediente > 0 Then
-            m_OperationLogger.LogOperation "EXPEDIENTE_FOUND", "Expediente encontrado ID: " & idExpediente & ", Nemotécnico: " & resultado.Nemotecnico, "CExpedienteService.GetExpedienteById"
-        Else
-            m_OperationLogger.LogOperation "EXPEDIENTE_NOT_FOUND", "Expediente no encontrado para ID: " & idExpediente, "CExpedienteService.GetExpedienteById"
-        End If
-    End If
+    ' Devolver el expediente
+     IExpedienteService_GetExpedienteById = expediente
     
     Exit Function
     
 ErrorHandler:
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "EXPEDIENTE_QUERY_ERROR", "Error consultando expediente ID: " & idExpediente & ": " & Err.Description, "CExpedienteService.GetExpedienteById"
+    ' Limpiar recursos en caso de error
+    If Not rs Is Nothing Then
+        If rs.State = 1 Then rs.Close
+        Set rs = Nothing
     End If
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_GetExpedienteById", Err.Number, Err.Description
-    Resume Cleanup
+    
+    ' Log del error
+    modErrorHandler.LogError "CExpedienteService.GetExpedienteById", Err.Number, Err.Description, "CExpedienteService.cls"
+    
+    ' Devolver estructura vacía en caso de error
+     Dim expedienteVacio As T_Expediente
+     expedienteVacio.idExpediente = 0
+     IExpedienteService_GetExpedienteById = expedienteVacio
 End Function
 
 Public Function GetExpedienteByNemotecnico(ByVal nemotecnico As String) As T_Expediente
@@ -140,171 +117,40 @@ ErrorHandler:
     Set IExpedienteService_GetExpedienteByNemotecnico = New T_Expediente
 End Function
 
-' Método alternativo para compatibilidad
-Private Function IExpedienteService_GetExpediente(ByVal idExpediente As Long) As T_Expediente
-    Dim resultado As T_Expediente
-    Dim db As DAO.Database
+' Implementa IExpedienteService.GetExpedientesParaSelector
+Private Function IExpedienteService_GetExpedientesParaSelector() As Object
+    On Error GoTo ErrorHandler
+    
+    ' Log de la operación
+    If Not m_OperationLogger Is Nothing Then
+        m_OperationLogger.LogOperation "ExpedienteService.GetExpedientesParaSelector", "Obteniendo lista de expedientes para selector"
+    End If
+    
+    ' Variables para la consulta
     Dim rs As DAO.Recordset
     Dim sql As String
     
-    On Error GoTo ErrorHandler
+    ' Construir la consulta SQL para obtener expedientes activos
+    sql = "SELECT e.idExpediente, e.NumeroExpediente, e.Titulo, e.Estado " & _
+          "FROM tbExpedientes e " & _
+          "WHERE e.Estado IN ('Activo', 'En Proceso') " & _
+          "ORDER BY e.NumeroExpediente"
     
-    ' Inicializar resultado vac?o
-    resultado.idExpediente = 0
-    resultado.Nemotecnico = ""
-    resultado.Titulo = ""
-    resultado.ResponsableCalidad = ""
-    resultado.ResponsableTecnico = ""
-    resultado.Pecal = ""
+    ' Ejecutar consulta usando el repositorio inyectado
+    Set rs = m_SolicitudRepository.ExecuteQuery(sql)
     
-    ' Obtener la ruta de la base de datos de expedientes desde configuraci?n
-    Dim rutaExpedientes As String
-    rutaExpedientes = GetExpedientesDbPath()
-    
-    If rutaExpedientes = "" Then
-        Debug.Print "Error: No se ha configurado la ruta de la base de datos de expedientes"
-        GoTo Cleanup
-    End If
-    
-    ' Abrir conexi?n a la base de datos de expedientes
-    Dim config As CConfig
-    Set config = New CConfig
-    Set db = DBEngine.OpenDatabase(rutaExpedientes, False, False, ";PWD=" & config.GetDatabasePassword())
-    
-    ' Construir la consulta SQL con filtro por ID
-    sql = "SELECT TbExpedientes.IDExpediente, TbExpedientes.Nemotecnico, TbExpedientes.Titulo, " & _
-          "TbUsuariosAplicaciones_1.Nombre AS ResponsableCalidad, " & _
-          "TbUsuariosAplicaciones.Nombre AS ResponsableTecnico, " & _
-          "TbExpedientes.Pecal " & _
-          "FROM ((TbExpedientes INNER JOIN TbExpedientesResponsables ON TbExpedientes.IDExpediente = TbExpedientesResponsables.IdExpediente) " & _
-          "LEFT JOIN TbUsuariosAplicaciones ON TbExpedientesResponsables.IdUsuario = TbUsuariosAplicaciones.Id) " & _
-          "LEFT JOIN TbUsuariosAplicaciones AS TbUsuariosAplicaciones_1 ON TbExpedientes.IDResponsableCalidad = TbUsuariosAplicaciones_1.Id " & _
-          "WHERE (((TbExpedientesResponsables.EsJefeProyecto)='S?') AND ((TbExpedientes.IDExpediente)=" & idExpediente & "));"
-    
-    ' Ejecutar la consulta
-    Set rs = db.OpenRecordset(sql, dbOpenSnapshot)
-    
-    ' Si encontramos un resultado, llenar la estructura
-    If Not rs.EOF Then
-        resultado.idExpediente = rs("IDExpediente")
-        resultado.Nemotecnico = Nz(rs("Nemotecnico"), "")
-        resultado.Titulo = Nz(rs("Titulo"), "")
-        resultado.ResponsableCalidad = Nz(rs("ResponsableCalidad"), "")
-        resultado.ResponsableTecnico = Nz(rs("ResponsableTecnico"), "")
-        resultado.Pecal = Nz(rs("Pecal"), "")
-    End If
-    
-Cleanup:
-    ' Limpiar recursos
-    If Not rs Is Nothing Then rs.Close
-    If Not db Is Nothing Then db.Close
-    Set rs = Nothing
-    Set db = Nothing
-    
-    IExpedienteService_GetExpediente = resultado
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_GetExpediente", Err.Number, Err.Description
-    Resume Cleanup
-End Function
-
-
-
-Private Function IExpedienteService_CreateExpediente(ByVal NumeroExpediente As String, ByVal Descripcion As String, ByVal idUsuario As Long) As Long
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de creación de expediente
-    IExpedienteService_CreateExpediente = 0
+    ' Devolver el recordset
+    Set IExpedienteService_GetExpedientesParaSelector = rs
     
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_CreateExpediente", Err.Number, Err.Description
-    IExpedienteService_CreateExpediente = 0
+    ' Log del error
+    modErrorHandler.LogError "CExpedienteService.GetExpedientesParaSelector", Err.Number, Err.Description, "CExpedienteService.cls"
+    
+    ' Devolver Nothing en caso de error
+    Set IExpedienteService_GetExpedientesParaSelector = Nothing
 End Function
-
-Private Function IExpedienteService_UpdateExpediente(ByVal ID As Long, ByVal Descripcion As String, ByVal Estado As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de actualización de expediente
-    IExpedienteService_UpdateExpediente = False
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_UpdateExpediente", Err.Number, Err.Description
-    IExpedienteService_UpdateExpediente = False
-End Function
-
-Private Function IExpedienteService_DeleteExpediente(ByVal ID As Long) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de eliminación de expediente
-    IExpedienteService_DeleteExpediente = False
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_DeleteExpediente", Err.Number, Err.Description
-    IExpedienteService_DeleteExpediente = False
-End Function
-
-Private Function IExpedienteService_SearchExpedientes(ByVal searchTerm As String) As Collection
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de búsqueda de expedientes
-    Set IExpedienteService_SearchExpedientes = New Collection
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_SearchExpedientes", Err.Number, Err.Description
-    Set IExpedienteService_SearchExpedientes = New Collection
-End Function
-
-Private Sub IExpedienteService_SaveExpediente(ByVal expediente As T_Expediente)
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica para guardar expediente
-    
-    Exit Sub
-    
-ErrorHandler:
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_SaveExpediente", Err.Number, Err.Description
-End Sub
-
-Public Sub SaveExpediente(ByVal expediente As T_Expediente)
-    IExpedienteService_SaveExpediente expediente
-End Sub
-
-Private Function IExpedienteService_GetExpedientesByUser(ByVal idUsuario As Long) As Collection
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de búsqueda por usuario
-    Set IExpedienteService_GetExpedientesByUser = New Collection
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_GetExpedientesByUser", Err.Number, Err.Description
-    Set IExpedienteService_GetExpedientesByUser = New Collection
-End Function
-
-Private Function IExpedienteService_ValidateExpediente(expediente As T_Expediente) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' TODO: Implementar lógica de validación
-    IExpedienteService_ValidateExpediente = True
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CExpedienteService.IExpedienteService_ValidateExpediente", Err.Number, Err.Description
-    IExpedienteService_ValidateExpediente = False
-End Function
-
-' #End If
 
 
 

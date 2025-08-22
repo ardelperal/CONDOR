@@ -18,11 +18,15 @@ Public Function CreateAuthService() As IAuthService
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
+    ' Obtener la instancia del repositorio de solicitudes
+    Dim solicitudRepository As ISolicitudRepository
+    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
+    
     ' Crear una instancia de la clase concreta
     Dim authServiceInstance As New CAuthService
     
-    ' Inicializar la instancia concreta con ambas dependencias
-    authServiceInstance.Initialize config, operationLogger
+    ' Inicializar la instancia concreta con todas las dependencias
+    authServiceInstance.Initialize config, operationLogger, solicitudRepository
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateAuthService = authServiceInstance

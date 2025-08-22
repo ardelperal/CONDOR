@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' M?dulo: modDatabase
@@ -25,10 +25,10 @@ Public Function GetSolicitudData(ByVal idSolicitud As Long) As DAO.Recordset
     Set db = CurrentDb()
     
     ' Construir consulta SQL con INNER JOIN
-    sql = "SELECT s.ID, s.NumeroExpediente, s.TipoSolicitud, s.EstadoInterno, s.EstadoRAC, " & _
+    sql = "SELECT s.ID, s.NumeroExpediente, s.TipoSolicitud, s.EstadoInterno, " & _
           "s.FechaCreacion, s.FechaUltimaModificacion, s.Usuario, s.Observaciones, s.Activo, " & _
-          "pc.ID as DatosID, pc.DescripcionCambio, pc.JustificacionCambio, " & _
-          "pc.ImpactoSeguridad, pc.ImpactoCalidad, pc.Estado as EstadoDatos " & _
+          "pc.ID as DatosID, pc.refContratoInspeccionOficial, pc.refSuministrador, " & _
+          "pc.refMaterialIdentificacion, pc.descripcionCambioSolicitado, pc.justificacionCambio, pc.Estado as EstadoDatos " & _
           "FROM Tb_Solicitudes s INNER JOIN TbDatos_PC pc ON s.ID = pc.SolicitudID " & _
           "WHERE s.ID = " & idSolicitud & " AND s.Activo = True AND pc.Activo = True"
     
@@ -93,7 +93,6 @@ Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData
         !NumeroExpediente = solicitudData.NumeroExpediente
         !tipoSolicitud = solicitudData.tipoSolicitud
         !estadoInterno = solicitudData.estadoInterno
-        !EstadoRAC = solicitudData.EstadoRAC
         !fechaCreacion = IIf(isNewRecord, Now(), solicitudData.fechaCreacion)
         !FechaUltimaModificacion = Now()
         !usuario = solicitudData.usuario
@@ -136,10 +135,11 @@ Public Function SaveSolicitudPC(ByRef solicitudData As T_Solicitud, ByRef pcData
         !SolicitudID = pcData.SolicitudID
         !NumeroExpediente = pcData.NumeroExpediente
         !tipoSolicitud = pcData.tipoSolicitud
-        !descripcionCambio = pcData.descripcionCambio
-        !JustificacionCambio = pcData.JustificacionCambio
-        !ImpactoSeguridad = pcData.ImpactoSeguridad
-        !impactoCalidad = pcData.impactoCalidad
+        !refContratoInspeccionOficial = pcData.refContratoInspeccionOficial
+        !refSuministrador = pcData.refSuministrador
+        !refMaterialIdentificacion = pcData.refMaterialIdentificacion
+        !descripcionCambioSolicitado = pcData.descripcionCambioSolicitado
+        !justificacionCambio = pcData.justificacionCambio
         !fechaCreacion = IIf(pcData.ID = 0, Now(), pcData.fechaCreacion)
         !FechaUltimaModificacion = Now()
         !Estado = pcData.Estado

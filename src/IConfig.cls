@@ -104,6 +104,18 @@ Public Function GetInstance() As IConfig
 End Function
 
 
+' Obtiene la ruta de los documentos generados
+' @return: Ruta de los documentos generados
+Public Function GetGeneratedDocsPath() As String
+    ' Esta es una interfaz - debe ser implementada por las clases concretas
+End Function
+
+' Verifica si el servicio de configuración está en modo de prueba.
+' @return: True si está en modo de prueba.
+Public Function IsTestMode() As Boolean
+End Function
+
+
 
 
 

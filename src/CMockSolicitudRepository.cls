@@ -1,12 +1,23 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 Implements ISolicitudRepository
 
 Private m_storage As Collection
+Private m_mockRecordset As DAO.Recordset
 
 Private Sub Class_Initialize()
     Set m_storage = New Collection
 End Sub
+
+' Método público para inyectar recordset mock en las pruebas
+Public Sub SetMockRecordset(recordset As DAO.Recordset)
+    Set m_mockRecordset = recordset
+End Sub
+
+' Método público para obtener el recordset mock (para uso en AuthService)
+Public Function GetMockRecordset() As DAO.Recordset
+    Set GetMockRecordset = m_mockRecordset
+End Function
 
 
 
@@ -58,9 +69,15 @@ Private Function ISolicitudRepository_Load(ByVal ID As Long) As Object
 End Function
 
 ' Implementación del método Save faltante
-Private Function ISolicitudRepository_Save(ByVal solicitud As ISolicitud) As Long
+Private Function ISolicitudRepository_Save(ByVal solicitud As Object) As Long
     ' Mock: simula guardado exitoso y retorna ID simulado
     ISolicitudRepository_Save = m_storage.Count + 1
+End Function
+
+' Implementación del método ExecuteQuery
+Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String) As DAO.Recordset
+    ' Mock: devuelve el recordset configurado previamente
+    Set ISolicitudRepository_ExecuteQuery = m_mockRecordset
 End Function
 
 

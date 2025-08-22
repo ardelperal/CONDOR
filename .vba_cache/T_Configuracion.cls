@@ -23,17 +23,7 @@ Private m_ExpedientesPath As String
 Private m_fechaCreacion As Date
 Private m_Activo As Boolean
 Private m_ExpedienteServiceURL As String
-Private m_ExpedienteServiceTimeout As Long
-Private m_ExpedienteServiceRetry As Long
-Private m_ExpedienteServiceAuth As String
-Private m_RACServiceURL As String
-Private m_RACAPIKey As String
-Private m_RACTimeout As Long
-Private m_RACAutoSend As Boolean
-Private m_RACRetryAttempts As Long
 Private m_LogLevel As String
-Private m_LogIntegraciones As Boolean
-Private m_AutoUpdate As Boolean
 
 '******************************************************************************
 ' PROPIEDADES PÚBLICAS (GET/LET)
@@ -123,61 +113,7 @@ Public Property Let ExpedienteServiceURL(ByVal value As String)
     m_ExpedienteServiceURL = value
 End Property
 
-Public Property Get ExpedienteServiceTimeout() As Long
-    ExpedienteServiceTimeout = m_ExpedienteServiceTimeout
-End Property
-Public Property Let ExpedienteServiceTimeout(ByVal value As Long)
-    m_ExpedienteServiceTimeout = value
-End Property
 
-Public Property Get ExpedienteServiceRetry() As Long
-    ExpedienteServiceRetry = m_ExpedienteServiceRetry
-End Property
-Public Property Let ExpedienteServiceRetry(ByVal value As Long)
-    m_ExpedienteServiceRetry = value
-End Property
-
-Public Property Get ExpedienteServiceAuth() As String
-    ExpedienteServiceAuth = m_ExpedienteServiceAuth
-End Property
-Public Property Let ExpedienteServiceAuth(ByVal value As String)
-    m_ExpedienteServiceAuth = value
-End Property
-
-Public Property Get RACServiceURL() As String
-    RACServiceURL = m_RACServiceURL
-End Property
-Public Property Let RACServiceURL(ByVal value As String)
-    m_RACServiceURL = value
-End Property
-
-Public Property Get RACAPIKey() As String
-    RACAPIKey = m_RACAPIKey
-End Property
-Public Property Let RACAPIKey(ByVal value As String)
-    m_RACAPIKey = value
-End Property
-
-Public Property Get RACTimeout() As Long
-    RACTimeout = m_RACTimeout
-End Property
-Public Property Let RACTimeout(ByVal value As Long)
-    m_RACTimeout = value
-End Property
-
-Public Property Get RACAutoSend() As Boolean
-    RACAutoSend = m_RACAutoSend
-End Property
-Public Property Let RACAutoSend(ByVal value As Boolean)
-    m_RACAutoSend = value
-End Property
-
-Public Property Get RACRetryAttempts() As Long
-    RACRetryAttempts = m_RACRetryAttempts
-End Property
-Public Property Let RACRetryAttempts(ByVal value As Long)
-    m_RACRetryAttempts = value
-End Property
 
 Public Property Get LogLevel() As String
     LogLevel = m_LogLevel
@@ -186,19 +122,7 @@ Public Property Let LogLevel(ByVal value As String)
     m_LogLevel = value
 End Property
 
-Public Property Get LogIntegraciones() As Boolean
-    LogIntegraciones = m_LogIntegraciones
-End Property
-Public Property Let LogIntegraciones(ByVal value As Boolean)
-    m_LogIntegraciones = value
-End Property
 
-Public Property Get AutoUpdate() As Boolean
-    AutoUpdate = m_AutoUpdate
-End Property
-Public Property Let AutoUpdate(ByVal value As Boolean)
-    m_AutoUpdate = value
-End Property
 
 '******************************************************************************
 ' MÉTODOS PÚBLICOS
@@ -220,7 +144,6 @@ End Function
 ' Determina si es una configuración de integración
 Public Function EsConfiguracionIntegracion() As Boolean
     EsConfiguracionIntegracion = (Categoria = "Integración" Or _
-                                 Categoria = "RAC" Or _
                                  InStr(Clave, "SERVICE_") > 0)
 End Function
 

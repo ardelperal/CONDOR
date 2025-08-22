@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' MÃ³dulo: Test_Database_Complete
@@ -155,7 +155,6 @@ Public Function Test_SaveSolicitudPC_NewRecord_ReturnsTrue() As Boolean
         .NumeroExpediente = "EXP-2024-001"
         .tipoSolicitud = "PC"
         .estadoInterno = "Borrador"
-        .EstadoRAC = "Pendiente"
         .usuario = "usuario.prueba@empresa.com"
         .Observaciones = "Solicitud de prueba"
         .Activo = True
@@ -166,10 +165,11 @@ Public Function Test_SaveSolicitudPC_NewRecord_ReturnsTrue() As Boolean
         .SolicitudID = 0
         .NumeroExpediente = "EXP-2024-001"
         .tipoSolicitud = "PC"
-        .descripcionCambio = "DescripciÃ³n de prueba"
-        .justificacion = "JustificaciÃ³n de prueba"
-        .impactoCoste = "Bajo"
-        .impactoCalidad = "Medio"
+        .refContratoInspeccionOficial = "CONT-2024-001"
+        .refSuministrador = "PROV-001"
+        .refMaterialIdentificacion = "MAT-001"
+        .descripcionCambioSolicitado = "DescripciÃ³n de prueba"
+        .justificacionCambio = "JustificaciÃ³n de prueba"
         .Estado = "Activo"
         .Activo = True
     End With
@@ -199,7 +199,6 @@ Public Function Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue() As Boolean
         .NumeroExpediente = "EXP-2024-001"
         .tipoSolicitud = "PC"
         .estadoInterno = "En Revisi?n"
-        .EstadoRAC = "Aprobado"
         .usuario = "usuario.prueba@empresa.com"
         .Observaciones = "Solicitud actualizada"
         .Activo = True
@@ -210,10 +209,11 @@ Public Function Test_SaveSolicitudPC_ExistingRecord_ReturnsTrue() As Boolean
         .SolicitudID = 123
         .NumeroExpediente = "EXP-2024-001"
         .tipoSolicitud = "PC"
-        .descripcionCambio = "DescripciÃ³n actualizada"
-        .justificacion = "JustificaciÃ³n actualizada"
-        .impactoCoste = "Alto"
-        .impactoCalidad = "Alto"
+        .refContratoInspeccionOficial = "CONT-2024-001"
+        .refSuministrador = "PROV-001"
+        .refMaterialIdentificacion = "MAT-001"
+        .descripcionCambioSolicitado = "DescripciÃ³n actualizada"
+        .justificacionCambio = "JustificaciÃ³n actualizada"
         .Estado = "Modificado"
         .Activo = True
     End With

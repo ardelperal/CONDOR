@@ -60,7 +60,7 @@ Public Function Test_ValidarSolicitud_ConDatosCompletos_RetornaExito() As Boolea
         .NumeroExpediente = "EXP-2024-001"
         .tipoSolicitud = "PC"
         .Descripcion = "Solicitud de cambio de precio válida"
-        .justificacion = "Incremento de materiales según índice ICCP"
+        .justificacionCambio = "Incremento de materiales según índice ICCP"
         .importeOriginal = 1500000
         .importeNuevo = 1725000
         .Estado = "Borrador"
@@ -103,7 +103,7 @@ Public Function Test_ValidarSolicitud_SinExpediente_RetornaFallo() As Boolean
         .NumeroExpediente = ""  ' Campo vacío - debe fallar
         .tipoSolicitud = "PC"
         .Descripcion = "Solicitud sin expediente"
-        .justificacion = "Test de validación"
+        .justificacionCambio = "Test de validación"
         .importeOriginal = 1500000
         .importeNuevo = 1725000
         .Estado = "Borrador"

@@ -1,9 +1,11 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Clase de tipo de datos para tbDatosCDCASUB
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 
+' Campos privados según especificación tbDatosCDCASUB
 Private m_idDatosCDCASUB As Long
+Private m_idSolicitud As Long
 Private m_refSuministrador As String
 Private m_refSubSuministrador As String
 Private m_suministradorPrincipalNombreDir As String
@@ -12,6 +14,12 @@ Private m_identificacionMaterial As String
 Private m_numPlanoEspecificacion As String
 Private m_cantidadPeriodo As Long
 Private m_numSerieLote As String
+Private m_descripcionImpactoNC As String
+Private m_descripcionImpactoNCCont As String
+Private m_refDesviacionesPrevias As String
+Private m_causaNC As String
+Private m_impactoCoste As String
+Private m_clasificacionNC As String
 Private m_afectaPrestaciones As Boolean
 Private m_afectaSeguridad As Boolean
 Private m_afectaFiabilidad As Boolean
@@ -21,8 +29,15 @@ Private m_afectaIntercambiabilidad As Boolean
 Private m_afectaMantenibilidad As Boolean
 Private m_afectaApariencia As Boolean
 Private m_afectaOtros As Boolean
+Private m_requiereModificacionContrato As Boolean
+Private m_efectoFechaEntrega As String
+Private m_identificacionAutoridadDiseno As String
 Private m_esSubSuministradorAD As Boolean
 Private m_nombreRepSubSuministrador As String
+Private m_racRef As String
+Private m_racCodigo As String
+Private m_observacionesRAC As String
+Private m_fechaFirmaRAC As Date
 Private m_decisionSuministradorPrincipal As String
 Private m_obsSuministradorPrincipal As String
 Private m_fechaFirmaSuministradorPrincipal As Date
@@ -30,12 +45,21 @@ Private m_firmaSuministradorPrincipalNombreCargo As String
 Private m_obsRACDelegador As String
 Private m_fechaFirmaRACDelegador As Date
 
+' Propiedades públicas
 Public Property Get idDatosCDCASUB() As Long
     idDatosCDCASUB = m_idDatosCDCASUB
 End Property
 
 Public Property Let idDatosCDCASUB(ByVal value As Long)
     m_idDatosCDCASUB = value
+End Property
+
+Public Property Get idSolicitud() As Long
+    idSolicitud = m_idSolicitud
+End Property
+
+Public Property Let idSolicitud(ByVal value As Long)
+    m_idSolicitud = value
 End Property
 
 Public Property Get refSuministrador() As String
@@ -100,6 +124,54 @@ End Property
 
 Public Property Let numSerieLote(ByVal value As String)
     m_numSerieLote = value
+End Property
+
+Public Property Get descripcionImpactoNC() As String
+    descripcionImpactoNC = m_descripcionImpactoNC
+End Property
+
+Public Property Let descripcionImpactoNC(ByVal value As String)
+    m_descripcionImpactoNC = value
+End Property
+
+Public Property Get descripcionImpactoNCCont() As String
+    descripcionImpactoNCCont = m_descripcionImpactoNCCont
+End Property
+
+Public Property Let descripcionImpactoNCCont(ByVal value As String)
+    m_descripcionImpactoNCCont = value
+End Property
+
+Public Property Get refDesviacionesPrevias() As String
+    refDesviacionesPrevias = m_refDesviacionesPrevias
+End Property
+
+Public Property Let refDesviacionesPrevias(ByVal value As String)
+    m_refDesviacionesPrevias = value
+End Property
+
+Public Property Get causaNC() As String
+    causaNC = m_causaNC
+End Property
+
+Public Property Let causaNC(ByVal value As String)
+    m_causaNC = value
+End Property
+
+Public Property Get impactoCoste() As String
+    impactoCoste = m_impactoCoste
+End Property
+
+Public Property Let impactoCoste(ByVal value As String)
+    m_impactoCoste = value
+End Property
+
+Public Property Get clasificacionNC() As String
+    clasificacionNC = m_clasificacionNC
+End Property
+
+Public Property Let clasificacionNC(ByVal value As String)
+    m_clasificacionNC = value
 End Property
 
 Public Property Get afectaPrestaciones() As Boolean
@@ -174,6 +246,30 @@ Public Property Let afectaOtros(ByVal value As Boolean)
     m_afectaOtros = value
 End Property
 
+Public Property Get requiereModificacionContrato() As Boolean
+    requiereModificacionContrato = m_requiereModificacionContrato
+End Property
+
+Public Property Let requiereModificacionContrato(ByVal value As Boolean)
+    m_requiereModificacionContrato = value
+End Property
+
+Public Property Get efectoFechaEntrega() As String
+    efectoFechaEntrega = m_efectoFechaEntrega
+End Property
+
+Public Property Let efectoFechaEntrega(ByVal value As String)
+    m_efectoFechaEntrega = value
+End Property
+
+Public Property Get identificacionAutoridadDiseno() As String
+    identificacionAutoridadDiseno = m_identificacionAutoridadDiseno
+End Property
+
+Public Property Let identificacionAutoridadDiseno(ByVal value As String)
+    m_identificacionAutoridadDiseno = value
+End Property
+
 Public Property Get esSubSuministradorAD() As Boolean
     esSubSuministradorAD = m_esSubSuministradorAD
 End Property
@@ -188,6 +284,38 @@ End Property
 
 Public Property Let nombreRepSubSuministrador(ByVal value As String)
     m_nombreRepSubSuministrador = value
+End Property
+
+Public Property Get racRef() As String
+    racRef = m_racRef
+End Property
+
+Public Property Let racRef(ByVal value As String)
+    m_racRef = value
+End Property
+
+Public Property Get racCodigo() As String
+    racCodigo = m_racCodigo
+End Property
+
+Public Property Let racCodigo(ByVal value As String)
+    m_racCodigo = value
+End Property
+
+Public Property Get observacionesRAC() As String
+    observacionesRAC = m_observacionesRAC
+End Property
+
+Public Property Let observacionesRAC(ByVal value As String)
+    m_observacionesRAC = value
+End Property
+
+Public Property Get fechaFirmaRAC() As Date
+    fechaFirmaRAC = m_fechaFirmaRAC
+End Property
+
+Public Property Let fechaFirmaRAC(ByVal value As Date)
+    m_fechaFirmaRAC = value
 End Property
 
 Public Property Get decisionSuministradorPrincipal() As String

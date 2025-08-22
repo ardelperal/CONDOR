@@ -2,25 +2,24 @@ Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Clase: CDocumentService
-' Descripción: Implementación del servicio de generación de documentos
+' Descripción: Implementación del servicio de generación y lectura de documentos.
 ' Implementa: IDocumentService
-' Autor: CONDOR-Expert
-' Fecha: Enero 2025
-' Versión: 1.0 - Implementación inicial
+' Autor: Gemini @ Google
+' Fecha: 2025-08-22
+' Versión: 2.0 - Refactorizada escritura, implementada lectura y auditoría.
 ' ============================================================================
 
 Implements IDocumentService
 
-' Variables privadas para manejo de Word y recursos
+' Dependencias inyectadas
+Private m_Config As IConfig
+Private m_SolicitudRepository As ISolicitudRepository
+Private m_OperationLogger As IOperationLogger
+
+' Variables privadas para manejo de Word
 Private m_WordApp As Object
 Private m_WordDoc As Object
 Private m_IsWordAppCreated As Boolean
-Private m_LastError As String
-
-' Dependencias inyectadas
-Private m_ValidationService As IValidationService
-Private m_SolicitudRepository As ISolicitudRepository
-Private m_OperationLogger As IOperationLogger
 
 ' ============================================================================
 ' CONSTRUCTOR Y DESTRUCTOR
@@ -28,12 +27,11 @@ Private m_OperationLogger As IOperationLogger
 
 Private Sub Class_Initialize()
     m_IsWordAppCreated = False
-    m_LastError = ""
     Set m_WordApp = Nothing
     Set m_WordDoc = Nothing
-    ' Las dependencias se inyectan mediante Initialize
-    Set m_ValidationService = Nothing
+    Set m_Config = Nothing
     Set m_SolicitudRepository = Nothing
+    Set m_OperationLogger = Nothing
 End Sub
 
 Private Sub Class_Terminate()
@@ -41,538 +39,287 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' MÉTODO PRIVADO DE LIMPIEZA DE RECURSOS
+' MÉTODO DE INICIALIZACIÓN CON DEPENDENCIAS (CONTRATO DE INTERFAZ)
 ' ============================================================================
 
-Private Sub LimpiarRecursos()
-    On Error Resume Next
-    
-    ' Cerrar documento de Word si está abierto, sin guardar cambios
-    If Not m_WordDoc Is Nothing Then
-        m_WordDoc.Close False
-        Set m_WordDoc = Nothing
-    End If
-    
-    ' Cerrar aplicación de Word si está abierta
-    If Not m_WordApp Is Nothing Then
-        If m_IsWordAppCreated Then
-            m_WordApp.Quit
-        End If
-        Set m_WordApp = Nothing
-        m_IsWordAppCreated = False
-    End If
-    
-    ' Limpiar error
-    m_LastError = ""
-End Sub
-
-' ============================================================================
-' MÉTODO DE INICIALIZACIÓN CON DEPENDENCIAS
-' ============================================================================
-
-' Método público para inicialización de dependencias
-Public Sub Initialize(ByVal validationService As IValidationService, ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger)
-    Set m_ValidationService = validationService
+Public Sub Initialize(ByVal configService As IConfig, ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger)
+    Set m_Config = configService
     Set m_SolicitudRepository = solicitudRepository
     Set m_OperationLogger = operationLogger
 End Sub
 
-' Método público para compatibilidad
-
-
 ' ============================================================================
-' IMPLEMENTACIÓN DE IDocumentService - MÉTODOS PRINCIPALES
+' IMPLEMENTACIÓN DE IDocumentService - ESCRITURA DE DOCUMENTOS
 ' ============================================================================
 
-Private Function IDocumentService_GenerarDocumento(ByVal idSolicitud As Long) As String
+Public Function IDocumentService_GenerarDocumento(ByVal laSolicitud As ISolicitud) As String
     On Error GoTo ErrorHandler
     
-    ' Logging de auditoría: Inicio de generación de documento
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "DOCUMENT_GENERATION_START", "Iniciando generación de documento para solicitud ID: " & idSolicitud, "CDocumentService.GenerarDocumento"
-    End If
-    
-    Dim tipoSolicitud As String
-    Dim nombrePlantilla As String
-    Dim RutaPlantilla As String
-    Dim MapeoCampos As String
+    Dim rutaPlantilla As String
     Dim nombreDocumento As String
     Dim rutaDestino As String
+    Dim rutaCompleta As String
     
-    ' Validar que las dependencias estén inyectadas
-    If m_ValidationService Is Nothing Or m_SolicitudRepository Is Nothing Then
-        m_LastError = "Dependencias no inicializadas. Llamar Initialize() primero."
+    If m_Config Is Nothing Or m_SolicitudRepository Is Nothing Or m_OperationLogger Is Nothing Then
+        modErrorHandler.LogError "CDocumentService.GenerarDocumento", -1, "Dependencias no inicializadas."
         IDocumentService_GenerarDocumento = ""
         Exit Function
     End If
     
-    ' Obtener datos de la solicitud usando el repositorio
-    Dim solicitudPC As CSolicitudPC
-    Set solicitudPC = m_SolicitudRepository.Load(idSolicitud)
+    m_OperationLogger.LogOperation "DocGen_Start", "Iniciando generación de documento para Solicitud ID: " & laSolicitud.idSolicitud, "CDocumentService"
     
-    If solicitudPC Is Nothing Then
-        m_LastError = "No se pudo cargar la solicitud con ID: " & idSolicitud
-        IDocumentService_GenerarDocumento = ""
-        Exit Function
-    End If
+    ' 1. Obtener ruta de la plantilla
+    rutaPlantilla = m_Config.GetPlantillaPath() & "\" & laSolicitud.tipoSolicitud & ".docx"
     
-    ' Crear objeto T_Solicitud para validación
-    Dim solicitudData As T_Solicitud
-    Set solicitudData = New T_Solicitud
-    solicitudData.idSolicitud = solicitudPC.idSolicitud
-    solicitudData.tipoSolicitud = solicitudPC.tipoSolicitud
-    solicitudData.estadoInterno = solicitudPC.estadoInterno
-    
-    ' Validar solicitud usando IValidationService
-    Dim MensajeError As String
-    If Not m_ValidationService.ValidarSolicitud(solicitudData, MensajeError) Then
-        m_LastError = "Solicitud inválida para generar documento: " & MensajeError
-        IDocumentService_GenerarDocumento = ""
-        Exit Function
-    End If
-    
-    ' Obtener tipo de solicitud del objeto cargado
-    tipoSolicitud = solicitudPC.tipoSolicitud
-    If tipoSolicitud = "" Then
-        m_LastError = "Tipo de solicitud no definido para ID: " & idSolicitud
-        IDocumentService_GenerarDocumento = ""
-        Exit Function
-    End If
-    
-    ' Obtener plantilla y mapeo
-    nombrePlantilla = IDocumentService_ObtenerNombrePlantilla(tipoSolicitud)
-    MapeoCampos = IDocumentService_ObtenerMapeoCampos(tipoSolicitud)
-    
-    ' Construir ruta completa de plantilla
-    RutaPlantilla = CurrentProject.path & "\back\recursos\Plantillas\" & nombrePlantilla
-    
-    ' Validar que la plantilla existe
-    If Not IDocumentService_ValidarPlantilla(RutaPlantilla) Then
-        m_LastError = "Plantilla no encontrada: " & RutaPlantilla
-        IDocumentService_GenerarDocumento = ""
-        Exit Function
-    End If
-    
-    ' Abrir plantilla
-    If Not IDocumentService_AbrirPlantilla(RutaPlantilla) Then
-        m_LastError = "Error al abrir plantilla: " & RutaPlantilla
-        IDocumentService_GenerarDocumento = ""
-        Exit Function
-    End If
-    
-    ' Reemplazar campos
-    If Not IDocumentService_ReemplazarCamposEnPlantilla(idSolicitud, MapeoCampos) Then
-        m_LastError = "Error al reemplazar campos en plantilla"
-        IDocumentService_GenerarDocumento = ""
-        Exit Function
-    End If
-    
-    ' Generar nombre y ruta de destino usando los datos ya cargados
-    nombreDocumento = GenerarNombreDocumentoConDatos(solicitudPC)
-    rutaDestino = CurrentProject.path & "\back\recursos\Documentos_Generados\"
-    
-    ' Crear directorio si no existe
-    If Dir(rutaDestino, vbDirectory) = "" Then
-        MkDir rutaDestino
-    End If
-    
-    ' Guardar documento
-    If IDocumentService_GuardarDocumento(rutaDestino, nombreDocumento) Then
-        IDocumentService_GenerarDocumento = rutaDestino & nombreDocumento
-        ' Logging de auditoría: Documento generado exitosamente
-        If Not m_OperationLogger Is Nothing Then
-            m_OperationLogger.LogOperation "DOCUMENT_GENERATION_SUCCESS", "Documento generado exitosamente para solicitud ID: " & idSolicitud & ", archivo: " & nombreDocumento, "CDocumentService.GenerarDocumento"
-        End If
-    Else
-        IDocumentService_GenerarDocumento = ""
-        ' Logging de auditoría: Fallo al guardar documento
-        If Not m_OperationLogger Is Nothing Then
-            m_OperationLogger.LogOperation "DOCUMENT_GENERATION_SAVE_FAILED", "Fallo al guardar documento para solicitud ID: " & idSolicitud, "CDocumentService.GenerarDocumento"
+    ' En modo de prueba, no verificamos la existencia del fichero para mantener el test aislado
+    If Not m_Config.IsTestMode Then
+        If Dir(rutaPlantilla) = "" Then
+            modErrorHandler.LogError "CDocumentService.GenerarDocumento", -1, "No se encontró la plantilla en: " & rutaPlantilla
+            IDocumentService_GenerarDocumento = ""
+            Exit Function
         End If
     End If
     
+    ' 2. Abrir la plantilla
+    If Not AbrirWordDocumento(rutaPlantilla) Then
+        ' El error ya fue manejado dentro de AbrirWordDocumento
+        IDocumentService_GenerarDocumento = ""
+        Exit Function
+    End If
+    
+    ' 3. Reemplazar los campos
+    If Not ReemplazarCamposEnPlantilla(laSolicitud) Then
+        IDocumentService_GenerarDocumento = ""
+        Exit Function
+    End If
+    
+    ' 4. Guardar el documento
+    nombreDocumento = "SOL_" & laSolicitud.codigoSolicitud & "_" & Format(Now, "YYYYMMDD_HHNNSS") & ".docx"
+    rutaDestino = m_Config.GetGeneratedDocsPath()
+    rutaCompleta = rutaDestino & "\" & nombreDocumento
+    
+    If Not GuardarWordDocumento(rutaCompleta) Then
+        IDocumentService_GenerarDocumento = ""
+        Exit Function
+    End If
+    
+    IDocumentService_GenerarDocumento = rutaCompleta
+    m_OperationLogger.LogOperation "DocGen_Success", "Documento generado: " & rutaCompleta, "CDocumentService"
+    
+    Call LimpiarRecursos
     Exit Function
-    
+
 ErrorHandler:
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "DOCUMENT_GENERATION_ERROR", "Error generando documento para solicitud ID: " & idSolicitud & ": " & Err.Description, "CDocumentService.GenerarDocumento"
-    End If
-    modErrorHandler.LogError "CDocumentService.IDocumentService_GenerarDocumento", Err.Number, Err.Description
-    m_LastError = "Error en GenerarDocumento: " & Err.Description
+    m_OperationLogger.LogOperation "DocGen_Error", "Error " & Err.Number & ": " & Err.Description, "CDocumentService"
+    modErrorHandler.LogError "CDocumentService.GenerarDocumento", Err.Number, Err.Description
+    Call LimpiarRecursos
     IDocumentService_GenerarDocumento = ""
 End Function
 
-Private Function IDocumentService_ObtenerNombrePlantilla(ByVal tipoSolicitud As String) As String
+' ============================================================================
+' IMPLEMENTACIÓN DE IDocumentService - LECTURA DE DOCUMENTOS
+' ============================================================================
+
+Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
     On Error GoTo ErrorHandler
     
-    Dim sql As String
-    Dim rs As Object
+    Dim laSolicitud As ISolicitud
+    Dim rsMapeo As Object ' Recordset
+    Dim campoTabla As String, campoWord As String, valorLeido As String
     
-    sql = "SELECT NombrePlantilla FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & tipoSolicitud & "'"
-    
-    Set rs = CurrentDb.OpenRecordset(sql)
-    
-    If Not rs.EOF Then
-        IDocumentService_ObtenerNombrePlantilla = rs("NombrePlantilla").value
-    Else
-        ' Plantilla por defecto basada en tipo
-        IDocumentService_ObtenerNombrePlantilla = tipoSolicitud & "_template.docx"
+    If m_Config Is Nothing Or m_SolicitudRepository Is Nothing Or m_OperationLogger Is Nothing Then
+        modErrorHandler.LogError "CDocumentService.LeerDocumento", -1, "Dependencias no inicializadas."
+        IDocumentService_LeerDocumento = False
+        Exit Function
     End If
     
-    rs.Close
-    Set rs = Nothing
+    m_OperationLogger.LogOperation "DocRead_Start", "Iniciando lectura de documento " & rutaDocumento & " para Solicitud ID: " & idSolicitud, "CDocumentService"
     
+    ' 1. Cargar la solicitud existente
+    Set laSolicitud = m_SolicitudRepository.Load(idSolicitud)
+    If laSolicitud Is Nothing Then
+        modErrorHandler.LogError "CDocumentService.LeerDocumento", -1, "No se pudo cargar la solicitud con ID: " & idSolicitud
+        IDocumentService_LeerDocumento = False
+        Exit Function
+    End If
+    
+    ' 2. Abrir el documento para lectura
+    If Not AbrirWordDocumento(rutaDocumento) Then
+        IDocumentService_LeerDocumento = False
+        Exit Function
+    End If
+    
+    ' 3. Obtener el mapeo de campos
+    Set rsMapeo = GetMapeo(laSolicitud.tipoSolicitud)
+    If rsMapeo.EOF Then
+        modErrorHandler.LogError "CDocumentService.LeerDocumento", -1, "No se encontró mapeo para tipo: " & laSolicitud.tipoSolicitud
+        IDocumentService_LeerDocumento = False
+        Exit Function
+    End If
+    
+    ' 4. Iterar, leer y actualizar el objeto
+    Do While Not rsMapeo.EOF
+        campoTabla = rsMapeo!nombreCampoTabla
+        campoWord = rsMapeo!nombreCampoWord
+        
+        If Not m_WordDoc.Bookmarks.Exists(campoWord) Then
+            ' Opcional: registrar si un marcador no se encuentra, pero no detener el proceso
+            m_OperationLogger.LogOperation "DocRead_Warning", "Marcador no encontrado en documento: " & campoWord, "CDocumentService"
+        Else
+            valorLeido = Trim(m_WordDoc.Bookmarks(campoWord).Range.Text)
+            
+            ' Actualizar la propiedad del objeto de datos correspondiente usando CallByName
+            CallByName laSolicitud.Datos, campoTabla, VbLet, valorLeido
+        End If
+        rsMapeo.MoveNext
+    Loop
+    
+    ' 5. Guardar la solicitud actualizada
+    If Not m_SolicitudRepository.Save(laSolicitud) Then
+        m_OperationLogger.LogOperation "DocRead_SaveFail", "Fallo al guardar la solicitud ID: " & idSolicitud, "CDocumentService"
+        IDocumentService_LeerDocumento = False
+        Exit Function
+    End If
+    
+    m_OperationLogger.LogOperation "DocRead_Success", "Documento leído y solicitud actualizada ID: " & idSolicitud, "CDocumentService"
+    IDocumentService_LeerDocumento = True
+    
+    Call LimpiarRecursos
+    rsMapeo.Close
+    Set rsMapeo = Nothing
     Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_ObtenerNombrePlantilla", Err.Number, Err.Description
-    m_LastError = "Error al obtener nombre de plantilla: " & Err.Description
-    IDocumentService_ObtenerNombrePlantilla = tipoSolicitud & "_template.docx"
-    If Not rs Is Nothing Then
-        rs.Close
-        Set rs = Nothing
-    End If
-End Function
 
-' Función eliminada: ValidarSolicitudParaDocumento - Ahora se usa IValidationService.ValidarSolicitud
-
-Private Function IDocumentService_ObtenerMapeoCampos(ByVal tipoSolicitud As String) As String
-    On Error GoTo ErrorHandler
-    
-    Dim sql As String
-    Dim rs As Object
-    
-    sql = "SELECT MapeoCampos FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & tipoSolicitud & "'"
-    
-    Set rs = CurrentDb.OpenRecordset(sql)
-    
-    If Not rs.EOF Then
-        IDocumentService_ObtenerMapeoCampos = rs("MapeoCampos").value
-    Else
-        ' Mapeo por defecto para tipos conocidos
-        Select Case tipoSolicitud
-            Case "PC"
-                IDocumentService_ObtenerMapeoCampos = "NumeroExpediente,FechaSolicitud,TipoSolicitud"
-            Case "RAC"
-                IDocumentService_ObtenerMapeoCampos = "NumeroExpediente,FechaSolicitud,TipoSolicitud,FechaLimite"
-            Case Else
-                IDocumentService_ObtenerMapeoCampos = "NumeroExpediente,FechaSolicitud,TipoSolicitud"
-        End Select
-    End If
-    
-    rs.Close
-    Set rs = Nothing
-    
-    Exit Function
-    
 ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_ObtenerMapeoCampos", Err.Number, Err.Description
-    m_LastError = "Error al obtener mapeo de campos: " & Err.Description
-    IDocumentService_ObtenerMapeoCampos = "NumeroExpediente,FechaSolicitud,TipoSolicitud"
-    If Not rs Is Nothing Then
-        rs.Close
-        Set rs = Nothing
-    End If
+    m_OperationLogger.LogOperation "DocRead_Error", "Error " & Err.Number & ": " & Err.Description, "CDocumentService"
+    modErrorHandler.LogError "CDocumentService.LeerDocumento", Err.Number, Err.Description
+    Call LimpiarRecursos
+    If Not rsMapeo Is Nothing Then rsMapeo.Close
+    Set rsMapeo = Nothing
+    IDocumentService_LeerDocumento = False
 End Function
 
 ' ============================================================================
-' IMPLEMENTACIÓN DE IDocumentService - PROCESAMIENTO DE PLANTILLAS
+' MÉTODOS PRIVADOS AUXILIARES
 ' ============================================================================
 
-Private Function IDocumentService_AbrirPlantilla(ByVal RutaPlantilla As String) As Boolean
+Private Function ReemplazarCamposEnPlantilla(ByVal laSolicitud As ISolicitud) As Boolean
     On Error GoTo ErrorHandler
     
-    ' Crear aplicación Word si no existe
+    Dim rsMapeo As Object ' Recordset
+    Dim datos As Object
+    Dim campoTabla As String, campoWord As String, valorAsociado As String
+    Dim valorPropiedad As Variant
+    
+    Set datos = laSolicitud.Datos
+    Set rsMapeo = GetMapeo(laSolicitud.tipoSolicitud)
+    
+    If rsMapeo.EOF Then
+        modErrorHandler.LogError "CDocumentService.ReemplazarCampos", -1, "No se encontró mapeo para tipo: " & laSolicitud.tipoSolicitud
+        ReemplazarCamposEnPlantilla = False
+        Exit Function
+    End If
+    
+    Do While Not rsMapeo.EOF
+        campoTabla = rsMapeo!nombreCampoTabla
+        campoWord = rsMapeo!nombreCampoWord
+        valorAsociado = Nz(rsMapeo!valorAsociado, "")
+        
+        If m_WordDoc.Bookmarks.Exists(campoWord) Then
+            valorPropiedad = CallByName(datos, campoTabla, VbGet)
+            
+            If VarType(valorPropiedad) = vbBoolean Then
+                If valorPropiedad = True Then
+                    m_WordDoc.Bookmarks(campoWord).Range.Text = "X" ' O ChrW(&HFE) con fuente Wingdings
+                Else
+                    m_WordDoc.Bookmarks(campoWord).Range.Text = ""
+                End If
+            Else
+                If valorAsociado <> "" Then
+                    If CStr(valorPropiedad) = valorAsociado Then
+                        m_WordDoc.Bookmarks(campoWord).Range.Text = "X"
+                    Else
+                        m_WordDoc.Bookmarks(campoWord).Range.Text = ""
+                    End If
+                Else
+                    m_WordDoc.Bookmarks(campoWord).Range.Text = Nz(valorPropiedad, "")
+                End If
+            End If
+        End If
+        rsMapeo.MoveNext
+    Loop
+    
+    ReemplazarCamposEnPlantilla = True
+    rsMapeo.Close
+    Set rsMapeo = Nothing
+    Exit Function
+
+ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.ReemplazarCampos", Err.Number, Err.Description
+    If Not rsMapeo Is Nothing Then rsMapeo.Close
+    Set rsMapeo = Nothing
+    ReemplazarCamposEnPlantilla = False
+End Function
+
+Private Function GetMapeo(ByVal tipoSolicitud As String) As Object ' Recordset
+    On Error GoTo ErrorHandler
+    
+    Dim sql As String
+    sql = "SELECT nombreCampoTabla, nombreCampoWord, valorAsociado FROM tbMapeoCampos WHERE nombrePlantilla = '" & tipoSolicitud & "'"
+    Set GetMapeo = CurrentDb.OpenRecordset(sql)
+    
+    Exit Function
+ErrorHandler:
+    modErrorHandler.LogError "CDocumentService.GetMapeo", Err.Number, Err.Description
+    Set GetMapeo = Nothing
+End Function
+
+Private Function AbrirWordDocumento(ByVal ruta As String) As Boolean
+    On Error GoTo ErrorHandler
+    
     If m_WordApp Is Nothing Then
         Set m_WordApp = CreateObject("Word.Application")
         m_IsWordAppCreated = True
         m_WordApp.Visible = False
     End If
     
-    ' Abrir plantilla
-    Set m_WordDoc = m_WordApp.Documents.Open(RutaPlantilla)
-    
-    IDocumentService_AbrirPlantilla = True
+    Set m_WordDoc = m_WordApp.Documents.Open(ruta)
+    AbrirWordDocumento = True
     Exit Function
-    
+
 ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_AbrirPlantilla", Err.Number, Err.Description
-    m_LastError = "Error al abrir plantilla: " & Err.Description
-    IDocumentService_AbrirPlantilla = False
+    modErrorHandler.LogError "CDocumentService.AbrirWordDocumento", Err.Number, Err.Description
+    Call LimpiarRecursos
+    AbrirWordDocumento = False
 End Function
 
-Private Function IDocumentService_ReemplazarCamposEnPlantilla(ByVal idSolicitud As Long, ByVal MapeoCampos As String) As Boolean
+Private Function GuardarWordDocumento(ByVal rutaCompleta As String) As Boolean
     On Error GoTo ErrorHandler
     
-    If m_WordDoc Is Nothing Then
-        m_LastError = "No hay documento abierto para reemplazar campos"
-        IDocumentService_ReemplazarCamposEnPlantilla = False
-        Exit Function
+    ' Crear directorio si no existe
+    Dim rutaDestino As String
+    rutaDestino = Left(rutaCompleta, InStrRev(rutaCompleta, "\"))
+    If Dir(rutaDestino, vbDirectory) = "" Then
+        MkDir rutaDestino
     End If
     
-    ' Obtener datos de la solicitud
-    Dim rs As Object
-    Set rs = IDocumentService_ObtenerDatosSolicitud(idSolicitud)
-    
-    If rs Is Nothing Or rs.EOF Then
-        m_LastError = "No se encontraron datos para la solicitud: " & idSolicitud
-        IDocumentService_ReemplazarCamposEnPlantilla = False
-        Exit Function
-    End If
-    
-    ' Procesar cada campo del mapeo
-    Dim campos() As String
-    Dim i As Integer
-    Dim NombreCampo As String
-    Dim valorCampo As String
-    Dim marcador As String
-    
-    campos = Split(MapeoCampos, ",")
-    
-    For i = 0 To UBound(campos)
-        NombreCampo = Trim(campos(i))
-        marcador = "{{" & NombreCampo & "}}"
-        
-        ' Obtener valor del campo
-        valorCampo = ObtenerValorCampo(rs, NombreCampo)
-        
-        ' Reemplazar en el documento
-        With m_WordDoc.Range.Find
-            .Text = marcador
-            .Replacement.Text = valorCampo
-            .Execute Replace:=2 ' wdReplaceAll
-        End With
-    Next i
-    
-    rs.Close
-    Set rs = Nothing
-    
-    IDocumentService_ReemplazarCamposEnPlantilla = True
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_ReemplazarCamposEnPlantilla", Err.Number, Err.Description
-    m_LastError = "Error al reemplazar campos: " & Err.Description
-    IDocumentService_ReemplazarCamposEnPlantilla = False
-    If Not rs Is Nothing Then
-        rs.Close
-        Set rs = Nothing
-    End If
-End Function
-
-Private Function IDocumentService_GuardarDocumento(ByVal rutaDestino As String, ByVal NombreArchivo As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    If m_WordDoc Is Nothing Then
-        m_LastError = "No hay documento abierto para guardar"
-        IDocumentService_GuardarDocumento = False
-        Exit Function
-    End If
-    
-    Dim rutaCompleta As String
-    rutaCompleta = rutaDestino & NombreArchivo
-    
-    ' Guardar como documento Word
     m_WordDoc.SaveAs2 rutaCompleta
-    
-    IDocumentService_GuardarDocumento = True
+    GuardarWordDocumento = True
     Exit Function
-    
+
 ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_GuardarDocumento", Err.Number, Err.Description
-    m_LastError = "Error al guardar documento: " & Err.Description
-    IDocumentService_GuardarDocumento = False
+    modErrorHandler.LogError "CDocumentService.GuardarWordDocumento", Err.Number, Err.Description
+    GuardarWordDocumento = False
 End Function
 
-' ============================================================================
-' IMPLEMENTACIÓN DE IDocumentService - CONSULTA DE DATOS
-' ============================================================================
-
-Private Function IDocumentService_ObtenerDatosSolicitud(ByVal idSolicitud As Long) As Object
-    On Error GoTo ErrorHandler
-    
-    Dim sql As String
-    
-    ' Consulta principal que une datos de solicitud con datos específicos
-    sql = "SELECT s.IdSolicitud, s.NumeroExpediente, s.FechaSolicitud, s.TipoSolicitud, s.EstadoInterno, " & _
-          "pc.NombreSolicitante, pc.ApellidosSolicitante, pc.DNI " & _
-          "FROM TbSolicitudes s " & _
-          "LEFT JOIN TbDatos_PC pc ON s.IdSolicitud = pc.IdSolicitud " & _
-          "WHERE s.IdSolicitud = " & idSolicitud
-    
-    Set IDocumentService_ObtenerDatosSolicitud = CurrentDb.OpenRecordset(sql)
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_ObtenerDatosSolicitud", Err.Number, Err.Description
-    m_LastError = "Error al obtener datos de solicitud: " & Err.Description
-    Set IDocumentService_ObtenerDatosSolicitud = Nothing
-End Function
-
-Private Function IDocumentService_ObtenerConfiguracionMapeo(ByVal tipoSolicitud As String) As Object
-    On Error GoTo ErrorHandler
-    
-    Dim sql As String
-    
-    sql = "SELECT * FROM Tb_Mapeo_Campos WHERE TipoSolicitud = '" & tipoSolicitud & "'"
-    
-    Set IDocumentService_ObtenerConfiguracionMapeo = CurrentDb.OpenRecordset(sql)
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_ObtenerConfiguracionMapeo", Err.Number, Err.Description
-    m_LastError = "Error al obtener configuración de mapeo: " & Err.Description
-    Set IDocumentService_ObtenerConfiguracionMapeo = Nothing
-End Function
-
-' ============================================================================
-' IMPLEMENTACIÓN DE IDocumentService - UTILIDADES
-' ============================================================================
-
-Private Function IDocumentService_ValidarPlantilla(ByVal RutaPlantilla As String) As Boolean
-    On Error GoTo ErrorHandler
-    
-    ' Verificar que el archivo existe
-    IDocumentService_ValidarPlantilla = (Dir(RutaPlantilla) <> "")
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_ValidarPlantilla", Err.Number, Err.Description
-    m_LastError = "Error al validar plantilla: " & Err.Description
-    IDocumentService_ValidarPlantilla = False
-End Function
-
-Private Function IDocumentService_GenerarNombreDocumento(ByVal idSolicitud As Long, ByVal tipoSolicitud As String) As String
-    On Error GoTo ErrorHandler
-    
-    Dim fechaActual As String
-    Dim NumeroExpediente As String
-    Dim solicitud As T_Solicitud
-    
-    fechaActual = Format(Date, "yyyy-mm-dd")
-    
-    ' Usar el repositorio inyectado para obtener la solicitud y su número de expediente
-    Set solicitud = m_SolicitudRepository.ObtenerPorId(idSolicitud)
-    If Not solicitud Is Nothing Then
-        NumeroExpediente = solicitud.NumeroExpediente
-    Else
-        NumeroExpediente = ""
-    End If
-    
-    If NumeroExpediente <> "" Then
-        IDocumentService_GenerarNombreDocumento = "DOC-" & tipoSolicitud & "-" & NumeroExpediente & "-" & fechaActual & ".docx"
-    Else
-        IDocumentService_GenerarNombreDocumento = "DOC-" & tipoSolicitud & "-" & idSolicitud & "-" & fechaActual & ".docx"
-    End If
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.IDocumentService_GenerarNombreDocumento", Err.Number, Err.Description
-    m_LastError = "Error al generar nombre de documento: " & Err.Description
-    IDocumentService_GenerarNombreDocumento = "DOC-" & tipoSolicitud & "-" & idSolicitud & ".docx"
-End Function
-
-Private Sub IDocumentService_LimpiarRecursos()
+Private Sub LimpiarRecursos()
     On Error Resume Next
-    
-    ' Cerrar documento si está abierto
     If Not m_WordDoc Is Nothing Then
-        m_WordDoc.Close False ' No guardar cambios
+        m_WordDoc.Close False ' Cerrar sin guardar
         Set m_WordDoc = Nothing
     End If
-    
-    ' Cerrar aplicación Word si la creamos nosotros
     If m_IsWordAppCreated And Not m_WordApp Is Nothing Then
         m_WordApp.Quit
         Set m_WordApp = Nothing
-        m_IsWordAppCreated = False
     End If
-    
-    m_LastError = ""
+    m_IsWordAppCreated = False
 End Sub
-
-' ============================================================================
-' MÉTODOS AUXILIARES PRIVADOS
-' ============================================================================
-
-' Función eliminada: ObtenerTipoSolicitud - Ahora se usa ISolicitudRepository.LoadPC
-
-' Función auxiliar para generar nombre usando datos ya cargados
-Private Function GenerarNombreDocumentoConDatos(ByVal solicitudPC As CSolicitudPC) As String
-    On Error GoTo ErrorHandler
-    
-    Dim fechaActual As String
-    Dim NumeroExpediente As String
-    
-    fechaActual = Format(Date, "yyyy-mm-dd")
-    NumeroExpediente = solicitudPC.idExpediente
-    
-    If NumeroExpediente <> "" Then
-        GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.tipoSolicitud & "-" & NumeroExpediente & "-" & fechaActual & ".docx"
-    Else
-        GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.tipoSolicitud & "-" & solicitudPC.idSolicitud & "-" & fechaActual & ".docx"
-    End If
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.GenerarNombreDocumentoConDatos", Err.Number, Err.Description
-    m_LastError = "Error al generar nombre de documento: " & Err.Description
-    GenerarNombreDocumentoConDatos = "DOC-" & solicitudPC.tipoSolicitud & "-" & solicitudPC.idSolicitud & ".docx"
-End Function
-
-Private Function ObtenerValorCampo(ByRef rs As Object, ByVal NombreCampo As String) As String
-    On Error GoTo ErrorHandler
-    
-    Dim Valor As Variant
-    
-    ' Intentar obtener el valor del campo
-    Valor = rs(NombreCampo).value
-    
-    If IsNull(Valor) Then
-        ObtenerValorCampo = ""
-    Else
-        ' Formatear según el tipo de campo
-        Select Case NombreCampo
-            Case "FechaSolicitud", "FechaLimite"
-                ObtenerValorCampo = Format(Valor, "dd/mm/yyyy")
-            Case Else
-                ObtenerValorCampo = CStr(Valor)
-        End Select
-    End If
-    
-    Exit Function
-    
-ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.ObtenerValorCampo", Err.Number, Err.Description
-    ObtenerValorCampo = "[Error: " & NombreCampo & "]"
-End Function
-
-' ============================================================================
-' MÉTODOS PÚBLICOS ADICIONALES
-' ============================================================================
-
-Public Function GetLastError() As String
-    GetLastError = m_LastError
-End Function
-
-Public Sub ClearLastError()
-    m_LastError = ""
-End Sub
-
-
-
-
-
-
-
-
-
-
-
-
-

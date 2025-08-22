@@ -1,25 +1,56 @@
 ﻿Option Compare Database
 Option Explicit
 ' Clase de tipo de datos para tbDatosPC
-' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
+' Basada en el Anexo A del CONDOR_MASTER_PLAN.md - Sección 8.2
 
+'******************************************************************************
+' VARIABLES PRIVADAS
+'******************************************************************************
 Private m_idDatosPC As Long
+Private m_idSolicitud As Long
 Private m_refContratoInspeccionOficial As String
-Private m_refContratoInspeccionOficialNuevo As String
 Private m_refSuministrador As String
-Private m_refSuministradorNuevo As String
-Private m_refSubSuministrador As String
-Private m_refSubSuministradorNuevo As String
-Private m_importeOriginal As Currency
-Private m_importeNuevo As Currency
-Private m_justificacion As String
-Private m_descripcionCambio As String
-Private m_impactoCalidad As String
-Private m_impactoCoste As String
-Private m_impactoPlazos As String
-Private m_requiereModificacionContrato As Boolean
-Private m_efectoFechaEntrega As String
-Private m_observacionesAdicionales As String
+Private m_suministradorNombreDir As String
+Private m_objetoContrato As String
+Private m_descripcionMaterialAfectado As String
+Private m_numPlanoEspecificacion As String
+Private m_descripcionPropuestaCambio As String
+Private m_descripcionPropuestaCambioCont As String
+Private m_motivoCorregirDeficiencias As Boolean
+Private m_motivoMejorarCapacidad As Boolean
+Private m_motivoAumentarNacionalizacion As Boolean
+Private m_motivoMejorarSeguridad As Boolean
+Private m_motivoMejorarFiabilidad As Boolean
+Private m_motivoMejorarCosteEficacia As Boolean
+Private m_motivoOtros As Boolean
+Private m_motivoOtrosDetalle As String
+Private m_incidenciaCoste As String
+Private m_incidenciaPlazo As String
+Private m_incidenciaSeguridad As Boolean
+Private m_incidenciaFiabilidad As Boolean
+Private m_incidenciaMantenibilidad As Boolean
+Private m_incidenciaIntercambiabilidad As Boolean
+Private m_incidenciaVidaUtilAlmacen As Boolean
+Private m_incidenciaFuncionamientoFuncion As Boolean
+Private m_cambioAfectaMaterialEntregado As Boolean
+Private m_cambioAfectaMaterialPorEntregar As Boolean
+Private m_firmaOficinaTecnicaNombre As String
+Private m_firmaRepSuministradorNombre As String
+Private m_observacionesRACRef As String
+Private m_racCodigo As String
+Private m_observacionesRAC As String
+Private m_fechaFirmaRAC As Date
+Private m_obsAprobacionAutoridadDiseno As String
+Private m_firmaAutoridadDisenoNombreCargo As String
+Private m_fechaFirmaAutoridadDiseno As Date
+Private m_decisionFinal As String
+Private m_obsDecisionFinal As String
+Private m_cargoFirmanteFinal As String
+Private m_fechaFirmaDecisionFinal As Date
+
+'******************************************************************************
+' PROPIEDADES PÚBLICAS
+'******************************************************************************
 
 Public Property Get idDatosPC() As Long
     idDatosPC = m_idDatosPC
@@ -27,6 +58,14 @@ End Property
 
 Public Property Let idDatosPC(ByVal value As Long)
     m_idDatosPC = value
+End Property
+
+Public Property Get idSolicitud() As Long
+    idSolicitud = m_idSolicitud
+End Property
+
+Public Property Let idSolicitud(ByVal value As Long)
+    m_idSolicitud = value
 End Property
 
 Public Property Get refContratoInspeccionOficial() As String
@@ -37,14 +76,6 @@ Public Property Let refContratoInspeccionOficial(ByVal value As String)
     m_refContratoInspeccionOficial = value
 End Property
 
-Public Property Get refContratoInspeccionOficialNuevo() As String
-    refContratoInspeccionOficialNuevo = m_refContratoInspeccionOficialNuevo
-End Property
-
-Public Property Let refContratoInspeccionOficialNuevo(ByVal value As String)
-    m_refContratoInspeccionOficialNuevo = value
-End Property
-
 Public Property Get refSuministrador() As String
     refSuministrador = m_refSuministrador
 End Property
@@ -53,108 +84,300 @@ Public Property Let refSuministrador(ByVal value As String)
     m_refSuministrador = value
 End Property
 
-Public Property Get refSuministradorNuevo() As String
-    refSuministradorNuevo = m_refSuministradorNuevo
+Public Property Get suministradorNombreDir() As String
+    suministradorNombreDir = m_suministradorNombreDir
 End Property
 
-Public Property Let refSuministradorNuevo(ByVal value As String)
-    m_refSuministradorNuevo = value
+Public Property Let suministradorNombreDir(ByVal value As String)
+    m_suministradorNombreDir = value
 End Property
 
-Public Property Get refSubSuministrador() As String
-    refSubSuministrador = m_refSubSuministrador
+Public Property Get objetoContrato() As String
+    objetoContrato = m_objetoContrato
 End Property
 
-Public Property Let refSubSuministrador(ByVal value As String)
-    m_refSubSuministrador = value
+Public Property Let objetoContrato(ByVal value As String)
+    m_objetoContrato = value
 End Property
 
-Public Property Get refSubSuministradorNuevo() As String
-    refSubSuministradorNuevo = m_refSubSuministradorNuevo
+Public Property Get descripcionMaterialAfectado() As String
+    descripcionMaterialAfectado = m_descripcionMaterialAfectado
 End Property
 
-Public Property Let refSubSuministradorNuevo(ByVal value As String)
-    m_refSubSuministradorNuevo = value
+Public Property Let descripcionMaterialAfectado(ByVal value As String)
+    m_descripcionMaterialAfectado = value
 End Property
 
-Public Property Get importeOriginal() As Currency
-    importeOriginal = m_importeOriginal
+Public Property Get numPlanoEspecificacion() As String
+    numPlanoEspecificacion = m_numPlanoEspecificacion
 End Property
 
-Public Property Let importeOriginal(ByVal value As Currency)
-    m_importeOriginal = value
+Public Property Let numPlanoEspecificacion(ByVal value As String)
+    m_numPlanoEspecificacion = value
 End Property
 
-Public Property Get importeNuevo() As Currency
-    importeNuevo = m_importeNuevo
+Public Property Get descripcionPropuestaCambio() As String
+    descripcionPropuestaCambio = m_descripcionPropuestaCambio
 End Property
 
-Public Property Let importeNuevo(ByVal value As Currency)
-    m_importeNuevo = value
+Public Property Let descripcionPropuestaCambio(ByVal value As String)
+    m_descripcionPropuestaCambio = value
 End Property
 
-Public Property Get justificacion() As String
-    justificacion = m_justificacion
+Public Property Get descripcionPropuestaCambioCont() As String
+    descripcionPropuestaCambioCont = m_descripcionPropuestaCambioCont
 End Property
 
-Public Property Let justificacion(ByVal value As String)
-    m_justificacion = value
+Public Property Let descripcionPropuestaCambioCont(ByVal value As String)
+    m_descripcionPropuestaCambioCont = value
 End Property
 
-Public Property Get descripcionCambio() As String
-    descripcionCambio = m_descripcionCambio
+Public Property Get motivoCorregirDeficiencias() As Boolean
+    motivoCorregirDeficiencias = m_motivoCorregirDeficiencias
 End Property
 
-Public Property Let descripcionCambio(ByVal value As String)
-    m_descripcionCambio = value
+Public Property Let motivoCorregirDeficiencias(ByVal value As Boolean)
+    m_motivoCorregirDeficiencias = value
 End Property
 
-Public Property Get impactoCalidad() As String
-    impactoCalidad = m_impactoCalidad
+Public Property Get motivoMejorarCapacidad() As Boolean
+    motivoMejorarCapacidad = m_motivoMejorarCapacidad
 End Property
 
-Public Property Let impactoCalidad(ByVal value As String)
-    m_impactoCalidad = value
+Public Property Let motivoMejorarCapacidad(ByVal value As Boolean)
+    m_motivoMejorarCapacidad = value
 End Property
 
-Public Property Get impactoCoste() As String
-    impactoCoste = m_impactoCoste
+Public Property Get motivoAumentarNacionalizacion() As Boolean
+    motivoAumentarNacionalizacion = m_motivoAumentarNacionalizacion
 End Property
 
-Public Property Let impactoCoste(ByVal value As String)
-    m_impactoCoste = value
+Public Property Let motivoAumentarNacionalizacion(ByVal value As Boolean)
+    m_motivoAumentarNacionalizacion = value
 End Property
 
-Public Property Get impactoPlazos() As String
-    impactoPlazos = m_impactoPlazos
+Public Property Get motivoMejorarSeguridad() As Boolean
+    motivoMejorarSeguridad = m_motivoMejorarSeguridad
 End Property
 
-Public Property Let impactoPlazos(ByVal value As String)
-    m_impactoPlazos = value
+Public Property Let motivoMejorarSeguridad(ByVal value As Boolean)
+    m_motivoMejorarSeguridad = value
 End Property
 
-Public Property Get requiereModificacionContrato() As Boolean
-    requiereModificacionContrato = m_requiereModificacionContrato
+Public Property Get motivoMejorarFiabilidad() As Boolean
+    motivoMejorarFiabilidad = m_motivoMejorarFiabilidad
 End Property
 
-Public Property Let requiereModificacionContrato(ByVal value As Boolean)
-    m_requiereModificacionContrato = value
+Public Property Let motivoMejorarFiabilidad(ByVal value As Boolean)
+    m_motivoMejorarFiabilidad = value
 End Property
 
-Public Property Get efectoFechaEntrega() As String
-    efectoFechaEntrega = m_efectoFechaEntrega
+Public Property Get motivoMejorarCosteEficacia() As Boolean
+    motivoMejorarCosteEficacia = m_motivoMejorarCosteEficacia
 End Property
 
-Public Property Let efectoFechaEntrega(ByVal value As String)
-    m_efectoFechaEntrega = value
+Public Property Let motivoMejorarCosteEficacia(ByVal value As Boolean)
+    m_motivoMejorarCosteEficacia = value
 End Property
 
-Public Property Get observacionesAdicionales() As String
-    observacionesAdicionales = m_observacionesAdicionales
+Public Property Get motivoOtros() As Boolean
+    motivoOtros = m_motivoOtros
 End Property
 
-Public Property Let observacionesAdicionales(ByVal value As String)
-    m_observacionesAdicionales = value
+Public Property Let motivoOtros(ByVal value As Boolean)
+    m_motivoOtros = value
+End Property
+
+Public Property Get motivoOtrosDetalle() As String
+    motivoOtrosDetalle = m_motivoOtrosDetalle
+End Property
+
+Public Property Let motivoOtrosDetalle(ByVal value As String)
+    m_motivoOtrosDetalle = value
+End Property
+
+Public Property Get incidenciaCoste() As String
+    incidenciaCoste = m_incidenciaCoste
+End Property
+
+Public Property Let incidenciaCoste(ByVal value As String)
+    m_incidenciaCoste = value
+End Property
+
+Public Property Get incidenciaPlazo() As String
+    incidenciaPlazo = m_incidenciaPlazo
+End Property
+
+Public Property Let incidenciaPlazo(ByVal value As String)
+    m_incidenciaPlazo = value
+End Property
+
+Public Property Get incidenciaSeguridad() As Boolean
+    incidenciaSeguridad = m_incidenciaSeguridad
+End Property
+
+Public Property Let incidenciaSeguridad(ByVal value As Boolean)
+    m_incidenciaSeguridad = value
+End Property
+
+Public Property Get incidenciaFiabilidad() As Boolean
+    incidenciaFiabilidad = m_incidenciaFiabilidad
+End Property
+
+Public Property Let incidenciaFiabilidad(ByVal value As Boolean)
+    m_incidenciaFiabilidad = value
+End Property
+
+Public Property Get incidenciaMantenibilidad() As Boolean
+    incidenciaMantenibilidad = m_incidenciaMantenibilidad
+End Property
+
+Public Property Let incidenciaMantenibilidad(ByVal value As Boolean)
+    m_incidenciaMantenibilidad = value
+End Property
+
+Public Property Get incidenciaIntercambiabilidad() As Boolean
+    incidenciaIntercambiabilidad = m_incidenciaIntercambiabilidad
+End Property
+
+Public Property Let incidenciaIntercambiabilidad(ByVal value As Boolean)
+    m_incidenciaIntercambiabilidad = value
+End Property
+
+Public Property Get incidenciaVidaUtilAlmacen() As Boolean
+    incidenciaVidaUtilAlmacen = m_incidenciaVidaUtilAlmacen
+End Property
+
+Public Property Let incidenciaVidaUtilAlmacen(ByVal value As Boolean)
+    m_incidenciaVidaUtilAlmacen = value
+End Property
+
+Public Property Get incidenciaFuncionamientoFuncion() As Boolean
+    incidenciaFuncionamientoFuncion = m_incidenciaFuncionamientoFuncion
+End Property
+
+Public Property Let incidenciaFuncionamientoFuncion(ByVal value As Boolean)
+    m_incidenciaFuncionamientoFuncion = value
+End Property
+
+Public Property Get cambioAfectaMaterialEntregado() As Boolean
+    cambioAfectaMaterialEntregado = m_cambioAfectaMaterialEntregado
+End Property
+
+Public Property Let cambioAfectaMaterialEntregado(ByVal value As Boolean)
+    m_cambioAfectaMaterialEntregado = value
+End Property
+
+Public Property Get cambioAfectaMaterialPorEntregar() As Boolean
+    cambioAfectaMaterialPorEntregar = m_cambioAfectaMaterialPorEntregar
+End Property
+
+Public Property Let cambioAfectaMaterialPorEntregar(ByVal value As Boolean)
+    m_cambioAfectaMaterialPorEntregar = value
+End Property
+
+Public Property Get firmaOficinaTecnicaNombre() As String
+    firmaOficinaTecnicaNombre = m_firmaOficinaTecnicaNombre
+End Property
+
+Public Property Let firmaOficinaTecnicaNombre(ByVal value As String)
+    m_firmaOficinaTecnicaNombre = value
+End Property
+
+Public Property Get firmaRepSuministradorNombre() As String
+    firmaRepSuministradorNombre = m_firmaRepSuministradorNombre
+End Property
+
+Public Property Let firmaRepSuministradorNombre(ByVal value As String)
+    m_firmaRepSuministradorNombre = value
+End Property
+
+Public Property Get observacionesRACRef() As String
+    observacionesRACRef = m_observacionesRACRef
+End Property
+
+Public Property Let observacionesRACRef(ByVal value As String)
+    m_observacionesRACRef = value
+End Property
+
+Public Property Get racCodigo() As String
+    racCodigo = m_racCodigo
+End Property
+
+Public Property Let racCodigo(ByVal value As String)
+    m_racCodigo = value
+End Property
+
+Public Property Get observacionesRAC() As String
+    observacionesRAC = m_observacionesRAC
+End Property
+
+Public Property Let observacionesRAC(ByVal value As String)
+    m_observacionesRAC = value
+End Property
+
+Public Property Get fechaFirmaRAC() As Date
+    fechaFirmaRAC = m_fechaFirmaRAC
+End Property
+
+Public Property Let fechaFirmaRAC(ByVal value As Date)
+    m_fechaFirmaRAC = value
+End Property
+
+Public Property Get obsAprobacionAutoridadDiseno() As String
+    obsAprobacionAutoridadDiseno = m_obsAprobacionAutoridadDiseno
+End Property
+
+Public Property Let obsAprobacionAutoridadDiseno(ByVal value As String)
+    m_obsAprobacionAutoridadDiseno = value
+End Property
+
+Public Property Get firmaAutoridadDisenoNombreCargo() As String
+    firmaAutoridadDisenoNombreCargo = m_firmaAutoridadDisenoNombreCargo
+End Property
+
+Public Property Let firmaAutoridadDisenoNombreCargo(ByVal value As String)
+    m_firmaAutoridadDisenoNombreCargo = value
+End Property
+
+Public Property Get fechaFirmaAutoridadDiseno() As Date
+    fechaFirmaAutoridadDiseno = m_fechaFirmaAutoridadDiseno
+End Property
+
+Public Property Let fechaFirmaAutoridadDiseno(ByVal value As Date)
+    m_fechaFirmaAutoridadDiseno = value
+End Property
+
+Public Property Get decisionFinal() As String
+    decisionFinal = m_decisionFinal
+End Property
+
+Public Property Let decisionFinal(ByVal value As String)
+    m_decisionFinal = value
+End Property
+
+Public Property Get obsDecisionFinal() As String
+    obsDecisionFinal = m_obsDecisionFinal
+End Property
+
+Public Property Let obsDecisionFinal(ByVal value As String)
+    m_obsDecisionFinal = value
+End Property
+
+Public Property Get cargoFirmanteFinal() As String
+    cargoFirmanteFinal = m_cargoFirmanteFinal
+End Property
+
+Public Property Let cargoFirmanteFinal(ByVal value As String)
+    m_cargoFirmanteFinal = value
+End Property
+
+Public Property Get fechaFirmaDecisionFinal() As Date
+    fechaFirmaDecisionFinal = m_fechaFirmaDecisionFinal
+End Property
+
+Public Property Let fechaFirmaDecisionFinal(ByVal value As Date)
+    m_fechaFirmaDecisionFinal = value
 End Property
 
 
