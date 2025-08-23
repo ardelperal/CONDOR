@@ -44,6 +44,7 @@ End Sub
 
 '''
 ' Valida si una transición de estado es permitida consultando la base de datos
+' REFACTORIZADO: Usa consultas parametrizadas para prevenir inyección SQL
 ' @param tipoSolicitud: Tipo de solicitud (PC, CDCA, CDCASUB)
 ' @param estadoOrigen: Estado actual de la solicitud
 ' @param estadoDestino: Estado al que se quiere transicionar
@@ -53,19 +54,9 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
+    Dim qdf As DAO.QueryDef
     Dim rs As DAO.Recordset
-    Dim sql As String
     Dim validCount As Long
-    
-    ' Construir la consulta SQL
-    sql = "SELECT COUNT(*) AS Valid " & _
-          "FROM (TbTransiciones " & _
-          "INNER JOIN TbEstados AS Origen ON TbTransiciones.EstadoOrigenID = Origen.ID) " & _
-          "INNER JOIN TbEstados AS Destino ON TbTransiciones.EstadoDestinoID = Destino.ID " & _
-          "WHERE TbTransiciones.TipoSolicitud = '" & tipoSolicitud & "' " & _
-          "AND Origen.CodigoEstado = '" & estadoOrigen & "' " & _
-          "AND Destino.CodigoEstado = '" & estadoDestino & "' " & _
-          "AND TbTransiciones.Activo = True;"
     
     ' Obtener ruta del backend desde configuración
     Dim backendPath As String
@@ -74,8 +65,24 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     ' Abrir conexión a la base de datos backend
     Set db = DBEngine.OpenDatabase(backendPath)
     
-    ' Ejecutar la consulta
-    Set rs = db.OpenRecordset(sql, dbOpenSnapshot)
+    ' Crear QueryDef con consulta parametrizada (SEGURA)
+    Set qdf = db.CreateQueryDef("", _
+        "SELECT COUNT(*) AS Valid " & _
+        "FROM (TbTransiciones " & _
+        "INNER JOIN TbEstados AS Origen ON TbTransiciones.EstadoOrigenID = Origen.ID) " & _
+        "INNER JOIN TbEstados AS Destino ON TbTransiciones.EstadoDestinoID = Destino.ID " & _
+        "WHERE TbTransiciones.TipoSolicitud = [pTipoSolicitud] " & _
+        "AND Origen.CodigoEstado = [pEstadoOrigen] " & _
+        "AND Destino.CodigoEstado = [pEstadoDestino] " & _
+        "AND TbTransiciones.Activo = True;")
+    
+    ' Asignar valores a los parámetros de forma segura
+    qdf.Parameters("pTipoSolicitud").Value = tipoSolicitud
+    qdf.Parameters("pEstadoOrigen").Value = estadoOrigen
+    qdf.Parameters("pEstadoDestino").Value = estadoDestino
+    
+    ' Ejecutar la consulta parametrizada
+    Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     ' Verificar si hay resultados
     If Not rs.EOF Then
@@ -88,6 +95,7 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     ' Limpiar recursos
     rs.Close
     Set rs = Nothing
+    Set qdf = Nothing
     db.Close
     Set db = Nothing
     
@@ -101,6 +109,9 @@ ErrorHandler:
     If Not rs Is Nothing Then
         If rs.State = adStateOpen Then rs.Close
         Set rs = Nothing
+    End If
+    If Not qdf Is Nothing Then
+        Set qdf = Nothing
     End If
     If Not db Is Nothing Then
         db.Close

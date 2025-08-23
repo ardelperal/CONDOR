@@ -1,6 +1,8 @@
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 ' Clase: CMockFileSystemObject
 ' Descripción: Mock del FileSystemObject para pruebas unitarias aisladas
 ' Arquitectura: Capa de Testing - Mock
@@ -81,3 +83,5 @@ End Function
 Public Function GetLastFilePath() As String
     GetLastFilePath = LastFilePath
 End Function
+
+#End If

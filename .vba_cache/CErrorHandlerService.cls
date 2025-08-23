@@ -8,17 +8,12 @@ Implements IErrorHandlerService
 ' Implementa: IErrorHandlerService
 
 Private m_configService As IConfig
-Private fso As Object ' Scripting.FileSystemObject
+Private m_FileSystem As IFileSystem
 
-Public Sub Initialize(config As IConfig, Optional fileSystemObject As Object = Nothing)
+Public Sub Initialize(config As IConfig, fileSystem As IFileSystem)
     On Error GoTo ErrorHandler
     Set m_configService = config
-    
-    If fileSystemObject Is Nothing Then
-        Set fso = CreateObject("Scripting.FileSystemObject")
-    Else
-        Set fso = fileSystemObject
-    End If
+    Set m_FileSystem = fileSystem
     
     Exit Sub
 ErrorHandler:
@@ -28,7 +23,7 @@ End Sub
 
 Private Sub Class_Terminate()
     Set m_configService = Nothing
-    Set fso = Nothing
+    Set m_FileSystem = Nothing
 End Sub
 
 Private Sub IErrorHandlerService_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
@@ -80,7 +75,7 @@ Private Sub WriteToLog(level As String, message As String, moduleName As String,
     LogPath = m_configService.GetLogPath()
 
     ' Abrir el fichero en modo Append (8)
-    Set logFile = fso.OpenTextFile(LogPath, 8, True)
+    Set logFile = m_FileSystem.OpenTextFile(LogPath, 8, True)
 
     ' Construir la línea de log en formato JSON
     json = "{"

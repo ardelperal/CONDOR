@@ -2,6 +2,8 @@ Attribute VB_Name = "Test_ErrorHandlerService"
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 ' =====================================================
 ' Test_ErrorHandlerService.bas
 ' Módulo de pruebas para CErrorHandlerService
@@ -38,27 +40,27 @@ Public Function Test_LogError_WritesToFile_Success() As CTestResult
     
     ' Variables para la prueba
     Dim errorHandlerService As New CErrorHandlerService
-    Dim mockConfig As New CMockConfig
-    Dim mockFSO As New CMockFileSystemObject
-    Dim logFilePath As String
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
+    Dim mockFileSystem As New CMockFileSystem
+    Dim mockTextFile As CMockTextFile
     Dim writtenContent As String
     
     ' Arrange: Configurar el mock y el servicio
-    logFilePath = "C:\Temp\test_error_log.txt"
-    mockConfig.SetValue "LOG_FILE_PATH", logFilePath
+    Set mockTextFile = mockFileSystem.GetMockTextFile()
     
-    ' Inicializar el servicio con el mock FileSystemObject
-    errorHandlerService.Initialize mockConfig, mockFSO
+    ' Inicializar el servicio con el mock FileSystem
+    errorHandlerService.Initialize configService, mockFileSystem
     
     ' Act: Llamar al método LogError
     errorHandlerService.LogError 1001, "Error de prueba", "Test_Module.Test_Function"
     
     ' Assert: Verificar que el mock capturó el contenido esperado
-    writtenContent = mockFSO.GetLastWrittenContent()
+    writtenContent = mockTextFile.LastWrittenLine
     
-    Call modAssert.IsTrue(mockFSO.WasOpenTextFileCalled(), "OpenTextFile debe haber sido llamado")
-    Call modAssert.IsTrue(mockFSO.WasWriteLineCalled(), "WriteLine debe haber sido llamado")
-    Call modAssert.IsTrue(mockFSO.WasCloseCalled(), "Close debe haber sido llamado")
+    Call modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
     Call modAssert.IsTrue(InStr(writtenContent, "1001") > 0, "El número de error debe estar en el log")
     Call modAssert.IsTrue(InStr(writtenContent, "Error de prueba") > 0, "La descripción del error debe estar en el log")
     Call modAssert.IsTrue(InStr(writtenContent, "Test_Module.Test_Function") > 0, "La fuente del error debe estar en el log")
@@ -83,26 +85,26 @@ Public Function Test_LogInfo_WritesToFile_Success() As CTestResult
     
     ' Variables para la prueba
     Dim errorHandlerService As New CErrorHandlerService
-    Dim mockConfig As New CMockConfig
-    Dim mockFSO As New CMockFileSystemObject
-    Dim logFilePath As String
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
+    Dim mockFileSystem As New CMockFileSystem
+    Dim mockTextFile As CMockTextFile
     Dim writtenContent As String
     
     ' Arrange
-    logFilePath = "C:\Temp\test_info_log.txt"
-    mockConfig.SetValue "LOG_FILE_PATH", logFilePath
+    Set mockTextFile = mockFileSystem.GetMockTextFile()
     
-    errorHandlerService.Initialize mockConfig, mockFSO
+    errorHandlerService.Initialize configService, mockFileSystem
     
     ' Act
     errorHandlerService.LogInfo "Información de prueba", "Test_Module.Test_Function"
     
     ' Assert
-    writtenContent = mockFSO.GetLastWrittenContent()
+    writtenContent = mockTextFile.LastWrittenLine
     
-    Call modAssert.IsTrue(mockFSO.WasOpenTextFileCalled(), "OpenTextFile debe haber sido llamado")
-    Call modAssert.IsTrue(mockFSO.WasWriteLineCalled(), "WriteLine debe haber sido llamado")
-    Call modAssert.IsTrue(mockFSO.WasCloseCalled(), "Close debe haber sido llamado")
+    Call modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
     Call modAssert.IsTrue(InStr(writtenContent, "Información de prueba") > 0, "El mensaje de info debe estar en el log")
     Call modAssert.IsTrue(InStr(writtenContent, "INFO") > 0, "El nivel INFO debe estar en el log")
     
@@ -125,26 +127,26 @@ Public Function Test_LogWarning_WritesToFile_Success() As CTestResult
     
     ' Variables para la prueba
     Dim errorHandlerService As New CErrorHandlerService
-    Dim mockConfig As New CMockConfig
-    Dim mockFSO As New CMockFileSystemObject
-    Dim logFilePath As String
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
+    Dim mockFileSystem As New CMockFileSystem
+    Dim mockTextFile As CMockTextFile
     Dim writtenContent As String
     
     ' Arrange
-    logFilePath = "C:\Temp\test_warning_log.txt"
-    mockConfig.SetValue "LOG_FILE_PATH", logFilePath
+    Set mockTextFile = mockFileSystem.GetMockTextFile()
     
-    errorHandlerService.Initialize mockConfig, mockFSO
+    errorHandlerService.Initialize configService, mockFileSystem
     
     ' Act
     errorHandlerService.LogWarning "Advertencia de prueba", "Test_Module.Test_Function"
     
     ' Assert
-    writtenContent = mockFSO.GetLastWrittenContent()
+    writtenContent = mockTextFile.LastWrittenLine
     
-    Call modAssert.IsTrue(mockFSO.WasOpenTextFileCalled(), "OpenTextFile debe haber sido llamado")
-    Call modAssert.IsTrue(mockFSO.WasWriteLineCalled(), "WriteLine debe haber sido llamado")
-    Call modAssert.IsTrue(mockFSO.WasCloseCalled(), "Close debe haber sido llamado")
+    Call modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
     Call modAssert.IsTrue(InStr(writtenContent, "Advertencia de prueba") > 0, "El mensaje de warning debe estar en el log")
     Call modAssert.IsTrue(InStr(writtenContent, "WARNING") > 0, "El nivel WARNING debe estar en el log")
     
@@ -167,14 +169,15 @@ Public Function Test_Initialize_WithValidConfig_Success() As CTestResult
     
     ' Variables para la prueba
     Dim errorHandlerService As New CErrorHandlerService
-    Dim mockConfig As New CMockConfig
-    Dim mockFSO As New CMockFileSystemObject
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
+    Dim mockFileSystem As New CMockFileSystem
     
     ' Arrange
-    mockConfig.SetValue "LOG_FILE_PATH", "C:\Temp\test_init_log.txt"
+    ' Las pruebas usan el mock del sistema de ficheros para aislamiento completo
     
     ' Act
-    errorHandlerService.Initialize mockConfig, mockFSO
+    errorHandlerService.Initialize configService, mockFileSystem
     
     ' Assert: Si no hay error, la inicialización fue exitosa
     testResult.SetResult True, "Initialize completado exitosamente con configuración válida y mock"
@@ -186,3 +189,5 @@ ErrorHandler:
     Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_Initialize_WithValidConfig_Success")
     testResult.SetResult False, "Error durante la inicialización: " & Err.Description
 End Function
+
+#End If

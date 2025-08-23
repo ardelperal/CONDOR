@@ -60,8 +60,8 @@ Public Sub App_Start()
     g_CurrentUserRole = authService.GetUserRole(UserEmail)
 
     ' 4. Obtener instancia de configuración y verificar que se haya cargado correctamente
-    Dim config As CConfig
-    Set config = modConfig.GetInstance()
+    Dim config As IConfig
+    Set config = modConfig.CreateConfigService()
     
     If Not config.GetValue("IsInitialized") Then
         ' El error específico ya ha sido logueado por CConfig.ValidateConfiguration

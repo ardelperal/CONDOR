@@ -17,16 +17,19 @@ Public Function CreateDocumentService() As IDocumentService
     Set configService = modConfigFactory.CreateConfigService()
     
     Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
+    Set solicitudRepository = modSolicitudRepositoryFactory.CreateSolicitudRepository()
     
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
+    Dim wordManager As IWordManager
+    Set wordManager = New CWordManager
+    
     ' Crear una instancia de la clase concreta
     Dim documentServiceInstance As New CDocumentService
     
-    ' Inicializar la instancia concreta con todas las dependencias
-    documentServiceInstance.Initialize configService, solicitudRepository, operationLogger
+    ' Inicializar la instancia concreta con las dependencias
+    documentServiceInstance.Initialize configService, solicitudRepository, operationLogger, wordManager
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateDocumentService = documentServiceInstance

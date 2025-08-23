@@ -1,5 +1,8 @@
 Option Compare Database
 Option Explicit
+
+#If DEV_MODE Then
+
 ' ============================================================================
 ' Clase: CMockConfig
 ' Descripción: Mock del servicio de configuración para pruebas unitarias.
@@ -81,3 +84,5 @@ End Function
 Private Function IConfig_IsTestMode() As Boolean
     IConfig_IsTestMode = IsTestMode
 End Function
+
+#End If

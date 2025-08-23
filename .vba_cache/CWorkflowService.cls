@@ -15,6 +15,13 @@ Option Explicit
 Implements IWorkflowService
 
 '******************************************************************************
+' VARIABLES PRIVADAS PARA DEPENDENCIAS INYECTADAS
+'******************************************************************************
+
+Private m_Config As IConfig
+Private m_OperationLogger As IOperationLogger
+
+'******************************************************************************
 ' CONSTANTES PRIVADAS
 '******************************************************************************
 
@@ -27,6 +34,16 @@ Private Const ESTADO_CANCELADO As String = "Cancelado"
 Private Const ROL_USUARIO As String = "Usuario"
 Private Const ROL_APROBADOR As String = "Aprobador"
 Private Const ROL_ADMINISTRADOR As String = "Administrador"
+
+'******************************************************************************
+' MÉTODO DE INICIALIZACIÓN CON DEPENDENCIAS
+'******************************************************************************
+
+' Inicializa el servicio con sus dependencias
+Public Sub Initialize(ByVal config As IConfig, ByVal operationLogger As IOperationLogger)
+    Set m_Config = config
+    Set m_OperationLogger = operationLogger
+End Sub
 
 '******************************************************************************
 ' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN DE TRANSICIONES
@@ -84,7 +101,7 @@ Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As Stri
     Dim rs As DAO.Recordset
     Dim sql As String
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     ' Consultar estados activos para el tipo de solicitud
     sql = "SELECT CodigoEstado, NombreEstado FROM TbEstados " & _
@@ -100,6 +117,7 @@ Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As Stri
     
     rs.Close
     Set rs = Nothing
+    db.Close
     Set db = Nothing
     
     Set IWorkflowService_GetAvailableStates = estados
@@ -114,7 +132,7 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, _
     Dim rs As DAO.Recordset
     Dim sql As String
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     ' Consultar transiciones válidas desde el estado actual
     sql = "SELECT DISTINCT t.EstadoDestinoID, e.CodigoEstado, e.NombreEstado " & _
@@ -135,6 +153,7 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, _
     
     rs.Close
     Set rs = Nothing
+    db.Close
     Set db = Nothing
     
     Set IWorkflowService_GetNextStates = estadosSiguientes
@@ -146,7 +165,7 @@ Private Function IWorkflowService_GetInitialState(ByVal tipoSolicitud As String)
     Dim sql As String
     Dim resultado As String
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     sql = "SELECT CodigoEstado FROM TbEstados " & _
           "WHERE TipoSolicitud = '" & tipoSolicitud & "' " & _
@@ -162,6 +181,7 @@ Private Function IWorkflowService_GetInitialState(ByVal tipoSolicitud As String)
     
     rs.Close
     Set rs = Nothing
+    db.Close
     Set db = Nothing
     
     IWorkflowService_GetInitialState = resultado
@@ -175,7 +195,7 @@ Private Function IWorkflowService_IsStateFinal(ByVal estadoCodigo As String, _
     Dim sql As String
     Dim resultado As Boolean
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     sql = "SELECT EsEstadoFinal FROM TbEstados " & _
           "WHERE CodigoEstado = '" & estadoCodigo & "' " & _
@@ -192,6 +212,7 @@ Private Function IWorkflowService_IsStateFinal(ByVal estadoCodigo As String, _
     
     rs.Close
     Set rs = Nothing
+    db.Close
     Set db = Nothing
     
     IWorkflowService_IsStateFinal = resultado
@@ -218,7 +239,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     
     On Error GoTo ErrorHandler
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     ' Insertar registro en TbHistorialEstados (asumiendo que existe esta tabla)
     sql = "INSERT INTO TbHistorialEstados (SolicitudID, EstadoAnterior, EstadoNuevo, Usuario, Comentarios, FechaCambio) " & _
@@ -226,6 +247,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     
     db.Execute sql
     
+    db.Close
     Set db = Nothing
     
     ' Logging de auditoría: Cambio de estado registrado exitosamente
@@ -243,7 +265,10 @@ ErrorHandler:
     End If
     
     modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.RecordStateChange"
-    If Not db Is Nothing Then Set db = Nothing
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
     IWorkflowService_RecordStateChange = False
 End Function
 
@@ -256,7 +281,7 @@ Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As 
     Dim sql As String
     Dim registro As String
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     sql = "SELECT EstadoAnterior, EstadoNuevo, Usuario, Comentarios, FechaCambio " & _
           "FROM TbHistorialEstados " & _
@@ -277,6 +302,7 @@ Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As 
     
     rs.Close
     Set rs = Nothing
+    db.Close
     Set db = Nothing
     
     Set IWorkflowService_GetStateHistory = historial
@@ -285,7 +311,10 @@ Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As 
 ErrorHandler:
     modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.GetStateHistory"
     If Not rs Is Nothing Then Set rs = Nothing
-    If Not db Is Nothing Then Set db = Nothing
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
     Set IWorkflowService_GetStateHistory = New Collection
 End Function
 
@@ -304,7 +333,7 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
     Dim sql As String
     Dim resultado As Boolean
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     ' Consultar si existe la transición y si el rol tiene permisos
     sql = "SELECT t.RolRequerido FROM TbTransiciones t " & _
@@ -337,6 +366,7 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
     
     rs.Close
     Set rs = Nothing
+    db.Close
     Set db = Nothing
     
     IWorkflowService_HasTransitionPermission = resultado
@@ -345,7 +375,10 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
 ErrorHandler:
     modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.HasTransitionPermission"
     If Not rs Is Nothing Then Set rs = Nothing
-    If Not db Is Nothing Then Set db = Nothing
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
     IWorkflowService_HasTransitionPermission = False
 End Function
 
@@ -359,7 +392,7 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
     Dim sql As String
     Dim resultado As Boolean
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     sql = "SELECT t.RequiereAprobacion FROM TbTransiciones t " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
@@ -379,6 +412,7 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
     
     rs.Close
     Set rs = Nothing
+    db.Close
     Set db = Nothing
     
     IWorkflowService_RequiresApproval = resultado
@@ -387,7 +421,10 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
 ErrorHandler:
     modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.RequiresApproval"
     If Not rs Is Nothing Then Set rs = Nothing
-    If Not db Is Nothing Then Set db = Nothing
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
     IWorkflowService_RequiresApproval = False
 End Function
 
@@ -405,7 +442,7 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     Dim sql As String
     Dim resultado As Boolean
     
-    Set db = CurrentDb
+    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
     
     sql = "SELECT COUNT(*) AS Total FROM TbTransiciones t " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
@@ -425,6 +462,7 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     
     rs.Close
     Set rs = Nothing
+    db.Close
     Set db = Nothing
     
     TransitionExists = resultado
@@ -433,7 +471,10 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
 ErrorHandler:
     modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.TransitionExists"
     If Not rs Is Nothing Then Set rs = Nothing
-    If Not db Is Nothing Then Set db = Nothing
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
     TransitionExists = False
 End Function
 

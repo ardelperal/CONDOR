@@ -35,9 +35,9 @@ Public Function CreateWorkflowRepository() As IWorkflowRepository
     Dim repository As CWorkflowRepository
     Set repository = New CWorkflowRepository
     
-    ' Inyectar dependencia de configuración
+    ' Obtener instancia de configuración usando el nuevo factory
     Dim configService As IConfig
-    Set configService = modConfigFactory.CreateConfigService()
+    Set configService = modConfig.CreateConfigService()
     repository.Initialize configService
     
     Set CreateWorkflowRepository = repository

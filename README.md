@@ -11,6 +11,18 @@ CONDOR sigue una arquitectura de 3 capas con integración a sistema existente:
 - **Capa de Negocio**: Módulos VBA con lógica de negocio + ExpedienteService (interfaz con app existente)
 - **Capa de Datos**: Base de datos Access + Integración con aplicación de expedientes existente por IDExpediente
 
+### 🏗️ Patrones de Diseño Implementados
+
+El proyecto CONDOR implementa una arquitectura modular basada en patrones de diseño:
+
+- **Patrón Repository**: Para acceso a datos
+- **Patrón Factory**: Para creación de servicios
+- **Inyección de Dependencias**: Para desacoplamiento
+- **Interfaces**: Para contratos bien definidos
+- **Separación de Responsabilidades**: Cada clase tiene una función específica
+- **Gestión Segura de Conexiones**: Uso de OpenDatabase con cierre explícito
+- **Configuración Centralizada**: Acceso a backend a través de modConfig.GetDataPath()
+
 ### Integración con Sistema Existente
 CONDOR se conecta con la aplicación de expedientes existente para obtener:
 - Nemotécnico del expediente
@@ -162,6 +174,25 @@ Se ha implementado un nuevo sistema para registrar las operaciones importantes d
 **Factory de Configuración:**
 Se ha añadido un factory específico para la gestión de servicios de configuración, siguiendo el patrón de inyección de dependencias.
 - **Factory:** `modConfigFactory.bas` (proporciona instancias de `IConfig`)
+
+**Servicio de Documentos:**
+Implementación completa del servicio de generación y lectura de documentos Word con arquitectura de inyección de dependencias.
+- **Interfaz:** `IDocumentService.cls` (contrato para operaciones de documentos)
+- **Implementación:** `CDocumentService.cls` (lógica principal de generación y lectura)
+- **Mock:** `CMockDocumentService.cls` (para pruebas unitarias aisladas)
+- **Factory:** `modDocumentServiceFactory.bas` (inyección de IConfig, ISolicitudRepository, IOperationLogger, IWordManager)
+
+**Gestión de Word:**
+Abstracción completa para el manejo de documentos Word, eliminando dependencias directas de Word.Application.
+- **Interfaz:** `IWordManager.cls` (contrato para operaciones con Word)
+- **Implementación:** `CWordManager.cls` (encapsula Word.Application)
+- **Mock:** `CMockWordManager.cls` (simula operaciones de Word para pruebas)
+
+**Características del DocumentService:**
+- **Aislamiento Total:** Sin dependencias directas de Word o base de datos en las pruebas
+- **Operaciones:** GenerarDocumento (plantilla → documento final), LeerDocumento (documento → base de datos)
+- **Pruebas Unitarias:** Test_DocumentService.bas con cobertura completa usando mocks
+- **Manejo de Errores:** Integración completa con modErrorHandler y IOperationLogger
 
 ## Estructura de Datos
 - Tablas principales: Expedientes, Solicitudes, Datos específicos y Mapeo de campos.

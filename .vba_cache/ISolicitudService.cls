@@ -1,21 +1,35 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ISolicitudService"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 ' ============================================================================
-' Interface: ISolicitudService
-' Descripcion: Contrato para la logica de negocio de Solicitudes.
-' Version: 3.0
+' INTERFAZ: ISolicitudService
+' Arquitectura: Contrato Limpio para Lógica de Negocio de Solicitudes
+' Version: 2.0 - Reconstrucción Total
+' ============================================================================
+' Define el contrato para operaciones de negocio relacionadas con solicitudes.
+' Implementa el patrón Service con delegación al repositorio.
 ' ============================================================================
 
-Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String, ByVal subTipo As String) As T_Solicitud
+' Crea una nueva solicitud con estado inicial "Borrador"
+' @param idExpediente: ID del expediente al que pertenece la solicitud
+' @param tipo: Tipo de solicitud (ej: "PC", "RAC", etc.)
+' @return: Objeto T_Solicitud creado y guardado
+Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As T_Solicitud
 End Function
 
-Public Function GetSolicitud(ByVal idSolicitud As Long) As T_Solicitud
-End Function
-
-Public Function SaveSolicitud(solicitud As T_Solicitud) As Boolean
-End Function
-
-Public Function ChangeState(ByVal idSolicitud As Long, ByVal newState As String) As Boolean
+' Guarda una solicitud existente
+' @param solicitud: Objeto T_Solicitud a guardar
+' @return: True si se guardó correctamente, False en caso contrario
+Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
 End Function
 
 

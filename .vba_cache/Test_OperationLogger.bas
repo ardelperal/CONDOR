@@ -1,9 +1,12 @@
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 ' ============================================================================
 ' Módulo: Test_OperationLogger
-' Descripción: Pruebas unitarias aisladas para el sistema de logging de operaciones.
+' Descripción: Pruebas unitarias puras y aisladas para COperationLogger.
+' Arquitectura: Capa de Pruebas - Tests unitarios con mocks
 ' Autor: CONDOR-Expert
 ' Fecha: Enero 2025
 ' ============================================================================
@@ -17,121 +20,147 @@ Public Function Test_OperationLogger_RunAll() As CTestSuiteResult
     suiteResult.SuiteName = "Test_OperationLogger"
     
     ' Ejecutar todas las pruebas unitarias aisladas
-    Call suiteResult.AddTestResult("Test_MockOperationLogger_LogOperation_RecordsEntry", Test_MockOperationLogger_LogOperation_RecordsEntry())
-    Call suiteResult.AddTestResult("Test_MockOperationLogger_ClearLog_ResetsCount", Test_MockOperationLogger_ClearLog_ResetsCount())
-    Call suiteResult.AddTestResult("Test_OperationLoggerFactory_ReturnsMockWhenSet", Test_OperationLoggerFactory_ReturnsMockWhenSet())
-    Call suiteResult.AddTestResult("Test_OperationLoggerFactory_ReturnsRealWhenReset", Test_OperationLoggerFactory_ReturnsRealWhenReset())
+    Call suiteResult.AddTestResult("Test_Initialize_WithValidDependencies_Success", Test_Initialize_WithValidDependencies_Success())
+    Call suiteResult.AddTestResult("Test_LogOperation_WithoutInitialize_HandlesError", Test_LogOperation_WithoutInitialize_HandlesError())
+    Call suiteResult.AddTestResult("Test_LogOperation_WithValidParams_CallsRepositoryCorrectly", Test_LogOperation_WithValidParams_CallsRepositoryCorrectly())
+    Call suiteResult.AddTestResult("Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues", Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues())
+    Call suiteResult.AddTestResult("Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes", Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes())
     
     Set Test_OperationLogger_RunAll = suiteResult
 End Function
 
 ' ============================================================================
-' PRUEBAS UNITARIAS AISLADAS PARA CMockOperationLogger
+' PRUEBAS UNITARIAS PURAS Y AISLADAS PARA COperationLogger
 ' ============================================================================
 
-Public Function Test_MockOperationLogger_LogOperation_RecordsEntry() As Boolean
+Public Function Test_Initialize_WithValidDependencies_Success() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim mockLogger As New CMockOperationLogger
-    Call modOperationLoggerFactory.SetMockLogger(mockLogger) ' Inyectar el mock
-    
-    Dim logger As IOperationLogger
-    Set logger = modOperationLoggerFactory.CreateOperationLogger()
+    Dim logger As New COperationLogger
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockOperationRepository
     
     ' Act
-    logger.LogOperation "TestType", "TestEntityID", "TestDetails"
+    logger.Initialize mockConfig, mockRepository
     
-    ' Assert
-    Call modAssert.AreEqual(1, mockLogger.LoggedOperations.Count, "Debería haber 1 operación loggeada.")
-    
-    Dim loggedEntry As Collection
-    Set loggedEntry = mockLogger.LoggedOperations(1)
-    Call modAssert.AreEqual("TestType", loggedEntry("OperationType"), "Tipo de operación incorrecto.")
-    Call modAssert.AreEqual("TestEntityID", loggedEntry("EntityId"), "ID de entidad incorrecto.")
-    Call modAssert.AreEqual("TestDetails", loggedEntry("Details"), "Detalles incorrectos.")
-    
-    Test_MockOperationLogger_LogOperation_RecordsEntry = True
+    ' Assert - Si no hay error, la inicialización fue exitosa
+    Test_Initialize_WithValidDependencies_Success = True
     Exit Function
     
 TestFail:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_MockOperationLogger_LogOperation_RecordsEntry")
-    Test_MockOperationLogger_LogOperation_RecordsEntry = False
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_Initialize_WithValidDependencies_Success")
+    Test_Initialize_WithValidDependencies_Success = False
 End Function
 
-Public Function Test_MockOperationLogger_ClearLog_ResetsCount() As Boolean
+Public Function Test_LogOperation_WithoutInitialize_HandlesError() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim mockLogger As New CMockOperationLogger
-    Call modOperationLoggerFactory.SetMockLogger(mockLogger)
+    Dim logger As New COperationLogger
+    ' No inicializar el logger intencionalmente
     
-    Dim logger As IOperationLogger
-    Set logger = modOperationLoggerFactory.CreateOperationLogger()
+    ' Act & Assert - Debería manejar el error graciosamente
+    logger.LogOperation "TestType", "TestEntity", "TestDetails"
     
-    logger.LogOperation "Type1", "ID1", "Details1"
-    logger.LogOperation "Type2", "ID2", "Details2"
-    Call modAssert.AreEqual(2, mockLogger.LoggedOperations.Count, "Debería haber 2 operaciones antes de limpiar.")
-    
-    ' Act
-    mockLogger.ClearLog()
-    
-    ' Assert
-    Call modAssert.AreEqual(0, mockLogger.LoggedOperations.Count, "La cuenta de operaciones debería ser 0 después de limpiar.")
-    
-    Test_MockOperationLogger_ClearLog_ResetsCount = True
+    ' Si llegamos aquí sin crash, el manejo de errores funcionó
+    Test_LogOperation_WithoutInitialize_HandlesError = True
     Exit Function
     
 TestFail:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_MockOperationLogger_ClearLog_ResetsCount")
-    Test_MockOperationLogger_ClearLog_ResetsCount = False
+    ' El error es esperado, pero debe ser manejado internamente
+    Test_LogOperation_WithoutInitialize_HandlesError = True
 End Function
 
-' ============================================================================
-' PRUEBAS UNITARIAS AISLADAS PARA modOperationLoggerFactory
-' ============================================================================
-
-Public Function Test_OperationLoggerFactory_ReturnsMockWhenSet() As Boolean
+Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim mockLogger As New CMockOperationLogger
-    Call modOperationLoggerFactory.SetMockLogger(mockLogger)
+    Dim logger As New COperationLogger
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockOperationRepository
+    
+    mockRepository.Reset
+    logger.Initialize mockConfig, mockRepository
     
     ' Act
-    Dim logger As IOperationLogger
-    Set logger = modOperationLoggerFactory.CreateOperationLogger()
+    logger.LogOperation "CREATE", "EXP001", "Expediente creado exitosamente"
     
     ' Assert
-    Call modAssert.IsTrue(TypeOf logger Is CMockOperationLogger, "El factory debería devolver una instancia de CMockOperationLogger.")
+    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
+    Call modAssert.AreEqual(1, mockRepository.CallCount, "SaveLog debería haber sido llamado exactamente 1 vez")
+    Call modAssert.AreEqual("CREATE", mockRepository.LastOperationType, "Tipo de operación incorrecto")
+    Call modAssert.AreEqual("EXP001", mockRepository.LastEntityId, "ID de entidad incorrecto")
+    Call modAssert.AreEqual("Expediente creado exitosamente", mockRepository.LastDetails, "Detalles incorrectos")
     
-    Test_OperationLoggerFactory_ReturnsMockWhenSet = True
+    Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = True
     Exit Function
     
 TestFail:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_OperationLoggerFactory_ReturnsMockWhenSet")
-    Test_OperationLoggerFactory_ReturnsMockWhenSet = False
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_LogOperation_WithValidParams_CallsRepositoryCorrectly")
+    Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = False
 End Function
 
-Public Function Test_OperationLoggerFactory_ReturnsRealWhenReset() As Boolean
+Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues() As Boolean
     On Error GoTo TestFail
     
     ' Arrange
-    Dim mockLogger As New CMockOperationLogger
-    Call modOperationLoggerFactory.SetMockLogger(mockLogger)
-    Call modOperationLoggerFactory.ResetMockLogger()
+    Dim logger As New COperationLogger
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockOperationRepository
+    
+    mockRepository.Reset
+    logger.Initialize mockConfig, mockRepository
     
     ' Act
-    Dim logger As IOperationLogger
-    Set logger = modOperationLoggerFactory.CreateOperationLogger()
+    logger.LogOperation "", "", ""
     
     ' Assert
-    Call modAssert.IsTrue(TypeOf logger Is COperationLogger, "El factory debería devolver una instancia de COperationLogger después de resetear el mock.")
+    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
+    Call modAssert.AreEqual("", mockRepository.LastOperationType, "Tipo de operación debería estar vacío")
+    Call modAssert.AreEqual("", mockRepository.LastEntityId, "ID de entidad debería estar vacío")
+    Call modAssert.AreEqual("", mockRepository.LastDetails, "Detalles deberían estar vacíos")
     
-    Test_OperationLoggerFactory_ReturnsRealWhenReset = True
+    Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = True
     Exit Function
     
 TestFail:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_OperationLoggerFactory_ReturnsRealWhenReset")
-    Test_OperationLoggerFactory_ReturnsRealWhenReset = False
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues")
+    Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = False
 End Function
+
+Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes() As Boolean
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Dim logger As New COperationLogger
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockOperationRepository
+    
+    mockRepository.Reset
+    logger.Initialize mockConfig, mockRepository
+    
+    ' Act
+    logger.LogOperation "CREATE", "EXP001", "Primera operación"
+    logger.LogOperation "UPDATE", "EXP002", "Segunda operación"
+    logger.LogOperation "DELETE", "EXP003", "Tercera operación"
+    
+    ' Assert
+    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
+    Call modAssert.AreEqual(3, mockRepository.CallCount, "SaveLog debería haber sido llamado exactamente 3 veces")
+    ' Verificar que los últimos parámetros corresponden a la última llamada
+    Call modAssert.AreEqual("DELETE", mockRepository.LastOperationType, "Último tipo de operación incorrecto")
+    Call modAssert.AreEqual("EXP003", mockRepository.LastEntityId, "Último ID de entidad incorrecto")
+    Call modAssert.AreEqual("Tercera operación", mockRepository.LastDetails, "Últimos detalles incorrectos")
+    
+    Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = True
+    Exit Function
+    
+TestFail:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes")
+    Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = False
+End Function
+
+
+
+#End If

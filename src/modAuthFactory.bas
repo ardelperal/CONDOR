@@ -20,8 +20,8 @@ Public Function CreateAuthService() As IAuthService
         Exit Function
     End If
     
-    ' Obtener la instancia de configuración
-    Dim config As CConfig: Set config = modConfig.GetInstance()
+    ' Obtener la instancia de configuración usando el nuevo factory
+    Dim config As IConfig: Set config = modConfig.CreateConfigService()
     
     ' Obtener la instancia del logger de operaciones
     Dim operationLogger As IOperationLogger

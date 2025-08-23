@@ -12,12 +12,16 @@ Public Function CreateErrorHandlerService() As IErrorHandlerService
     
     Dim errorHandlerInstance As New CErrorHandlerService
     Dim config As IConfig
+    Dim fileSystem As IFileSystem
     
-    ' Obtener la configuración desde su factory
-    Set config = modConfigFactory.CreateConfig()
+    ' Obtener instancia de configuración usando el nuevo factory
+    Set config = modConfig.CreateConfigService()
+    
+    ' Crear instancia del sistema de ficheros
+    Set fileSystem = New CFileSystem
     
     ' Inicializar el servicio con sus dependencias
-    errorHandlerInstance.Initialize config
+    errorHandlerInstance.Initialize config, fileSystem
     
     ' Devolver la interfaz
     Set CreateErrorHandlerService = errorHandlerInstance

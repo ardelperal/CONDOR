@@ -7,6 +7,9 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
+#If DEV_MODE Then
+
 '==============================================================================
 ' Clase: CMockWorkflowRepository
 ' Propósito: Mock del repositorio de workflow para pruebas unitarias
@@ -78,3 +81,5 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     IWorkflowRepository_IsValidTransition = (Err.Number = 0)
     On Error GoTo 0
 End Function
+
+#End If

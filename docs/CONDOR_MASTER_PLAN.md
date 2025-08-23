@@ -43,6 +43,42 @@ Testing contra la Interfaz: En los módulos de prueba (Test_*), las variables de
 
 - **Auditoría de Operaciones:** Toda operación que represente una acción de negocio significativa (creación, cambio de estado, etc.) debe ser registrada a través del servicio `IOperationLogger`. La trazabilidad de las acciones es un requisito fundamental.
 
+2.3. Arquitectura del DocumentService
+El servicio de documentos (`DocumentService`) implementa un patrón de inyección de dependencias completo para el manejo de documentos Word, garantizando el aislamiento total y la testabilidad.
+
+**Componentes Principales:**
+- **IDocumentService.cls**: Interfaz que define el contrato para operaciones de documentos
+- **CDocumentService.cls**: Implementación principal que orquesta las operaciones de generación y lectura de documentos
+- **CMockDocumentService.cls**: Implementación mock para pruebas unitarias aisladas
+- **modDocumentServiceFactory.bas**: Factory que maneja la creación e inyección de todas las dependencias
+
+**Dependencias Inyectadas:**
+- **IConfig**: Servicio de configuración para obtener rutas de plantillas y configuraciones
+- **ISolicitudRepository**: Repositorio para acceso a datos de solicitudes
+- **IOperationLogger**: Servicio de logging para auditoría de operaciones
+- **IWordManager**: Abstracción para el manejo de documentos Word
+
+**Gestión de Word:**
+- **IWordManager.cls**: Interfaz que abstrae las operaciones con Word (abrir, guardar, reemplazar texto, leer contenido)
+- **CWordManager.cls**: Implementación concreta que encapsula la interacción con `Word.Application`
+- **CMockWordManager.cls**: Mock que simula operaciones de Word para pruebas sin dependencias externas
+
+**Operaciones Principales:**
+1. **GenerarDocumento**: Abre plantilla Word, reemplaza marcadores con datos de la solicitud, guarda el documento
+2. **LeerDocumento**: Lee un documento Word existente y extrae valores de marcadores para actualizar la base de datos
+
+**Arquitectura de Pruebas:**
+- **Test_DocumentService.bas**: Suite completa de pruebas unitarias aisladas
+- Utiliza mocks para todas las dependencias (Config, Repository, Logger, WordManager)
+- Pruebas independientes que no requieren Word ni base de datos
+- Cobertura completa de escenarios de éxito y error
+
+**Beneficios de la Arquitectura:**
+- **Aislamiento Total**: Sin dependencias directas de Word o base de datos en las pruebas
+- **Testabilidad**: Cada componente puede probarse de forma independiente
+- **Mantenibilidad**: Separación clara de responsabilidades
+- **Flexibilidad**: Fácil intercambio de implementaciones (real vs mock)
+
 3. Flujo de Trabajo y Gestión de Estados
    El flujo de trabajo de la aplicación se divide en fases gestionadas por los roles Calidad y Técnico. El rol Administrador tiene acceso a todas las funcionalidades.
 
@@ -261,7 +297,7 @@ Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado ap
 | Campo | Tipo | Longitud | Nulo | Clave | Descripción |
 |-------|------|----------|------|-------|-------------|
 | idSolicitud | AutoNumber | - | No | PK | Identificador único de la solicitud |
-| idExpediente | Text | 50 | No | FK | Referencia al expediente asociado |
+| idExpediente | Long | - | No | FK | Referencia al expediente asociado |
 | tipoSolicitud | Text | 20 | No | - | Tipo de solicitud: "PC", "CD/CA", "CD/CA-SUB" |
 | subTipoSolicitud | Text | 20 | Sí | - | Subtipo: "Desviación" o "Concesión" |
 | codigoSolicitud | Text | 50 | No | - | Código único autogenerado |

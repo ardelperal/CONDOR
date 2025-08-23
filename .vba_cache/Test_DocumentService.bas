@@ -2,105 +2,359 @@ Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Módulo: Test_DocumentService
-' Descripción: Pruebas unitarias para CDocumentService.cls, siguiendo la arquitectura TDD.
+' Descripción: Suite de pruebas unitarias para DocumentService
+' Autor: CONDOR-Expert
+' Fecha: 2025-08-22
+' Versión: 2.0 - Estandarizado según framework
 ' ============================================================================
 
-' --- DECLARACIÓN DE MOCKS ---
-Private m_MockConfig As CMockConfig
-Private m_MockSolicitudRepository As CMockSolicitudRepository
-Private m_MockOperationLogger As CMockOperationLogger
-Private m_MockSolicitud As CMockSolicitud ' Un mock para el objeto ISolicitud
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
+' ============================================================================
 
-' --- FUNCIÓN PRINCIPAL DE LA SUITE ---
 Public Function Test_DocumentService_RunAll() As CTestSuiteResult
-    Dim suiteResult As New CTestSuiteResult
-    suiteResult.SuiteName = "Test_DocumentService"
-
-    ' Añadir aquí cada una de las pruebas individuales
-    suiteResult.AddTest "Test_GenerarDocumento_RutaValida_Success", Test_GenerarDocumento_RutaValida_Success()
-    suiteResult.AddTest "Test_GenerarDocumento_PlantillaNoExiste_Fail", Test_GenerarDocumento_PlantillaNoExiste_Fail()
-    ' TODO: Añadir más pruebas para LeerDocumento
-
-    Set Test_DocumentService_RunAll = suiteResult
+    Dim suite As New CTestSuiteResult
+    suite.Initialize "DocumentService"
+    
+    ' Ejecutar todas las pruebas y añadir resultados
+    suite.AddTestResult Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente()
+    suite.AddTestResult Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia()
+    suite.AddTestResult Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia()
+    suite.AddTestResult Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud()
+    suite.AddTestResult Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse()
+    suite.AddTestResult Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente()
+    
+    Set Test_DocumentService_RunAll = suite
 End Function
 
-' --- SETUP DE PRUEBAS ---
-Private Sub Setup()
-    ' Se ejecuta antes de cada prueba para inicializar los mocks
-    Set m_MockConfig = New CMockConfig
-    Set m_MockSolicitudRepository = New CMockSolicitudRepository
-    Set m_MockOperationLogger = New CMockOperationLogger
-    Set m_MockSolicitud = New CMockSolicitud
-End Sub
+' ============================================================================
+' PRUEBAS DE GENERACIÓN DE DOCUMENTOS
+' ============================================================================
 
-' --- PRUEBAS INDIVIDUALES ---
-
-Private Function Test_GenerarDocumento_RutaValida_Success() As CTestResult
-    Dim result As New CTestResult
-    result.TestName = "Test_GenerarDocumento_RutaValida_Success"
-    On Error GoTo TestFail
-
+Private Function Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "GenerarDocumento con datos válidos"
+    
+    On Error GoTo ErrorHandler
+    
     ' Arrange
-    Call Setup
-    Dim docService As IDocumentService
-    Set docService = CreateTestableDocumentService()
-
-    ' Configurar mocks para un escenario exitoso - SIN dependencias del sistema de ficheros
-    m_MockConfig.SetPlantillaPath "C:\Plantillas\PC.docx"
-    m_MockConfig.SetGeneratedDocsPath "C:\Documentos\Generados"
-    m_MockConfig.IsTestMode = True ' Esto le dice al servicio que no compruebe si el fichero existe
-    m_MockSolicitud.tipoSolicitud = "PC"
-    m_MockSolicitud.codigoSolicitud = "PC-001"
-
+    Dim docService As New CDocumentService
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockWordManager As New CMockWordManager
+    
+    ' Configurar mocks
+    mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
+    mockConfig.GetGeneratedDocsPath_ReturnValue = "C:\Generated"
+    mockConfig.IsTestMode_ReturnValue = True
+    
+    mockWordManager.AbrirDocumento_ReturnValue = True
+    mockWordManager.ReemplazarTexto_ReturnValue = True
+    mockWordManager.GuardarDocumento_ReturnValue = True
+    
+    ' Crear solicitud de prueba
+    Dim solicitud As T_Solicitud
+    solicitud.idSolicitud = 123
+    solicitud.codigoSolicitud = "SOL001"
+    solicitud.tipoSolicitud = "Permiso"
+    
+    ' Inicializar servicio
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    
     ' Act
-    Dim rutaGenerada As String
-    rutaGenerada = docService.GenerarDocumento(m_MockSolicitud)
-
+    Dim resultado As String
+    resultado = docService.GenerarDocumento(solicitud)
+    
     ' Assert
-    modAssert.AreNotEqual "", rutaGenerada, "La ruta del documento no debería estar vacía."
-    modAssert.IsTrue InStr(rutaGenerada, "PC-001") > 0, "El nombre del fichero debe contener el código de la solicitud."
-
-    result.Passed = True
+    If resultado = "" Then
+        testResult.Fail "No se generó el documento"
+        GoTo Cleanup
+    End If
+    
+    If Not mockWordManager.AbrirDocumento_WasCalled Then
+        testResult.Fail "No se llamó a AbrirDocumento"
+        GoTo Cleanup
+    End If
+    
+    If Not mockWordManager.GuardarDocumento_WasCalled Then
+        testResult.Fail "No se llamó a GuardarDocumento"
+        GoTo Cleanup
+    End If
+    
+    If Not mockWordManager.CerrarDocumento_WasCalled Then
+        testResult.Fail "No se llamó a CerrarDocumento"
+        GoTo Cleanup
+    End If
+    
+    testResult.Pass
+    
+Cleanup:
+    ' Limpiar
+    mockConfig.Reset
+    mockRepository.Reset
+    mockLogger.Reset
+    mockWordManager.Reset
+    Set Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente = testResult
     Exit Function
-
-TestFail:
-    result.Passed = False
-    result.Message = "Error: " & Err.Description
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    Resume Cleanup
 End Function
 
-Private Function Test_GenerarDocumento_PlantillaNoExiste_Fail() As CTestResult
-    Dim result As New CTestResult
-    result.TestName = "Test_GenerarDocumento_PlantillaNoExiste_Fail"
-    On Error GoTo TestFail
-
+Private Function Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "GenerarDocumento con plantilla inexistente"
+    
+    On Error GoTo ErrorHandler
+    
     ' Arrange
-    Call Setup
-    Dim docService As IDocumentService
-    Set docService = CreateTestableDocumentService()
-
-    ' Configurar mocks para un escenario de fallo (la plantilla no existe)
-    m_MockConfig.SetPlantillaPath "C:RutaInexistente"
-    m_MockConfig.IsTestMode = False ' Forzar la comprobación de ficheros para esta prueba
-    m_MockSolicitud.tipoSolicitud = "PC"
-
+    Dim docService As New CDocumentService
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockWordManager As New CMockWordManager
+    
+    ' Configurar mocks para simular error
+    mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
+    mockConfig.IsTestMode_ReturnValue = False ' Para que verifique existencia
+    mockWordManager.AbrirDocumento_ReturnValue = False ' Simular fallo
+    
+    ' Crear solicitud de prueba
+    Dim solicitud As T_Solicitud
+    solicitud.idSolicitud = 123
+    solicitud.codigoSolicitud = "SOL001"
+    solicitud.tipoSolicitud = "Inexistente"
+    
+    ' Inicializar servicio
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    
     ' Act
-    Dim rutaGenerada As String
-    rutaGenerada = docService.GenerarDocumento(m_MockSolicitud)
-
+    Dim resultado As String
+    resultado = docService.GenerarDocumento(solicitud)
+    
     ' Assert
-    modAssert.AreEqual "", rutaGenerada, "La ruta del documento debería estar vacía si la plantilla no existe."
-
-    result.Passed = True
+    If resultado <> "" Then
+        testResult.Fail "Debería haber retornado cadena vacía"
+    Else
+        testResult.Pass
+    End If
+    
+Cleanup:
+    ' Limpiar
+    mockConfig.Reset
+    mockRepository.Reset
+    mockLogger.Reset
+    mockWordManager.Reset
+    Set Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia = testResult
     Exit Function
-TestFail:
-    result.Passed = False
-    result.Message = "Error: " & Err.Description
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    Resume Cleanup
 End Function
 
-' --- FUNCIÓN AUXILIAR PARA CREAR EL SERVICIO BAJO PRUEBA ---
-Private Function CreateTestableDocumentService() As IDocumentService
-    ' Crea una instancia real del servicio pero le inyecta nuestros mocks
-    Dim serviceImpl As New CDocumentService
-    serviceImpl.Initialize m_MockConfig, m_MockSolicitudRepository, m_MockOperationLogger
-    Set CreateTestableDocumentService = serviceImpl
+Private Function Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "GenerarDocumento con error en WordManager"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange
+    Dim docService As New CDocumentService
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockWordManager As New CMockWordManager
+    
+    ' Configurar mocks
+    mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
+    mockConfig.IsTestMode_ReturnValue = True
+    mockWordManager.AbrirDocumento_ReturnValue = True
+    mockWordManager.GuardarDocumento_ReturnValue = False ' Simular fallo al guardar
+    
+    ' Crear solicitud de prueba
+    Dim solicitud As T_Solicitud
+    solicitud.idSolicitud = 123
+    solicitud.codigoSolicitud = "SOL001"
+    solicitud.tipoSolicitud = "Permiso"
+    
+    ' Inicializar servicio
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    
+    ' Act
+    Dim resultado As String
+    resultado = docService.GenerarDocumento(solicitud)
+    
+    ' Assert
+    If resultado <> "" Then
+        testResult.Fail "Debería haber retornado cadena vacía"
+    Else
+        testResult.Pass
+    End If
+    
+Cleanup:
+    ' Limpiar
+    mockConfig.Reset
+    mockRepository.Reset
+    mockLogger.Reset
+    mockWordManager.Reset
+    Set Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia = testResult
+    Exit Function
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    Resume Cleanup
+End Function
+
+' ============================================================================
+' PRUEBAS DE LECTURA DE DOCUMENTOS
+' ============================================================================
+
+Private Function Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "LeerDocumento con documento válido"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange
+    Dim docService As New CDocumentService
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockWordManager As New CMockWordManager
+    
+    ' Configurar mocks
+    Dim solicitudMock As New T_Solicitud
+    solicitudMock.idSolicitud = 123
+    solicitudMock.tipoSolicitud = "Permiso"
+    
+    mockRepository.GetSolicitudById_ReturnValue = solicitudMock
+    mockRepository.UpdateSolicitud_ReturnValue = True
+    mockWordManager.LeerContenidoDocumento_ReturnValue = "[nombre]Juan Pérez[/nombre][fecha]2025-01-01[/fecha]"
+    
+    ' Inicializar servicio
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    
+    ' Act
+    Dim resultado As Boolean
+    resultado = docService.LeerDocumento("C:\test.docx", 123)
+    
+    ' Assert
+    If Not resultado Then
+        testResult.Fail "Fallo al leer documento"
+        GoTo Cleanup
+    End If
+    
+    If Not mockRepository.GetSolicitudById_WasCalled Then
+        testResult.Fail "No se llamó a GetSolicitudById del repositorio"
+        GoTo Cleanup
+    End If
+    
+    If Not mockRepository.UpdateSolicitud_WasCalled Then
+        testResult.Fail "No se llamó a UpdateSolicitud del repositorio"
+        GoTo Cleanup
+    End If
+    
+    testResult.Pass
+    
+Cleanup:
+    ' Limpiar
+    mockConfig.Reset
+    mockRepository.Reset
+    mockLogger.Reset
+    mockWordManager.Reset
+    Set Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud = testResult
+    Exit Function
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    Resume Cleanup
+End Function
+
+Private Function Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "LeerDocumento con documento inexistente"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange
+    Dim docService As New CDocumentService
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockWordManager As New CMockWordManager
+    
+    ' Configurar mocks para simular error
+    Dim solicitudMock As New T_Solicitud
+    solicitudMock.idSolicitud = 123
+    
+    mockRepository.GetSolicitudById_ReturnValue = solicitudMock
+    mockWordManager.LeerContenidoDocumento_ReturnValue = "" ' Simular fallo
+    
+    ' Inicializar servicio
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    
+    ' Act
+    Dim resultado As Boolean
+    resultado = docService.LeerDocumento("C:\inexistente.docx", 123)
+    
+    ' Assert
+    If resultado Then
+        testResult.Fail "Debería haber retornado False"
+    Else
+        testResult.Pass
+    End If
+    
+Cleanup:
+    ' Limpiar
+    mockConfig.Reset
+    mockRepository.Reset
+    mockLogger.Reset
+    mockWordManager.Reset
+    Set Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse = testResult
+    Exit Function
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    Resume Cleanup
+End Function
+
+' ============================================================================
+' PRUEBAS DE INICIALIZACIÓN
+' ============================================================================
+
+Private Function Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Initialize con dependencias válidas"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange
+    Dim docService As New CDocumentService
+    Dim mockConfig As New CMockConfig
+    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockWordManager As New CMockWordManager
+    
+    ' Act
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    
+    ' Assert
+    ' Verificar que no se produzcan errores durante la inicialización
+    testResult.Pass
+    
+Cleanup:
+    ' Limpiar
+    mockConfig.Reset
+    mockRepository.Reset
+    mockLogger.Reset
+    mockWordManager.Reset
+    Set Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente = testResult
+    Exit Function
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado durante inicialización: " & Err.Description
+    Resume Cleanup
 End Function

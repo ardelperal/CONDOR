@@ -124,6 +124,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - [X] Sistema de logging de operaciones
 - [X] Factory para servicios de configuración
 
+
 ## 1. ARQUITECTURA Y ESTRUCTURA BASE
 
 ### 1.1 Capa de Datos

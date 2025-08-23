@@ -1,51 +1,38 @@
 Option Compare Database
 Option Explicit
 
-' ============================================================================
-' Módulo: modExpedienteServiceFactory
-' Descripción: Factory para crear instancias de CExpedienteService con dependencias reales
-' Autor: CONDOR-Developer
-' Fecha: Enero 2025
-' ============================================================================
+' =====================================================
+' MODULO: modExpedienteServiceFactory
+' DESCRIPCION: Factory especializada para la creación del servicio de expedientes
+' AUTOR: Sistema CONDOR
+' FECHA: 2024
+' =====================================================
 
-' ============================================================================
-' FUNCIÓN FACTORY PRINCIPAL
-' ============================================================================
-
-Public Function CreateExpedienteService() As CExpedienteService
-    ' Crear instancia del servicio
-    Dim expedienteService As New CExpedienteService
+' Función factory para crear y configurar el servicio de expedientes
+Public Function CreateExpedienteService() As IExpedienteService
+    On Error GoTo ErrorHandler
     
-    ' Crear dependencias reales
-    Dim config As IConfig
-    Set config = New CConfig
+    ' Obtener todas las dependencias requeridas
+    Dim m_Config As IConfig
+    Dim m_OperationLogger As IOperationLogger
+    Dim m_SolicitudRepository As ISolicitudRepository
     
-    Dim logger As IOperationLogger
-    Set logger = New COperationLogger
+    Set m_Config = modConfig.CreateConfigService()
+    Set m_OperationLogger = modOperationLoggerFactory.CreateOperationLogger()
+    Set m_SolicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
     
-    Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    ' Crear una instancia de la clase concreta
+    Dim expedienteServiceInstance As New CExpedienteService
     
-    ' Inyectar dependencias
-    expedienteService.Initialize config, logger, repository
+    ' Inicializar la instancia concreta con todas las dependencias
+    expedienteServiceInstance.Initialize m_Config, m_OperationLogger, m_SolicitudRepository
     
-    ' Devolver instancia configurada
-    Set CreateExpedienteService = expedienteService
-End Function
-
-' ============================================================================
-' FUNCIÓN FACTORY PARA TESTING CON MOCKS
-' ============================================================================
-
-Public Function CreateExpedienteServiceWithMocks(ByVal mockConfig As IConfig, _
-                                                ByVal mockLogger As IOperationLogger, _
-                                                ByVal mockRepository As ISolicitudRepository) As CExpedienteService
-    ' Crear instancia del servicio
-    Dim expedienteService As New CExpedienteService
+    ' Devolver la instancia inicializada como el tipo de la interfaz
+    Set CreateExpedienteService = expedienteServiceInstance
     
-    ' Inyectar mocks
-    expedienteService.Initialize mockConfig, mockLogger, mockRepository
+    Exit Function
     
-    ' Devolver instancia configurada con mocks
-    Set CreateExpedienteServiceWithMocks = expedienteService
+ErrorHandler:
+    Call modErrorHandler.LogError(Err.Number, Err.Description, "modExpedienteServiceFactory.CreateExpedienteService")
+    Set CreateExpedienteService = Nothing
 End Function

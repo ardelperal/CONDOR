@@ -1,6 +1,21 @@
 Option Compare Database
 Option Explicit
 
+' Función para compatibilidad con CLI (debe estar fuera del bloque condicional)
+Public Sub ExecuteAllTests()
+#If DEV_MODE Then
+    Call EjecutarTodasLasPruebas
+#End If
+End Sub
+
+Public Sub RunTests()
+#If DEV_MODE Then
+    Call EjecutarTodasLasPruebas
+#End If
+End Sub
+
+#If DEV_MODE Then
+
 ' ============================================================================
 ' MOTOR DE EJECUCIÓN DE PRUEBAS - FRAMEWORK ORIENTADO A OBJETOS
 ' Arquitectura: Separación de Responsabilidades (Ejecución vs. Reporte)
@@ -48,6 +63,10 @@ Private Sub RegisterTestSuites()
     m_registeredSuites.Add "Test_Solicitud_RunAll"
     m_registeredSuites.Add "Test_WorkflowRepository_RunAll"
     m_registeredSuites.Add "Test_AppManager_RunAll"
+    m_registeredSuites.Add "Test_CSolicitudRepository_RunAll"
+    m_registeredSuites.Add "Test_DocumentServiceFactory_RunAll"
+    m_registeredSuites.Add "Test_ExpedienteServiceFactory_RunAll"
+    m_registeredSuites.Add "Test_LoggingService_RunAll"
 End Sub
 
 ' ============================================================================
@@ -86,6 +105,8 @@ Private Function CreateErrorSuiteResult(ByVal suiteName As String, ByVal errorDe
 
     Set CreateErrorSuiteResult = errorResult
 End Function
+
+#End If
 
 
 

@@ -2,63 +2,51 @@ Attribute VB_Name = "Test_CConfig"
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 ' ============================================================================
-' MÓDULO DE PRUEBAS UNITARIAS PARA CConfig
+' MÓDULO DE PRUEBAS DE INTEGRACIÓN PARA CConfig
 ' ============================================================================
-' Este módulo contiene pruebas unitarias aisladas para CConfig
-' utilizando mocks para todas las dependencias externas.
-' Sigue la Lección 10: El Aislamiento de las Pruebas Unitarias con Mocks no es Negociable
+' Este módulo contiene pruebas de integración para CConfig
+' que validan la nueva implementación autónoma sin dependencias.
+' CConfig ahora se conecta directamente a la base de datos.
 
 ' Función principal que ejecuta todas las pruebas del módulo
 Public Function Test_CConfig_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "Test_CConfig"
     
-    ' Ejecutar todas las pruebas unitarias
-    suiteResult.AddTestResult Test_Initialize_LoadsAndReadsValues_Success()
+    ' Ejecutar todas las pruebas de integración
+    suiteResult.AddTestResult Test_GetValue_DATAPATH_Success()
+    suiteResult.AddTestResult Test_GetValue_DATABASEPASSWORD_Success()
+    suiteResult.AddTestResult Test_HasKey_ExistingKey_ReturnsTrue()
+    suiteResult.AddTestResult Test_HasKey_NonExistingKey_ReturnsFalse()
+    suiteResult.AddTestResult Test_GetValue_NonExistingKey_ReturnsEmpty()
     
     Set Test_CConfig_RunAll = suiteResult
 End Function
 
 ' ============================================================================
-' PRUEBAS UNITARIAS PARA CConfig
+' PRUEBAS DE INTEGRACIÓN PARA CConfig
 ' ============================================================================
 
-' Prueba que CConfig inicializa correctamente y lee valores desde el mock repository
-Private Function Test_Initialize_LoadsAndReadsValues_Success() As CTestResult
+' Prueba que CConfig puede obtener el valor DATAPATH correctamente
+Private Function Test_GetValue_DATAPATH_Success() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_Initialize_LoadsAndReadsValues_Success"
+    testResult.Initialize "Test_GetValue_DATAPATH_Success"
     
     On Error GoTo ErrorHandler
     
-    ' Arrange - Configurar mocks y datos de prueba
-    Dim mockRepository As New CMockSolicitudRepository
-    Dim mockLogger As New CMockOperationLogger
-    
-    ' Crear recordset mock con claves de configuración
-    Dim mockRecordset As Object
-    Set mockRecordset = CreateMockConfigRecordset()
-    mockRepository.SetMockRecordset mockRecordset
-    
-    ' Crear instancia de CConfig con dependencias mock
+    ' Arrange
     Dim config As New CConfig
-    config.Initialize mockLogger, mockRepository
     
-    ' Act - Ejecutar inicialización y métodos bajo prueba
-    Dim initResult As Boolean
-    initResult = config.InitializeEnvironment()
+    ' Act
+    Dim dataPath As String
+    dataPath = config.GetValue("DATAPATH")
     
-    ' Assert - Verificar que la inicialización fue exitosa
-    modAssert.AssertTrue initResult, "InitializeEnvironment debe retornar True"
-    
-    ' Verificar que GetValue devuelve los valores correctos del recordset mock
-    modAssert.AssertEquals "C:\\Test\\Database.accdb", config.GetValue("DATABASEPATH"), "DATABASEPATH debe coincidir con el valor mock"
-    modAssert.AssertEquals "C:\\Test\\Logs", config.GetValue("LOGPATH"), "LOGPATH debe coincidir con el valor mock"
-    
-    ' Verificar que HasKey funciona correctamente para claves existentes e inexistentes
-    modAssert.AssertTrue config.HasKey("DATABASEPATH"), "HasKey debe retornar True para claves existentes"
-    modAssert.AssertTrue config.HasKey("LOGPATH"), "HasKey debe retornar True para claves existentes"
-    modAssert.AssertFalse config.HasKey("CLAVE_INEXISTENTE"), "HasKey debe retornar False para claves inexistentes"
+    ' Assert
+    modAssert.AssertFalse dataPath = "", "DATAPATH no debe estar vacío"
+    modAssert.AssertTrue InStr(dataPath, ".accdb") > 0, "DATAPATH debe contener .accdb"
     
     testResult.Pass
     GoTo CleanUp
@@ -67,49 +55,118 @@ ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
 CleanUp:
-    ' Limpiar recursos
-    If Not mockRecordset Is Nothing Then
-        mockRecordset.Close
-        Set mockRecordset = Nothing
-    End If
-    Set Test_Initialize_LoadsAndReadsValues_Success = testResult
+    Set config = Nothing
+    Set Test_GetValue_DATAPATH_Success = testResult
 End Function
 
-' ============================================================================
-' FUNCIONES AUXILIARES PARA CREAR RECORDSETS MOCK
-' ============================================================================
-
-' Crea un recordset mock con datos de configuración para las pruebas
-Private Function CreateMockConfigRecordset() As Object
-    Dim rs As Object
+' Prueba que CConfig puede obtener el valor DATABASEPASSWORD correctamente
+Private Function Test_GetValue_DATABASEPASSWORD_Success() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetValue_DATABASEPASSWORD_Success"
     
-    ' Crear recordset ADODB en memoria
-    Set rs = CreateObject("ADODB.Recordset")
+    On Error GoTo ErrorHandler
     
-    ' Definir campos del recordset
-    rs.Fields.Append "Clave", 202, 50 ' adVarWChar
-    rs.Fields.Append "Valor", 202, 255 ' adVarWChar
+    ' Arrange
+    Dim config As New CConfig
     
-    ' Abrir recordset en memoria
-    rs.Open
+    ' Act
+    Dim password As String
+    password = config.GetValue("DATABASEPASSWORD")
     
-    ' Añadir registro DATABASEPATH
-    rs.AddNew
-    rs.Fields("Clave").Value = "DATABASEPATH"
-    rs.Fields("Valor").Value = "C:\\Test\\Database.accdb"
-    rs.Update
+    ' Assert
+    modAssert.AssertEquals "dpddpd", password, "DATABASEPASSWORD debe ser 'dpddpd'"
     
-    ' Añadir registro LOGPATH
-    rs.AddNew
-    rs.Fields("Clave").Value = "LOGPATH"
-    rs.Fields("Valor").Value = "C:\\Test\\Logs"
-    rs.Update
+    testResult.Pass
+    GoTo CleanUp
     
-    ' Mover al primer registro
-    rs.MoveFirst
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
     
-    Set CreateMockConfigRecordset = rs
+CleanUp:
+    Set config = Nothing
+    Set Test_GetValue_DATABASEPASSWORD_Success = testResult
 End Function
+
+' Prueba que HasKey devuelve True para claves existentes
+Private Function Test_HasKey_ExistingKey_ReturnsTrue() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_HasKey_ExistingKey_ReturnsTrue"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange
+    Dim config As New CConfig
+    
+    ' Act & Assert
+    modAssert.AssertTrue config.HasKey("DATAPATH"), "HasKey debe devolver True para DATAPATH"
+    modAssert.AssertTrue config.HasKey("DATABASEPASSWORD"), "HasKey debe devolver True para DATABASEPASSWORD"
+    
+    testResult.Pass
+    GoTo CleanUp
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    Set config = Nothing
+    Set Test_HasKey_ExistingKey_ReturnsTrue = testResult
+End Function
+
+' Prueba que HasKey devuelve False para claves no existentes
+Private Function Test_HasKey_NonExistingKey_ReturnsFalse() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_HasKey_NonExistingKey_ReturnsFalse"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange
+    Dim config As New CConfig
+    
+    ' Act & Assert
+    modAssert.AssertFalse config.HasKey("CLAVE_INEXISTENTE"), "HasKey debe devolver False para clave inexistente"
+    modAssert.AssertFalse config.HasKey(""), "HasKey debe devolver False para clave vacía"
+    
+    testResult.Pass
+    GoTo CleanUp
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    Set config = Nothing
+    Set Test_HasKey_NonExistingKey_ReturnsFalse = testResult
+End Function
+
+' Prueba que GetValue devuelve cadena vacía para claves no existentes
+Private Function Test_GetValue_NonExistingKey_ReturnsEmpty() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_GetValue_NonExistingKey_ReturnsEmpty"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange
+    Dim config As New CConfig
+    
+    ' Act & Assert
+    Dim value As String
+    value = config.GetValue("CLAVE_INEXISTENTE")
+    modAssert.AssertEquals "", value, "GetValue debe devolver cadena vacía para clave inexistente"
+    
+    value = config.GetValue("")
+    modAssert.AssertEquals "", value, "GetValue debe devolver cadena vacía para clave vacía"
+    
+    testResult.Pass
+    GoTo CleanUp
+    
+ErrorHandler:
+    testResult.Fail "Error inesperado: " & Err.Description
+    
+CleanUp:
+    Set config = Nothing
+    Set Test_GetValue_NonExistingKey_ReturnsEmpty = testResult
+End Function
+
+#End If
 
 
 

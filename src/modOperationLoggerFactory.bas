@@ -13,14 +13,20 @@ Public Function CreateOperationLogger() As IOperationLogger
         Set CreateOperationLogger = g_MockLogger ' Devolver el mock si está configurado
     Else
         Dim loggerInstance As COperationLogger
-        Set loggerInstance = New COperationLogger
-        
-        ' Crear la dependencia de configuración
+        Dim repositoryInstance As COperationRepository
         Dim configService As IConfig
-        Set configService = modConfigFactory.CreateConfigService() ' Asumiendo que existe un factory para config
         
-        ' Inyectar la dependencia
-        loggerInstance.Initialize configService
+        Set loggerInstance = New COperationLogger
+        Set repositoryInstance = New COperationRepository
+        
+        ' Obtener instancia de configuración usando el nuevo factory
+        Set configService = modConfig.CreateConfigService()
+        
+        ' Inicializar el repositorio con la configuración
+        repositoryInstance.Initialize configService
+        
+        ' Inyectar las dependencias en el logger
+        loggerInstance.Initialize configService, repositoryInstance
         
         Set CreateOperationLogger = loggerInstance
     End If

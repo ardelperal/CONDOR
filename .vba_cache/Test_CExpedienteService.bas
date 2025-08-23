@@ -2,6 +2,8 @@ Attribute VB_Name = "Test_CExpedienteService"
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 ' ============================================================================
 ' MÓDULO DE PRUEBAS UNITARIAS PARA CExpedienteService
 ' ============================================================================
@@ -35,7 +37,8 @@ Private Function Test_GetExpedienteById_Success() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks y datos de prueba
-    Dim mockConfig As New CMockConfig
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
     
@@ -84,7 +87,8 @@ Private Function Test_GetExpedienteById_NotFound() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks con recordset vacío
-    Dim mockConfig As New CMockConfig
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
     
@@ -133,7 +137,8 @@ Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks
-    Dim mockConfig As New CMockConfig
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
     
@@ -177,7 +182,8 @@ Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks con recordset vacío
-    Dim mockConfig As New CMockConfig
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
     
@@ -306,6 +312,8 @@ Private Function CreateEmptyRecordset() As Object
     
     Set CreateEmptyRecordset = rs
 End Function
+
+#End If
 
 
 

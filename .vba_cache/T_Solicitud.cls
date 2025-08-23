@@ -27,11 +27,11 @@ Public Property Let idSolicitud(ByVal value As Long)
     m_idSolicitud = value
 End Property
 
-Public Property Get idExpediente() As String
+Public Property Get idExpediente() As Long
     idExpediente = m_idExpediente
 End Property
 
-Public Property Let idExpediente(ByVal value As String)
+Public Property Let idExpediente(ByVal value As Long)
     m_idExpediente = value
 End Property
 

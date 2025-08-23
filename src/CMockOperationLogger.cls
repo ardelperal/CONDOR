@@ -1,6 +1,8 @@
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 ' Clase: CMockOperationLogger
 ' Descripción: Mock del servicio de logging de operaciones para pruebas unitarias.
 '              Almacena las operaciones loggeadas en una colección para su verificación.
@@ -38,3 +40,5 @@ End Sub
 Public Sub ClearLog()
     Set LoggedOperations = New Collection
 End Sub
+
+#End If

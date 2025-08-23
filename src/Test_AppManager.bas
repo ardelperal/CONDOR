@@ -4,6 +4,8 @@
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 ' ============================================================================
 ' SUITE DE PRUEBAS UNITARIAS PARA modAppManager
 ' ============================================================================
@@ -187,6 +189,8 @@ TestFail:
     testResult.Fail "Error: " & Err.Number & " - " & Err.Description
     Set Test_Ping_ReturnsPong = testResult
 End Function
+
+#End If
 
 
 

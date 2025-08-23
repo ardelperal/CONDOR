@@ -9,6 +9,8 @@ Attribute VB_Name = "Test_WorkflowRepository"
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 '==============================================================================
 ' FUNCIÓN PRINCIPAL DE EJECUCIÓN
 '==============================================================================
@@ -219,7 +221,7 @@ Private Sub SetupTestData_ValidTransition()
     On Error GoTo ErrorHandler
     
     Dim configService As IConfig
-    Set configService = modConfig.GetInstance()
+    Set configService = modConfig.CreateConfigService()
     
     Dim backendPath As String
     backendPath = configService.GetValue("DATAPATH")
@@ -254,7 +256,7 @@ Private Sub SetupTestData_InactiveTransition()
     On Error GoTo ErrorHandler
     
     Dim configService As IConfig
-    Set configService = modConfig.GetInstance()
+    Set configService = modConfig.CreateConfigService()
     
     Dim backendPath As String
     backendPath = configService.GetValue("DATAPATH")
@@ -288,7 +290,7 @@ Private Sub CleanupTestData()
     On Error GoTo ErrorHandler
     
     Dim configService As IConfig
-    Set configService = modConfig.GetInstance()
+    Set configService = modConfig.CreateConfigService()
     
     Dim backendPath As String
     backendPath = configService.GetValue("DATAPATH")
@@ -309,3 +311,5 @@ ErrorHandler:
     If Not db Is Nothing Then Set db = Nothing
     Debug.Print "Error en CleanupTestData: " & Err.Number & " - " & Err.Description
 End Sub
+
+#End If

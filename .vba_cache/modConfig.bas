@@ -1,121 +1,15 @@
+Attribute VB_Name = "modConfig"
 Option Compare Database
 Option Explicit
-' Modulo de Configuracion del Sistema CONDOR - Factory/Singleton
-' Proporciona acceso a la instancia ?nica del servicio de configuraci?n
-' Version: 3.0 (refactorizado para arquitectura de clases)
-' Fecha: 2025-01-14
+' Factory para el servicio de configuración. Versión 4.0.
 
+' Constante global para la ruta de la base de datos del backend
+Public Const BACKEND_DB_PATH As String = "\..\data\CONDOR_Backend.accdb"
 
-' Constante para modo de desarrollo
-Public Const DEV_MODE As Boolean = True
-
-' Constante para identificacion de aplicacion en sistema Lanzadera
-Public Const IDAplicacion_CONDOR As Long = 231
-
-' Instancia singleton del servicio de configuraci?n
-Private g_ConfigInstance As IConfig
-
-' Funci?n factory/singleton para obtener la instancia de configuraci?n
-Public Function config() As IConfig
-    If g_ConfigInstance Is Nothing Then
-        Set g_ConfigInstance = New CConfig
-    End If
-    Set config = g_ConfigInstance
-End Function
-
-' Funci?n p?blica para obtener instancia ?nica de CConfig (para inyecci?n de dependencias)
-Public Function GetInstance() As CConfig
-    If g_ConfigInstance Is Nothing Then
-        Set g_ConfigInstance = New CConfig
-    End If
-    Set GetInstance = g_ConfigInstance
-End Function
-
-' Funci?n de inicializaci?n del entorno (delegada a CConfig)
-Public Function InitializeEnvironment() As Boolean
-    InitializeEnvironment = config().InitializeEnvironment()
-End Function
-' === FUNCIONES DE COMPATIBILIDAD (delegadas a CConfig) ===
-
-' Funci?n para obtener el entorno activo (para debug)
-Public Function GetActiveEnvironment() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetActiveEnvironment = configInstance.GetActiveEnvironment()
-End Function
-
-' Funci?n para obtener la ruta de la base de datos principal
-Public Function GetDatabasePath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetDatabasePath = configInstance.GetDatabasePath()
-End Function
-
-' Funci?n para obtener la ruta de la base de datos de datos
-Public Function GetDataPath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetDataPath = configInstance.GetDataPath()
-End Function
-
-' Funci?n para obtener la ruta de la base de datos de Expedientes
-Public Function GetExpedientesPath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetExpedientesPath = configInstance.GetExpedientesPath()
-End Function
-
-' Funci?n para obtener la ruta de la base de datos de Expedientes (alias para compatibilidad)
-Public Function GetExpedientesDbPath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetExpedientesDbPath = configInstance.GetExpedientesDbPath()
-End Function
-
-' Funci?n para obtener la ruta de las plantillas
-Public Function GetPlantillasPath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetPlantillasPath = configInstance.GetPlantillasPath()
-End Function
-
-' Funci?n para obtener la ruta de la base de datos Lanzadera
-Public Function GetLanzaderaDbPath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetLanzaderaDbPath = configInstance.GetLanzaderaDbPath()
-End Function
-
-' Funci?n para obtener la ruta de c?digo fuente
-Public Function GetSourcePath() As String
-    ' Implementaci?n directa ya que no existe en IConfig
-    GetSourcePath = Application.CurrentProject.Path & "\..\src"
-End Function
-
-' Funci?n para obtener la ruta de backups
-Public Function GetBackupPath() As String
-    ' Implementaci?n directa ya que no existe en IConfig
-    GetBackupPath = Application.CurrentProject.Path & "\..\back"
-End Function
-
-' Funci?n para obtener la ruta de logs
-Public Function GetLogPath() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    GetLogPath = configInstance.GetLogPath()
-End Function
-
-' Funci?n para obtener la ruta temporal
-Public Function GetTempPath() As String
-    ' Implementaci?n directa ya que no existe en IConfig
-    GetTempPath = Environ("TEMP")
-End Function
-
-' Funci?n de prueba (delegada a CConfig)
-Public Function TestModConfig() As String
-    Dim configInstance As IConfig
-    Set configInstance = config()
-    TestModConfig = configInstance.TestCConfig()
+Public Function CreateConfigService() As IConfig
+    Dim config As New CConfig
+    ' Aquí se podría inicializar si fuera necesario
+    Set CreateConfigService = config
 End Function
 
 

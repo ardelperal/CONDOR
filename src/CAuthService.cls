@@ -43,23 +43,20 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     Dim role As E_UserRole
     Dim rs As DAO.Recordset
     Dim sql As String
-    Dim dbPath As String
-    Dim dbPassword As String
+    Dim params As Collection
+    Dim param As QueryParameter
 
     role = Rol_Desconocido
 
-    dbPath = configSvc.GetValue("LANZADERADBPATH")
-    dbPassword = configSvc.GetValue("DATABASEPASSWORD")
-
-    If dbPath = "" Or dbPassword = "" Then
-        Call modErrorHandler.LogWarning("La configuración para la base de datos de Lanzadera no fue encontrada.", "CAuthService.GetUserRole")
-        IAuthService_GetUserRole = Rol_Desconocido
-        Exit Function
-    End If
-
-    ' Verificar si es administrador global
-    sql = "SELECT EsAdministrador FROM TbUsuariosAplicaciones WHERE CorreoUsuario = '" & UserEmail & "'"
-    Set rs = ExecuteExternalQuery(sql, dbPath, dbPassword)
+    ' Primera consulta parametrizada: verificar si es administrador global
+    sql = "SELECT EsAdministrador FROM TbUsuariosAplicaciones WHERE CorreoUsuario = [pUserEmail]"
+    
+    Set params = New Collection
+    Set param = New QueryParameter
+    param.Initialize "pUserEmail", UserEmail
+    params.Add param
+    
+    Set rs = m_SolicitudRepository.ExecuteQuery(sql, params)
 
     If Not rs Is Nothing Then
         If Not rs.EOF Then
@@ -69,17 +66,30 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
         End If
         rs.Close
     End If
+    
+    Set rs = Nothing
+    Set params = Nothing
 
     If role = Rol_Admin Then
         IAuthService_GetUserRole = Rol_Admin
         Exit Function
     End If
 
-    ' Consultar roles específicos de la aplicación
+    ' Segunda consulta parametrizada: roles específicos de la aplicación
     sql = "SELECT EsUsuarioAdministrador, EsUsuarioCalidad, EsUsuarioTecnico " & _
           "FROM TbUsuariosAplicacionesPermisos " & _
-          "WHERE CorreoUsuario = '" & UserEmail & "' AND IDAplicacion = " & modConfig.IDAplicacion_CONDOR
-    Set rs = ExecuteExternalQuery(sql, dbPath, dbPassword)
+          "WHERE CorreoUsuario = [pUserEmail] AND IDAplicacion = [pIDAplicacion]"
+    
+    Set params = New Collection
+    Set param = New QueryParameter
+    param.Initialize "pUserEmail", UserEmail
+    params.Add param
+    
+    Set param = New QueryParameter
+    param.Initialize "pIDAplicacion", modConfig.IDAplicacion_CONDOR
+    params.Add param
+    
+    Set rs = m_SolicitudRepository.ExecuteQuery(sql, params)
 
     If Not rs Is Nothing Then
         If Not rs.EOF Then
@@ -93,6 +103,9 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
         End If
         rs.Close
     End If
+    
+    Set rs = Nothing
+    Set params = Nothing
 
     ' Logging de auditoría: Resultado de consulta de rol
     If Not m_OperationLogger Is Nothing Then
@@ -112,6 +125,7 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
 ErrorHandler:
     IAuthService_GetUserRole = Rol_Desconocido
     If Not rs Is Nothing Then Set rs = Nothing
+    If Not params Is Nothing Then Set params = Nothing
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "ROLE_ERROR", "Error consultando rol para " & UserEmail & ": " & Err.Description, "CAuthService.GetUserRole"
     End If

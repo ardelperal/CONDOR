@@ -7,17 +7,19 @@ Implements ILoggingService
 ' Arquitectura: Capa de Servicios - Implementación
 ' Implementa: ILoggingService
 
-Private configSvc As IConfig
-Private fso As Object ' Scripting.FileSystemObject
+' Dependencias inyectadas
+Private m_Config As IConfig
+Private m_FileSystem As IFileSystem
 
-Private Sub Class_Initialize()
-    Set configSvc = New CConfig ' TODO: Usar Factory cuando exista
-    Set fso = CreateObject("Scripting.FileSystemObject")
+' Método para inyectar dependencias
+Public Sub Initialize(ByVal config As IConfig, ByVal fileSystem As IFileSystem)
+    Set m_Config = config
+    Set m_FileSystem = fileSystem
 End Sub
 
 Private Sub Class_Terminate()
-    Set configSvc = Nothing
-    Set fso = Nothing
+    Set m_Config = Nothing
+    Set m_FileSystem = Nothing
 End Sub
 
 Private Sub ILoggingService_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
@@ -66,10 +68,10 @@ Private Sub WriteToLog(level As String, message As String, moduleName As String,
     Dim json As String
     Dim LogPath As String
 
-    LogPath = configSvc.GetLogPath()
+    LogPath = m_Config.GetLogPath()
 
     ' Abrir el fichero en modo Append (8)
-    Set logFile = fso.OpenTextFile(LogPath, 8, True)
+    Set logFile = m_FileSystem.OpenTextFile(LogPath, 8, True)
 
     ' Construir la línea de log en formato JSON
     json = "{"

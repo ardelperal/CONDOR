@@ -10,6 +10,8 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+#If DEV_MODE Then
+
 ' =====================================================
 ' CMockErrorHandlerService.cls
 ' Mock implementation of IErrorHandlerService
@@ -146,3 +148,5 @@ Public Function WasLogWarningCalledWith(message As String, Optional moduleName A
     WasLogWarningCalledWith = (m_lastWarningMessage = message) And _
                              (m_lastWarningModuleName = moduleName)
 End Function
+
+#End If
