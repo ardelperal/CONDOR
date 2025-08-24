@@ -1,6 +1,9 @@
 Option Compare Database
 Option Explicit
 
+' Colección privada para registrar nombres de funciones de suite
+Private m_registeredSuites As Collection
+
 ' Función para compatibilidad con CLI (debe estar fuera del bloque condicional)
 Public Sub ExecuteAllTests()
 #If DEV_MODE Then
@@ -22,9 +25,6 @@ End Sub
 ' Version: 3.0 - Refactorización Crítica
 ' Fecha: 2025-01-14
 ' ============================================================================
-
-' Colección privada para registrar nombres de funciones de suite
-Private m_registeredSuites As Collection
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL - ORQUESTADOR DEL FRAMEWORK
