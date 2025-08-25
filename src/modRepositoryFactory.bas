@@ -87,6 +87,35 @@ ErrorHandler:
 End Function
 
 '******************************************************************************
+' FUNCIÓN: CreateMapeoRepository
+' DESCRIPCIÓN: Crea una instancia del repositorio de mapeo
+' RETORNA: IMapeoRepository - Instancia del repositorio de mapeo
+'******************************************************************************
+Public Function CreateMapeoRepository() As IMapeoRepository
+    On Error GoTo ErrorHandler
+    
+    ' Obtener las dependencias
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
+    
+    ' Crear el repositorio real con inyección de dependencias
+    Dim repositoryInstance As New CMapeoRepository
+    
+    ' Inyectar las dependencias
+    repositoryInstance.Initialize configService
+    
+    Set CreateMapeoRepository = repositoryInstance
+    
+    Exit Function
+    
+ErrorHandler:
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modRepositoryFactory.CreateMapeoRepository"
+    Set CreateMapeoRepository = Nothing
+End Function
+
+'******************************************************************************
 ' GESTIÓN DE MOCKS PARA PRUEBAS
 '******************************************************************************
 

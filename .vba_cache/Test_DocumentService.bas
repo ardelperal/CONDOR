@@ -43,6 +43,7 @@ Private Function Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorre
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     Dim mockWordManager As New CMockWordManager
+    Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Configurar mocks
     mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
@@ -60,7 +61,7 @@ Private Function Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorre
     solicitud.tipoSolicitud = "Permiso"
     
     ' Inicializar servicio
-    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
     Dim resultado As String
@@ -95,6 +96,7 @@ Cleanup:
     mockRepository.Reset
     mockLogger.Reset
     mockWordManager.Reset
+    mockMapeoRepository.Reset
     Set Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente = testResult
     Exit Function
     
@@ -115,6 +117,7 @@ Private Function Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCaden
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     Dim mockWordManager As New CMockWordManager
+    Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Configurar mocks para simular error
     mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
@@ -128,7 +131,7 @@ Private Function Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCaden
     solicitud.tipoSolicitud = "Inexistente"
     
     ' Inicializar servicio
-    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
     Dim resultado As String
@@ -147,6 +150,7 @@ Cleanup:
     mockRepository.Reset
     mockLogger.Reset
     mockWordManager.Reset
+    mockMapeoRepository.Reset
     Set Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia = testResult
     Exit Function
     
@@ -167,6 +171,7 @@ Private Function Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaV
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     Dim mockWordManager As New CMockWordManager
+    Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Configurar mocks
     mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
@@ -181,7 +186,7 @@ Private Function Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaV
     solicitud.tipoSolicitud = "Permiso"
     
     ' Inicializar servicio
-    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
     Dim resultado As String
@@ -200,6 +205,7 @@ Cleanup:
     mockRepository.Reset
     mockLogger.Reset
     mockWordManager.Reset
+    mockMapeoRepository.Reset
     Set Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia = testResult
     Exit Function
     
@@ -224,6 +230,7 @@ Private Function Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud()
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     Dim mockWordManager As New CMockWordManager
+    Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Configurar mocks
     Dim solicitudMock As New T_Solicitud
@@ -235,7 +242,7 @@ Private Function Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud()
     mockWordManager.LeerContenidoDocumento_ReturnValue = "[nombre]Juan Pérez[/nombre][fecha]2025-01-01[/fecha]"
     
     ' Inicializar servicio
-    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
     Dim resultado As Boolean
@@ -265,6 +272,7 @@ Cleanup:
     mockRepository.Reset
     mockLogger.Reset
     mockWordManager.Reset
+    mockMapeoRepository.Reset
     Set Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud = testResult
     Exit Function
     
@@ -285,6 +293,7 @@ Private Function Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse() 
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     Dim mockWordManager As New CMockWordManager
+    Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Configurar mocks para simular error
     Dim solicitudMock As New T_Solicitud
@@ -294,7 +303,7 @@ Private Function Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse() 
     mockWordManager.LeerContenidoDocumento_ReturnValue = "" ' Simular fallo
     
     ' Inicializar servicio
-    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
     Dim resultado As Boolean
@@ -313,6 +322,7 @@ Cleanup:
     mockRepository.Reset
     mockLogger.Reset
     mockWordManager.Reset
+    mockMapeoRepository.Reset
     Set Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse = testResult
     Exit Function
     
@@ -337,9 +347,10 @@ Private Function Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectam
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     Dim mockWordManager As New CMockWordManager
+    Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Act
-    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Assert
     ' Verificar que no se produzcan errores durante la inicialización
@@ -351,6 +362,7 @@ Cleanup:
     mockRepository.Reset
     mockLogger.Reset
     mockWordManager.Reset
+    mockMapeoRepository.Reset
     Set Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente = testResult
     Exit Function
     

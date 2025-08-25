@@ -25,11 +25,14 @@ Public Function CreateDocumentService() As IDocumentService
     Dim wordManager As IWordManager
     Set wordManager = New CWordManager
     
+    Dim mapeoRepository As IMapeoRepository
+    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository()
+    
     ' Crear una instancia de la clase concreta
     Dim documentServiceInstance As New CDocumentService
     
     ' Inicializar la instancia concreta con las dependencias
-    documentServiceInstance.Initialize configService, solicitudRepository, operationLogger, wordManager
+    documentServiceInstance.Initialize configService, solicitudRepository, operationLogger, wordManager, mapeoRepository
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateDocumentService = documentServiceInstance

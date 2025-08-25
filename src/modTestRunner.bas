@@ -18,6 +18,11 @@ Public Function RunAllTests() As String
     RunAllTests = reportString
 End Function
 
+' Alias para compatibilidad con CLI
+Public Function ExecuteAllTests() As String
+    ExecuteAllTests = RunAllTests()
+End Function
+
 '******************************************************************************
 ' MOTOR DE EJECUCIÓN DE PRUEBAS - FRAMEWORK ORIENTADO A OBJETOS
 ' Arquitectura: Separación de Responsabilidades (Ejecución vs. Reporte)
@@ -69,6 +74,7 @@ Private Sub RegisterAllSuites()
     m_SuiteNames.Add "Test_WorkflowRepository_RunAll"
     m_SuiteNames.Add "Test_ErrorHandlerService_RunAll"
     m_SuiteNames.Add "Test_AppManager_RunAll"
+    m_SuiteNames.Add "IntegrationTest_CMapeoRepository_RunAll"
 End Sub
 
 '******************************************************************************
