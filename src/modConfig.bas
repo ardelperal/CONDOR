@@ -1,7 +1,7 @@
 ﻿Attribute VB_Name = "modConfig"
 Option Compare Database
 Option Explicit
-' Factory para el servicio de configuraciÃ³n. VersiÃ³n 4.0.
+' Factory para el servicio de configuración. Versión 4.0.
 
 
 

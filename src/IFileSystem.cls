@@ -6,11 +6,11 @@ Option Explicit
 ' DESCRIPCION: Contrato para interactuar con el sistema de ficheros
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
-' VERSION: 1.0 - AbstracciÃ³n del FileSystemObject
+' VERSION: 1.0 - Abstracción del FileSystemObject
 ' =====================================================
 
 ' Contrato para operaciones de sistema de ficheros
-' Permite abstraer la interacciÃ³n con archivos para facilitar las pruebas unitarias
+' Permite abstraer la interacción con archivos para facilitar las pruebas unitarias
 
 ' Abre un archivo de texto para lectura/escritura
 ' @param Path: Ruta del archivo

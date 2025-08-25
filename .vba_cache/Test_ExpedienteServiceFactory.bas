@@ -10,7 +10,7 @@ Option Explicit
 
 #If DEV_MODE Then
 
-' FunciÃ³n principal que ejecuta todas las pruebas del ExpedienteServiceFactory
+' Función principal que ejecuta todas las pruebas del ExpedienteServiceFactory
 Public Function Test_ExpedienteServiceFactory_RunAll() As CTestSuiteResult
     Dim suiteResult As CTestSuiteResult
     Set suiteResult = New CTestSuiteResult
@@ -24,7 +24,7 @@ Public Function Test_ExpedienteServiceFactory_RunAll() As CTestSuiteResult
     Set Test_ExpedienteServiceFactory_RunAll = suiteResult
 End Function
 
-' Prueba que CreateExpedienteService devuelve una instancia vÃ¡lida
+' Prueba que CreateExpedienteService devuelve una instancia válida
 Private Function Test_CreateExpedienteService_ReturnsValidInstance() As CTestResult
     Dim testResult As CTestResult
     Set testResult = New CTestResult
@@ -38,7 +38,7 @@ Private Function Test_CreateExpedienteService_ReturnsValidInstance() As CTestRes
     
     ' Assert
     If expedienteService Is Nothing Then
-        testResult.Fail "CreateExpedienteService debe devolver una instancia vÃ¡lida"
+        testResult.Fail "CreateExpedienteService debe devolver una instancia válida"
     Else
         testResult.Pass
     End If
@@ -63,7 +63,7 @@ Private Function Test_CreateExpedienteService_InitializesDependencies() As CTest
     Dim expedienteService As IExpedienteService
     Set expedienteService = modExpedienteServiceFactory.CreateExpedienteService()
     
-    ' Assert - Verificar que el servicio estÃ¡ inicializado
+    ' Assert - Verificar que el servicio está inicializado
     If expedienteService Is Nothing Then
         testResult.Fail "El servicio de expedientes debe estar inicializado"
     Else
@@ -86,8 +86,8 @@ Private Function Test_CreateExpedienteService_HandlesErrors() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Esta prueba verifica que la funciÃ³n maneja errores internos
-    ' En condiciones normales, deberÃ­a devolver una instancia vÃ¡lida
+    ' Esta prueba verifica que la función maneja errores internos
+    ' En condiciones normales, debería devolver una instancia válida
     Dim expedienteService As IExpedienteService
     Set expedienteService = modExpedienteServiceFactory.CreateExpedienteService()
     

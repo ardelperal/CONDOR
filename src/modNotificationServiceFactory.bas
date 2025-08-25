@@ -2,13 +2,13 @@
 Option Explicit
 
 ' =====================================================
-' MODULO: modNotificationServiceFactory
-' DESCRIPCION: Factory especializada para la creaciÃ³n del servicio de notificaciones
+' MÓDULO: modNotificationServiceFactory
+' DESCRIPCIÓN: Factory especializada para la creación del servicio de notificaciones
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
 ' =====================================================
 
-' FunciÃ³n factory para crear y configurar el servicio de notificaciones
+' Función factory para crear y configurar el servicio de notificaciones
 Public Function CreateNotificationService() As INotificationService
     On Error GoTo ErrorHandler
     

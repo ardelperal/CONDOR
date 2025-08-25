@@ -1,33 +1,34 @@
-﻿Option Compare Database
-Option Explicit
-' ============================================================================
-' MÃ³dulo: Test_WordManager
-' DescripciÃ³n: Suite de pruebas para WordManager con pruebas de integraciÃ³n controladas.
+﻿Attribute VB_Name = "Test_WordManager"
+'******************************************************************************
+' Módulo: Test_WordManager
+' Descripción: Suite de pruebas para WordManager con pruebas de integración controladas.
 ' Autor: CONDOR-Expert
-' Fecha: 2025-08-22
-' VersiÃ³n: 1.0
-' ============================================================================
+' Fecha: 2025-01-21
+' Versión: 1.0
+'******************************************************************************
 
-' ============================================================================
-' FUNCIÃ“N PRINCIPAL DE EJECUCIÃ“N
-' ============================================================================
+Option Compare Database
+Option Explicit
+
+' FUNCIÓN PRINCIPAL DE EJECUCIÓN
+'******************************************************************************
 
 Public Function Test_WordManager_RunAll() As CTestSuiteResult
-    Dim suiteResult As New CTestSuiteResult
-    suiteResult.SuiteName = "Test_WordManager"
+    Dim suite As New CTestSuiteResult
+    suite.Initialize "Test_WordManager"
     
     ' Ejecutar todas las pruebas
-    suiteResult.AddTestResult Test_AbrirReemplazarGuardar_Success()
-    suiteResult.AddTestResult Test_AbrirDocumento_Inexistente_Fail()
-    suiteResult.AddTestResult Test_LeerContenidoDocumento_Success()
-    suiteResult.AddTestResult Test_CerrarDocumento_Success()
+    suite.AddTest Test_AbrirYGuardarDocumento_ConRutaValida_DebeEjecutarCorrectamente
+    suite.AddTest Test_AbrirDocumento_ConRutaInexistente_DebeRetornarFalse
+    suite.AddTest Test_LeerContenidoDocumento_ConDocumentoValido_DebeRetornarContenido
+    suite.AddTest Test_CerrarDocumento_ConDocumentoAbierto_DebeEjecutarSinErrores
     
-    Set Test_WordManager_RunAll = suiteResult
+    Set Test_WordManager_RunAll = suite
 End Function
 
-' ============================================================================
-' PRUEBAS DE INTEGRACIÃ“N CONTROLADAS
-' ============================================================================
+'******************************************************************************
+' PRUEBAS DE INTEGRACIÓN CONTROLADAS
+'******************************************************************************
 
 ' Prueba que abre un documento, reemplaza texto, lo guarda y verifica que existe
 Private Function Test_AbrirReemplazarGuardar_Success() As CTestResult
@@ -63,16 +64,16 @@ Private Function Test_AbrirReemplazarGuardar_Success() As CTestResult
     Dim guardarResult As Boolean
     
     abrirResult = wordManager.AbrirDocumento(rutaPlantilla)
-    modAssert.AssertTrue abrirResult, "DeberÃ­a abrir el documento correctamente"
+    modAssert.AssertTrue abrirResult, "Debería abrir el documento correctamente"
     
     reemplazarResult = wordManager.ReemplazarTexto("[MARCADOR_PRUEBA]", "TEXTO_REEMPLAZADO")
-    modAssert.AssertTrue reemplazarResult, "DeberÃ­a reemplazar el texto correctamente"
+    modAssert.AssertTrue reemplazarResult, "Debería reemplazar el texto correctamente"
     
     guardarResult = wordManager.GuardarDocumento(rutaDestino)
-    modAssert.AssertTrue guardarResult, "DeberÃ­a guardar el documento correctamente"
+    modAssert.AssertTrue guardarResult, "Debería guardar el documento correctamente"
     
-    ' Verificar que el archivo se creÃ³
-    modAssert.AssertTrue fso.FileExists(rutaDestino), "El archivo guardado deberÃ­a existir"
+    ' Verificar que el archivo se creó
+    modAssert.AssertTrue fso.FileExists(rutaDestino), "El archivo guardado debería existir"
     
     ' Limpiar recursos
     wordManager.CerrarDocumento
@@ -111,7 +112,7 @@ Private Function Test_AbrirDocumento_Inexistente_Fail() As CTestResult
     resultado = wordManager.AbrirDocumento(rutaInexistente)
     
     ' Verificar que devuelve False
-    modAssert.AssertFalse resultado, "DeberÃ­a devolver False al intentar abrir archivo inexistente"
+    modAssert.AssertFalse resultado, "Debería devolver False al intentar abrir archivo inexistente"
     
     ' Limpiar recursos
     wordManager.CerrarDocumento
@@ -148,9 +149,9 @@ Private Function Test_LeerContenidoDocumento_Success() As CTestResult
     ' Leer contenido
     contenido = wordManager.LeerContenidoDocumento(rutaDocumento)
     
-    ' Verificar que se leyÃ³ contenido
-    modAssert.AssertTrue Len(contenido) > 0, "DeberÃ­a leer contenido del documento"
-    modAssert.AssertTrue InStr(contenido, "Contenido de prueba") > 0, "DeberÃ­a contener el texto esperado"
+    ' Verificar que se leyó contenido
+    modAssert.AssertTrue Len(contenido) > 0, "Debería leer contenido del documento"
+    modAssert.AssertTrue InStr(contenido, "Contenido de prueba") > 0, "Debería contener el texto esperado"
     
     ' Limpiar archivos de prueba
     LimpiarArchivosTemporales
@@ -185,7 +186,7 @@ Private Function Test_CerrarDocumento_Success() As CTestResult
     CrearArchivoPlantillaPrueba rutaDocumento
     wordManager.AbrirDocumento rutaDocumento
     
-    ' Cerrar documento (no deberÃ­a generar errores)
+    ' Cerrar documento (no debería generar errores)
     wordManager.CerrarDocumento
     
     ' Limpiar archivos de prueba
@@ -206,7 +207,7 @@ TestError:
 End Function
 
 ' ============================================================================
-' MÃ‰TODOS AUXILIARES PARA PRUEBAS
+' MÉTODOS AUXILIARES PARA PRUEBAS
 ' ============================================================================
 
 ' Crea un archivo de plantilla de prueba con marcadores
@@ -236,7 +237,7 @@ Private Sub CrearArchivoPlantillaPrueba(ByVal rutaArchivo As String)
     Set wordApp = Nothing
 End Sub
 
-' Crea un documento con texto especÃ­fico para pruebas de lectura
+' Crea un documento con texto específico para pruebas de lectura
 Private Sub CrearDocumentoPruebaConTexto(ByVal rutaArchivo As String, ByVal texto As String)
     Dim wordApp As Object
     Dim wordDoc As Object

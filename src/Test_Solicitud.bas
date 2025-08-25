@@ -6,15 +6,15 @@ Option Explicit
 
 ' ============================================================================
 ' SUITE DE PRUEBAS UNITARIAS PARA CSolicitudService
-' Arquitectura: Pruebas Aisladas con InyecciÃ³n de Dependencias y Mocks
-' Version: 2.0 - ReconstrucciÃ³n Total
+' Arquitectura: Pruebas Aisladas con Inyección de Dependencias y Mocks
+' Version: 2.0 - Reconstrucción Total
 ' ============================================================================
-' Pruebas unitarias que validan la lÃ³gica de negocio de CSolicitudService
+' Pruebas unitarias que validan la lógica de negocio de CSolicitudService
 ' usando mocks para aislar las dependencias externas.
 ' ============================================================================
 
 ' ============================================================================
-' FUNCIÃ“N PRINCIPAL DE LA SUITE DE PRUEBAS
+' FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
 ' ============================================================================
 
 Public Function RunAllTests() As CTestSuiteResult
@@ -39,7 +39,7 @@ End Function
 
 Private Function Test_CreateSolicitud_ConParametrosValidos_DebeCrearSolicitudConEstadoBorrador() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "CreateSolicitud con parÃ¡metros vÃ¡lidos debe crear solicitud con estado Borrador"
+    testResult.Initialize "CreateSolicitud con parámetros válidos debe crear solicitud con estado Borrador"
     
     On Error GoTo ErrorHandler
     
@@ -109,7 +109,7 @@ End Function
 
 Private Function Test_CreateSolicitud_ConIdExpedienteVacio_DebeLanzarError() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "CreateSolicitud con ID expediente vacÃ­o debe lanzar error"
+    testResult.Initialize "CreateSolicitud con ID expediente vacío debe lanzar error"
     
     On Error GoTo ErrorHandler
     
@@ -131,7 +131,7 @@ Private Function Test_CreateSolicitud_ConIdExpedienteVacio_DebeLanzarError() As 
     On Error GoTo ErrorHandler
     
     If Not errorOcurred Then
-        testResult.Fail "Debe lanzar un error cuando idExpediente estÃ¡ vacÃ­o"
+        testResult.Fail "Debe lanzar un error cuando idExpediente está vacío"
         GoTo Cleanup
     End If
     
@@ -150,7 +150,7 @@ End Function
 
 Private Function Test_CreateSolicitud_ConTipoVacio_DebeLanzarError() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "CreateSolicitud con tipo vacÃ­o debe lanzar error"
+    testResult.Initialize "CreateSolicitud con tipo vacío debe lanzar error"
     
     On Error GoTo ErrorHandler
     
@@ -172,7 +172,7 @@ Private Function Test_CreateSolicitud_ConTipoVacio_DebeLanzarError() As CTestRes
     On Error GoTo ErrorHandler
     
     If Not errorOcurred Then
-        testResult.Fail "Debe lanzar un error cuando tipo estÃ¡ vacÃ­o"
+        testResult.Fail "Debe lanzar un error cuando tipo está vacío"
         GoTo Cleanup
     End If
     
@@ -210,7 +210,7 @@ Private Function Test_CreateSolicitud_SinInicializar_DebeLanzarError() As CTestR
     On Error GoTo ErrorHandler
     
     If Not errorOcurred Then
-        testResult.Fail "Debe lanzar un error cuando el servicio no estÃ¡ inicializado"
+        testResult.Fail "Debe lanzar un error cuando el servicio no está inicializado"
         GoTo Cleanup
     End If
     
@@ -231,7 +231,7 @@ End Function
 
 Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModificacion() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "SaveSolicitud con solicitud vÃ¡lida debe actualizar fecha de modificaciÃ³n"
+    testResult.Initialize "SaveSolicitud con solicitud válida debe actualizar fecha de modificación"
     
     On Error GoTo ErrorHandler
     
@@ -253,7 +253,7 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
         .tipoSolicitud = "PC"
         .estadoInterno = "Borrador"
         .fechaCreacion = DateAdd("d", -1, Now()) ' Ayer
-        .fechaModificacion = Null ' Sin modificaciÃ³n previa
+        .fechaModificacion = Null ' Sin modificación previa
     End With
     
     ' Act
@@ -262,7 +262,7 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
     
     ' Assert
     If Not resultado Then
-        testResult.Fail "SaveSolicitud debe retornar True para una solicitud vÃ¡lida"
+        testResult.Fail "SaveSolicitud debe retornar True para una solicitud válida"
         GoTo Cleanup
     End If
     
@@ -272,12 +272,12 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
     End If
     
     If IsNull(solicitud.fechaModificacion) Then
-        testResult.Fail "La fecha de modificaciÃ³n debe ser actualizada"
+        testResult.Fail "La fecha de modificación debe ser actualizada"
         GoTo Cleanup
     End If
     
     If Len(Trim(solicitud.usuarioModificacion)) = 0 Then
-        testResult.Fail "El usuario de modificaciÃ³n debe ser establecido"
+        testResult.Fail "El usuario de modificación debe ser establecido"
         GoTo Cleanup
     End If
     
@@ -364,7 +364,7 @@ Private Function Test_SaveSolicitud_SinInicializar_DebeLanzarError() As CTestRes
     On Error GoTo ErrorHandler
     
     If Not errorOcurred Then
-        testResult.Fail "Debe lanzar un error cuando el servicio no estÃ¡ inicializado"
+        testResult.Fail "Debe lanzar un error cuando el servicio no está inicializado"
         GoTo Cleanup
     End If
     

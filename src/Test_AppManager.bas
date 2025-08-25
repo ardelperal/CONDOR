@@ -10,7 +10,7 @@ Option Explicit
 ' SUITE DE PRUEBAS UNITARIAS PARA modAppManager
 ' ============================================================================
 
-' FunciÃ³n principal de la suite de pruebas
+' Función principal de la suite de pruebas
 Public Function Test_AppManager_RunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
     suite.Initialize "Test_AppManager"
@@ -162,7 +162,7 @@ TestFail:
 End Function
 
 ' ============================================================================
-' PRUEBAS UNITARIAS PARA FUNCIÃ“N Ping
+' PRUEBAS UNITARIAS PARA FUNCIÓN Ping
 ' ============================================================================
 
 Private Function Test_Ping_ReturnsPong() As CTestResult

@@ -2,16 +2,16 @@
 Option Explicit
 '******************************************************************************
 ' CLASE: CWorkflowService
-' DESCRIPCIÃ“N: ImplementaciÃ³n concreta del servicio de workflow y estados
+' DESCRIPCIÓN: Implementación concreta del servicio de workflow y estados
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
-' NOTAS: LecciÃ³n 1 - Implementa la interfaz IWorkflowService
-'        LecciÃ³n 3 - Sigue la arquitectura de 3 capas (Capa de Servicios)
-'        LecciÃ³n 6 - Utiliza mÃ³dulos de acceso a datos como especificaciÃ³n
+' NOTAS: Lección 1 - Implementa la interfaz IWorkflowService
+'        Lección 3 - Sigue la arquitectura de 3 capas (Capa de Servicios)
+'        Lección 6 - Utiliza módulos de acceso a datos como especificación
 '******************************************************************************
 
 
-' LecciÃ³n 1: Implementar la interfaz
+' Lección 1: Implementar la interfaz
 Implements IWorkflowService
 
 '******************************************************************************
@@ -36,7 +36,7 @@ Private Const ROL_APROBADOR As String = "Aprobador"
 Private Const ROL_ADMINISTRADOR As String = "Administrador"
 
 '******************************************************************************
-' MÃ‰TODO DE INICIALIZACIÃ“N CON DEPENDENCIAS
+' MÉTODO DE INICIALIZACIÓN CON DEPENDENCIAS
 '******************************************************************************
 
 ' Inicializa el servicio con sus dependencias
@@ -46,7 +46,7 @@ Public Sub Initialize(ByVal config As IConfig, ByVal operationLogger As IOperati
 End Sub
 
 '******************************************************************************
-' IMPLEMENTACIÃ“N DE MÃ‰TODOS DE VALIDACIÃ“N DE TRANSICIONES
+' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN DE TRANSICIONES
 '******************************************************************************
 
 Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, _
@@ -55,44 +55,44 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
                                                     ByVal tipoSolicitud As String, _
                                                     ByVal usuarioRol As String) As Boolean
     
-    ' Logging de auditorÃ­a: ValidaciÃ³n de transiciÃ³n de estado
+    ' Logging de auditoría: Validación de transición de estado
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATION", "Validando transiciÃ³n solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino & " por usuario rol: " & usuarioRol, "CWorkflowService.ValidateTransition"
+        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATION", "Validando transición solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino & " por usuario rol: " & usuarioRol, "CWorkflowService.ValidateTransition"
     End If
     
     Dim resultado As Boolean
     resultado = False
     
-    ' Validar parÃ¡metros de entrada
+    ' Validar parámetros de entrada
     If Len(Trim(estadoOrigen)) = 0 Or Len(Trim(estadoDestino)) = 0 Or _
        Len(Trim(tipoSolicitud)) = 0 Or Len(Trim(usuarioRol)) = 0 Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Verificar si la transiciÃ³n existe en TbTransiciones
+    ' Verificar si la transición existe en TbTransiciones
     If Not TransitionExists(estadoOrigen, estadoDestino, tipoSolicitud) Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Verificar permisos del usuario para esta transiciÃ³n
+    ' Verificar permisos del usuario para esta transición
     If Not IWorkflowService_HasTransitionPermission(usuarioRol, estadoOrigen, estadoDestino, tipoSolicitud) Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Si llegamos aquÃ­, la transiciÃ³n es vÃ¡lida
+    ' Si llegamos aquí, la transición es válida
     IWorkflowService_ValidateTransition = True
     
-    ' Logging de auditorÃ­a: TransiciÃ³n validada exitosamente
+    ' Logging de auditoría: Transición validada exitosamente
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATED", "TransiciÃ³n validada exitosamente para solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino, "CWorkflowService.ValidateTransition"
+        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATED", "Transición validada exitosamente para solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino, "CWorkflowService.ValidateTransition"
     End If
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÃ“N DE MÃ‰TODOS DE OBTENCIÃ“N DE ESTADOS
+' IMPLEMENTACIÓN DE MÉTODOS DE OBTENCIÓN DE ESTADOS
 '******************************************************************************
 
 Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As String) As Collection
@@ -134,7 +134,7 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, _
     
     Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
-    ' Consultar transiciones vÃ¡lidas desde el estado actual
+    ' Consultar transiciones válidas desde el estado actual
     sql = "SELECT DISTINCT t.EstadoDestinoID, e.CodigoEstado, e.NombreEstado " & _
           "FROM TbTransiciones t INNER JOIN TbEstados e ON t.EstadoDestinoID = e.ID " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
@@ -219,7 +219,7 @@ Private Function IWorkflowService_IsStateFinal(ByVal estadoCodigo As String, _
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÃ“N DE MÃ‰TODOS DE HISTORIAL DE ESTADOS
+' IMPLEMENTACIÓN DE MÉTODOS DE HISTORIAL DE ESTADOS
 '******************************************************************************
 
 Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
@@ -234,7 +234,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     Dim sql As String
     On Error GoTo ErrorHandler
     
-    ' Logging de auditorÃ­a: Registro de cambio de estado
+    ' Logging de auditoría: Registro de cambio de estado
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "WORKFLOW_STATE_CHANGE", "Registrando cambio de estado para solicitud ID: " & SolicitudID & ", de " & estadoAnterior & " a " & estadoNuevo & " por usuario: " & usuario, "CWorkflowService.RecordStateChange"
     End If
@@ -250,7 +250,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     db.Close
     Set db = Nothing
     
-    ' Logging de auditorÃ­a: Cambio de estado registrado exitosamente
+    ' Logging de auditoría: Cambio de estado registrado exitosamente
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "WORKFLOW_STATE_RECORDED", "Cambio de estado registrado exitosamente para solicitud ID: " & SolicitudID & ", de " & estadoAnterior & " a " & estadoNuevo, "CWorkflowService.RecordStateChange"
     End If
@@ -259,7 +259,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     Exit Function
     
 ErrorHandler:
-    ' Logging de auditorÃ­a: Error al registrar cambio de estado
+    ' Logging de auditoría: Error al registrar cambio de estado
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "WORKFLOW_STATE_RECORD_ERROR", "Error al registrar cambio de estado para solicitud ID: " & SolicitudID & ". Error: " & Err.Description, "CWorkflowService.RecordStateChange"
     End If
@@ -321,7 +321,7 @@ ErrorHandler:
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÃ“N DE MÃ‰TODOS DE VALIDACIÃ“N DE PERMISOS
+' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN DE PERMISOS
 '******************************************************************************
 
 Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As String, _

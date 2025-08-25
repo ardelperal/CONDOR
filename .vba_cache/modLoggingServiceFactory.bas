@@ -1,7 +1,7 @@
 ﻿Attribute VB_Name = "modLoggingServiceFactory"
 '******************************************************************************
-' MÃ³dulo: modLoggingServiceFactory
-' PropÃ³sito: Factory para crear instancias de ILoggingService con inyecciÃ³n de dependencias
+' Módulo: modLoggingServiceFactory
+' Propósito: Factory para crear instancias de ILoggingService con inyección de dependencias
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-01-21
 '******************************************************************************
@@ -10,7 +10,7 @@ Option Compare Database
 Option Explicit
 
 '******************************************************************************
-' FUNCIONES PÃšBLICAS
+' FUNCIONES PÚBLICAS
 '******************************************************************************
 
 ' Crea una instancia completamente configurada de ILoggingService

@@ -4,7 +4,7 @@ Option Explicit
 
 ' =====================================================
 ' MODULO: modAuthFactory
-' DESCRIPCION: Factory para la creaciÃ³n de servicios de autenticaciÃ³n
+' DESCRIPCION: Factory para la creación de servicios de autenticación
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
 ' =====================================================
@@ -12,7 +12,7 @@ Option Explicit
 ' Variable privada para almacenar el mock de AuthService
 Private m_MockAuthService As IAuthService
 
-' FunciÃ³n factory para crear y configurar el servicio de autenticaciÃ³n
+' Función factory para crear y configurar el servicio de autenticación
 Public Function CreateAuthService() As IAuthService
     ' Si hay un mock configurado, devolverlo
     If Not m_MockAuthService Is Nothing Then
@@ -20,7 +20,7 @@ Public Function CreateAuthService() As IAuthService
         Exit Function
     End If
     
-    ' Obtener la instancia de configuraciÃ³n usando el nuevo factory
+    ' Obtener la instancia de configuración usando el nuevo factory
     Dim config As IConfig: Set config = modConfig.CreateConfigService()
     
     ' Obtener la instancia del logger de operaciones
@@ -41,12 +41,12 @@ Public Function CreateAuthService() As IAuthService
     Set CreateAuthService = authServiceInstance
 End Function
 
-' MÃ©todo para inyectar un mock de AuthService (usado en pruebas unitarias)
+' Método para inyectar un mock de AuthService (usado en pruebas unitarias)
 Public Sub SetMockAuthService(mock As IAuthService)
     Set m_MockAuthService = mock
 End Sub
 
-' MÃ©todo para resetear el factory a su estado normal (usado en pruebas unitarias)
+' Método para resetear el factory a su estado normal (usado en pruebas unitarias)
 Public Sub ResetMock()
     Set m_MockAuthService = Nothing
 End Sub

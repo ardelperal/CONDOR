@@ -16,7 +16,7 @@ Private m_fechaCompletadoTecnico As Date
 Private m_fechaModificacion As Date
 Private m_usuarioModificacion As String
 
-' Propiedades para datos especÃ­ficos segÃºn tipo de solicitud
+' Propiedades para datos específicos según tipo de solicitud
 Private m_datosPC As T_Datos_PC
 Private m_datosCDCA As T_Datos_CD_CA
 Private m_datosCDCASUB As T_Datos_CD_CA_SUB
@@ -101,7 +101,7 @@ Public Property Let fechaCompletadoTecnico(ByVal value As Date)
     m_fechaCompletadoTecnico = value
 End Property
 
-' Propiedades para objetos de datos especÃ­ficos
+' Propiedades para objetos de datos específicos
 Public Property Get datosPC() As T_Datos_PC
     Set datosPC = m_datosPC
 End Property

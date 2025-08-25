@@ -3,8 +3,8 @@ Option Compare Database
 Option Explicit
 
 ' =====================================================
-' MODULO: modDocumentServiceFactory
-' DESCRIPCION: Factory para la creaciÃ³n del servicio de documentos
+' MÓDULO: modDocumentServiceFactory
+' DESCRIPCIÓN: Factory para la creación del servicio de documentos
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2025-08-22
 ' =====================================================

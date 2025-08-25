@@ -2,11 +2,11 @@
 Option Explicit
 ' ============================================================================
 ' Clase: CWordManager
-' DescripciÃ³n: ImplementaciÃ³n concreta del gestor de Word.
+' Descripción: Implementación concreta del gestor de Word.
 ' Implementa: IWordManager
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-08-22
-' VersiÃ³n: 1.0
+' Versión: 1.0
 ' ============================================================================
 
 Implements IWordManager
@@ -31,7 +31,7 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' IMPLEMENTACIÃ“N DE LA INTERFAZ IWordManager
+' IMPLEMENTACIÓN DE LA INTERFAZ IWordManager
 ' ============================================================================
 
 Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As Boolean
@@ -39,7 +39,7 @@ Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As B
     On Error GoTo ErrorHandler
     
     
-    ' Crear aplicaciÃ³n Word si no existe
+    ' Crear aplicación Word si no existe
     If m_WordApp Is Nothing Then
         Set m_WordApp = CreateObject("Word.Application")
         m_IsWordAppCreated = True
@@ -119,7 +119,7 @@ Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As Stri
     Dim contenido As String
     On Error GoTo ErrorHandler
     
-    ' Crear aplicaciÃ³n temporal para lectura
+    ' Crear aplicación temporal para lectura
     Set tempWordApp = CreateObject("Word.Application")
     tempWordApp.Visible = False
     
@@ -156,7 +156,7 @@ ErrorHandler:
 End Function
 
 ' ============================================================================
-' MÃ‰TODOS PRIVADOS
+' MÉTODOS PRIVADOS
 ' ============================================================================
 
 Private Sub LimpiarRecursos()

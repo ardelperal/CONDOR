@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
-' Contrato para el servicio de configuraciÃ³n. VersiÃ³n 2.0.
+' Contrato para el servicio de configuración. Versión 2.0.
 
 Public Function GetValue(ByVal key As String) As Variant
 End Function

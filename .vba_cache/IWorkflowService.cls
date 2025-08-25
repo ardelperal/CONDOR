@@ -2,7 +2,7 @@
 Option Explicit
 ' ===================================================================
 ' Interfaz: IWorkflowService
-' DescripciÃ³n: Contrato para el servicio de workflow y estados.
+' Descripción: Contrato para el servicio de workflow y estados.
 ' ===================================================================
 
 Public Function ValidateTransition(ByVal SolicitudID As Long, ByVal estadoOrigen As String, ByVal estadoDestino As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Boolean

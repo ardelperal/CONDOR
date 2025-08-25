@@ -2,18 +2,18 @@
 Option Explicit
 ' ============================================================================
 ' Interfaz: IDocumentService
-' DescripciÃ³n: Define el contrato para el servicio de lectura y escritura de documentos.
+' Descripción: Define el contrato para el servicio de lectura y escritura de documentos.
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-08-22
-' VersiÃ³n: 2.1 - Eliminado Initialize de la interfaz.
+' Versión: 2.1 - Eliminado Initialize de la interfaz.
 ' ============================================================================
 
 ' ============================================================================
-' MÃ‰TODOS PRINCIPALES DEL SERVICIO
+' MÉTODOS PRINCIPALES DEL SERVICIO
 ' ============================================================================
 
 ' Genera un documento oficial basado en una solicitud
-' ParÃ¡metros:
+' Parámetros:
 '   - laSolicitud: El objeto de solicitud que contiene todos los datos.
 ' Retorna: Ruta completa del documento generado o una cadena vacÃ­a si falla.
 Public Function GenerarDocumento(ByVal laSolicitud As T_Solicitud) As String

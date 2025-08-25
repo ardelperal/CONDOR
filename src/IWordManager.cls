@@ -2,35 +2,35 @@
 Option Explicit
 ' ============================================================================
 ' Interfaz: IWordManager
-' DescripciÃ³n: Define el contrato para el manejo de documentos Word.
+' Descripción: Define el contrato para el manejo de documentos Word.
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-08-22
-' VersiÃ³n: 1.0
+' Versión: 1.0
 ' ============================================================================
 
 ' ============================================================================
-' MÃ‰TODOS PARA MANEJO DE WORD
+' MÉTODOS PARA MANEJO DE WORD
 ' ============================================================================
 
-' Abre un documento Word desde una ruta especÃ­fica
-' ParÃ¡metros:
+' Abre un documento Word desde una ruta específica
+' Parámetros:
 '   - rutaDocumento: Ruta completa al archivo Word
-' Retorna: True si se abriÃ³ correctamente, False en caso contrario
+' Retorna: True si se abrió correctamente, False en caso contrario
 Public Function AbrirDocumento(ByVal rutaDocumento As String) As Boolean
 End Function
 
 ' Reemplaza texto en el documento actualmente abierto
-' ParÃ¡metros:
+' Parámetros:
 '   - textoABuscar: Texto que se va a reemplazar
 '   - textoReemplazo: Texto de reemplazo
-' Retorna: True si se realizÃ³ el reemplazo, False en caso contrario
+' Retorna: True si se realizó el reemplazo, False en caso contrario
 Public Function ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
 End Function
 
-' Guarda el documento actualmente abierto en una ruta especÃ­fica
-' ParÃ¡metros:
+' Guarda el documento actualmente abierto en una ruta específica
+' Parámetros:
 '   - rutaDestino: Ruta donde guardar el documento
-' Retorna: True si se guardÃ³ correctamente, False en caso contrario
+' Retorna: True si se guardó correctamente, False en caso contrario
 Public Function GuardarDocumento(ByVal rutaDestino As String) As Boolean
 End Function
 
@@ -39,8 +39,8 @@ Public Sub CerrarDocumento()
 End Sub
 
 ' Lee el contenido de texto de un documento Word
-' ParÃ¡metros:
+' Parámetros:
 '   - rutaDocumento: Ruta completa al archivo Word
-' Retorna: El contenido de texto del documento o cadena vacÃ­a si falla
+' Retorna: El contenido de texto del documento o cadena vacía si falla
 Public Function LeerContenidoDocumento(ByVal rutaDocumento As String) As String
 End Function

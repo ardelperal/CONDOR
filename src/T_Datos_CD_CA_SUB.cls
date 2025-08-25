@@ -1,9 +1,9 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Clase de tipo de datos para tbDatosCDCASUB
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 
-' Campos privados segÃºn especificaciÃ³n tbDatosCDCASUB
+' Campos privados según especificación tbDatosCDCASUB
 Private m_idDatosCDCASUB As Long
 Private m_idSolicitud As Long
 Private m_refSuministrador As String
@@ -45,7 +45,7 @@ Private m_firmaSuministradorPrincipalNombreCargo As String
 Private m_obsRACDelegador As String
 Private m_fechaFirmaRACDelegador As Date
 
-' Propiedades pÃºblicas
+' Propiedades públicas
 Public Property Get idDatosCDCASUB() As Long
     idDatosCDCASUB = m_idDatosCDCASUB
 End Property

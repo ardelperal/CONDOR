@@ -1,7 +1,7 @@
 ﻿Attribute VB_Name = "Test_WorkflowRepository"
 '==============================================================================
-' MÃ³dulo: Test_WorkflowRepository
-' PropÃ³sito: Pruebas de integraciÃ³n para CWorkflowRepository
+' Módulo: Test_WorkflowRepository
+' Propósito: Pruebas de integración para CWorkflowRepository
 ' Autor: CONDOR-Expert
 ' Fecha: 2024
 '==============================================================================
@@ -12,11 +12,11 @@ Option Explicit
 #If DEV_MODE Then
 
 '==============================================================================
-' FUNCIÃ“N PRINCIPAL DE EJECUCIÃ“N
+' FUNCIÓN PRINCIPAL DE EJECUCIÓN
 '==============================================================================
 
 '''
-' Ejecuta todas las pruebas de integraciÃ³n del WorkflowRepository
+' Ejecuta todas las pruebas de integración del WorkflowRepository
 ' @return CTestSuiteResult: Resultado de la suite de pruebas
 '''
 Public Function Test_WorkflowRepository_RunAll() As CTestSuiteResult
@@ -25,7 +25,7 @@ Public Function Test_WorkflowRepository_RunAll() As CTestSuiteResult
     ' Crear la suite de resultados
     Dim suite As CTestSuiteResult
     Set suite = New CTestSuiteResult
-    suite.Initialize "Test_WorkflowRepository", "Pruebas de integraciÃ³n para CWorkflowRepository"
+    suite.Initialize "Test_WorkflowRepository", "Pruebas de integración para CWorkflowRepository"
     
     ' Ejecutar todas las pruebas individuales
     suite.AddTestResult Test_WorkflowRepository_ValidTransition_ReturnsTrue()
@@ -43,17 +43,17 @@ ErrorHandler:
 End Function
 
 '==============================================================================
-' PRUEBAS DE INTEGRACIÃ“N
+' PRUEBAS DE INTEGRACIÓN
 '==============================================================================
 
 '''
-' Prueba que una transiciÃ³n vÃ¡lida existente en la base de datos devuelve True
+' Prueba que una transición válida existente en la base de datos devuelve True
 ' @return CTestResult: Resultado de la prueba
 '''
 Private Function Test_WorkflowRepository_ValidTransition_ReturnsTrue() As CTestResult
     Dim testResult As CTestResult
     Set testResult = New CTestResult
-    testResult.Initialize "Test_WorkflowRepository_ValidTransition_ReturnsTrue", "TransiciÃ³n vÃ¡lida debe devolver True"
+    testResult.Initialize "Test_WorkflowRepository_ValidTransition_ReturnsTrue", "Transición válida debe devolver True"
     
     On Error GoTo ErrorHandler
     
@@ -72,7 +72,7 @@ Private Function Test_WorkflowRepository_ValidTransition_ReturnsTrue() As CTestR
     If result Then
         testResult.Pass
     Else
-        testResult.Fail "Se esperaba True para transiciÃ³n vÃ¡lida PC: BORRADOR -> ENVIADO"
+        testResult.Fail "Se esperaba True para transición válida PC: BORRADOR -> ENVIADO"
     End If
     
     ' Limpiar datos de prueba
@@ -88,13 +88,13 @@ ErrorHandler:
 End Function
 
 '''
-' Prueba que una transiciÃ³n invÃ¡lida devuelve False
+' Prueba que una transición inválida devuelve False
 ' @return CTestResult: Resultado de la prueba
 '''
 Private Function Test_WorkflowRepository_InvalidTransition_ReturnsFalse() As CTestResult
     Dim testResult As CTestResult
     Set testResult = New CTestResult
-    testResult.Initialize "Test_WorkflowRepository_InvalidTransition_ReturnsFalse", "TransiciÃ³n invÃ¡lida debe devolver False"
+    testResult.Initialize "Test_WorkflowRepository_InvalidTransition_ReturnsFalse", "Transición inválida debe devolver False"
     
     On Error GoTo ErrorHandler
     
@@ -105,7 +105,7 @@ Private Function Test_WorkflowRepository_InvalidTransition_ReturnsFalse() As CTe
     Dim repository As IWorkflowRepository
     Set repository = modWorkflowRepositoryFactory.CreateWorkflowRepository()
     
-    ' Ejecutar la prueba con una transiciÃ³n que no existe
+    ' Ejecutar la prueba con una transición que no existe
     Dim result As Boolean
     result = repository.IsValidTransition("PC", "ENVIADO", "BORRADOR")
     
@@ -113,7 +113,7 @@ Private Function Test_WorkflowRepository_InvalidTransition_ReturnsFalse() As CTe
     If Not result Then
         testResult.Pass
     Else
-        testResult.Fail "Se esperaba False para transiciÃ³n invÃ¡lida PC: ENVIADO -> BORRADOR"
+        testResult.Fail "Se esperaba False para transición inválida PC: ENVIADO -> BORRADOR"
     End If
     
     ' Limpiar datos de prueba
@@ -170,17 +170,17 @@ ErrorHandler:
 End Function
 
 '''
-' Prueba que una transiciÃ³n inactiva devuelve False
+' Prueba que una transición inactiva devuelve False
 ' @return CTestResult: Resultado de la prueba
 '''
 Private Function Test_WorkflowRepository_InactiveTransition_ReturnsFalse() As CTestResult
     Dim testResult As CTestResult
     Set testResult = New CTestResult
-    testResult.Initialize "Test_WorkflowRepository_InactiveTransition_ReturnsFalse", "TransiciÃ³n inactiva debe devolver False"
+    testResult.Initialize "Test_WorkflowRepository_InactiveTransition_ReturnsFalse", "Transición inactiva debe devolver False"
     
     On Error GoTo ErrorHandler
     
-    ' Preparar datos de prueba con transiciÃ³n inactiva
+    ' Preparar datos de prueba con transición inactiva
     Call SetupTestData_InactiveTransition
     
     ' Crear instancia real del repositorio usando factory
@@ -195,7 +195,7 @@ Private Function Test_WorkflowRepository_InactiveTransition_ReturnsFalse() As CT
     If Not result Then
         testResult.Pass
     Else
-        testResult.Fail "Se esperaba False para transiciÃ³n inactiva PC: BORRADOR -> CANCELADO"
+        testResult.Fail "Se esperaba False para transición inactiva PC: BORRADOR -> CANCELADO"
     End If
     
     ' Limpiar datos de prueba
@@ -211,11 +211,11 @@ ErrorHandler:
 End Function
 
 '==============================================================================
-' FUNCIONES AUXILIARES PARA PREPARACIÃ“N DE DATOS
+' FUNCIONES AUXILIARES PARA PREPARACIÓN DE DATOS
 '==============================================================================
 
 '''
-' Configura datos de prueba para transiciones vÃ¡lidas
+' Configura datos de prueba para transiciones válidas
 '''
 Private Sub SetupTestData_ValidTransition()
     On Error GoTo ErrorHandler
@@ -237,7 +237,7 @@ Private Sub SetupTestData_ValidTransition()
     db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9002, 'ENVIADO', 'Test Enviado')"
     db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9003, 'CANCELADO', 'Test Cancelado')"
     
-    ' Insertar transiciÃ³n vÃ¡lida activa
+    ' Insertar transición válida activa
     db.Execute "INSERT INTO TbTransiciones (ID, TipoSolicitud, EstadoOrigenID, EstadoDestinoID, Activo) " & _
                "VALUES (9001, 'PC', 9001, 9002, True)"
     
@@ -271,7 +271,7 @@ Private Sub SetupTestData_InactiveTransition()
     db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9001, 'BORRADOR', 'Test Borrador')"
     db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9003, 'CANCELADO', 'Test Cancelado')"
     
-    ' Insertar transiciÃ³n inactiva
+    ' Insertar transición inactiva
     db.Execute "INSERT INTO TbTransiciones (ID, TipoSolicitud, EstadoOrigenID, EstadoDestinoID, Activo) " & _
                "VALUES (9002, 'PC', 9001, 9003, False)"
     

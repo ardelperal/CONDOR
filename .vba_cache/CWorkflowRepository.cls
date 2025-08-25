@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 '==============================================================================
 ' Clase: CWorkflowRepository
-' PropÃ³sito: ImplementaciÃ³n real del repositorio de workflow que accede a la base de datos
+' Propósito: Implementación real del repositorio de workflow que accede a la base de datos
 ' Autor: CONDOR-Expert
 ' Fecha: 2024
 '==============================================================================
@@ -23,32 +23,32 @@ Implements IWorkflowRepository
 ' VARIABLES PRIVADAS
 '==============================================================================
 
-' Dependencia para acceso a configuraciÃ³n
+' Dependencia para acceso a configuración
 Private m_Config As IConfig
 
 '==============================================================================
-' MÃ‰TODOS PÃšBLICOS
+' MÉTODOS PÚBLICOS
 '==============================================================================
 
 '''
 ' Inicializa el repositorio con sus dependencias
-' @param config: Servicio de configuraciÃ³n para obtener rutas de base de datos
+' @param config: Servicio de configuración para obtener rutas de base de datos
 '''
 Public Sub Initialize(config As IConfig)
     Set m_Config = config
 End Sub
 
 '==============================================================================
-' IMPLEMENTACIÃ“N DE INTERFAZ IWorkflowRepository
+' IMPLEMENTACIÓN DE INTERFAZ IWorkflowRepository
 '==============================================================================
 
 '''
-' Valida si una transiciÃ³n de estado es permitida consultando la base de datos
-' REFACTORIZADO: Usa consultas parametrizadas para prevenir inyecciÃ³n SQL
+' Valida si una transición de estado es permitida consultando la base de datos
+' REFACTORIZADO: Usa consultas parametrizadas para prevenir inyección SQL
 ' @param tipoSolicitud: Tipo de solicitud (PC, CDCA, CDCASUB)
 ' @param estadoOrigen: Estado actual de la solicitud
 ' @param estadoDestino: Estado al que se quiere transicionar
-' @return Boolean: True si la transiciÃ³n es vÃ¡lida, False en caso contrario
+' @return Boolean: True si la transición es válida, False en caso contrario
 '''
 Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As String, ByVal estadoOrigen As String, ByVal estadoDestino As String) As Boolean
     Dim errorHandler As IErrorHandlerService
@@ -59,11 +59,11 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     Dim rs As DAO.Recordset
     Dim validCount As Long
     
-    ' Obtener ruta del backend desde configuraciÃ³n
+    ' Obtener ruta del backend desde configuración
     Dim backendPath As String
     backendPath = m_Config.GetDataPath()
     
-    ' Abrir conexiÃ³n a la base de datos backend
+    ' Abrir conexión a la base de datos backend
     Set db = DBEngine.OpenDatabase(backendPath)
     
     ' Crear QueryDef con consulta parametrizada (SEGURA)
@@ -77,7 +77,7 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
         "AND Destino.CodigoEstado = [pEstadoDestino] " & _
         "AND TbTransiciones.Activo = True;")
     
-    ' Asignar valores a los parÃ¡metros de forma segura
+    ' Asignar valores a los parámetros de forma segura
     qdf.Parameters("pTipoSolicitud").Value = tipoSolicitud
     qdf.Parameters("pEstadoOrigen").Value = estadoOrigen
     qdf.Parameters("pEstadoDestino").Value = estadoDestino
@@ -103,10 +103,10 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     Exit Function
     
 ErrorHandler:
-    ' En caso de error, asumir que la transiciÃ³n no es vÃ¡lida
+    ' En caso de error, asumir que la transición no es válida
     IWorkflowRepository_IsValidTransition = False
     
-    ' Limpiar recursos si estÃ¡n abiertos
+    ' Limpiar recursos si está abiertos
     If Not rs Is Nothing Then
         rs.Close
         Set rs = Nothing

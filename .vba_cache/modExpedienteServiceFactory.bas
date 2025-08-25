@@ -3,12 +3,12 @@ Option Explicit
 
 ' =====================================================
 ' MODULO: modExpedienteServiceFactory
-' DESCRIPCION: Factory especializada para la creaciÃ³n del servicio de expedientes
+' DESCRIPCION: Factory especializada para la creación del servicio de expedientes
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
 ' =====================================================
 
-' FunciÃ³n factory para crear y configurar el servicio de expedientes
+' Función factory para crear y configurar el servicio de expedientes
 Public Function CreateExpedienteService() As IExpedienteService
     On Error GoTo ErrorHandler
     

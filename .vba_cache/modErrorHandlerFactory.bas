@@ -1,8 +1,8 @@
 ﻿Attribute VB_Name = "modErrorHandlerFactory"
 Option Compare Database
 Option Explicit
-' MÃ³dulo: modErrorHandlerFactory
-' DescripciÃ³n: Factory para crear instancias de IErrorHandlerService
+' Módulo: modErrorHandlerFactory
+' Descripción: Factory para crear instancias de IErrorHandlerService
 ' Arquitectura: Capa de Servicios - Factory Pattern
 
 ' Crea una instancia configurada de IErrorHandlerService
@@ -14,7 +14,7 @@ Public Function CreateErrorHandlerService() As IErrorHandlerService
     Dim config As IConfig
     Dim fileSystem As IFileSystem
     
-    ' Obtener instancia de configuraciÃ³n usando el nuevo factory
+    ' Obtener instancia de configuración usando el nuevo factory
     Set config = modConfig.CreateConfigService()
     
     ' Crear instancia del sistema de ficheros
@@ -29,7 +29,7 @@ Public Function CreateErrorHandlerService() As IErrorHandlerService
     Exit Function
     
 ErrorHandler:
-    ' Nota: En caso de error en el factory, usamos logging directo para evitar recursiÃ³n
+    ' Nota: En caso de error en el factory, usamos logging directo para evitar recursión
     Debug.Print "Error en modErrorHandlerFactory.CreateErrorHandlerService: " & Err.Number & " - " & Err.Description
     Set CreateErrorHandlerService = Nothing
 End Function

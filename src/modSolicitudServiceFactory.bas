@@ -2,8 +2,8 @@
 Option Compare Database
 Option Explicit
 '******************************************************************************
-' MÃ“DULO: modSolicitudServiceFactory
-' DESCRIPCIÃ“N: Factory para la inyecciÃ³n de dependencias del servicio de solicitudes
+' MÓDULO: modSolicitudServiceFactory
+' DESCRIPCIÓN: Factory para la inyección de dependencias del servicio de solicitudes
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2025-01-14
 '******************************************************************************
@@ -13,8 +13,8 @@ Option Explicit
 '******************************************************************************
 
 '******************************************************************************
-' FUNCIÃ“N: CreateSolicitudService
-' DESCRIPCIÃ“N: Crea una instancia del servicio de solicitudes con todas sus dependencias
+' FUNCIÓN: CreateSolicitudService
+' DESCRIPCIÓN: Crea una instancia del servicio de solicitudes con todas sus dependencias
 ' RETORNA: ISolicitudService - Instancia del servicio completamente inicializada
 '******************************************************************************
 Public Function CreateSolicitudService() As ISolicitudService

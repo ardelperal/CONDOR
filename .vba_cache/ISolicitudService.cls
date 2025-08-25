@@ -12,11 +12,11 @@ Option Explicit
 
 ' ============================================================================
 ' INTERFAZ: ISolicitudService
-' Arquitectura: Contrato Limpio para LÃ³gica de Negocio de Solicitudes
-' Version: 2.0 - ReconstrucciÃ³n Total
+' Arquitectura: Contrato Limpio para Lógica de Negocio de Solicitudes
+' Version: 2.0 - Reconstrucción Total
 ' ============================================================================
 ' Define el contrato para operaciones de negocio relacionadas con solicitudes.
-' Implementa el patrÃ³n Service con delegaciÃ³n al repositorio.
+' Implementa el patrón Service con delegación al repositorio.
 ' ============================================================================
 
 ' Crea una nueva solicitud con estado inicial "Borrador"
@@ -28,7 +28,7 @@ End Function
 
 ' Guarda una solicitud existente
 ' @param solicitud: Objeto T_Solicitud a guardar
-' @return: True si se guardÃ³ correctamente, False en caso contrario
+' @return: True si se guardó correctamente, False en caso contrario
 Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
 End Function
 

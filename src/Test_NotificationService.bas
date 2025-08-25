@@ -5,10 +5,10 @@ Option Explicit
 
 ' Test_NotificationService.bas
 ' Suite de pruebas unitarias PURAS para CNotificationService
-' Reconstruido para probar la implementaciÃ³n real con aislamiento completo
+' Reconstruido para probar la implementación real con aislamiento completo
 ' Incluye CMockDatabase para verificar interacciones con la base de datos
 
-' FunciÃ³n principal para ejecutar todas las pruebas del mÃ³dulo
+' Función principal para ejecutar todas las pruebas del módulo
 Public Function Test_NotificationService_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.SuiteName = "Test_NotificationService"
@@ -49,33 +49,33 @@ Private Function Test_EnviarNotificacion_Success_CallsDatabaseCorrectly_Result()
     ' Inyectar dependencias
     notificationService.Initialize mockConfig, mockLogger
     
-    ' Configurar el mock database para simular Ã©xito
+    ' Configurar el mock database para simular éxito
     mockDatabase.SimulateSuccess = True
     
     ' Act
     Dim resultado As Boolean
     resultado = notificationService.EnviarNotificacion("dest@empresa.com", "Asunto Test", "<html>Cuerpo Test</html>")
     
-    ' Assert - Verificar que se usÃ³ la base de datos correctamente
+    ' Assert - Verificar que se usó la base de datos correctamente
     Assert.IsTrue mockDatabase.WasCreateQueryDefCalled, "Debe llamar a CreateQueryDef para consulta parametrizada"
     Assert.IsTrue mockDatabase.WasExecuteCalled, "Debe llamar a Execute para ejecutar la consulta"
     
-    ' Verificar que se creÃ³ la consulta con el nombre correcto
+    ' Verificar que se creó la consulta con el nombre correcto
     Assert.AreEqual "qryInsertCorreo", mockDatabase.LastQueryDefName, "Debe crear QueryDef con nombre correcto"
     
     ' Verificar que la consulta SQL es parametrizada (no contiene valores directos)
     Dim sqlQuery As String
     sqlQuery = mockDatabase.LastQueryDefSQL
     Assert.IsTrue InStr(sqlQuery, "INSERT INTO") > 0, "Debe ser una consulta INSERT"
-    Assert.IsTrue InStr(sqlQuery, "?") > 0, "Debe usar parÃ¡metros (?) en lugar de concatenaciÃ³n"
+    Assert.IsTrue InStr(sqlQuery, "?") > 0, "Debe usar parámetros (?) en lugar de concatenación"
     Assert.IsFalse InStr(sqlQuery, "dest@empresa.com") > 0, "No debe contener valores literales (SQL injection prevention)"
     
-    ' Verificar que se establecieron los parÃ¡metros correctamente
-    Assert.AreEqual 4, mockDatabase.ParameterCount, "Debe tener 4 parÃ¡metros"
-    Assert.AreEqual "dest@empresa.com", mockDatabase.GetParameterValue(0), "ParÃ¡metro 0 debe ser destinatarios"
-    Assert.AreEqual "Asunto Test", mockDatabase.GetParameterValue(1), "ParÃ¡metro 1 debe ser asunto"
-    Assert.AreEqual "<html>Cuerpo Test</html>", mockDatabase.GetParameterValue(2), "ParÃ¡metro 2 debe ser cuerpo"
-    Assert.AreEqual "testuser@empresa.com", mockDatabase.GetParameterValue(3), "ParÃ¡metro 3 debe ser usuario actual"
+    ' Verificar que se establecieron los parámetros correctamente
+    Assert.AreEqual 4, mockDatabase.ParameterCount, "Debe tener 4 parámetros"
+    Assert.AreEqual "dest@empresa.com", mockDatabase.GetParameterValue(0), "Parámetro 0 debe ser destinatarios"
+    Assert.AreEqual "Asunto Test", mockDatabase.GetParameterValue(1), "Parámetro 1 debe ser asunto"
+    Assert.AreEqual "<html>Cuerpo Test</html>", mockDatabase.GetParameterValue(2), "Parámetro 2 debe ser cuerpo"
+    Assert.AreEqual "testuser@empresa.com", mockDatabase.GetParameterValue(3), "Parámetro 3 debe ser usuario actual"
     
     result.Passed = True
     result.Message = "Prueba exitosa: EnviarNotificacion usa consultas parametrizadas correctamente"
@@ -89,7 +89,7 @@ TestError:
     Set Test_EnviarNotificacion_Success_CallsDatabaseCorrectly_Result = result
 End Function
 
-' Test: Verificar inicializaciÃ³n correcta con dependencias vÃ¡lidas
+' Test: Verificar inicialización correcta con dependencias válidas
 Private Function Test_Initialize_WithValidDependencies_Result() As CTestResult
     Dim result As New CTestResult
     result.TestName = "Test_Initialize_WithValidDependencies"
@@ -104,9 +104,9 @@ Private Function Test_Initialize_WithValidDependencies_Result() As CTestResult
     ' Act
     notificationService.Initialize mockConfig, mockLogger
     
-    ' Assert - Si no hay error, la inicializaciÃ³n fue exitosa
+    ' Assert - Si no hay error, la inicialización fue exitosa
     result.Passed = True
-    result.Message = "Prueba exitosa: Initialize con dependencias vÃ¡lidas"
+    result.Message = "Prueba exitosa: Initialize con dependencias válidas"
     
     Set Test_Initialize_WithValidDependencies_Result = result
     Exit Function
@@ -147,7 +147,7 @@ TestError:
     Set Test_EnviarNotificacion_WithoutInitialize_Result = result
 End Function
 
-' Test: Verificar comportamiento con parÃ¡metros invÃ¡lidos
+' Test: Verificar comportamiento con parámetros inválidos
 Private Function Test_EnviarNotificacion_WithInvalidParameters_Result() As CTestResult
     Dim result As New CTestResult
     result.TestName = "Test_EnviarNotificacion_WithInvalidParameters"
@@ -161,23 +161,23 @@ Private Function Test_EnviarNotificacion_WithInvalidParameters_Result() As CTest
     
     notificationService.Initialize mockConfig, mockLogger
     
-    ' Act & Assert - Destinatarios vacÃ­o
+    ' Act & Assert - Destinatarios vacío
     Dim resultado1 As Boolean
     resultado1 = notificationService.EnviarNotificacion("", "Asunto", "<html>Cuerpo</html>")
-    Assert.IsFalse resultado1, "Debe fallar con destinatarios vacÃ­o"
+    Assert.IsFalse resultado1, "Debe fallar con destinatarios vacío"
     
-    ' Act & Assert - Asunto vacÃ­o
+    ' Act & Assert - Asunto vacío
     Dim resultado2 As Boolean
     resultado2 = notificationService.EnviarNotificacion("test@empresa.com", "", "<html>Cuerpo</html>")
-    Assert.IsFalse resultado2, "Debe fallar con asunto vacÃ­o"
+    Assert.IsFalse resultado2, "Debe fallar con asunto vacío"
     
-    ' Act & Assert - Cuerpo vacÃ­o
+    ' Act & Assert - Cuerpo vacío
     Dim resultado3 As Boolean
     resultado3 = notificationService.EnviarNotificacion("test@empresa.com", "Asunto", "")
-    Assert.IsFalse resultado3, "Debe fallar con cuerpo vacÃ­o"
+    Assert.IsFalse resultado3, "Debe fallar con cuerpo vacío"
     
     result.Passed = True
-    result.Message = "Prueba exitosa: EnviarNotificacion valida correctamente parÃ¡metros"
+    result.Message = "Prueba exitosa: EnviarNotificacion valida correctamente parámetros"
     
     Set Test_EnviarNotificacion_WithInvalidParameters_Result = result
     Exit Function
@@ -200,7 +200,7 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     
-    ' Configurar valores especÃ­ficos en el mock
+    ' Configurar valores específicos en el mock
     mockConfig.SetConfigValue "CORREOSDBPATH", "C:\test\correos_test.accdb"
     mockConfig.SetConfigValue "DATABASEPASSWORD", "password123"
     mockConfig.SetConfigValue "USUARIOACTUAL", "usuario.test@empresa.com"

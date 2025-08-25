@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -14,7 +14,7 @@ Option Explicit
 
 Private m_suiteResults As Collection
 
-' El constructor recibe la colecciÃ³n de resultados del runner
+' El constructor recibe la colección de resultados del runner
 Public Sub Initialize(ByVal results As Collection)
     Set m_suiteResults = results
 End Sub
@@ -46,7 +46,7 @@ Public Property Get TotalFailed() As Long
     TotalFailed = TotalTests - TotalPassed
 End Property
 
-' --- MÃ©todo Principal de GeneraciÃ³n de Informe ---
+' --- Método Principal de Generación de Informe ---
 Public Function GenerateReport() As String
     Dim report As String
     Dim suiteResult As CTestSuiteResult
@@ -68,9 +68,9 @@ Public Function GenerateReport() As String
     report = report & "Pruebas fallidas: " & TotalFailed & vbCrLf
 
     If TotalFailed = 0 Then
-        report = report & "RESULTADO: âœ… TODAS LAS PRUEBAS PASARON" & vbCrLf
+        report = report & "RESULTADO: ✅ TODAS LAS PRUEBAS PASARON" & vbCrLf
     Else
-        report = report & "RESULTADO: âŒ HAY PRUEBAS FALLIDAS" & vbCrLf
+        report = report & "RESULTADO: ❌ HAY PRUEBAS FALLIDAS" & vbCrLf
     End If
 
     report = report & String(80, "=") & vbCrLf

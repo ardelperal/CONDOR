@@ -1,7 +1,7 @@
 ﻿Attribute VB_Name = "Test_LoggingService"
 '******************************************************************************
-' MÃ³dulo: Test_LoggingService
-' PropÃ³sito: Pruebas unitarias para CLoggingService usando mocks
+' Módulo: Test_LoggingService
+' Propósito: Pruebas unitarias para CLoggingService usando mocks
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-01-21
 '******************************************************************************
@@ -10,7 +10,7 @@ Option Compare Database
 Option Explicit
 
 '******************************************************************************
-' FUNCIÃ“N PRINCIPAL DE EJECUCIÃ“N
+' FUNCIÓN PRINCIPAL DE EJECUCIÓN
 '******************************************************************************
 
 ' Ejecuta todas las pruebas del LoggingService
@@ -51,13 +51,13 @@ Private Function Test_Initialize_WithValidDependencies_SetsUpCorrectly() As CTes
     ' Act
     service.Initialize mockConfig, mockFileSystem
     
-    ' Assert - Si no hay error, la inicializaciÃ³n fue exitosa
-    result.Pass "El servicio se inicializÃ³ correctamente con las dependencias"
+    ' Assert - Si no hay error, la inicialización fue exitosa
+    result.Pass "El servicio se inicializó correctamente con las dependencias"
     
     GoTo Cleanup
     
 ErrorHandler:
-    result.Fail "Error durante la inicializaciÃ³n: " & Err.Description
+    result.Fail "Error durante la inicialización: " & Err.Description
     
 Cleanup:
     Set service = Nothing
@@ -91,12 +91,12 @@ Private Function Test_LogError_WithValidMessage_CallsFileSystemCorrectly() As CT
     ' Assert
     If mockFileSystem.WasOpenTextFileCalled Then
         If mockFileSystem.LastPath = "C:\test\log.txt" And mockFileSystem.LastMode = 8 And mockFileSystem.LastCreate = True Then
-            result.Pass "LogError llamÃ³ correctamente a OpenTextFile con los parÃ¡metros esperados"
+            result.Pass "LogError llamó correctamente a OpenTextFile con los parámetros esperados"
         Else
-            result.Fail "LogError llamÃ³ a OpenTextFile pero con parÃ¡metros incorrectos. Path: " & mockFileSystem.LastPath & ", Mode: " & mockFileSystem.LastMode
+            result.Fail "LogError llamó a OpenTextFile pero con parámetros incorrectos. Path: " & mockFileSystem.LastPath & ", Mode: " & mockFileSystem.LastMode
         End If
     Else
-        result.Fail "LogError no llamÃ³ a OpenTextFile"
+        result.Fail "LogError no llamó a OpenTextFile"
     End If
     
     GoTo Cleanup
@@ -136,12 +136,12 @@ Private Function Test_LogInfo_WithValidMessage_CallsFileSystemCorrectly() As CTe
     ' Assert
     If mockFileSystem.WasOpenTextFileCalled Then
         If mockFileSystem.LastPath = "C:\test\info.log" And mockFileSystem.LastMode = 8 And mockFileSystem.LastCreate = True Then
-            result.Pass "LogInfo llamÃ³ correctamente a OpenTextFile con los parÃ¡metros esperados"
+            result.Pass "LogInfo llamó correctamente a OpenTextFile con los parámetros esperados"
         Else
-            result.Fail "LogInfo llamÃ³ a OpenTextFile pero con parÃ¡metros incorrectos"
+            result.Fail "LogInfo llamó a OpenTextFile pero con parámetros incorrectos"
         End If
     Else
-        result.Fail "LogInfo no llamÃ³ a OpenTextFile"
+        result.Fail "LogInfo no llamó a OpenTextFile"
     End If
     
     GoTo Cleanup
@@ -181,12 +181,12 @@ Private Function Test_LogWarning_WithValidMessage_CallsFileSystemCorrectly() As 
     ' Assert
     If mockFileSystem.WasOpenTextFileCalled Then
         If mockFileSystem.LastPath = "C:\test\warning.log" And mockFileSystem.LastMode = 8 And mockFileSystem.LastCreate = True Then
-            result.Pass "LogWarning llamÃ³ correctamente a OpenTextFile con los parÃ¡metros esperados"
+            result.Pass "LogWarning llamó correctamente a OpenTextFile con los parámetros esperados"
         Else
-            result.Fail "LogWarning llamÃ³ a OpenTextFile pero con parÃ¡metros incorrectos"
+            result.Fail "LogWarning llamó a OpenTextFile pero con parámetros incorrectos"
         End If
     Else
-        result.Fail "LogWarning no llamÃ³ a OpenTextFile"
+        result.Fail "LogWarning no llamó a OpenTextFile"
     End If
     
     GoTo Cleanup
@@ -201,7 +201,7 @@ Cleanup:
     Set Test_LogWarning_WithValidMessage_CallsFileSystemCorrectly = result
 End Function
 
-' Prueba que LogError con todos los parÃ¡metros escribe una entrada completa
+' Prueba que LogError con todos los parámetros escribe una entrada completa
 Private Function Test_LogError_WithAllParameters_WritesCompleteLogEntry() As CTestResult
     Dim result As New CTestResult
     result.Initialize "Test_LogError_WithAllParameters_WritesCompleteLogEntry"
@@ -229,12 +229,12 @@ Private Function Test_LogError_WithAllParameters_WritesCompleteLogEntry() As CTe
     ' Assert
     If mockFileSystem.WasOpenTextFileCalled And mockTextFile.WasWriteLineCalled Then
         If InStr(mockTextFile.LastWrittenLine, "ERROR") > 0 And InStr(mockTextFile.LastWrittenLine, "Error completo") > 0 Then
-            result.Pass "LogError escribiÃ³ correctamente la entrada de log completa"
+            result.Pass "LogError escribió correctamente la entrada de log completa"
         Else
-            result.Fail "LogError escribiÃ³ al archivo pero el contenido no es el esperado: " & mockTextFile.LastWrittenLine
+            result.Fail "LogError escribió al archivo pero el contenido no es el esperado: " & mockTextFile.LastWrittenLine
         End If
     Else
-        result.Fail "LogError no escribiÃ³ al archivo de log"
+        result.Fail "LogError no escribió al archivo de log"
     End If
     
     GoTo Cleanup

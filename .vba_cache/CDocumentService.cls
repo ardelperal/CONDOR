@@ -12,10 +12,12 @@ Option Explicit
 Implements IDocumentService
 
 ' Dependencias inyectadas
+' Dependencias inyectadas
 Private m_Config As IConfig
 Private m_SolicitudRepository As ISolicitudRepository
 Private m_OperationLogger As IOperationLogger
 Private m_WordManager As IWordManager
+Private m_MapeoRepository As IMapeoRepository
 
 ' ============================================================================
 ' CONSTRUCTOR Y DESTRUCTOR
@@ -26,6 +28,7 @@ Private Sub Class_Initialize()
     Set m_SolicitudRepository = Nothing
     Set m_OperationLogger = Nothing
     Set m_WordManager = Nothing
+    Set m_MapeoRepository = Nothing
 End Sub
 
 Private Sub Class_Terminate()
@@ -36,11 +39,12 @@ End Sub
 ' MÃ‰TODO DE INICIALIZACIÃ“N CON DEPENDENCIAS (CONTRATO DE INTERFAZ)
 ' ============================================================================
 
-Public Sub Initialize(ByVal configService As IConfig, ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal wordManager As IWordManager)
+Public Sub Initialize(ByVal configService As IConfig, ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal wordManager As IWordManager, ByVal mapeoRepository As IMapeoRepository)
     Set m_Config = configService
     Set m_SolicitudRepository = solicitudRepository
     Set m_OperationLogger = operationLogger
     Set m_WordManager = wordManager
+    Set m_MapeoRepository = mapeoRepository
 End Sub
 
 ' ============================================================================
@@ -156,7 +160,7 @@ Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, By
     End If
     
     ' 3. Obtener el mapeo de campos
-    Set rsMapeo = GetMapeo(solicitudLeida.tipoSolicitud)
+    Set rsMapeo = m_MapeoRepository.GetMapeoPorTipo(solicitudLeida.tipoSolicitud)
     If rsMapeo.EOF Then
         Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
         errorHandler.LogError -1, "No se encontrÃ³ mapeo para tipo: " & solicitudLeida.tipoSolicitud, "CDocumentService.LeerDocumento"
@@ -223,7 +227,7 @@ Private Function ReemplazarCamposEnPlantilla(ByVal solicitud As T_Solicitud) As 
     Dim valorPropiedad As Variant
     
     Set datos = solicitud.Datos
-    Set rsMapeo = GetMapeo(solicitud.tipoSolicitud)
+    Set rsMapeo = m_MapeoRepository.GetMapeoPorTipo(solicitud.tipoSolicitud)
     
     If rsMapeo.EOF Then
         errorHandler.LogError -1, "No se encontrÃ³ mapeo para tipo: " & solicitud.tipoSolicitud, "CDocumentService.ReemplazarCampos"
@@ -276,27 +280,7 @@ ErrorHandler:
     ReemplazarCamposEnPlantilla = False
 End Function
 
-Private Function GetMapeo(ByVal tipoSolicitud As String) As Object ' Recordset
-    Dim errorHandler As IErrorHandlerService
-    On Error GoTo ErrorHandler
-    
-    Dim db As DAO.Database
-    Dim sql As String
-    
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
-    sql = "SELECT nombreCampoTabla, nombreCampoWord, valorAsociado FROM tbMapeoCampos WHERE nombrePlantilla = '" & tipoSolicitud & "'"
-    Set GetMapeo = db.OpenRecordset(sql)
-    
-    Exit Function
-ErrorHandler:
-    If Not db Is Nothing Then
-        db.Close
-        Set db = Nothing
-    End If
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "CDocumentService.GetMapeo"
-    Set GetMapeo = Nothing
-End Function
+
 
 Private Function ExtraerValorMarcador(ByVal contenidoDocumento As String, ByVal nombreMarcador As String) As String
     Dim errorHandler As IErrorHandlerService
