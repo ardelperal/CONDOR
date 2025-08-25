@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -27,6 +27,7 @@ Implements IWorkflowRepository
 '==============================================================================
 
 Private m_Rules As Collection
+Private m_IsValidTransition_WasCalled As Boolean
 
 '==============================================================================
 ' EVENTOS DE CLASE
@@ -34,6 +35,7 @@ Private m_Rules As Collection
 
 Private Sub Class_Initialize()
     Set m_Rules = New Collection
+    m_IsValidTransition_WasCalled = False
 End Sub
 
 Private Sub Class_Terminate()
@@ -48,13 +50,15 @@ End Sub
 ' @param tipo: Tipo de solicitud
 ' @param origen: Estado origen
 ' @param destino: Estado destino
-Public Sub AddRule(ByVal tipo As String, ByVal origen As String, ByVal destino As String)
+' @param esValida: Indica si la transición es válida (True) o no (False)
+Public Sub AddRule(ByVal tipo As String, ByVal origen As String, ByVal destino As String, Optional ByVal esValida As Boolean = True)
     Dim ruleKey As String
     ruleKey = tipo & "|" & origen & "|" & destino
     
-    On Error Resume Next
-    m_Rules.Add True, ruleKey
-    On Error GoTo 0
+    ' Verificar si la clave ya existe antes de añadir
+    If Not RuleExists(ruleKey) Then
+        m_Rules.Add esValida, ruleKey
+    End If
 End Sub
 
 ' Limpia todas las reglas configuradas
@@ -67,19 +71,52 @@ Public Function GetRuleCount() As Long
     GetRuleCount = m_Rules.Count
 End Function
 
+' Indica si el método IsValidTransition fue llamado
+Public Property Get IsValidTransition_WasCalled() As Boolean
+    IsValidTransition_WasCalled = m_IsValidTransition_WasCalled
+End Property
+
+'==============================================================================
+' MÉTODOS PRIVADOS
+'==============================================================================
+
+' Verifica si una clave existe en la colección de reglas
+' @param ruleKey: Clave a verificar
+' @return: True si la clave existe, False en caso contrario
+Private Function RuleExists(ByVal ruleKey As String) As Boolean
+    Dim testValue As Variant
+    Dim errorOccurred As Boolean
+    
+    errorOccurred = False
+    
+    ' Intentar acceder al elemento usando la clave
+    On Error GoTo ErrorHandler
+    testValue = m_Rules(ruleKey)
+    RuleExists = True
+    Exit Function
+    
+ErrorHandler:
+    RuleExists = False
+    Resume Next
+End Function
+
 '==============================================================================
 ' IMPLEMENTACIÃ“N DE IWorkflowRepository
 '==============================================================================
 
 Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As String, ByVal estadoOrigen As String, ByVal estadoDestino As String) As Boolean
+    ' Marcar que el método fue llamado
+    m_IsValidTransition_WasCalled = True
+    
     Dim ruleKey As String
     ruleKey = tipoSolicitud & "|" & estadoOrigen & "|" & estadoDestino
     
-    On Error Resume Next
-    Dim dummy As Boolean
-    dummy = m_Rules(ruleKey)
-    IWorkflowRepository_IsValidTransition = (Err.Number = 0)
-    On Error GoTo 0
+    ' Verificar si la regla existe y es válida
+    If RuleExists(ruleKey) Then
+        IWorkflowRepository_IsValidTransition = m_Rules(ruleKey)
+    Else
+        IWorkflowRepository_IsValidTransition = False
+    End If
 End Function
 
 #End If
