@@ -1,25 +1,25 @@
-Attribute VB_Name = "Test_CSolicitudRepository"
+﻿Attribute VB_Name = "Test_CSolicitudRepository"
 Option Compare Database
 Option Explicit
 
 #If DEV_MODE Then
 
 ' ============================================================================
-' SUITE DE PRUEBAS DE INTEGRACIÓN PARA CSolicitudRepository
-' Arquitectura: Pruebas Reales con Conexión al Backend
-' Version: 2.0 - Reconstrucción Total
+' SUITE DE PRUEBAS DE INTEGRACIÃ“N PARA CSolicitudRepository
+' Arquitectura: Pruebas Reales con ConexiÃ³n al Backend
+' Version: 2.0 - ReconstrucciÃ³n Total
 ' ============================================================================
-' Pruebas de integración que validan las operaciones de CSolicitudRepository
+' Pruebas de integraciÃ³n que validan las operaciones de CSolicitudRepository
 ' contra la base de datos real del backend.
 ' ============================================================================
 
 ' ============================================================================
-' FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
+' FUNCIÃ“N PRINCIPAL DE LA SUITE DE PRUEBAS
 ' ============================================================================
 
 Public Function RunAllTests() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_CSolicitudRepository - Pruebas de Integración"
+    suiteResult.Initialize "Test_CSolicitudRepository - Pruebas de IntegraciÃ³n"
     
     ' Ejecutar todas las pruebas
     suiteResult.AddTestResult Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto()
@@ -32,12 +32,12 @@ Public Function RunAllTests() As CTestSuiteResult
 End Function
 
 ' ============================================================================
-' PRUEBAS DE INTEGRACIÓN
+' PRUEBAS DE INTEGRACIÃ“N
 ' ============================================================================
 
 Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "SaveSolicitud y GetSolicitudById - Ciclo completo de guardado y recuperación"
+    testResult.Initialize "SaveSolicitud y GetSolicitudById - Ciclo completo de guardado y recuperaciÃ³n"
     
     On Error GoTo ErrorHandler
     
@@ -60,7 +60,7 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
         .estadoInterno = "Borrador"
         .fechaCreacion = Now()
         .usuarioCreacion = "TEST_USER"
-        .observaciones = "Solicitud de prueba de integración"
+        .observaciones = "Solicitud de prueba de integraciÃ³n"
     End With
     
     Dim idGenerado As Long
@@ -69,16 +69,16 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
     ' Act - Guardar solicitud
     idGenerado = repository.SaveSolicitud(solicitudOriginal)
     
-    ' Assert - Verificar que se asignó un ID
+    ' Assert - Verificar que se asignÃ³ un ID
     If idGenerado <= 0 Then
-        testResult.Fail "SaveSolicitud debe retornar un ID válido, pero retornó " & idGenerado
+        testResult.Fail "SaveSolicitud debe retornar un ID vÃ¡lido, pero retornÃ³ " & idGenerado
         GoTo Cleanup
     End If
     
     ' Act - Recuperar solicitud
     Set solicitudRecuperada = repository.GetSolicitudById(idGenerado)
     
-    ' Assert - Verificar que se recuperó correctamente
+    ' Assert - Verificar que se recuperÃ³ correctamente
     If solicitudRecuperada Is Nothing Then
         testResult.Fail "GetSolicitudById debe retornar la solicitud guardada"
         GoTo Cleanup
@@ -105,7 +105,7 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
     End If
     
     If solicitudRecuperada.usuarioCreacion <> solicitudOriginal.usuarioCreacion Then
-        testResult.Fail "El usuario de creación debe coincidir: esperado '" & solicitudOriginal.usuarioCreacion & "', obtenido '" & solicitudRecuperada.usuarioCreacion & "'"
+        testResult.Fail "El usuario de creaciÃ³n debe coincidir: esperado '" & solicitudOriginal.usuarioCreacion & "', obtenido '" & solicitudRecuperada.usuarioCreacion & "'"
         GoTo Cleanup
     End If
     
@@ -166,7 +166,7 @@ End Function
 
 Private Function Test_SaveSolicitud_ConSolicitudNueva_DebeAsignarId() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "SaveSolicitud con solicitud nueva debe asignar ID automáticamente"
+    testResult.Initialize "SaveSolicitud con solicitud nueva debe asignar ID automÃ¡ticamente"
     
     On Error GoTo ErrorHandler
     
@@ -195,7 +195,7 @@ Private Function Test_SaveSolicitud_ConSolicitudNueva_DebeAsignarId() As CTestRe
     
     ' Assert
     If idGenerado <= 0 Then
-        testResult.Fail "SaveSolicitud debe asignar un ID positivo, pero asignó " & idGenerado
+        testResult.Fail "SaveSolicitud debe asignar un ID positivo, pero asignÃ³ " & idGenerado
         GoTo Cleanup
     End If
     
@@ -239,7 +239,7 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         .estadoInterno = "Borrador"
         .fechaCreacion = Now()
         .usuarioCreacion = "TEST_USER"
-        .observaciones = "Observación inicial"
+        .observaciones = "ObservaciÃ³n inicial"
     End With
     
     Dim idGenerado As Long
@@ -261,7 +261,7 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         .usuarioCreacion = solicitudInicial.usuarioCreacion
         .fechaModificacion = Now()
         .usuarioModificacion = "TEST_USER_MOD"
-        .observaciones = "Observación modificada" ' Cambiar observaciones
+        .observaciones = "ObservaciÃ³n modificada" ' Cambiar observaciones
     End With
     
     ' Act - Actualizar solicitud
@@ -288,13 +288,13 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         GoTo Cleanup
     End If
     
-    If solicitudRecuperada.observaciones <> "Observación modificada" Then
-        testResult.Fail "Las observaciones deben haberse actualizado a 'Observación modificada', pero son '" & solicitudRecuperada.observaciones & "'"
+    If solicitudRecuperada.observaciones <> "ObservaciÃ³n modificada" Then
+        testResult.Fail "Las observaciones deben haberse actualizado a 'ObservaciÃ³n modificada', pero son '" & solicitudRecuperada.observaciones & "'"
         GoTo Cleanup
     End If
     
     If solicitudRecuperada.usuarioModificacion <> "TEST_USER_MOD" Then
-        testResult.Fail "El usuario de modificación debe ser 'TEST_USER_MOD', pero es '" & solicitudRecuperada.usuarioModificacion & "'"
+        testResult.Fail "El usuario de modificaciÃ³n debe ser 'TEST_USER_MOD', pero es '" & solicitudRecuperada.usuarioModificacion & "'"
         GoTo Cleanup
     End If
     
@@ -338,7 +338,7 @@ Private Function Test_Repository_SinInicializar_DebeLanzarError() As CTestResult
     On Error GoTo ErrorHandler
     
     If Not errorOcurred Then
-        testResult.Fail "SaveSolicitud debe lanzar un error cuando el repositorio no está inicializado"
+        testResult.Fail "SaveSolicitud debe lanzar un error cuando el repositorio no estÃ¡ inicializado"
         GoTo Cleanup
     End If
     
@@ -352,7 +352,7 @@ Private Function Test_Repository_SinInicializar_DebeLanzarError() As CTestResult
     On Error GoTo ErrorHandler
     
     If Not errorOcurred Then
-        testResult.Fail "GetSolicitudById debe lanzar un error cuando el repositorio no está inicializado"
+        testResult.Fail "GetSolicitudById debe lanzar un error cuando el repositorio no estÃ¡ inicializado"
         GoTo Cleanup
     End If
     
@@ -368,7 +368,7 @@ ErrorHandler:
 End Function
 
 ' ============================================================================
-' MÉTODOS AUXILIARES PARA LIMPIEZA
+' MÃ‰TODOS AUXILIARES PARA LIMPIEZA
 ' ============================================================================
 
 Private Sub LimpiarSolicitudDePrueba(ByVal idSolicitud As Long, ByRef config As CConfig)

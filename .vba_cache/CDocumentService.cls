@@ -1,12 +1,12 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Clase: CDocumentService
-' Descripción: Implementación del servicio de generación y lectura de documentos.
+' DescripciÃ³n: ImplementaciÃ³n del servicio de generaciÃ³n y lectura de documentos.
 ' Implementa: IDocumentService
 ' Autor: Gemini @ Google
 ' Fecha: 2025-08-22
-' Versión: 2.0 - Refactorizada escritura, implementada lectura y auditoría.
+' VersiÃ³n: 2.0 - Refactorizada escritura, implementada lectura y auditorÃ­a.
 ' ============================================================================
 
 Implements IDocumentService
@@ -33,7 +33,7 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' MÉTODO DE INICIALIZACIÓN CON DEPENDENCIAS (CONTRATO DE INTERFAZ)
+' MÃ‰TODO DE INICIALIZACIÃ“N CON DEPENDENCIAS (CONTRATO DE INTERFAZ)
 ' ============================================================================
 
 Public Sub Initialize(ByVal configService As IConfig, ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal wordManager As IWordManager)
@@ -44,10 +44,11 @@ Public Sub Initialize(ByVal configService As IConfig, ByVal solicitudRepository 
 End Sub
 
 ' ============================================================================
-' IMPLEMENTACIÓN DE IDocumentService - ESCRITURA DE DOCUMENTOS
+' IMPLEMENTACIÃ“N DE IDocumentService - ESCRITURA DE DOCUMENTOS
 ' ============================================================================
 
-Public Function IDocumentService_GenerarDocumento(ByVal laSolicitud As T_Solicitud) As String
+Public Function IDocumentService_GenerarDocumento(ByVal solicitud As T_Solicitud) As String
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Dim rutaPlantilla As String
@@ -56,20 +57,22 @@ Public Function IDocumentService_GenerarDocumento(ByVal laSolicitud As T_Solicit
     Dim rutaCompleta As String
     
     If m_Config Is Nothing Or m_SolicitudRepository Is Nothing Or m_OperationLogger Is Nothing Then
-        modErrorHandler.LogError "CDocumentService.GenerarDocumento", -1, "Dependencias no inicializadas."
+        Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+        errorHandler.LogError -1, "Dependencias no inicializadas.", "CDocumentService.GenerarDocumento"
         IDocumentService_GenerarDocumento = ""
         Exit Function
     End If
     
-    m_OperationLogger.LogOperation "DocGen_Start", "Iniciando generación de documento para Solicitud ID: " & laSolicitud.idSolicitud, "CDocumentService"
+    m_OperationLogger.LogOperation "DocGen_Start", "Iniciando generaciÃ³n de documento para Solicitud ID: " & solicitud.idSolicitud, "CDocumentService"
     
     ' 1. Obtener ruta de la plantilla
-    rutaPlantilla = m_Config.GetPlantillaPath() & "\" & laSolicitud.tipoSolicitud & ".docx"
+    rutaPlantilla = m_Config.GetValue("PLANTILLA_PATH") & "\" & solicitud.tipoSolicitud & ".docx"
     
     ' En modo de prueba, no verificamos la existencia del fichero para mantener el test aislado
-    If Not m_Config.IsTestMode Then
+    If Not CBool(m_Config.GetValue("IS_TEST_MODE")) Then
         If Dir(rutaPlantilla) = "" Then
-            modErrorHandler.LogError "CDocumentService.GenerarDocumento", -1, "No se encontró la plantilla en: " & rutaPlantilla
+            Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+            errorHandler.LogError -1, "No se encontrÃ³ la plantilla en: " & rutaPlantilla, "CDocumentService.GenerarDocumento"
             IDocumentService_GenerarDocumento = ""
             Exit Function
         End If
@@ -83,14 +86,14 @@ Public Function IDocumentService_GenerarDocumento(ByVal laSolicitud As T_Solicit
     End If
     
     ' 3. Reemplazar los campos
-    If Not ReemplazarCamposEnPlantilla(laSolicitud) Then
+    If Not ReemplazarCamposEnPlantilla(solicitud) Then
         IDocumentService_GenerarDocumento = ""
         Exit Function
     End If
     
     ' 4. Guardar el documento
-    nombreDocumento = "SOL_" & laSolicitud.codigoSolicitud & "_" & Format(Now, "YYYYMMDD_HHNNSS") & ".docx"
-    rutaDestino = m_Config.GetGeneratedDocsPath()
+    nombreDocumento = "SOL_" & solicitud.codigoSolicitud & "_" & Format(Now, "YYYYMMDD_HHNNSS") & ".docx"
+    rutaDestino = m_Config.GetValue("GENERATED_DOCS_PATH")
     rutaCompleta = rutaDestino & "\" & nombreDocumento
     
     If Not m_WordManager.GuardarDocumento(rutaCompleta) Then
@@ -107,24 +110,27 @@ Public Function IDocumentService_GenerarDocumento(ByVal laSolicitud As T_Solicit
 
 ErrorHandler:
     m_OperationLogger.LogOperation "DocGen_Error", "Error " & Err.Number & ": " & Err.Description, "CDocumentService"
-    modErrorHandler.LogError "CDocumentService.GenerarDocumento", Err.Number, Err.Description
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CDocumentService.GenerarDocumento"
     m_WordManager.CerrarDocumento
     IDocumentService_GenerarDocumento = ""
 End Function
 
 ' ============================================================================
-' IMPLEMENTACIÓN DE IDocumentService - LECTURA DE DOCUMENTOS
+' IMPLEMENTACIÃ“N DE IDocumentService - LECTURA DE DOCUMENTOS
 ' ============================================================================
 
 Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    Dim laSolicitud As T_Solicitud
+    Dim solicitudLeida As T_Solicitud
     Dim rsMapeo As Object ' Recordset
     Dim campoTabla As String, campoWord As String, valorLeido As String
     
     If m_Config Is Nothing Or m_SolicitudRepository Is Nothing Or m_OperationLogger Is Nothing Then
-        modErrorHandler.LogError "CDocumentService.LeerDocumento", -1, "Dependencias no inicializadas."
+        Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+        errorHandler.LogError -1, "Dependencias no inicializadas.", "CDocumentService.LeerDocumento"
         IDocumentService_LeerDocumento = False
         Exit Function
     End If
@@ -132,9 +138,10 @@ Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, By
     m_OperationLogger.LogOperation "DocRead_Start", "Iniciando lectura de documento " & rutaDocumento & " para Solicitud ID: " & idSolicitud, "CDocumentService"
     
     ' 1. Cargar la solicitud existente
-    Set laSolicitud = m_SolicitudRepository.GetSolicitudById(idSolicitud)
-    If laSolicitud Is Nothing Then
-        modErrorHandler.LogError "CDocumentService.LeerDocumento", -1, "No se pudo cargar la solicitud con ID: " & idSolicitud
+    Set solicitudLeida = m_SolicitudRepository.GetSolicitudById(idSolicitud)
+    If solicitudLeida Is Nothing Then
+        Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+        errorHandler.LogError -1, "No se pudo cargar la solicitud con ID: " & idSolicitud, "CDocumentService.LeerDocumento"
         IDocumentService_LeerDocumento = False
         Exit Function
     End If
@@ -149,9 +156,10 @@ Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, By
     End If
     
     ' 3. Obtener el mapeo de campos
-    Set rsMapeo = GetMapeo(laSolicitud.tipoSolicitud)
+    Set rsMapeo = GetMapeo(solicitudLeida.tipoSolicitud)
     If rsMapeo.EOF Then
-        modErrorHandler.LogError "CDocumentService.LeerDocumento", -1, "No se encontró mapeo para tipo: " & laSolicitud.tipoSolicitud
+        Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+        errorHandler.LogError -1, "No se encontrÃ³ mapeo para tipo: " & solicitudLeida.tipoSolicitud, "CDocumentService.LeerDocumento"
         IDocumentService_LeerDocumento = False
         Exit Function
     End If
@@ -162,14 +170,14 @@ Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, By
         campoWord = rsMapeo!nombreCampoWord
         
         ' Buscar el marcador en el contenido del documento
-        ' Nota: Esta es una implementación simplificada para demostrar el patrón
-        ' En una implementación real, se necesitaría un parser más sofisticado
+        ' Nota: Esta es una implementaciÃ³n simplificada para demostrar el patrÃ³n
+        ' En una implementaciÃ³n real, se necesitarÃ­a un parser mÃ¡s sofisticado
         If InStr(contenidoDocumento, campoWord) > 0 Then
-            ' Extraer valor del marcador (implementación simplificada)
+            ' Extraer valor del marcador (implementaciÃ³n simplificada)
             valorLeido = ExtraerValorMarcador(contenidoDocumento, campoWord)
             
             ' Actualizar la propiedad del objeto solicitud correspondiente usando CallByName
-            CallByName laSolicitud, campoTabla, VbLet, valorLeido
+            CallByName solicitudLeida, campoTabla, VbLet, valorLeido
         Else
             m_OperationLogger.LogOperation "DocRead_Warning", "Marcador no encontrado en documento: " & campoWord, "CDocumentService"
         End If
@@ -177,13 +185,13 @@ Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, By
     Loop
     
     ' 5. Guardar la solicitud actualizada
-    If Not m_SolicitudRepository.UpdateSolicitud(laSolicitud) Then
-        m_OperationLogger.LogOperation "DocRead_SaveFail", "Fallo al guardar la solicitud ID: " & idSolicitud, "CDocumentService"
+    If m_SolicitudRepository.SaveSolicitud(solicitudLeida) = 0 Then
+        m_OperationLogger.LogOperation "DocRead_SaveFail", "Fallo al guardar la solicitud ID: " & idSolicitud & " usando método ISolicitudRepository.SaveSolicitud", "CDocumentService"
         IDocumentService_LeerDocumento = False
         Exit Function
     End If
     
-    m_OperationLogger.LogOperation "DocRead_Success", "Documento leído y solicitud actualizada ID: " & idSolicitud, "CDocumentService"
+    m_OperationLogger.LogOperation "DocRead_Success", "Documento leÃ­do y solicitud actualizada ID: " & idSolicitud, "CDocumentService"
     IDocumentService_LeerDocumento = True
     
     rsMapeo.Close
@@ -192,29 +200,33 @@ Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, By
 
 ErrorHandler:
     m_OperationLogger.LogOperation "DocRead_Error", "Error " & Err.Number & ": " & Err.Description, "CDocumentService"
-    modErrorHandler.LogError "CDocumentService.LeerDocumento", Err.Number, Err.Description
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CDocumentService.LeerDocumento"
     If Not rsMapeo Is Nothing Then rsMapeo.Close
     Set rsMapeo = Nothing
     IDocumentService_LeerDocumento = False
 End Function
 
 ' ============================================================================
-' MÉTODOS PRIVADOS AUXILIARES
+' MÃ‰TODOS PRIVADOS AUXILIARES
 ' ============================================================================
 
-Private Function ReemplazarCamposEnPlantilla(ByVal laSolicitud As T_Solicitud) As Boolean
+Private Function ReemplazarCamposEnPlantilla(ByVal solicitud As T_Solicitud) As Boolean
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     Dim rsMapeo As Object ' Recordset
     Dim datos As Object
     Dim campoTabla As String, campoWord As String, valorAsociado As String
     Dim valorPropiedad As Variant
     
-    Set datos = laSolicitud.Datos
-    Set rsMapeo = GetMapeo(laSolicitud.tipoSolicitud)
+    Set datos = solicitud.Datos
+    Set rsMapeo = GetMapeo(solicitud.tipoSolicitud)
     
     If rsMapeo.EOF Then
-        modErrorHandler.LogError "CDocumentService.ReemplazarCampos", -1, "No se encontró mapeo para tipo: " & laSolicitud.tipoSolicitud
+        errorHandler.LogError -1, "No se encontrÃ³ mapeo para tipo: " & solicitud.tipoSolicitud, "CDocumentService.ReemplazarCampos"
         ReemplazarCamposEnPlantilla = False
         Exit Function
     End If
@@ -258,19 +270,20 @@ Private Function ReemplazarCamposEnPlantilla(ByVal laSolicitud As T_Solicitud) A
     Exit Function
 
 ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.ReemplazarCampos", Err.Number, Err.Description
+    errorHandler.LogError Err.Number, Err.Description, "CDocumentService.ReemplazarCampos"
     If Not rsMapeo Is Nothing Then rsMapeo.Close
     Set rsMapeo = Nothing
     ReemplazarCamposEnPlantilla = False
 End Function
 
 Private Function GetMapeo(ByVal tipoSolicitud As String) As Object ' Recordset
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
     Dim sql As String
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     sql = "SELECT nombreCampoTabla, nombreCampoWord, valorAsociado FROM tbMapeoCampos WHERE nombrePlantilla = '" & tipoSolicitud & "'"
     Set GetMapeo = db.OpenRecordset(sql)
     
@@ -280,14 +293,16 @@ ErrorHandler:
         db.Close
         Set db = Nothing
     End If
-    modErrorHandler.LogError "CDocumentService.GetMapeo", Err.Number, Err.Description
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CDocumentService.GetMapeo"
     Set GetMapeo = Nothing
 End Function
 
 Private Function ExtraerValorMarcador(ByVal contenidoDocumento As String, ByVal nombreMarcador As String) As String
-    ' Implementación simplificada para extraer valores de marcadores
-    ' En una implementación real, se necesitaría un parser más sofisticado
-    ' que maneje el formato específico de los marcadores de Word
+    Dim errorHandler As IErrorHandlerService
+    ' ImplementaciÃ³n simplificada para extraer valores de marcadores
+    ' En una implementaciÃ³n real, se necesitarÃ­a un parser mÃ¡s sofisticado
+    ' que maneje el formato especÃ­fico de los marcadores de Word
     
     On Error GoTo ErrorHandler
     
@@ -296,7 +311,7 @@ Private Function ExtraerValorMarcador(ByVal contenidoDocumento As String, ByVal 
     Dim marcadorInicio As String
     Dim marcadorFin As String
     
-    ' Buscar patrones típicos de marcadores en documentos Word
+    ' Buscar patrones tÃ­picos de marcadores en documentos Word
     marcadorInicio = "[" & nombreMarcador & "]"
     marcadorFin = "[/" & nombreMarcador & "]"
     
@@ -317,6 +332,7 @@ Private Function ExtraerValorMarcador(ByVal contenidoDocumento As String, ByVal 
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError "CDocumentService.ExtraerValorMarcador", Err.Number, Err.Description
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CDocumentService.ExtraerValorMarcador"
     ExtraerValorMarcador = ""
 End Function

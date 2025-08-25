@@ -1,7 +1,7 @@
-Attribute VB_Name = "modLoggingServiceFactory"
+﻿Attribute VB_Name = "modLoggingServiceFactory"
 '******************************************************************************
-' Módulo: modLoggingServiceFactory
-' Propósito: Factory para crear instancias de ILoggingService con inyección de dependencias
+' MÃ³dulo: modLoggingServiceFactory
+' PropÃ³sito: Factory para crear instancias de ILoggingService con inyecciÃ³n de dependencias
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-01-21
 '******************************************************************************
@@ -10,7 +10,7 @@ Option Compare Database
 Option Explicit
 
 '******************************************************************************
-' FUNCIONES PÚBLICAS
+' FUNCIONES PÃšBLICAS
 '******************************************************************************
 
 ' Crea una instancia completamente configurada de ILoggingService
@@ -23,7 +23,7 @@ Public Function CreateLoggingService() As ILoggingService
     Dim fileSystem As IFileSystem
     
     ' Crear las dependencias
-    Set config = New CConfig
+    Set config = modConfig.CreateConfigService()
     Set fileSystem = New CFileSystem
     
     ' Crear el servicio
@@ -38,6 +38,8 @@ Public Function CreateLoggingService() As ILoggingService
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "modLoggingServiceFactory.CreateLoggingService"
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modLoggingServiceFactory.CreateLoggingService"
     Set CreateLoggingService = Nothing
 End Function

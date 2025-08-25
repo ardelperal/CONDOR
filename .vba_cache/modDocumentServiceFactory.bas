@@ -1,10 +1,10 @@
-Attribute VB_Name = "modDocumentServiceFactory"
+﻿Attribute VB_Name = "modDocumentServiceFactory"
 Option Compare Database
 Option Explicit
 
 ' =====================================================
 ' MODULO: modDocumentServiceFactory
-' DESCRIPCION: Factory para la creación del servicio de documentos
+' DESCRIPCION: Factory para la creaciÃ³n del servicio de documentos
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2025-08-22
 ' =====================================================
@@ -14,10 +14,10 @@ Public Function CreateDocumentService() As IDocumentService
     
     ' Obtener las dependencias necesarias
     Dim configService As IConfig
-    Set configService = modConfigFactory.CreateConfigService()
+    Set configService = modConfig.CreateConfigService()
     
     Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modSolicitudRepositoryFactory.CreateSolicitudRepository()
+    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
@@ -37,6 +37,8 @@ Public Function CreateDocumentService() As IDocumentService
     Exit Function
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "modDocumentServiceFactory.CreateDocumentService")
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modDocumentServiceFactory.CreateDocumentService"
     Set CreateDocumentService = Nothing
 End Function

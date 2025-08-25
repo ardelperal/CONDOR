@@ -62,9 +62,9 @@ Regla Inquebrantable: La base de datos de datos (_datos.accdb) debe ser accedida
 Acción Correctiva: Reemplazar todas las instancias de CurrentDb en los repositorios por DBEngine.OpenDatabase(modConfig.GetInstance().GetDataPath()).
 
 Lección 13: La Centralización de la Configuración y la Seguridad
-Observación: Las configuraciones sensibles, como las contraseñas, no deben estar hardcodeadas directamente en el código de la aplicación.
-Regla Inquebrantable: Todos los valores de configuración, especialmente los sensibles, deben ser gestionados por una única fuente de verdad: el servicio de configuración (CConfig). El acceso a estos valores debe realizarse a través de los métodos de la clase de configuración, como GetDatabasePassword().
-Acción Correctiva: Eliminar todas las cadenas de contraseña hardcodeadas del código de la aplicación y reemplazarlas por llamadas al servicio de configuración.
+Observación: Las configuraciones sensibles, como las contraseñas, no deben estar hardcodeadas directamente en el código de la aplicación. Además, el uso de strings genéricos con GetValue() es propenso a errores tipográficos y dificulta el mantenimiento.
+Regla Inquebrantable: Todos los valores de configuración, especialmente los sensibles, deben ser gestionados por una única fuente de verdad: el servicio de configuración (CConfig). Para configuraciones críticas y frecuentemente utilizadas, se deben crear métodos específicos en la interfaz IConfig (como GetDataPath(), GetDatabasePassword()) en lugar de usar strings genéricos con GetValue(). Esto proporciona seguridad de tipos, detección temprana de errores y facilita la refactorización.
+Acción Correctiva: Eliminar todas las cadenas de contraseña hardcodeadas del código de la aplicación y reemplazarlas por llamadas al servicio de configuración. Para configuraciones críticas, crear métodos específicos en IConfig y refactorizar el código existente para usar estos métodos en lugar de GetValue() con strings.
 
 Lección 14: La Eliminación Proactiva de Código Muerto es un Requisito de Mantenibilidad
 Observación: Con la refactorización, es común que funciones, variables o clases enteras queden sin uso, aumentando la complejidad del código.
@@ -73,3 +73,13 @@ Acción Correctiva: Cualquier prompt que implique una refactorización o la elim
 
 Lección 15: No Documentar Cambios en el Desarrollo
 Observación: En esta fase del proyecto, documentar cada cambio en el desarrollo crea una sobrecarga innecesaria y ralentiza el progreso. Regla Inquebrantable: No se debe documentar el estado de los cambios durante el desarrollo. La única documentación requerida en esta etapa es el estado final del proyecto una vez que se considera un producto mínimo viable. Acción Correctiva: Los prompts para Copilot no deben incluir instrucciones para actualizar la documentación de desarrollo, como PLAN_DE_ACCION.md o README.md, o CONDOR_MASTER_PLAN.md hasta que el producto mínimo viable esté completo. La documentación se actualizará de forma integral al finalizar la fase actual.
+
+Lección 16: El Patrón Infalible para la Limpieza de Recursos en Error Handlers
+Observación: Los bloques ErrorHandler que contienen errores de compilación son inaceptables, ya que impiden el registro del error original y dejan el sistema en un estado inconsistente. Un patrón común de error es verificar el estado de objetos de base de datos (como rs.State) antes de cerrarlos, lo cual puede fallar si el error ocurrió antes de que el objeto fuera completamente inicializado.
+Regla Inquebrantable: La única forma aceptada para cerrar objetos de base de datos (Recordsets, QueryDefs, Database) dentro de un ErrorHandler es verificando primero que no sean Nothing. El patrón estándar es: `If Not [objeto] Is Nothing Then [objeto].Close`. Nunca se debe verificar el estado del objeto (.State) ya que esto puede generar errores adicionales.
+Acción Correctiva: Todos los bloques ErrorHandler deben usar exclusivamente el patrón `If Not rs Is Nothing Then rs.Close` para la limpieza de Recordsets, y patrones similares para otros objetos de base de datos. Cualquier verificación de .State debe ser eliminada.
+
+Lección 17: Principio de Responsabilidad Única para Repositorios
+Observación: Se ha detectado que servicios como CExpedienteService dependían incorrectamente de ISolicitudRepository para obtener datos de expedientes, violando el principio de responsabilidad única y creando un acoplamiento inadecuado entre entidades de negocio diferentes.
+Regla Inquebrantable: Cada repositorio debe gestionar una única entidad de negocio y sus datos relacionados. ISolicitudRepository solo debe manejar operaciones sobre la entidad Solicitud (T_Solicitud), IExpedienteRepository solo debe manejar operaciones sobre la entidad Expediente (T_Expediente), etc. Los servicios deben depender de los repositorios apropiados para cumplir sus contratos de interfaz.
+Acción Correctiva: Cuando un servicio no puede cumplir su contrato de interfaz con las dependencias actuales, se debe crear el repositorio específico para la entidad que necesita y refactorizar el servicio para usar la dependencia correcta. Nunca se debe "reutilizar" un repositorio de una entidad diferente para acceder a datos de otra entidad.

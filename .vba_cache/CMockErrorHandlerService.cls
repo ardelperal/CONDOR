@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -33,13 +33,13 @@ Private m_logErrorCallCount As Long
 Private m_logInfoCallCount As Long
 Private m_logWarningCallCount As Long
 
-' Método Initialize (no forma parte de la interfaz pero es útil para el mock)
+' MÃ©todo Initialize (no forma parte de la interfaz pero es Ãºtil para el mock)
 Public Sub Initialize(config As IConfig)
-    ' Mock no necesita configuración real, pero mantiene la firma
-    ' para compatibilidad con el patrón de inyección de dependencias
+    ' Mock no necesita configuraciÃ³n real, pero mantiene la firma
+    ' para compatibilidad con el patrÃ³n de inyecciÃ³n de dependencias
 End Sub
 
-' Implementación mock de LogError
+' ImplementaciÃ³n mock de LogError
 Private Sub IErrorHandlerService_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
     m_lastErrorNumber = errNumber
     m_lastErrorDescription = errDescription
@@ -48,14 +48,14 @@ Private Sub IErrorHandlerService_LogError(ByVal errNumber As Long, ByVal errDesc
     m_logErrorCallCount = m_logErrorCallCount + 1
 End Sub
 
-' Implementación mock de LogInfo
+' ImplementaciÃ³n mock de LogInfo
 Private Sub IErrorHandlerService_LogInfo(ByVal message As String, Optional ByVal moduleName As String)
     m_lastInfoMessage = message
     m_lastInfoModuleName = moduleName
     m_logInfoCallCount = m_logInfoCallCount + 1
 End Sub
 
-' Implementación mock de LogWarning
+' ImplementaciÃ³n mock de LogWarning
 Private Sub IErrorHandlerService_LogWarning(ByVal message As String, Optional ByVal moduleName As String)
     m_lastWarningMessage = message
     m_lastWarningModuleName = moduleName
@@ -63,10 +63,10 @@ Private Sub IErrorHandlerService_LogWarning(ByVal message As String, Optional By
 End Sub
 
 ' =====================================================
-' Métodos públicos para verificación en pruebas
+' MÃ©todos pÃºblicos para verificaciÃ³n en pruebas
 ' =====================================================
 
-' Verificar la última llamada a LogError
+' Verificar la Ãºltima llamada a LogError
 Public Function GetLastErrorNumber() As Long
     GetLastErrorNumber = m_lastErrorNumber
 End Function
@@ -83,7 +83,7 @@ Public Function GetLastErrorContext() As String
     GetLastErrorContext = m_lastErrorContext
 End Function
 
-' Verificar la última llamada a LogInfo
+' Verificar la Ãºltima llamada a LogInfo
 Public Function GetLastInfoMessage() As String
     GetLastInfoMessage = m_lastInfoMessage
 End Function
@@ -92,7 +92,7 @@ Public Function GetLastInfoModuleName() As String
     GetLastInfoModuleName = m_lastInfoModuleName
 End Function
 
-' Verificar la última llamada a LogWarning
+' Verificar la Ãºltima llamada a LogWarning
 Public Function GetLastWarningMessage() As String
     GetLastWarningMessage = m_lastWarningMessage
 End Function
@@ -129,7 +129,7 @@ Public Sub Reset()
     m_logWarningCallCount = 0
 End Sub
 
-' Verificar si se llamó a LogError con parámetros específicos
+' Verificar si se llamÃ³ a LogError con parÃ¡metros especÃ­ficos
 Public Function WasLogErrorCalledWith(errorNumber As Long, errorDescription As String, Optional moduleName As String = "", Optional context As String = "") As Boolean
     WasLogErrorCalledWith = (m_lastErrorNumber = errorNumber) And _
                            (m_lastErrorDescription = errorDescription) And _
@@ -137,13 +137,13 @@ Public Function WasLogErrorCalledWith(errorNumber As Long, errorDescription As S
                            (m_lastErrorContext = context)
 End Function
 
-' Verificar si se llamó a LogInfo con parámetros específicos
+' Verificar si se llamÃ³ a LogInfo con parÃ¡metros especÃ­ficos
 Public Function WasLogInfoCalledWith(message As String, Optional moduleName As String = "") As Boolean
     WasLogInfoCalledWith = (m_lastInfoMessage = message) And _
                           (m_lastInfoModuleName = moduleName)
 End Function
 
-' Verificar si se llamó a LogWarning con parámetros específicos
+' Verificar si se llamÃ³ a LogWarning con parÃ¡metros especÃ­ficos
 Public Function WasLogWarningCalledWith(message As String, Optional moduleName As String = "") As Boolean
     WasLogWarningCalledWith = (m_lastWarningMessage = message) And _
                              (m_lastWarningModuleName = moduleName)

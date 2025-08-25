@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -13,14 +13,14 @@ Option Explicit
 ' ============================================================================
 ' INTERFAZ: ISolicitudRepository
 ' Arquitectura: Contrato Limpio para Acceso a Datos de Solicitudes
-' Version: 2.0 - Reconstrucción Total
+' Version: 2.0 - ReconstrucciÃ³n Total
 ' ============================================================================
 ' Define el contrato para operaciones de persistencia de solicitudes.
-' Implementa el patrón Repository con conexión explícita al Backend.
+' Implementa el patrÃ³n Repository con conexiÃ³n explÃ­cita al Backend.
 ' ============================================================================
 
 ' Obtiene una solicitud por su ID desde el Backend
-' @param idSolicitud: ID único de la solicitud
+' @param idSolicitud: ID Ãºnico de la solicitud
 ' @return: Objeto T_Solicitud o Nothing si no existe
 Public Function GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
 End Function
@@ -29,6 +29,13 @@ End Function
 ' @param solicitud: Objeto T_Solicitud a persistir
 ' @return: ID de la solicitud guardada
 Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
+End Function
+
+' Ejecuta una consulta SQL con parÃ¡metros opcionales
+' @param sql: Consulta SQL a ejecutar
+' @param params: ColecciÃ³n opcional de parÃ¡metros QueryParameter
+' @return: Recordset con los resultados
+Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.Recordset
 End Function
 
 

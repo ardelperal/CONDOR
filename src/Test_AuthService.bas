@@ -1,17 +1,17 @@
-Attribute VB_Name = "Test_AuthService"
+﻿Attribute VB_Name = "Test_AuthService"
 Option Compare Database
 Option Explicit
 
 #If DEV_MODE Then
 
 ' ============================================================================
-' MÓDULO DE PRUEBAS UNITARIAS PARA CAuthService
+' MÃ“DULO DE PRUEBAS UNITARIAS PARA CAuthService
 ' ============================================================================
-' Este módulo contiene pruebas unitarias aisladas para CAuthService
+' Este mÃ³dulo contiene pruebas unitarias aisladas para CAuthService
 ' utilizando mocks para todas las dependencias externas.
-' Sigue la Lección 10: El Aislamiento de las Pruebas Unitarias con Mocks no es Negociable
+' Sigue la LecciÃ³n 10: El Aislamiento de las Pruebas Unitarias con Mocks no es Negociable
 
-' Función principal que ejecuta todas las pruebas del módulo
+' FunciÃ³n principal que ejecuta todas las pruebas del mÃ³dulo
 Public Function Test_AuthService_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "Test_AuthService"
@@ -42,19 +42,19 @@ Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador(
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
     
-    ' Nota: La nueva implementación de IConfig no permite SetValue
-    ' Las pruebas deben usar la configuración real del sistema
+    ' Nota: La nueva implementaciÃ³n de IConfig no permite SetValue
+    ' Las pruebas deben usar la configuraciÃ³n real del sistema
     
     ' Crear recordset mock para usuario administrador
     Dim mockRecordset As Object
-    Set mockRecordset = CreateMockUserRecordset("Sí", "No", "No")
+    Set mockRecordset = CreateMockUserRecordset("SÃ­", "No", "No")
     mockRepository.SetMockRecordset mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
     authService.Initialize configService, mockLogger, mockRepository
     
-    ' Act - Ejecutar el método bajo prueba
+    ' Act - Ejecutar el mÃ©todo bajo prueba
     Dim userRole As E_UserRole
     userRole = authService.GetUserRole("admin@test.com")
     
@@ -89,19 +89,19 @@ Private Function Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad() As CTestRe
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
     
-    ' Nota: La nueva implementación de IConfig no permite SetValue
-    ' Las pruebas deben usar la configuración real del sistema
+    ' Nota: La nueva implementaciÃ³n de IConfig no permite SetValue
+    ' Las pruebas deben usar la configuraciÃ³n real del sistema
     
     ' Crear recordset mock para usuario de calidad
     Dim mockRecordset As Object
-    Set mockRecordset = CreateMockUserRecordset("No", "Sí", "No")
+    Set mockRecordset = CreateMockUserRecordset("No", "SÃ­", "No")
     mockRepository.SetMockRecordset mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
     authService.Initialize configService, mockLogger, mockRepository
     
-    ' Act - Ejecutar el método bajo prueba
+    ' Act - Ejecutar el mÃ©todo bajo prueba
     Dim userRole As E_UserRole
     userRole = authService.GetUserRole("calidad@test.com")
     
@@ -123,7 +123,7 @@ CleanUp:
     Set Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad = testResult
 End Function
 
-' Prueba que GetUserRole devuelve Rol_Tecnico para usuario técnico
+' Prueba que GetUserRole devuelve Rol_Tecnico para usuario tÃ©cnico
 Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico"
@@ -136,24 +136,24 @@ Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestRe
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
     
-    ' Nota: La nueva implementación de IConfig no permite SetValue
-    ' Las pruebas deben usar la configuración real del sistema
+    ' Nota: La nueva implementaciÃ³n de IConfig no permite SetValue
+    ' Las pruebas deben usar la configuraciÃ³n real del sistema
     
-    ' Crear recordset mock para usuario técnico
+    ' Crear recordset mock para usuario tÃ©cnico
     Dim mockRecordset As Object
-    Set mockRecordset = CreateMockUserRecordset("No", "No", "Sí")
+    Set mockRecordset = CreateMockUserRecordset("No", "No", "SÃ­")
     mockRepository.SetMockRecordset mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
     authService.Initialize configService, mockLogger, mockRepository
     
-    ' Act - Ejecutar el método bajo prueba
+    ' Act - Ejecutar el mÃ©todo bajo prueba
     Dim userRole As E_UserRole
     userRole = authService.GetUserRole("tecnico@test.com")
     
     ' Assert - Verificar resultado
-    modAssert.AssertEquals Rol_Tecnico, userRole, "GetUserRole debe devolver Rol_Tecnico para usuario técnico"
+    modAssert.AssertEquals Rol_Tecnico, userRole, "GetUserRole debe devolver Rol_Tecnico para usuario tÃ©cnico"
     
     testResult.Pass
     GoTo CleanUp
@@ -183,10 +183,10 @@ Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockSolicitudRepository
     
-    ' Nota: La nueva implementación de IConfig no permite SetValue
-    ' Las pruebas deben usar la configuración real del sistema
+    ' Nota: La nueva implementaciÃ³n de IConfig no permite SetValue
+    ' Las pruebas deben usar la configuraciÃ³n real del sistema
     
-    ' Crear recordset mock vacío (usuario no encontrado)
+    ' Crear recordset mock vacÃ­o (usuario no encontrado)
     Dim mockRecordset As Object
     Set mockRecordset = CreateEmptyUserRecordset()
     mockRepository.SetMockRecordset mockRecordset
@@ -195,7 +195,7 @@ Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As
     Dim authService As New CAuthService
     authService.Initialize mockConfig, mockLogger, mockRepository
     
-    ' Act - Ejecutar el método bajo prueba
+    ' Act - Ejecutar el mÃ©todo bajo prueba
     Dim userRole As E_UserRole
     userRole = authService.GetUserRole("inexistente@test.com")
     
@@ -236,7 +236,7 @@ Private Function CreateMockUserRecordset(esAdmin As String, esCalidad As String,
     ' Abrir recordset en memoria
     rs.Open
     
-    ' Añadir registro con datos del usuario
+    ' AÃ±adir registro con datos del usuario
     rs.AddNew
     rs.Fields("EsAdministrador").Value = esAdmin
     rs.Fields("EsUsuarioCalidad").Value = esCalidad
@@ -249,19 +249,19 @@ Private Function CreateMockUserRecordset(esAdmin As String, esCalidad As String,
     Set CreateMockUserRecordset = rs
 End Function
 
-' Crea un recordset vacío para simular usuario no encontrado
+' Crea un recordset vacÃ­o para simular usuario no encontrado
 Private Function CreateEmptyUserRecordset() As Object
     Dim rs As Object
     
     ' Crear recordset ADODB en memoria
     Set rs = CreateObject("ADODB.Recordset")
     
-    ' Definir campos básicos para el recordset vacío
+    ' Definir campos bÃ¡sicos para el recordset vacÃ­o
     rs.Fields.Append "EsAdministrador", 202, 10 ' adVarWChar
     rs.Fields.Append "EsUsuarioCalidad", 202, 10 ' adVarWChar
     rs.Fields.Append "EsUsuarioTecnico", 202, 10 ' adVarWChar
     
-    ' Abrir recordset en memoria (sin añadir registros, queda vacío)
+    ' Abrir recordset en memoria (sin aÃ±adir registros, queda vacÃ­o)
     rs.Open
     
     Set CreateEmptyUserRecordset = rs

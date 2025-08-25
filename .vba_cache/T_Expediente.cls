@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 '******************************************************************************
 ' CLASE: T_Expediente
@@ -27,6 +27,11 @@ Private m_FechaInicio As Date
 Private m_FechaFinPrevista As Date
 Private m_FechaFinContrato As Date
 Private m_FechaFinGarantia As Date
+Private m_Descripcion As String
+Private m_FechaCreacion As Date
+Private m_Estado As String
+Private m_IdUsuarioCreador As Long
+Private m_NombreUsuarioCreador As String
 
 '******************************************************************************
 ' PROPIEDADES PÚBLICAS (GET/LET)
@@ -135,6 +140,41 @@ Public Property Get FechaFinGarantia() As Date
 End Property
 Public Property Let FechaFinGarantia(ByVal value As Date)
     m_FechaFinGarantia = value
+End Property
+
+Public Property Get Descripcion() As String
+    Descripcion = m_Descripcion
+End Property
+Public Property Let Descripcion(ByVal value As String)
+    m_Descripcion = value
+End Property
+
+Public Property Get FechaCreacion() As Date
+    FechaCreacion = m_FechaCreacion
+End Property
+Public Property Let FechaCreacion(ByVal value As Date)
+    m_FechaCreacion = value
+End Property
+
+Public Property Get Estado() As String
+    Estado = m_Estado
+End Property
+Public Property Let Estado(ByVal value As String)
+    m_Estado = value
+End Property
+
+Public Property Get IdUsuarioCreador() As Long
+    IdUsuarioCreador = m_IdUsuarioCreador
+End Property
+Public Property Let IdUsuarioCreador(ByVal value As Long)
+    m_IdUsuarioCreador = value
+End Property
+
+Public Property Get NombreUsuarioCreador() As String
+    NombreUsuarioCreador = m_NombreUsuarioCreador
+End Property
+Public Property Let NombreUsuarioCreador(ByVal value As String)
+    m_NombreUsuarioCreador = value
 End Property
 
 '******************************************************************************

@@ -1,9 +1,9 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' CNotificationService.cls
-' Implementación segura del servicio de notificaciones asíncrono
-' Reconstruido para cumplir con principios de inyección de dependencias y seguridad
-' Basado en las Especificaciones de Integración - Sección 2
+' ImplementaciÃ³n segura del servicio de notificaciones asÃ­ncrono
+' Reconstruido para cumplir con principios de inyecciÃ³n de dependencias y seguridad
+' Basado en las Especificaciones de IntegraciÃ³n - SecciÃ³n 2
 
 ' Implementa la interfaz INotificationService
 Implements INotificationService
@@ -12,8 +12,9 @@ Implements INotificationService
 Private m_Config As IConfig
 Private m_OperationLogger As IOperationLogger
 
-' Método público para inyectar dependencias
+' MÃ©todo pÃºblico para inyectar dependencias
 Public Sub Initialize(config As IConfig, logger As IOperationLogger)
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Set m_Config = config
@@ -22,41 +23,42 @@ Public Sub Initialize(config As IConfig, logger As IOperationLogger)
     Exit Sub
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.Initialize"
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CNotificationService.Initialize"
 End Sub
 
-' Implementación del método EnviarNotificacion de la interfaz
+' ImplementaciÃ³n del mÃ©todo EnviarNotificacion de la interfaz
 Private Function INotificationService_EnviarNotificacion( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
-    
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    ' Validar que las dependencias estén inyectadas
+    ' Validar que las dependencias estÃ©n inyectadas
     If m_Config Is Nothing Or m_OperationLogger Is Nothing Then
         INotificationService_EnviarNotificacion = False
         Exit Function
     End If
     
-    ' Validar parámetros
+    ' Validar parÃ¡metros
     If Len(Trim(destinatarios)) = 0 Or Len(Trim(asunto)) = 0 Or Len(Trim(cuerpoHTML)) = 0 Then
         INotificationService_EnviarNotificacion = False
         Exit Function
     End If
     
-    ' Obtener configuración desde IConfig inyectado
+    ' Obtener configuraciÃ³n desde IConfig inyectado
     Dim rutaCorreosDB As String
     Dim passwordDB As String
     Dim usuarioActual As String
     Dim correoAdministrador As String
     
-    rutaCorreosDB = m_Config.GetConfigValue("CORREOSDBPATH")
-    passwordDB = m_Config.GetConfigValue("DATABASEPASSWORD")
-    usuarioActual = m_Config.GetConfigValue("USUARIOACTUAL")
-    correoAdministrador = m_Config.GetConfigValue("CORREOADMINISTRADOR")
+    rutaCorreosDB = m_Config.GetValue("CORREOS_DB_PATH")
+    passwordDB = m_Config.GetDatabasePassword()
+    usuarioActual = m_Config.GetValue("USUARIO_ACTUAL")
+    correoAdministrador = m_Config.GetValue("CORREO_ADMINISTRADOR")
     
     If Len(rutaCorreosDB) = 0 Then
         INotificationService_EnviarNotificacion = False
@@ -78,7 +80,7 @@ Private Function INotificationService_EnviarNotificacion( _
         "Destinatarios, DestinatariosConCopia, DestinatariosConCopiaOculta, " & _
         "URLAdjunto, FechaGrabacion, FechaEnvio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     
-    ' Asignar parámetros de forma segura
+    ' Asignar parÃ¡metros de forma segura
     qdf.Parameters(0) = nuevoID
     qdf.Parameters(1) = "CONDOR"
     qdf.Parameters(2) = asunto
@@ -99,15 +101,16 @@ Private Function INotificationService_EnviarNotificacion( _
     db.Close
     Set db = Nothing
     
-    ' Registrar operación exitosa
-    m_OperationLogger.LogOperation "NotificationService", "EnviarNotificacion", _
+    ' Registrar operaciÃ³n exitosa
+    m_OperationLogger.LogOperation "NOTIFICATION", CStr(nuevoID), _
         "Correo encolado exitosamente. ID: " & nuevoID & ", Destinatarios: " & destinatarios
     
     INotificationService_EnviarNotificacion = True
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.EnviarNotificacion"
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CNotificationService.EnviarNotificacion"
     
     ' Limpiar recursos en caso de error
     If Not qdf Is Nothing Then

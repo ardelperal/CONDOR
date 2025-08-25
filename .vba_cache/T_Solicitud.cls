@@ -13,8 +13,10 @@ Private m_fechaCreacion As Date
 Private m_usuarioCreacion As String
 Private m_fechaPaseTecnico As Date
 Private m_fechaCompletadoTecnico As Date
+Private m_fechaModificacion As Date
+Private m_usuarioModificacion As String
 
-' Propiedades para datos específicos según tipo de solicitud
+' Propiedades para datos especÃ­ficos segÃºn tipo de solicitud
 Private m_datosPC As T_Datos_PC
 Private m_datosCDCA As T_Datos_CD_CA
 Private m_datosCDCASUB As T_Datos_CD_CA_SUB
@@ -99,7 +101,7 @@ Public Property Let fechaCompletadoTecnico(ByVal value As Date)
     m_fechaCompletadoTecnico = value
 End Property
 
-' Propiedades para objetos de datos específicos
+' Propiedades para objetos de datos especÃ­ficos
 Public Property Get datosPC() As T_Datos_PC
     Set datosPC = m_datosPC
 End Property
@@ -122,6 +124,36 @@ End Property
 
 Public Property Set datosCDCASUB(ByVal value As T_Datos_CD_CA_SUB)
     Set m_datosCDCASUB = value
+End Property
+
+Public Property Get fechaModificacion() As Date
+    fechaModificacion = m_fechaModificacion
+End Property
+
+Public Property Let fechaModificacion(ByVal value As Date)
+    m_fechaModificacion = value
+End Property
+
+Public Property Get usuarioModificacion() As String
+    usuarioModificacion = m_usuarioModificacion
+End Property
+
+Public Property Let usuarioModificacion(ByVal value As String)
+    m_usuarioModificacion = value
+End Property
+
+' Propiedad para acceder a los datos específicos según el tipo de solicitud
+Public Property Get Datos() As Object
+    Select Case UCase(m_tipoSolicitud)
+        Case "PC"
+            Set Datos = m_datosPC
+        Case "CD_CA"
+            Set Datos = m_datosCDCA
+        Case "CD_CA_SUB"
+            Set Datos = m_datosCDCASUB
+        Case Else
+            Set Datos = Nothing
+    End Select
 End Property
 
 

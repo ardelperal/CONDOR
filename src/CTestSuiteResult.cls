@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -12,8 +12,8 @@ Option Explicit
 
 ' ============================================================================
 ' CLASE INTELIGENTE DE RESULTADOS DE SUITE DE PRUEBAS
-' Arquitectura: Gestión Orientada a Objetos de Resultados
-' Version: 3.0 - Refactorización Crítica
+' Arquitectura: GestiÃ³n Orientada a Objetos de Resultados
+' Version: 3.0 - RefactorizaciÃ³n CrÃ­tica
 ' Fecha: 2025-01-14
 ' ============================================================================
 
@@ -22,7 +22,7 @@ Private m_suiteName As String
 Private m_testResults As Collection
 
 ' ============================================================================
-' INICIALIZACIÓN
+' INICIALIZACIÃ“N
 ' ============================================================================
 
 Private Sub Class_Initialize()
@@ -34,7 +34,7 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' PROPIEDADES PÚBLICAS
+' PROPIEDADES PÃšBLICAS
 ' ============================================================================
 
 ' Propiedad para el nombre de la suite
@@ -69,10 +69,10 @@ Public Property Get TestsFailed() As Long
 End Property
 
 ' ============================================================================
-' MÉTODOS PÚBLICOS
+' MÃ‰TODOS PÃšBLICOS
 ' ============================================================================
 
-' Método para añadir un resultado de prueba
+' MÃ©todo para aÃ±adir un resultado de prueba
 Public Sub AddTestResult(ByVal result As CTestResult)
     If result Is Nothing Then
         Err.Raise 91, "CTestSuiteResult.AddTestResult", "El resultado de prueba no puede ser Nothing"
@@ -81,7 +81,7 @@ Public Sub AddTestResult(ByVal result As CTestResult)
     m_testResults.Add result
 End Sub
 
-' Función que devuelve el reporte formateado para esta suite
+' FunciÃ³n que devuelve el reporte formateado para esta suite
 Public Function GetFormattedResult() As String
     Dim report As String
     
@@ -92,9 +92,9 @@ Public Function GetFormattedResult() As String
     Dim testResult As CTestResult
     For Each testResult In m_testResults
         If testResult.Success Then
-            report = report & "[✅ PASS] " & testResult.TestName & vbCrLf
+            report = report & "[âœ… PASS] " & testResult.TestName & vbCrLf
         Else
-            report = report & "[❌ FAIL] " & testResult.TestName
+            report = report & "[âŒ FAIL] " & testResult.TestName
             If testResult.ErrorMessage <> "" Then
                 report = report & " - " & testResult.ErrorMessage
             End If
@@ -109,24 +109,24 @@ Public Function GetFormattedResult() As String
 End Function
 
 ' ============================================================================
-' MÉTODOS DE ACCESO A RESULTADOS INDIVIDUALES
+' MÃ‰TODOS DE ACCESO A RESULTADOS INDIVIDUALES
 ' ============================================================================
 
-' Método para obtener un resultado específico por índice
+' MÃ©todo para obtener un resultado especÃ­fico por Ã­ndice
 Public Function GetTestResult(ByVal index As Long) As CTestResult
     If index < 1 Or index > m_testResults.Count Then
-        Err.Raise 9, "CTestSuiteResult.GetTestResult", "Índice fuera de rango"
+        Err.Raise 9, "CTestSuiteResult.GetTestResult", "Ãndice fuera de rango"
     End If
     
     Set GetTestResult = m_testResults(index)
 End Function
 
-' Método para verificar si la suite completa pasó
+' MÃ©todo para verificar si la suite completa pasÃ³
 Public Function AllTestsPassed() As Boolean
     AllTestsPassed = (TestsFailed = 0 And TotalTests > 0)
 End Function
 
-' Método para obtener lista de pruebas fallidas
+' MÃ©todo para obtener lista de pruebas fallidas
 Public Function GetFailedTestNames() As String
     Dim failedNames As String
     Dim testResult As CTestResult

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -12,8 +12,8 @@ Attribute VB_Exposed = False
 
 '==============================================================================
 ' Clase: CMockWorkflowRepository
-' Propósito: Mock del repositorio de workflow para pruebas unitarias
-'            Implementa IWorkflowRepository permitiendo configurar reglas de transición
+' PropÃ³sito: Mock del repositorio de workflow para pruebas unitarias
+'            Implementa IWorkflowRepository permitiendo configurar reglas de transiciÃ³n
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-01-21
 '==============================================================================
@@ -41,10 +41,10 @@ Private Sub Class_Terminate()
 End Sub
 
 '==============================================================================
-' MÉTODOS PÚBLICOS
+' MÃ‰TODOS PÃšBLICOS
 '==============================================================================
 
-' Añade una regla de transición válida al mock
+' AÃ±ade una regla de transiciÃ³n vÃ¡lida al mock
 ' @param tipo: Tipo de solicitud
 ' @param origen: Estado origen
 ' @param destino: Estado destino
@@ -62,13 +62,13 @@ Public Sub ClearRules()
     Set m_Rules = New Collection
 End Sub
 
-' Obtiene el número de reglas configuradas (para verificación en pruebas)
+' Obtiene el nÃºmero de reglas configuradas (para verificaciÃ³n en pruebas)
 Public Function GetRuleCount() As Long
     GetRuleCount = m_Rules.Count
 End Function
 
 '==============================================================================
-' IMPLEMENTACIÓN DE IWorkflowRepository
+' IMPLEMENTACIÃ“N DE IWorkflowRepository
 '==============================================================================
 
 Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As String, ByVal estadoOrigen As String, ByVal estadoDestino As String) As Boolean

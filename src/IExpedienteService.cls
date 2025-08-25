@@ -1,4 +1,4 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 Public Function GetExpedienteById(ByVal idExpediente As Long) As T_Expediente

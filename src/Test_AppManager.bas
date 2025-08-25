@@ -1,4 +1,4 @@
-' Test_AppManager.bas - Suite de Pruebas Unitarias para modAppManager
+﻿' Test_AppManager.bas - Suite de Pruebas Unitarias para modAppManager
 ' Refactorizado para usar pruebas unitarias aisladas con mocks
 
 Option Compare Database
@@ -10,7 +10,7 @@ Option Explicit
 ' SUITE DE PRUEBAS UNITARIAS PARA modAppManager
 ' ============================================================================
 
-' Función principal de la suite de pruebas
+' FunciÃ³n principal de la suite de pruebas
 Public Function Test_AppManager_RunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
     suite.Initialize "Test_AppManager"
@@ -162,7 +162,7 @@ TestFail:
 End Function
 
 ' ============================================================================
-' PRUEBAS UNITARIAS PARA FUNCIÓN Ping
+' PRUEBAS UNITARIAS PARA FUNCIÃ“N Ping
 ' ============================================================================
 
 Private Function Test_Ping_ReturnsPong() As CTestResult

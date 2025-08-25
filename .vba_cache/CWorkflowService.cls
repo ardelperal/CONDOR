@@ -1,17 +1,17 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 '******************************************************************************
 ' CLASE: CWorkflowService
-' DESCRIPCIÓN: Implementación concreta del servicio de workflow y estados
+' DESCRIPCIÃ“N: ImplementaciÃ³n concreta del servicio de workflow y estados
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
-' NOTAS: Lección 1 - Implementa la interfaz IWorkflowService
-'        Lección 3 - Sigue la arquitectura de 3 capas (Capa de Servicios)
-'        Lección 6 - Utiliza módulos de acceso a datos como especificación
+' NOTAS: LecciÃ³n 1 - Implementa la interfaz IWorkflowService
+'        LecciÃ³n 3 - Sigue la arquitectura de 3 capas (Capa de Servicios)
+'        LecciÃ³n 6 - Utiliza mÃ³dulos de acceso a datos como especificaciÃ³n
 '******************************************************************************
 
 
-' Lección 1: Implementar la interfaz
+' LecciÃ³n 1: Implementar la interfaz
 Implements IWorkflowService
 
 '******************************************************************************
@@ -36,7 +36,7 @@ Private Const ROL_APROBADOR As String = "Aprobador"
 Private Const ROL_ADMINISTRADOR As String = "Administrador"
 
 '******************************************************************************
-' MÉTODO DE INICIALIZACIÓN CON DEPENDENCIAS
+' MÃ‰TODO DE INICIALIZACIÃ“N CON DEPENDENCIAS
 '******************************************************************************
 
 ' Inicializa el servicio con sus dependencias
@@ -46,7 +46,7 @@ Public Sub Initialize(ByVal config As IConfig, ByVal operationLogger As IOperati
 End Sub
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN DE TRANSICIONES
+' IMPLEMENTACIÃ“N DE MÃ‰TODOS DE VALIDACIÃ“N DE TRANSICIONES
 '******************************************************************************
 
 Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, _
@@ -55,44 +55,44 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
                                                     ByVal tipoSolicitud As String, _
                                                     ByVal usuarioRol As String) As Boolean
     
-    ' Logging de auditoría: Validación de transición de estado
+    ' Logging de auditorÃ­a: ValidaciÃ³n de transiciÃ³n de estado
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATION", "Validando transición solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino & " por usuario rol: " & usuarioRol, "CWorkflowService.ValidateTransition"
+        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATION", "Validando transiciÃ³n solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino & " por usuario rol: " & usuarioRol, "CWorkflowService.ValidateTransition"
     End If
     
     Dim resultado As Boolean
     resultado = False
     
-    ' Validar parámetros de entrada
+    ' Validar parÃ¡metros de entrada
     If Len(Trim(estadoOrigen)) = 0 Or Len(Trim(estadoDestino)) = 0 Or _
        Len(Trim(tipoSolicitud)) = 0 Or Len(Trim(usuarioRol)) = 0 Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Verificar si la transición existe en TbTransiciones
+    ' Verificar si la transiciÃ³n existe en TbTransiciones
     If Not TransitionExists(estadoOrigen, estadoDestino, tipoSolicitud) Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Verificar permisos del usuario para esta transición
+    ' Verificar permisos del usuario para esta transiciÃ³n
     If Not IWorkflowService_HasTransitionPermission(usuarioRol, estadoOrigen, estadoDestino, tipoSolicitud) Then
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
-    ' Si llegamos aquí, la transición es válida
+    ' Si llegamos aquÃ­, la transiciÃ³n es vÃ¡lida
     IWorkflowService_ValidateTransition = True
     
-    ' Logging de auditoría: Transición validada exitosamente
+    ' Logging de auditorÃ­a: TransiciÃ³n validada exitosamente
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATED", "Transición validada exitosamente para solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino, "CWorkflowService.ValidateTransition"
+        m_OperationLogger.LogOperation "WORKFLOW_TRANSITION_VALIDATED", "TransiciÃ³n validada exitosamente para solicitud ID: " & SolicitudID & ", de " & estadoOrigen & " a " & estadoDestino, "CWorkflowService.ValidateTransition"
     End If
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE MÉTODOS DE OBTENCIÓN DE ESTADOS
+' IMPLEMENTACIÃ“N DE MÃ‰TODOS DE OBTENCIÃ“N DE ESTADOS
 '******************************************************************************
 
 Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As String) As Collection
@@ -101,7 +101,7 @@ Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As Stri
     Dim rs As DAO.Recordset
     Dim sql As String
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     ' Consultar estados activos para el tipo de solicitud
     sql = "SELECT CodigoEstado, NombreEstado FROM TbEstados " & _
@@ -132,9 +132,9 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, _
     Dim rs As DAO.Recordset
     Dim sql As String
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
-    ' Consultar transiciones válidas desde el estado actual
+    ' Consultar transiciones vÃ¡lidas desde el estado actual
     sql = "SELECT DISTINCT t.EstadoDestinoID, e.CodigoEstado, e.NombreEstado " & _
           "FROM TbTransiciones t INNER JOIN TbEstados e ON t.EstadoDestinoID = e.ID " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
@@ -165,7 +165,7 @@ Private Function IWorkflowService_GetInitialState(ByVal tipoSolicitud As String)
     Dim sql As String
     Dim resultado As String
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     sql = "SELECT CodigoEstado FROM TbEstados " & _
           "WHERE TipoSolicitud = '" & tipoSolicitud & "' " & _
@@ -195,7 +195,7 @@ Private Function IWorkflowService_IsStateFinal(ByVal estadoCodigo As String, _
     Dim sql As String
     Dim resultado As Boolean
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     sql = "SELECT EsEstadoFinal FROM TbEstados " & _
           "WHERE CodigoEstado = '" & estadoCodigo & "' " & _
@@ -219,27 +219,27 @@ Private Function IWorkflowService_IsStateFinal(ByVal estadoCodigo As String, _
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE MÉTODOS DE HISTORIAL DE ESTADOS
+' IMPLEMENTACIÃ“N DE MÃ‰TODOS DE HISTORIAL DE ESTADOS
 '******************************************************************************
 
 Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
+    Dim errorHandler As IErrorHandlerService
                                                    ByVal estadoAnterior As String, _
                                                    ByVal estadoNuevo As String, _
                                                    ByVal usuario As String, _
                                                    ByVal comentarios As String) As Boolean
     
-    ' Logging de auditoría: Registro de cambio de estado
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim sql As String
+    On Error GoTo ErrorHandler
+    
+    ' Logging de auditorÃ­a: Registro de cambio de estado
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "WORKFLOW_STATE_CHANGE", "Registrando cambio de estado para solicitud ID: " & SolicitudID & ", de " & estadoAnterior & " a " & estadoNuevo & " por usuario: " & usuario, "CWorkflowService.RecordStateChange"
     End If
     
-    Dim db As DAO.Database
-    Dim rs As DAO.Recordset
-    Dim sql As String
-    
-    On Error GoTo ErrorHandler
-    
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     ' Insertar registro en TbHistorialEstados (asumiendo que existe esta tabla)
     sql = "INSERT INTO TbHistorialEstados (SolicitudID, EstadoAnterior, EstadoNuevo, Usuario, Comentarios, FechaCambio) " & _
@@ -250,7 +250,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     db.Close
     Set db = Nothing
     
-    ' Logging de auditoría: Cambio de estado registrado exitosamente
+    ' Logging de auditorÃ­a: Cambio de estado registrado exitosamente
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "WORKFLOW_STATE_RECORDED", "Cambio de estado registrado exitosamente para solicitud ID: " & SolicitudID & ", de " & estadoAnterior & " a " & estadoNuevo, "CWorkflowService.RecordStateChange"
     End If
@@ -259,12 +259,13 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     Exit Function
     
 ErrorHandler:
-    ' Logging de auditoría: Error al registrar cambio de estado
+    ' Logging de auditorÃ­a: Error al registrar cambio de estado
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "WORKFLOW_STATE_RECORD_ERROR", "Error al registrar cambio de estado para solicitud ID: " & SolicitudID & ". Error: " & Err.Description, "CWorkflowService.RecordStateChange"
     End If
     
-    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.RecordStateChange"
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWorkflowService.RecordStateChange"
     If Not db Is Nothing Then
         db.Close
         Set db = Nothing
@@ -273,15 +274,15 @@ ErrorHandler:
 End Function
 
 Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As Collection
-    On Error GoTo ErrorHandler
-    
+    Dim errorHandler As IErrorHandlerService
     Dim historial As New Collection
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
     Dim sql As String
     Dim registro As String
+    On Error GoTo ErrorHandler
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     sql = "SELECT EstadoAnterior, EstadoNuevo, Usuario, Comentarios, FechaCambio " & _
           "FROM TbHistorialEstados " & _
@@ -309,7 +310,8 @@ Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As 
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.GetStateHistory"
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWorkflowService.GetStateHistory"
     If Not rs Is Nothing Then Set rs = Nothing
     If Not db Is Nothing Then
         db.Close
@@ -319,10 +321,11 @@ ErrorHandler:
 End Function
 
 '******************************************************************************
-' IMPLEMENTACIÓN DE MÉTODOS DE VALIDACIÓN DE PERMISOS
+' IMPLEMENTACIÃ“N DE MÃ‰TODOS DE VALIDACIÃ“N DE PERMISOS
 '******************************************************************************
 
 Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As String, _
+    Dim errorHandler As IErrorHandlerService
                                                          ByVal estadoOrigen As String, _
                                                          ByVal estadoDestino As String, _
                                                          ByVal tipoSolicitud As String) As Boolean
@@ -333,9 +336,9 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
     Dim sql As String
     Dim resultado As Boolean
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
-    ' Consultar si existe la transición y si el rol tiene permisos
+    ' Consultar si existe la transiciÃ³n y si el rol tiene permisos
     sql = "SELECT t.RolRequerido FROM TbTransiciones t " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
           "INNER JOIN TbEstados ed ON t.EstadoDestinoID = ed.ID " & _
@@ -350,10 +353,10 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
         Dim rolRequerido As String
         rolRequerido = Nz(rs("RolRequerido").value, "")
         
-        ' Si no hay rol requerido específico, cualquier usuario puede hacer la transición
+        ' Si no hay rol requerido especÃ­fico, cualquier usuario puede hacer la transiciÃ³n
         If Len(Trim(rolRequerido)) = 0 Then
             resultado = True
-        ' Si el usuario es administrador, puede hacer cualquier transición
+        ' Si el usuario es administrador, puede hacer cualquier transiciÃ³n
         ElseIf usuarioRol = ROL_ADMINISTRADOR Then
             resultado = True
         ' Verificar si el rol del usuario coincide con el requerido
@@ -373,7 +376,8 @@ Private Function IWorkflowService_HasTransitionPermission(ByVal usuarioRol As St
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.HasTransitionPermission"
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWorkflowService.HasTransitionPermission"
     If Not rs Is Nothing Then Set rs = Nothing
     If Not db Is Nothing Then
         db.Close
@@ -383,6 +387,7 @@ ErrorHandler:
 End Function
 
 Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String, _
+    Dim errorHandler As IErrorHandlerService
                                                   ByVal estadoDestino As String, _
                                                   ByVal tipoSolicitud As String) As Boolean
     On Error GoTo ErrorHandler
@@ -392,7 +397,7 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
     Dim sql As String
     Dim resultado As Boolean
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     sql = "SELECT t.RequiereAprobacion FROM TbTransiciones t " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
@@ -419,7 +424,8 @@ Private Function IWorkflowService_RequiresApproval(ByVal estadoOrigen As String,
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.RequiresApproval"
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWorkflowService.RequiresApproval"
     If Not rs Is Nothing Then Set rs = Nothing
     If Not db Is Nothing Then
         db.Close
@@ -429,10 +435,11 @@ ErrorHandler:
 End Function
 
 '******************************************************************************
-' MÉTODOS AUXILIARES PRIVADOS
+' MÃ‰TODOS AUXILIARES PRIVADOS
 '******************************************************************************
 
 Private Function TransitionExists(ByVal estadoOrigen As String, _
+    Dim errorHandler As IErrorHandlerService
                                  ByVal estadoDestino As String, _
                                  ByVal tipoSolicitud As String) As Boolean
     On Error GoTo ErrorHandler
@@ -442,7 +449,7 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     Dim sql As String
     Dim resultado As Boolean
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetValue("DATAPATH"), False, False, "MS Access;PWD=" & m_Config.GetValue("DATABASEPASSWORD"))
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     sql = "SELECT COUNT(*) AS Total FROM TbTransiciones t " & _
           "INNER JOIN TbEstados eo ON t.EstadoOrigenID = eo.ID " & _
@@ -469,7 +476,8 @@ Private Function TransitionExists(ByVal estadoOrigen As String, _
     Exit Function
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CWorkflowService.TransitionExists"
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWorkflowService.TransitionExists"
     If Not rs Is Nothing Then Set rs = Nothing
     If Not db Is Nothing Then
         db.Close

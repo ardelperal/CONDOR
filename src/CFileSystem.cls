@@ -1,10 +1,10 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 Implements IFileSystem
 
 ' =====================================================
 ' CLASE: CFileSystem
-' DESCRIPCION: Implementación real del sistema de ficheros
+' DESCRIPCION: ImplementaciÃ³n real del sistema de ficheros
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
 ' VERSION: 1.0 - Wrapper del FileSystemObject
@@ -29,7 +29,7 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' IMPLEMENTACIÓN DE LA INTERFAZ IFileSystem
+' IMPLEMENTACIÃ“N DE LA INTERFAZ IFileSystem
 ' ============================================================================
 
 ' Implementa la apertura de archivos de texto

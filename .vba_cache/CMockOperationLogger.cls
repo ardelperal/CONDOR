@@ -1,11 +1,11 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 #If DEV_MODE Then
 
 ' Clase: CMockOperationLogger
-' Descripción: Mock del servicio de logging de operaciones para pruebas unitarias.
-'              Almacena las operaciones loggeadas en una colección para su verificación.
+' DescripciÃ³n: Mock del servicio de logging de operaciones para pruebas unitarias.
+'              Almacena las operaciones loggeadas en una colecciÃ³n para su verificaciÃ³n.
 
 Implements IOperationLogger
 
@@ -18,9 +18,10 @@ Private Sub Class_Initialize()
 End Sub
 
 Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    ' Registrar que el método fue llamado
+    ' Registrar que el mÃ©todo fue llamado
     LogOperationCalled = True
     
     Dim logEntry As New Collection
@@ -33,7 +34,7 @@ Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal e
     Exit Sub
     
 ErrorHandler:
-    ' En un mock, los errores internos no suelen ser críticos, pero se podrían registrar para depuración del mock
+    ' En un mock, los errores internos no suelen ser crÃ­ticos, pero se podrÃ­an registrar para depuraciÃ³n del mock
     Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogOperation: " & Err.Description
 End Sub
 

@@ -1,4 +1,4 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 ' =====================================================
@@ -12,7 +12,7 @@ Option Explicit
 ' Mock del objeto TextFile que simula las operaciones
 ' de escritura en archivos sin interactuar con el disco
 
-' Propiedades públicas para verificación en pruebas
+' Propiedades pÃºblicas para verificaciÃ³n en pruebas
 Public WasWriteLineCalled As Boolean
 Public WasCloseCalled As Boolean
 Public LastWrittenLine As String
@@ -32,7 +32,7 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' MÉTODOS PÚBLICOS PARA CONFIGURACIÓN DEL MOCK
+' MÃ‰TODOS PÃšBLICOS PARA CONFIGURACIÃ“N DEL MOCK
 ' ============================================================================
 
 ' Reinicia el estado del mock para una nueva prueba
@@ -45,10 +45,10 @@ Public Sub Reset()
 End Sub
 
 ' ============================================================================
-' MÉTODOS QUE SIMULAN EL COMPORTAMIENTO DEL TEXTFILE REAL
+' MÃ‰TODOS QUE SIMULAN EL COMPORTAMIENTO DEL TEXTFILE REAL
 ' ============================================================================
 
-' Simula la escritura de una línea en el archivo
+' Simula la escritura de una lÃ­nea en el archivo
 Public Sub WriteLine(ByVal line As String)
     WasWriteLineCalled = True
     LastWrittenLine = line

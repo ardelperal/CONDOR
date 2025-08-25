@@ -1,4 +1,4 @@
-Attribute VB_Name = "modAssert"
+﻿Attribute VB_Name = "modAssert"
 ' Modulo: modAssert
 ' Proposito: Funciones de asercion para las pruebas.
 Option Compare Database

@@ -1,7 +1,7 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' Clase de tipo de datos para tbDatosCDCA
-' Basada en el Anexo A del CONDOR_MASTER_PLAN.md - Sección 8.3
+' Basada en el Anexo A del CONDOR_MASTER_PLAN.md - SecciÃ³n 8.3
 
 '******************************************************************************
 ' VARIABLES PRIVADAS
@@ -34,7 +34,7 @@ Private m_fechaFirmaDecisionFinal As Date
 Private m_cargoFirmanteFinal As String
 
 '******************************************************************************
-' PROPIEDADES PÚBLICAS
+' PROPIEDADES PÃšBLICAS
 '******************************************************************************
 
 Public Property Get idDatosCDCA() As Long

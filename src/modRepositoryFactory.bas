@@ -1,8 +1,12 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
+
+' Variable privada para almacenar el mock
+Private m_MockRepository As ISolicitudRepository
+
 '******************************************************************************
-' MÓDULO: modRepositoryFactory
-' DESCRIPCIÓN: Factory para la inyección de dependencias del repositorio de solicitudes
+' MÃ“DULO: modRepositoryFactory
+' DESCRIPCIÃ“N: Factory para la inyecciÃ³n de dependencias del repositorio de solicitudes
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
 '******************************************************************************
@@ -26,44 +30,78 @@ Public Function CreateSolicitudRepository() As ISolicitudRepository
         Exit Function
     End If
     
-    ' Obtener la instancia del logger de operaciones
+    ' Obtener las dependencias
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
+    
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
-    ' Usar el repositorio real con inyección de dependencias
+    ' Usar el repositorio real con inyecciÃ³n de dependencias
     Dim repositoryInstance As New CSolicitudRepository
     
-    ' Inyectar la dependencia del logger
-    repositoryInstance.Initialize operationLogger
+    ' Inyectar AMBAS dependencias
+    repositoryInstance.Initialize configService, operationLogger
     
     Set CreateSolicitudRepository = repositoryInstance
     
     Exit Function
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "modRepositoryFactory.CreateSolicitudRepository")
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modRepositoryFactory.CreateSolicitudRepository"
     Set CreateSolicitudRepository = Nothing
+End Function
+
+'******************************************************************************
+' FUNCIÓN: CreateExpedienteRepository
+' DESCRIPCIÓN: Crea una instancia del repositorio de expedientes
+' RETORNA: IExpedienteRepository - Instancia del repositorio de expedientes
+'******************************************************************************
+Public Function CreateExpedienteRepository() As IExpedienteRepository
+    On Error GoTo ErrorHandler
+    
+    ' Obtener las dependencias
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
+    
+    Dim operationLogger As IOperationLogger
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
+    
+    ' Crear el repositorio real con inyección de dependencias
+    Dim repositoryInstance As New CExpedienteRepository
+    
+    ' Inyectar las dependencias
+    repositoryInstance.Initialize configService, operationLogger
+    
+    Set CreateExpedienteRepository = repositoryInstance
+    
+    Exit Function
+    
+ErrorHandler:
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modRepositoryFactory.CreateExpedienteRepository"
+    Set CreateExpedienteRepository = Nothing
 End Function
 
 '******************************************************************************
 ' GESTIÓN DE MOCKS PARA PRUEBAS
 '******************************************************************************
 
-' Variable privada para almacenar el mock
-Private m_MockRepository As ISolicitudRepository
-
 '******************************************************************************
-' FUNCIÓN: SetMockRepository
-' DESCRIPCIÓN: Configura un mock para ser usado en lugar del repositorio real
-' PARÁMETROS: mockRepo - Instancia del mock a usar
+' FUNCIÃ“N: SetMockRepository
+' DESCRIPCIÃ“N: Configura un mock para ser usado en lugar del repositorio real
+' PARÃMETROS: mockRepo - Instancia del mock a usar
 '******************************************************************************
 Public Sub SetMockRepository(mockRepo As ISolicitudRepository)
     Set m_MockRepository = mockRepo
 End Sub
 
 '******************************************************************************
-' FUNCIÓN: ResetMock
-' DESCRIPCIÓN: Limpia el mock configurado, volviendo al comportamiento normal
+' FUNCIÃ“N: ResetMock
+' DESCRIPCIÃ“N: Limpia el mock configurado, volviendo al comportamiento normal
 '******************************************************************************
 Public Sub ResetMock()
     Set m_MockRepository = Nothing

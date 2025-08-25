@@ -1,4 +1,4 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 #If DEV_MODE Then
@@ -30,7 +30,7 @@ End Sub
 
 
 
-' Método para limpiar el historial de llamadas
+' MÃ©todo para limpiar el historial de llamadas
 Public Sub LimpiarHistorial()
     UltimaLlamada_Destinatarios = ""
     UltimaLlamada_Asunto = ""
@@ -39,7 +39,7 @@ Public Sub LimpiarHistorial()
     NumeroLlamadas = 0
 End Sub
 
-' Implementación mock del método EnviarNotificacion
+' ImplementaciÃ³n mock del mÃ©todo EnviarNotificacion
 Private Function INotificationService_EnviarNotificacion( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
@@ -50,13 +50,13 @@ Private Function INotificationService_EnviarNotificacion( _
     ' Incrementar contador de llamadas
     NumeroLlamadas = NumeroLlamadas + 1
     
-    ' Guardar parámetros de la última llamada
+    ' Guardar parÃ¡metros de la Ãºltima llamada
     UltimaLlamada_Destinatarios = destinatarios
     UltimaLlamada_Asunto = asunto
     UltimaLlamada_CuerpoHTML = cuerpoHTML
     UltimaLlamada_URLAdjunto = urlAdjunto
     
-    ' Simular error si está configurado
+    ' Simular error si estÃ¡ configurado
     If SimularError Then
         Err.Raise 9999, "CMockNotificationService", "Error simulado para pruebas"
     End If
@@ -65,18 +65,18 @@ Private Function INotificationService_EnviarNotificacion( _
     INotificationService_EnviarNotificacion = ValorRetorno
 End Function
 
-' Implementación pública del método EnviarNotificacion
+' ImplementaciÃ³n pÃºblica del mÃ©todo EnviarNotificacion
 Public Function EnviarNotificacion( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
-    ' Delegar a la implementación de la interfaz
+    ' Delegar a la implementaciÃ³n de la interfaz
     EnviarNotificacion = INotificationService_EnviarNotificacion(destinatarios, asunto, cuerpoHTML, urlAdjunto)
 End Function
 
-' Método helper para verificar si se llamó con parámetros específicos
+' MÃ©todo helper para verificar si se llamÃ³ con parÃ¡metros especÃ­ficos
 Public Function FueLlamadoCon( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _

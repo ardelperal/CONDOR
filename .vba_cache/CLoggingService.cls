@@ -1,17 +1,17 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 Implements ILoggingService
 
 ' Clase: CLoggingService
-' Descripción: Implementación concreta del servicio de logging del sistema CONDOR
-' Arquitectura: Capa de Servicios - Implementación
+' DescripciÃ³n: ImplementaciÃ³n concreta del servicio de logging del sistema CONDOR
+' Arquitectura: Capa de Servicios - ImplementaciÃ³n
 ' Implementa: ILoggingService
 
 ' Dependencias inyectadas
 Private m_Config As IConfig
 Private m_FileSystem As IFileSystem
 
-' Método para inyectar dependencias
+' MÃ©todo para inyectar dependencias
 Public Sub Initialize(ByVal config As IConfig, ByVal fileSystem As IFileSystem)
     Set m_Config = config
     Set m_FileSystem = fileSystem
@@ -23,6 +23,7 @@ Private Sub Class_Terminate()
 End Sub
 
 Private Sub ILoggingService_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     WriteToLog "ERROR", errDescription, moduleName, errNumber, context
@@ -30,11 +31,12 @@ Private Sub ILoggingService_LogError(ByVal errNumber As Long, ByVal errDescripti
     Exit Sub
     
 ErrorHandler:
-    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
+    ' No podemos usar modErrorHandler aquÃ­ para evitar recursiÃ³n infinita
     Debug.Print "Error en CLoggingService.ILoggingService_LogError: " & Err.Description
 End Sub
 
 Private Sub ILoggingService_LogInfo(ByVal message As String, Optional ByVal moduleName As String)
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     WriteToLog "INFO", message, moduleName
@@ -42,11 +44,12 @@ Private Sub ILoggingService_LogInfo(ByVal message As String, Optional ByVal modu
     Exit Sub
     
 ErrorHandler:
-    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
+    ' No podemos usar modErrorHandler aquÃ­ para evitar recursiÃ³n infinita
     Debug.Print "Error en CLoggingService.ILoggingService_LogInfo: " & Err.Description
 End Sub
 
 Private Sub ILoggingService_LogWarning(ByVal message As String, Optional ByVal moduleName As String)
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     WriteToLog "WARNING", message, moduleName
@@ -54,7 +57,7 @@ Private Sub ILoggingService_LogWarning(ByVal message As String, Optional ByVal m
     Exit Sub
     
 ErrorHandler:
-    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
+    ' No podemos usar modErrorHandler aquÃ­ para evitar recursiÃ³n infinita
     Debug.Print "Error en CLoggingService.ILoggingService_LogWarning: " & Err.Description
 End Sub
 
@@ -68,12 +71,12 @@ Private Sub WriteToLog(level As String, message As String, moduleName As String,
     Dim json As String
     Dim LogPath As String
 
-    LogPath = m_Config.GetLogPath()
+    LogPath = m_Config.GetValue("LOG_FILE_PATH")
 
     ' Abrir el fichero en modo Append (8)
     Set logFile = m_FileSystem.OpenTextFile(LogPath, 8, True)
 
-    ' Construir la línea de log en formato JSON
+    ' Construir la lÃ­nea de log en formato JSON
     json = "{"
     json = json & """timestamp"": """ & Format(Now, "yyyy-mm-dd hh:nn:ss") & ""","
     json = json & """level"": """ & level & ""","
@@ -90,9 +93,10 @@ Private Sub WriteToLog(level As String, message As String, moduleName As String,
 End Sub
 
 Private Function EscapeJSON(ByVal str As String) As String
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    ' Función auxiliar para escapar caracteres en JSON
+    ' FunciÃ³n auxiliar para escapar caracteres en JSON
     Dim temp As String
     temp = Replace(str, "\", "\\")
     temp = Replace(temp, """""", "\\""")
@@ -104,7 +108,7 @@ Private Function EscapeJSON(ByVal str As String) As String
     Exit Function
     
 ErrorHandler:
-    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
+    ' No podemos usar modErrorHandler aquÃ­ para evitar recursiÃ³n infinita
     Debug.Print "Error en CLoggingService.EscapeJSON: " & Err.Description
     EscapeJSON = str ' Devolver string original si falla el escape
 End Function

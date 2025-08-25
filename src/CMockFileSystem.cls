@@ -1,4 +1,4 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 Implements IFileSystem
 
@@ -14,7 +14,7 @@ Implements IFileSystem
 ' las llamadas realizadas durante las pruebas unitarias
 ' sin interactuar con el sistema de ficheros real
 
-' Propiedades públicas para verificación en pruebas
+' Propiedades pÃºblicas para verificaciÃ³n en pruebas
 Public WasOpenTextFileCalled As Boolean
 Public LastPath As String
 Public LastMode As Long
@@ -42,7 +42,7 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' MÉTODOS PÚBLICOS PARA CONFIGURACIÓN DEL MOCK
+' MÃ‰TODOS PÃšBLICOS PARA CONFIGURACIÃ“N DEL MOCK
 ' ============================================================================
 
 ' Reinicia el estado del mock para una nueva prueba
@@ -55,18 +55,18 @@ Public Sub Reset()
     m_mockTextFile.Reset
 End Sub
 
-' Obtiene el mock del TextFile para configuración adicional
+' Obtiene el mock del TextFile para configuraciÃ³n adicional
 Public Function GetMockTextFile() As CMockTextFile
     Set GetMockTextFile = m_mockTextFile
 End Function
 
 ' ============================================================================
-' IMPLEMENTACIÓN DE LA INTERFAZ IFileSystem
+' IMPLEMENTACIÃ“N DE LA INTERFAZ IFileSystem
 ' ============================================================================
 
 ' Mock de la apertura de archivos de texto
 Private Function IFileSystem_OpenTextFile(ByVal Path As String, ByVal Mode As Long, ByVal Create As Boolean) As Object
-    ' Registrar la llamada para verificación
+    ' Registrar la llamada para verificaciÃ³n
     WasOpenTextFileCalled = True
     LastPath = Path
     LastMode = Mode

@@ -1,12 +1,12 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Clase: CWordManager
-' Descripción: Implementación concreta del gestor de Word.
+' DescripciÃ³n: ImplementaciÃ³n concreta del gestor de Word.
 ' Implementa: IWordManager
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-08-22
-' Versión: 1.0
+' VersiÃ³n: 1.0
 ' ============================================================================
 
 Implements IWordManager
@@ -31,13 +31,15 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' IMPLEMENTACIÓN DE LA INTERFAZ IWordManager
+' IMPLEMENTACIÃ“N DE LA INTERFAZ IWordManager
 ' ============================================================================
 
 Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As Boolean
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    ' Crear aplicación Word si no existe
+    
+    ' Crear aplicaciÃ³n Word si no existe
     If m_WordApp Is Nothing Then
         Set m_WordApp = CreateObject("Word.Application")
         m_IsWordAppCreated = True
@@ -51,15 +53,18 @@ Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As B
     Exit Function
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "CWordManager.AbrirDocumento")
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWordManager.AbrirDocumento"
     IWordManager_AbrirDocumento = False
 End Function
 
 Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     If m_WordDoc Is Nothing Then
-        Call modErrorHandler.LogError(-1, "No hay documento abierto", "CWordManager.ReemplazarTexto")
+        Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+        errorHandler.LogError -1, "No hay documento abierto", "CWordManager.ReemplazarTexto"
         IWordManager_ReemplazarTexto = False
         Exit Function
     End If
@@ -75,15 +80,18 @@ Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVa
     Exit Function
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "CWordManager.ReemplazarTexto")
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWordManager.ReemplazarTexto"
     IWordManager_ReemplazarTexto = False
 End Function
 
 Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As Boolean
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     If m_WordDoc Is Nothing Then
-        Call modErrorHandler.LogError(-1, "No hay documento abierto", "CWordManager.GuardarDocumento")
+        Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+        errorHandler.LogError -1, "No hay documento abierto", "CWordManager.GuardarDocumento"
         IWordManager_GuardarDocumento = False
         Exit Function
     End If
@@ -95,7 +103,8 @@ Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As B
     Exit Function
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "CWordManager.GuardarDocumento")
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWordManager.GuardarDocumento"
     IWordManager_GuardarDocumento = False
 End Function
 
@@ -104,13 +113,13 @@ Private Sub IWordManager_CerrarDocumento()
 End Sub
 
 Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As String) As String
-    On Error GoTo ErrorHandler
-    
+    Dim errorHandler As IErrorHandlerService
     Dim tempWordApp As Object
     Dim tempWordDoc As Object
     Dim contenido As String
+    On Error GoTo ErrorHandler
     
-    ' Crear aplicación temporal para lectura
+    ' Crear aplicaciÃ³n temporal para lectura
     Set tempWordApp = CreateObject("Word.Application")
     tempWordApp.Visible = False
     
@@ -130,7 +139,8 @@ Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As Stri
     Exit Function
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "CWordManager.LeerContenidoDocumento")
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CWordManager.LeerContenidoDocumento"
     
     ' Limpiar recursos en caso de error
     If Not tempWordDoc Is Nothing Then
@@ -146,7 +156,7 @@ ErrorHandler:
 End Function
 
 ' ============================================================================
-' MÉTODOS PRIVADOS
+' MÃ‰TODOS PRIVADOS
 ' ============================================================================
 
 Private Sub LimpiarRecursos()

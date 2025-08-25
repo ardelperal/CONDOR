@@ -1,18 +1,18 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Clase: CMockDocumentService
-' Descripción: Mock del servicio de documentos para pruebas unitarias aisladas.
+' DescripciÃ³n: Mock del servicio de documentos para pruebas unitarias aisladas.
 ' Implementa: IDocumentService
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-08-22
-' Versión: 1.0
+' VersiÃ³n: 1.0
 ' ============================================================================
 
 Implements IDocumentService
 
 ' ============================================================================
-' PROPIEDADES PÚBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
+' PROPIEDADES PÃšBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
 ' ============================================================================
 
 ' Propiedades para GenerarDocumento
@@ -29,7 +29,7 @@ Public LeerDocumento_LastRutaDocumento As String
 Public LeerDocumento_LastIdSolicitud As Long
 
 ' ============================================================================
-' MÉTODOS PÚBLICOS PARA GESTIÓN DEL MOCK
+' MÃ‰TODOS PÃšBLICOS PARA GESTIÃ“N DEL MOCK
 ' ============================================================================
 
 ' Reinicia todas las propiedades del mock a sus valores por defecto
@@ -49,7 +49,7 @@ Public Sub Reset()
 End Sub
 
 ' ============================================================================
-' IMPLEMENTACIÓN DE LA INTERFAZ IDocumentService
+' IMPLEMENTACIÃ“N DE LA INTERFAZ IDocumentService
 ' ============================================================================
 
 Private Function IDocumentService_GenerarDocumento(ByVal laSolicitud As T_Solicitud) As String

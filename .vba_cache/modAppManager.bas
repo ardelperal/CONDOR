@@ -1,4 +1,4 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' Definir constante de compilacion condicional para modo desarrollo
 #Const DEV_MODE = 1
@@ -43,12 +43,16 @@ End Function
 Public Sub App_Start()
     On Error GoTo ErrorHandler
 
+    ' 0. Obtener instancia del servicio de errores usando el factory
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+
     ' 1. Obtener el email del usuario actual
     Dim UserEmail As String
     UserEmail = GetCurrentUserEmail()
 
     If UserEmail = "" Then
-        Call modErrorHandler.LogCriticalError(vbObjectError + 514, "No se pudo obtener el email del usuario para la autenticación.", "modAppManager.App_Start")
+        Call errorHandler.LogError(vbObjectError + 514, "No se pudo obtener el email del usuario para la autenticaciÃ³n.", "modAppManager.App_Start", "CRITICAL_STARTUP_FAILURE")
         Exit Sub
     End If
 
@@ -59,13 +63,13 @@ Public Sub App_Start()
     ' 3. Determinar el rol del usuario y guardarlo en la variable global
     g_CurrentUserRole = authService.GetUserRole(UserEmail)
 
-    ' 4. Obtener instancia de configuración y verificar que se haya cargado correctamente
+    ' 4. Obtener instancia de configuraciÃ³n y verificar que se haya cargado correctamente
     Dim config As IConfig
     Set config = modConfig.CreateConfigService()
     
     If Not config.GetValue("IsInitialized") Then
-        ' El error específico ya ha sido logueado por CConfig.ValidateConfiguration
-        ' Simplemente detenemos la ejecución para prevenir que la app se abra en un estado inválido.
+        ' El error especÃ­fico ya ha sido logueado por CConfig.ValidateConfiguration
+        ' Simplemente detenemos la ejecuciÃ³n para prevenir que la app se abra en un estado invÃ¡lido.
         Exit Sub
     End If
 
@@ -73,21 +77,21 @@ Public Sub App_Start()
     Select Case g_CurrentUserRole
         Case Rol_Admin
             Debug.Print "Usuario autenticado como Administrador."
-            ' TODO: Implementar inicialización específica para Admin
+            ' TODO: Implementar inicializaciÃ³n especÃ­fica para Admin
         Case Rol_Calidad
             Debug.Print "Usuario autenticado como Calidad."
-            ' TODO: Implementar inicialización específica para Calidad
+            ' TODO: Implementar inicializaciÃ³n especÃ­fica para Calidad
         Case Rol_Tecnico
-            Debug.Print "Usuario autenticado como Técnico."
-            ' TODO: Implementar inicialización específica para Técnico
+            Debug.Print "Usuario autenticado como TÃ©cnico."
+            ' TODO: Implementar inicializaciÃ³n especÃ­fica para TÃ©cnico
         Case Rol_Desconocido
-            Call modErrorHandler.LogCriticalError(vbObjectError + 515, "El usuario '" & UserEmail & "' no tiene un rol definido en el sistema.", "modAppManager.App_Start")
+            Call errorHandler.LogError(vbObjectError + 515, "El usuario '" & UserEmail & "' no tiene un rol definido en el sistema.", "modAppManager.App_Start", "CRITICAL_AUTH_FAILURE")
     End Select
     
     Exit Sub
     
 ErrorHandler:
-    Call modErrorHandler.LogCriticalError(Err.Number, Err.Description, "modAppManager.App_Start")
+    Call errorHandler.LogError(Err.Number, Err.Description, "modAppManager.App_Start", "CRITICAL_STARTUP_ERROR")
 End Sub
 
 ' =====================================================

@@ -1,13 +1,13 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' Interfaz: IErrorHandlerService
-' Descripción: Define el contrato para servicios de manejo de errores del sistema CONDOR
+' DescripciÃ³n: Define el contrato para servicios de manejo de errores del sistema CONDOR
 ' Arquitectura: Capa de Servicios - Interface
 
 ' Registra un error en el sistema de logging
-' @param errNumber: Número del error
-' @param errDescription: Descripción del error
-' @param moduleName: Nombre del módulo donde ocurrió el error (opcional)
+' @param errNumber: NÃºmero del error
+' @param errDescription: DescripciÃ³n del error
+' @param moduleName: Nombre del mÃ³dulo donde ocurriÃ³ el error (opcional)
 ' @param context: Contexto adicional del error (opcional)
 Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
 End Sub

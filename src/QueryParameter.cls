@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,8 +9,8 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
-' Clase auxiliar para encapsular parámetros de consulta SQL
-' Versión 1.0 - Soporte para consultas parametrizadas seguras
+' Clase auxiliar para encapsular parÃ¡metros de consulta SQL
+' VersiÃ³n 1.0 - Soporte para consultas parametrizadas seguras
 
 Private m_name As String
 Private m_value As Variant

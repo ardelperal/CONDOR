@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -16,10 +16,11 @@ Private m_OperationLogger As IOperationLogger
 Private m_SolicitudRepository As ISolicitudRepository
 
 Private Sub Class_Initialize()
-    ' Inicialización sin dependencias
+    ' InicializaciÃ³n sin dependencias
 End Sub
 
 Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, solicitudRepository As ISolicitudRepository)
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Set configSvc = config
@@ -29,13 +30,15 @@ Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, so
     Exit Sub
     
 ErrorHandler:
-    modErrorHandler.LogError Err.Number, Err.Description, "CAuthService.Initialize"
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CAuthService.Initialize"
 End Sub
 
 Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRole
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
 
-    ' Logging de auditoría: Consulta de rol de usuario
+    ' Logging de auditorÃ­a: Consulta de rol de usuario
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "ROLE_QUERY", "Consultando rol para usuario: " & UserEmail, "CAuthService.GetUserRole"
     End If
@@ -60,7 +63,7 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
 
     If Not rs Is Nothing Then
         If Not rs.EOF Then
-            If rs!EsAdministrador = "Sí" Then
+            If rs!EsAdministrador = "SÃ­" Then
                 role = Rol_Admin
             End If
         End If
@@ -75,7 +78,7 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
         Exit Function
     End If
 
-    ' Segunda consulta parametrizada: roles específicos de la aplicación
+    ' Segunda consulta parametrizada: roles especÃ­ficos de la aplicaciÃ³n
     sql = "SELECT EsUsuarioAdministrador, EsUsuarioCalidad, EsUsuarioTecnico " & _
           "FROM TbUsuariosAplicacionesPermisos " & _
           "WHERE CorreoUsuario = [pUserEmail] AND IDAplicacion = [pIDAplicacion]"
@@ -86,18 +89,18 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     params.Add param
     
     Set param = New QueryParameter
-    param.Initialize "pIDAplicacion", modConfig.IDAplicacion_CONDOR
+    param.Initialize "pIDAplicacion", configSvc.GetValue("IDAplicacion_CONDOR")
     params.Add param
     
     Set rs = m_SolicitudRepository.ExecuteQuery(sql, params)
 
     If Not rs Is Nothing Then
         If Not rs.EOF Then
-            If rs!EsUsuarioAdministrador = "Sí" Then
+            If rs!EsUsuarioAdministrador = "SÃ­" Then
                 role = Rol_Admin
-            ElseIf rs!EsUsuarioCalidad = "Sí" Then
+            ElseIf rs!EsUsuarioCalidad = "SÃ­" Then
                 role = Rol_Calidad
-            ElseIf rs!EsUsuarioTecnico = "Sí" Then
+            ElseIf rs!EsUsuarioTecnico = "SÃ­" Then
                 role = Rol_Tecnico
             End If
         End If
@@ -107,13 +110,13 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     Set rs = Nothing
     Set params = Nothing
 
-    ' Logging de auditoría: Resultado de consulta de rol
+    ' Logging de auditorÃ­a: Resultado de consulta de rol
     If Not m_OperationLogger Is Nothing Then
         Dim roleText As String
         Select Case role
             Case Rol_Admin: roleText = "Administrador"
             Case Rol_Calidad: roleText = "Calidad"
-            Case Rol_Tecnico: roleText = "Técnico"
+            Case Rol_Tecnico: roleText = "TÃ©cnico"
             Case Else: roleText = "Desconocido"
         End Select
         m_OperationLogger.LogOperation "ROLE_ASSIGNED", "Rol asignado a " & UserEmail & ": " & roleText, "CAuthService.GetUserRole"
@@ -129,10 +132,11 @@ ErrorHandler:
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "ROLE_ERROR", "Error consultando rol para " & UserEmail & ": " & Err.Description, "CAuthService.GetUserRole"
     End If
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "CAuthService.GetUserRole")
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "CAuthService.GetUserRole"
 End Function
 
-' Método público para acceso directo
+' MÃ©todo pÃºblico para acceso directo
 Public Function GetUserRole(ByVal UserEmail As String) As E_UserRole
     GetUserRole = IAuthService_GetUserRole(UserEmail)
 End Function

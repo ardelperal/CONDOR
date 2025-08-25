@@ -1,18 +1,18 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Clase: CMockWordManager
-' Descripción: Mock del gestor de Word para pruebas unitarias aisladas.
+' DescripciÃ³n: Mock del gestor de Word para pruebas unitarias aisladas.
 ' Implementa: IWordManager
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-08-22
-' Versión: 1.0
+' VersiÃ³n: 1.0
 ' ============================================================================
 
 Implements IWordManager
 
 ' ============================================================================
-' PROPIEDADES PÚBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
+' PROPIEDADES PÃšBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
 ' ============================================================================
 
 ' Propiedades para AbrirDocumento
@@ -55,7 +55,7 @@ Private Sub Class_Initialize()
 End Sub
 
 ' ============================================================================
-' MÉTODOS PÚBLICOS PARA GESTIÓN DEL MOCK
+' MÃ‰TODOS PÃšBLICOS PARA GESTIÃ“N DEL MOCK
 ' ============================================================================
 
 ' Reinicia todas las propiedades del mock a sus valores por defecto
@@ -92,7 +92,7 @@ Public Sub Reset()
 End Sub
 
 ' ============================================================================
-' IMPLEMENTACIÓN DE LA INTERFAZ IWordManager
+' IMPLEMENTACIÃ“N DE LA INTERFAZ IWordManager
 ' ============================================================================
 
 Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As Boolean
@@ -108,7 +108,7 @@ Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVa
     ReemplazarTexto_LastTextoABuscar = textoABuscar
     ReemplazarTexto_LastTextoReemplazo = textoReemplazo
     
-    ' Guardar la llamada en la colección para verificación detallada
+    ' Guardar la llamada en la colecciÃ³n para verificaciÃ³n detallada
     Dim callInfo As String
     callInfo = textoABuscar & "|" & textoReemplazo
     ReemplazarTexto_Calls.Add callInfo

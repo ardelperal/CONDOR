@@ -53,6 +53,43 @@
 - **Testabilidad:** Pruebas de integración específicas para validar la funcionalidad
 - **Cumplimiento:** Seguimiento de mejores prácticas de desarrollo seguro
 
+### ✅ Refactorización de CConfig - Eliminación de Auto-inicialización
+
+**Estado:** COMPLETADA
+**Fecha:** $(Get-Date -Format "yyyy-MM-dd")
+
+#### Objetivos Alcanzados:
+
+1. **Eliminación de Lógica de Auto-inicialización:**
+   - ✅ Eliminado método `Private Sub LoadConfigurationFromDatabase()` de CConfig.cls
+   - ✅ Modificado `Class_Initialize` para solo inicializar la colección `m_Settings`
+   - ✅ Eliminados bloques `If Not m_IsInitialized Then...` de métodos `IConfig_GetValue` e `IConfig_HasKey`
+   - ✅ CConfig ya no intenta cargarse automáticamente desde la base de datos
+
+2. **Alineación con Factory Pattern:**
+   - ✅ CConfig ahora depende completamente de modConfig (factory) para su inicialización
+   - ✅ Eliminado conflicto entre auto-inicialización y factory pattern
+   - ✅ Arquitectura más limpia y predecible
+
+3. **Refactorización de Pruebas Unitarias:**
+   - ✅ Convertidas todas las pruebas de integración en Test_CConfig.bas a pruebas unitarias aisladas
+   - ✅ Implementado uso de `LoadFromCollection` en todas las pruebas
+   - ✅ Eliminadas dependencias de base de datos en las pruebas unitarias
+   - ✅ Pruebas más rápidas, confiables y mantenibles
+
+4. **Validación del Sistema:**
+   - ✅ Ejecutado `cscript //nologo condor_cli.vbs rebuild` exitosamente
+   - ✅ 84 archivos copiados y sincronizados
+   - ✅ Proyecto completamente reconstruido sin errores
+
+#### Beneficios Obtenidos:
+
+- **Arquitectura Consistente:** CConfig alineado con el patrón Factory
+- **Testabilidad Mejorada:** Pruebas unitarias completamente aisladas
+- **Mantenibilidad:** Eliminación de lógica duplicada y conflictiva
+- **Predictibilidad:** Comportamiento más controlable y determinístico
+- **Centralización:** Configuración gestionada únicamente por modConfig factory
+
 ## Próximas Tareas Pendientes
 
 ### 🔄 En Progreso
@@ -99,3 +136,71 @@ Las pruebas de integración están organizadas en:
 
 **Responsable:** CONDOR-Expert  
 **Próxima Revisión:** Pendiente de definir
+
+---
+### **PLANTILLAS DE PROMPTS ESTÁNDAR PARA EL SUPERVISOR**
+
+Cuando el Supervisor solicite un tipo de prompt específico, CONDOR-Architect deberá generar el prompt para Copilot basándose en la plantilla correspondiente definida en esta sección.
+
+#### **Plantilla: "Prompt Quirúrgico"**
+
+**Objetivo:** Para corregir bugs o implementar cambios muy específicos, minimizando el riesgo y asegurando que la documentación del proyecto se mantenga siempre actualizada.
+**Palabra clave de activación:** "cambio quirúrgico", "prompt quirúrgico".
+
+**Prompt a generar:**
+
+---
+Hola. Tenemos una tarea de alta precisión. Necesito que corrijas un error específico en el módulo `[NombreDelModulo]`.
+
+**El problema es:** `[Describe el error de forma concisa y exacta, por ejemplo: "La función 'CalcularTotal' en CCalculoService está dividiendo por cero cuando la cantidad es nula."]`
+
+**(Opcional) Lección Aprendida:** Para guiarte, consulta la sección `[NombreDeLaSeccion]` en el documento `Lecciones_aprendidas.md`, que aborda un patrón de error similar. Aplica esa solución aquí.
+
+**Tus directrices son estrictas:**
+1.  **Intervención Mínima:** Corrige únicamente la lógica que causa este error. No refactorices, renombres ni alteres ninguna otra parte del código que no esté directamente relacionada con esta solución.
+2.  **Sin Proactividad:** No busques ni corrijas patrones de errores similares en otros módulos. Tu alcance se limita exclusivamente a `[NombreDelModuloOCodigoEspecifico]`.
+3.  **Adherencia a la Arquitectura:** Asegúrate de que tu corrección respeta los "Principios de Arquitectura de Código".
+
+**Proceso a seguir:**
+1.  **Modifica el código mínimo necesario** en `[NombreDelModulo]` para solucionar el problema.
+2.  Para validar, ejecuta el comando de reconstrucción y limpieza: `cscript //nologo condor_cli.vbs rebuild`.
+3.  **Actualización de Documentación:** Una vez la funcionalidad esté implementada y verificada, actualiza los documentos de planificación para reflejar el **estado final** del proyecto. No documentes el "cambio", sino el "nuevo estado". Por ejemplo, si la tarea se ha completado, márcala como `[x]` en el `PLAN_DE_ACCION.md`.
+
+Por favor, procede con precisión quirúrgica.
+---
+
+---
+#### **Plantilla: "Prompt Proactivo"**
+
+**Objetivo:** Para guiar el desarrollo de nuevas funcionalidades o la refactorización significativa de módulos existentes, otorgando a Copilot la autonomía para mejorar la calidad y consistencia del código circundante.
+**Palabra clave de activación:** "prompt proactivo", "desarrollo proactivo".
+
+**Prompt a generar:**
+
+---
+Hola. Nuestra próxima misión es `[describe la misión de forma clara, ej: "reconstruir desde cero las pruebas para CExpedienteService"]`.
+
+**Paso 1: Revisión Obligatoria de Lecciones Aprendidas**
+Abre y lee el fichero `Lecciones_aprendidas.md`. La lección clave para esta misión es la **`[Lección X: Título de la Lección]`**.
+`[Explica brevemente por qué esa lección es crucial y cómo debe aplicarse en esta tarea específica, ej: "Para probar el servicio de forma unitaria, debemos reemplazar sus dependencias reales por Mocks que simulen las respuestas."]`
+
+**Paso 2: Misión Principal - `[Título de la Misión]`**
+Tu objetivo es `[verbo de acción: implementar, refactorizar, crear]` el `[Nombre del Módulo/Funcionalidad]`.
+
+**Requisitos Específicos:**
+* `[Detalla el primer requisito técnico de forma clara y concisa, ej: "Borra todo el contenido actual del fichero /src/Test_CExpedienteService.bas."]`
+* `[Detalla el segundo requisito, ej: "Crea una prueba unitaria aislada para el método 'GetExpedienteById', usando un Mock del repositorio para simular la respuesta."]`
+* `[Añade tantos requisitos como sean necesarios para definir el alcance del trabajo.]`
+
+**Paso 3: Auditoría Proactiva y de Calidad**
+Además de la misión principal, debes realizar las siguientes acciones para asegurar la calidad y consistencia del sistema:
+* `[Describe la primera acción proactiva, ej: "Asegúrate de que la clase Mock (CMock...) tenga un método público que permita a las pruebas inyectarle los datos falsos que debe devolver."]`
+* `[Describe la segunda acción proactiva, ej: "Añade la llamada a la nueva suite de pruebas (..._RunAll) dentro de la función 'RegisterTestSuites' en el módulo modTestRunner.bas (Lección 7)."]`
+* `[Añade otra acción proactiva si es necesario, ej: "Verifica que el manejo de errores utilice nuestro logger centralizado (Lección 8)."]`
+
+**Paso 4: Sigue el Ciclo de Trabajo Asistido**
+1.  Una vez completado el desarrollo, ejecuta el comando de reconstrucción: `cscript //nologo condor_cli.vbs rebuild`.
+2.  **Pausa y espera la confirmación del Supervisor** para la compilación manual. No procedas hasta recibir la luz verde.
+
+Por favor, procede comenzando por el Paso 1.
+---

@@ -1,27 +1,30 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 ' Clase: COperationRepository
-' Descripción: Implementación concreta del repositorio de logs de operaciones.
+' DescripciÃ³n: ImplementaciÃ³n concreta del repositorio de logs de operaciones.
 '              Maneja la persistencia en la tabla Tb_Operaciones_Log.
-' Arquitectura: Capa de Datos - Implementación del patrón Repository
+' Arquitectura: Capa de Datos - ImplementaciÃ³n del patrÃ³n Repository
 
 Implements IOperationRepository
 
 ' Dependencia inyectada
 Private m_configService As IConfig
 
-' Método de inicialización para inyectar dependencias
+' MÃ©todo de inicializaciÃ³n para inyectar dependencias
 Public Sub Initialize(config As IConfig)
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     Set m_configService = config
     Exit Sub
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "COperationRepository.Initialize")
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "COperationRepository.Initialize"
 End Sub
 
-' Implementación del contrato IOperationRepository
+' ImplementaciÃ³n del contrato IOperationRepository
 Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
@@ -38,7 +41,7 @@ Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal en
     
     rs.AddNew
     rs("FechaHora") = Now
-    rs("Usuario") = Environ("USERNAME") ' O el usuario autenticado de la aplicación
+    rs("Usuario") = Environ("USERNAME") ' O el usuario autenticado de la aplicaciÃ³n
     rs("TipoOperacion") = operationType
     rs("IDEntidadAfectada") = entityId
     rs("Detalles") = details
@@ -50,8 +53,9 @@ Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal en
     Exit Sub
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "COperationRepository.IOperationRepository_SaveLog", _
-                                  "TipoOperacion: " & operationType & ", Entidad: " & entityId)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "COperationRepository.IOperationRepository_SaveLog", _
+                                  "TipoOperacion: " & operationType & ", Entidad: " & entityId
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
 End Sub

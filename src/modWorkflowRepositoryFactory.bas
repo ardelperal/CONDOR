@@ -1,7 +1,7 @@
-Attribute VB_Name = "modWorkflowRepositoryFactory"
+﻿Attribute VB_Name = "modWorkflowRepositoryFactory"
 '==============================================================================
-' Módulo: modWorkflowRepositoryFactory
-' Propósito: Factory para crear instancias de IWorkflowRepository
+' MÃ³dulo: modWorkflowRepositoryFactory
+' PropÃ³sito: Factory para crear instancias de IWorkflowRepository
 ' Autor: CONDOR-Expert
 ' Fecha: 2024
 '==============================================================================
@@ -13,13 +13,13 @@ Option Explicit
 Private m_MockRepository As IWorkflowRepository
 
 '==============================================================================
-' FUNCIONES PÚBLICAS
+' FUNCIONES PÃšBLICAS
 '==============================================================================
 
 '''
 ' Crea una instancia de IWorkflowRepository
-' Durante las pruebas, devuelve el mock si está configurado
-' En producción, devuelve la implementación real CWorkflowRepository
+' Durante las pruebas, devuelve el mock si estÃ¡ configurado
+' En producciÃ³n, devuelve la implementaciÃ³n real CWorkflowRepository
 ' @return IWorkflowRepository: Instancia del repositorio de workflow
 '''
 Public Function CreateWorkflowRepository() As IWorkflowRepository
@@ -31,11 +31,11 @@ Public Function CreateWorkflowRepository() As IWorkflowRepository
         Exit Function
     End If
     
-    ' En caso contrario, crear la implementación real
+    ' En caso contrario, crear la implementaciÃ³n real
     Dim repository As CWorkflowRepository
     Set repository = New CWorkflowRepository
     
-    ' Obtener instancia de configuración usando el nuevo factory
+    ' Obtener instancia de configuraciÃ³n usando el nuevo factory
     Dim configService As IConfig
     Set configService = modConfig.CreateConfigService()
     repository.Initialize configService
@@ -55,14 +55,14 @@ End Function
 
 '''
 ' Configura un mock repository para las pruebas
-' @param mockRepo: Instancia del mock a usar en lugar de la implementación real
+' @param mockRepo: Instancia del mock a usar en lugar de la implementaciÃ³n real
 '''
 Public Sub SetMockRepository(ByVal mockRepo As IWorkflowRepository)
     Set m_MockRepository = mockRepo
 End Sub
 
 '''
-' Resetea el mock repository, volviendo a usar la implementación real
+' Resetea el mock repository, volviendo a usar la implementaciÃ³n real
 '''
 Public Sub ResetMock()
     Set m_MockRepository = Nothing

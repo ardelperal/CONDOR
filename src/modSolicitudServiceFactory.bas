@@ -1,9 +1,9 @@
-Attribute VB_Name = "modSolicitudServiceFactory"
+﻿Attribute VB_Name = "modSolicitudServiceFactory"
 Option Compare Database
 Option Explicit
 '******************************************************************************
-' MÓDULO: modSolicitudServiceFactory
-' DESCRIPCIÓN: Factory para la inyección de dependencias del servicio de solicitudes
+' MÃ“DULO: modSolicitudServiceFactory
+' DESCRIPCIÃ“N: Factory para la inyecciÃ³n de dependencias del servicio de solicitudes
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2025-01-14
 '******************************************************************************
@@ -13,8 +13,8 @@ Option Explicit
 '******************************************************************************
 
 '******************************************************************************
-' FUNCIÓN: CreateSolicitudService
-' DESCRIPCIÓN: Crea una instancia del servicio de solicitudes con todas sus dependencias
+' FUNCIÃ“N: CreateSolicitudService
+' DESCRIPCIÃ“N: Crea una instancia del servicio de solicitudes con todas sus dependencias
 ' RETORNA: ISolicitudService - Instancia del servicio completamente inicializada
 '******************************************************************************
 Public Function CreateSolicitudService() As ISolicitudService
@@ -27,20 +27,19 @@ Public Function CreateSolicitudService() As ISolicitudService
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
-    Dim workflowRepository As IWorkflowRepository
-    Set workflowRepository = modWorkflowRepositoryFactory.CreateWorkflowRepository()
-    
     ' Crear la instancia del servicio
     Dim serviceInstance As New CSolicitudService
     
-    ' Inyectar todas las dependencias
-    serviceInstance.Initialize solicitudRepository, operationLogger, workflowRepository
+    ' Inyectar las dependencias requeridas por Initialize
+    serviceInstance.Initialize solicitudRepository, operationLogger
     
     Set CreateSolicitudService = serviceInstance
     
     Exit Function
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "modSolicitudServiceFactory.CreateSolicitudService")
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modSolicitudServiceFactory.CreateSolicitudService"
     Set CreateSolicitudService = Nothing
 End Function

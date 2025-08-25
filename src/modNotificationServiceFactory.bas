@@ -1,14 +1,14 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 ' =====================================================
 ' MODULO: modNotificationServiceFactory
-' DESCRIPCION: Factory especializada para la creación del servicio de notificaciones
+' DESCRIPCION: Factory especializada para la creaciÃ³n del servicio de notificaciones
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024
 ' =====================================================
 
-' Función factory para crear y configurar el servicio de notificaciones
+' FunciÃ³n factory para crear y configurar el servicio de notificaciones
 Public Function CreateNotificationService() As INotificationService
     On Error GoTo ErrorHandler
     
@@ -16,7 +16,7 @@ Public Function CreateNotificationService() As INotificationService
     Dim config As IConfig
     Dim operationLogger As IOperationLogger
     
-    Set config = modConfigFactory.CreateConfig()
+    Set config = modConfig.CreateConfigService()
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
     ' Crear una instancia de la clase concreta
@@ -31,6 +31,8 @@ Public Function CreateNotificationService() As INotificationService
     Exit Function
     
 ErrorHandler:
-    Call modErrorHandler.LogError(Err.Number, Err.Description, "modNotificationServiceFactory.CreateNotificationService")
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modNotificationServiceFactory.CreateNotificationService"
     Set CreateNotificationService = Nothing
 End Function

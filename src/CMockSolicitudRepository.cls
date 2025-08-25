@@ -1,10 +1,10 @@
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 ' ============================================================================
 ' CLASE: CMockSolicitudRepository
 ' Arquitectura: Mock del Repositorio de Solicitudes para Pruebas Unitarias
-' Version: 2.0 - Reconstrucción Total
+' Version: 2.0 - ReconstrucciÃ³n Total
 ' ============================================================================
 ' Mock que implementa ISolicitudRepository para aislamiento de pruebas unitarias.
 ' Permite verificar llamadas y configurar comportamientos de prueba.
@@ -13,24 +13,29 @@ Option Explicit
 Implements ISolicitudRepository
 
 ' ============================================================================
-' PROPIEDADES PÚBLICAS PARA VERIFICACIÓN EN PRUEBAS
+' PROPIEDADES PÃšBLICAS PARA VERIFICACIÃ“N EN PRUEBAS
 ' ============================================================================
 
 ' Flags de llamadas
 Public GetSolicitudByIdCalled As Boolean
 Public SaveSolicitudCalled As Boolean
+Public ExecuteQueryCalled As Boolean
 
-' Parámetros capturados
+' ParÃ¡metros capturados
 Public LastIdSolicitudRequested As Long
 Public LastSavedSolicitud As T_Solicitud
+Public LastExecutedSql As String
+Public LastExecutedParams As Collection
 
 ' Valores de retorno configurables
 Public GetSolicitudByIdReturnValue As T_Solicitud
 Public SaveSolicitudReturnValue As Long
+Public ExecuteQueryReturnValue As DAO.Recordset
 
 ' Contadores
 Public GetSolicitudByIdCallCount As Long
 Public SaveSolicitudCallCount As Long
+Public ExecuteQueryCallCount As Long
 
 ' ============================================================================
 ' CONSTRUCTOR
@@ -41,7 +46,7 @@ Private Sub Class_Initialize()
 End Sub
 
 ' ============================================================================
-' MÉTODOS PÚBLICOS PARA CONFIGURACIÓN DEL MOCK
+' MÃ‰TODOS PÃšBLICOS PARA CONFIGURACIÃ“N DEL MOCK
 ' ============================================================================
 
 ' Reinicia todas las propiedades del mock a sus valores por defecto
@@ -49,18 +54,23 @@ Public Sub Reset()
     ' Resetear flags de llamadas
     GetSolicitudByIdCalled = False
     SaveSolicitudCalled = False
+    ExecuteQueryCalled = False
     
-    ' Resetear parámetros capturados
+    ' Resetear parÃ¡metros capturados
     LastIdSolicitudRequested = 0
     Set LastSavedSolicitud = Nothing
+    LastExecutedSql = ""
+    Set LastExecutedParams = Nothing
     
     ' Resetear valores de retorno
     Set GetSolicitudByIdReturnValue = Nothing
     SaveSolicitudReturnValue = 1 ' Valor por defecto exitoso
+    Set ExecuteQueryReturnValue = Nothing
     
     ' Resetear contadores
     GetSolicitudByIdCallCount = 0
     SaveSolicitudCallCount = 0
+    ExecuteQueryCallCount = 0
 End Sub
 
 ' Configura la solicitud que debe devolver GetSolicitudById
@@ -73,11 +83,16 @@ Public Sub SetSaveSolicitudReturnValue(ByVal returnId As Long)
     SaveSolicitudReturnValue = returnId
 End Sub
 
+' Configura el Recordset que debe devolver ExecuteQuery
+Public Sub SetExecuteQueryReturnValue(ByVal rs As DAO.Recordset)
+    Set ExecuteQueryReturnValue = rs
+End Sub
+
 ' ============================================================================
-' IMPLEMENTACIÓN DE ISolicitudRepository
+' IMPLEMENTACIÃ“N DE ISolicitudRepository
 ' ============================================================================
 
-' Implementación mock de GetSolicitudById
+' ImplementaciÃ³n mock de GetSolicitudById
 Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
     ' Registrar la llamada
     GetSolicitudByIdCalled = True
@@ -92,7 +107,7 @@ Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long
     End If
 End Function
 
-' Implementación mock de SaveSolicitud
+' ImplementaciÃ³n mock de SaveSolicitud
 Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
     ' Registrar la llamada
     SaveSolicitudCalled = True
@@ -103,18 +118,35 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
     ISolicitudRepository_SaveSolicitud = SaveSolicitudReturnValue
 End Function
 
+' ImplementaciÃ³n mock de ExecuteQuery
+Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.Recordset
+    ' Registrar la llamada
+    ExecuteQueryCalled = True
+    ExecuteQueryCallCount = ExecuteQueryCallCount + 1
+    LastExecutedSql = sql
+    Set LastExecutedParams = params
+    
+    ' Devolver el valor configurado
+    Set ISolicitudRepository_ExecuteQuery = ExecuteQueryReturnValue
+End Function
+
 ' ============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA (DELEGACIÓN)
+' MÃ‰TODOS PÃšBLICOS DE CONVENIENCIA (DELEGACIÃ“N)
 ' ============================================================================
 
-' Método público que delega a la implementación de la interfaz
+' MÃ©todo pÃºblico que delega a la implementaciÃ³n de la interfaz
 Public Function GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
     Set GetSolicitudById = ISolicitudRepository_GetSolicitudById(idSolicitud)
 End Function
 
-' Método público que delega a la implementación de la interfaz
+' MÃ©todo pÃºblico que delega a la implementaciÃ³n de la interfaz
 Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
     SaveSolicitud = ISolicitudRepository_SaveSolicitud(solicitud)
+End Function
+
+' MÃ©todo pÃºblico que delega a la implementaciÃ³n de la interfaz
+Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.Recordset
+    Set ExecuteQuery = ISolicitudRepository_ExecuteQuery(sql, params)
 End Function
 
 
