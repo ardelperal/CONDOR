@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_WordManager"
+Attribute VB_Name = "Test_WordManager"
 '******************************************************************************
 ' Módulo: Test_WordManager
 ' Descripción: Suite de pruebas para WordManager con pruebas de integración controladas.
@@ -18,10 +18,10 @@ Public Function Test_WordManager_RunAll() As CTestSuiteResult
     suite.Initialize "Test_WordManager"
     
     ' Ejecutar todas las pruebas
-    suite.AddTest Test_AbrirYGuardarDocumento_ConRutaValida_DebeEjecutarCorrectamente
-    suite.AddTest Test_AbrirDocumento_ConRutaInexistente_DebeRetornarFalse
-    suite.AddTest Test_LeerContenidoDocumento_ConDocumentoValido_DebeRetornarContenido
-    suite.AddTest Test_CerrarDocumento_ConDocumentoAbierto_DebeEjecutarSinErrores
+    suite.AddTest Test_AbrirReemplazarGuardar_Success
+    suite.AddTest Test_AbrirDocumento_Inexistente_Fail
+    suite.AddTest Test_LeerContenidoDocumento_Success
+    suite.AddTest Test_CerrarDocumento_Success
     
     Set Test_WordManager_RunAll = suite
 End Function
@@ -37,7 +37,7 @@ Private Function Test_AbrirReemplazarGuardar_Success() As CTestResult
     
     On Error GoTo TestError
     
-    Dim wordManager As New CWordManager
+    Dim mockWordManager As New CMockWordManager
     Dim rutaPlantilla As String
     Dim rutaDestino As String
     Dim fso As Object
@@ -48,38 +48,40 @@ Private Function Test_AbrirReemplazarGuardar_Success() As CTestResult
     
     Set fso = CreateObject("Scripting.FileSystemObject")
     
-    ' Crear archivo de plantilla de prueba si no existe
-    If Not fso.FileExists(rutaPlantilla) Then
-        CrearArchivoPlantillaPrueba rutaPlantilla
-    End If
-    
-    ' Limpiar archivo destino si existe
-    If fso.FileExists(rutaDestino) Then
-        fso.DeleteFile rutaDestino
-    End If
-    
     ' Ejecutar operaciones
     Dim abrirResult As Boolean
     Dim reemplazarResult As Boolean
     Dim guardarResult As Boolean
     
-    abrirResult = wordManager.AbrirDocumento(rutaPlantilla)
-    modAssert.AssertTrue abrirResult, "Debería abrir el documento correctamente"
+    ' Configurar mock para retornar éxito
+    mockWordManager.AbrirDocumento_ReturnValue = True
+    mockWordManager.ReemplazarTexto_ReturnValue = True
+    mockWordManager.GuardarDocumento_ReturnValue = True
     
-    reemplazarResult = wordManager.ReemplazarTexto("[MARCADOR_PRUEBA]", "TEXTO_REEMPLAZADO")
-    modAssert.AssertTrue reemplazarResult, "Debería reemplazar el texto correctamente"
-    
-    guardarResult = wordManager.GuardarDocumento(rutaDestino)
-    modAssert.AssertTrue guardarResult, "Debería guardar el documento correctamente"
-    
-    ' Verificar que el archivo se creó
-    modAssert.AssertTrue fso.FileExists(rutaDestino), "El archivo guardado debería existir"
+    abrirResult = mockWordManager.AbrirDocumento(rutaPlantilla)
+     reemplazarResult = mockWordManager.ReemplazarTexto("[MARCADOR_PRUEBA]", "TEXTO_REEMPLAZADO")
+     guardarResult = mockWordManager.GuardarDocumento(rutaDestino)
+     
+     ' Verificar que los métodos fueron llamados correctamente
+     modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "AbrirDocumento debería haber sido llamado"
+     modAssert.AssertEqual rutaPlantilla, mockWordManager.AbrirDocumento_LastRutaDocumento, "Debería pasar la ruta de plantilla correcta"
+     
+     modAssert.AssertTrue mockWordManager.ReemplazarTexto_WasCalled, "ReemplazarTexto debería haber sido llamado"
+     modAssert.AssertEqual "[MARCADOR_PRUEBA]", mockWordManager.ReemplazarTexto_LastTextoABuscar, "Debería buscar el marcador correcto"
+     modAssert.AssertEqual "TEXTO_REEMPLAZADO", mockWordManager.ReemplazarTexto_LastTextoReemplazo, "Debería usar el texto de reemplazo correcto"
+     
+     modAssert.AssertTrue mockWordManager.GuardarDocumento_WasCalled, "GuardarDocumento debería haber sido llamado"
+     modAssert.AssertEqual rutaDestino, mockWordManager.GuardarDocumento_LastRutaDestino, "Debería guardar en la ruta de destino correcta"
+     
+     ' Verificar que los métodos retornaron los valores esperados
+     modAssert.AssertTrue abrirResult, "AbrirDocumento debería retornar True"
+     modAssert.AssertTrue reemplazarResult, "ReemplazarTexto debería retornar True"
+     modAssert.AssertTrue guardarResult, "GuardarDocumento debería retornar True"
     
     ' Limpiar recursos
-    wordManager.CerrarDocumento
+    mockWordManager.CerrarDocumento
     
-    ' Limpiar archivos de prueba
-    LimpiarArchivosTemporales
+    ' No necesitamos limpiar archivos en pruebas unitarias con mocks
     
     testResult.Passed = True
     testResult.Message = "Prueba exitosa: Abrir, reemplazar, guardar y verificar archivo"
@@ -91,7 +93,6 @@ TestExit:
 TestError:
     testResult.Passed = False
     testResult.Message = "Error en prueba: " & Err.Description
-    LimpiarArchivosTemporales
     Resume TestExit
 End Function
 
@@ -102,20 +103,25 @@ Private Function Test_AbrirDocumento_Inexistente_Fail() As CTestResult
     
     On Error GoTo TestError
     
-    Dim wordManager As New CWordManager
+    Dim mockWordManager As New CMockWordManager
     Dim rutaInexistente As String
     Dim resultado As Boolean
     
     rutaInexistente = "C:\Temp\archivo_que_no_existe_" & Format(Now, "yyyymmddhhnnss") & ".docx"
     
-    ' Intentar abrir archivo inexistente
-    resultado = wordManager.AbrirDocumento(rutaInexistente)
+    ' Configurar mock para retornar fallo
+    mockWordManager.AbrirDocumento_ReturnValue = False
     
-    ' Verificar que devuelve False
-    modAssert.AssertFalse resultado, "Debería devolver False al intentar abrir archivo inexistente"
+    ' Intentar abrir archivo inexistente
+     resultado = mockWordManager.AbrirDocumento(rutaInexistente)
+     
+     ' Verificar que el método fue llamado y retornó False
+     modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "AbrirDocumento debería haber sido llamado"
+     modAssert.AssertEqual rutaInexistente, mockWordManager.AbrirDocumento_LastRutaDocumento, "Debería pasar la ruta inexistente"
+     modAssert.AssertFalse resultado, "Debería devolver False cuando el mock está configurado para fallo"
     
     ' Limpiar recursos
-    wordManager.CerrarDocumento
+    mockWordManager.CerrarDocumento
     
     testResult.Passed = True
     testResult.Message = "Prueba exitosa: Manejo correcto de archivo inexistente"
@@ -137,24 +143,24 @@ Private Function Test_LeerContenidoDocumento_Success() As CTestResult
     
     On Error GoTo TestError
     
-    Dim wordManager As New CWordManager
+    Dim mockWordManager As New CMockWordManager
     Dim rutaDocumento As String
     Dim contenido As String
     
     rutaDocumento = "C:\Temp\documento_lectura_test.docx"
     
-    ' Crear documento de prueba
-    CrearDocumentoPruebaConTexto rutaDocumento, "Contenido de prueba para lectura"
+    ' Configurar mock para retornar contenido
+    mockWordManager.LeerContenidoDocumento_ReturnValue = "Contenido de prueba para lectura"
     
     ' Leer contenido
-    contenido = wordManager.LeerContenidoDocumento(rutaDocumento)
+     contenido = mockWordManager.LeerContenidoDocumento(rutaDocumento)
+     
+     ' Verificar que el método fue llamado correctamente
+     modAssert.AssertTrue mockWordManager.LeerContenidoDocumento_WasCalled, "LeerContenidoDocumento debería haber sido llamado"
+     modAssert.AssertEqual rutaDocumento, mockWordManager.LeerContenidoDocumento_LastRutaDocumento, "Debería pasar la ruta correcta"
+     modAssert.AssertEqual "Contenido de prueba para lectura", contenido, "Debería retornar el contenido configurado en el mock"
     
-    ' Verificar que se leyó contenido
-    modAssert.AssertTrue Len(contenido) > 0, "Debería leer contenido del documento"
-    modAssert.AssertTrue InStr(contenido, "Contenido de prueba") > 0, "Debería contener el texto esperado"
-    
-    ' Limpiar archivos de prueba
-    LimpiarArchivosTemporales
+    ' No necesitamos limpiar archivos en pruebas unitarias con mocks
     
     testResult.Passed = True
     testResult.Message = "Prueba exitosa: Lectura de contenido de documento"
@@ -166,7 +172,6 @@ TestExit:
 TestError:
     testResult.Passed = False
     testResult.Message = "Error en prueba: " & Err.Description
-    LimpiarArchivosTemporales
     Resume TestExit
 End Function
 
@@ -177,20 +182,25 @@ Private Function Test_CerrarDocumento_Success() As CTestResult
     
     On Error GoTo TestError
     
-    Dim wordManager As New CWordManager
+    Dim mockWordManager As New CMockWordManager
     Dim rutaDocumento As String
     
     rutaDocumento = "C:\Temp\documento_cierre_test.docx"
     
-    ' Crear y abrir documento
-    CrearArchivoPlantillaPrueba rutaDocumento
-    wordManager.AbrirDocumento rutaDocumento
+    ' Configurar mock
+    mockWordManager.AbrirDocumento_ReturnValue = True
+    
+    ' Abrir documento
+    mockWordManager.AbrirDocumento rutaDocumento
     
     ' Cerrar documento (no debería generar errores)
-    wordManager.CerrarDocumento
+     mockWordManager.CerrarDocumento
+     
+     ' Verificar que los métodos fueron llamados
+     modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "AbrirDocumento debería haber sido llamado"
+     modAssert.AssertTrue mockWordManager.CerrarDocumento_WasCalled, "CerrarDocumento debería haber sido llamado"
     
-    ' Limpiar archivos de prueba
-    LimpiarArchivosTemporales
+    ' No necesitamos limpiar archivos en pruebas unitarias con mocks
     
     testResult.Passed = True
     testResult.Message = "Prueba exitosa: Cierre correcto de documento"

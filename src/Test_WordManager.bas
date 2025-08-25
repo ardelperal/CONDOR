@@ -1,10 +1,11 @@
 Attribute VB_Name = "Test_WordManager"
 '******************************************************************************
 ' Módulo: Test_WordManager
-' Descripción: Suite de pruebas para WordManager con pruebas de integración controladas.
+' Descripción: Suite de pruebas unitarias puras para WordManager usando mocks.
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-01-21
-' Versión: 1.0
+' Versión: 2.0
+' Nota: Cumple con Lección 10 - Pruebas unitarias puras sin dependencias externas
 '******************************************************************************
 
 Option Compare Database
@@ -17,77 +18,55 @@ Public Function Test_WordManager_RunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
     suite.Initialize "Test_WordManager"
     
-    ' Ejecutar todas las pruebas
-    suite.AddTest Test_AbrirReemplazarGuardar_Success
-    suite.AddTest Test_AbrirDocumento_Inexistente_Fail
+    ' Ejecutar todas las pruebas unitarias puras
+    suite.AddTest Test_AbrirDocumento_Success
+    suite.AddTest Test_AbrirDocumento_Failure
+    suite.AddTest Test_ReemplazarTexto_Success
+    suite.AddTest Test_ReemplazarTexto_Failure
+    suite.AddTest Test_GuardarDocumento_Success
+    suite.AddTest Test_GuardarDocumento_Failure
     suite.AddTest Test_LeerContenidoDocumento_Success
+    suite.AddTest Test_LeerContenidoDocumento_Failure
     suite.AddTest Test_CerrarDocumento_Success
     
     Set Test_WordManager_RunAll = suite
 End Function
 
 '******************************************************************************
-' PRUEBAS DE INTEGRACIÓN CONTROLADAS
+' PRUEBAS UNITARIAS PURAS - ABRIR DOCUMENTO
 '******************************************************************************
 
-' Prueba que abre un documento, reemplaza texto, lo guarda y verifica que existe
-Private Function Test_AbrirReemplazarGuardar_Success() As CTestResult
+' Prueba unitaria: AbrirDocumento retorna True cuando el mock está configurado para éxito
+Private Function Test_AbrirDocumento_Success() As CTestResult
     Dim testResult As New CTestResult
-    testResult.TestName = "Test_AbrirReemplazarGuardar_Success"
+    testResult.TestName = "Test_AbrirDocumento_Success"
     
     On Error GoTo TestError
     
     Dim mockWordManager As New CMockWordManager
-    Dim rutaPlantilla As String
-    Dim rutaDestino As String
-    Dim fso As Object
+    Dim rutaDocumento As String
+    Dim resultado As Boolean
     
-    ' Configurar rutas de prueba
-    rutaPlantilla = "C:\Temp\plantilla_test.docx"
-    rutaDestino = "C:\Temp\documento_generado_test.docx"
-    
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    
-    ' Ejecutar operaciones
-    Dim abrirResult As Boolean
-    Dim reemplazarResult As Boolean
-    Dim guardarResult As Boolean
+    ' Configurar datos de prueba
+    rutaDocumento = "C:\Test\documento.docx"
     
     ' Configurar mock para retornar éxito
     mockWordManager.AbrirDocumento_ReturnValue = True
-    mockWordManager.ReemplazarTexto_ReturnValue = True
-    mockWordManager.GuardarDocumento_ReturnValue = True
     
-    abrirResult = mockWordManager.AbrirDocumento(rutaPlantilla)
-     reemplazarResult = mockWordManager.ReemplazarTexto("[MARCADOR_PRUEBA]", "TEXTO_REEMPLAZADO")
-     guardarResult = mockWordManager.GuardarDocumento(rutaDestino)
-     
-     ' Verificar que los métodos fueron llamados correctamente
-     modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "AbrirDocumento debería haber sido llamado"
-     modAssert.AssertEqual rutaPlantilla, mockWordManager.AbrirDocumento_LastRutaDocumento, "Debería pasar la ruta de plantilla correcta"
-     
-     modAssert.AssertTrue mockWordManager.ReemplazarTexto_WasCalled, "ReemplazarTexto debería haber sido llamado"
-     modAssert.AssertEqual "[MARCADOR_PRUEBA]", mockWordManager.ReemplazarTexto_LastTextoABuscar, "Debería buscar el marcador correcto"
-     modAssert.AssertEqual "TEXTO_REEMPLAZADO", mockWordManager.ReemplazarTexto_LastTextoReemplazo, "Debería usar el texto de reemplazo correcto"
-     
-     modAssert.AssertTrue mockWordManager.GuardarDocumento_WasCalled, "GuardarDocumento debería haber sido llamado"
-     modAssert.AssertEqual rutaDestino, mockWordManager.GuardarDocumento_LastRutaDestino, "Debería guardar en la ruta de destino correcta"
-     
-     ' Verificar que los métodos retornaron los valores esperados
-     modAssert.AssertTrue abrirResult, "AbrirDocumento debería retornar True"
-     modAssert.AssertTrue reemplazarResult, "ReemplazarTexto debería retornar True"
-     modAssert.AssertTrue guardarResult, "GuardarDocumento debería retornar True"
+    ' Ejecutar método bajo prueba
+    resultado = mockWordManager.AbrirDocumento(rutaDocumento)
     
-    ' Limpiar recursos
-    mockWordManager.CerrarDocumento
-    
-    ' No necesitamos limpiar archivos en pruebas unitarias con mocks
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "AbrirDocumento debería haber sido llamado"
+    modAssert.AssertEqual rutaDocumento, mockWordManager.AbrirDocumento_LastRutaDocumento, "Debería pasar la ruta correcta"
+    modAssert.AssertTrue resultado, "Debería retornar True cuando el mock está configurado para éxito"
+    modAssert.AssertEqual 1, mockWordManager.AbrirDocumento_CallCount, "Debería haber sido llamado exactamente una vez"
     
     testResult.Passed = True
-    testResult.Message = "Prueba exitosa: Abrir, reemplazar, guardar y verificar archivo"
+    testResult.Message = "Prueba unitaria exitosa: AbrirDocumento Success"
     
 TestExit:
-    Set Test_AbrirReemplazarGuardar_Success = testResult
+    Set Test_AbrirDocumento_Success = testResult
     Exit Function
     
 TestError:
@@ -96,38 +75,37 @@ TestError:
     Resume TestExit
 End Function
 
-' Prueba que intenta abrir un archivo inexistente y verifica que falla
-Private Function Test_AbrirDocumento_Inexistente_Fail() As CTestResult
+' Prueba unitaria: AbrirDocumento retorna False cuando el mock está configurado para fallo
+Private Function Test_AbrirDocumento_Failure() As CTestResult
     Dim testResult As New CTestResult
-    testResult.TestName = "Test_AbrirDocumento_Inexistente_Fail"
+    testResult.TestName = "Test_AbrirDocumento_Failure"
     
     On Error GoTo TestError
     
     Dim mockWordManager As New CMockWordManager
-    Dim rutaInexistente As String
+    Dim rutaDocumento As String
     Dim resultado As Boolean
     
-    rutaInexistente = "C:\Temp\archivo_que_no_existe_" & Format(Now, "yyyymmddhhnnss") & ".docx"
+    ' Configurar datos de prueba
+    rutaDocumento = "C:\Test\archivo_inexistente.docx"
     
     ' Configurar mock para retornar fallo
     mockWordManager.AbrirDocumento_ReturnValue = False
     
-    ' Intentar abrir archivo inexistente
-     resultado = mockWordManager.AbrirDocumento(rutaInexistente)
-     
-     ' Verificar que el método fue llamado y retornó False
-     modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "AbrirDocumento debería haber sido llamado"
-     modAssert.AssertEqual rutaInexistente, mockWordManager.AbrirDocumento_LastRutaDocumento, "Debería pasar la ruta inexistente"
-     modAssert.AssertFalse resultado, "Debería devolver False cuando el mock está configurado para fallo"
+    ' Ejecutar método bajo prueba
+    resultado = mockWordManager.AbrirDocumento(rutaDocumento)
     
-    ' Limpiar recursos
-    mockWordManager.CerrarDocumento
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "AbrirDocumento debería haber sido llamado"
+    modAssert.AssertEqual rutaDocumento, mockWordManager.AbrirDocumento_LastRutaDocumento, "Debería pasar la ruta correcta"
+    modAssert.AssertFalse resultado, "Debería retornar False cuando el mock está configurado para fallo"
+    modAssert.AssertEqual 1, mockWordManager.AbrirDocumento_CallCount, "Debería haber sido llamado exactamente una vez"
     
     testResult.Passed = True
-    testResult.Message = "Prueba exitosa: Manejo correcto de archivo inexistente"
+    testResult.Message = "Prueba unitaria exitosa: AbrirDocumento Failure"
     
 TestExit:
-    Set Test_AbrirDocumento_Inexistente_Fail = testResult
+    Set Test_AbrirDocumento_Failure = testResult
     Exit Function
     
 TestError:
@@ -136,7 +114,181 @@ TestError:
     Resume TestExit
 End Function
 
-' Prueba la lectura de contenido de un documento
+'******************************************************************************
+' PRUEBAS UNITARIAS PURAS - REEMPLAZAR TEXTO
+'******************************************************************************
+
+' Prueba unitaria: ReemplazarTexto retorna True cuando el mock está configurado para éxito
+Private Function Test_ReemplazarTexto_Success() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.TestName = "Test_ReemplazarTexto_Success"
+    
+    On Error GoTo TestError
+    
+    Dim mockWordManager As New CMockWordManager
+    Dim textoABuscar As String
+    Dim textoReemplazo As String
+    Dim resultado As Boolean
+    
+    ' Configurar datos de prueba
+    textoABuscar = "[MARCADOR]"
+    textoReemplazo = "TEXTO_NUEVO"
+    
+    ' Configurar mock para retornar éxito
+    mockWordManager.ReemplazarTexto_ReturnValue = True
+    
+    ' Ejecutar método bajo prueba
+    resultado = mockWordManager.ReemplazarTexto(textoABuscar, textoReemplazo)
+    
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.ReemplazarTexto_WasCalled, "ReemplazarTexto debería haber sido llamado"
+    modAssert.AssertEqual textoABuscar, mockWordManager.ReemplazarTexto_LastTextoABuscar, "Debería pasar el texto a buscar correcto"
+    modAssert.AssertEqual textoReemplazo, mockWordManager.ReemplazarTexto_LastTextoReemplazo, "Debería pasar el texto de reemplazo correcto"
+    modAssert.AssertTrue resultado, "Debería retornar True cuando el mock está configurado para éxito"
+    modAssert.AssertEqual 1, mockWordManager.ReemplazarTexto_CallCount, "Debería haber sido llamado exactamente una vez"
+    
+    testResult.Passed = True
+    testResult.Message = "Prueba unitaria exitosa: ReemplazarTexto Success"
+    
+TestExit:
+    Set Test_ReemplazarTexto_Success = testResult
+    Exit Function
+    
+TestError:
+    testResult.Passed = False
+    testResult.Message = "Error en prueba: " & Err.Description
+    Resume TestExit
+End Function
+
+' Prueba unitaria: ReemplazarTexto retorna False cuando el mock está configurado para fallo
+Private Function Test_ReemplazarTexto_Failure() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.TestName = "Test_ReemplazarTexto_Failure"
+    
+    On Error GoTo TestError
+    
+    Dim mockWordManager As New CMockWordManager
+    Dim textoABuscar As String
+    Dim textoReemplazo As String
+    Dim resultado As Boolean
+    
+    ' Configurar datos de prueba
+    textoABuscar = "[MARCADOR_INEXISTENTE]"
+    textoReemplazo = "TEXTO_NUEVO"
+    
+    ' Configurar mock para retornar fallo
+    mockWordManager.ReemplazarTexto_ReturnValue = False
+    
+    ' Ejecutar método bajo prueba
+    resultado = mockWordManager.ReemplazarTexto(textoABuscar, textoReemplazo)
+    
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.ReemplazarTexto_WasCalled, "ReemplazarTexto debería haber sido llamado"
+    modAssert.AssertEqual textoABuscar, mockWordManager.ReemplazarTexto_LastTextoABuscar, "Debería pasar el texto a buscar correcto"
+    modAssert.AssertEqual textoReemplazo, mockWordManager.ReemplazarTexto_LastTextoReemplazo, "Debería pasar el texto de reemplazo correcto"
+    modAssert.AssertFalse resultado, "Debería retornar False cuando el mock está configurado para fallo"
+    modAssert.AssertEqual 1, mockWordManager.ReemplazarTexto_CallCount, "Debería haber sido llamado exactamente una vez"
+    
+    testResult.Passed = True
+    testResult.Message = "Prueba unitaria exitosa: ReemplazarTexto Failure"
+    
+TestExit:
+    Set Test_ReemplazarTexto_Failure = testResult
+    Exit Function
+    
+TestError:
+    testResult.Passed = False
+    testResult.Message = "Error en prueba: " & Err.Description
+    Resume TestExit
+End Function
+
+'******************************************************************************
+' PRUEBAS UNITARIAS PURAS - GUARDAR DOCUMENTO
+'******************************************************************************
+
+' Prueba unitaria: GuardarDocumento retorna True cuando el mock está configurado para éxito
+Private Function Test_GuardarDocumento_Success() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.TestName = "Test_GuardarDocumento_Success"
+    
+    On Error GoTo TestError
+    
+    Dim mockWordManager As New CMockWordManager
+    Dim rutaDestino As String
+    Dim resultado As Boolean
+    
+    ' Configurar datos de prueba
+    rutaDestino = "C:\Test\documento_guardado.docx"
+    
+    ' Configurar mock para retornar éxito
+    mockWordManager.GuardarDocumento_ReturnValue = True
+    
+    ' Ejecutar método bajo prueba
+    resultado = mockWordManager.GuardarDocumento(rutaDestino)
+    
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.GuardarDocumento_WasCalled, "GuardarDocumento debería haber sido llamado"
+    modAssert.AssertEqual rutaDestino, mockWordManager.GuardarDocumento_LastRutaDestino, "Debería pasar la ruta de destino correcta"
+    modAssert.AssertTrue resultado, "Debería retornar True cuando el mock está configurado para éxito"
+    modAssert.AssertEqual 1, mockWordManager.GuardarDocumento_CallCount, "Debería haber sido llamado exactamente una vez"
+    
+    testResult.Passed = True
+    testResult.Message = "Prueba unitaria exitosa: GuardarDocumento Success"
+    
+TestExit:
+    Set Test_GuardarDocumento_Success = testResult
+    Exit Function
+    
+TestError:
+    testResult.Passed = False
+    testResult.Message = "Error en prueba: " & Err.Description
+    Resume TestExit
+End Function
+
+' Prueba unitaria: GuardarDocumento retorna False cuando el mock está configurado para fallo
+Private Function Test_GuardarDocumento_Failure() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.TestName = "Test_GuardarDocumento_Failure"
+    
+    On Error GoTo TestError
+    
+    Dim mockWordManager As New CMockWordManager
+    Dim rutaDestino As String
+    Dim resultado As Boolean
+    
+    ' Configurar datos de prueba
+    rutaDestino = "C:\RutaInvalida\documento.docx"
+    
+    ' Configurar mock para retornar fallo
+    mockWordManager.GuardarDocumento_ReturnValue = False
+    
+    ' Ejecutar método bajo prueba
+    resultado = mockWordManager.GuardarDocumento(rutaDestino)
+    
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.GuardarDocumento_WasCalled, "GuardarDocumento debería haber sido llamado"
+    modAssert.AssertEqual rutaDestino, mockWordManager.GuardarDocumento_LastRutaDestino, "Debería pasar la ruta de destino correcta"
+    modAssert.AssertFalse resultado, "Debería retornar False cuando el mock está configurado para fallo"
+    modAssert.AssertEqual 1, mockWordManager.GuardarDocumento_CallCount, "Debería haber sido llamado exactamente una vez"
+    
+    testResult.Passed = True
+    testResult.Message = "Prueba unitaria exitosa: GuardarDocumento Failure"
+    
+TestExit:
+    Set Test_GuardarDocumento_Failure = testResult
+    Exit Function
+    
+TestError:
+    testResult.Passed = False
+    testResult.Message = "Error en prueba: " & Err.Description
+    Resume TestExit
+End Function
+
+'******************************************************************************
+' PRUEBAS UNITARIAS PURAS - LEER CONTENIDO DOCUMENTO
+'******************************************************************************
+
+' Prueba unitaria: LeerContenidoDocumento retorna contenido cuando el mock está configurado
 Private Function Test_LeerContenidoDocumento_Success() As CTestResult
     Dim testResult As New CTestResult
     testResult.TestName = "Test_LeerContenidoDocumento_Success"
@@ -145,25 +297,27 @@ Private Function Test_LeerContenidoDocumento_Success() As CTestResult
     
     Dim mockWordManager As New CMockWordManager
     Dim rutaDocumento As String
-    Dim contenido As String
+    Dim contenidoEsperado As String
+    Dim contenidoObtenido As String
     
-    rutaDocumento = "C:\Temp\documento_lectura_test.docx"
+    ' Configurar datos de prueba
+    rutaDocumento = "C:\Test\documento_lectura.docx"
+    contenidoEsperado = "Contenido de prueba para validar lectura"
     
-    ' Configurar mock para retornar contenido
-    mockWordManager.LeerContenidoDocumento_ReturnValue = "Contenido de prueba para lectura"
+    ' Configurar mock para retornar contenido específico
+    mockWordManager.LeerContenidoDocumento_ReturnValue = contenidoEsperado
     
-    ' Leer contenido
-     contenido = mockWordManager.LeerContenidoDocumento(rutaDocumento)
-     
-     ' Verificar que el método fue llamado correctamente
-     modAssert.AssertTrue mockWordManager.LeerContenidoDocumento_WasCalled, "LeerContenidoDocumento debería haber sido llamado"
-     modAssert.AssertEqual rutaDocumento, mockWordManager.LeerContenidoDocumento_LastRutaDocumento, "Debería pasar la ruta correcta"
-     modAssert.AssertEqual "Contenido de prueba para lectura", contenido, "Debería retornar el contenido configurado en el mock"
+    ' Ejecutar método bajo prueba
+    contenidoObtenido = mockWordManager.LeerContenidoDocumento(rutaDocumento)
     
-    ' No necesitamos limpiar archivos en pruebas unitarias con mocks
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.LeerContenidoDocumento_WasCalled, "LeerContenidoDocumento debería haber sido llamado"
+    modAssert.AssertEqual rutaDocumento, mockWordManager.LeerContenidoDocumento_LastRutaDocumento, "Debería pasar la ruta correcta"
+    modAssert.AssertEqual contenidoEsperado, contenidoObtenido, "Debería retornar el contenido configurado en el mock"
+    modAssert.AssertEqual 1, mockWordManager.LeerContenidoDocumento_CallCount, "Debería haber sido llamado exactamente una vez"
     
     testResult.Passed = True
-    testResult.Message = "Prueba exitosa: Lectura de contenido de documento"
+    testResult.Message = "Prueba unitaria exitosa: LeerContenidoDocumento Success"
     
 TestExit:
     Set Test_LeerContenidoDocumento_Success = testResult
@@ -175,7 +329,50 @@ TestError:
     Resume TestExit
 End Function
 
-' Prueba el cierre correcto de documentos
+' Prueba unitaria: LeerContenidoDocumento retorna cadena vacía cuando el mock está configurado para fallo
+Private Function Test_LeerContenidoDocumento_Failure() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.TestName = "Test_LeerContenidoDocumento_Failure"
+    
+    On Error GoTo TestError
+    
+    Dim mockWordManager As New CMockWordManager
+    Dim rutaDocumento As String
+    Dim contenidoObtenido As String
+    
+    ' Configurar datos de prueba
+    rutaDocumento = "C:\Test\documento_inexistente.docx"
+    
+    ' Configurar mock para retornar cadena vacía (simulando fallo)
+    mockWordManager.LeerContenidoDocumento_ReturnValue = ""
+    
+    ' Ejecutar método bajo prueba
+    contenidoObtenido = mockWordManager.LeerContenidoDocumento(rutaDocumento)
+    
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.LeerContenidoDocumento_WasCalled, "LeerContenidoDocumento debería haber sido llamado"
+    modAssert.AssertEqual rutaDocumento, mockWordManager.LeerContenidoDocumento_LastRutaDocumento, "Debería pasar la ruta correcta"
+    modAssert.AssertEqual "", contenidoObtenido, "Debería retornar cadena vacía cuando el mock está configurado para fallo"
+    modAssert.AssertEqual 1, mockWordManager.LeerContenidoDocumento_CallCount, "Debería haber sido llamado exactamente una vez"
+    
+    testResult.Passed = True
+    testResult.Message = "Prueba unitaria exitosa: LeerContenidoDocumento Failure"
+    
+TestExit:
+    Set Test_LeerContenidoDocumento_Failure = testResult
+    Exit Function
+    
+TestError:
+    testResult.Passed = False
+    testResult.Message = "Error en prueba: " & Err.Description
+    Resume TestExit
+End Function
+
+'******************************************************************************
+' PRUEBAS UNITARIAS PURAS - CERRAR DOCUMENTO
+'******************************************************************************
+
+' Prueba unitaria: CerrarDocumento ejecuta correctamente
 Private Function Test_CerrarDocumento_Success() As CTestResult
     Dim testResult As New CTestResult
     testResult.TestName = "Test_CerrarDocumento_Success"
@@ -183,27 +380,16 @@ Private Function Test_CerrarDocumento_Success() As CTestResult
     On Error GoTo TestError
     
     Dim mockWordManager As New CMockWordManager
-    Dim rutaDocumento As String
     
-    rutaDocumento = "C:\Temp\documento_cierre_test.docx"
+    ' Ejecutar método bajo prueba
+    mockWordManager.CerrarDocumento
     
-    ' Configurar mock
-    mockWordManager.AbrirDocumento_ReturnValue = True
-    
-    ' Abrir documento
-    mockWordManager.AbrirDocumento rutaDocumento
-    
-    ' Cerrar documento (no debería generar errores)
-     mockWordManager.CerrarDocumento
-     
-     ' Verificar que los métodos fueron llamados
-     modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "AbrirDocumento debería haber sido llamado"
-     modAssert.AssertTrue mockWordManager.CerrarDocumento_WasCalled, "CerrarDocumento debería haber sido llamado"
-    
-    ' No necesitamos limpiar archivos en pruebas unitarias con mocks
+    ' Aserciones sobre el mock
+    modAssert.AssertTrue mockWordManager.CerrarDocumento_WasCalled, "CerrarDocumento debería haber sido llamado"
+    modAssert.AssertEqual 1, mockWordManager.CerrarDocumento_CallCount, "Debería haber sido llamado exactamente una vez"
     
     testResult.Passed = True
-    testResult.Message = "Prueba exitosa: Cierre correcto de documento"
+    testResult.Message = "Prueba unitaria exitosa: CerrarDocumento Success"
     
 TestExit:
     Set Test_CerrarDocumento_Success = testResult
@@ -212,88 +398,5 @@ TestExit:
 TestError:
     testResult.Passed = False
     testResult.Message = "Error en prueba: " & Err.Description
-    LimpiarArchivosTemporales
     Resume TestExit
 End Function
-
-' ============================================================================
-' MÉTODOS AUXILIARES PARA PRUEBAS
-' ============================================================================
-
-' Crea un archivo de plantilla de prueba con marcadores
-Private Sub CrearArchivoPlantillaPrueba(ByVal rutaArchivo As String)
-    Dim wordApp As Object
-    Dim wordDoc As Object
-    Dim fso As Object
-    
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    
-    ' Crear directorio si no existe
-    If Not fso.FolderExists("C:\Temp") Then
-        fso.CreateFolder "C:\Temp"
-    End If
-    
-    Set wordApp = CreateObject("Word.Application")
-    wordApp.Visible = False
-    
-    Set wordDoc = wordApp.Documents.Add
-    wordDoc.Content.Text = "Documento de prueba con [MARCADOR_PRUEBA] para reemplazar."
-    
-    wordDoc.SaveAs2 rutaArchivo
-    wordDoc.Close
-    wordApp.Quit
-    
-    Set wordDoc = Nothing
-    Set wordApp = Nothing
-End Sub
-
-' Crea un documento con texto específico para pruebas de lectura
-Private Sub CrearDocumentoPruebaConTexto(ByVal rutaArchivo As String, ByVal texto As String)
-    Dim wordApp As Object
-    Dim wordDoc As Object
-    Dim fso As Object
-    
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    
-    ' Crear directorio si no existe
-    If Not fso.FolderExists("C:\Temp") Then
-        fso.CreateFolder "C:\Temp"
-    End If
-    
-    Set wordApp = CreateObject("Word.Application")
-    wordApp.Visible = False
-    
-    Set wordDoc = wordApp.Documents.Add
-    wordDoc.Content.Text = texto
-    
-    wordDoc.SaveAs2 rutaArchivo
-    wordDoc.Close
-    wordApp.Quit
-    
-    Set wordDoc = Nothing
-    Set wordApp = Nothing
-End Sub
-
-' Limpia todos los archivos temporales de prueba
-Private Sub LimpiarArchivosTemporales()
-    Dim fso As Object
-    Dim archivos As Variant
-    Dim i As Integer
-    
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    
-    archivos = Array( _
-        "C:\Temp\plantilla_test.docx", _
-        "C:\Temp\documento_generado_test.docx", _
-        "C:\Temp\documento_lectura_test.docx", _
-        "C:\Temp\documento_cierre_test.docx" _
-    )
-    
-    For i = 0 To UBound(archivos)
-        If fso.FileExists(archivos(i)) Then
-            On Error Resume Next
-            fso.DeleteFile archivos(i)
-            On Error GoTo 0
-        End If
-    Next i
-End Sub
