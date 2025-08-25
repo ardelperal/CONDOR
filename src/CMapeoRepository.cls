@@ -60,3 +60,14 @@ ErrorHandler:
     errorHandler.LogError Err.Number, Err.Description, "CMapeoRepository.GetMapeoPorTipo"
     Set IMapeoRepository_GetMapeoPorTipo = Nothing
 End Function
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA
+' ============================================================================
+' Estos métodos exponen públicamente la funcionalidad de la interfaz
+' para facilitar las pruebas y el uso directo de la clase concreta
+
+' Método público de conveniencia para GetMapeoPorTipo
+Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
+    Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
+End Function

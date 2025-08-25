@@ -41,6 +41,9 @@ Private Function IntegrationTest_ObtenerExpedientePorId_Success() As CTestResult
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
+    
     Dim mockLogger As New CMockOperationLogger
     
     ' Crear repositorio con dependencias mock
@@ -79,6 +82,9 @@ Private Function IntegrationTest_ObtenerExpedientePorId_NotFound() As CTestResul
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
+    
     Dim mockLogger As New CMockOperationLogger
     
     ' Crear repositorio con dependencias mock
@@ -123,6 +129,9 @@ Private Function IntegrationTest_ObtenerExpedientePorNemotecnico_Success() As CT
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
+    
     Dim mockLogger As New CMockOperationLogger
     
     ' Crear repositorio con dependencias mock
@@ -161,6 +170,9 @@ Private Function IntegrationTest_ObtenerExpedientePorNemotecnico_NotFound() As C
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
+    
     Dim mockLogger As New CMockOperationLogger
     
     ' Crear repositorio con dependencias mock
@@ -205,6 +217,9 @@ Private Function IntegrationTest_ObtenerExpedientesActivosParaSelector_Success()
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
+    
     Dim mockLogger As New CMockOperationLogger
     
     ' Crear repositorio con dependencias mock

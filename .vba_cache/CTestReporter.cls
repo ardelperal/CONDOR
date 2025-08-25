@@ -9,8 +9,12 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 ' Clase: CTestReporter
-' Proposito: Agrega resultados de multiples suites y genera un informe consolidado.
+' Propósito: Agrega resultados de múltiples suites y genera un informe consolidado.
+' Implementa: ITestReporter
+
+Implements ITestReporter
 
 Private m_suiteResults As Collection
 
@@ -69,10 +73,26 @@ Public Function GenerateReport() As String
 
     If TotalFailed = 0 Then
         report = report & "RESULTADO: ✅ TODAS LAS PRUEBAS PASARON" & vbCrLf
+        report = report & "RESULT: SUCCESS" & vbCrLf
     Else
         report = report & "RESULTADO: ❌ HAY PRUEBAS FALLIDAS" & vbCrLf
+        report = report & "RESULT: FAILED" & vbCrLf
     End If
 
     report = report & String(80, "=") & vbCrLf
     GenerateReport = report
+End Function
+
+'******************************************************************************
+' IMPLEMENTACIÓN DE LA INTERFAZ ITestReporter
+'******************************************************************************
+
+' Implementación de ITestReporter.Initialize
+Private Sub ITestReporter_Initialize(ByVal results As Collection)
+    Initialize results
+End Sub
+
+' Implementación de ITestReporter.GenerateReport
+Private Function ITestReporter_GenerateReport() As String
+    ITestReporter_GenerateReport = GenerateReport()
 End Function

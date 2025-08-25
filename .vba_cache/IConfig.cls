@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -21,6 +21,9 @@ Public Function GetDataPath() As String
 End Function
 
 Public Function GetDatabasePassword() As String
+End Function
+
+Public Function GetAttachmentsPath() As String
 End Function
 
 

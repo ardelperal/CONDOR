@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_CSolicitudRepository"
+Attribute VB_Name = "Test_CSolicitudRepository"
 Option Compare Database
 Option Explicit
 
@@ -43,13 +43,14 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
     
     ' Arrange
     Dim repository As New CSolicitudRepository
-    Dim config As New CConfig
-    Dim logger As New COperationLogger
+    Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "desarrollo2024"
+    
+    Dim mockLogger As New CMockOperationLogger
     
     ' Inicializar dependencias
-    config.Initialize
-    logger.Initialize config
-    repository.Initialize config, logger
+    repository.Initialize mockConfig, mockLogger
     
     ' Crear solicitud de prueba
     Dim solicitudOriginal As New T_Solicitud
@@ -57,7 +58,7 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
         .idSolicitud = 0 ' Nueva solicitud
         .idExpediente = "TEST-EXP-" & Format(Now(), "yyyymmddhhnnss")
         .tipoSolicitud = "PC"
-        .estadoInterno = "Borrador"
+        .idEstadoInterno = 1 ' ID del estado Borrador
         .fechaCreacion = Now()
         .usuarioCreacion = "TEST_USER"
         .observaciones = "Solicitud de prueba de integraciÃ³n"
@@ -99,8 +100,8 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
         GoTo Cleanup
     End If
     
-    If solicitudRecuperada.estadoInterno <> solicitudOriginal.estadoInterno Then
-        testResult.Fail "El estado interno debe coincidir: esperado '" & solicitudOriginal.estadoInterno & "', obtenido '" & solicitudRecuperada.estadoInterno & "'"
+    If solicitudRecuperada.idEstadoInterno <> solicitudOriginal.idEstadoInterno Then
+        testResult.Fail "El estado interno debe coincidir: esperado '" & solicitudOriginal.idEstadoInterno & "', obtenido '" & solicitudRecuperada.idEstadoInterno & "'"
         GoTo Cleanup
     End If
     
@@ -114,7 +115,7 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
 Cleanup:
     ' Limpiar datos de prueba
     If idGenerado > 0 Then
-        Call LimpiarSolicitudDePrueba(idGenerado, config)
+        Call LimpiarSolicitudDePrueba(idGenerado, mockConfig)
     End If
     
     Set Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto = testResult
@@ -133,12 +134,13 @@ Private Function Test_GetSolicitudById_ConIdInexistente_DebeRetornarNothing() As
     
     ' Arrange
     Dim repository As New CSolicitudRepository
-    Dim config As New CConfig
-    Dim logger As New COperationLogger
+    Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "desarrollo2024"
     
-    config.Initialize
-    logger.Initialize config
-    repository.Initialize config, logger
+    Dim mockLogger As New CMockOperationLogger
+    
+    repository.Initialize mockConfig, mockLogger
     
     ' Act - Buscar solicitud con ID que no existe
     Dim idInexistente As Long
@@ -172,19 +174,20 @@ Private Function Test_SaveSolicitud_ConSolicitudNueva_DebeAsignarId() As CTestRe
     
     ' Arrange
     Dim repository As New CSolicitudRepository
-    Dim config As New CConfig
-    Dim logger As New COperationLogger
+    Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "desarrollo2024"
     
-    config.Initialize
-    logger.Initialize config
-    repository.Initialize config, logger
+    Dim mockLogger As New CMockOperationLogger
+    
+    repository.Initialize mockConfig, mockLogger
     
     Dim solicitud As New T_Solicitud
     With solicitud
         .idSolicitud = 0 ' Nueva solicitud
         .idExpediente = "TEST-NEW-" & Format(Now(), "yyyymmddhhnnss")
         .tipoSolicitud = "PC"
-        .estadoInterno = "Borrador"
+        .idEstadoInterno = 1 ' ID del estado Borrador
         .fechaCreacion = Now()
         .usuarioCreacion = "TEST_USER"
     End With
@@ -204,7 +207,7 @@ Private Function Test_SaveSolicitud_ConSolicitudNueva_DebeAsignarId() As CTestRe
 Cleanup:
     ' Limpiar datos de prueba
     If idGenerado > 0 Then
-        Call LimpiarSolicitudDePrueba(idGenerado, config)
+        Call LimpiarSolicitudDePrueba(idGenerado, mockConfig)
     End If
     
     Set Test_SaveSolicitud_ConSolicitudNueva_DebeAsignarId = testResult
@@ -223,12 +226,13 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
     
     ' Arrange
     Dim repository As New CSolicitudRepository
-    Dim config As New CConfig
-    Dim logger As New COperationLogger
+    Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "desarrollo2024"
     
-    config.Initialize
-    logger.Initialize config
-    repository.Initialize config, logger
+    Dim mockLogger As New CMockOperationLogger
+    
+    repository.Initialize mockConfig, mockLogger
     
     ' Crear y guardar solicitud inicial
     Dim solicitudInicial As New T_Solicitud
@@ -236,7 +240,7 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         .idSolicitud = 0
         .idExpediente = "TEST-UPD-" & Format(Now(), "yyyymmddhhnnss")
         .tipoSolicitud = "PC"
-        .estadoInterno = "Borrador"
+        .idEstadoInterno = 1 ' ID del estado Borrador
         .fechaCreacion = Now()
         .usuarioCreacion = "TEST_USER"
         .observaciones = "ObservaciÃ³n inicial"
@@ -256,7 +260,7 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         .idSolicitud = idGenerado
         .idExpediente = solicitudInicial.idExpediente
         .tipoSolicitud = "PC"
-        .estadoInterno = "En Proceso" ' Cambiar estado
+        .idEstadoInterno = 2 ' ID del estado En Proceso
         .fechaCreacion = solicitudInicial.fechaCreacion
         .usuarioCreacion = solicitudInicial.usuarioCreacion
         .fechaModificacion = Now()
@@ -283,8 +287,8 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         GoTo Cleanup
     End If
     
-    If solicitudRecuperada.estadoInterno <> "En Proceso" Then
-        testResult.Fail "El estado interno debe haberse actualizado a 'En Proceso', pero es '" & solicitudRecuperada.estadoInterno & "'"
+    If solicitudRecuperada.idEstadoInterno <> 2 Then
+        testResult.Fail "El estado interno debe haberse actualizado a ID 2 (En Proceso), pero es '" & solicitudRecuperada.idEstadoInterno & "'"
         GoTo Cleanup
     End If
     
@@ -303,7 +307,7 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
 Cleanup:
     ' Limpiar datos de prueba
     If idGenerado > 0 Then
-        Call LimpiarSolicitudDePrueba(idGenerado, config)
+        Call LimpiarSolicitudDePrueba(idGenerado, mockConfig)
     End If
     
     Set Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar = testResult
@@ -371,7 +375,7 @@ End Function
 ' MÃ‰TODOS AUXILIARES PARA LIMPIEZA
 ' ============================================================================
 
-Private Sub LimpiarSolicitudDePrueba(ByVal idSolicitud As Long, ByRef config As CConfig)
+Private Sub LimpiarSolicitudDePrueba(ByVal idSolicitud As Long, ByRef mockConfig As CMockConfig)
     On Error Resume Next
     
     ' Conectar al backend para eliminar la solicitud de prueba
@@ -379,8 +383,8 @@ Private Sub LimpiarSolicitudDePrueba(ByVal idSolicitud As Long, ByRef config As 
     Dim rutaBackend As String
     Dim passwordBackend As String
     
-    rutaBackend = config.GetBackendPath()
-    passwordBackend = config.GetBackendPassword()
+    rutaBackend = mockConfig.GetDataPath()
+    passwordBackend = mockConfig.GetDatabasePassword()
     
     Set db = DBEngine.OpenDatabase(rutaBackend, False, False, ";PWD=" & passwordBackend)
     

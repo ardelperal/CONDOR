@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_Solicitud"
+Attribute VB_Name = "Test_Solicitud"
 Option Compare Database
 Option Explicit
 
@@ -79,8 +79,8 @@ Private Function Test_CreateSolicitud_ConParametrosValidos_DebeCrearSolicitudCon
         GoTo Cleanup
     End If
     
-    If resultado.estadoInterno <> "Borrador" Then
-        testResult.Fail "El estado interno debe ser 'Borrador', pero fue '" & resultado.estadoInterno & "'"
+    If resultado.idEstadoInterno <> 1 Then
+        testResult.Fail "El estado interno debe ser ID 1 (Borrador), pero fue '" & resultado.idEstadoInterno & "'"
         GoTo Cleanup
     End If
     
@@ -251,7 +251,7 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
         .idSolicitud = 456
         .idExpediente = "EXP-2024-002"
         .tipoSolicitud = "PC"
-        .estadoInterno = "Borrador"
+        .idEstadoInterno = 1 ' ID del estado Borrador
         .fechaCreacion = DateAdd("d", -1, Now()) ' Ayer
         .fechaModificacion = Null ' Sin modificación previa
     End With

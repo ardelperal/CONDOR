@@ -1,14 +1,14 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' Clase de tipo de datos para tbSolicitudes
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 
 Private m_idSolicitud As Long
-Private m_idExpediente As String
+Private m_idExpediente As Long
 Private m_tipoSolicitud As String
 Private m_subTipoSolicitud As String
 Private m_codigoSolicitud As String
-Private m_estadoInterno As String
+Private m_idEstadoInterno As Long
 Private m_fechaCreacion As Date
 Private m_usuarioCreacion As String
 Private m_fechaPaseTecnico As Date
@@ -61,12 +61,12 @@ Public Property Let codigoSolicitud(ByVal value As String)
     m_codigoSolicitud = value
 End Property
 
-Public Property Get estadoInterno() As String
-    estadoInterno = m_estadoInterno
+Public Property Get idEstadoInterno() As Long
+    idEstadoInterno = m_idEstadoInterno
 End Property
 
-Public Property Let estadoInterno(ByVal value As String)
-    m_estadoInterno = value
+Public Property Let idEstadoInterno(ByVal value As Long)
+    m_idEstadoInterno = value
 End Property
 
 Public Property Get fechaCreacion() As Date

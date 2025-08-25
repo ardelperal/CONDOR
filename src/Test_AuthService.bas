@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_AuthService"
+Attribute VB_Name = "Test_AuthService"
 Option Compare Database
 Option Explicit
 
@@ -37,22 +37,21 @@ Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador(
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks y datos de prueba
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    ' Nota: La nueva implementaciÃ³n de IConfig no permite SetValue
-    ' Las pruebas deben usar la configuraciÃ³n real del sistema
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockAuthRepository As New CMockAuthRepository
     
     ' Crear recordset mock para usuario administrador
     Dim mockRecordset As Object
     Set mockRecordset = CreateMockUserRecordset("SÃ­", "No", "No")
-    mockRepository.SetMockRecordset mockRecordset
+    mockAuthRepository.SetMockUserData mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    authService.Initialize configService, mockLogger, mockRepository
+    authService.Initialize mockConfig, mockLogger, mockAuthRepository
     
     ' Act - Ejecutar el mÃ©todo bajo prueba
     Dim userRole As E_UserRole
@@ -84,22 +83,21 @@ Private Function Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad() As CTestRe
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks y datos de prueba
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    ' Nota: La nueva implementaciÃ³n de IConfig no permite SetValue
-    ' Las pruebas deben usar la configuraciÃ³n real del sistema
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockAuthRepository As New CMockAuthRepository
     
     ' Crear recordset mock para usuario de calidad
     Dim mockRecordset As Object
     Set mockRecordset = CreateMockUserRecordset("No", "SÃ­", "No")
-    mockRepository.SetMockRecordset mockRecordset
+    mockAuthRepository.SetMockUserData mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    authService.Initialize configService, mockLogger, mockRepository
+    authService.Initialize mockConfig, mockLogger, mockAuthRepository
     
     ' Act - Ejecutar el mÃ©todo bajo prueba
     Dim userRole As E_UserRole
@@ -131,22 +129,21 @@ Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestRe
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks y datos de prueba
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    ' Nota: La nueva implementaciÃ³n de IConfig no permite SetValue
-    ' Las pruebas deben usar la configuraciÃ³n real del sistema
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockAuthRepository As New CMockAuthRepository
     
     ' Crear recordset mock para usuario tÃ©cnico
     Dim mockRecordset As Object
     Set mockRecordset = CreateMockUserRecordset("No", "No", "SÃ­")
-    mockRepository.SetMockRecordset mockRecordset
+    mockAuthRepository.SetMockUserData mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    authService.Initialize configService, mockLogger, mockRepository
+    authService.Initialize mockConfig, mockLogger, mockAuthRepository
     
     ' Act - Ejecutar el mÃ©todo bajo prueba
     Dim userRole As E_UserRole
@@ -178,22 +175,21 @@ Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks y datos de prueba
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockRepository As New CMockSolicitudRepository
+    Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    ' Nota: La nueva implementaciÃ³n de IConfig no permite SetValue
-    ' Las pruebas deben usar la configuraciÃ³n real del sistema
+    Dim mockLogger As New CMockOperationLogger
+    Dim mockAuthRepository As New CMockAuthRepository
     
     ' Crear recordset mock vacÃ­o (usuario no encontrado)
     Dim mockRecordset As Object
     Set mockRecordset = CreateEmptyUserRecordset()
-    mockRepository.SetMockRecordset mockRecordset
+    mockAuthRepository.SetMockUserData mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    authService.Initialize mockConfig, mockLogger, mockRepository
+    authService.Initialize mockConfig, mockLogger, mockAuthRepository
     
     ' Act - Ejecutar el mÃ©todo bajo prueba
     Dim userRole As E_UserRole

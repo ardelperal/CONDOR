@@ -125,7 +125,7 @@ End If
 objAccess.Visible = False
 objAccess.UserControl = False
 ' Suprimir alertas y diálogos de confirmación
-objAccess.DoCmd.SetWarnings False
+' ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación  ' Comentado temporalmente por error de compilación
 objAccess.Application.Echo False
 ' Configuraciones adicionales para suprimir diálogos
 On Error Resume Next
@@ -941,81 +941,49 @@ End Sub
 ' Subrutina para ejecutar la suite de pruebas unitarias
 Sub ExecuteTests()
     WScript.Echo "=== INICIANDO EJECUCION DE PRUEBAS ==="
-    Dim strLogPath, objLogFile, strLine, testsFailed
-    strLogPath = "C:\Proyectos\CONDOR\logs\test_results.log"
-
-    ' 1. Limpiar log anterior
-    If objFSO.FileExists(strLogPath) Then objFSO.DeleteFile(strLogPath)
-
-    ' 2. Ejecutar las pruebas en Access
+    Dim reportString
+    
+    ' Ejecutar las pruebas en Access y capturar el resultado
     WScript.Echo "Ejecutando suite de pruebas en Access..."
     On Error Resume Next
     
-    ' Verificar que la función ExecuteAllTests existe
-    Dim testFunctionExists
-    testFunctionExists = False
+    ' Suprimir diálogos inesperados de Access durante las pruebas
+    objAccess.Application.DisplayAlerts = False
     
-    ' Intentar verificar si la función existe en los módulos
-    Dim vbComp, vbModule
-    For Each vbComp In objAccess.VBE.ActiveVBProject.VBComponents
-        If vbComp.Type = 1 Then ' vbext_ct_StdModule
-            Set vbModule = vbComp.CodeModule
-            If InStr(vbModule.Lines(1, vbModule.CountOfLines), "ExecuteAllTests") > 0 Then
-                testFunctionExists = True
-                WScript.Echo "✓ Función ExecuteAllTests encontrada en módulo: " & vbComp.Name
-                Exit For
-            End If
-        End If
-    Next
+    ' Llamar directamente a ExecuteAllTests y capturar el valor de retorno
+    reportString = objAccess.Application.Run("ExecuteAllTests")
     
-    If Not testFunctionExists Then
-        WScript.Echo "ERROR: No se encontró la función ExecuteAllTests en ningún módulo VBA"
-        WScript.Echo "SUGERENCIA: Verifica que el módulo modTestRunner.bas esté correctamente importado"
-        objAccess.Quit
-        WScript.Quit 1
-    End If
-    
-    ' Ejecutar función wrapper sin parámetros
-    objAccess.Application.Run "RunTests"
-
     If Err.Number <> 0 Then
         WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas."
         WScript.Echo "  Código de Error: " & Err.Number
         WScript.Echo "  Descripción: " & Err.Description
         WScript.Echo "  Fuente: " & Err.Source
-        WScript.Echo "SUGERENCIA: Abre Access manualmente y ejecuta ExecuteAllTests desde el módulo modTestRunner para ver el error específico"
+        WScript.Echo "SUGERENCIA: Abre Access manualmente y ejecuta RunAllTests desde el módulo modTestRunner para ver el error específico"
         objAccess.Quit
         WScript.Quit 1
     End If
     On Error GoTo 0
-
-    ' Access se cerrará automáticamente al final de las pruebas.
-    ' Esperamos un momento para asegurar que el fichero de log se ha escrito.
-    WScript.Sleep 2000
-
-    ' 3. Leer y mostrar los resultados desde el log
-    WScript.Echo "--- INICIO DE RESULTADOS DE PRUEBAS ---"
-    testsFailed = True ' Asumir fallo hasta que se confirme el éxito
-    If objFSO.FileExists(strLogPath) Then
-        Set objLogFile = objFSO.OpenTextFile(strLogPath, 1) ' ForReading
-        Do While Not objLogFile.AtEndOfStream
-            strLine = objLogFile.ReadLine
-            WScript.Echo strLine
-            If InStr(strLine, "RESULT: SUCCESS") > 0 Then testsFailed = False
-        Loop
-        objLogFile.Close
-    Else
-        WScript.Echo "ERROR: No se encontró el fichero de resultados de pruebas."
+    
+    ' Verificar si reportString está vacío
+    If IsEmpty(reportString) Or reportString = "" Then
+        WScript.Echo "ERROR: La comunicación con el motor de pruebas de Access falló"
+        WScript.Echo "SUGERENCIA: El motor de pruebas no devolvió ningún resultado"
+        objAccess.Quit
+        WScript.Quit 1
     End If
+    
+    ' Mostrar el reporte completo directamente en la consola
+    WScript.Echo "--- INICIO DE RESULTADOS DE PRUEBAS ---"
+    WScript.Echo reportString
     WScript.Echo "--- FIN DE RESULTADOS DE PRUEBAS ---"
-
-    ' 4. Salir con el código de estado apropiado
-    If testsFailed Then
-        WScript.Echo "RESULTADO FINAL: ✗ Pruebas fallidas."
-        WScript.Quit 1 ' Código de error para CI/CD
-    Else
+    
+    ' Determinar el éxito o fracaso buscando la línea final
+    If InStr(reportString, "RESULT: SUCCESS") > 0 Then
         WScript.Echo "RESULTADO FINAL: ✓ Todas las pruebas pasaron."
         WScript.Quit 0 ' Código de éxito
+    Else
+        WScript.Echo "RESULTADO FINAL: ✗ Pruebas fallidas."
+        WScript.Quit 1 ' Código de error para CI/CD
     End If
 End Sub
 
@@ -1595,7 +1563,7 @@ Sub RebuildProject()
     
     ' Suprimir alertas y diálogos de confirmación
     On Error Resume Next
-    objAccess.DoCmd.SetWarnings False
+    ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación
     objAccess.Application.Echo False
     objAccess.DisplayAlerts = False
     ' Configuraciones adicionales para suprimir diálogos
@@ -1952,7 +1920,7 @@ Sub UpdateProject()
     
     ' Configurar Access en modo silencioso para evitar confirmaciones
     On Error Resume Next
-    objAccess.DoCmd.SetWarnings False
+    ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación
     objAccess.Application.Echo False
     objAccess.DisplayAlerts = False
     objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
@@ -2021,7 +1989,7 @@ Sub UpdateProject()
         
         ' Configurar modo silencioso y seguro
         On Error Resume Next
-        objAccess.DoCmd.SetWarnings False
+        ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación
         objAccess.Application.Echo False
         objAccess.DisplayAlerts = False
         objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
@@ -2122,7 +2090,7 @@ Sub UpdateProject()
         
         ' Configurar para cerrar sin confirmaciones
         On Error Resume Next
-        objAccess.DoCmd.SetWarnings False
+        ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación
         objAccess.Application.Echo False
         objAccess.DisplayAlerts = False
         objAccess.Application.Interactive = False

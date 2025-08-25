@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_WorkflowRepository"
+Attribute VB_Name = "Test_WorkflowRepository"
 '==============================================================================
 ' Módulo: Test_WorkflowRepository
 ' Propósito: Pruebas de integración para CWorkflowRepository
@@ -227,7 +227,7 @@ Private Sub SetupTestData_ValidTransition()
     backendPath = configService.GetValue("DATAPATH")
     
     Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(backendPath)
+    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False)
     
     ' Limpiar datos previos
     Call CleanupTestData
@@ -262,7 +262,7 @@ Private Sub SetupTestData_InactiveTransition()
     backendPath = configService.GetValue("DATAPATH")
     
     Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(backendPath)
+    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False)
     
     ' Limpiar datos previos
     Call CleanupTestData
@@ -296,7 +296,7 @@ Private Sub CleanupTestData()
     backendPath = configService.GetValue("DATAPATH")
     
     Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(backendPath)
+    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False)
     
     ' Eliminar transiciones de prueba
     db.Execute "DELETE FROM TbTransiciones WHERE ID >= 9000"

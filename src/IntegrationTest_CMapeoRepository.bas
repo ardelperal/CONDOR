@@ -39,6 +39,8 @@ Private Function IntegrationTest_GetMapeoPorTipo_Success() As CTestResult
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
     ' Crear repositorio con dependencias mock
     Dim repository As New CMapeoRepository
@@ -76,6 +78,8 @@ Private Function IntegrationTest_GetMapeoPorTipo_NotFound() As CTestResult
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
     ' Crear repositorio con dependencias mock
     Dim repository As New CMapeoRepository
@@ -115,6 +119,8 @@ Private Function IntegrationTest_GetMapeoPorTipo_EmptyType() As CTestResult
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
+    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
     ' Crear repositorio con dependencias mock
     Dim repository As New CMapeoRepository

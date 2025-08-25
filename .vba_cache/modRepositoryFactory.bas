@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 
 ' Variable privada para almacenar el mock
@@ -84,6 +84,38 @@ ErrorHandler:
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError Err.Number, Err.Description, "modRepositoryFactory.CreateExpedienteRepository"
     Set CreateExpedienteRepository = Nothing
+End Function
+
+'******************************************************************************
+' FUNCIÓN: CreateAuthRepository
+' DESCRIPCIÓN: Crea una instancia del repositorio de autenticación
+' RETORNA: IAuthRepository - Instancia del repositorio de autenticación
+'******************************************************************************
+Public Function CreateAuthRepository() As IAuthRepository
+    On Error GoTo ErrorHandler
+    
+    ' Obtener las dependencias
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService()
+    
+    Dim operationLogger As IOperationLogger
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
+    
+    ' Crear el repositorio real con inyección de dependencias
+    Dim repositoryInstance As New CAuthRepository
+    
+    ' Inyectar AMBAS dependencias
+    repositoryInstance.Initialize configService, operationLogger
+    
+    Set CreateAuthRepository = repositoryInstance
+    
+    Exit Function
+    
+ErrorHandler:
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modRepositoryFactory.CreateAuthRepository"
+    Set CreateAuthRepository = Nothing
 End Function
 
 '******************************************************************************

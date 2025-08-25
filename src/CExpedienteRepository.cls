@@ -192,3 +192,24 @@ ErrorHandler:
     ' Devolver Nothing en caso de error
     Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = Nothing
 End Function
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA
+' ============================================================================
+' Estos métodos exponen públicamente la funcionalidad de la interfaz
+' para facilitar las pruebas y el uso directo de la clase concreta
+
+' Método público de conveniencia para ObtenerExpedientePorId
+Public Function ObtenerExpedientePorId(ByVal IdExpediente As Long) As DAO.Recordset
+    Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(IdExpediente)
+End Function
+
+' Método público de conveniencia para ObtenerExpedientePorNemotecnico
+Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.Recordset
+    Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico)
+End Function
+
+' Método público de conveniencia para ObtenerExpedientesActivosParaSelector
+Public Function ObtenerExpedientesActivosParaSelector() As DAO.Recordset
+    Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector()
+End Function

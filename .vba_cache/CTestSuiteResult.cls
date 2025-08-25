@@ -72,6 +72,12 @@ End Property
 ' MÉTODOS PÚBLICOS
 ' ============================================================================
 
+' Método de inicialización pública
+Public Sub Initialize(ByVal suiteName As String)
+    m_suiteName = suiteName
+    Set m_testResults = New Collection
+End Sub
+
 ' Método para añadir un resultado de prueba
 Public Sub AddTestResult(ByVal result As CTestResult)
     If result Is Nothing Then
@@ -79,6 +85,11 @@ Public Sub AddTestResult(ByVal result As CTestResult)
     End If
     
     m_testResults.Add result
+End Sub
+
+' Método alias para compatibilidad con modTestRunner
+Public Sub AddTest(ByVal result As CTestResult)
+    AddTestResult result
 End Sub
 
 ' Función que devuelve el reporte formateado para esta suite

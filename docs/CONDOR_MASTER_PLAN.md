@@ -301,7 +301,7 @@ Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado ap
 | tipoSolicitud | Text | 20 | No | - | Tipo de solicitud: "PC", "CD/CA", "CD/CA-SUB" |
 | subTipoSolicitud | Text | 20 | Sí | - | Subtipo: "Desviación" o "Concesión" |
 | codigoSolicitud | Text | 50 | No | - | Código único autogenerado |
-| estadoInterno | Text | 30 | No | - | Estado actual en el workflow |
+| idEstadoInterno | Long | - | No | FK | Referencia al estado actual en la tabla tbEstados |
 | fechaCreacion | DateTime | - | No | - | Timestamp de creación del registro |
 | usuarioCreacion | Text | 100 | No | - | Email del usuario que creó la solicitud |
 | fechaPaseTecnico | DateTime | - | Sí | - | Fecha de envío a revisión técnica |
@@ -474,7 +474,7 @@ Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado ap
 | descripcionError | Memo | - | No | - | Descripción del error |
 | contexto | Memo | - | Sí | - | Contexto adicional del error |
 
-#### 8.6.3. Tabla: tb_Operaciones_Log
+#### 8.6.3. Tabla: tbOperacionesLog
 **Descripción:** Registro de operaciones clave del sistema para auditoría y trazabilidad.
 
 | Campo | Tipo | Longitud | Nulo | Clave | Descripción |
@@ -496,13 +496,12 @@ Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado ap
 |-------|------|----------|------|-------|-------------|
 | idAdjunto | AutoNumber | - | No | PK | Identificador único del adjunto |
 | idSolicitud | Long | - | No | FK | Referencia a tbSolicitudes |
-| nombreArchivo | Text | 255 | No | - | Nombre del archivo |
-| rutaArchivo | Text | 500 | No | - | Ruta completa del archivo |
-| tipoArchivo | Text | 50 | Sí | - | Tipo de archivo |
-| tamanoBytes | Long | - | Sí | - | Tamaño del archivo en bytes |
+| nombreArchivo | Text | 255 | No | - | Nombre del archivo (solo nombre, sin ruta) |
 | fechaSubida | DateTime | - | No | - | Fecha de subida del archivo |
 | usuarioSubida | Text | 100 | No | - | Usuario que subió el archivo |
 | descripcion | Memo | - | Sí | - | Descripción del adjunto |
+
+**NOTA:** La ruta base de los adjuntos se obtiene dinámicamente desde la configuración (clave ATTACHMENTS_PATH) y se combina con nombreArchivo en tiempo de ejecución.
 
 #### 8.6.5. Tabla: tbEstados
 **Descripción:** Definición de los estados del workflow.
@@ -514,7 +513,6 @@ Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado ap
 | descripcion | Text | 255 | Sí | - | Descripción del estado |
 | esEstadoInicial | Boolean | - | No | - | Indica si es estado inicial |
 | esEstadoFinal | Boolean | - | No | - | Indica si es estado final |
-| color | Text | 7 | Sí | - | Color hexadecimal para visualización |
 | orden | Integer | - | Sí | - | Orden de visualización |
 
 #### 8.6.6. Tabla: tbTransiciones
@@ -546,6 +544,14 @@ Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado ap
 | fechaCreacion | DateTime | - | No | - | Fecha de creación |
 | fechaModificacion | DateTime | - | Sí | - | Fecha de última modificación |
 | usuarioModificacion | Text | 100 | Sí | - | Usuario que realizó la modificación |
+
+**Configuraciones Predefinidas:**
+
+```sql
+-- Configuración de rutas de adjuntos
+INSERT INTO tbConfiguracion (clave, valor, descripcion, categoria, tipoValor, esEditable) VALUES
+('ATTACHMENTS_PATH', 'C:\\Proyectos\\CONDOR\\back\\recursos\\Adjuntos', 'Ruta base para almacenamiento de archivos adjuntos', 'Rutas', 'String', 1);
+```
 
 #### 8.6.8. Tabla: TbLocalConfig (en Frontend)
 **Descripción:** Tabla de arranque (bootstrap) ubicada en el Frontend (`CONDOR.accdb`). Su único propósito es indicar al sistema cómo encontrar y conectarse a la base de datos del Backend.

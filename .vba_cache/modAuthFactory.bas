@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modAuthFactory"
+Attribute VB_Name = "modAuthFactory"
 Option Compare Database
 Option Explicit
 
@@ -27,15 +27,15 @@ Public Function CreateAuthService() As IAuthService
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
-    ' Obtener la instancia del repositorio de solicitudes
-    Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
+    ' Obtener la instancia del repositorio de autenticación
+    Dim authRepository As IAuthRepository
+    Set authRepository = modRepositoryFactory.CreateAuthRepository()
     
     ' Crear una instancia de la clase concreta
     Dim authServiceInstance As New CAuthService
     
     ' Inicializar la instancia concreta con todas las dependencias
-    authServiceInstance.Initialize config, operationLogger, solicitudRepository
+    authServiceInstance.Initialize config, operationLogger, authRepository
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateAuthService = authServiceInstance

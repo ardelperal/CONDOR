@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_CConfig"
+Attribute VB_Name = "Test_CConfig"
 Option Compare Database
 Option Explicit
 
@@ -16,7 +16,7 @@ Public Function Test_CConfig_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "Test_CConfig"
     
-    ' Ejecutar todas las pruebas de integraciÃ³n
+    ' Ejecutar todas las pruebas unitarias
     suiteResult.AddTestResult Test_GetValue_DATAPATH_Success()
     suiteResult.AddTestResult Test_GetValue_DATABASEPASSWORD_Success()
     suiteResult.AddTestResult Test_GetDataPath_Success()

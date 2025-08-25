@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -64,7 +64,7 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     backendPath = m_Config.GetDataPath()
     
     ' Abrir conexión a la base de datos backend
-    Set db = DBEngine.OpenDatabase(backendPath)
+    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False)
     
     ' Crear QueryDef con consulta parametrizada (SEGURA)
     Set qdf = db.CreateQueryDef("", _

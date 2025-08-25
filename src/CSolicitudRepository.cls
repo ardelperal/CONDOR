@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -88,7 +88,7 @@ Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long
             .tipoSolicitud = rs("tipoSolicitud") & ""
             .subTipoSolicitud = rs("subTipoSolicitud") & ""
             .codigoSolicitud = rs("codigoSolicitud") & ""
-            .estadoInterno = rs("estadoInterno") & ""
+            .idEstadoInterno = rs("idEstadoInterno")
             .fechaCreacion = rs("fechaCreacion")
             .usuarioCreacion = rs("usuarioCreacion") & ""
             .fechaModificacion = rs("fechaModificacion")
@@ -146,14 +146,14 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
         ' INSERT - Nueva solicitud
         Set qdf = db.CreateQueryDef("", _
             "INSERT INTO T_Solicitudes (idExpediente, tipoSolicitud, subTipoSolicitud, " & _
-            "codigoSolicitud, estadoInterno, fechaCreacion, usuarioCreacion) " & _
+            "codigoSolicitud, idEstadoInterno, fechaCreacion, usuarioCreacion) " & _
             "VALUES (?, ?, ?, ?, ?, ?, ?)")
         
         qdf.Parameters(0) = solicitud.idExpediente
         qdf.Parameters(1) = solicitud.tipoSolicitud
         qdf.Parameters(2) = solicitud.subTipoSolicitud
         qdf.Parameters(3) = solicitud.codigoSolicitud
-        qdf.Parameters(4) = solicitud.estadoInterno
+        qdf.Parameters(4) = solicitud.idEstadoInterno
         qdf.Parameters(5) = solicitud.fechaCreacion
         qdf.Parameters(6) = solicitud.usuarioCreacion
         
@@ -168,14 +168,14 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
         ' UPDATE - Solicitud existente
         Set qdf = db.CreateQueryDef("", _
             "UPDATE T_Solicitudes SET idExpediente=?, tipoSolicitud=?, subTipoSolicitud=?, " & _
-            "codigoSolicitud=?, estadoInterno=?, fechaModificacion=?, usuarioModificacion=? " & _
+            "codigoSolicitud=?, idEstadoInterno=?, fechaModificacion=?, usuarioModificacion=? " & _
             "WHERE idSolicitud=?")
         
         qdf.Parameters(0) = solicitud.idExpediente
         qdf.Parameters(1) = solicitud.tipoSolicitud
         qdf.Parameters(2) = solicitud.subTipoSolicitud
         qdf.Parameters(3) = solicitud.codigoSolicitud
-        qdf.Parameters(4) = solicitud.estadoInterno
+        qdf.Parameters(4) = solicitud.idEstadoInterno
         qdf.Parameters(5) = Now()
         qdf.Parameters(6) = solicitud.usuarioModificacion
         qdf.Parameters(7) = solicitud.idSolicitud
@@ -339,3 +339,24 @@ ErrorHandler:
     ' Log del error pero no propagar para no interrumpir la carga principal
     m_operationLogger.LogOperation "LOAD_DATA_ERROR", CStr(solicitud.idSolicitud), "Error cargando datos específicos: " & Err.Description
 End Sub
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA
+' ============================================================================
+' Estos métodos exponen públicamente la funcionalidad de la interfaz
+' para facilitar las pruebas y el uso directo de la clase concreta
+
+' Método público de conveniencia para GetSolicitudById
+Public Function GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
+    Set GetSolicitudById = ISolicitudRepository_GetSolicitudById(idSolicitud)
+End Function
+
+' Método público de conveniencia para SaveSolicitud
+Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
+    SaveSolicitud = ISolicitudRepository_SaveSolicitud(solicitud)
+End Function
+
+' Método público de conveniencia para ExecuteQuery
+Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.Recordset
+    Set ExecuteQuery = ISolicitudRepository_ExecuteQuery(sql, params)
+End Function

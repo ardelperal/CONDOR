@@ -28,7 +28,7 @@ Acción Correctiva: Ante este error, se debe añadir la función de conversión 
 
 Lección 6: Usar los Tests y Módulos de Acceso a Datos como Especificación para Clases de Datos
 Observación: Errores de "método o dato miembro no encontrado" ocurren frecuentemente en los tests y módulos de acceso a datos al usar clases de tipo de datos (T_*.cls) que están incompletas.
-Regla Inquebrantable: Los tests que construyen objetos de datos y los módulos de acceso a datos que asignan valores a propiedades de objetos actúan como la especificación funcional para esas clases de datos. La clase debe contener todas las propiedades públicas que tanto los tests como los módulos de datos utilizan.
+Regla Inquebrantable: Los tests que construyen objetos de datos y los módulos de acceso a datos que asignan valores a propiedades de objetos actúan como la especificación funcional para esas clases de datos. La clase debe contener todas las propiedades públicas que tanto los tests como los módulos de datos utilizan. Por cada tabla tb... en la base de datos, debe existir su correspondiente clase de datos T_... en el código. Esta correspondencia 1:1 garantiza que los repositorios puedan mapear correctamente los datos de un Recordset a un objeto.
 Acción Correctiva: Ante este error, se debe realizar una auditoría proactiva completa de todos los módulos que utilizan la clase de datos para añadir todas las propiedades faltantes.
 
 Lección 7: La Batería de Pruebas Debe Ser Exhaustiva
@@ -59,7 +59,39 @@ Acción Correctiva: Utilizar la plantilla estándar para la creación de nuevas 
 Lección 12: La Separación del Frontend y el Backend es Crítica
 Observación: El uso de CurrentDb en módulos que acceden a datos rompe la arquitectura cliente-servidor. El código del frontend no debe interactuar directamente con la base de datos de datos.
 Regla Inquebrantable: La base de datos de datos (_datos.accdb) debe ser accedida exclusivamente a través de conexiones DAO, utilizando la ruta y la contraseña almacenadas en el servicio de configuración (modConfig). El uso de CurrentDb solo es válido para operaciones en la base de datos del frontend (código VBA, formularios, etc.).
-Acción Correctiva: Reemplazar todas las instancias de CurrentDb en los repositorios por DBEngine.OpenDatabase(modConfig.GetInstance().GetDataPath()).
+
+Ejemplo de Violación (CAuthRepository antes de refactorización):
+```vba
+Private m_Database As DAO.Database
+
+Private Sub Class_Initialize()
+    Set m_Database = CurrentDb  ' ❌ INCORRECTO: Viola arquitectura cliente-servidor
+End Sub
+```
+
+Ejemplo Correcto (CSolicitudRepository):
+```vba
+Private m_configService As IConfig
+Private m_operationLogger As IOperationLogger
+
+Public Sub Initialize(ByVal configService As IConfig, ByVal operationLogger As IOperationLogger)
+    Set m_configService = configService
+    Set m_operationLogger = operationLogger
+End Sub
+
+Private Function GetData() As DAO.Recordset
+    ' ✅ CORRECTO: Conexión explícita al Backend
+    Dim backendPath As String
+    backendPath = m_configService.GetDataPath()
+    
+    Dim backendPassword As String
+    backendPassword = m_configService.GetDatabasePassword()
+    
+    Set db = DBEngine.OpenDatabase(backendPath, False, False, ";PWD=" & backendPassword)
+End Function
+```
+
+Acción Correctiva: Reemplazar todas las instancias de CurrentDb en los repositorios por DBEngine.OpenDatabase con configuración inyectada.
 
 Lección 13: La Centralización de la Configuración y la Seguridad
 Observación: Las configuraciones sensibles, como las contraseñas, no deben estar hardcodeadas directamente en el código de la aplicación. Además, el uso de strings genéricos con GetValue() es propenso a errores tipográficos y dificulta el mantenimiento.
@@ -74,6 +106,8 @@ Observación: Con la refactorización, es común que funciones, variables o clas
 Regla Inquebrantable: El código que no se utiliza, se elimina. No se debe mantener código comentado o sin referencias "por si acaso".
 Acción Correctiva: Cualquier prompt que implique una refactorización o la eliminación de una funcionalidad debe incluir explícitamente un paso final: "Busca y elimina cualquier función, variable o clase de ayuda que haya quedado sin referencias tras este cambio".
 
+Nota Adicional: Este principio se aplica especialmente a las propiedades de las clases de datos (T_*) cuando se eliminan columnas de las tablas correspondientes. Al eliminar un campo de una tabla, la variable miembro privada y las propiedades públicas (Get/Let) asociadas en la clase T_* correspondiente se convierten automáticamente en código muerto y deben ser eliminadas para mantener la consistencia entre el esquema de datos y las clases de datos.
+
 Lección 15: No Documentar Cambios en el Desarrollo
 Observación: En esta fase del proyecto, documentar cada cambio en el desarrollo crea una sobrecarga innecesaria y ralentiza el progreso. Regla Inquebrantable: No se debe documentar el estado de los cambios durante el desarrollo. La única documentación requerida en esta etapa es el estado final del proyecto una vez que se considera un producto mínimo viable. Acción Correctiva: Los prompts para Copilot no deben incluir instrucciones para actualizar la documentación de desarrollo, como PLAN_DE_ACCION.md o README.md, o CONDOR_MASTER_PLAN.md hasta que el producto mínimo viable esté completo. La documentación se actualizará de forma integral al finalizar la fase actual.
 
@@ -86,6 +120,14 @@ Lección 17: Principio de Responsabilidad Única para Repositorios
 Observación: Se ha detectado que servicios como CExpedienteService dependían incorrectamente de ISolicitudRepository para obtener datos de expedientes, violando el principio de responsabilidad única y creando un acoplamiento inadecuado entre entidades de negocio diferentes.
 Regla Inquebrantable: Cada repositorio debe gestionar una única entidad de negocio y sus datos relacionados. ISolicitudRepository solo debe manejar operaciones sobre la entidad Solicitud (T_Solicitud), IExpedienteRepository solo debe manejar operaciones sobre la entidad Expediente (T_Expediente), etc. Los servicios deben depender de los repositorios apropiados para cumplir sus contratos de interfaz.
 Acción Correctiva: Cuando un servicio no puede cumplir su contrato de interfaz con las dependencias actuales, se debe crear el repositorio específico para la entidad que necesita y refactorizar el servicio para usar la dependencia correcta. Nunca se debe "reutilizar" un repositorio de una entidad diferente para acceder a datos de otra entidad.
+
+Ejemplo Práctico - Refactorización del AuthService:
+Antes: CAuthService dependía incorrectamente de ISolicitudRepository para consultar datos de usuarios y permisos, violando el principio de responsabilidad única.
+Después: Se creó IAuthRepository con CAuthRepository para gestionar exclusivamente las consultas de autenticación (TbUsuariosAplicaciones, TbUsuariosAplicacionesPermisos). CAuthService ahora depende de IAuthRepository, separando claramente las responsabilidades:
+- ISolicitudRepository: Gestiona T_Solicitud y datos relacionados
+- IAuthRepository: Gestiona consultas de usuarios y permisos de aplicación
+- IExpedienteRepository: Gestiona T_Expediente y datos relacionados
+Esta separación mejora la mantenibilidad, testabilidad y cumple el principio de responsabilidad única.
 
 Lección 18: La Prevención de Inyección de SQL con Consultas Parametrizadas es Obligatoria
 Observación: Se han detectado repositorios que construyen consultas SQL mediante la concatenación de strings, lo cual introduce una vulnerabilidad de seguridad crítica de Inyección de SQL.
@@ -147,3 +189,14 @@ Lección 27: Las Pruebas Automatizadas Deben Ser 100% Desatendidas
 Observación: Los pop-ups de base de datos y diálogos interactivos durante la ejecución de pruebas desde el CLI rompen la automatización y hacen que el sistema de CI/CD falle. Cualquier interacción con la interfaz de usuario durante las pruebas automatizadas es una violación crítica del principio de ejecución desatendida.
 Regla Inquebrantable: Todo código ejecutado en modo de prueba no debe, bajo ninguna circunstancia, generar una interacción con la interfaz de usuario. Las conexiones a datos deben ser explícitas y usar opciones como dbFailOnError para forzar un error programático en lugar de mostrar diálogos. El CLI debe configurar DisplayAlerts = False para suprimir diálogos inesperados.
 Acción Correctiva: Auditar todas las llamadas a DBEngine.OpenDatabase para incluir el parámetro dbFailOnError, configurar objAccess.Application.DisplayAlerts = False en el CLI antes de ejecutar pruebas, y establecer conexiones de base de datos con parámetros explícitos que fuercen errores programáticos en lugar de diálogos interactivos. Cualquier código que pueda generar pop-ups debe ser refactorizado para manejar errores de forma programática.
+
+Lección 28: La Construcción Dinámica de Rutas Elimina el Acoplamiento Fuerte con el Sistema de Archivos
+Observación: El almacenamiento de rutas absolutas en la base de datos (como rutaArchivo en tbAdjuntos) crea un acoplamiento fuerte con la estructura del sistema de archivos, haciendo que la aplicación sea frágil ante cambios de ubicación, movimientos de servidores o despliegues en diferentes entornos.
+Regla Inquebrantable: Las rutas de archivos nunca deben almacenarse como rutas absolutas en la base de datos. En su lugar, se debe almacenar únicamente el nombre del archivo y construir la ruta completa dinámicamente en tiempo de ejecución combinando una ruta base obtenida de la configuración (IConfig.GetAttachmentsPath()) con el nombre del archivo.
+Acción Correctiva: Eliminar campos de ruta absoluta (rutaArchivo) de las tablas de datos y reemplazarlos con campos de nombre de archivo (nombreArchivo). Implementar métodos en IConfig para obtener rutas base configurables (GetAttachmentsPath, GetTemplatesPath, etc.) y construir rutas completas dinámicamente usando Path.Combine o concatenación de strings. Esto hace la aplicación completamente portable entre entornos sin necesidad de actualizar datos en la base de datos.
+NOTA ADICIONAL: De forma similar, otros metadatos de los ficheros (como el tipo de archivo) deben derivarse dinámicamente del nombre del fichero usando la extensión, en lugar de almacenarse de forma redundante en campos separados. Esto elimina la posibilidad de inconsistencias entre el nombre del archivo y sus metadatos almacenados, y reduce la complejidad del esquema de datos siguiendo el principio de eliminación proactiva de código muerto.
+
+Lección 29: La Normalización de Datos Previene Inconsistencias y Mejora la Integridad Referencial
+Observación: El almacenamiento de valores descriptivos como cadenas de texto (ej: estadoInterno = "Borrador") en lugar de claves foráneas numéricas crea múltiples problemas: inconsistencias por variaciones tipográficas, dificultad para mantener integridad referencial, imposibilidad de cambiar descripciones centralizadamente, y mayor consumo de espacio de almacenamiento.
+Regla Inquebrantable: Todos los campos que representen valores de un conjunto finito y controlado deben normalizarse usando claves foráneas numéricas (Long) que referencien tablas de configuración. Los valores descriptivos deben almacenarse únicamente en las tablas de referencia (ej: tbEstados) y obtenerse mediante JOINs cuando sea necesario mostrarlos al usuario.
+Acción Correctiva: Identificar todos los campos de texto que contengan valores de conjuntos controlados (estados, tipos, categorías, etc.) y refactorizarlos a campos Long con claves foráneas. Crear o actualizar las tablas de referencia correspondientes (tbEstados, tbTiposSolicitud, etc.) con campos Clave (Long, PK) y Descripcion (Text). Actualizar todas las clases T_* para usar tipos Long en lugar de String para estos campos, y modificar los repositorios para realizar JOINs cuando sea necesario obtener las descripciones. Esto garantiza integridad referencial, elimina inconsistencias, centraliza el mantenimiento de valores de dominio y optimiza el almacenamiento.

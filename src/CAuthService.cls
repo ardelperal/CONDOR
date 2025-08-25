@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -13,19 +13,19 @@ Implements IAuthService
 
 Private configSvc As IConfig
 Private m_OperationLogger As IOperationLogger
-Private m_SolicitudRepository As ISolicitudRepository
+Private m_AuthRepository As IAuthRepository
 
 Private Sub Class_Initialize()
     ' InicializaciÃ³n sin dependencias
 End Sub
 
-Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, solicitudRepository As ISolicitudRepository)
+Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository)
     Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Set configSvc = config
     Set m_OperationLogger = operationLogger
-    Set m_SolicitudRepository = solicitudRepository
+    Set m_AuthRepository = authRepository
     
     Exit Sub
     
@@ -45,21 +45,11 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
 
     Dim role As E_UserRole
     Dim rs As DAO.Recordset
-    Dim sql As String
-    Dim params As Collection
-    Dim param As QueryParameter
 
     role = Rol_Desconocido
 
-    ' Primera consulta parametrizada: verificar si es administrador global
-    sql = "SELECT EsAdministrador FROM TbUsuariosAplicaciones WHERE CorreoUsuario = [pUserEmail]"
-    
-    Set params = New Collection
-    Set param = New QueryParameter
-    param.Initialize "pUserEmail", UserEmail
-    params.Add param
-    
-    Set rs = m_SolicitudRepository.ExecuteQuery(sql, params)
+    ' Primera consulta: verificar si es administrador global
+    Set rs = m_AuthRepository.GetUserByEmail(UserEmail)
 
     If Not rs Is Nothing Then
         If Not rs.EOF Then
@@ -71,28 +61,14 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     End If
     
     Set rs = Nothing
-    Set params = Nothing
 
     If role = Rol_Admin Then
         IAuthService_GetUserRole = Rol_Admin
         Exit Function
     End If
 
-    ' Segunda consulta parametrizada: roles especÃ­ficos de la aplicaciÃ³n
-    sql = "SELECT EsUsuarioAdministrador, EsUsuarioCalidad, EsUsuarioTecnico " & _
-          "FROM TbUsuariosAplicacionesPermisos " & _
-          "WHERE CorreoUsuario = [pUserEmail] AND IDAplicacion = [pIDAplicacion]"
-    
-    Set params = New Collection
-    Set param = New QueryParameter
-    param.Initialize "pUserEmail", UserEmail
-    params.Add param
-    
-    Set param = New QueryParameter
-    param.Initialize "pIDAplicacion", configSvc.GetValue("IDAplicacion_CONDOR")
-    params.Add param
-    
-    Set rs = m_SolicitudRepository.ExecuteQuery(sql, params)
+    ' Segunda consulta: roles específicos de la aplicación
+    Set rs = m_AuthRepository.GetUserApplicationPermissions(UserEmail, configSvc.GetValue("IDAplicacion_CONDOR"))
 
     If Not rs Is Nothing Then
         If Not rs.EOF Then
@@ -108,7 +84,6 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     End If
     
     Set rs = Nothing
-    Set params = Nothing
 
     ' Logging de auditorÃ­a: Resultado de consulta de rol
     If Not m_OperationLogger Is Nothing Then
@@ -128,7 +103,6 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
 ErrorHandler:
     IAuthService_GetUserRole = Rol_Desconocido
     If Not rs Is Nothing Then Set rs = Nothing
-    If Not params Is Nothing Then Set params = Nothing
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "ROLE_ERROR", "Error consultando rol para " & UserEmail & ": " & Err.Description, "CAuthService.GetUserRole"
     End If

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -15,3 +15,22 @@ Option Explicit
 Public TestName As String
 Public Success As Boolean
 Public ErrorMessage As String
+
+' Método de inicialización
+Public Sub Initialize(ByVal testName As String)
+    Me.TestName = testName
+    Me.Success = False
+    Me.ErrorMessage = ""
+End Sub
+
+' Método para marcar la prueba como fallida
+Public Sub Fail(ByVal errorMessage As String)
+    Me.Success = False
+    Me.ErrorMessage = errorMessage
+End Sub
+
+' Método para marcar la prueba como exitosa
+Public Sub Pass()
+    Me.Success = True
+    Me.ErrorMessage = ""
+End Sub

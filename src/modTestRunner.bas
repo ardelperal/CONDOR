@@ -1,21 +1,41 @@
-﻿Attribute VB_Name = "modTestRunner"
+Attribute VB_Name = "modTestRunner"
 
 ' Colección privada para registrar nombres de funciones de suite
 Private m_SuiteNames As Collection
 
 ' Función para compatibilidad con CLI (debe estar fuera del bloque condicional)
 Public Function RunAllTests() As String
-    ' Ejecutar todas las pruebas y devolver resultado como string
-    Dim reporter As New CTestReporter
-    Dim allResults As Collection
+    On Error GoTo ErrorHandler
     
+    ' Inicializar colección de suites
+    Set m_SuiteNames = New Collection
+    
+    ' Descubrir y registrar automáticamente todas las suites disponibles
+    DiscoverAndRegisterSuites
+    
+    ' Ejecutar todas las pruebas y devolver resultado como string
+    Dim reporter As ITestReporter
+    Set reporter = New CTestReporter
+    
+    Dim allResults As Collection
     Set allResults = ExecuteAllSuites()
+    
+    ' Inicializar el reportero con los resultados
+    reporter.Initialize allResults
     
     ' Generar reporte en formato string
     Dim reportString As String
-    reportString = reporter.GenerateReport(allResults)
+    reportString = reporter.GenerateReport()
     
     RunAllTests = reportString
+    Exit Function
+    
+ErrorHandler:
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests"
+    
+    RunAllTests = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS: " & Err.Description & vbCrLf & "RESULT: FAILED"
 End Function
 
 ' Alias para compatibilidad con CLI
@@ -38,8 +58,8 @@ Public Sub RunTestFramework()
     ' Inicializar colección de suites
     Set m_SuiteNames = New Collection
     
-    ' Registrar todas las suites disponibles
-    RegisterAllSuites
+    ' Descubrir y registrar automáticamente todas las suites disponibles
+    DiscoverAndRegisterSuites
     
     ' Ejecutar todas las suites y obtener resultados
     Dim allResults As Collection
@@ -51,30 +71,53 @@ Public Sub RunTestFramework()
 End Sub
 
 '******************************************************************************
-' GESTIÓN DE REGISTRO DE SUITES
+' GESTIÓN DE DESCUBRIMIENTO AUTOMÁTICO DE SUITES
 '******************************************************************************
 
-' Función que registra todas las funciones de suite disponibles
-Private Sub RegisterAllSuites()
-    ' Registrar todas las suites de prueba disponibles
-    ' Cada suite debe seguir el patrón: Test_[ModuleName]_RunAll
+' Función que descubre automáticamente todas las suites de prueba basándose en convenciones de nomenclatura
+' Convención: Los módulos de prueba deben comenzar con "Test_" o "IntegrationTest_"
+' Patrón de función: [NombreModulo]_RunAll (ej: Test_CConfig_RunAll, IntegrationTest_CMapeoRepository_RunAll)
+' Requiere: Referencia a "Microsoft Visual Basic for Applications Extensibility 5.3"
+Private Sub DiscoverAndRegisterSuites()
+    On Error GoTo ErrorHandler
     
+    ' Obtener referencia al proyecto VBA actual
+    Dim vbProject As Object
+    Set vbProject = Application.VBE.ActiveVBProject
+    
+    ' Iterar sobre todos los componentes del proyecto
+    Dim vbComponent As Object
+    For Each vbComponent In vbProject.VBComponents
+        ' Verificar si es un módulo estándar (Type = 1) y cumple con la convención de nomenclatura
+        If vbComponent.Type = 1 Then ' vbext_ct_StdModule = 1
+            Dim componentName As String
+            componentName = vbComponent.Name
+            
+            ' Verificar si el nombre comienza con "Test_" o "IntegrationTest_"
+            If Left(componentName, 5) = "Test_" Or Left(componentName, 16) = "IntegrationTest_" Then
+                ' Construir el nombre de la función de ejecución siguiendo el patrón [NombreModulo]_RunAll
+                Dim suiteFunction As String
+                suiteFunction = componentName & "_RunAll"
+                
+                ' Añadir a la colección de suites
+                m_SuiteNames.Add suiteFunction
+            End If
+        End If
+    Next vbComponent
+    
+    Exit Sub
+    
+ErrorHandler:
+    ' En caso de error en el descubrimiento, registrar el error pero continuar
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.DiscoverAndRegisterSuites"
+    
+    ' Si falla el descubrimiento automático, al menos intentar registrar las suites conocidas críticas
+    On Error Resume Next
     m_SuiteNames.Add "Test_CConfig_RunAll"
     m_SuiteNames.Add "Test_AuthService_RunAll"
-    m_SuiteNames.Add "Test_CExpedienteService_RunAll"
-    m_SuiteNames.Add "Test_Solicitud_RunAll"
-    m_SuiteNames.Add "Test_CSolicitudRepository_RunAll"
-    m_SuiteNames.Add "Test_DocumentService_RunAll"
-    m_SuiteNames.Add "Test_DocumentServiceFactory_RunAll"
-    m_SuiteNames.Add "Test_ExpedienteServiceFactory_RunAll"
-    m_SuiteNames.Add "Test_LoggingService_RunAll"
-    m_SuiteNames.Add "Test_NotificationService_RunAll"
-    m_SuiteNames.Add "Test_OperationLogger_RunAll"
-    m_SuiteNames.Add "Test_WordManager_RunAll"
-    m_SuiteNames.Add "Test_WorkflowRepository_RunAll"
-    m_SuiteNames.Add "Test_ErrorHandlerService_RunAll"
-    m_SuiteNames.Add "Test_AppManager_RunAll"
-    m_SuiteNames.Add "IntegrationTest_CMapeoRepository_RunAll"
+    On Error GoTo 0
 End Sub
 
 '******************************************************************************

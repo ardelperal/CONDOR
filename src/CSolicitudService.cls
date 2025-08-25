@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -79,7 +79,7 @@ Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String,
         .tipoSolicitud = Trim(tipo)
         .subTipoSolicitud = ""
         .codigoSolicitud = GenerateCodigoSolicitud(idExpediente, tipo)
-        .estadoInterno = "Borrador"
+        .idEstadoInterno = 1 ' ID del estado Borrador en tbEstados
         .fechaCreacion = Now()
         .usuarioCreacion = Environ("USERNAME") ' Usuario actual del sistema
         .fechaModificacion = Null
