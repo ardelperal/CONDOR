@@ -53,7 +53,7 @@ El servicio de documentos (`DocumentService`) implementa un patrón de inyecció
 - **modDocumentServiceFactory.bas**: Factory que maneja la creación e inyección de todas las dependencias
 
 **Dependencias Inyectadas:**
-- **IConfig**: Servicio de configuración para obtener rutas de plantillas y configuraciones
+- **IConfig**: Servicio de configuración que accede a los parámetros globales del Backend (tbConfiguracion) utilizando el sistema de arranque del Frontend (TbLocalConfig)
 - **ISolicitudRepository**: Repositorio para acceso a datos de solicitudes
 - **IOperationLogger**: Servicio de logging para auditoría de operaciones
 - **IWordManager**: Abstracción para el manejo de documentos Word
@@ -530,8 +530,8 @@ Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado ap
 | accionesPost | Memo | - | Sí | - | Acciones a ejecutar post-transición |
 | activa | Boolean | - | No | - | Indica si la transición está activa |
 
-#### 8.6.7. Tabla: tbConfiguracion
-**Descripción:** Configuración del sistema y parámetros de la aplicación.
+#### 8.6.7. Tabla: tbConfiguracion (en Backend)
+**Descripción:** Configuración del sistema y parámetros globales de la aplicación. Esta tabla reside en el Backend (`CONDOR_datos.accdb`) y contiene todos los parámetros de configuración de la aplicación.
 
 | Campo | Tipo | Longitud | Nulo | Clave | Descripción |
 |-------|------|----------|------|-------|-------------|
@@ -546,6 +546,14 @@ Framework de Tests Refactorizado: El sistema de pruebas ha sido refactorizado ap
 | fechaCreacion | DateTime | - | No | - | Fecha de creación |
 | fechaModificacion | DateTime | - | Sí | - | Fecha de última modificación |
 | usuarioModificacion | Text | 100 | Sí | - | Usuario que realizó la modificación |
+
+#### 8.6.8. Tabla: TbLocalConfig (en Frontend)
+**Descripción:** Tabla de arranque (bootstrap) ubicada en el Frontend (`CONDOR.accdb`). Su único propósito es indicar al sistema cómo encontrar y conectarse a la base de datos del Backend.
+
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|---|---|---|---|---|---|
+| ID | AutoNumber | - | No | PK | Identificador único |
+| Entorno | Text | 20 | No | - | Indicador del entorno ("LOCAL" u "OFICINA") |
 
 
 
