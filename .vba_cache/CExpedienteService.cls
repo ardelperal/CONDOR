@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 
 Implements IExpedienteService
@@ -27,9 +27,9 @@ Public Function GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
     Set GetExpedienteById = IExpedienteService_GetExpedienteById(idExpediente)
 End Function
 
-' Obtiene un expediente por su nemotÃ©cnico desde la base de datos de expedientes
+' Obtiene un expediente por su nemotécnico desde la base de datos de expedientes
 Public Function GetExpedienteByNemotecnico(ByVal nemotecnico As String) As T_Expediente
-    GetExpedienteByNemotecnico = IExpedienteService_GetExpedienteByNemotecnico(nemotecnico)
+    Set GetExpedienteByNemotecnico = IExpedienteService_GetExpedienteByNemotecnico(nemotecnico)
 End Function
 
 ' ImplementaciÃ³n de la interfaz para GetExpedienteById
@@ -40,6 +40,9 @@ Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long
     ' Variables
     Dim rs As DAO.Recordset
     Dim expediente As T_Expediente
+    
+    ' Instanciar el objeto expediente
+    Set expediente = New T_Expediente
     
     ' Log de la operaciÃ³n
     If Not m_OperationLogger Is Nothing Then
@@ -79,7 +82,7 @@ Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long
     End If
     
     ' Devolver el expediente
-    IExpedienteService_GetExpedienteById = expediente
+    Set IExpedienteService_GetExpedienteById = expediente
     
     Exit Function
     
@@ -94,10 +97,11 @@ ErrorHandler:
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedienteById"
     
-    ' Devolver estructura vacÃ­a en caso de error
+    ' Devolver estructura vacía en caso de error
     Dim expedienteVacio As T_Expediente
+    Set expedienteVacio = New T_Expediente
     expedienteVacio.idExpediente = 0
-    IExpedienteService_GetExpedienteById = expedienteVacio
+    Set IExpedienteService_GetExpedienteById = expedienteVacio
 End Function
 
 
@@ -179,7 +183,7 @@ Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal nemotecnico
     End If
     
     ' Devolver el expediente
-    IExpedienteService_GetExpedienteByNemotecnico = expediente
+    Set IExpedienteService_GetExpedienteByNemotecnico = expediente
     
     Exit Function
     
@@ -194,10 +198,11 @@ ErrorHandler:
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError Err.Number, Err.Description, "CExpedienteService.IExpedienteService_GetExpedienteByNemotecnico", "NemotÃ©cnico: " & nemotecnico
     
-    ' Devolver estructura vacÃ­a en caso de error
+    ' Devolver estructura vacía en caso de error
     Dim expedienteVacio As T_Expediente
+    Set expedienteVacio = New T_Expediente
     expedienteVacio.idExpediente = 0
-    IExpedienteService_GetExpedienteByNemotecnico = expedienteVacio
+    Set IExpedienteService_GetExpedienteByNemotecnico = expedienteVacio
 End Function
 
 

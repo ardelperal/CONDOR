@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Clase: CDocumentService
@@ -51,7 +51,7 @@ End Sub
 ' IMPLEMENTACIÃ“N DE IDocumentService - ESCRITURA DE DOCUMENTOS
 ' ============================================================================
 
-Public Function IDocumentService_GenerarDocumento(ByVal solicitud As T_Solicitud) As String
+Private Function IDocumentService_GenerarDocumento(ByVal solicitud As T_Solicitud) As String
     Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
@@ -124,7 +124,7 @@ End Function
 ' IMPLEMENTACIÃ“N DE IDocumentService - LECTURA DE DOCUMENTOS
 ' ============================================================================
 
-Public Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
+Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
     Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
@@ -263,7 +263,7 @@ Private Function ReemplazarCamposEnPlantilla(ByVal solicitud As T_Solicitud) As 
         
         ' Reemplazar el marcador usando IWordManager
         If Not m_WordManager.ReemplazarTexto(campoWord, textoReemplazo) Then
-            m_OperationLogger.LogOperation "DocGen_Warning", "No se pudo reemplazar marcador: " & campoWord, "CDocumentService"
+            m_OperationLogger.LogOperation "DocGen_Warning", "No se pudo reemplazar marcador: " & campoWord & " para Solicitud ID: " & solicitud.idSolicitud, "CDocumentService"
         End If
         rsMapeo.MoveNext
     Loop

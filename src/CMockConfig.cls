@@ -29,6 +29,12 @@ Public GetDatabasePassword_WasCalled As Boolean
 Public GetDatabasePassword_CallCount As Long
 Public GetAttachmentsPath_WasCalled As Boolean
 Public GetAttachmentsPath_CallCount As Long
+Public GetCorreosDBPath_WasCalled As Boolean
+Public GetCorreosDBPath_CallCount As Long
+Public GetUsuarioActual_WasCalled As Boolean
+Public GetUsuarioActual_CallCount As Long
+Public GetCorreoAdministrador_WasCalled As Boolean
+Public GetCorreoAdministrador_CallCount As Long
 
 ' Constructor de la clase
 Private Sub Class_Initialize()
@@ -49,6 +55,15 @@ Public Sub AddSetting(ByVal key As String, ByVal value As Variant)
     m_mockSettings.Add value, key
 End Sub
 
+' Métodos de conveniencia para configurar valores específicos
+Public Sub SetDataPath(ByVal path As String)
+    AddSetting "BACKEND_DB_PATH", path
+End Sub
+
+Public Sub SetDatabasePassword(ByVal password As String)
+    AddSetting "DATABASE_PASSWORD", password
+End Sub
+
 ' Método público para limpiar todas las configuraciones y contadores
 Public Sub Reset()
     Set m_mockSettings = New Collection
@@ -62,6 +77,12 @@ Public Sub Reset()
     GetDatabasePassword_CallCount = 0
     GetAttachmentsPath_WasCalled = False
     GetAttachmentsPath_CallCount = 0
+    GetCorreosDBPath_WasCalled = False
+    GetCorreosDBPath_CallCount = 0
+    GetUsuarioActual_WasCalled = False
+    GetUsuarioActual_CallCount = 0
+    GetCorreoAdministrador_WasCalled = False
+    GetCorreoAdministrador_CallCount = 0
 End Sub
 
 '******************************************************************************
@@ -124,4 +145,28 @@ Private Function IConfig_GetAttachmentsPath() As String
     GetAttachmentsPath_CallCount = GetAttachmentsPath_CallCount + 1
     
     IConfig_GetAttachmentsPath = GetMockSettingValue("ATTACHMENTS_PATH")
+End Function
+
+' Implementación de IConfig_GetCorreosDBPath
+Private Function IConfig_GetCorreosDBPath() As String
+    GetCorreosDBPath_WasCalled = True
+    GetCorreosDBPath_CallCount = GetCorreosDBPath_CallCount + 1
+    
+    IConfig_GetCorreosDBPath = GetMockSettingValue("CORREOS_DB_PATH")
+End Function
+
+' Implementación de IConfig_GetUsuarioActual
+Private Function IConfig_GetUsuarioActual() As String
+    GetUsuarioActual_WasCalled = True
+    GetUsuarioActual_CallCount = GetUsuarioActual_CallCount + 1
+    
+    IConfig_GetUsuarioActual = GetMockSettingValue("USUARIO_ACTUAL")
+End Function
+
+' Implementación de IConfig_GetCorreoAdministrador
+Private Function IConfig_GetCorreoAdministrador() As String
+    GetCorreoAdministrador_WasCalled = True
+    GetCorreoAdministrador_CallCount = GetCorreoAdministrador_CallCount + 1
+    
+    IConfig_GetCorreoAdministrador = GetMockSettingValue("CORREO_ADMINISTRADOR")
 End Function

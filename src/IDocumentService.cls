@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Interfaz: IDocumentService
@@ -16,7 +16,7 @@ Option Explicit
 ' Parámetros:
 '   - laSolicitud: El objeto de solicitud que contiene todos los datos.
 ' Retorna: Ruta completa del documento generado o una cadena vacÃ­a si falla.
-Public Function GenerarDocumento(ByVal laSolicitud As T_Solicitud) As String
+Public Function GenerarDocumento(ByVal solicitud As T_Solicitud) As String
 End Function
 
 ' Lee un documento Word y actualiza la solicitud correspondiente en la base de datos.

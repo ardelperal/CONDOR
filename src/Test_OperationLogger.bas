@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 
 #If DEV_MODE Then
@@ -33,7 +33,7 @@ End Function
 ' PRUEBAS UNITARIAS PURAS Y AISLADAS PARA COperationLogger
 ' ============================================================================
 
-Public Function Test_Initialize_WithValidDependencies_Success() As Boolean
+Public Function Test_Initialize_WithValidDependencies_Success() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
@@ -44,37 +44,38 @@ Public Function Test_Initialize_WithValidDependencies_Success() As Boolean
     ' Act
     logger.Initialize mockConfig, mockRepository
     
-    ' Assert - Si no hay error, la inicializaciÃ³n fue exitosa
-    Test_Initialize_WithValidDependencies_Success = True
+    ' Assert - Si no hay error, la inicialización fue exitosa
+    Set Test_Initialize_WithValidDependencies_Success = New CTestResult
+    Test_Initialize_WithValidDependencies_Success.Pass
     Exit Function
     
 TestFail:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Call errorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_Initialize_WithValidDependencies_Success")
-    Test_Initialize_WithValidDependencies_Success = False
+    Set Test_Initialize_WithValidDependencies_Success = New CTestResult
+    Test_Initialize_WithValidDependencies_Success.Fail "Error en inicialización: " & Err.Description
 End Function
 
-Public Function Test_LogOperation_WithoutInitialize_HandlesError() As Boolean
+Public Function Test_LogOperation_WithoutInitialize_HandlesError() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
     Dim logger As New COperationLogger
     ' No inicializar el logger intencionalmente
     
-    ' Act & Assert - DeberÃ­a manejar el error graciosamente
+    ' Act & Assert - Debería manejar el error graciosamente
     logger.LogOperation "TestType", "TestEntity", "TestDetails"
     
-    ' Si llegamos aquÃ­ sin crash, el manejo de errores funcionÃ³
-    Test_LogOperation_WithoutInitialize_HandlesError = True
+    ' Si llegamos aquí sin crash, el manejo de errores funcionó
+    Set Test_LogOperation_WithoutInitialize_HandlesError = New CTestResult
+    Test_LogOperation_WithoutInitialize_HandlesError.Pass
     Exit Function
     
 TestFail:
     ' El error es esperado, pero debe ser manejado internamente
-    Test_LogOperation_WithoutInitialize_HandlesError = True
+    Set Test_LogOperation_WithoutInitialize_HandlesError = New CTestResult
+    Test_LogOperation_WithoutInitialize_HandlesError.Pass
 End Function
 
-Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As Boolean
+Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
@@ -95,17 +96,16 @@ Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As 
     Call modAssert.AreEqual("EXP001", mockRepository.LastEntityId, "ID de entidad incorrecto")
     Call modAssert.AreEqual("Expediente creado exitosamente", mockRepository.LastDetails, "Detalles incorrectos")
     
-    Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = True
+    Set Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = New CTestResult
+    Test_LogOperation_WithValidParams_CallsRepositoryCorrectly.Pass
     Exit Function
     
 TestFail:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Call errorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_LogOperation_WithValidParams_CallsRepositoryCorrectly")
-    Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = False
+    Set Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = New CTestResult
+    Test_LogOperation_WithValidParams_CallsRepositoryCorrectly.Fail "Error en prueba: " & Err.Description
 End Function
 
-Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues() As Boolean
+Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
@@ -125,17 +125,16 @@ Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues
     Call modAssert.AreEqual("", mockRepository.LastEntityId, "ID de entidad deberÃ­a estar vacÃ­o")
     Call modAssert.AreEqual("", mockRepository.LastDetails, "Detalles deberÃ­an estar vacÃ­os")
     
-    Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = True
+    Set Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = New CTestResult
+    Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues.Pass
     Exit Function
     
 TestFail:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Call errorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues")
-    Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = False
+    Set Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = New CTestResult
+    Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues.Fail "Error en prueba: " & Err.Description
 End Function
 
-Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes() As Boolean
+Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
@@ -159,14 +158,13 @@ Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTime
     Call modAssert.AreEqual("EXP003", mockRepository.LastEntityId, "Ãšltimo ID de entidad incorrecto")
     Call modAssert.AreEqual("Tercera operaciÃ³n", mockRepository.LastDetails, "Ãšltimos detalles incorrectos")
     
-    Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = True
+    Set Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = New CTestResult
+    Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes.Pass
     Exit Function
     
 TestFail:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Call errorHandler.LogError(Err.Number, Err.Description, "Test_OperationLogger.Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes")
-    Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = False
+    Set Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = New CTestResult
+    Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes.Fail "Error en prueba: " & Err.Description
 End Function
 
 

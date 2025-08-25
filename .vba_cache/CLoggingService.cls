@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 Implements ILoggingService
 
@@ -61,11 +61,19 @@ ErrorHandler:
     Debug.Print "Error en CLoggingService.ILoggingService_LogWarning: " & Err.Description
 End Sub
 
+Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
+    ILoggingService_LogError errNumber, errDescription, moduleName, context
+End Sub
+
+Public Sub LogInfo(ByVal message As String, Optional ByVal moduleName As String)
+    ILoggingService_LogInfo message, moduleName
+End Sub
+
 Public Sub LogWarning(ByVal message As String, Optional ByVal moduleName As String)
     ILoggingService_LogWarning message, moduleName
 End Sub
 
-Private Sub WriteToLog(level As String, message As String, moduleName As String, Optional errNumber As Long, Optional context As String)
+Private Sub WriteToLog(level As String, message As String, Optional moduleName As String, Optional errNumber As Long, Optional context As String)
     On Error Resume Next
     Dim logFile As Object
     Dim json As String
@@ -99,10 +107,13 @@ Private Function EscapeJSON(ByVal str As String) As String
     ' FunciÃ³n auxiliar para escapar caracteres en JSON
     Dim temp As String
     temp = Replace(str, "\", "\\")
-    temp = Replace(temp, """""", "\\""")
+    temp = Replace(temp, """", "\"")
+    temp = Replace(temp, vbTab, "\t")
     temp = Replace(temp, vbCrLf, "\n")
-    temp = Replace(temp, vbCr, "\n")
+    temp = Replace(temp, vbCr, "\r")
     temp = Replace(temp, vbLf, "\n")
+    temp = Replace(temp, Chr(8), "\b")
+    temp = Replace(temp, Chr(12), "\f")
     EscapeJSON = temp
     
     Exit Function

@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' ============================================================================
 ' Módulo: Test_DocumentService
@@ -238,7 +238,7 @@ Private Function Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud()
     solicitudMock.tipoSolicitud = "Permiso"
     
     mockRepository.GetSolicitudById_ReturnValue = solicitudMock
-    mockRepository.UpdateSolicitud_ReturnValue = True
+    mockRepository.SetSaveSolicitudReturnValue 1
     mockWordManager.LeerContenidoDocumento_ReturnValue = "[nombre]Juan Pérez[/nombre][fecha]2025-01-01[/fecha]"
     
     ' Inicializar servicio
@@ -259,8 +259,8 @@ Private Function Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud()
         GoTo Cleanup
     End If
     
-    If Not mockRepository.UpdateSolicitud_WasCalled Then
-        testResult.Fail "No se llamó a UpdateSolicitud del repositorio"
+    If Not mockRepository.SaveSolicitudCalled Then
+        testResult.Fail "No se llamó a SaveSolicitud del repositorio"
         GoTo Cleanup
     End If
     

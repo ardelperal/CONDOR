@@ -48,7 +48,7 @@ Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal IdExpediente
     End If
     
     ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, ";PWD=" & m_Config.GetDatabasePassword())
     
     ' Construir la consulta SQL parametrizada
     sql = "SELECT e.idExpediente, e.NumeroExpediente, e.Titulo, e.Descripcion, " & _
@@ -67,7 +67,6 @@ Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal IdExpediente
     
     ' Limpiar recursos de consulta (mantener recordset abierto)
     Set qdf = Nothing
-    Set db = Nothing
     
     ' Devolver el recordset
     Set IExpedienteRepository_ObtenerExpedientePorId = rs
@@ -105,7 +104,7 @@ Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nem
     End If
     
     ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, ";PWD=" & m_Config.GetDatabasePassword())
     
     ' Construir la consulta SQL parametrizada
     sql = "SELECT e.idExpediente, e.NumeroExpediente, e.Titulo, e.Descripcion, " & _
@@ -124,7 +123,6 @@ Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nem
     
     ' Limpiar recursos de consulta (mantener recordset abierto)
     Set qdf = Nothing
-    Set db = Nothing
     
     ' Devolver el recordset
     Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = rs
@@ -161,7 +159,7 @@ Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() A
     End If
     
     ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, ";PWD=" & m_Config.GetDatabasePassword())
     
     ' Construir la consulta SQL para obtener expedientes activos
     sql = "SELECT e.idExpediente, e.NumeroExpediente, e.Titulo, e.Estado " & _
@@ -171,9 +169,6 @@ Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() A
     
     ' Ejecutar consulta
     Set rs = db.OpenRecordset(sql)
-    
-    ' Limpiar recursos de consulta (mantener recordset abierto)
-    Set db = Nothing
     
     ' Devolver el recordset
     Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = rs

@@ -26,6 +26,15 @@ End Function
 Public Function GetAttachmentsPath() As String
 End Function
 
+Public Function GetCorreosDBPath() As String
+End Function
+
+Public Function GetUsuarioActual() As String
+End Function
+
+Public Function GetCorreoAdministrador() As String
+End Function
+
 
 
 

@@ -42,7 +42,6 @@ Public Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) 
     
     ' Limpiar recursos de consulta (mantener recordset abierto)
     Set qdf = Nothing
-    Set db = Nothing
     
     ' Devolver el recordset
     Set IMapeoRepository_GetMapeoPorTipo = rs

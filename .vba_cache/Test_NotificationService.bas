@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 
 #If DEV_MODE Then
@@ -35,16 +35,17 @@ Private Function Test_EnviarNotificacion_Success_CallsDatabaseCorrectly_Result()
     On Error GoTo TestError
     
     ' Arrange
-    Dim notificationService As New CNotificationService
+    Dim notificationService As INotificationService
+    Set notificationService = New CNotificationService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockDatabase As New CMockDatabase
     
     ' Configurar mock config con valores de prueba
-    mockConfig.SetConfigValue "CORREOSDBPATH", "C:\test\correos_test.accdb"
-    mockConfig.SetConfigValue "DATABASEPASSWORD", "testpass123"
-    mockConfig.SetConfigValue "USUARIOACTUAL", "testuser@empresa.com"
-    mockConfig.SetConfigValue "CORREOADMINISTRADOR", "admin@empresa.com"
+    mockConfig.SetConfigValue "CORREOS_DB_PATH", "C:\test\correos_test.accdb"
+    mockConfig.SetConfigValue "DATABASE_PASSWORD", "testpass123"
+    mockConfig.SetConfigValue "USUARIO_ACTUAL", "testuser@empresa.com"
+    mockConfig.SetConfigValue "CORREO_ADMINISTRADOR", "admin@empresa.com"
     
     ' Inyectar dependencias
     notificationService.Initialize mockConfig, mockLogger
@@ -71,7 +72,7 @@ Private Function Test_EnviarNotificacion_Success_CallsDatabaseCorrectly_Result()
     Assert.IsFalse InStr(sqlQuery, "dest@empresa.com") > 0, "No debe contener valores literales (SQL injection prevention)"
     
     ' Verificar que se establecieron los parámetros correctamente
-    Assert.AreEqual 4, mockDatabase.ParameterCount, "Debe tener 4 parámetros"
+    Assert.AreEqual 10, mockDatabase.ParameterCount, "Debe tener 10 parámetros"
     Assert.AreEqual "dest@empresa.com", mockDatabase.GetParameterValue(0), "Parámetro 0 debe ser destinatarios"
     Assert.AreEqual "Asunto Test", mockDatabase.GetParameterValue(1), "Parámetro 1 debe ser asunto"
     Assert.AreEqual "<html>Cuerpo Test</html>", mockDatabase.GetParameterValue(2), "Parámetro 2 debe ser cuerpo"
@@ -97,7 +98,8 @@ Private Function Test_Initialize_WithValidDependencies_Result() As CTestResult
     On Error GoTo TestError
     
     ' Arrange
-    Dim notificationService As New CNotificationService
+    Dim notificationService As INotificationService
+    Set notificationService = New CNotificationService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     
@@ -125,7 +127,8 @@ Private Function Test_EnviarNotificacion_WithoutInitialize_Result() As CTestResu
     On Error GoTo TestError
     
     ' Arrange
-    Dim notificationService As New CNotificationService
+    Dim notificationService As INotificationService
+    Set notificationService = New CNotificationService
     ' No llamamos Initialize intencionalmente
     
     ' Act
@@ -155,7 +158,8 @@ Private Function Test_EnviarNotificacion_WithInvalidParameters_Result() As CTest
     On Error GoTo TestError
     
     ' Arrange
-    Dim notificationService As New CNotificationService
+    Dim notificationService As INotificationService
+    Set notificationService = New CNotificationService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     
@@ -196,15 +200,16 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     On Error GoTo TestError
     
     ' Arrange
-    Dim notificationService As New CNotificationService
+    Dim notificationService As INotificationService
+    Set notificationService = New CNotificationService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     
     ' Configurar valores específicos en el mock
-    mockConfig.SetConfigValue "CORREOSDBPATH", "C:\test\correos_test.accdb"
-    mockConfig.SetConfigValue "DATABASEPASSWORD", "password123"
-    mockConfig.SetConfigValue "USUARIOACTUAL", "usuario.test@empresa.com"
-    mockConfig.SetConfigValue "CORREOADMINISTRADOR", "admin.test@empresa.com"
+    mockConfig.SetConfigValue "CORREOS_DB_PATH", "C:\test\correos_test.accdb"
+    mockConfig.SetConfigValue "DATABASE_PASSWORD", "password123"
+    mockConfig.SetConfigValue "USUARIO_ACTUAL", "usuario.test@empresa.com"
+    mockConfig.SetConfigValue "CORREO_ADMINISTRADOR", "admin.test@empresa.com"
     
     notificationService.Initialize mockConfig, mockLogger
     
@@ -213,10 +218,10 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     resultado = notificationService.EnviarNotificacion("dest@empresa.com", "Asunto Config Test", "<html>Test Config</html>")
     
     ' Assert - Verificar que se obtuvieron los valores correctos
-    Assert.IsTrue mockConfig.WasGetConfigValueCalledWith("CORREOSDBPATH"), "Debe obtener CORREOSDBPATH del config"
-    Assert.IsTrue mockConfig.WasGetConfigValueCalledWith("DATABASEPASSWORD"), "Debe obtener DATABASEPASSWORD del config"
-    Assert.IsTrue mockConfig.WasGetConfigValueCalledWith("USUARIOACTUAL"), "Debe obtener USUARIOACTUAL del config"
-    Assert.IsTrue mockConfig.WasGetConfigValueCalledWith("CORREOADMINISTRADOR"), "Debe obtener CORREOADMINISTRADOR del config"
+    Assert.IsTrue mockConfig.GetCorreosDBPath_WasCalled, "Debe obtener CORREOS_DB_PATH del config"
+    Assert.IsTrue mockConfig.GetDatabasePassword_WasCalled, "Debe obtener DATABASE_PASSWORD del config"
+    Assert.IsTrue mockConfig.GetUsuarioActual_WasCalled, "Debe obtener USUARIO_ACTUAL del config"
+    Assert.IsTrue mockConfig.GetCorreoAdministrador_WasCalled, "Debe obtener CORREO_ADMINISTRADOR del config"
     
     result.Passed = True
     result.Message = "Prueba exitosa: EnviarNotificacion usa valores correctos del config inyectado"

@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modLoggingServiceFactory"
+Attribute VB_Name = "modLoggingServiceFactory"
 '******************************************************************************
 ' Módulo: modLoggingServiceFactory
 ' Propósito: Factory para crear instancias de ILoggingService con inyección de dependencias
@@ -24,7 +24,7 @@ Public Function CreateLoggingService() As ILoggingService
     
     ' Crear las dependencias
     Set config = modConfig.CreateConfigService()
-    Set fileSystem = New CFileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
     
     ' Crear el servicio
     Set service = New CLoggingService

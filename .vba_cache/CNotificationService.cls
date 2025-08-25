@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 ' CNotificationService.cls
 ' ImplementaciÃ³n segura del servicio de notificaciones asÃ­ncrono
@@ -55,10 +55,10 @@ Private Function INotificationService_EnviarNotificacion( _
     Dim usuarioActual As String
     Dim correoAdministrador As String
     
-    rutaCorreosDB = m_Config.GetValue("CORREOS_DB_PATH")
+    rutaCorreosDB = m_Config.GetCorreosDBPath()
     passwordDB = m_Config.GetDatabasePassword()
-    usuarioActual = m_Config.GetValue("USUARIO_ACTUAL")
-    correoAdministrador = m_Config.GetValue("CORREO_ADMINISTRADOR")
+    usuarioActual = m_Config.GetUsuarioActual()
+    correoAdministrador = m_Config.GetCorreoAdministrador()
     
     If Len(rutaCorreosDB) = 0 Then
         INotificationService_EnviarNotificacion = False

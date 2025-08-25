@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modDocumentServiceFactory"
+Attribute VB_Name = "modDocumentServiceFactory"
 Option Compare Database
 Option Explicit
 
@@ -23,7 +23,7 @@ Public Function CreateDocumentService() As IDocumentService
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
     Dim wordManager As IWordManager
-    Set wordManager = New CWordManager
+    Set wordManager = modWordManagerFactory.CreateWordManager()
     
     Dim mapeoRepository As IMapeoRepository
     Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository()

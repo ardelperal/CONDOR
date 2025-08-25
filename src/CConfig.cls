@@ -121,6 +121,21 @@ ErrorHandler:
     m_IsInitialized = False
 End Sub
 
+' Implementación de IConfig.GetCorreosDBPath
+Private Function IConfig_GetCorreosDBPath() As String
+    IConfig_GetCorreosDBPath = GetSettingValue("CORREOS_DB_PATH")
+End Function
+
+' Implementación de IConfig.GetUsuarioActual
+Private Function IConfig_GetUsuarioActual() As String
+    IConfig_GetUsuarioActual = GetSettingValue("USUARIO_ACTUAL")
+End Function
+
+' Implementación de IConfig.GetCorreoAdministrador
+Private Function IConfig_GetCorreoAdministrador() As String
+    IConfig_GetCorreoAdministrador = GetSettingValue("CORREO_ADMINISTRADOR")
+End Function
+
 
 
 

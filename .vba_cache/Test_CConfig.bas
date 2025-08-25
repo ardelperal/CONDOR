@@ -42,17 +42,17 @@ Private Function Test_GetValue_DATAPATH_Success() As CTestResult
     ' Arrange
     Dim config As New CConfig
     Dim settings As New Collection
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "DATAPATH"
-    settings.Add "testpassword", "DATABASEPASSWORD"
+    settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
+    settings.Add "testpassword", "DATABASE_PASSWORD"
     config.LoadFromCollection settings
     
     ' Act
     Dim dataPath As String
-    dataPath = config.GetValue("DATAPATH")
+    dataPath = config.GetValue("BACKEND_DB_PATH")
     
     ' Assert
-    modAssert.AssertEquals "C:\Test\CONDOR_Backend.accdb", dataPath, "DATAPATH debe ser el valor configurado"
-    modAssert.AssertTrue InStr(dataPath, ".accdb") > 0, "DATAPATH debe contener .accdb"
+    modAssert.AssertEquals "C:\Test\CONDOR_Backend.accdb", dataPath, "BACKEND_DB_PATH debe ser el valor configurado"
+    modAssert.AssertTrue InStr(dataPath, ".accdb") > 0, "BACKEND_DB_PATH debe contener .accdb"
     
     testResult.Pass
     GoTo CleanUp
@@ -75,16 +75,16 @@ Private Function Test_GetValue_DATABASEPASSWORD_Success() As CTestResult
     ' Arrange
     Dim config As New CConfig
     Dim settings As New Collection
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "DATAPATH"
-    settings.Add "testpassword", "DATABASEPASSWORD"
+    settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
+    settings.Add "testpassword", "DATABASE_PASSWORD"
     config.LoadFromCollection settings
     
     ' Act
     Dim password As String
-    password = config.GetValue("DATABASEPASSWORD")
+    password = config.GetValue("DATABASE_PASSWORD")
     
     ' Assert
-    modAssert.AssertEquals "testpassword", password, "DATABASEPASSWORD debe ser 'testpassword'"
+    modAssert.AssertEquals "testpassword", password, "DATABASE_PASSWORD debe ser 'testpassword'"
     
     testResult.Pass
     GoTo CleanUp

@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modErrorHandlerFactory"
+Attribute VB_Name = "modErrorHandlerFactory"
 Option Compare Database
 Option Explicit
 ' Módulo: modErrorHandlerFactory
@@ -17,8 +17,8 @@ Public Function CreateErrorHandlerService() As IErrorHandlerService
     ' Obtener instancia de configuración usando el nuevo factory
     Set config = modConfig.CreateConfigService()
     
-    ' Crear instancia del sistema de ficheros
-    Set fileSystem = New CFileSystem
+    ' Crear instancia del sistema de ficheros usando factory
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
     
     ' Inicializar el servicio con sus dependencias
     errorHandlerInstance.Initialize config, fileSystem

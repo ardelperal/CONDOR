@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_CExpedienteService"
+Attribute VB_Name = "Test_CExpedienteService"
 Option Compare Database
 Option Explicit
 
@@ -218,97 +218,84 @@ CleanUp:
 End Function
 
 ' ============================================================================
-' FUNCIONES AUXILIARES PARA CREAR RECORDSETS MOCK
+' FUNCIONES AUXILIARES PARA CREAR RECORDSETS MOCK CON DAO
 ' ============================================================================
 
-' Crea un recordset mock con datos de un expediente específico
-Private Function CreateMockExpedienteRecordset(idExp As Long, numero As String, titulo As String, descripcion As String, fecha As Date, estado As String, idUsuario As Long, nombreUsuario As String) As Object
-    Dim rs As Object
+' Crea un recordset DAO con datos de un expediente específico usando BD temporal
+Private Function CreateMockExpedienteRecordset(idExp As Long, numero As String, titulo As String, descripcion As String, fecha As Date, estado As String, idUsuario As Long, nombreUsuario As String) As DAO.Recordset
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim tempDbPath As String
     
-    ' Crear recordset ADODB en memoria
-    Set rs = CreateObject("ADODB.Recordset")
+    ' Crear base de datos temporal
+    tempDbPath = Environ("TEMP") & "\TestExpediente_" & Format(Now, "yyyymmddhhnnss") & ".accdb"
+    Set db = DBEngine.CreateDatabase(tempDbPath, dbLangGeneral)
     
-    ' Definir campos del recordset
-    rs.Fields.Append "idExpediente", 3 ' adInteger
-    rs.Fields.Append "NumeroExpediente", 202, 50 ' adVarWChar
-    rs.Fields.Append "Titulo", 202, 255 ' adVarWChar
-    rs.Fields.Append "Descripcion", 203 ' adLongVarWChar
-    rs.Fields.Append "FechaCreacion", 7 ' adDate
-    rs.Fields.Append "Estado", 202, 50 ' adVarWChar
-    rs.Fields.Append "IdUsuarioCreador", 3 ' adInteger
-    rs.Fields.Append "NombreUsuarioCreador", 202, 255 ' adVarWChar
+    ' Crear tabla de expedientes
+    db.Execute "CREATE TABLE Expedientes (" & _
+               "idExpediente LONG PRIMARY KEY, " & _
+               "NumeroExpediente TEXT(50), " & _
+               "Titulo TEXT(255), " & _
+               "Descripcion MEMO, " & _
+               "FechaCreacion DATETIME, " & _
+               "Estado TEXT(50), " & _
+               "IdUsuarioCreador LONG, " & _
+               "NombreUsuarioCreador TEXT(255))"
     
-    ' Abrir recordset en memoria
-    rs.Open
+    ' Insertar datos de prueba
+    db.Execute "INSERT INTO Expedientes (idExpediente, NumeroExpediente, Titulo, Descripcion, FechaCreacion, Estado, IdUsuarioCreador, NombreUsuarioCreador) " & _
+               "VALUES (" & idExp & ", '" & numero & "', '" & titulo & "', '" & descripcion & "', #" & Format(fecha, "mm/dd/yyyy") & "#, '" & estado & "', " & idUsuario & ", '" & nombreUsuario & "')"
     
-    ' Añadir fila de datos de prueba
-    rs.AddNew
-    rs.Fields("idExpediente").Value = idExp
-    rs.Fields("NumeroExpediente").Value = numero
-    rs.Fields("Titulo").Value = titulo
-    rs.Fields("Descripcion").Value = descripcion
-    rs.Fields("FechaCreacion").Value = fecha
-    rs.Fields("Estado").Value = estado
-    rs.Fields("IdUsuarioCreador").Value = idUsuario
-    rs.Fields("NombreUsuarioCreador").Value = nombreUsuario
-    rs.Update
-    
-    ' Mover al primer registro
-    rs.MoveFirst
+    ' Abrir recordset
+    Set rs = db.OpenRecordset("SELECT * FROM Expedientes", dbOpenDynaset)
     
     Set CreateMockExpedienteRecordset = rs
 End Function
 
-' Crea un recordset mock con lista de expedientes para selector
-Private Function CreateMockExpedientesListRecordset() As Object
-    Dim rs As Object
+' Crea un recordset DAO con lista de expedientes para selector usando BD temporal
+Private Function CreateMockExpedientesListRecordset() As DAO.Recordset
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim tempDbPath As String
     
-    ' Crear recordset ADODB en memoria
-    Set rs = CreateObject("ADODB.Recordset")
+    ' Crear base de datos temporal
+    tempDbPath = Environ("TEMP") & "\TestExpedientesList_" & Format(Now, "yyyymmddhhnnss") & ".accdb"
+    Set db = DBEngine.CreateDatabase(tempDbPath, dbLangGeneral)
     
-    ' Definir campos del recordset
-    rs.Fields.Append "idExpediente", 3 ' adInteger
-    rs.Fields.Append "NumeroExpediente", 202, 50 ' adVarWChar
-    rs.Fields.Append "Titulo", 202, 255 ' adVarWChar
-    rs.Fields.Append "Estado", 202, 50 ' adVarWChar
+    ' Crear tabla de expedientes
+    db.Execute "CREATE TABLE Expedientes (" & _
+               "idExpediente LONG PRIMARY KEY, " & _
+               "NumeroExpediente TEXT(50), " & _
+               "Titulo TEXT(255), " & _
+               "Estado TEXT(50))"
     
-    ' Abrir recordset en memoria
-    rs.Open
+    ' Insertar datos de prueba
+    db.Execute "INSERT INTO Expedientes (idExpediente, NumeroExpediente, Titulo, Estado) " & _
+               "VALUES (1, 'EXP-2024-001', 'Expediente Uno', 'Activo')"
+    db.Execute "INSERT INTO Expedientes (idExpediente, NumeroExpediente, Titulo, Estado) " & _
+               "VALUES (2, 'EXP-2024-002', 'Expediente Dos', 'En Proceso')"
     
-    ' Añadir primer registro de prueba
-    rs.AddNew
-    rs.Fields("idExpediente").Value = 1
-    rs.Fields("NumeroExpediente").Value = "EXP-2024-001"
-    rs.Fields("Titulo").Value = "Expediente Uno"
-    rs.Fields("Estado").Value = "Activo"
-    rs.Update
-    
-    ' Añadir segundo registro de prueba
-    rs.AddNew
-    rs.Fields("idExpediente").Value = 2
-    rs.Fields("NumeroExpediente").Value = "EXP-2024-002"
-    rs.Fields("Titulo").Value = "Expediente Dos"
-    rs.Fields("Estado").Value = "En Proceso"
-    rs.Update
-    
-    ' Mover al primer registro
-    rs.MoveFirst
+    ' Abrir recordset
+    Set rs = db.OpenRecordset("SELECT * FROM Expedientes", dbOpenDynaset)
     
     Set CreateMockExpedientesListRecordset = rs
 End Function
 
-' Crea un recordset vacío para simular casos donde no se encuentran datos
-Private Function CreateEmptyRecordset() As Object
-    Dim rs As Object
+' Crea un recordset DAO vacío para simular casos donde no se encuentran datos
+Private Function CreateEmptyRecordset() As DAO.Recordset
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim tempDbPath As String
     
-    ' Crear recordset ADODB en memoria
-    Set rs = CreateObject("ADODB.Recordset")
+    ' Crear base de datos temporal
+    tempDbPath = Environ("TEMP") & "\TestEmpty_" & Format(Now, "yyyymmddhhnnss") & ".accdb"
+    Set db = DBEngine.CreateDatabase(tempDbPath, dbLangGeneral)
     
-    ' Definir un campo básico para el recordset vacío
-    rs.Fields.Append "id", 3 ' adInteger
+    ' Crear tabla vacía
+    db.Execute "CREATE TABLE EmptyTable (id LONG PRIMARY KEY)"
     
-    ' Abrir recordset en memoria (sin añadir registros, queda vacío)
-    rs.Open
+    ' Abrir recordset vacío
+    Set rs = db.OpenRecordset("SELECT * FROM EmptyTable", dbOpenDynaset)
     
     Set CreateEmptyRecordset = rs
 End Function

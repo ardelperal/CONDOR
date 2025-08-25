@@ -44,7 +44,8 @@ Private Function Test_CreateSolicitud_ConParametrosValidos_DebeCrearSolicitudCon
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim solicitudService As New CSolicitudService
+    Dim solicitudService As ISolicitudService
+    Set solicitudService = New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
@@ -114,7 +115,8 @@ Private Function Test_CreateSolicitud_ConIdExpedienteVacio_DebeLanzarError() As 
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim solicitudService As New CSolicitudService
+    Dim solicitudService As ISolicitudService
+    Set solicitudService = New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
@@ -155,10 +157,12 @@ Private Function Test_CreateSolicitud_ConTipoVacio_DebeLanzarError() As CTestRes
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim solicitudService As New CSolicitudService
+    Dim solicitudService As ISolicitudService
+    Set solicitudService = New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
+    ' Inicializar servicio con dependencias
     solicitudService.Initialize mockRepository, mockLogger
     
     ' Act & Assert
@@ -196,7 +200,8 @@ Private Function Test_CreateSolicitud_SinInicializar_DebeLanzarError() As CTestR
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim solicitudService As New CSolicitudService
+    Dim solicitudService As ISolicitudService
+    Set solicitudService = New CSolicitudService
     ' No inicializar el servicio
     
     ' Act & Assert
@@ -236,13 +241,15 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim solicitudService As New CSolicitudService
+    Dim solicitudService As ISolicitudService
+    Set solicitudService = New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
     ' Configurar mocks
     mockRepository.SetSaveSolicitudReturnValue 456 ' ID exitoso
     
+    ' Inicializar servicio con dependencias
     solicitudService.Initialize mockRepository, mockLogger
     
     ' Crear solicitud de prueba
@@ -306,7 +313,8 @@ Private Function Test_SaveSolicitud_ConSolicitudNula_DebeLanzarError() As CTestR
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim solicitudService As New CSolicitudService
+    Dim solicitudService As ISolicitudService
+    Set solicitudService = New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
@@ -347,7 +355,8 @@ Private Function Test_SaveSolicitud_SinInicializar_DebeLanzarError() As CTestRes
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim solicitudService As New CSolicitudService
+    Dim solicitudService As ISolicitudService
+    Set solicitudService = New CSolicitudService
     ' No inicializar el servicio
     
     Dim solicitud As New T_Solicitud

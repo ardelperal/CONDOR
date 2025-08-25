@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_LoggingService"
+Attribute VB_Name = "Test_LoggingService"
 '******************************************************************************
 ' Módulo: Test_LoggingService
 ' Propósito: Pruebas unitarias para CLoggingService usando mocks
@@ -82,7 +82,7 @@ Private Function Test_LogError_WithValidMessage_CallsFileSystemCorrectly() As CT
     Set mockConfig = New CMockConfig
     Set mockFileSystem = New CMockFileSystem
     
-    mockConfig.SetLogPath "C:\test\log.txt"
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\test\log.txt"
     service.Initialize mockConfig, mockFileSystem
     
     ' Act
@@ -127,7 +127,7 @@ Private Function Test_LogInfo_WithValidMessage_CallsFileSystemCorrectly() As CTe
     Set mockConfig = New CMockConfig
     Set mockFileSystem = New CMockFileSystem
     
-    mockConfig.SetLogPath "C:\test\info.log"
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\test\info.log"
     service.Initialize mockConfig, mockFileSystem
     
     ' Act
@@ -172,7 +172,7 @@ Private Function Test_LogWarning_WithValidMessage_CallsFileSystemCorrectly() As 
     Set mockConfig = New CMockConfig
     Set mockFileSystem = New CMockFileSystem
     
-    mockConfig.SetLogPath "C:\test\warning.log"
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\test\warning.log"
     service.Initialize mockConfig, mockFileSystem
     
     ' Act
@@ -218,7 +218,7 @@ Private Function Test_LogError_WithAllParameters_WritesCompleteLogEntry() As CTe
     Set mockConfig = New CMockConfig
     Set mockFileSystem = New CMockFileSystem
     
-    mockConfig.SetLogPath "C:\test\complete.log"
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\test\complete.log"
     service.Initialize mockConfig, mockFileSystem
     
     Set mockTextFile = mockFileSystem.GetMockTextFile()

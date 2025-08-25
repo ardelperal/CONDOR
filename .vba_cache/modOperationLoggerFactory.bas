@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 
 ' Módulo: modOperationLoggerFactory
@@ -36,7 +36,7 @@ Public Function CreateOperationLogger() As IOperationLogger
 ErrorHandler:
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "modOperationLoggerFactory.CreateOperationLogger"
+    Call errorHandler.LogError(Err.Number, Err.Description, "modOperationLoggerFactory", "Error en la creación del logger de operaciones")
     Set CreateOperationLogger = Nothing
 End Function
 
@@ -48,7 +48,7 @@ Public Sub SetMockLogger(ByVal mockLogger As IOperationLogger)
 ErrorHandler:
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "modOperationLoggerFactory.SetMockLogger"
+    Call errorHandler.LogError(Err.Number, Err.Description, "modOperationLoggerFactory", "Error configurando mock logger")
 End Sub
 
 ' Método para resetear el mock logger
@@ -59,5 +59,5 @@ Public Sub ResetMockLogger()
 ErrorHandler:
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "modOperationLoggerFactory.ResetMockLogger"
+    Call errorHandler.LogError(Err.Number, Err.Description, "modOperationLoggerFactory", "Error reseteando mock logger")
 End Sub

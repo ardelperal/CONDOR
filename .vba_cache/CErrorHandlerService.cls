@@ -1,4 +1,4 @@
-﻿Option Compare Database
+Option Compare Database
 Option Explicit
 Implements IErrorHandlerService
 
@@ -11,7 +11,6 @@ Private m_configService As IConfig
 Private m_FileSystem As IFileSystem
 
 Public Sub Initialize(config As IConfig, fileSystem As IFileSystem)
-    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     Set m_configService = config
     Set m_FileSystem = fileSystem
@@ -28,7 +27,6 @@ Private Sub Class_Terminate()
 End Sub
 
 Private Sub IErrorHandlerService_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
-    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     WriteToLog "ERROR", errDescription, moduleName, errNumber, context
@@ -36,12 +34,11 @@ Private Sub IErrorHandlerService_LogError(ByVal errNumber As Long, ByVal errDesc
     Exit Sub
     
 ErrorHandler:
-    ' No podemos usar modErrorHandler aquÃ­ para evitar recursiÃ³n infinita
+    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
     Debug.Print "Error en CErrorHandlerService.IErrorHandlerService_LogError: " & Err.Description
 End Sub
 
 Private Sub IErrorHandlerService_LogInfo(ByVal message As String, Optional ByVal moduleName As String)
-    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     WriteToLog "INFO", message, moduleName
@@ -49,12 +46,11 @@ Private Sub IErrorHandlerService_LogInfo(ByVal message As String, Optional ByVal
     Exit Sub
     
 ErrorHandler:
-    ' No podemos usar modErrorHandler aquÃ­ para evitar recursiÃ³n infinita
+    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
     Debug.Print "Error en CErrorHandlerService.IErrorHandlerService_LogInfo: " & Err.Description
 End Sub
 
 Private Sub IErrorHandlerService_LogWarning(ByVal message As String, Optional ByVal moduleName As String)
-    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     WriteToLog "WARNING", message, moduleName
@@ -62,15 +58,23 @@ Private Sub IErrorHandlerService_LogWarning(ByVal message As String, Optional By
     Exit Sub
     
 ErrorHandler:
-    ' No podemos usar modErrorHandler aquÃ­ para evitar recursiÃ³n infinita
+    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
     Debug.Print "Error en CErrorHandlerService.IErrorHandlerService_LogWarning: " & Err.Description
+End Sub
+
+Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal context As String)
+    IErrorHandlerService_LogError errNumber, errDescription, moduleName, context
+End Sub
+
+Public Sub LogInfo(ByVal message As String, Optional ByVal moduleName As String)
+    IErrorHandlerService_LogInfo message, moduleName
 End Sub
 
 Public Sub LogWarning(ByVal message As String, Optional ByVal moduleName As String)
     IErrorHandlerService_LogWarning message, moduleName
 End Sub
 
-Private Sub WriteToLog(level As String, message As String, moduleName As String, Optional errNumber As Long, Optional context As String)
+Private Sub WriteToLog(level As String, message As String, Optional moduleName As String, Optional errNumber As Long, Optional context As String)
     On Error Resume Next
     Dim logFile As Object
     Dim json As String
@@ -98,22 +102,29 @@ Private Sub WriteToLog(level As String, message As String, moduleName As String,
 End Sub
 
 Private Function EscapeJSON(ByVal str As String) As String
-    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    ' FunciÃ³n auxiliar para escapar caracteres en JSON
+    ' Función auxiliar para escapar caracteres en JSON de forma robusta
     Dim temp As String
-    temp = Replace(str, "\", "\\")
-    temp = Replace(temp, """""", "\\""")
+    temp = str
+    
+    ' Escapar caracteres especiales en el orden correcto
+    temp = Replace(temp, "\", "\\")
+    temp = Replace(temp, Chr(34), "\" & Chr(34))
+    temp = Replace(temp, vbTab, "\t")
     temp = Replace(temp, vbCrLf, "\n")
     temp = Replace(temp, vbCr, "\n")
     temp = Replace(temp, vbLf, "\n")
+    temp = Replace(temp, Chr(8), "\b")
+    temp = Replace(temp, Chr(12), "\f")
+    temp = Replace(temp, "/", "\/")
+    
     EscapeJSON = temp
     
     Exit Function
     
 ErrorHandler:
-    ' No podemos usar modErrorHandler aquÃ­ para evitar recursiÃ³n infinita
+    ' No podemos usar modErrorHandler aquí para evitar recursión infinita
     Debug.Print "Error en CErrorHandlerService.EscapeJSON: " & Err.Description
     EscapeJSON = str ' Devolver string original si falla el escape
 End Function
