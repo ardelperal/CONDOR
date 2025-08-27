@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -78,7 +78,7 @@ End Sub
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
 ' ============================================================================
 
-Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
+Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
     IErrorHandlerService_LogError errNumber, errDescription, moduleName, isCritical
 End Sub
 

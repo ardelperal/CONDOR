@@ -71,6 +71,10 @@ Public Function GetIDAplicacionCondor() As String
     GetIDAplicacionCondor = IConfig_GetIDAplicacionCondor()
 End Function
 
+Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
+    IConfig_SetSetting key, value
+End Sub
+
 ' Función auxiliar privada para obtener valores de la colección m_Settings
 Private Function GetSettingValue(ByVal key As String) As Variant
     On Error GoTo ErrorHandler
@@ -171,6 +175,14 @@ End Function
 Private Function IConfig_GetIDAplicacionCondor() As String
     IConfig_GetIDAplicacionCondor = GetSettingValue("IDAplicacion_CONDOR")
 End Function
+
+' Implementación de IConfig.SetSetting
+Private Sub IConfig_SetSetting(ByVal key As String, ByVal value As Variant)
+    On Error Resume Next
+    m_Settings.Remove UCase(key)
+    m_Settings.Add value, UCase(key)
+    On Error GoTo 0
+End Sub
 
 
 

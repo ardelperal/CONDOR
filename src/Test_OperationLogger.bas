@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_OperationLogger"
+Attribute VB_Name = "Test_OperationLogger"
 Option Compare Database
 Option Explicit
 
@@ -42,9 +42,10 @@ Public Function Test_Initialize_WithValidDependencies_Success() As CTestResult
     Dim logger As New COperationLogger
     Dim mockConfig As New CMockConfig
     Dim mockRepository As New CMockOperationRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Act
-    logger.Initialize mockConfig, mockRepository
+    Call logger.Initialize(mockConfig, mockRepository, mockErrorHandler)
     
     ' Assert - Si no hay error, la inicialización fue exitosa
     Set Test_Initialize_WithValidDependencies_Success = New CTestResult
@@ -53,7 +54,7 @@ Public Function Test_Initialize_WithValidDependencies_Success() As CTestResult
     
 TestFail:
     Set Test_Initialize_WithValidDependencies_Success = New CTestResult
-    Test_Initialize_WithValidDependencies_Success.Fail "Error en inicialización: " & Err.Description
+    Call Test_Initialize_WithValidDependencies_Success.Fail("Error en inicialización: " & Err.Description)
 End Function
 
 Public Function Test_LogOperation_WithoutInitialize_HandlesError() As CTestResult
@@ -64,7 +65,7 @@ Public Function Test_LogOperation_WithoutInitialize_HandlesError() As CTestResul
     ' No inicializar el logger intencionalmente
     
     ' Act & Assert - Debería manejar el error graciosamente
-    logger.LogOperation "TestType", "TestEntity", "TestDetails"
+    Call logger.LogOperation("TestType", "TestEntity", "TestDetails")
     
     ' Si llegamos aquí sin crash, el manejo de errores funcionó
     Set Test_LogOperation_WithoutInitialize_HandlesError = New CTestResult
@@ -84,12 +85,13 @@ Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As 
     Dim logger As New COperationLogger
     Dim mockConfig As New CMockConfig
     Dim mockRepository As New CMockOperationRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     mockRepository.Reset
-    logger.Initialize mockConfig, mockRepository
+    Call logger.Initialize(mockConfig, mockRepository, mockErrorHandler)
     
     ' Act
-    logger.LogOperation "CREATE", "EXP001", "Expediente creado exitosamente"
+    Call logger.LogOperation("CREATE", "EXP001", "Expediente creado exitosamente")
     
     ' Assert
     Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
@@ -104,7 +106,7 @@ Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As 
     
 TestFail:
     Set Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = New CTestResult
-    Test_LogOperation_WithValidParams_CallsRepositoryCorrectly.Fail "Error en prueba: " & Err.Description
+    Call Test_LogOperation_WithValidParams_CallsRepositoryCorrectly.Fail("Error en prueba: " & Err.Description)
 End Function
 
 Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues() As CTestResult
@@ -114,12 +116,13 @@ Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues
     Dim logger As New COperationLogger
     Dim mockConfig As New CMockConfig
     Dim mockRepository As New CMockOperationRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     mockRepository.Reset
-    logger.Initialize mockConfig, mockRepository
+    logger.Initialize mockConfig, mockRepository, mockErrorHandler
     
     ' Act
-    logger.LogOperation "", "", ""
+    Call logger.LogOperation("", "", "")
     
     ' Assert
     Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
@@ -133,7 +136,7 @@ Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues
     
 TestFail:
     Set Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = New CTestResult
-    Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues.Fail "Error en prueba: " & Err.Description
+    Call Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues.Fail("Error en prueba: " & Err.Description)
 End Function
 
 Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes() As CTestResult
@@ -143,14 +146,15 @@ Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTime
     Dim logger As New COperationLogger
     Dim mockConfig As New CMockConfig
     Dim mockRepository As New CMockOperationRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     mockRepository.Reset
-    logger.Initialize mockConfig, mockRepository
+    logger.Initialize mockConfig, mockRepository, mockErrorHandler
     
     ' Act
-    logger.LogOperation "CREATE", "EXP001", "Primera operación"
-    logger.LogOperation "UPDATE", "EXP002", "Segunda operación"
-    logger.LogOperation "DELETE", "EXP003", "Tercera operación"
+    Call logger.LogOperation("CREATE", "EXP001", "Primera operación")
+    Call logger.LogOperation("UPDATE", "EXP002", "Segunda operación")
+    Call logger.LogOperation("DELETE", "EXP003", "Tercera operación")
     
     ' Assert
     Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
@@ -166,7 +170,7 @@ Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTime
     
 TestFail:
     Set Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = New CTestResult
-    Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes.Fail "Error en prueba: " & Err.Description
+    Call Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes.Fail("Error en prueba: " & Err.Description)
 End Function
 
 

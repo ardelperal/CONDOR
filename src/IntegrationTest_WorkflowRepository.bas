@@ -14,6 +14,8 @@ Option Compare Database
 Option Explicit
 
 ' Constantes para las pruebas
+Private Const TEST_DB_PATH As String = "back\test_db\CONDOR_integration_test.accdb"
+Private Const TEMPLATE_DB_PATH As String = "back\test_db\CONDOR_template.accdb"
 Private Const TEST_TIPO_SOLICITUD As String = "PC"
 Private Const TEST_ESTADO_INICIAL As String = "BORRADOR"
 Private Const TEST_ESTADO_REVISION As String = "EN_REVISION"
@@ -22,8 +24,10 @@ Private Const TEST_ROL_ADMIN As String = "ADMINISTRADOR"
 
 ' Variables globales para las pruebas
 Private m_Repository As CWorkflowRepository
-Private m_Config As CConfig
+Private testConfig As CConfig
 Private m_TestSolicitudID As Long
+Private m_Config As CConfig
+Private activeTestPath As String
 
 '''
 ' Ejecuta todas las pruebas de integración del repositorio
@@ -33,9 +37,6 @@ Public Function IntegrationTest_WorkflowRepository_RunAll() As CTestSuiteResult
     suiteResult.Initialize "IntegrationTest_WorkflowRepository - Pruebas de Integración"
     
     On Error GoTo ErrorHandler
-    
-    ' Configurar entorno de pruebas
-    Call SetupTestEnvironment
     
     ' Ejecutar pruebas individuales
     suiteResult.AddTestResult Test_IsValidTransition_Integration()
@@ -48,9 +49,6 @@ Public Function IntegrationTest_WorkflowRepository_RunAll() As CTestSuiteResult
     suiteResult.AddTestResult Test_HasTransitionPermission_Integration()
     suiteResult.AddTestResult Test_RequiresApproval_Integration()
     suiteResult.AddTestResult Test_GetTransitionRequiredRole_Integration()
-    
-    ' Limpiar entorno de pruebas
-    Call TeardownTestEnvironment
     
     Set IntegrationTest_WorkflowRepository_RunAll = suiteResult
     Exit Function
@@ -66,28 +64,66 @@ ErrorHandler:
 End Function
 
 '''
-' Configura el entorno de pruebas
+' Configura el entorno de pruebas con base de datos separada
 '''
-Private Sub SetupTestEnvironment()
+Private Sub Setup()
     On Error GoTo ErrorHandler
     
-    Debug.Print "Configurando entorno de pruebas..."
+    ' Aprovisionar la base de datos de prueba antes de cada ejecución
+    Dim fullTemplatePath As String
+    Dim fullTestPath As String
     
-    ' Inicializar configuración
-    Set m_Config = New CConfig
+    fullTemplatePath = modTestUtils.GetProjectPath() & TEMPLATE_DB_PATH
+    fullTestPath = modTestUtils.GetProjectPath() & TEST_DB_PATH
+    activeTestPath = fullTestPath
     
-    ' Inicializar repositorio
+    modTestUtils.PrepareTestDatabase fullTemplatePath, fullTestPath
+    
+    ' Configurar objetos de prueba
+    Set testConfig = New CConfig
+    testConfig.SetSetting "DATABASE_PATH", fullTestPath
+    Set m_Config = testConfig
+    
     Set m_Repository = New CWorkflowRepository
-    m_Repository.Initialize m_Config
+    m_Repository.Initialize testConfig
     
-    ' Crear una solicitud de prueba para las pruebas que la requieren
-    m_TestSolicitudID = CreateTestSolicitud()
+    ' Insertar datos de prueba en las tablas
+    Call InsertTestData
     
-    Debug.Print "Entorno configurado. SolicitudID de prueba: " & m_TestSolicitudID
     Exit Sub
     
 ErrorHandler:
-    Debug.Print "ERROR en SetupTestEnvironment: " & Err.Number & " - " & Err.Description
+    Debug.Print "Error en Setup (" & Err.Number & "): " & Err.Description
+    Err.Raise Err.Number, "IntegrationTest_WorkflowRepository.Setup", Err.Description
+End Sub
+
+
+
+'''
+' Inserta datos de prueba en las tablas
+'''
+Private Sub InsertTestData()
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    Set db = DBEngine.OpenDatabase(testConfig.GetSetting("DATABASE_PATH"), dbFailOnError, False)
+    
+    ' Insertar estados de prueba
+    db.Execute "INSERT INTO TbEstados (Codigo, Descripcion, TipoSolicitud, EsInicial, EsFinal) VALUES ('BORRADOR', 'Borrador', 'PC', True, False)"
+    db.Execute "INSERT INTO TbEstados (Codigo, Descripcion, TipoSolicitud, EsInicial, EsFinal) VALUES ('EN_REVISION', 'En Revisión', 'PC', False, False)"
+    db.Execute "INSERT INTO TbEstados (Codigo, Descripcion, TipoSolicitud, EsInicial, EsFinal) VALUES ('APROBADO', 'Aprobado', 'PC', False, True)"
+    
+    ' Insertar transiciones de prueba
+    db.Execute "INSERT INTO TbTransiciones (TipoSolicitud, EstadoOrigen, EstadoDestino, RolRequerido, RequiereAprobacion) VALUES ('PC', 'BORRADOR', 'EN_REVISION', 'USUARIO', False)"
+    db.Execute "INSERT INTO TbTransiciones (TipoSolicitud, EstadoOrigen, EstadoDestino, RolRequerido, RequiereAprobacion) VALUES ('PC', 'EN_REVISION', 'APROBADO', 'APROBADOR', True)"
+    
+    db.Close
+    Set db = Nothing
+    
+    Exit Sub
+    
+ErrorHandler:
+    Debug.Print "ERROR en InsertTestData: " & Err.Number & " - " & Err.Description
 End Sub
 
 '''
@@ -103,9 +139,25 @@ Private Sub TeardownTestEnvironment()
         Call CleanupTestSolicitud(m_TestSolicitudID)
     End If
     
+    ' Eliminar archivo de base de datos activa usando IFileSystem
+    If Len(activeTestPath) > 0 Then
+        Dim fs As IFileSystem
+        Set fs = modFileSystemFactory.CreateFileSystem()
+        
+        If fs.FileExists(activeTestPath) Then
+            fs.DeleteFile activeTestPath
+            Debug.Print "Base de datos de prueba eliminada: " & activeTestPath
+        End If
+        
+        Set fs = Nothing
+    End If
+    
     ' Limpiar objetos
     Set m_Repository = Nothing
     Set m_Config = Nothing
+    Set testConfig = Nothing
+    activeTestPath = ""
+    m_TestSolicitudID = 0
     
     Debug.Print "Entorno limpiado."
     Exit Sub
@@ -114,7 +166,7 @@ ErrorHandler:
     Debug.Print "ERROR en TeardownTestEnvironment: " & Err.Number & " - " & Err.Description
 End Sub
 
-'''
+'''  
 ' Crea una solicitud de prueba en la base de datos
 '''
 Private Function CreateTestSolicitud() As Long
@@ -123,8 +175,8 @@ Private Function CreateTestSolicitud() As Long
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False)
-    Set rs = db.OpenRecordset("TbSolicitudes", dbOpenDynaset)
+    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & TEST_DB_PATH, dbFailOnError, False)
+    Set rs = db.OpenRecordset("T_Solicitudes", dbOpenDynaset)
     
     rs.AddNew
     rs("TipoSolicitud") = TEST_TIPO_SOLICITUD
@@ -132,9 +184,10 @@ Private Function CreateTestSolicitud() As Long
     rs("FechaCreacion") = Now()
     rs("UsuarioCreacion") = TEST_USUARIO_TEST
     rs("Descripcion") = "Solicitud de prueba para integración"
+    rs("idExpediente") = "EXP-TEST-WF-001"
     rs.Update
     
-    CreateTestSolicitud = rs("ID")
+    CreateTestSolicitud = rs("idSolicitud")
     
     rs.Close
     Set rs = Nothing
@@ -156,13 +209,13 @@ Private Sub CleanupTestSolicitud(ByVal solicitudID As Long)
     
     Dim db As DAO.Database
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False)
+    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & TEST_DB_PATH, dbFailOnError, False)
     
     ' Limpiar historial de estados
-    db.Execute "DELETE FROM TbHistorialEstados WHERE SolicitudID = " & solicitudID
+    db.Execute "DELETE FROM TbHistorialEstados WHERE idSolicitud = " & solicitudID
     
     ' Limpiar solicitud
-    db.Execute "DELETE FROM TbSolicitudes WHERE ID = " & solicitudID
+    db.Execute "DELETE FROM T_Solicitudes WHERE idSolicitud = " & solicitudID
     
     db.Close
     Set db = Nothing
@@ -182,22 +235,20 @@ Private Function Test_IsValidTransition_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Probar transición válida
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
+    
+    ' Arrange: Configurar datos de prueba
+    ' (Los datos ya están insertados en Setup)
+    
+    ' Act & Assert: Probar transición válida
     Dim resultado As Boolean
     resultado = m_Repository.IsValidTransition(TEST_TIPO_SOLICITUD, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION)
+    modAssert.AssertTrue resultado, "Transición válida de BORRADOR a EN_REVISION debe ser permitida"
     
-    If Not resultado Then
-        testResult.Fail "Transición válida no detectada"
-        GoTo Cleanup
-    End If
-    
-    ' Probar transición inválida
-    resultado = m_Repository.IsValidTransition(TEST_TIPO_SOLICITUD, "ESTADO_INEXISTENTE", TEST_ESTADO_REVISION)
-    
-    If resultado Then
-        testResult.Fail "Transición inválida aceptada"
-        GoTo Cleanup
-    End If
+    ' Act & Assert: Probar transición inválida
+    resultado = m_Repository.IsValidTransition(TEST_TIPO_SOLICITUD, TEST_ESTADO_INICIAL, "APROBADO")
+    modAssert.AssertFalse resultado, "Transición inválida de BORRADOR a APROBADO debe ser rechazada"
     
     testResult.Pass
     
@@ -219,18 +270,17 @@ Private Function Test_GetAvailableStates_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
+    
+    ' Act: Obtener estados disponibles
     Dim estados As Collection
     Set estados = m_Repository.GetAvailableStates(TEST_TIPO_SOLICITUD)
     
-    If estados Is Nothing Then
-        testResult.Fail "GetAvailableStates devolvió Nothing"
-        GoTo Cleanup
-    End If
-    
-    If estados.Count = 0 Then
-        testResult.Fail "No se encontraron estados disponibles"
-        GoTo Cleanup
-    End If
+    ' Assert: Verificar resultados
+    modAssert.AssertNotNothing estados, "GetAvailableStates no debe devolver Nothing"
+    modAssert.AssertTrue estados.Count > 0, "Debe haber al menos un estado disponible"
+    modAssert.AssertTrue estados.Count = 3, "Deben existir exactamente 3 estados para PC"
     
     testResult.Pass
     
@@ -253,23 +303,22 @@ Private Function Test_GetNextStates_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    Dim estadosSiguientes As Collection
-    Set estadosSiguientes = m_Repository.GetNextStates(TEST_ESTADO_INICIAL, TEST_TIPO_SOLICITUD, TEST_ROL_ADMIN)
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
     
-    If estadosSiguientes Is Nothing Then
-        testResult.Fail "GetNextStates devolvió Nothing"
-        GoTo Cleanup
-    End If
+    ' Act: Obtener estados siguientes desde BORRADOR
+    Dim nextStates As Collection
+    Set nextStates = m_Repository.GetNextStates(TEST_TIPO_SOLICITUD, TEST_ESTADO_INICIAL)
     
-    If estadosSiguientes.Count = 0 Then
-        testResult.Fail "No se encontraron estados siguientes"
-        GoTo Cleanup
-    End If
+    ' Assert: Verificar resultados
+    modAssert.AssertNotNothing nextStates, "GetNextStates no debe devolver Nothing"
+    modAssert.AssertTrue nextStates.Count > 0, "Debe haber al menos un estado siguiente desde BORRADOR"
+    modAssert.AssertTrue nextStates.Count = 1, "Desde BORRADOR solo debe haber 1 transición (a EN_REVISION)"
     
     testResult.Pass
     
 Cleanup:
-    Set estadosSiguientes = Nothing
+    Set nextStates = Nothing
     Set Test_GetNextStates_Integration = testResult
     Exit Function
     
@@ -287,13 +336,16 @@ Private Function Test_GetInitialState_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
+    
+    ' Act: Obtener estado inicial
     Dim estadoInicial As String
     estadoInicial = m_Repository.GetInitialState(TEST_TIPO_SOLICITUD)
     
-    If Len(estadoInicial) = 0 Then
-        testResult.Fail "No se obtuvo estado inicial"
-        GoTo Cleanup
-    End If
+    ' Assert: Verificar resultados
+    modAssert.AssertNotEmpty estadoInicial, "GetInitialState no debe devolver cadena vacía"
+    modAssert.AssertEqual estadoInicial, TEST_ESTADO_INICIAL, "Estado inicial debe ser BORRADOR"
     
     testResult.Pass
     
@@ -315,19 +367,18 @@ Private Function Test_IsStateFinal_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Probar con estado inicial (no debería ser final)
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
+    
+    ' Act & Assert: Probar estado no final (BORRADOR)
     Dim esFinal As Boolean
-    esFinal = m_Repository.IsStateFinal(TEST_ESTADO_INICIAL, TEST_TIPO_SOLICITUD)
+    esFinal = m_Repository.IsStateFinal(TEST_TIPO_SOLICITUD, TEST_ESTADO_INICIAL)
+    modAssert.AssertFalse esFinal, "Estado BORRADOR no debe ser final"
     
-    If esFinal Then
-        testResult.Fail "Estado inicial incorrectamente identificado como final"
-        GoTo Cleanup
-    End If
+    ' Act & Assert: Probar estado final (APROBADO)
+    esFinal = m_Repository.IsStateFinal(TEST_TIPO_SOLICITUD, "APROBADO")
+    modAssert.AssertTrue esFinal, "Estado APROBADO debe ser final"
     
-    ' Probar con estado final (si existe)
-    esFinal = m_Repository.IsStateFinal("APROBADO", TEST_TIPO_SOLICITUD)
-    
-    ' Nota: No fallamos si APROBADO no es final, ya que depende de la configuración
     testResult.Pass
     
 Cleanup:
@@ -348,17 +399,27 @@ Private Function Test_RecordStateChange_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    Dim resultado As Boolean
-    resultado = m_Repository.RecordStateChange(m_TestSolicitudID, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION, TEST_USUARIO_TEST, "Cambio de prueba")
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
     
-    If Not resultado Then
-        testResult.Fail "No se pudo registrar el cambio de estado"
-        GoTo Cleanup
-    End If
+    ' Arrange: Crear una solicitud de prueba
+    Dim testSolicitudID As Long
+    testSolicitudID = CreateTestSolicitud()
+    
+    ' Act: Registrar cambio de estado
+    Dim resultado As Boolean
+    resultado = m_Repository.RecordStateChange(testSolicitudID, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION, TEST_USUARIO_TEST, "Cambio de prueba")
+    
+    ' Assert: Verificar que el cambio se registró correctamente
+    modAssert.AssertTrue resultado, "El cambio de estado debe registrarse correctamente"
     
     testResult.Pass
     
 Cleanup:
+    ' Limpiar solicitud de prueba
+    If testSolicitudID > 0 Then
+        Call CleanupTestSolicitud(testSolicitudID)
+    End If
     Set Test_RecordStateChange_Integration = testResult
     Exit Function
     
@@ -376,17 +437,29 @@ Private Function Test_GetStateHistory_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    Dim historial As Collection
-    Set historial = m_Repository.GetStateHistory(m_TestSolicitudID)
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
     
-    If historial Is Nothing Then
-        testResult.Fail "GetStateHistory devolvió Nothing"
-        GoTo Cleanup
-    End If
+    ' Arrange: Crear una solicitud de prueba y registrar cambio de estado
+    Dim testSolicitudID As Long
+    testSolicitudID = CreateTestSolicitud()
+    m_Repository.RecordStateChange testSolicitudID, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION, TEST_USUARIO_TEST, "Cambio de prueba"
+    
+    ' Act: Obtener historial
+    Dim historial As Collection
+    Set historial = m_Repository.GetStateHistory(testSolicitudID)
+    
+    ' Assert: Verificar resultados
+    modAssert.AssertNotNothing historial, "GetStateHistory no debe devolver Nothing"
+    modAssert.AssertTrue historial.Count > 0, "Debe existir al menos un registro en el historial"
     
     testResult.Pass
     
 Cleanup:
+    ' Limpiar solicitud de prueba
+    If testSolicitudID > 0 Then
+        Call CleanupTestSolicitud(testSolicitudID)
+    End If
     Set historial = Nothing
     Set Test_GetStateHistory_Integration = testResult
     Exit Function
@@ -405,14 +478,21 @@ Private Function Test_HasTransitionPermission_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Probar con rol de administrador (debería tener permisos)
-    Dim tienePermiso As Boolean
-    tienePermiso = m_Repository.HasTransitionPermission(TEST_ROL_ADMIN, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION, TEST_TIPO_SOLICITUD)
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
     
-    If Not tienePermiso Then
-        testResult.Fail "Administrador sin permisos de transición"
-        GoTo Cleanup
-    End If
+    ' Act & Assert: Probar permiso válido (USUARIO puede hacer BORRADOR -> EN_REVISION)
+    Dim tienePermiso As Boolean
+    tienePermiso = m_Repository.HasTransitionPermission(TEST_TIPO_SOLICITUD, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION, "USUARIO")
+    modAssert.AssertTrue tienePermiso, "Usuario debe tener permiso para transición BORRADOR -> EN_REVISION"
+    
+    ' Act & Assert: Probar permiso inválido (rol inexistente)
+    tienePermiso = m_Repository.HasTransitionPermission(TEST_TIPO_SOLICITUD, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION, "ROL_INEXISTENTE")
+    modAssert.AssertFalse tienePermiso, "Rol inexistente no debe tener permisos"
+    
+    ' Act & Assert: Probar transición que requiere APROBADOR
+    tienePermiso = m_Repository.HasTransitionPermission(TEST_TIPO_SOLICITUD, TEST_ESTADO_REVISION, "APROBADO", "APROBADOR")
+    modAssert.AssertTrue tienePermiso, "Aprobador debe tener permiso para transición EN_REVISION -> APROBADO"
     
     testResult.Pass
     
@@ -434,10 +514,18 @@ Private Function Test_RequiresApproval_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    Dim requiereAprobacion As Boolean
-    requiereAprobacion = m_Repository.RequiresApproval(TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION, TEST_TIPO_SOLICITUD)
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
     
-    ' Esta prueba siempre pasa ya que solo verifica que el método funcione
+    ' Act & Assert: Probar transición que requiere aprobación (EN_REVISION -> APROBADO)
+    Dim requiereAprobacion As Boolean
+    requiereAprobacion = m_Repository.RequiresApproval(TEST_TIPO_SOLICITUD, TEST_ESTADO_REVISION, "APROBADO")
+    modAssert.AssertTrue requiereAprobacion, "Transición EN_REVISION -> APROBADO debe requerir aprobación"
+    
+    ' Act & Assert: Probar transición que no requiere aprobación (BORRADOR -> EN_REVISION)
+    requiereAprobacion = m_Repository.RequiresApproval(TEST_TIPO_SOLICITUD, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION)
+    modAssert.AssertFalse requiereAprobacion, "Transición BORRADOR -> EN_REVISION no debe requerir aprobación"
+    
     testResult.Pass
     
 Cleanup:
@@ -458,10 +546,24 @@ Private Function Test_GetTransitionRequiredRole_Integration() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    Dim rolRequerido As String
-    rolRequerido = m_Repository.GetTransitionRequiredRole(TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION, TEST_TIPO_SOLICITUD)
+    ' Setup: Preparar base de datos de prueba
+    Call Setup
     
-    ' Esta prueba siempre pasa ya que solo verifica que el método funcione
+    ' Act: Obtener rol requerido para transición BORRADOR -> EN_REVISION
+    Dim rolRequerido As String
+    rolRequerido = m_Repository.GetTransitionRequiredRole(TEST_TIPO_SOLICITUD, TEST_ESTADO_INICIAL, TEST_ESTADO_REVISION)
+    
+    ' Assert: Verificar que se obtuvo el rol correcto
+    modAssert.AssertNotEmpty rolRequerido, "Debe obtenerse un rol requerido para la transición"
+    modAssert.AssertEqual rolRequerido, "USUARIO", "El rol requerido para BORRADOR -> EN_REVISION debe ser USUARIO"
+    
+    ' Act: Obtener rol requerido para transición EN_REVISION -> APROBADO
+    rolRequerido = m_Repository.GetTransitionRequiredRole(TEST_TIPO_SOLICITUD, TEST_ESTADO_REVISION, "APROBADO")
+    
+    ' Assert: Verificar que se obtuvo el rol correcto
+    modAssert.AssertNotEmpty rolRequerido, "Debe obtenerse un rol requerido para la transición"
+    modAssert.AssertEqual rolRequerido, "APROBADOR", "El rol requerido para EN_REVISION -> APROBADO debe ser APROBADOR"
+    
     testResult.Pass
     
 Cleanup:

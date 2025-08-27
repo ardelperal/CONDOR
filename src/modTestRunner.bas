@@ -12,7 +12,9 @@ Public Function RunAllTests() As String
     
     ' Obtener instancia del manejador de errores
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService() ' Created here for top-level entry point
+    Dim config As New CConfig
+    Dim fileSystem As New CFileSystem
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem) ' Created here for top-level entry point
     
     ' Inicializar colección de suites
     Set m_SuiteNames = New Collection
@@ -67,7 +69,9 @@ Public Sub RunTestFramework()
     
     ' Obtener instancia del manejador de errores
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService() ' Created here for top-level entry point
+    Dim config2 As New CConfig
+    Dim fileSystem2 As New CFileSystem
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config2, fileSystem2) ' Created here for top-level entry point
     
     ' Inicializar colección de suites
     Set m_SuiteNames = New Collection
@@ -81,7 +85,7 @@ Public Sub RunTestFramework()
     
     ' Generar y mostrar reporte
     Dim reporter As New CTestReporter
-    reporter.Initialize allResults ' Initialize reporter with results
+    Call reporter.Initialize(allResults) ' Initialize reporter with results
     Dim reportString As String
     reportString = reporter.GenerateReport()
     MsgBox reportString, vbInformation, "Resultados de Pruebas CONDOR"
@@ -133,7 +137,9 @@ Private Sub DiscoverAndRegisterSuites()
 ErrorHandler:
     ' En caso de error en el descubrimiento automático, usar registro manual como fallback
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim config3 As New CConfig
+    Dim fileSystem3 As New CFileSystem
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config3, fileSystem3)
     errorHandler.LogError Err.Number, Err.Description, "modTestRunner.DiscoverAndRegisterSuites - Usando fallback manual"
     
     ' Fallback: Registro manual de suites conocidas
@@ -154,7 +160,6 @@ Private Sub RegisterKnownSuites()
     m_SuiteNames.Add "Test_modAssert_RunAll"
     m_SuiteNames.Add "Test_NotificationService_RunAll"
     m_SuiteNames.Add "Test_OperationLogger_RunAll"
-    m_SuiteNames.Add "Test_Solicitud_RunAll"
     m_SuiteNames.Add "Test_SolicitudService_RunAll"
     m_SuiteNames.Add "Test_WorkflowService_RunAll"
     
@@ -162,6 +167,7 @@ Private Sub RegisterKnownSuites()
     m_SuiteNames.Add "IntegrationTest_CConfig_RunAll"
     m_SuiteNames.Add "IntegrationTest_CExpedienteRepository_RunAll"
     m_SuiteNames.Add "IntegrationTest_CMapeoRepository_RunAll"
+    m_SuiteNames.Add "IntegrationTest_NotificationService_RunAll"
     m_SuiteNames.Add "IntegrationTest_SolicitudRepository_RunAll"
     m_SuiteNames.Add "IntegrationTest_WordManager_RunAll"
     m_SuiteNames.Add "IntegrationTest_WorkflowRepository_RunAll"
@@ -193,18 +199,20 @@ Private Function ExecuteAllSuites() As Collection
         Else
             ' Crear un resultado de error para suites que fallan
             Dim errorSuite As New CTestSuiteResult
-            errorSuite.Initialize suiteName
+            Call errorSuite.Initialize(suiteName)
             
             Dim errorTest As New CTestResult
-            errorTest.Initialize "Suite_Execution_Error"
-            errorTest.Fail "Error ejecutando suite: " & Err.Description
+            Call errorTest.Initialize("Suite_Execution_Error")
+            Call errorTest.Fail("Error ejecutando suite: " & Err.Description)
             
-            errorSuite.AddTest errorTest
+            Call errorSuite.AddTest(errorTest)
             allResults.Add errorSuite
             
             ' Log the error
             Dim localErrorHandler As IErrorHandlerService
-            Set localErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+            Dim config4 As New CConfig
+            Dim fileSystem4 As New CFileSystem
+            Set localErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config4, fileSystem4)
             localErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllSuites", True ' Mark as critical
         End If
         

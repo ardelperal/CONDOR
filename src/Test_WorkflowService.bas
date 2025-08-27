@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_WorkflowService"
+Attribute VB_Name = "Test_WorkflowService"
 Option Compare Database
 Option Explicit
 
@@ -18,20 +18,20 @@ Option Explicit
 ' Ejecuta todas las pruebas del WorkflowService
 Public Function Test_WorkflowService_RunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
-    suite.Initialize "Test_WorkflowService"
+    Call suite.Initialize("Test_WorkflowService")
     
     ' Ejecutar todas las pruebas
-    suite.AddTest Test_ValidateTransition_Valid
-    suite.AddTest Test_ValidateTransition_Invalid
-    suite.AddTest Test_ValidateTransition_NoPermissions
-    suite.AddTest Test_GetNextStates
-    suite.AddTest Test_GetAvailableStates
-    suite.AddTest Test_GetInitialState
-    suite.AddTest Test_IsStateFinal
-    suite.AddTest Test_RecordStateChange
-    suite.AddTest Test_GetStateHistory
-    suite.AddTest Test_HasTransitionPermission
-    suite.AddTest Test_RequiresApproval
+    Call suite.AddTest(Test_ValidateTransition_Valid)
+    Call suite.AddTest(Test_ValidateTransition_Invalid)
+    Call suite.AddTest(Test_ValidateTransition_NoPermissions)
+    Call suite.AddTest(Test_GetNextStates)
+    Call suite.AddTest(Test_GetAvailableStates)
+    Call suite.AddTest(Test_GetInitialState)
+    Call suite.AddTest(Test_IsStateFinal)
+    Call suite.AddTest(Test_RecordStateChange)
+    Call suite.AddTest(Test_GetStateHistory)
+    Call suite.AddTest(Test_HasTransitionPermission)
+    Call suite.AddTest(Test_RequiresApproval)
     
     Set Test_WorkflowService_RunAll = suite
 End Function
@@ -43,7 +43,7 @@ End Function
 ' Test que verifica que una transición válida retorna True
 Private Function Test_ValidateTransition_Valid() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "ValidateTransition con transición válida retorna True"
+    Call testResult.Initialize("ValidateTransition con transición válida retorna True")
     
     On Error GoTo ErrorHandler
     
@@ -54,10 +54,10 @@ Private Function Test_ValidateTransition_Valid() As CTestResult
     Dim mockWorkflowRepo As New CMockWorkflowRepository
     
     ' Configurar el mock para que IsValidTransition retorne True
-    mockWorkflowRepo.AddRule "PC", "Borrador", "EnProceso", True
+    Call mockWorkflowRepo.AddRule("PC", "Borrador", "EnProceso", True)
     
     ' Inicializar el servicio con los mocks
-    workflowService.Initialize mockConfig, mockLogger, mockWorkflowRepo
+    Call workflowService.Initialize(mockConfig, mockLogger, mockWorkflowRepo)
     
     ' Act
     Dim Resultado As Boolean
@@ -67,12 +67,12 @@ Private Function Test_ValidateTransition_Valid() As CTestResult
     If Resultado Then
         testResult.Pass
     Else
-        testResult.Fail "Se esperaba True pero se obtuvo False"
+        Call testResult.Fail("Se esperaba True pero se obtuvo False")
     End If
     
     ' Verificar que se llamó al método IsValidTransition del repositorio
     If Not mockWorkflowRepo.IsValidTransition_WasCalled Then
-        testResult.Fail "No se llamó al método IsValidTransition del repositorio"
+        Call testResult.Fail("No se llamó al método IsValidTransition del repositorio")
     End If
     
 Cleanup:
@@ -91,7 +91,7 @@ Cleanup:
     Exit Function
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
     Resume Cleanup
 End Function
 

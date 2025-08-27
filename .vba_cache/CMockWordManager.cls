@@ -22,6 +22,13 @@ Option Explicit
 Implements IWordManager
 
 ' ============================================================================
+' VARIABLES PRIVADAS PARA INYECCIÓN DE DEPENDENCIAS
+' ============================================================================
+
+Private m_WordApp As Object
+Private m_ErrorHandler As IErrorHandlerService
+
+' ============================================================================
 ' PROPIEDADES PÚBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
 ' ============================================================================
 
@@ -65,6 +72,15 @@ Private Sub Class_Initialize()
 End Sub
 
 ' ============================================================================
+' INICIALIZACIÓN CON DEPENDENCIAS
+' ============================================================================
+
+Public Sub Initialize(ByVal wordApp As Object, ByVal errorHandler As IErrorHandlerService)
+    Set m_WordApp = wordApp
+    Set m_ErrorHandler = errorHandler
+End Sub
+
+' ============================================================================
 ' MÉTODOS PÚBLICOS PARA GESTIÓN DEL MOCK
 ' ============================================================================
 
@@ -99,6 +115,10 @@ Public Sub Reset()
     LeerContenidoDocumento_WasCalled = False
     LeerContenidoDocumento_CallCount = 0
     LeerContenidoDocumento_LastRutaDocumento = ""
+    
+    ' Reset ErrorHandler y WordApp
+    Set m_ErrorHandler = Nothing
+    Set m_WordApp = Nothing
 End Sub
 
 ' ============================================================================

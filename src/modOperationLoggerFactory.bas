@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modOperationLoggerFactory"
+Attribute VB_Name = "modOperationLoggerFactory"
 Option Compare Database
 Option Explicit
 
@@ -11,24 +11,28 @@ Private g_MockLogger As IOperationLogger ' Para inyectar un mock en tests
 Public Function CreateOperationLogger(ByVal errorHandler As IErrorHandlerService) As IOperationLogger
     On Error GoTo ErrorHandler
     
-    If Not g_MockLogger Is Nothing Then
-        Set CreateOperationLogger = g_MockLogger ' Devolver el mock si está configurado
+    ' Obtener la instancia de configuración
+    Dim configService As IConfig
+    Set configService = modConfig.CreateConfigService(errorHandler)
+    
+    ' Decidir si usar mock o clase concreta basado en DEV_MODE
+    If CBool(configService.GetValue("DEV_MODE")) Then
+        ' Modo desarrollo - usar mock
+        Dim mockLogger As New CMockOperationLogger
+        Set CreateOperationLogger = mockLogger
     Else
+        ' Modo producción - usar clase concreta
         Dim loggerInstance As COperationLogger
         Dim repositoryInstance As COperationRepository
-        Dim configService As IConfig
         
         Set loggerInstance = New COperationLogger
         Set repositoryInstance = New COperationRepository
         
-        ' Obtener instancia de configuración usando el nuevo factory
-        Set configService = modConfig.CreateConfigService(errorHandler) ' Pass errorHandler
-        
-        ' Inicializar el repositorio con la configuración
-        repositoryInstance.Initialize configService
+        ' Inicializar el repositorio con la configuración y errorHandler
+        repositoryInstance.Initialize configService, errorHandler
         
         ' Inyectar las dependencias en el logger
-        loggerInstance.Initialize configService, repositoryInstance
+        loggerInstance.Initialize configService, repositoryInstance, errorHandler
         
         Set CreateOperationLogger = loggerInstance
     End If

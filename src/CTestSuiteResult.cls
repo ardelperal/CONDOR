@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -90,7 +90,7 @@ End Sub
 
 ' Método alias para compatibilidad con modTestRunner
 Public Sub AddTest(ByVal result As CTestResult)
-    AddTestResult result
+    Call AddTestResult(result)
 End Sub
 
 ' Función que devuelve el reporte formateado para esta suite

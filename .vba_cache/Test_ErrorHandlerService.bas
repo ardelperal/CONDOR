@@ -30,7 +30,9 @@ Public Function Test_ErrorHandlerService_RunAll() As CTestSuiteResult
     Exit Function
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim mockConfig As New CMockConfig
+    Dim mockFileSystem As New CMockFileSystem
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(mockConfig, mockFileSystem)
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_ErrorHandlerService_RunAll")
     Set Test_ErrorHandlerService_RunAll = Nothing
 End Function
@@ -63,13 +65,13 @@ Public Function Test_LogError_WritesToFile_Success() As CTestResult
     ' Assert: Verificar que el mock capturó el contenido esperado
     writtenContent = mockTextFile.LastWrittenLine
     
-    modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
-    modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
-    modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
-    modAssert.IsTrue(InStr(writtenContent, "1001") > 0, "El número de error debe estar en el log")
-    modAssert.IsTrue(InStr(writtenContent, "Error de prueba") > 0, "La descripción del error debe estar en el log")
-    modAssert.IsTrue(InStr(writtenContent, "Test_Module.Test_Function") > 0, "La fuente del error debe estar en el log")
-    modAssert.IsTrue(InStr(writtenContent, "ERROR") > 0, "El nivel ERROR debe estar en el log")
+    Call modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
+    Call modAssert.IsTrue(InStr(writtenContent, "1001") > 0, "El número de error debe estar en el log")
+    Call modAssert.IsTrue(InStr(writtenContent, "Error de prueba") > 0, "La descripción del error debe estar en el log")
+    Call modAssert.IsTrue(InStr(writtenContent, "Test_Module.Test_Function") > 0, "La fuente del error debe estar en el log")
+    Call modAssert.IsTrue(InStr(writtenContent, "ERROR") > 0, "El nivel ERROR debe estar en el log")
     
     testResult.Pass "LogError escribió correctamente usando mock"
     
@@ -77,7 +79,9 @@ Public Function Test_LogError_WritesToFile_Success() As CTestResult
     Exit Function
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim mockConfigErr As New CMockConfig
+    Dim mockFileSystemErr As New CMockFileSystem
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(mockConfigErr, mockFileSystemErr)
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogError_WritesToFile_Success")
     testResult.Fail "Error durante la prueba: " & Err.Description
 End Function
@@ -110,9 +114,9 @@ Public Function Test_LogError_IsCritical_FlaggedCorrectly() As CTestResult
     ' Assert: Verificar que el JSON contiene "isCritical":true
     writtenContent = mockTextFile.LastWrittenLine
     
-    modAssert.IsTrue(InStr(writtenContent, """isCritical"" : true") > 0, "El JSON debe contener 'isCritical':true")
-    modAssert.IsTrue(InStr(writtenContent, "Error crítico de prueba") > 0, "La descripción del error debe estar en el log")
-    modAssert.IsTrue(InStr(writtenContent, "ERROR") > 0, "El nivel ERROR debe estar en el log")
+    Call modAssert.IsTrue(InStr(writtenContent, """isCritical"" : true") > 0, "El JSON debe contener 'isCritical':true")
+    Call modAssert.IsTrue(InStr(writtenContent, "Error crítico de prueba") > 0, "La descripción del error debe estar en el log")
+    Call modAssert.IsTrue(InStr(writtenContent, "ERROR") > 0, "El nivel ERROR debe estar en el log")
     
     testResult.Pass "LogError con isCritical=True se marcó correctamente en el JSON"
     
@@ -120,7 +124,9 @@ Public Function Test_LogError_IsCritical_FlaggedCorrectly() As CTestResult
     Exit Function
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim mockConfigErr2 As New CMockConfig
+    Dim mockFileSystemErr2 As New CMockFileSystem
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(mockConfigErr2, mockFileSystemErr2)
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogError_IsCritical_FlaggedCorrectly")
     testResult.Fail "Error durante la prueba: " & Err.Description
 End Function
@@ -152,11 +158,11 @@ Public Function Test_LogInfo_WritesCorrectly() As CTestResult
     ' Assert
     writtenContent = mockTextFile.LastWrittenLine
     
-    modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
-    modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
-    modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
-    modAssert.IsTrue(InStr(writtenContent, "Información de prueba") > 0, "El mensaje de info debe estar en el log")
-    modAssert.IsTrue(InStr(writtenContent, "INFO") > 0, "El nivel INFO debe estar en el log")
+    Call modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
+    Call modAssert.IsTrue(InStr(writtenContent, "Información de prueba") > 0, "El mensaje de info debe estar en el log")
+    Call modAssert.IsTrue(InStr(writtenContent, "INFO") > 0, "El nivel INFO debe estar en el log")
     
     testResult.Pass "LogInfo escribió correctamente al archivo de log"
     
@@ -164,7 +170,9 @@ Public Function Test_LogInfo_WritesCorrectly() As CTestResult
     Exit Function
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim mockConfigErr3 As New CMockConfig
+    Dim mockFileSystemErr3 As New CMockFileSystem
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(mockConfigErr3, mockFileSystemErr3)
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogWarning_WritesCorrectly")
     testResult.Fail "Error durante la prueba: " & Err.Description
 End Function
@@ -196,11 +204,11 @@ Public Function Test_LogWarning_WritesCorrectly() As CTestResult
     ' Assert
     writtenContent = mockTextFile.LastWrittenLine
     
-    modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
-    modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
-    modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
-    modAssert.IsTrue(InStr(writtenContent, "Advertencia de prueba") > 0, "El mensaje de warning debe estar en el log")
-    modAssert.IsTrue(InStr(writtenContent, "WARNING") > 0, "El nivel WARNING debe estar en el log")
+    Call modAssert.IsTrue(mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado")
+    Call modAssert.IsTrue(mockTextFile.WasCloseCalled, "Close debe haber sido llamado")
+    Call modAssert.IsTrue(InStr(writtenContent, "Advertencia de prueba") > 0, "El mensaje de warning debe estar en el log")
+    Call modAssert.IsTrue(InStr(writtenContent, "WARNING") > 0, "El nivel WARNING debe estar en el log")
     
     testResult.Pass "LogWarning escribió correctamente usando mock"
     
@@ -208,7 +216,9 @@ Public Function Test_LogWarning_WritesCorrectly() As CTestResult
     Exit Function
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim mockConfigErr4 As New CMockConfig
+    Dim mockFileSystemErr4 As New CMockFileSystem
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(mockConfigErr4, mockFileSystemErr4)
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogWarning_WritesToFile_Success")
     testResult.SetResult False, "Error durante la prueba: " & Err.Description
 End Function
@@ -239,7 +249,9 @@ Public Function Test_Initialize_WithValidConfig_Success() As CTestResult
     Exit Function
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim mockConfigErr5 As New CMockConfig
+    Dim mockFileSystemErr5 As New CMockFileSystem
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(mockConfigErr5, mockFileSystemErr5)
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_Initialize_WithValidConfig_Success")
     testResult.SetResult False, "Error durante la prueba: " & Err.Description
 End Function

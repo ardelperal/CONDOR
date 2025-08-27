@@ -21,22 +21,28 @@ Implements IAuthRepository
 
 ' Dependencias inyectadas
 Private m_configService As IConfig
+Private m_ErrorHandler As IErrorHandlerService
 Private m_isInitialized As Boolean
 
 ' Inicializa el repositorio con sus dependencias
 ' @param configService: Servicio de configuración para obtener ruta del Backend
-Public Sub Initialize(ByVal configService As IConfig)
+' @param errorHandler: Servicio de manejo de errores
+Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErrorHandlerService)
     If configService Is Nothing Then
         Err.Raise 5, "CAuthRepository.Initialize", "configService no puede ser Nothing"
     End If
     
+    If errorHandler Is Nothing Then
+        Err.Raise 5, "CAuthRepository.Initialize", "errorHandler no puede ser Nothing"
+    End If
+    
     Set m_configService = configService
+    Set m_ErrorHandler = errorHandler
     m_isInitialized = True
 End Sub
 
 ' Implementación de IAuthRepository_GetUserAuthData
 Private Function IAuthRepository_GetUserAuthData(ByVal UserEmail As String) As T_AuthData
-    Dim ErrorHandler As IErrorHandlerService
     Dim authData As New T_AuthData
     
     If Not m_isInitialized Then
@@ -120,8 +126,9 @@ ErrorHandler:
     If Not qdf Is Nothing Then Set qdf = Nothing
     If Not db Is Nothing Then db.Close
     
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CAuthRepository.GetUserAuthData"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthRepository.GetUserAuthData"
+    End If
     
     ' Devolver objeto con valores por defecto en caso de error
     Set IAuthRepository_GetUserAuthData = authData

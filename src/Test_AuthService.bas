@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_AuthService"
+Attribute VB_Name = "Test_AuthService"
 Option Compare Database
 Option Explicit
 
@@ -15,13 +15,13 @@ Option Explicit
 ' Función principal que ejecuta todas las pruebas del módulo
 Public Function Test_AuthService_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_AuthService"
+    Call suiteResult.Initialize("Test_AuthService")
     
     ' Ejecutar todas las pruebas unitarias
-    suiteResult.AddTestResult Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador()
-    suiteResult.AddTestResult Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad()
-    suiteResult.AddTestResult Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico()
-    suiteResult.AddTestResult Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido()
+    Call suiteResult.AddTestResult(Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador())
+    Call suiteResult.AddTestResult(Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad())
+    Call suiteResult.AddTestResult(Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico())
+    Call suiteResult.AddTestResult(Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido())
     
     Set Test_AuthService_RunAll = suiteResult
 End Function
@@ -33,17 +33,18 @@ End Function
 ' Prueba que GetUserRole devuelve Rol_Administrador para usuario administrador
 Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador"
+    Call testResult.Initialize("Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador")
     
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
-    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
-    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
+    Call mockConfig.AddSetting("BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb")
+    Call mockConfig.AddSetting("DATABASE_PASSWORD", "testpassword")
     
     Dim mockLogger As New CMockOperationLogger
     Dim mockAuthRepository As New CMockAuthRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Configurar T_AuthData para usuario administrador
     Dim authData As New T_AuthData
@@ -53,11 +54,11 @@ Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador(
     authData.IsCalidad = False
     authData.IsTecnico = False
     
-    mockAuthRepository.ConfigureMockData authData
+    Call mockAuthRepository.ConfigureMockData(authData)
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    authService.Initialize mockConfig, mockLogger, mockAuthRepository
+    Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
     
     ' Act - Ejecutar el método bajo prueba
     Dim userRole As E_UserRole
@@ -70,27 +71,33 @@ Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador(
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
     Set authData = Nothing
+    mockConfig.Reset
+    mockLogger.Reset
+    mockAuthRepository.Reset
+    mockErrorHandler.Reset
     Set Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador = testResult
+    Exit Function
 End Function
 
 ' Prueba que GetUserRole devuelve Rol_Calidad para usuario de calidad
 Private Function Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad"
+    Call testResult.Initialize("Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad")
     
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
-    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    Call mockConfig.AddSetting("BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb")
     mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
     Dim mockLogger As New CMockOperationLogger
     Dim mockAuthRepository As New CMockAuthRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Configurar T_AuthData para usuario de calidad
     Dim authData As New T_AuthData
@@ -104,7 +111,7 @@ Private Function Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad() As CTestRe
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    authService.Initialize mockConfig, mockLogger, mockAuthRepository
+    authService.Initialize mockConfig, mockLogger, mockAuthRepository, mockErrorHandler
     
     ' Act - Ejecutar el método bajo prueba
     Dim userRole As E_UserRole
@@ -121,7 +128,12 @@ ErrorHandler:
     
 Cleanup:
     Set authData = Nothing
+    mockConfig.Reset
+    mockLogger.Reset
+    mockAuthRepository.Reset
+    mockErrorHandler.Reset
     Set Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad = testResult
+    Exit Function
 End Function
 
 ' Prueba que GetUserRole devuelve Rol_Tecnico para usuario técnico
@@ -138,6 +150,7 @@ Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestRe
     
     Dim mockLogger As New CMockOperationLogger
     Dim mockAuthRepository As New CMockAuthRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Configurar T_AuthData para usuario técnico
     Dim authData As New T_AuthData
@@ -151,7 +164,7 @@ Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestRe
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    authService.Initialize mockConfig, mockLogger, mockAuthRepository
+    authService.Initialize mockConfig, mockLogger, mockAuthRepository, mockErrorHandler
     
     ' Act - Ejecutar el método bajo prueba
     Dim userRole As E_UserRole
@@ -168,7 +181,12 @@ ErrorHandler:
     
 Cleanup:
     Set authData = Nothing
+    mockConfig.Reset
+    mockLogger.Reset
+    mockAuthRepository.Reset
+    mockErrorHandler.Reset
     Set Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico = testResult
+    Exit Function
 End Function
 
 ' Prueba que GetUserRole devuelve Rol_Desconocido para usuario no encontrado
@@ -185,6 +203,7 @@ Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As
     
     Dim mockLogger As New CMockOperationLogger
     Dim mockAuthRepository As New CMockAuthRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Configurar T_AuthData para usuario no encontrado
     Dim authData As New T_AuthData
@@ -198,7 +217,7 @@ Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As
     
     ' Crear servicio con dependencias mock
     Dim authService As New CAuthService
-    authService.Initialize mockConfig, mockLogger, mockAuthRepository
+    authService.Initialize mockConfig, mockLogger, mockAuthRepository, mockErrorHandler
     
     ' Act - Ejecutar el método bajo prueba
     Dim userRole As E_UserRole
@@ -215,7 +234,12 @@ ErrorHandler:
     
 Cleanup:
     Set authData = Nothing
+    mockConfig.Reset
+    mockLogger.Reset
+    mockAuthRepository.Reset
+    mockErrorHandler.Reset
     Set Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido = testResult
+    Exit Function
 End Function
 
 #End If

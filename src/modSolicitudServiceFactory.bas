@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modSolicitudServiceFactory"
+Attribute VB_Name = "modSolicitudServiceFactory"
 Option Compare Database
 Option Explicit
 
@@ -18,28 +18,38 @@ Option Explicit
 ' DESCRIPCIÓN: Crea una instancia del servicio de solicitudes con todas sus dependencias
 ' RETORNA: ISolicitudService - Instancia del servicio completamente inicializada
 '******************************************************************************
-Public Function CreateSolicitudService(ByVal errorHandler As IErrorHandlerService) As ISolicitudService
+Public Function CreateSolicitudService() As ISolicitudService
     On Error GoTo ErrorHandler
     
-    ' Obtener todas las dependencias necesarias
-    Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository(errorHandler)
+    ' 1. Obtener dependencias de sus propias factorías
+    Dim repo As ISolicitudRepository
+    Dim logger As IOperationLogger
+    Dim errorHandler As IErrorHandlerService
+    Dim config As IConfig
     
-    Dim operationLogger As IOperationLogger
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
+    ' Crear errorHandler primero para poder usarlo en caso de errores
+    Set config = modConfig.CreateConfigService()
+    Dim fileSystem As IFileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
     
-    ' Crear la instancia del servicio
+    ' Crear las demás dependencias
+    Set repo = modRepositoryFactory.CreateSolicitudRepository(errorHandler, config)
+    Set logger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
+    
+    ' 2. Crear e inicializar el servicio
     Dim serviceInstance As New CSolicitudService
+    serviceInstance.Initialize repo, logger, errorHandler
     
-    ' Inyectar las dependencias requeridas por Initialize
-    serviceInstance.Initialize solicitudRepository, operationLogger
-    
+    ' 3. Devolver la instancia
     Set CreateSolicitudService = serviceInstance
     
     Exit Function
     
 ErrorHandler:
-    errorHandler.LogError Err.Number, Err.Description, "modSolicitudServiceFactory.CreateSolicitudService"
+    If Not errorHandler Is Nothing Then
+        errorHandler.LogError Err.Number, Err.Description, "modSolicitudServiceFactory.CreateSolicitudService"
+    End If
     Set CreateSolicitudService = Nothing
 End Function
 

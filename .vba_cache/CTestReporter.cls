@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -90,7 +90,7 @@ End Function
 
 ' Implementación de ITestReporter.Initialize
 Private Sub ITestReporter_Initialize(ByVal results As Collection)
-    Initialize results
+    Call Initialize(results)
 End Sub
 
 ' Implementación de ITestReporter.GenerateReport

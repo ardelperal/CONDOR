@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -21,10 +21,16 @@ Implements IOperationLogger
 
 Public LoggedOperations As Collection
 Public LogOperationCalled As Boolean
+Private m_ErrorHandler As IErrorHandlerService
 
 Private Sub Class_Initialize()
     Set LoggedOperations = New Collection
     LogOperationCalled = False
+End Sub
+
+' Método público para inicializar el mock desde el factory
+Public Sub Initialize(Optional ByVal errorHandler As IErrorHandlerService = Nothing)
+    Set m_ErrorHandler = errorHandler
 End Sub
 
 Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
@@ -89,7 +95,7 @@ ErrorHandler:
     Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogStateChange: " & Err.Description
 End Sub
 
-Private Sub IOperationLogger_LogError(ByVal errorCode As String, ByVal errorMessage As String, ByVal context As String)
+Private Sub IOperationLogger_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
     On Error GoTo ErrorHandler
     
     ' Registrar que el método fue llamado
@@ -97,8 +103,8 @@ Private Sub IOperationLogger_LogError(ByVal errorCode As String, ByVal errorMess
     
     Dim logEntry As New Collection
     logEntry.Add "ERROR_SISTEMA", "OperationType"
-    logEntry.Add errorCode, "EntityId"
-    logEntry.Add "Código: " & errorCode & ", Mensaje: " & errorMessage & ", Contexto: " & context, "Details"
+    logEntry.Add CStr(errNumber), "EntityId"
+    logEntry.Add "Número: " & errNumber & ", Descripción: " & errDescription & ", Módulo: " & moduleName & ", Crítico: " & isCritical, "Details"
     logEntry.Add "LogError", "Method"
     
     LoggedOperations.Add logEntry
@@ -134,8 +140,8 @@ Public Sub LogStateChange(ByVal SolicitudID As Long, ByVal oldState As String, B
 End Sub
 
 ' Método público de conveniencia para LogError
-Public Sub LogError(ByVal errorCode As String, ByVal errorMessage As String, ByVal context As String)
-    IOperationLogger_LogError errorCode, errorMessage, context
+Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
+    IOperationLogger_LogError errNumber, errDescription, moduleName, isCritical
 End Sub
 
 #End If

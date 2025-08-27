@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -40,10 +40,11 @@ Public Sub LogStateChange(ByVal SolicitudID As Long, ByVal oldState As String, B
 End Sub
 
 ' Registra un error del sistema
-' @param errorCode: Código del error
-' @param errorMessage: Mensaje del error
-' @param context: Contexto donde ocurrió el error
-Public Sub LogError(ByVal errorCode As String, ByVal errorMessage As String, ByVal context As String)
+' @param errNumber: Número del error
+' @param errDescription: Descripción del error
+' @param moduleName: Nombre del módulo donde ocurrió el error (opcional)
+' @param isCritical: Indica si el error es crítico (opcional, por defecto False)
+Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
 End Sub
 
 

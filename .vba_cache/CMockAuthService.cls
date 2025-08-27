@@ -19,7 +19,7 @@ Implements IAuthService
 Private m_MockUserRole As E_UserRole
 
 ' Implementación de la interfaz IAuthService
-Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository)
+Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository, errorHandler As IErrorHandlerService)
     ' Mock no requiere configuración específica, pero mantiene la interfaz
     ' para compatibilidad con el patrón de inyección de dependencias
     m_MockUserRole = Rol_Desconocido ' Valor por defecto

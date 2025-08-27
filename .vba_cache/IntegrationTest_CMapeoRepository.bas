@@ -9,6 +9,7 @@ Option Explicit
 
 Private m_repository As IMapeoRepository
 Private m_mockConfig As CMockConfig
+Private m_mockErrorHandler As CMockErrorHandlerService
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE
@@ -16,10 +17,10 @@ Private m_mockConfig As CMockConfig
 
 Public Function IntegrationTest_CMapeoRepository_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_CMapeoRepository - Pruebas Unitarias CMapeoRepository"
+    Call suiteResult.Initialize("Test_CMapeoRepository - Pruebas Unitarias CMapeoRepository")
     
-    suiteResult.AddTestResult Test_GetMapeoPorTipo_Success()
-    suiteResult.AddTestResult Test_GetMapeoPorTipo_NotFound()
+    Call suiteResult.AddTestResult(Test_GetMapeoPorTipo_Success())
+    Call suiteResult.AddTestResult(Test_GetMapeoPorTipo_NotFound())
     
     Set IntegrationTest_CMapeoRepository_RunAll = suiteResult
 End Function
@@ -30,15 +31,17 @@ End Function
 
 Private Sub Setup()
     Set m_mockConfig = New CMockConfig
+    Set m_mockErrorHandler = New CMockErrorHandlerService
     
     Dim repoImpl As New CMapeoRepository
-    repoImpl.Initialize m_mockConfig
+    Call repoImpl.Initialize(m_mockConfig, m_mockErrorHandler)
     Set m_repository = repoImpl
 End Sub
 
 Private Sub Teardown()
     Set m_repository = Nothing
     Set m_mockConfig = Nothing
+    Set m_mockErrorHandler = Nothing
 End Sub
 
 ' ============================================================================
@@ -47,7 +50,7 @@ End Sub
 
 Private Function Test_GetMapeoPorTipo_Success() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "GetMapeoPorTipo debe devolver un recordset con datos"
+    Call testResult.Initialize("GetMapeoPorTipo debe devolver un recordset con datos")
     
     On Error GoTo ErrorHandler
     
@@ -58,8 +61,8 @@ Private Function Test_GetMapeoPorTipo_Success() As CTestResult
     tipoSolicitud = "PC"
     
     ' Configurar mockConfig para devolver una ruta de BD válida
-    m_mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    m_mockConfig.SetDatabasePassword "testpass"
+    m_mockConfig.SetSetting "DATABASE_PATH", "C:\Test\Backend.accdb"
+    m_mockConfig.SetSetting "DB_PASSWORD", "testpass"
     
     ' Act
     Dim rs As DAO.recordset
@@ -76,15 +79,17 @@ Private Function Test_GetMapeoPorTipo_Success() As CTestResult
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
 Cleanup:
+    m_mockConfig.Reset
+    m_mockErrorHandler.Reset
     Call Teardown
     Set Test_GetMapeoPorTipo_Success = testResult
 End Function
 
 Private Function Test_GetMapeoPorTipo_NotFound() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "GetMapeoPorTipo debe devolver un recordset vacío si no hay mapeo"
+    Call testResult.Initialize("GetMapeoPorTipo debe devolver un recordset vacío si no hay mapeo")
     
     On Error GoTo ErrorHandler
     
@@ -95,8 +100,8 @@ Private Function Test_GetMapeoPorTipo_NotFound() As CTestResult
     tipoSolicitud = "TIPO_INEXISTENTE"
     
     ' Configurar mockConfig para devolver una ruta de BD válida
-    m_mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    m_mockConfig.SetDatabasePassword "testpass"
+    m_mockConfig.SetSetting "DATABASE_PATH", "C:\Test\Backend.accdb"
+    m_mockConfig.SetSetting "DB_PASSWORD", "testpass"
     
     ' Act
     Dim rs As DAO.recordset
@@ -113,8 +118,10 @@ Private Function Test_GetMapeoPorTipo_NotFound() As CTestResult
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
 Cleanup:
+    m_mockConfig.Reset
+    m_mockErrorHandler.Reset
     Call Teardown
     Set Test_GetMapeoPorTipo_NotFound = testResult
 End Function

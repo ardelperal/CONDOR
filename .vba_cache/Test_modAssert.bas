@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_modAssert"
+Attribute VB_Name = "Test_modAssert"
 Option Compare Database
 Option Explicit
 
@@ -15,20 +15,20 @@ Option Explicit
 ' Función principal que ejecuta todas las pruebas del módulo
 Public Function Test_modAssert_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_modAssert"
+    Call suiteResult.Initialize("Test_modAssert")
     
     ' Ejecutar todas las pruebas de meta-testing
-    suiteResult.AddTestResult Test_AssertTrue_WithTrueCondition_Passes()
-    suiteResult.AddTestResult Test_AssertTrue_WithFalseCondition_Fails()
-    suiteResult.AddTestResult Test_AssertFalse_WithFalseCondition_Passes()
-    suiteResult.AddTestResult Test_AssertFalse_WithTrueCondition_Fails()
-    suiteResult.AddTestResult Test_AssertEquals_WithEqualValues_Passes()
-    suiteResult.AddTestResult Test_AssertEquals_WithDifferentValues_Fails()
-    suiteResult.AddTestResult Test_AssertNotNull_WithValidObject_Passes()
-    suiteResult.AddTestResult Test_AssertNotNull_WithNothingObject_Fails()
-    suiteResult.AddTestResult Test_AssertIsNull_WithNothingObject_Passes()
-    suiteResult.AddTestResult Test_AssertIsNull_WithValidObject_Fails()
-    suiteResult.AddTestResult Test_Fail_AlwaysFails()
+    Call suiteResult.AddTestResult(Test_AssertTrue_WithTrueCondition_Passes())
+    Call suiteResult.AddTestResult(Test_AssertTrue_WithFalseCondition_Fails())
+    Call suiteResult.AddTestResult(Test_AssertFalse_WithFalseCondition_Passes())
+    Call suiteResult.AddTestResult(Test_AssertFalse_WithTrueCondition_Fails())
+    Call suiteResult.AddTestResult(Test_AssertEquals_WithEqualValues_Passes())
+    Call suiteResult.AddTestResult(Test_AssertEquals_WithDifferentValues_Fails())
+    Call suiteResult.AddTestResult(Test_AssertNotNull_WithValidObject_Passes())
+    Call suiteResult.AddTestResult(Test_AssertNotNull_WithNothingObject_Fails())
+    Call suiteResult.AddTestResult(Test_AssertIsNull_WithNothingObject_Passes())
+    Call suiteResult.AddTestResult(Test_AssertIsNull_WithValidObject_Fails())
+    Call suiteResult.AddTestResult(Test_Fail_AlwaysFails())
     
     Set Test_modAssert_RunAll = suiteResult
 End Function
@@ -40,7 +40,7 @@ End Function
 ' Prueba que AssertTrue no falla cuando se le pasa True
 Private Function Test_AssertTrue_WithTrueCondition_Passes() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertTrue_WithTrueCondition_Passes"
+    Call testResult.Initialize("Test_AssertTrue_WithTrueCondition_Passes")
     
     On Error GoTo ErrorHandler
     
@@ -60,7 +60,7 @@ End Function
 ' Prueba que AssertTrue falla cuando se le pasa False
 Private Function Test_AssertTrue_WithFalseCondition_Fails() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertTrue_WithFalseCondition_Fails"
+    Call testResult.Initialize("Test_AssertTrue_WithFalseCondition_Fails")
     
     On Error GoTo ErrorHandler
     
@@ -90,7 +90,7 @@ End Function
 ' Prueba que AssertFalse no falla cuando se le pasa False
 Private Function Test_AssertFalse_WithFalseCondition_Passes() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertFalse_WithFalseCondition_Passes"
+    Call testResult.Initialize("Test_AssertFalse_WithFalseCondition_Passes")
     
     On Error GoTo ErrorHandler
     
@@ -110,7 +110,7 @@ End Function
 ' Prueba que AssertFalse falla cuando se le pasa True
 Private Function Test_AssertFalse_WithTrueCondition_Fails() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertFalse_WithTrueCondition_Fails"
+    Call testResult.Initialize("Test_AssertFalse_WithTrueCondition_Fails")
     
     On Error GoTo ErrorHandler
     
@@ -140,7 +140,7 @@ End Function
 ' Prueba que AssertEquals no falla cuando los valores son iguales
 Private Function Test_AssertEquals_WithEqualValues_Passes() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertEquals_WithEqualValues_Passes"
+    Call testResult.Initialize("Test_AssertEquals_WithEqualValues_Passes")
     
     On Error GoTo ErrorHandler
     
@@ -153,7 +153,7 @@ Private Function Test_AssertEquals_WithEqualValues_Passes() As CTestResult
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "AssertEquals falló inesperadamente con valores iguales: " & Err.Description
+    Call testResult.Fail("AssertEquals falló inesperadamente con valores iguales: " & Err.Description)
     
 Cleanup:
     Set Test_AssertEquals_WithEqualValues_Passes = testResult
@@ -162,7 +162,7 @@ End Function
 ' Prueba que AssertEquals falla cuando los valores son diferentes
 Private Function Test_AssertEquals_WithDifferentValues_Fails() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertEquals_WithDifferentValues_Fails"
+    Call testResult.Initialize("Test_AssertEquals_WithDifferentValues_Fails")
     
     On Error GoTo ErrorHandler
     
@@ -170,7 +170,7 @@ Private Function Test_AssertEquals_WithDifferentValues_Fails() As CTestResult
     modAssert.AssertEquals "expected", "actual", "Esta aserción debe fallar"
     
     ' Si llegamos aquí, la aserción no falló como debería
-    testResult.Fail "AssertEquals debería haber fallado con valores diferentes"
+    Call testResult.Fail("AssertEquals debería haber fallado con valores diferentes")
     GoTo Cleanup
     
 ErrorHandler:
@@ -192,7 +192,7 @@ End Function
 ' Prueba que AssertNotNull no falla cuando el objeto no es Nothing
 Private Function Test_AssertNotNull_WithValidObject_Passes() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertNotNull_WithValidObject_Passes"
+    Call testResult.Initialize("Test_AssertNotNull_WithValidObject_Passes")
     
     On Error GoTo ErrorHandler
     
@@ -216,7 +216,7 @@ End Function
 ' Prueba que AssertNotNull falla cuando el objeto es Nothing
 Private Function Test_AssertNotNull_WithNothingObject_Fails() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertNotNull_WithNothingObject_Fails"
+    Call testResult.Initialize("Test_AssertNotNull_WithNothingObject_Fails")
     
     On Error GoTo ErrorHandler
     
@@ -250,7 +250,7 @@ End Function
 ' Prueba que AssertIsNull no falla cuando el objeto es Nothing
 Private Function Test_AssertIsNull_WithNothingObject_Passes() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertIsNull_WithNothingObject_Passes"
+    Call testResult.Initialize("Test_AssertIsNull_WithNothingObject_Passes")
     
     On Error GoTo ErrorHandler
     
@@ -274,7 +274,7 @@ End Function
 ' Prueba que AssertIsNull falla cuando el objeto no es Nothing
 Private Function Test_AssertIsNull_WithValidObject_Fails() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_AssertIsNull_WithValidObject_Fails"
+    Call testResult.Initialize("Test_AssertIsNull_WithValidObject_Fails")
     
     On Error GoTo ErrorHandler
     
@@ -308,12 +308,12 @@ End Function
 ' Prueba que Fail siempre falla
 Private Function Test_Fail_AlwaysFails() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_Fail_AlwaysFails"
+    Call testResult.Initialize("Test_Fail_AlwaysFails")
     
     On Error GoTo ErrorHandler
     
     ' Act - Debe lanzar error
-    modAssert.Fail "Esta función siempre debe fallar"
+    Call modAssert.Fail("Esta función siempre debe fallar")
     
     ' Si llegamos aquí, Fail no falló como debería
     testResult.Fail "Fail debería haber fallado incondicionalmente"

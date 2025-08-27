@@ -54,22 +54,14 @@ Public Sub App_Start(ByVal errorHandler As IErrorHandlerService, Optional ByVal 
 
     ' 2. Crear instancia del servicio de autenticacion usando el factory
     Dim authService As IAuthService
-    Set authService = modAuthFactory.CreateAuthService(errorHandler)
+    
+    ' Crear el servicio de autenticación usando la factoría (sin parámetros)
+    Set authService = modAuthFactory.CreateAuthService()
 
     ' 3. Determinar el rol del usuario y guardarlo en la variable global
     g_CurrentUserRole = authService.GetUserRole(UserEmail)
 
-    ' 4. Obtener instancia de configuración y verificar que se haya cargado correctamente
-    Dim config As IConfig
-    Set config = modConfig.CreateConfigService(errorHandler)
-    
-    If Not config.GetValue("IsInitialized") Then
-        ' El error específico ya ha sido logueado por CConfig.ValidateConfiguration
-        ' Simplemente detenemos la ejecución para prevenir que la app se abra en un estado inválido.
-        Exit Sub
-    End If
-
-    ' 5. Continuar con la inicializacion de la aplicacion segun el rol
+    ' 4. Continuar con la inicializacion de la aplicacion segun el rol
     Select Case g_CurrentUserRole
         Case ROL_ADMINISTRADOR
             Debug.Print "Usuario autenticado como Administrador."

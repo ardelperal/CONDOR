@@ -14,13 +14,14 @@ Option Explicit
 Implements IMapeoRepository
 
 Private m_Config As IConfig
+Private m_ErrorHandler As IErrorHandlerService
 
-Public Sub Initialize(ByVal configService As IConfig)
+Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErrorHandlerService)
     Set m_Config = configService
+    Set m_ErrorHandler = errorHandler
 End Sub
 
 Public Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.recordset
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
@@ -56,8 +57,7 @@ ErrorHandler:
         db.Close
         Set db = Nothing
     End If
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CMapeoRepository.GetMapeoPorTipo"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CMapeoRepository.GetMapeoPorTipo"
     Set IMapeoRepository_GetMapeoPorTipo = Nothing
 End Function
 

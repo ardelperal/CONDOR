@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -38,6 +38,9 @@ End Function
 
 Public Function GetIDAplicacionCondor() As String
 End Function
+
+Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
+End Sub
 
 
 

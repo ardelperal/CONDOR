@@ -10,123 +10,122 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+' =====================================================
+' Clase: CNotificationRepository
+' Propósito: Implementación concreta del repositorio de notificaciones
+' Autor: CONDOR-Expert
+' Fecha: 2025-01-15
+' =====================================================
+
 Implements INotificationRepository
 
-'******************************************************************************
-' CLASE: CNotificationRepository
-' Propósito: Repositorio concreto para operaciones de notificaciones en BD
-' Patrón: Repository Pattern
-' Versión: 1.0
-'******************************************************************************
+' Dependencias inyectadas
+Private m_configService As IConfig
+Private m_ErrorHandler As IErrorHandlerService
+Private m_isInitialized As Boolean
 
-' Dependencia inyectada
-Private m_Config As IConfig
-
-' Método público para inyectar dependencias
-Public Sub Initialize(config As IConfig)
-    Dim ErrorHandler As IErrorHandlerService
-    On Error GoTo ErrorHandler
+' Inicializa el repositorio con sus dependencias
+' @param configService: Servicio de configuración para obtener ruta de la BD de correos
+' @param errorHandler: Servicio de manejo de errores
+Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErrorHandlerService)
+    If configService Is Nothing Then
+        Err.Raise 5, "CNotificationRepository.Initialize", "configService no puede ser Nothing"
+    End If
     
-    Set m_Config = config
+    If errorHandler Is Nothing Then
+        Err.Raise 5, "CNotificationRepository.Initialize", "errorHandler no puede ser Nothing"
+    End If
     
-    Exit Sub
-    
-ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CNotificationRepository.Initialize"
+    Set m_configService = configService
+    Set m_ErrorHandler = errorHandler
+    m_isInitialized = True
 End Sub
 
-' Implementación del método de la interfaz
+' Implementación de INotificationRepository_EncolarCorreo
 Private Function INotificationRepository_EncolarCorreo(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpo As String, ByVal cc As String, ByVal bcc As String, ByVal adjunto As String) As Boolean
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    ' Validar que la dependencia esté inyectada
-    If m_Config Is Nothing Then
+    ' Validar inicialización
+    If Not m_isInitialized Then
+        m_ErrorHandler.LogError 5, "Repositorio no inicializado", "CNotificationRepository.EncolarCorreo"
         INotificationRepository_EncolarCorreo = False
         Exit Function
     End If
     
-    ' Obtener configuración desde IConfig inyectado
-    Dim rutaCorreosDB As String
-    Dim passwordDB As String
-    
-    rutaCorreosDB = m_Config.GetCorreosDBPath()
-    passwordDB = m_Config.GetDatabasePassword()
-    
-    If Len(rutaCorreosDB) = 0 Then
+    ' Validar parámetros obligatorios
+    If Len(Trim(destinatarios)) = 0 Or Len(Trim(asunto)) = 0 Or Len(Trim(cuerpo)) = 0 Then
+        m_ErrorHandler.LogError 5, "Parámetros obligatorios vacíos", "CNotificationRepository.EncolarCorreo"
         INotificationRepository_EncolarCorreo = False
         Exit Function
     End If
     
-    ' Conectar a la base de datos de correos
     Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(rutaCorreosDB, dbFailOnError, False, ";PWD=" & passwordDB)
+    Dim rs As DAO.Recordset
+    Dim correosDbPath As String
+    Dim dbPassword As String
     
-    ' Calcular nuevo IDCorreo usando consulta SQL robusta
-    Dim nuevoId As Long
-    Dim rsMaxId As DAO.Recordset
-    Set rsMaxId = db.OpenRecordset("SELECT MAX(IDCorreo) AS MaxID FROM TbCorreosEnviados")
-    nuevoId = Nz(rsMaxId!MaxID, 0) + 1
-    rsMaxId.Close
-    Set rsMaxId = Nothing
+    ' Obtener configuración de la base de datos de correos
+    correosDbPath = m_configService.GetCorreosDBPath()
+    dbPassword = m_configService.GetDatabasePassword()
     
-    ' Crear consulta parametrizada para eliminar vulnerabilidad SQL injection
-    Dim qdf As DAO.QueryDef
-    Set qdf = db.CreateQueryDef("", _
-        "INSERT INTO TbCorreosEnviados (IDCorreo, Aplicacion, Asunto, Cuerpo, " & _
-        "Destinatarios, DestinatariosConCopia, DestinatariosConCopiaOculta, " & _
-        "URLAdjunto, FechaGrabacion, FechaEnvio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    ' Validar que la configuración esté disponible
+    If Len(Trim(correosDbPath)) = 0 Then
+        m_ErrorHandler.LogError 5, "Ruta de base de datos de correos no configurada", "CNotificationRepository.EncolarCorreo"
+        INotificationRepository_EncolarCorreo = False
+        Exit Function
+    End If
     
-    ' Asignar parámetros de forma segura
-    qdf.parameters(0) = nuevoId
-    qdf.parameters(1) = "CONDOR"
-    qdf.parameters(2) = asunto
-    qdf.parameters(3) = cuerpo
-    qdf.parameters(4) = destinatarios
-    qdf.parameters(5) = cc
-    qdf.parameters(6) = bcc
-    qdf.parameters(7) = adjunto
-    qdf.parameters(8) = Now()
-    qdf.parameters(9) = Null
+    ' Abrir conexión a la base de datos de correos
+    If Len(Trim(dbPassword)) > 0 Then
+        Set db = DBEngine.OpenDatabase(correosDbPath, False, False, ";PWD=" & dbPassword)
+    Else
+        Set db = DBEngine.OpenDatabase(correosDbPath, False, False)
+    End If
     
-    ' Ejecutar consulta parametrizada
-    qdf.Execute
+    ' Abrir tabla de correos para insertar nuevo registro
+    Set rs = db.OpenRecordset("Tb_Correos", dbOpenDynaset)
     
-    ' Limpiar recursos
-    qdf.Close
-    Set qdf = Nothing
+    ' Insertar nuevo registro
+    rs.AddNew
+    rs("Destinatarios") = destinatarios
+    rs("Asunto") = asunto
+    rs("Cuerpo") = cuerpo
+    rs("CC") = cc
+    rs("BCC") = bcc
+    rs("Adjunto") = adjunto
+    rs("FechaCreacion") = Now()
+    rs("Estado") = "PENDIENTE"
+    rs.Update
+    
+    ' Cerrar recursos
+    rs.Close
     db.Close
+    
+    Set rs = Nothing
     Set db = Nothing
     
     INotificationRepository_EncolarCorreo = True
     Exit Function
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CNotificationRepository.EncolarCorreo"
-    
     ' Limpiar recursos en caso de error
-    If Not qdf Is Nothing Then
-        qdf.Close
-        Set qdf = Nothing
+    If Not rs Is Nothing Then
+        If rs.Updatable Then rs.CancelUpdate
+        rs.Close
+        Set rs = Nothing
     End If
+    
     If Not db Is Nothing Then
         db.Close
         Set db = Nothing
     End If
-End Function
-
-'==============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA
-'==============================================================================
-
-' Método público de conveniencia que delega a la implementación de la interfaz
-Public Function EncolarCorreo(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpo As String, ByVal cc As String, ByVal bcc As String, ByVal adjunto As String) As Boolean
-    EncolarCorreo = INotificationRepository_EncolarCorreo(destinatarios, asunto, cuerpo, cc, bcc, adjunto)
+    
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationRepository.EncolarCorreo"
+    INotificationRepository_EncolarCorreo = False
 End Function
 
 ' Destructor
 Private Sub Class_Terminate()
-    Set m_Config = Nothing
+    Set m_configService = Nothing
+    Set m_ErrorHandler = Nothing
 End Sub

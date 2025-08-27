@@ -25,6 +25,7 @@ Implements ISolicitudService
 ' Dependencias inyectadas
 Private m_solicitudRepository As ISolicitudRepository
 Private m_OperationLogger As IOperationLogger
+Private m_ErrorHandler As IErrorHandlerService
 Private m_isInitialized As Boolean
 
 ' ============================================================================
@@ -34,7 +35,8 @@ Private m_isInitialized As Boolean
 ' Inicializa el servicio con sus dependencias
 ' @param solicitudRepository: Repositorio para operaciones de persistencia
 ' @param operationLogger: Logger para registrar operaciones
-Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger)
+' @param errorHandler: Manejador de errores para logging
+Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal errorHandler As IErrorHandlerService)
     If solicitudRepository Is Nothing Then
         Err.Raise 5, "CSolicitudService.Initialize", "solicitudRepository no puede ser Nothing"
     End If
@@ -43,8 +45,13 @@ Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal o
         Err.Raise 5, "CSolicitudService.Initialize", "operationLogger no puede ser Nothing"
     End If
     
+    If errorHandler Is Nothing Then
+        Err.Raise 5, "CSolicitudService.Initialize", "errorHandler no puede ser Nothing"
+    End If
+    
     Set m_solicitudRepository = solicitudRepository
     Set m_OperationLogger = operationLogger
+    Set m_ErrorHandler = errorHandler
     m_isInitialized = True
 End Sub
 
@@ -54,7 +61,6 @@ End Sub
 
 ' Crea una nueva solicitud con estado inicial "Borrador"
 Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As T_Solicitud
-    Dim ErrorHandler As IErrorHandlerService
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudService.CreateSolicitud", "El servicio no ha sido inicializado. Llame a Initialize() primero."
@@ -107,14 +113,12 @@ Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String,
     
 ErrorHandler:
     m_OperationLogger.LogOperation "CREATE_ERROR", "", "Error: " & Err.Description
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CreateSolicitud"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CreateSolicitud"
     Err.Raise Err.Number, "CSolicitudService.CreateSolicitud", Err.Description
 End Function
 
 ' Guarda una solicitud existente
 Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
-    Dim ErrorHandler As IErrorHandlerService
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudService.SaveSolicitud", "El servicio no ha sido inicializado. Llame a Initialize() primero."
@@ -148,8 +152,7 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As T_Solicitud)
     
 ErrorHandler:
     m_OperationLogger.LogOperation "SAVE_ERROR", "", "Error: " & Err.Description
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.SaveSolicitud"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.SaveSolicitud"
     ISolicitudService_SaveSolicitud = False
 End Function
 

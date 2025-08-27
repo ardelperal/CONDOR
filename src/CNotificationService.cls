@@ -22,10 +22,13 @@ Implements INotificationService
 Private m_Config As IConfig
 Private m_OperationLogger As IOperationLogger
 Private m_NotificationRepository As INotificationRepository
+Private m_ErrorHandler As IErrorHandlerService
 
 ' Método público para inyectar dependencias
-Public Sub Initialize(config As IConfig, logger As IOperationLogger, repository As INotificationRepository)
-    Dim ErrorHandler As IErrorHandlerService
+Public Sub Initialize(config As IConfig, logger As IOperationLogger, repository As INotificationRepository, errorHandler As IErrorHandlerService)
+    ' Asignar ErrorHandler primero para poder usarlo en el manejo de errores
+    Set m_ErrorHandler = errorHandler
+    
     On Error GoTo ErrorHandler
     
     Set m_Config = config
@@ -35,8 +38,7 @@ Public Sub Initialize(config As IConfig, logger As IOperationLogger, repository 
     Exit Sub
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.Initialize"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.Initialize"
 End Sub
 
 ' Implementación del método EnviarNotificacion de la interfaz
@@ -46,7 +48,6 @@ Private Function INotificationService_EnviarNotificacion( _
     ByVal cuerpoHTML As String, _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Validar que las dependencias estén inyectadas
@@ -85,8 +86,7 @@ Private Function INotificationService_EnviarNotificacion( _
     Exit Function
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.EnviarNotificacion"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.EnviarNotificacion"
     
     ' No hay recursos específicos que limpiar ya que el repositorio maneja la BD
     
@@ -112,6 +112,7 @@ Private Sub Class_Terminate()
     Set m_Config = Nothing
     Set m_OperationLogger = Nothing
     Set m_NotificationRepository = Nothing
+    Set m_ErrorHandler = Nothing
 End Sub
 
 

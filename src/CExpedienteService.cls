@@ -17,6 +17,7 @@ Implements IExpedienteService
 Private m_Config As IConfig
 Private m_OperationLogger As IOperationLogger
 Private m_ExpedienteRepository As IExpedienteRepository
+Private m_ErrorHandler As IErrorHandlerService
 
 ' ============================================================================
 ' MÃ‰TODOS DE INICIALIZACIÃ“N
@@ -25,10 +26,12 @@ Private m_ExpedienteRepository As IExpedienteRepository
 ' Inicializa el servicio con sus dependencias
 Public Sub Initialize(ByVal config As IConfig, _
                      ByVal operationLogger As IOperationLogger, _
-                     ByVal expedienteRepository As IExpedienteRepository)
+                     ByVal expedienteRepository As IExpedienteRepository, _
+                     ByVal errorHandler As IErrorHandlerService)
     Set m_Config = config
     Set m_OperationLogger = operationLogger
     Set m_ExpedienteRepository = expedienteRepository
+    Set m_ErrorHandler = errorHandler
 End Sub
 
 ' Implementación de la interfaz IExpedienteService
@@ -109,8 +112,9 @@ ErrorHandler:
     End If
     
     ' Log del error
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedienteById"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedienteById"
+    End If
     
     ' Devolver estructura vacía en caso de error
     Dim expedienteVacio As T_Expediente
@@ -144,8 +148,9 @@ Private Function IExpedienteService_GetExpedientesParaSelector() As DAO.Recordse
     
 ErrorHandler:
     ' Log del error
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedientesParaSelector"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedientesParaSelector"
+    End If
     
     ' Devolver Nothing en caso de error
     Set IExpedienteService_GetExpedientesParaSelector = Nothing
@@ -159,6 +164,9 @@ Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico
     ' Variables
     Dim rs As DAO.recordset
     Dim expediente As T_Expediente
+    
+    ' Instanciar el objeto expediente
+    Set expediente = New T_Expediente
     
     ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
@@ -210,8 +218,9 @@ ErrorHandler:
     End If
     
     ' Log del error
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.IExpedienteService_GetExpedienteByNemotecnico", "Nemotécnico: " & Nemotecnico
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.IExpedienteService_GetExpedienteByNemotecnico"
+    End If
     
     ' Devolver estructura vacía en caso de error
     Dim expedienteVacio As T_Expediente

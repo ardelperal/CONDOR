@@ -44,8 +44,10 @@ End Sub
 ' ============================================================================
 ' INICIALIZACIÓN CON DEPENDENCIAS
 ' ============================================================================
-Public Sub Initialize(ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal wordApp As Object, ByVal errorHandler As IErrorHandlerService)
+    Set m_WordApp = wordApp
     Set m_ErrorHandler = errorHandler
+    m_IsWordAppCreated = False ' La aplicación Word se inyecta, no se crea internamente
 End Sub
 
 ' ============================================================================
@@ -55,12 +57,11 @@ End Sub
 Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As Boolean
     On Error GoTo ErrorHandler
     
-    ' Crear aplicación Word si no existe
+    ' Verificar que la aplicación Word esté disponible
     If m_WordApp Is Nothing Then
-        Set m_WordApp = CreateObject("Word.Application")
-        m_IsWordAppCreated = True
-        m_WordApp.Visible = False
-        m_WordApp.DisplayAlerts = False ' Suprimir alertas (Lección 27)
+        m_ErrorHandler.LogError -1, "Aplicación Word no inicializada", "CWordManager.IWordManager_AbrirDocumento"
+        IWordManager_AbrirDocumento = False
+        Exit Function
     End If
     
     ' Abrir el documento
@@ -146,27 +147,26 @@ End Sub
 
 Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As String) As String
     Dim contenido As String
-    Dim tempWordApp As Object
     Dim tempWordDoc As Object
     
     On Error GoTo ErrorHandler
     
-    ' Crear instancia temporal de Word para leer el documento
-    Set tempWordApp = CreateObject("Word.Application")
-    tempWordApp.Visible = False
-    tempWordApp.DisplayAlerts = False ' Suprimir alertas (Lección 27)
+    ' Verificar que la aplicación Word esté disponible
+    If m_WordApp Is Nothing Then
+        m_ErrorHandler.LogError -1, "Aplicación Word no inicializada", "CWordManager.IWordManager_LeerContenidoDocumento"
+        IWordManager_LeerContenidoDocumento = ""
+        Exit Function
+    End If
     
-    ' Abrir el documento
-    Set tempWordDoc = tempWordApp.Documents.Open(rutaDocumento)
+    ' Abrir el documento usando la aplicación Word inyectada
+    Set tempWordDoc = m_WordApp.Documents.Open(rutaDocumento)
     
     ' Leer el contenido
     contenido = tempWordDoc.content.Text
     
     ' Limpiar recursos temporales
     tempWordDoc.Close False
-    tempWordApp.Quit
     Set tempWordDoc = Nothing
-    Set tempWordApp = Nothing
     
     IWordManager_LeerContenidoDocumento = contenido
     Exit Function
@@ -180,13 +180,6 @@ ErrorHandler:
         On Error Resume Next
         tempWordDoc.Close False
         Set tempWordDoc = Nothing
-        On Error GoTo 0
-    End If
-    
-    If Not tempWordApp Is Nothing Then
-        On Error Resume Next
-        tempWordApp.Quit
-        Set tempWordApp = Nothing
         On Error GoTo 0
     End If
     

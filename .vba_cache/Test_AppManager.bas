@@ -15,7 +15,7 @@ Option Explicit
 ' Función principal de la suite de pruebas
 Public Function Test_AppManager_RunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
-    suite.Initialize "Test_AppManager"
+    Call suite.Initialize("Test_AppManager")
     
     ' Ejecutar todas las pruebas unitarias
     suite.AddTestResult Test_App_Start_AdminUser_SetsCorrectGlobalRole()
@@ -23,6 +23,9 @@ Public Function Test_AppManager_RunAll() As CTestSuiteResult
     suite.AddTestResult Test_App_Start_TecnicoUser_SetsCorrectGlobalRole()
     suite.AddTestResult Test_App_Start_DesconocidoUser_SetsCorrectGlobalRole()
     suite.AddTestResult Test_Ping_ReturnsPong()
+    
+    ' Ejecutar prueba de humo
+    suite.AddTestResult Test_AppStart_SmokeTest()
     
     Set Test_AppManager_RunAll = suite
 End Function
@@ -198,6 +201,40 @@ Private Function Test_Ping_ReturnsPong() As CTestResult
 TestFail:
     testResult.Fail "Error: " & Err.Number & " - " & Err.Description
     Set Test_Ping_ReturnsPong = testResult
+End Function
+
+' ============================================================================
+' PRUEBA DE HUMO PARA App_Start CON INSTANCIAS REALES
+' ============================================================================
+
+Private Function Test_AppStart_SmokeTest() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_AppStart_SmokeTest"
+    
+    On Error GoTo TestFail
+    
+    ' Arrange - Crear instancias reales del CErrorHandlerService y sus dependencias
+    Dim config As New CConfig
+    Dim fileSystem As New CFileSystem
+    Dim errorHandler As New CErrorHandlerService
+    errorHandler.Initialize config, fileSystem
+    
+    ' Act - Llamar al procedimiento App_Start con errorHandler real y email de prueba
+    modAppManager.App_Start errorHandler, "admin@test.com"
+    
+    ' Assert - Verificar que no se lancen errores y que g_CurrentUserRole se establezca correctamente
+    If modAppManager.g_CurrentUserRole = ROL_ADMINISTRADOR Then
+        testResult.Pass
+    Else
+        testResult.Fail "Expected g_CurrentUserRole to be ROL_ADMINISTRADOR, but was " & modAppManager.g_CurrentUserRole
+    End If
+    
+    Set Test_AppStart_SmokeTest = testResult
+    Exit Function
+    
+TestFail:
+    testResult.Fail "Error during smoke test: " & Err.Number & " - " & Err.Description
+    Set Test_AppStart_SmokeTest = testResult
 End Function
 
 #End If

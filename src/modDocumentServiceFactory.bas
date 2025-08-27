@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modDocumentServiceFactory"
+Attribute VB_Name = "modDocumentServiceFactory"
 Option Compare Database
 Option Explicit
 
@@ -17,23 +17,17 @@ Public Function CreateDocumentService(ByVal errorHandler As IErrorHandlerService
     Dim configService As IConfig
     Set configService = modConfig.CreateConfigService(errorHandler)
     
-    Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository(errorHandler)
-    
-    Dim operationLogger As IOperationLogger
+    ' Crear las dependencias usando los factories correspondientes
+    Set wordManager = modWordManagerFactory.CreateWordManager(errorHandler, configService)
+    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository(errorHandler, configService)
+    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository(errorHandler, configService)
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
-    
-    Dim wordManager As IWordManager
-    Set wordManager = modWordManagerFactory.CreateWordManager(errorHandler)
-    
-    Dim mapeoRepository As IMapeoRepository
-    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository(errorHandler)
     
     ' Crear una instancia de la clase concreta
     Dim documentServiceInstance As New CDocumentService
     
-    ' Inicializar la instancia concreta con las dependencias
-    documentServiceInstance.Initialize configService, solicitudRepository, operationLogger, wordManager, mapeoRepository
+    ' Inicializar la instancia concreta con las dependencias (incluyendo errorHandler)
+    documentServiceInstance.Initialize configService, solicitudRepository, operationLogger, wordManager, mapeoRepository, errorHandler
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateDocumentService = documentServiceInstance

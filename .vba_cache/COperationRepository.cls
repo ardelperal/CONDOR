@@ -18,23 +18,22 @@ Option Explicit
 
 Implements IOperationRepository
 
-' Dependencia inyectada
+' Dependencias inyectadas
 Private m_configService As IConfig
+Private m_ErrorHandler As IErrorHandlerService
 
 ' Método de inicialización para inyectar dependencias
-Public Sub Initialize(config As IConfig)
-    Dim ErrorHandler As IErrorHandlerService
+Public Sub Initialize(config As IConfig, errorHandler As IErrorHandlerService)
     On Error GoTo ErrorHandler
     Set m_configService = config
+    Set m_ErrorHandler = errorHandler
     Exit Sub
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "COperationRepository.Initialize"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "COperationRepository.Initialize"
 End Sub
 
 ' Implementación del contrato IOperationRepository
 Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
@@ -71,8 +70,7 @@ Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal en
     Exit Sub
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "COperationRepository.IOperationRepository_SaveLog", _
+    m_ErrorHandler.LogError Err.Number, Err.Description, "COperationRepository.IOperationRepository_SaveLog", _
                                   "TipoOperacion: " & operationType & ", Entidad: " & entityId
     If Not qdf Is Nothing Then Set qdf = Nothing
     If Not db Is Nothing Then db.Close

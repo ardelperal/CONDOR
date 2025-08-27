@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "Test_NotificationService"
+Attribute VB_Name = "Test_NotificationService"
 Option Compare Database
 Option Explicit
 
@@ -42,6 +42,7 @@ Private Function Test_EnviarNotificacion_Success_CallsRepositoryCorrectly_Result
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockNotificationRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Configurar mock config con valores de prueba
     mockConfig.SetConfigValue "CORREOS_DB_PATH", "C:\test\correos_test.accdb"
@@ -50,7 +51,7 @@ Private Function Test_EnviarNotificacion_Success_CallsRepositoryCorrectly_Result
     mockConfig.SetConfigValue "CORREO_ADMINISTRADOR", "admin@empresa.com"
     
     ' Inicializar usando la implementación concreta
-    notificationServiceImpl.Initialize mockConfig, mockLogger, mockRepository
+    notificationServiceImpl.Initialize mockConfig, mockLogger, mockRepository, mockErrorHandler
     
     ' Asignar a la variable de interfaz para la prueba
     Set notificationService = notificationServiceImpl
@@ -78,6 +79,12 @@ Private Function Test_EnviarNotificacion_Success_CallsRepositoryCorrectly_Result
     result.Passed = True
     result.message = "Prueba exitosa: EnviarNotificacion usa el repositorio correctamente"
     
+    ' Cleanup
+    mockConfig.Reset
+    mockLogger.Reset
+    mockRepository.Reset
+    mockErrorHandler.Reset
+    
     Set Test_EnviarNotificacion_Success_CallsRepositoryCorrectly_Result = result
     Exit Function
     
@@ -100,9 +107,10 @@ Private Function Test_Initialize_WithValidDependencies_Result() As CTestResult
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockNotificationRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Inicializar usando la implementación concreta
-    notificationServiceImpl.Initialize mockConfig, mockLogger, mockRepository
+    notificationServiceImpl.Initialize mockConfig, mockLogger, mockRepository, mockErrorHandler
     
     ' Asignar a la variable de interfaz para la prueba
     Set notificationService = notificationServiceImpl
@@ -112,6 +120,12 @@ Private Function Test_Initialize_WithValidDependencies_Result() As CTestResult
     ' Assert - Si no hay error, la inicialización fue exitosa
     result.Passed = True
     result.message = "Prueba exitosa: Initialize con todas las dependencias válidas"
+    
+    ' Cleanup
+    mockConfig.Reset
+    mockLogger.Reset
+    mockRepository.Reset
+    mockErrorHandler.Reset
     
     Set Test_Initialize_WithValidDependencies_Result = result
     Exit Function
@@ -145,6 +159,8 @@ Private Function Test_EnviarNotificacion_WithoutInitialize_Result() As CTestResu
     result.Passed = True
     result.message = "Prueba exitosa: EnviarNotificacion falla correctamente sin Initialize"
     
+    ' Cleanup - No hay mocks que resetear en esta prueba
+    
     Set Test_EnviarNotificacion_WithoutInitialize_Result = result
     Exit Function
     
@@ -167,9 +183,10 @@ Private Function Test_EnviarNotificacion_WithInvalidParameters_Result() As CTest
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockNotificationRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Inicializar usando la implementación concreta
-    notificationServiceImpl.Initialize mockConfig, mockLogger, mockRepository
+    notificationServiceImpl.Initialize mockConfig, mockLogger, mockRepository, mockErrorHandler
     
     ' Asignar a la variable de interfaz para la prueba
     Set notificationService = notificationServiceImpl
@@ -195,6 +212,12 @@ Private Function Test_EnviarNotificacion_WithInvalidParameters_Result() As CTest
     result.Passed = True
     result.message = "Prueba exitosa: EnviarNotificacion valida correctamente parámetros"
     
+    ' Cleanup
+    mockConfig.Reset
+    mockLogger.Reset
+    mockRepository.Reset
+    mockErrorHandler.Reset
+    
     Set Test_EnviarNotificacion_WithInvalidParameters_Result = result
     Exit Function
     
@@ -217,6 +240,7 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockNotificationRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Configurar valores específicos en el mock
     mockConfig.SetConfigValue "CORREOS_DB_PATH", "C:\test\correos_test.accdb"
@@ -225,7 +249,7 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     mockConfig.SetConfigValue "CORREO_ADMINISTRADOR", "admin.test@empresa.com"
     
     ' Inicializar usando la implementación concreta
-    notificationServiceImpl.Initialize mockConfig, mockLogger, mockRepository
+    notificationServiceImpl.Initialize mockConfig, mockLogger, mockRepository, mockErrorHandler
     
     ' Asignar a la variable de interfaz para la prueba
     Set notificationService = notificationServiceImpl
@@ -246,6 +270,12 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     
     result.Passed = True
     result.message = "Prueba exitosa: EnviarNotificacion usa valores correctos del config inyectado"
+    
+    ' Cleanup
+    mockConfig.Reset
+    mockLogger.Reset
+    mockRepository.Reset
+    mockErrorHandler.Reset
     
     Set Test_EnviarNotificacion_ConfigValuesUsed_Result = result
     Exit Function

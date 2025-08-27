@@ -58,15 +58,19 @@ Private Function IntegrationTest_WordManager_CicloCompleto_Success() As CTestRes
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim wordManager As New CWordManager
+    Dim wordManager As IWordManager
     Dim errorHandler As IErrorHandlerService
     Dim archivoOriginal As String
     Dim archivoGuardado As String
     Dim contenidoFinal As String
     
-    ' Crear instancia real de ErrorHandler
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    wordManager.Initialize errorHandler
+    ' Crear instancia real de ErrorHandler y WordManager usando factory
+    Dim config As IConfig
+    Dim fileSystem As IFileSystem
+    Set config = New CConfig
+    Set fileSystem = New CFileSystem
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    Set wordManager = modWordManagerFactory.CreateWordManager(errorHandler)
     
     ' Crear archivo de prueba con marcador
     archivoOriginal = m_TempFolder & "documento_original.docx"
@@ -106,6 +110,11 @@ ErrorHandler:
     On Error GoTo 0
     
 Cleanup:
+    ' Limpiar recursos
+    On Error Resume Next
+    Set wordManager = Nothing
+    On Error GoTo 0
+    
     Set IntegrationTest_WordManager_CicloCompleto_Success = testResult
 End Function
 
@@ -116,14 +125,18 @@ Private Function IntegrationTest_WordManager_AbrirFicheroInexistente_DevuelveFal
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim wordManager As New CWordManager
+    Dim wordManager As IWordManager
     Dim errorHandler As IErrorHandlerService
     Dim rutaInvalida As String
     Dim resultado As Boolean
     
-    ' Crear instancia real de ErrorHandler
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    wordManager.Initialize errorHandler
+    ' Crear instancia real de ErrorHandler y WordManager usando factory
+    Dim config As IConfig
+    Dim fileSystem As IFileSystem
+    Set config = New CConfig
+    Set fileSystem = New CFileSystem
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    Set wordManager = modWordManagerFactory.CreateWordManager(errorHandler)
     
     rutaInvalida = m_TempFolder & "archivo_que_no_existe.docx"
     
@@ -140,6 +153,11 @@ ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Number & " - " & Err.Description
     
 Cleanup:
+    ' Limpiar recursos
+    On Error Resume Next
+    Set wordManager = Nothing
+    On Error GoTo 0
+    
     Set IntegrationTest_WordManager_AbrirFicheroInexistente_DevuelveFalse = testResult
 End Function
 
@@ -153,13 +171,18 @@ Private Sub InicializarSetup()
     ' Inicializar colección de archivos temporales
     Set m_TempFiles = New Collection
     
-    ' Configurar carpeta temporal
-    m_TempFolder = Environ("TEMP") & "\CONDOR_WordManager_Tests\"
+    ' Configurar carpeta temporal usando ruta estandarizada del proyecto
+    m_TempFolder = modTestUtils.GetProjectPath() & "back\test_env\word_tests\"
     
-    ' Crear carpeta temporal si no existe
-    If Dir(m_TempFolder, vbDirectory) = "" Then
-        MkDir m_TempFolder
+    ' Crear carpeta temporal si no existe usando IFileSystem
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    
+    If Not fs.FolderExists(m_TempFolder) Then
+        fs.CreateFolder m_TempFolder
     End If
+    
+    Set fs = Nothing
     
     Exit Sub
     
@@ -220,21 +243,32 @@ Private Sub LimpiarArchivosTemporales()
     
     Dim i As Integer
     Dim archivo As String
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
     
-    ' Eliminar archivos temporales creados durante las pruebas
+    ' Eliminar archivos temporales creados durante las pruebas usando IFileSystem
     If Not m_TempFiles Is Nothing Then
         For i = 1 To m_TempFiles.Count
             archivo = m_TempFiles(i)
-            If Dir(archivo) <> "" Then
-                Kill archivo
+            If fs.FileExists(archivo) Then
+                fs.DeleteFile archivo
             End If
         Next i
     End If
     
+    ' Verificar si la carpeta está vacía usando FileSystemObject (funcionalidad no disponible en IFileSystem)
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
     ' Eliminar carpeta temporal si está vacía
-    If Dir(m_TempFolder, vbDirectory) <> "" Then
-        RmDir m_TempFolder
+    If fs.FolderExists(m_TempFolder) Then
+        If fso.GetFolder(m_TempFolder).Files.Count = 0 And fso.GetFolder(m_TempFolder).SubFolders.Count = 0 Then
+            fs.DeleteFolder m_TempFolder
+        End If
     End If
+    
+    Set fs = Nothing
+    Set fso = Nothing
     
     On Error GoTo 0
 End Sub

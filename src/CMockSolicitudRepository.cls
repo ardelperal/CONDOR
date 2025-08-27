@@ -10,159 +10,147 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
-' ============================================================================
+'******************************************************************************
 ' CLASE: CMockSolicitudRepository
-' Arquitectura: Mock del Repositorio de Solicitudes para Pruebas Unitarias
-' Version: 2.0 - Reconstrucción Total
-' ============================================================================
-' Mock que implementa ISolicitudRepository para aislamiento de pruebas unitarias.
-' Permite verificar llamadas y configurar comportamientos de prueba.
-' ============================================================================
+' DESCRIPCIÓN: Implementación Mock del repositorio de solicitudes para pruebas unitarias.
+' AUTOR: Sistema CONDOR
+' FECHA: 2025-08-27
+'******************************************************************************
 
 Implements ISolicitudRepository
 
-' ============================================================================
-' PROPIEDADES PÚBLICAS PARA VERIFICACIÓN EN PRUEBAS
-' ============================================================================
+' Variables para tracking de llamadas y configuración de retorno
+Private m_GetSolicitudById_WasCalled As Boolean
+Private m_SaveSolicitud_WasCalled As Boolean
+Private m_ExecuteQuery_WasCalled As Boolean
 
-' Flags de llamadas
-Public GetSolicitudByIdCalled As Boolean
-Public SaveSolicitudCalled As Boolean
-Public ExecuteQueryCalled As Boolean
+Private m_LastIdSolicitud As Long
+Private m_LastSolicitud As T_Solicitud
+Private m_LastSql As String
+Private m_LastParams As Collection
 
-' Parámetros capturados
-Public LastIdSolicitudRequested As Long
-Public LastSavedSolicitud As T_Solicitud
-Public LastExecutedSql As String
-Public LastExecutedParams As Collection
+Private m_GetSolicitudByIdReturnValue As T_Solicitud
+Private m_SaveSolicitudReturnValue As Long
+Private m_ExecuteQueryReturnValue As DAO.recordset
 
-' Valores de retorno configurables
-Public GetSolicitudByIdReturnValue As T_Solicitud
-Public SaveSolicitudReturnValue As Long
-Public ExecuteQueryReturnValue As DAO.recordset
+Private m_GetSolicitudByIdCallCount As Long
+Private m_SaveSolicitudCallCount As Long
+Private m_ExecuteQueryCallCount As Long
 
-' Contadores
-Public GetSolicitudByIdCallCount As Long
-Public SaveSolicitudCallCount As Long
-Public ExecuteQueryCallCount As Long
+'--- PROPIEDADES PARA VERIFICACIÓN DE LLAMADAS ---
 
-' ============================================================================
-' CONSTRUCTOR
-' ============================================================================
+Public Property Get GetSolicitudById_WasCalled() As Boolean
+    GetSolicitudById_WasCalled = m_GetSolicitudById_WasCalled
+End Property
 
-Private Sub Class_Initialize()
-    Reset
+Public Property Get SaveSolicitud_WasCalled() As Boolean
+    SaveSolicitud_WasCalled = m_SaveSolicitud_WasCalled
+End Property
+
+Public Property Get ExecuteQuery_WasCalled() As Boolean
+    ExecuteQuery_WasCalled = m_ExecuteQuery_WasCalled
+End Property
+
+Public Property Get LastIdSolicitud() As Long
+    LastIdSolicitud = m_LastIdSolicitud
+End Property
+
+Public Property Get LastSolicitud() As T_Solicitud
+    Set LastSolicitud = m_LastSolicitud
+End Property
+
+Public Property Get LastSql() As String
+    LastSql = m_LastSql
+End Property
+
+Public Property Get LastParams() As Collection
+    Set LastParams = m_LastParams
+End Property
+
+Public Property Get GetSolicitudByIdCallCount() As Long
+    GetSolicitudByIdCallCount = m_GetSolicitudByIdCallCount
+End Property
+
+Public Property Get SaveSolicitudCallCount() As Long
+    SaveSolicitudCallCount = m_SaveSolicitudCallCount
+End Property
+
+Public Property Get ExecuteQueryCallCount() As Long
+    ExecuteQueryCallCount = m_ExecuteQueryCallCount
+End Property
+
+'--- MÉTODOS PARA CONFIGURAR VALORES DE RETORNO ---
+
+Public Sub SetGetSolicitudByIdReturnValue(ByVal returnValue As T_Solicitud)
+    Set m_GetSolicitudByIdReturnValue = returnValue
 End Sub
 
-' ============================================================================
-' MÉTODOS PÚBLICOS PARA CONFIGURACIÓN DEL MOCK
-' ============================================================================
+Public Sub SetSaveSolicitudReturnValue(ByVal returnValue As Long)
+    m_SaveSolicitudReturnValue = returnValue
+End Sub
 
-' Reinicia todas las propiedades del mock a sus valores por defecto
+Public Sub SetExecuteQueryReturnValue(ByVal returnValue As DAO.recordset)
+    Set m_ExecuteQueryReturnValue = returnValue
+End Sub
+
+'--- MÉTODO RESET ---
+
 Public Sub Reset()
-    ' Resetear flags de llamadas
-    GetSolicitudByIdCalled = False
-    SaveSolicitudCalled = False
-    ExecuteQueryCalled = False
+    m_GetSolicitudById_WasCalled = False
+    m_SaveSolicitud_WasCalled = False
+    m_ExecuteQuery_WasCalled = False
     
-    ' Resetear parámetros capturados
-    LastIdSolicitudRequested = 0
-    Set LastSavedSolicitud = Nothing
-    LastExecutedSql = ""
-    Set LastExecutedParams = Nothing
+    m_LastIdSolicitud = 0
+    Set m_LastSolicitud = Nothing
+    m_LastSql = ""
+    Set m_LastParams = Nothing
     
-    ' Resetear valores de retorno
-    Set GetSolicitudByIdReturnValue = Nothing
-    SaveSolicitudReturnValue = 1 ' Valor por defecto exitoso
-    Set ExecuteQueryReturnValue = Nothing
+    Set m_GetSolicitudByIdReturnValue = Nothing
+    m_SaveSolicitudReturnValue = 0
+    Set m_ExecuteQueryReturnValue = Nothing
     
-    ' Resetear contadores
-    GetSolicitudByIdCallCount = 0
-    SaveSolicitudCallCount = 0
-    ExecuteQueryCallCount = 0
+    m_GetSolicitudByIdCallCount = 0
+    m_SaveSolicitudCallCount = 0
+    m_ExecuteQueryCallCount = 0
 End Sub
 
-' Configura la solicitud que debe devolver GetSolicitudById
-Public Sub SetGetSolicitudByIdReturnValue(ByVal solicitud As T_Solicitud)
-    Set GetSolicitudByIdReturnValue = solicitud
-End Sub
+'--- IMPLEMENTACIÓN DE LA INTERFAZ ISolicitudRepository ---
 
-' Configura el ID que debe devolver SaveSolicitud
-Public Sub SetSaveSolicitudReturnValue(ByVal returnId As Long)
-    SaveSolicitudReturnValue = returnId
-End Sub
-
-' Configura el Recordset que debe devolver ExecuteQuery
-Public Sub SetExecuteQueryReturnValue(ByVal rs As DAO.recordset)
-    Set ExecuteQueryReturnValue = rs
-End Sub
-
-' ============================================================================
-' IMPLEMENTACIÓN DE ISolicitudRepository
-' ============================================================================
-
-' Implementación mock de GetSolicitudById
 Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
-    ' Registrar la llamada
-    GetSolicitudByIdCalled = True
-    GetSolicitudByIdCallCount = GetSolicitudByIdCallCount + 1
-    LastIdSolicitudRequested = idSolicitud
+    m_GetSolicitudById_WasCalled = True
+    m_LastIdSolicitud = idSolicitud
+    m_GetSolicitudByIdCallCount = m_GetSolicitudByIdCallCount + 1
     
-    ' Devolver el valor configurado
-    If Not GetSolicitudByIdReturnValue Is Nothing Then
-        Set ISolicitudRepository_GetSolicitudById = GetSolicitudByIdReturnValue
-    Else
-        Set ISolicitudRepository_GetSolicitudById = Nothing
-    End If
+    Set ISolicitudRepository_GetSolicitudById = m_GetSolicitudByIdReturnValue
 End Function
 
-' Implementación mock de SaveSolicitud
 Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
-    ' Registrar la llamada
-    SaveSolicitudCalled = True
-    SaveSolicitudCallCount = SaveSolicitudCallCount + 1
-    Set LastSavedSolicitud = solicitud
+    m_SaveSolicitud_WasCalled = True
+    Set m_LastSolicitud = solicitud
+    m_SaveSolicitudCallCount = m_SaveSolicitudCallCount + 1
     
-    ' Devolver el valor configurado
-    ISolicitudRepository_SaveSolicitud = SaveSolicitudReturnValue
+    ISolicitudRepository_SaveSolicitud = m_SaveSolicitudReturnValue
 End Function
 
-' Implementación mock de ExecuteQuery
 Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
-    ' Registrar la llamada
-    ExecuteQueryCalled = True
-    ExecuteQueryCallCount = ExecuteQueryCallCount + 1
-    LastExecutedSql = sql
-    Set LastExecutedParams = params
+    m_ExecuteQuery_WasCalled = True
+    m_LastSql = sql
+    Set m_LastParams = params
+    m_ExecuteQueryCallCount = m_ExecuteQueryCallCount + 1
     
-    ' Devolver el valor configurado
-    Set ISolicitudRepository_ExecuteQuery = ExecuteQueryReturnValue
+    Set ISolicitudRepository_ExecuteQuery = m_ExecuteQueryReturnValue
 End Function
 
-' ============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA (DELEGACIÓN)
-' ============================================================================
+'--- MÉTODOS PÚBLICOS DE CONVENIENCIA ---
 
-' Método público que delega a la implementación de la interfaz
 Public Function GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
     Set GetSolicitudById = ISolicitudRepository_GetSolicitudById(idSolicitud)
 End Function
 
-' Método público que delega a la implementación de la interfaz
 Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
     SaveSolicitud = ISolicitudRepository_SaveSolicitud(solicitud)
 End Function
 
-' Método público que delega a la implementación de la interfaz
 Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
     Set ExecuteQuery = ISolicitudRepository_ExecuteQuery(sql, params)
 End Function
-
-
-
-
-
-
-
-

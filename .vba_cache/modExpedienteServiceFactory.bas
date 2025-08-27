@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modExpedienteServiceFactory"
+Attribute VB_Name = "modExpedienteServiceFactory"
 Option Compare Database
 Option Explicit
 
@@ -11,31 +11,38 @@ Option Explicit
 ' =====================================================
 
 ' Función factory para crear y configurar el servicio de expedientes
-Public Function CreateExpedienteService(ByVal errorHandler As IErrorHandlerService) As IExpedienteService
+Public Function CreateExpedienteService() As IExpedienteService
     On Error GoTo ErrorHandler
     
-    ' Obtener todas las dependencias requeridas
-    Dim m_Config As IConfig
-    Dim m_OperationLogger As IOperationLogger
-    Dim m_ExpedienteRepository As IExpedienteRepository
+    ' 1. Obtener dependencias de sus propias factorías
+    Dim repo As IExpedienteRepository
+    Dim logger As IOperationLogger
+    Dim errorHandler As IErrorHandlerService
+    Dim config As IConfig
     
-    Set m_Config = modConfig.CreateConfigService(errorHandler)
-    Set m_OperationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
-    Set m_ExpedienteRepository = modRepositoryFactory.CreateExpedienteRepository(errorHandler)
+    ' Crear errorHandler y config primero para poder usarlos en caso de errores
+    Set config = modConfig.CreateConfigService()
+    Dim fileSystem As IFileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
     
-    ' Crear una instancia de la clase concreta
+    ' Crear las demás dependencias
+    Set repo = modRepositoryFactory.CreateExpedienteRepository(errorHandler)
+    Set logger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
+    
+    ' 2. Crear e inicializar el servicio
     Dim expedienteServiceInstance As New CExpedienteService
+    expedienteServiceInstance.Initialize config, logger, repo, errorHandler
     
-    ' Inicializar la instancia concreta con todas las dependencias
-    expedienteServiceInstance.Initialize m_Config, m_OperationLogger, m_ExpedienteRepository
-    
-    ' Devolver la instancia inicializada como el tipo de la interfaz
+    ' 3. Devolver la instancia
     Set CreateExpedienteService = expedienteServiceInstance
     
     Exit Function
     
 ErrorHandler:
-    errorHandler.LogError Err.Number, Err.Description, "modExpedienteServiceFactory.CreateExpedienteService"
+    If Not errorHandler Is Nothing Then
+        errorHandler.LogError Err.Number, Err.Description, "modExpedienteServiceFactory.CreateExpedienteService"
+    End If
     Set CreateExpedienteService = Nothing
 End Function
 

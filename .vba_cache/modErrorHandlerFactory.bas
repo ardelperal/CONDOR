@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modErrorHandlerFactory"
+Attribute VB_Name = "modErrorHandlerFactory"
 Option Compare Database
 Option Explicit
 
@@ -7,21 +7,15 @@ Option Explicit
 ' Arquitectura: Capa de Servicios - Factory Pattern
 
 ' Crea una instancia configurada de IErrorHandlerService
+' @param config IConfig: Instancia de configuración
+' @param fileSystem IFileSystem: Instancia del sistema de ficheros
 ' @return IErrorHandlerService: Instancia lista para usar
-Public Function CreateErrorHandlerService() As IErrorHandlerService
+Public Function CreateErrorHandlerService(ByVal config As IConfig, ByVal fileSystem As IFileSystem) As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Dim errorHandlerInstance As New CErrorHandlerService
-    Dim config As IConfig
-    Dim fileSystem As IFileSystem
     
-    ' Obtener instancia de configuración usando el nuevo factory (sin pasar errorHandler)
-    Set config = modConfig.CreateConfigService()
-    
-    ' Crear instancia del sistema de ficheros usando factory (sin pasar errorHandler)
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    
-    ' Inicializar el servicio con sus dependencias
+    ' Inicializar el servicio con las dependencias recibidas
     errorHandlerInstance.Initialize config, fileSystem
     
     ' Devolver la interfaz

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -181,6 +181,11 @@ Private Function IConfig_GetIDAplicacionCondor() As String
     IConfig_GetIDAplicacionCondor = GetMockSettingValue("IDAplicacion_CONDOR")
 End Function
 
+' Implementación de IConfig_SetSetting
+Private Sub IConfig_SetSetting(ByVal key As String, ByVal value As Variant)
+    AddSetting key, value
+End Sub
+
 '******************************************************************************
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
 '******************************************************************************
@@ -229,4 +234,9 @@ End Function
 Public Function GetIDAplicacionCondor() As String
     GetIDAplicacionCondor = IConfig_GetIDAplicacionCondor()
 End Function
+
+' Método público de conveniencia para SetSetting
+Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
+    IConfig_SetSetting key, value
+End Sub
 

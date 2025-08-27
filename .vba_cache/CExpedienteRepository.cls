@@ -15,14 +15,16 @@ Implements IExpedienteRepository
 
 ' Dependencias inyectadas
 Private m_Config As IConfig
+Private m_ErrorHandler As IErrorHandlerService
 
 ' ============================================================================
 ' MÉTODOS DE INICIALIZACIÓN
 ' ============================================================================
 
 ' Inicializa el repositorio con sus dependencias
-Public Sub Initialize(ByVal config As IConfig)
+Public Sub Initialize(ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
     Set m_Config = config
+    Set m_ErrorHandler = errorHandler
 End Sub
 
 ' ============================================================================
@@ -75,8 +77,9 @@ ErrorHandler:
     If Not db Is Nothing Then Set db = Nothing
     
     ' Log del error
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorId"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorId"
+    End If
     
     ' Devolver Nothing en caso de error
     Set IExpedienteRepository_ObtenerExpedientePorId = Nothing
@@ -128,8 +131,9 @@ ErrorHandler:
     If Not db Is Nothing Then Set db = Nothing
     
     ' Log del error
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorNemotecnico"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorNemotecnico"
+    End If
     
     ' Devolver Nothing en caso de error
     Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = Nothing
@@ -170,8 +174,9 @@ ErrorHandler:
     If Not db Is Nothing Then Set db = Nothing
     
     ' Log del error
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientesActivosParaSelector"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientesActivosParaSelector"
+    End If
     
     ' Devolver Nothing en caso de error
     Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = Nothing

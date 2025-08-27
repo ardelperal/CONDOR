@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modAuthFactory"
+Attribute VB_Name = "modAuthFactory"
 Option Compare Database
 Option Explicit
 
@@ -14,7 +14,7 @@ Option Explicit
 Private m_MockAuthService As IAuthService
 
 ' Función factory para crear y configurar el servicio de autenticación
-Public Function CreateAuthService(ByVal errorHandler As IErrorHandlerService) As IAuthService
+Public Function CreateAuthService() As IAuthService
     On Error GoTo ErrorHandler
     
     ' Si hay un mock configurado, devolverlo
@@ -23,22 +23,28 @@ Public Function CreateAuthService(ByVal errorHandler As IErrorHandlerService) As
         Exit Function
     End If
     
-    ' Obtener la instancia de configuración usando el nuevo factory
-    Dim config As IConfig: Set config = modConfig.CreateConfigService(errorHandler)
+    ' Crear las dependencias necesarias usando sus respectivas factorías
+    Dim fileSystem As IFileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
     
-    ' Obtener la instancia del logger de operaciones
+    Dim config As IConfig
+    Set config = modConfig.CreateConfigService()
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    
     Dim operationLogger As IOperationLogger
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
+    Set operationLogger = New COperationLogger
+    operationLogger.Initialize config, errorHandler
     
-    ' Obtener la instancia del repositorio de autenticación
     Dim authRepository As IAuthRepository
-    Set authRepository = modRepositoryFactory.CreateAuthRepository(errorHandler)
+    Set authRepository = modRepositoryFactory.CreateAuthRepository(errorHandler, config)
     
     ' Crear una instancia de la clase concreta
     Dim authServiceInstance As New CAuthService
     
     ' Inicializar la instancia concreta con todas las dependencias
-    authServiceInstance.Initialize config, operationLogger, authRepository
+    authServiceInstance.Initialize config, operationLogger, authRepository, errorHandler
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateAuthService = authServiceInstance
@@ -46,7 +52,7 @@ Public Function CreateAuthService(ByVal errorHandler As IErrorHandlerService) As
     Exit Function
     
 ErrorHandler:
-    errorHandler.LogError Err.Number, Err.Description, "modAuthFactory.CreateAuthService"
+    Debug.Print "Error en modAuthFactory.CreateAuthService: " & Err.Number & " - " & Err.Description
     Err.Raise Err.Number, Err.Source, Err.Description
 End Function
 

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -62,10 +62,10 @@ End Sub
 ' IMPLEMENTACIÓN DE LA INTERFAZ IDocumentService
 ' ============================================================================
 
-Private Function IDocumentService_GenerarDocumento(ByVal laSolicitud As T_Solicitud) As String
+Private Function IDocumentService_GenerarDocumento(ByVal solicitud As T_Solicitud) As String
     GenerarDocumento_WasCalled = True
     GenerarDocumento_CallCount = GenerarDocumento_CallCount + 1
-    Set GenerarDocumento_LastSolicitud = laSolicitud
+    Set GenerarDocumento_LastSolicitud = solicitud
     IDocumentService_GenerarDocumento = GenerarDocumento_ReturnValue
 End Function
 

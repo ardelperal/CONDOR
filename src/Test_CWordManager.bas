@@ -20,11 +20,11 @@ Private m_tempTemplatePath As String
 
 Public Function Test_CWordManager_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_CWordManager - Pruebas Unitarias CWordManager"
+    Call suiteResult.Initialize("Test_CWordManager - Pruebas Unitarias CWordManager")
     
-    suiteResult.AddTestResult Test_AbrirCerrarDocumento_Success()
-    suiteResult.AddTestResult Test_ReemplazarTexto_Success()
-    suiteResult.AddTestResult Test_GuardarDocumento_Success()
+    Call suiteResult.AddTestResult(Test_AbrirCerrarDocumento_Success())
+    Call suiteResult.AddTestResult(Test_ReemplazarTexto_Success())
+    Call suiteResult.AddTestResult(Test_GuardarDocumento_Success())
     
     Set Test_CWordManager_RunAll = suiteResult
 End Function
@@ -39,14 +39,14 @@ Private Sub Setup()
     Set m_mockErrorHandler = New CMockErrorHandlerService ' Instantiated
     
     ' Configurar mocks para rutas de ficheros temporales
-    m_mockConfig.AddSetting "GENERATED_DOCS_PATH", Environ("TEMP") & "\CondorTests"
-    m_mockConfig.AddSetting "PLANTILLA_PATH", Environ("TEMP") & "\CondorTests"
+    Call m_mockConfig.AddSetting("GENERATED_DOCS_PATH", Environ("TEMP") & "\CondorTests")
+    Call m_mockConfig.AddSetting("PLANTILLA_PATH", Environ("TEMP") & "\CondorTests")
     
     ' Asegurarse de que la carpeta de tests existe
     Dim fso As Object
     Set fso = CreateObject("Scripting.FileSystemObject")
     If Not fso.FolderExists(Environ("TEMP") & "\CondorTests") Then
-        fso.CreateFolder Environ("TEMP") & "\CondorTests"
+        Call fso.CreateFolder(Environ("TEMP") & "\CondorTests")
     End If
     
     ' Crear un documento de Word temporal para las pruebas
@@ -54,31 +54,41 @@ Private Sub Setup()
     CreateDummyWordDocument m_tempTemplatePath, "[MARCADOR_TEST]"
     
     Dim managerImpl As New CWordManager
-    managerImpl.Initialize m_mockErrorHandler ' Injected
+    Call managerImpl.Initialize(m_mockErrorHandler) ' Injected
     Set m_wordManager = managerImpl
 End Sub
 
 Private Sub Teardown()
     On Error Resume Next
-    m_wordManager.CerrarDocumento ' Asegurarse de cerrar Word
+    Call m_wordManager.CerrarDocumento() ' Asegurarse de cerrar Word
     Set m_wordManager = Nothing
     Set m_mockConfig = Nothing
     Set m_mockLogger = Nothing
     Set m_mockErrorHandler = Nothing ' Cleaned up
     
-    ' Limpiar ficheros temporales
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    If fso.FileExists(m_tempTemplatePath) Then fso.DeleteFile m_tempTemplatePath
-    If m_tempDocPath <> "" And fso.FileExists(m_tempDocPath) Then fso.DeleteFile m_tempDocPath
+    ' Limpiar ficheros temporales usando IFileSystem
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    
+    If fs.FileExists(m_tempTemplatePath) Then fs.DeleteFile m_tempTemplatePath
+    If m_tempDocPath <> "" And fs.FileExists(m_tempDocPath) Then fs.DeleteFile m_tempDocPath
     
     ' Limpiar carpeta de tests si está vacía
-    If fso.FolderExists(Environ("TEMP") & "\CondorTests") Then
-        If fso.GetFolder(Environ("TEMP") & "\CondorTests").Files.Count = 0 And _
-           fso.GetFolder(Environ("TEMP") & "\CondorTests").SubFolders.Count = 0 Then
-            fso.DeleteFolder Environ("TEMP") & "\CondorTests"
+    Dim testFolderPath As String
+    testFolderPath = Environ("TEMP") & "\CondorTests"
+    
+    If fs.FolderExists(testFolderPath) Then
+        ' Verificar si está vacía usando FSO para contar archivos (IFileSystem no tiene esta funcionalidad)
+        Dim fso As Object
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        If fso.GetFolder(testFolderPath).Files.Count = 0 And _
+           fso.GetFolder(testFolderPath).SubFolders.Count = 0 Then
+            fs.DeleteFolder testFolderPath
         End If
+        Set fso = Nothing
     End If
+    
+    Set fs = Nothing
     On Error GoTo 0
 End Sub
 
@@ -98,7 +108,7 @@ Private Sub CreateDummyWordDocument(ByVal filePath As String, ByVal content As S
     
     Set wordDoc = wordApp.Documents.Add
     wordDoc.Content.Text = content
-    wordDoc.SaveAs2 filePath
+    Call wordDoc.SaveAs2(filePath)
     wordDoc.Close
     wordApp.Quit
     Set wordDoc = Nothing
@@ -111,7 +121,7 @@ End Sub
 
 Private Function Test_AbrirCerrarDocumento_Success() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "AbrirDocumento y CerrarDocumento deben funcionar correctamente"
+    Call testResult.Initialize("AbrirDocumento y CerrarDocumento deben funcionar correctamente")
     
     On Error GoTo ErrorHandler
     
@@ -130,7 +140,7 @@ Private Function Test_AbrirCerrarDocumento_Success() As CTestResult
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
 Cleanup:
     Call Teardown
     Set Test_AbrirCerrarDocumento_Success = testResult

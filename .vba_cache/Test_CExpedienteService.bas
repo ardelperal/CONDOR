@@ -15,13 +15,13 @@ Option Explicit
 ' Función principal que ejecuta todas las pruebas del módulo
 Public Function Test_CExpedienteService_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_CExpedienteService"
+    Call suiteResult.Initialize("Test_CExpedienteService")
     
     ' Ejecutar todas las pruebas unitarias
-    suiteResult.AddTestResult Test_GetExpedienteById_Success()
-    suiteResult.AddTestResult Test_GetExpedienteById_NotFound()
-    suiteResult.AddTestResult Test_GetExpedientesParaSelector_Success()
-    suiteResult.AddTestResult Test_GetExpedientesParaSelector_EmptyResult()
+    Call suiteResult.AddTestResult(Test_GetExpedienteById_Success())
+    Call suiteResult.AddTestResult(Test_GetExpedienteById_NotFound())
+    Call suiteResult.AddTestResult(Test_GetExpedientesParaSelector_Success())
+    Call suiteResult.AddTestResult(Test_GetExpedientesParaSelector_EmptyResult())
     
     Set Test_CExpedienteService_RunAll = suiteResult
 End Function
@@ -33,7 +33,7 @@ End Function
 ' Prueba que GetExpedienteById devuelve correctamente un expediente cuando existe
 Private Function Test_GetExpedienteById_Success() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetExpedienteById_Success"
+    Call testResult.Initialize("Test_GetExpedienteById_Success")
     
     On Error GoTo ErrorHandler
     
@@ -41,34 +41,35 @@ Private Function Test_GetExpedienteById_Success() As CTestResult
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockExpedienteRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Crear recordset mock con datos de expediente
     Dim mockRecordset As DAO.recordset
     Set mockRecordset = CreateMockExpedienteRecordset(123, "EXP-2024-001", "Expediente de Prueba", "Descripción de prueba", #1/15/2024#, "Activo", 1, "Juan Pérez")
-    mockRepository.SetObtenerExpedientePorIdReturnValue mockRecordset
+    Call mockRepository.SetObtenerExpedientePorIdReturnValue(mockRecordset)
     
     ' Crear servicio con dependencias mock
     Dim expedienteService As New CExpedienteService
-    expedienteService.Initialize mockConfig, mockLogger, mockRepository
+    Call expedienteService.Initialize(mockConfig, mockLogger, mockRepository, mockErrorHandler)
     
     ' Act - Ejecutar el método bajo prueba
     Dim Resultado As T_Expediente
     Resultado = expedienteService.GetExpedienteById(123)
     
     ' Assert - Verificar resultados
-    modAssert.AssertEquals 123, Resultado.idExpediente, "ID del expediente debe coincidir"
-    modAssert.AssertEquals "EXP-2024-001", Resultado.NumeroExpediente, "Número del expediente debe coincidir"
-    modAssert.AssertEquals "Expediente de Prueba", Resultado.Titulo, "Título del expediente debe coincidir"
-    modAssert.AssertEquals "Descripción de prueba", Resultado.Descripcion, "Descripción del expediente debe coincidir"
-    modAssert.AssertEquals "Activo", Resultado.Estado, "Estado del expediente debe coincidir"
-    modAssert.AssertEquals 1, Resultado.IdUsuarioCreador, "ID del usuario creador debe coincidir"
-    modAssert.AssertEquals "Juan Pérez", Resultado.NombreUsuarioCreador, "Nombre del usuario creador debe coincidir"
+    Call modAssert.AssertEquals(123, Resultado.idExpediente, "ID del expediente debe coincidir")
+    Call modAssert.AssertEquals("EXP-2024-001", Resultado.NumeroExpediente, "Número del expediente debe coincidir")
+    Call modAssert.AssertEquals("Expediente de Prueba", Resultado.Titulo, "Título del expediente debe coincidir")
+    Call modAssert.AssertEquals("Descripción de prueba", Resultado.Descripcion, "Descripción del expediente debe coincidir")
+    Call modAssert.AssertEquals("Activo", Resultado.Estado, "Estado del expediente debe coincidir")
+    Call modAssert.AssertEquals(1, Resultado.IdUsuarioCreador, "ID del usuario creador debe coincidir")
+    Call modAssert.AssertEquals("Juan Pérez", Resultado.NombreUsuarioCreador, "Nombre del usuario creador debe coincidir")
     
     testResult.Pass
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
     ' Limpiar recursos
@@ -76,13 +77,18 @@ Cleanup:
         mockRecordset.Close
         Set mockRecordset = Nothing
     End If
+    ' Reset mocks
+    mockConfig.Reset
+    mockLogger.Reset
+    mockRepository.Reset
+    mockErrorHandler.Reset
     Set Test_GetExpedienteById_Success = testResult
 End Function
 
 ' Prueba que GetExpedienteById maneja correctamente cuando no se encuentra el expediente
 Private Function Test_GetExpedienteById_NotFound() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetExpedienteById_NotFound"
+    Call testResult.Initialize("Test_GetExpedienteById_NotFound")
     
     On Error GoTo ErrorHandler
     
@@ -90,6 +96,7 @@ Private Function Test_GetExpedienteById_NotFound() As CTestResult
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockExpedienteRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Crear recordset mock vacío (EOF = True)
     Dim mockRecordset As DAO.recordset
@@ -98,22 +105,22 @@ Private Function Test_GetExpedienteById_NotFound() As CTestResult
     
     ' Crear servicio con dependencias mock
     Dim expedienteService As New CExpedienteService
-    expedienteService.Initialize mockConfig, mockLogger, mockRepository
+    Call expedienteService.Initialize(mockConfig, mockLogger, mockRepository, mockErrorHandler)
     
     ' Act - Ejecutar el método bajo prueba
     Dim Resultado As T_Expediente
     Resultado = expedienteService.GetExpedienteById(999)
     
     ' Assert - Verificar que devuelve estructura vacía
-    modAssert.AssertEquals 0, Resultado.idExpediente, "ID debe ser 0 para expediente no encontrado"
-    modAssert.AssertEquals "", Resultado.NumeroExpediente, "Número debe estar vacío para expediente no encontrado"
-    modAssert.AssertEquals "", Resultado.Titulo, "Título debe estar vacío para expediente no encontrado"
+    Call modAssert.AssertEquals(0, Resultado.idExpediente, "ID debe ser 0 para expediente no encontrado")
+    Call modAssert.AssertEquals("", Resultado.NumeroExpediente, "Número debe estar vacío para expediente no encontrado")
+    Call modAssert.AssertEquals("", Resultado.Titulo, "Título debe estar vacío para expediente no encontrado")
     
     testResult.Pass
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
     ' Limpiar recursos
@@ -121,6 +128,11 @@ Cleanup:
         mockRecordset.Close
         Set mockRecordset = Nothing
     End If
+    ' Reset mocks
+    mockConfig.Reset
+    mockLogger.Reset
+    mockRepository.Reset
+    mockErrorHandler.Reset
     Set Test_GetExpedienteById_NotFound = testResult
 End Function
 
@@ -131,7 +143,7 @@ End Function
 ' Prueba que GetExpedientesParaSelector devuelve correctamente una lista de expedientes
 Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetExpedientesParaSelector_Success"
+    Call testResult.Initialize("Test_GetExpedientesParaSelector_Success")
     
     On Error GoTo ErrorHandler
     
@@ -139,6 +151,7 @@ Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockExpedienteRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Crear recordset mock con lista de expedientes
     Dim mockRecordset As DAO.recordset
@@ -147,35 +160,40 @@ Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     
     ' Crear servicio con dependencias mock
     Dim expedienteService As New CExpedienteService
-    expedienteService.Initialize mockConfig, mockLogger, mockRepository
+    Call expedienteService.Initialize(mockConfig, mockLogger, mockRepository, mockErrorHandler)
     
     ' Act - Ejecutar el método bajo prueba
     Dim Resultado As Object
     Set Resultado = expedienteService.GetExpedientesParaSelector()
     
     ' Assert - Verificar que devuelve un recordset válido
-    modAssert.AssertNotNull Resultado, "El resultado no debe ser Nothing"
-    modAssert.AssertEquals "DAO.Recordset", TypeName(Resultado), "El resultado debe ser un recordset"
+    Call modAssert.AssertNotNull(Resultado, "El resultado no debe ser Nothing")
+    Call modAssert.AssertEquals("DAO.Recordset", TypeName(Resultado), "El resultado debe ser un recordset")
     
     ' Verificar que el recordset tiene registros
     Dim rs As DAO.recordset
     Set rs = Resultado
-    modAssert.AssertFalse rs.EOF, "El recordset debe tener registros"
+    Call modAssert.AssertFalse(rs.EOF, "El recordset debe tener registros")
     
     testResult.Pass
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
+    ' Reset mocks
+    mockConfig.Reset
+    mockLogger.Reset
+    mockRepository.Reset
+    mockErrorHandler.Reset
     Set Test_GetExpedientesParaSelector_Success = testResult
 End Function
 
 ' Prueba que GetExpedientesParaSelector maneja correctamente cuando no hay expedientes
 Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetExpedientesParaSelector_EmptyResult"
+    Call testResult.Initialize("Test_GetExpedientesParaSelector_EmptyResult")
     
     On Error GoTo ErrorHandler
     
@@ -183,6 +201,7 @@ Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockExpedienteRepository
+    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Crear recordset mock vacío
     Dim mockRecordset As DAO.recordset
@@ -191,26 +210,31 @@ Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     
     ' Crear servicio con dependencias mock
     Dim expedienteService As New CExpedienteService
-    expedienteService.Initialize mockConfig, mockLogger, mockRepository
+    Call expedienteService.Initialize(mockConfig, mockLogger, mockRepository, mockErrorHandler)
     
     ' Act - Ejecutar el método bajo prueba
     Dim Resultado As Object
     Set Resultado = expedienteService.GetExpedientesParaSelector()
     
     ' Assert - Verificar que devuelve un recordset válido pero vacío
-    modAssert.AssertNotNull Resultado, "El resultado no debe ser Nothing"
+    Call modAssert.AssertNotNull(Resultado, "El resultado no debe ser Nothing")
     
     Dim rs As DAO.recordset
     Set rs = Resultado
-    modAssert.AssertTrue rs.EOF, "El recordset debe estar vacío"
+    Call modAssert.AssertTrue(rs.EOF, "El recordset debe estar vacío")
     
     testResult.Pass
     GoTo Cleanup
     
 ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
+    Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
+    ' Reset mocks
+    mockConfig.Reset
+    mockLogger.Reset
+    mockRepository.Reset
+    mockErrorHandler.Reset
     Set Test_GetExpedientesParaSelector_EmptyResult = testResult
 End Function
 

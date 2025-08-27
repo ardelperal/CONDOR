@@ -20,28 +20,25 @@ Implements IOperationLogger
 ' Dependencias inyectadas
 Private m_configService As IConfig
 Private m_OperationRepository As IOperationRepository
+Private m_ErrorHandler As IErrorHandlerService
 
 ' Método de inicialización para inyectar dependencias
-Public Sub Initialize(config As IConfig, repository As IOperationRepository)
-    Dim ErrorHandler As IErrorHandlerService
+Public Sub Initialize(config As IConfig, repository As IOperationRepository, errorHandler As IErrorHandlerService)
     On Error GoTo ErrorHandler
-    
     
     Set m_configService = config
     Set m_OperationRepository = repository
+    Set m_ErrorHandler = errorHandler
     Exit Sub
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.Initialize"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.Initialize"
 End Sub
 
 
 
 ' Implementación del contrato IOperationLogger
 Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
-    
     
     ' Delegar la operación de guardado al repositorio
     m_OperationRepository.SaveLog operationType, entityId, details
@@ -49,13 +46,11 @@ Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal e
     Exit Sub
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogOperation", _
+    m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogOperation", _
                                   "TipoOperacion: " & operationType & ", Entidad: " & entityId
 End Sub
 
 Private Sub IOperationLogger_LogSolicitudCreation(ByVal SolicitudID As Long, ByVal userId As String)
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Registrar la creación de solicitud
@@ -64,13 +59,11 @@ Private Sub IOperationLogger_LogSolicitudCreation(ByVal SolicitudID As Long, ByV
     Exit Sub
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogSolicitudCreation", _
+    m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogSolicitudCreation", _
                                   "SolicitudId: " & SolicitudID & ", Usuario: " & userId
 End Sub
 
 Private Sub IOperationLogger_LogStateChange(ByVal SolicitudID As Long, ByVal oldState As String, ByVal newState As String, ByVal userId As String)
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Registrar el cambio de estado
@@ -81,26 +74,23 @@ Private Sub IOperationLogger_LogStateChange(ByVal SolicitudID As Long, ByVal old
     Exit Sub
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogStateChange", _
+    m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogStateChange", _
                                   "SolicitudId: " & SolicitudID & ", Estados: " & oldState & " -> " & newState
 End Sub
 
-Private Sub IOperationLogger_LogError(ByVal errorCode As String, ByVal errorMessage As String, ByVal context As String)
-    Dim ErrorHandler As IErrorHandlerService
+Private Sub IOperationLogger_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
     On Error GoTo ErrorHandler
     
     ' Registrar el error del sistema
     Dim details As String
-    details = "Código: " & errorCode & ", Mensaje: " & errorMessage & ", Contexto: " & context
-    m_OperationRepository.SaveLog "ERROR_SISTEMA", errorCode, details
+    details = "Número: " & errNumber & ", Descripción: " & errDescription & ", Módulo: " & moduleName & ", Crítico: " & isCritical
+    m_OperationRepository.SaveLog "ERROR_SISTEMA", CStr(errNumber), details
     
     Exit Sub
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogError", _
-                                  "Código: " & errorCode & ", Contexto: " & context
+    m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogError", _
+                                  "Número: " & errNumber & ", Módulo: " & moduleName
 End Sub
 
 ' ============================================================================
@@ -119,8 +109,8 @@ Public Sub LogStateChange(ByVal SolicitudID As Long, ByVal oldState As String, B
     IOperationLogger_LogStateChange SolicitudID, oldState, newState, userId
 End Sub
 
-Public Sub LogError(ByVal errorCode As String, ByVal errorMessage As String, ByVal context As String)
-    IOperationLogger_LogError errorCode, errorMessage, context
+Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
+    IOperationLogger_LogError errNumber, errDescription, moduleName, isCritical
 End Sub
 
 

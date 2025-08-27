@@ -16,7 +16,7 @@ Public Function CreateConfigService(Optional ByVal dbFrontend As DAO.Database = 
     Dim entorno As String
     
     ' Constantes con las rutas base según el entorno
-    Const BASE_PATH_LOCAL As String = "C:\Proyectos\CONDOR"
+    Const BASE_PATH_LOCAL As String = "C:\Proyectos\CONDOR\"
     Const BASE_PATH_OFICINA As String = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR"
     
     ' PASO 1: Conectarse al Frontend local para leer configuración de arranque
@@ -46,7 +46,7 @@ Public Function CreateConfigService(Optional ByVal dbFrontend As DAO.Database = 
         Case "LOCAL"
             backendPath = BASE_PATH_LOCAL & "back\CONDOR_datos.accdb"
         Case "OFICINA"
-            backendPath = BASE_PATH_OFICINA & "back\CONDOR_datos.accdb"
+            backendPath = BASE_PATH_OFICINA & "\back\CONDOR_datos.accdb"
         Case Else
             If Not errorHandler Is Nothing Then
                 errorHandler.LogError vbObjectError + 1002, "Entorno no válido: '" & entorno & "'. Los valores válidos son 'LOCAL' o 'OFICINA'", "modConfig.CreateConfigService"

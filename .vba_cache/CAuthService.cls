@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -15,28 +15,29 @@ Implements IAuthService
 Private configSvc As IConfig
 Private m_OperationLogger As IOperationLogger
 Private m_AuthRepository As IAuthRepository
+Private m_ErrorHandler As IErrorHandlerService
 
 Private Sub Class_Initialize()
     ' Inicialización sin dependencias
 End Sub
 
-Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository)
-    Dim ErrorHandler As IErrorHandlerService
+Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository, errorHandler As IErrorHandlerService)
     On Error GoTo ErrorHandler
     
     Set configSvc = config
     Set m_OperationLogger = operationLogger
     Set m_AuthRepository = authRepository
+    Set m_ErrorHandler = errorHandler
     
     Exit Sub
     
 ErrorHandler:
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CAuthService.Initialize"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthService.Initialize"
+    End If
 End Sub
 
 Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRole
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
 
     ' Logging de auditoría: Consulta de rol de usuario
@@ -99,8 +100,9 @@ ErrorHandler:
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "ROLE_ERROR", "Error consultando rol para " & UserEmail & ": " & Err.Description, "CAuthService.GetUserRole"
     End If
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    ErrorHandler.LogError Err.Number, Err.Description, "CAuthService.GetUserRole"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthService.GetUserRole"
+    End If
 End Function
 
 ' Método público para acceso directo

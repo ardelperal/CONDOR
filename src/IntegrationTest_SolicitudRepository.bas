@@ -1,28 +1,26 @@
 Option Compare Database
 Option Explicit
 
-
-
 #If DEV_MODE Then
 
 ' ============================================================================
-' SUITE DE PRUEBAS UNITARIAS PARA CSolicitudRepository
-' Arquitectura: Pruebas Aisladas con Inyección de Dependencias y Mocks
-' Version: 1.0 - Implementación Inicial
+' PRUEBAS DE INTEGRACIÓN PARA CSolicitudRepository
 ' ============================================================================
-' Pruebas unitarias que validan la funcionalidad del repositorio de solicitudes
-' usando mocks para aislar las dependencias externas.
-' ============================================================================
+' Este módulo contiene pruebas de integración que validan el comportamiento
+' del repositorio CSolicitudRepository contra una base de datos real.
+' A diferencia de las pruebas unitarias, estas pruebas verifican la interacción
+' completa con la capa de datos.
 
-' ============================================================================
-' FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
-' ============================================================================
+' Constantes para las rutas de base de datos de prueba
+Private Const CONDOR_TEMPLATE_PATH As String = "back\test_db\templates\CONDOR_test_template.accdb"
+Private Const CONDOR_ACTIVE_PATH As String = "back\test_db\active\CONDOR_integration_test.accdb"
 
+' Función principal que ejecuta todas las pruebas del módulo
 Public Function IntegrationTest_SolicitudRepository_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_SolicitudRepository - Pruebas Unitarias CSolicitudRepository"
+    suiteResult.Initialize "IntegrationTest_SolicitudRepository"
     
-    ' Ejecutar todas las pruebas
+    ' Ejecutar todas las pruebas de integración
     suiteResult.AddTestResult Test_GetSolicitudById_Success()
     suiteResult.AddTestResult Test_GetSolicitudById_NotFound()
     suiteResult.AddTestResult Test_SaveSolicitud_New()
@@ -36,6 +34,92 @@ Public Function IntegrationTest_SolicitudRepository_RunAll() As CTestSuiteResult
 End Function
 
 ' ============================================================================
+' PROCEDIMIENTOS DE CONFIGURACIÓN Y LIMPIEZA
+' ============================================================================
+
+' Procedimiento: Setup
+' Propósito: Prepara el entorno de pruebas con una base de datos limpia
+Private Sub Setup()
+    On Error GoTo ErrorHandler
+
+    ' Aprovisionar la base de datos de prueba antes de cada ejecución
+    Dim fullTemplatePath As String
+    Dim fullTestPath As String
+
+    fullTemplatePath = modTestUtils.GetProjectPath() & CONDOR_TEMPLATE_PATH
+    fullTestPath = modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+
+    modTestUtils.PrepareTestDatabase fullTemplatePath, fullTestPath
+    
+    ' Abrir la nueva base de datos y ejecutar sentencias INSERT para datos de prueba
+    Dim db As DAO.Database
+    Set db = DBEngine.OpenDatabase(fullTestPath)
+    
+    ' Insertar registro de prueba conocido en T_Solicitudes
+    db.Execute "INSERT INTO T_Solicitudes (idSolicitud, idExpediente, fechaCreacion, estado) " & _
+               "VALUES (1, 'EXP-TEST-001', #" & Format(Date, "mm/dd/yyyy") & "#, 'Pendiente')"
+    
+    ' Insertar solicitudes adicionales para pruebas de datos específicos
+    db.Execute "INSERT INTO T_Solicitudes (idSolicitud, idExpediente, fechaCreacion, estado) " & _
+               "VALUES (2, 'EXP-PC-001', #" & Format(Date, "mm/dd/yyyy") & "#, 'Pendiente')"
+    
+    db.Execute "INSERT INTO T_Solicitudes (idSolicitud, idExpediente, fechaCreacion, estado) " & _
+               "VALUES (3, 'EXP-CDCA-001', #" & Format(Date, "mm/dd/yyyy") & "#, 'Pendiente')"
+    
+    db.Execute "INSERT INTO T_Solicitudes (idSolicitud, idExpediente, fechaCreacion, estado) " & _
+               "VALUES (4, 'EXP-CDCASUB-001', #" & Format(Date, "mm/dd/yyyy") & "#, 'Pendiente')"
+    
+    ' Insertar datos específicos para PC
+    db.Execute "INSERT INTO TbDatos_PC (idSolicitud, campo1, campo2) " & _
+               "VALUES (2, 'Valor PC 1', 'Valor PC 2')"
+    
+    ' Insertar datos específicos para CD_CA
+    db.Execute "INSERT INTO TbDatos_CD_CA (idSolicitud, campoA, campoB) " & _
+               "VALUES (3, 'Valor CDCA A', 'Valor CDCA B')"
+    
+    ' Insertar datos específicos para CD_CA_SUB
+    db.Execute "INSERT INTO TbDatos_CD_CA_SUB (idSolicitud, campoX, campoY) " & _
+               "VALUES (4, 'Valor CDCASUB X', 'Valor CDCASUB Y')"
+    
+    db.Close
+    Set db = Nothing
+    
+    Exit Sub
+
+ErrorHandler:
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
+    Debug.Print "Error en Setup (" & Err.Number & "): " & Err.Description
+    Err.Raise Err.Number, "IntegrationTest_SolicitudRepository.Setup", Err.Description
+End Sub
+
+' Procedimiento: Teardown
+' Propósito: Limpia el entorno de pruebas después de la ejecución
+Private Sub Teardown()
+    On Error GoTo ErrorHandler
+    
+    ' Eliminar la base de datos de prueba si existe usando IFileSystem
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    
+    Dim fullTestPath As String
+    fullTestPath = modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    
+    If fs.FileExists(fullTestPath) Then
+        fs.DeleteFile fullTestPath
+    End If
+    
+    Set fs = Nothing
+    Exit Sub
+    
+ErrorHandler:
+    ' Ignorar errores de limpieza
+    Resume Next
+End Sub
+
+' ============================================================================
 ' PRUEBAS DE GetSolicitudById
 ' ============================================================================
 
@@ -45,30 +129,34 @@ Private Function Test_GetSolicitudById_Success() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Dim repository As ISolicitudRepository
-    Dim repositoryImpl As New CSolicitudRepository
-    Dim mockConfig As New CMockConfig
+    ' Setup - Preparar base de datos de prueba
+    Setup
     
-    ' Configurar mocks
-    mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    mockConfig.SetDatabasePassword "testpass"
+    ' Arrange - Configurar repositorio con base de datos de prueba
+    Dim testConfig As New CConfig
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
     
-    ' Inicializar repositorio con dependencias
-    repositoryImpl.Initialize mockConfig
-    Set repository = repositoryImpl
+    ' Crear instancia del repositorio con dependencias
+    Dim repository As New CSolicitudRepository
+    repository.Initialize testConfig
     
-    ' Act
-    ' Nota: Esta prueba requiere una base de datos de prueba o mock más avanzado
-    ' Por ahora validamos que el repositorio esté correctamente inicializado
+    ' Act - Ejecutar el método a probar
+    Dim result As T_Solicitud
+    Set result = repository.GetSolicitudById(1)
+    
+    ' Assert - Verificar resultados usando modAssert
+    modAssert.AssertNotNull result, "El resultado no debería ser nulo."
+    modAssert.AssertEquals 1, result.idSolicitud, "El ID de la solicitud no coincide."
+    modAssert.AssertEquals "EXP-TEST-001", result.idExpediente, "El ID del expediente no coincide."
     
     testResult.Pass
     
 Cleanup:
-    mockConfig.Reset
+    Teardown
+    Set result = Nothing
     Set repository = Nothing
-    Set repositoryImpl = Nothing
-    Set mockConfig = Nothing
+    Set testConfig = Nothing
     Exit Function
     
 ErrorHandler:
@@ -82,30 +170,32 @@ Private Function Test_GetSolicitudById_NotFound() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Dim repository As ISolicitudRepository
-    Dim repositoryImpl As New CSolicitudRepository
-    Dim mockConfig As New CMockConfig
+    ' Setup - Preparar base de datos de prueba
+    Setup
     
-    ' Configurar mocks
-    mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    mockConfig.SetDatabasePassword "testpass"
+    ' Arrange - Configurar repositorio con base de datos de prueba
+    Dim testConfig As New CConfig
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
     
-    ' Inicializar repositorio con dependencias
-    repositoryImpl.Initialize mockConfig
-    Set repository = repositoryImpl
+    ' Crear instancia del repositorio con dependencias
+    Dim repository As New CSolicitudRepository
+    repository.Initialize testConfig
     
-    ' Act & Assert
-    ' Nota: Esta prueba requiere una base de datos de prueba
-    ' Por ahora validamos que el repositorio maneje correctamente IDs inexistentes
+    ' Act - Ejecutar el método a probar con ID inexistente
+    Dim result As T_Solicitud
+    Set result = repository.GetSolicitudById(999) ' ID que no existe
+    
+    ' Assert - Verificar que devuelve Nothing
+    modAssert.AssertIsNull result, "El resultado debería ser nulo para un ID inexistente."
     
     testResult.Pass
     
 Cleanup:
-    mockConfig.Reset
+    Teardown
+    Set result = Nothing
     Set repository = Nothing
-    Set repositoryImpl = Nothing
-    Set mockConfig = Nothing
+    Set testConfig = Nothing
     Exit Function
     
 ErrorHandler:
@@ -123,44 +213,60 @@ Private Function Test_SaveSolicitud_New() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Dim repository As ISolicitudRepository
-    Dim repositoryImpl As New CSolicitudRepository
-    Dim mockConfig As New CMockConfig
+    ' Setup - Preparar base de datos de prueba
+    Setup
     
-    ' Configurar mocks
-    mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    mockConfig.SetDatabasePassword "testpass"
+    ' Arrange - Configurar repositorio con base de datos de prueba
+     Dim testConfig As New CConfig
+     testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+     testConfig.SetSetting "DB_PASSWORD", ""
     
-    ' Inicializar repositorio con dependencias
-    repositoryImpl.Initialize mockConfig
-    Set repository = repositoryImpl
+    ' Crear instancia del repositorio con dependencias
+     Dim repository As New CSolicitudRepository
+     repository.Initialize testConfig
     
-    ' Crear solicitud de prueba
-    Dim solicitud As New T_Solicitud
-    With solicitud
-        .idSolicitud = 0 ' Nuevo registro
-        .idExpediente = "EXP-2024-001"
-        .tipoSolicitud = "PC"
-        .subTipoSolicitud = "CAMBIO_MENOR"
-        .codigoSolicitud = "PC-2024-001"
-        .idEstadoInterno = 1
-        .fechaCreacion = Now()
-        .usuarioCreacion = "test_user"
-    End With
+    ' Crear nueva solicitud para insertar
+    Dim nuevaSolicitud As New T_Solicitud
+    nuevaSolicitud.idSolicitud = 0 ' ID 0 indica nueva solicitud
+    nuevaSolicitud.idExpediente = "EXP-NEW-001"
+    nuevaSolicitud.fechaCreacion = Date
+    nuevaSolicitud.estado = "Pendiente"
     
-    ' Act & Assert
-    ' Nota: Esta prueba requiere una base de datos de prueba
-    ' Por ahora validamos que el repositorio esté correctamente configurado
+    ' Act - Ejecutar el método a probar
+    Dim newId As Long
+    newId = repository.SaveSolicitud(nuevaSolicitud)
+    
+    ' Assert - Verificar que se asignó un ID válido
+    modAssert.AssertTrue newId > 1, "El nuevo ID debe ser mayor que 1."
+    
+    ' Verificar que el registro existe en la base de datos
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH)
+    Set rs = db.OpenRecordset("SELECT * FROM T_Solicitudes WHERE idSolicitud = " & newId)
+    
+    modAssert.AssertFalse rs.EOF, "El nuevo registro debe existir en la base de datos."
+    modAssert.AssertEquals "EXP-NEW-001", rs("idExpediente").Value, "El ID del expediente debe coincidir."
+    modAssert.AssertEquals "Pendiente", rs("estado").Value, "El estado debe coincidir."
+    
+    rs.Close
+    db.Close
     
     testResult.Pass
     
 Cleanup:
-    mockConfig.Reset
+    If Not rs Is Nothing Then
+        If Not rs.EOF And Not rs.BOF Then rs.Close
+        Set rs = Nothing
+    End If
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
+    Teardown
+    Set nuevaSolicitud = Nothing
     Set repository = Nothing
-    Set repositoryImpl = Nothing
-    Set mockConfig = Nothing
-    Set solicitud = Nothing
+    Set testConfig = Nothing
     Exit Function
     
 ErrorHandler:
@@ -174,46 +280,60 @@ Private Function Test_SaveSolicitud_Update() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Dim repository As ISolicitudRepository
-    Dim repositoryImpl As New CSolicitudRepository ' Correcta declaración e instanciación
-    Dim mockConfig As New CMockConfig
-    ' El mockLogger ya no es necesario aquí según nuestra arquitectura
+    ' Setup - Preparar base de datos de prueba
+    Setup
     
-    ' Configurar mocks
-    mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    mockConfig.SetDatabasePassword "testpass"
+    ' Arrange - Configurar repositorio con base de datos de prueba
+    Dim testConfig As New CConfig
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
     
-    ' Inicializar repositorio usando la implementación concreta
-    repositoryImpl.Initialize mockConfig
+    ' Crear instancia del repositorio con dependencias
+    Dim repository As New CSolicitudRepository
+    repository.Initialize testConfig
     
-    ' Asignar a la variable de interfaz para la prueba
-    Set repository = repositoryImpl
+    ' Obtener el objeto T_Solicitud con id = 1 usando GetSolicitudById(1)
+    Dim solicitud As T_Solicitud
+    Set solicitud = repository.GetSolicitudById(1)
     
-    ' Crear solicitud existente de prueba
-    Dim solicitud As New T_Solicitud
-    With solicitud
-        .idSolicitud = 123 ' Registro existente
-        .idExpediente = "EXP-2024-001"
-        .tipoSolicitud = "PC"
-        .subTipoSolicitud = "CAMBIO_MAYOR"
-        .codigoSolicitud = "PC-2024-001"
-        .idEstadoInterno = 2
-        .usuarioModificacion = "test_user_mod"
-    End With
+    ' Modificar una de sus propiedades
+    solicitud.idExpediente = "EXP-TEST-UPDATED"
     
-    ' Act & Assert
-    ' Nota: Esta prueba requiere una base de datos de prueba
-    ' Por ahora validamos que el repositorio esté correctamente configurado
+    ' Act - Ejecutar el método a probar
+    Dim updatedId As Long
+    updatedId = repository.SaveSolicitud(solicitud)
+    
+    ' Assert - Verificar que devuelve el mismo ID
+    modAssert.AssertEquals 1, updatedId, "El ID devuelto debe ser el mismo para actualización."
+    
+    ' Abrir una conexión DAO directa a la base de datos de prueba
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH)
+    Set rs = db.OpenRecordset("SELECT * FROM T_Solicitudes WHERE idSolicitud = 1")
+    
+    ' Verificar que el campo idExpediente en la base de datos es ahora "EXP-TEST-UPDATED"
+    modAssert.AssertFalse rs.EOF, "El registro debe existir en la base de datos."
+    modAssert.AssertEquals "EXP-TEST-UPDATED", rs("idExpediente").Value, "El ID del expediente debe estar actualizado."
+    
+    rs.Close
+    db.Close
     
     testResult.Pass
     
 Cleanup:
-    mockConfig.Reset
-    Set repository = Nothing
-    Set repositoryImpl = Nothing
-    Set mockConfig = Nothing
+    If Not rs Is Nothing Then
+        If Not rs.EOF And Not rs.BOF Then rs.Close
+        Set rs = Nothing
+    End If
+    If Not db Is Nothing Then
+        db.Close
+        Set db = Nothing
+    End If
+    Teardown
     Set solicitud = Nothing
+    Set repository = Nothing
+    Set testConfig = Nothing
     Exit Function
     
 ErrorHandler:
@@ -227,40 +347,52 @@ End Function
 
 Private Function Test_ExecuteQuery() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "ExecuteQuery debe ejecutar una consulta genérica con parámetros"
+    testResult.Initialize "ExecuteQuery debe ejecutar una consulta parametrizada y devolver un recordset"
     
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Dim repository As ISolicitudRepository
-    Dim repositoryImpl As New CSolicitudRepository
-    Dim mockConfig As New CMockConfig
+    ' Setup - Preparar base de datos de prueba
+    Setup
     
-    ' Configurar mocks
-    mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    mockConfig.SetDatabasePassword "testpass"
+    ' Arrange - Configurar repositorio con base de datos de prueba
+    Dim testConfig As New CConfig
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
     
-    ' Inicializar repositorio con dependencias
-    repositoryImpl.Initialize mockConfig
-    Set repository = repositoryImpl
+    ' Crear instancia del repositorio con dependencias
+    Dim repository As New CSolicitudRepository
+    repository.Initialize testConfig
     
-    ' Preparar parámetros de consulta
+    ' Define una consulta SQL parametrizada
+    Dim sql As String
+    sql = "SELECT idSolicitud FROM T_Solicitudes WHERE idExpediente = ?"
+    
+    ' Crea una colección de QueryParameter y añade el parámetro
     Dim params As New Collection
     Dim param1 As New QueryParameter
-    param1.Initialize "TipoSolicitud", "PC"
+    param1.Initialize "idExpediente", "EXP-TEST-001"
     params.Add param1
     
-    ' Act & Assert
-    ' Nota: Esta prueba requiere una base de datos de prueba
-    ' Por ahora validamos que el repositorio esté correctamente configurado
+    ' Act - Llama al método ExecuteQuery
+    Dim rs As Object
+    Set rs = repository.ExecuteQuery(sql, params)
+    
+    ' Assert - Utiliza modAssert para validar el recordset devuelto
+    modAssert.AssertNotNull rs, "El recordset no debe ser nulo."
+    modAssert.AssertFalse rs.EOF, "El recordset no debe estar vacío."
+    modAssert.AssertEquals 1, rs!idSolicitud.Value, "El valor del campo no es el esperado."
     
     testResult.Pass
     
 Cleanup:
-    mockConfig.Reset
+    ' Asegúrate de que el recordset se cierra correctamente
+    If Not rs Is Nothing Then
+        rs.Close
+        Set rs = Nothing
+    End If
+    Teardown
     Set repository = Nothing
-    Set repositoryImpl = Nothing
-    Set mockConfig = Nothing
+    Set testConfig = Nothing
     Set params = Nothing
     Set param1 = Nothing
     Exit Function
@@ -280,30 +412,35 @@ Private Function Test_CargarDatosEspecificos_PC() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Dim repository As ISolicitudRepository
-    Dim repositoryImpl As New CSolicitudRepository
-    Dim mockConfig As New CMockConfig
+    ' Setup - Preparar base de datos de prueba
+    Setup
     
-    ' Configurar mocks
-    mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    mockConfig.SetDatabasePassword "testpass"
+    ' Arrange - Configurar repositorio con base de datos de prueba
+    Dim testConfig As New CConfig
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
     
-    ' Inicializar repositorio con dependencias
-    repositoryImpl.Initialize mockConfig
-    Set repository = repositoryImpl
+    ' Crear instancia del repositorio con dependencias
+    Dim repository As New CSolicitudRepository
+    repository.Initialize testConfig
     
-    ' Act & Assert
-    ' Nota: Esta prueba requiere una base de datos de prueba con datos específicos
-    ' Por ahora validamos que el repositorio esté correctamente configurado
+    ' Act - Llamar a GetSolicitudById con el ID correspondiente al tipo PC (ID 2)
+    Dim solicitud As T_Solicitud
+    Set solicitud = repository.GetSolicitudById(2)
+    
+    ' Assert - Verificar que la propiedad de datos específicos no sea nula
+    modAssert.AssertNotNull solicitud, "La solicitud no debería ser nula."
+    modAssert.AssertNotNull solicitud.datosPC, "Los datos PC no deberían ser nulos."
+    modAssert.AssertEquals "Valor PC 1", solicitud.datosPC.campo1, "El campo1 de datos PC debe coincidir."
+    modAssert.AssertEquals "Valor PC 2", solicitud.datosPC.campo2, "El campo2 de datos PC debe coincidir."
     
     testResult.Pass
     
 Cleanup:
-    mockConfig.Reset
+    Teardown
+    Set solicitud = Nothing
     Set repository = Nothing
-    Set repositoryImpl = Nothing
-    Set mockConfig = Nothing
+    Set testConfig = Nothing
     Exit Function
     
 ErrorHandler:
@@ -317,30 +454,35 @@ Private Function Test_CargarDatosEspecificos_CDCA() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Dim repository As ISolicitudRepository
-    Dim repositoryImpl As New CSolicitudRepository
-    Dim mockConfig As New CMockConfig
+    ' Setup - Preparar base de datos de prueba
+    Setup
     
-    ' Configurar mocks
-    mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    mockConfig.SetDatabasePassword "testpass"
+    ' Arrange - Configurar repositorio con base de datos de prueba
+    Dim testConfig As New CConfig
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
     
-    ' Inicializar repositorio con dependencias
-    repositoryImpl.Initialize mockConfig
-    Set repository = repositoryImpl
+    ' Crear instancia del repositorio con dependencias
+    Dim repository As New CSolicitudRepository
+    repository.Initialize testConfig
     
-    ' Act & Assert
-    ' Nota: Esta prueba requiere una base de datos de prueba con datos específicos
-    ' Por ahora validamos que el repositorio esté correctamente configurado
+    ' Act - Llamar a GetSolicitudById con el ID correspondiente al tipo CDCA (ID 3)
+    Dim solicitud As T_Solicitud
+    Set solicitud = repository.GetSolicitudById(3)
+    
+    ' Assert - Verificar que la propiedad de datos específicos no sea nula
+    modAssert.AssertNotNull solicitud, "La solicitud no debería ser nula."
+    modAssert.AssertNotNull solicitud.datosCDCA, "Los datos CD_CA no deberían ser nulos."
+    modAssert.AssertEquals "Valor CDCA A", solicitud.datosCDCA.campoA, "El campoA de datos CD_CA debe coincidir."
+    modAssert.AssertEquals "Valor CDCA B", solicitud.datosCDCA.campoB, "El campoB de datos CD_CA debe coincidir."
     
     testResult.Pass
     
 Cleanup:
-    mockConfig.Reset
+    Teardown
+    Set solicitud = Nothing
     Set repository = Nothing
-    Set repositoryImpl = Nothing
-    Set mockConfig = Nothing
+    Set testConfig = Nothing
     Exit Function
     
 ErrorHandler:
@@ -354,30 +496,35 @@ Private Function Test_CargarDatosEspecificos_CDCASUB() As CTestResult
     
     On Error GoTo ErrorHandler
     
-    ' Arrange
-    Dim repository As ISolicitudRepository
-    Dim repositoryImpl As New CSolicitudRepository
-    Dim mockConfig As New CMockConfig
+    ' Setup - Preparar base de datos de prueba
+    Setup
     
-    ' Configurar mocks
-    mockConfig.SetDataPath "C:\Test\Backend.accdb"
-    mockConfig.SetDatabasePassword "testpass"
+    ' Arrange - Configurar repositorio con base de datos de prueba
+    Dim testConfig As New CConfig
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
     
-    ' Inicializar repositorio con dependencias
-    repositoryImpl.Initialize mockConfig
-    Set repository = repositoryImpl
+    ' Crear instancia del repositorio con dependencias
+    Dim repository As New CSolicitudRepository
+    repository.Initialize testConfig
     
-    ' Act & Assert
-    ' Nota: Esta prueba requiere una base de datos de prueba con datos específicos
-    ' Por ahora validamos que el repositorio esté correctamente configurado
+    ' Act - Llamar a GetSolicitudById con el ID correspondiente al tipo CDCASUB (ID 4)
+    Dim solicitud As T_Solicitud
+    Set solicitud = repository.GetSolicitudById(4)
+    
+    ' Assert - Verificar que la propiedad de datos específicos no sea nula
+    modAssert.AssertNotNull solicitud, "La solicitud no debería ser nula."
+    modAssert.AssertNotNull solicitud.datosCDCASUB, "Los datos CD_CA_SUB no deberían ser nulos."
+    modAssert.AssertEquals "Valor CDCASUB X", solicitud.datosCDCASUB.campoX, "El campoX de datos CD_CA_SUB debe coincidir."
+    modAssert.AssertEquals "Valor CDCASUB Y", solicitud.datosCDCASUB.campoY, "El campoY de datos CD_CA_SUB debe coincidir."
     
     testResult.Pass
     
 Cleanup:
-    mockConfig.Reset
+    Teardown
+    Set solicitud = Nothing
     Set repository = Nothing
-    Set repositoryImpl = Nothing
-    Set mockConfig = Nothing
+    Set testConfig = Nothing
     Exit Function
     
 ErrorHandler:
