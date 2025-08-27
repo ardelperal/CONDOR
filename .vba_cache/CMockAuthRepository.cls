@@ -1,58 +1,82 @@
-Option Compare Database
-Option Explicit
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockAuthRepository"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+' =============================================================================
+' Proyecto: CONDOR
+' Clase: CMockAuthRepository
+' Descripción: Implementación mock del repositorio de autenticación para pruebas
+' Implementa: IAuthRepository
+' Autor: Sistema CONDOR
+' Fecha: 2024
+' =============================================================================
 
-#If DEV_MODE Then
+Option Explicit
 
 Implements IAuthRepository
 
-' Variables privadas para almacenar los datos mock
-Private m_MockUserRecordset As DAO.Recordset
-Private m_MockPermissionsRecordset As DAO.Recordset
+' Variables privadas
+Private m_MockData As T_AuthData
 
-'******************************************************************************
-' MÉTODO: SetMockUserData
-' DESCRIPCIÓN: Configura el Recordset que debe devolver GetUserByEmail
-' PARÁMETROS: mockRecordset - Recordset configurado para las pruebas
-'******************************************************************************
-Public Sub SetMockUserData(mockRecordset As DAO.Recordset)
-    Set m_MockUserRecordset = mockRecordset
+' Constructor
+Private Sub Class_Initialize()
+    Set m_MockData = New T_AuthData
 End Sub
 
-'******************************************************************************
-' MÉTODO: SetMockPermissionsData
-' DESCRIPCIÓN: Configura el Recordset que debe devolver GetUserApplicationPermissions
-' PARÁMETROS: mockRecordset - Recordset configurado para las pruebas
-'******************************************************************************
-Public Sub SetMockPermissionsData(mockRecordset As DAO.Recordset)
-    Set m_MockPermissionsRecordset = mockRecordset
+' Destructor
+Private Sub Class_Terminate()
+    Set m_MockData = Nothing
 End Sub
 
-'******************************************************************************
-' IMPLEMENTACIÓN DE IAuthRepository
-'******************************************************************************
+' Configura los datos mock que devolverá el repositorio
+' @param data: Objeto T_AuthData con los datos de prueba
+Public Sub ConfigureMockData(data As T_AuthData)
+    On Error GoTo ErrorHandler
+    
+    If data Is Nothing Then
+        Err.Raise 5, "CMockAuthRepository.ConfigureMockData", "El parámetro data no puede ser Nothing"
+    End If
+    
+    Set m_MockData = data
+    Exit Sub
+    
+ErrorHandler:
+    Err.Raise Err.Number, "CMockAuthRepository.ConfigureMockData", Err.Description
+End Sub
 
-Private Function IAuthRepository_GetUserByEmail(ByVal UserEmail As String) As DAO.Recordset
-    ' El mock devuelve el Recordset configurado mediante SetMockUserData
-    ' independientemente del email proporcionado
-    Set IAuthRepository_GetUserByEmail = m_MockUserRecordset
+' Implementación de IAuthRepository_GetUserAuthData
+' @param UserEmail: Email del usuario (no utilizado en el mock)
+' @return: Objeto T_AuthData configurado previamente
+Private Function IAuthRepository_GetUserAuthData(ByVal UserEmail As String) As T_AuthData
+    On Error GoTo ErrorHandler
+    
+    If m_MockData Is Nothing Then
+        Err.Raise 91, "CMockAuthRepository.IAuthRepository_GetUserAuthData", "No se han configurado datos mock. Llame a ConfigureMockData primero."
+    End If
+    
+    Set IAuthRepository_GetUserAuthData = m_MockData
+    Exit Function
+    
+ErrorHandler:
+    Err.Raise Err.Number, "CMockAuthRepository.IAuthRepository_GetUserAuthData", Err.Description
 End Function
 
-Private Function IAuthRepository_GetUserApplicationPermissions(ByVal UserEmail As String, ByVal ApplicationName As String) As DAO.Recordset
-    ' El mock devuelve el Recordset configurado mediante SetMockPermissionsData
-    ' independientemente de los parámetros proporcionados
-    Set IAuthRepository_GetUserApplicationPermissions = m_MockPermissionsRecordset
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
+' ============================================================================
+
+' Método público de conveniencia para GetUserAuthData
+Public Function GetUserAuthData(ByVal UserEmail As String) As T_AuthData
+    Set GetUserAuthData = IAuthRepository_GetUserAuthData(UserEmail)
 End Function
 
-'******************************************************************************
-' MÉTODOS PÚBLICOS DE CONVENIENCIA
-'******************************************************************************
+' Método para resetear el estado del mock
+Public Sub Reset()
+    Set m_MockData = New T_AuthData
+End Sub
 
-Public Function GetUserByEmail(ByVal UserEmail As String) As DAO.Recordset
-    Set GetUserByEmail = IAuthRepository_GetUserByEmail(UserEmail)
-End Function
-
-Public Function GetUserApplicationPermissions(ByVal UserEmail As String, ByVal ApplicationName As String) As DAO.Recordset
-    Set GetUserApplicationPermissions = IAuthRepository_GetUserApplicationPermissions(UserEmail, ApplicationName)
-End Function
-
-#End If

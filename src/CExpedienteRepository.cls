@@ -10,21 +10,19 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 Implements IExpedienteRepository
 
 ' Dependencias inyectadas
 Private m_Config As IConfig
-Private m_OperationLogger As IOperationLogger
 
 ' ============================================================================
 ' MÉTODOS DE INICIALIZACIÓN
 ' ============================================================================
 
 ' Inicializa el repositorio con sus dependencias
-Public Sub Initialize(ByVal config As IConfig, _
-                     ByVal operationLogger As IOperationLogger)
+Public Sub Initialize(ByVal config As IConfig)
     Set m_Config = config
-    Set m_OperationLogger = operationLogger
 End Sub
 
 ' ============================================================================
@@ -32,23 +30,20 @@ End Sub
 ' ============================================================================
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientePorId
-Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal IdExpediente As Long) As DAO.Recordset
-    Dim errorHandler As IErrorHandlerService
+Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
+    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim sql As String
     
-    ' Log de la operación
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "READ", CStr(IdExpediente), "ExpedienteRepository: Consultando expediente ID: " & IdExpediente
-    End If
+    ' Logging removido - responsabilidad de la capa de servicio
     
     ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, ";PWD=" & m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, ";PWD=" & m_Config.GetDatabasePassword())
     
     ' Construir la consulta SQL parametrizada
     sql = "SELECT e.idExpediente, e.NumeroExpediente, e.Titulo, e.Descripcion, " & _
@@ -60,7 +55,7 @@ Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal IdExpediente
     
     ' Crear QueryDef con parámetro
     Set qdf = db.CreateQueryDef("", sql)
-    qdf.Parameters(0) = IdExpediente
+    qdf.parameters(0) = idExpediente
     
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
@@ -80,31 +75,28 @@ ErrorHandler:
     If Not db Is Nothing Then Set db = Nothing
     
     ' Log del error
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorId"
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorId"
     
     ' Devolver Nothing en caso de error
     Set IExpedienteRepository_ObtenerExpedientePorId = Nothing
 End Function
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientePorNemotecnico
-Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.Recordset
-    Dim errorHandler As IErrorHandlerService
+Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
+    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim sql As String
     
-    ' Log de la operación
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "READ", Nemotecnico, "ExpedienteRepository: Consultando expediente por nemotécnico: " & Nemotecnico
-    End If
+    ' Logging removido - responsabilidad de la capa de servicio
     
     ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, ";PWD=" & m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, ";PWD=" & m_Config.GetDatabasePassword())
     
     ' Construir la consulta SQL parametrizada
     sql = "SELECT e.idExpediente, e.NumeroExpediente, e.Titulo, e.Descripcion, " & _
@@ -116,7 +108,7 @@ Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nem
     
     ' Crear QueryDef con parámetro
     Set qdf = db.CreateQueryDef("", sql)
-    qdf.Parameters(0) = Nemotecnico
+    qdf.parameters(0) = Nemotecnico
     
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
@@ -136,30 +128,27 @@ ErrorHandler:
     If Not db Is Nothing Then Set db = Nothing
     
     ' Log del error
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorNemotecnico"
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorNemotecnico"
     
     ' Devolver Nothing en caso de error
     Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = Nothing
 End Function
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientesActivosParaSelector
-Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As DAO.Recordset
-    Dim errorHandler As IErrorHandlerService
+Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As DAO.recordset
+    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta
     Dim db As DAO.Database
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim sql As String
     
-    ' Log de la operación
-    If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "READ", "", "ExpedienteRepository: Obteniendo expedientes activos para selector"
-    End If
+    ' Logging removido - responsabilidad de la capa de servicio
     
     ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, ";PWD=" & m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, ";PWD=" & m_Config.GetDatabasePassword())
     
     ' Construir la consulta SQL para obtener expedientes activos
     sql = "SELECT e.idExpediente, e.NumeroExpediente, e.Titulo, e.Estado " & _
@@ -181,8 +170,8 @@ ErrorHandler:
     If Not db Is Nothing Then Set db = Nothing
     
     ' Log del error
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientesActivosParaSelector"
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientesActivosParaSelector"
     
     ' Devolver Nothing en caso de error
     Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = Nothing
@@ -195,16 +184,18 @@ End Function
 ' para facilitar las pruebas y el uso directo de la clase concreta
 
 ' Método público de conveniencia para ObtenerExpedientePorId
-Public Function ObtenerExpedientePorId(ByVal IdExpediente As Long) As DAO.Recordset
-    Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(IdExpediente)
+Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
+    Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(idExpediente)
 End Function
 
 ' Método público de conveniencia para ObtenerExpedientePorNemotecnico
-Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.Recordset
+Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
     Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico)
 End Function
 
 ' Método público de conveniencia para ObtenerExpedientesActivosParaSelector
-Public Function ObtenerExpedientesActivosParaSelector() As DAO.Recordset
+Public Function ObtenerExpedientesActivosParaSelector() As DAO.recordset
     Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector()
 End Function
+
+

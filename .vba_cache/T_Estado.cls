@@ -1,5 +1,15 @@
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "T_Estado"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' Clase de tipo de datos para tbEstados
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
@@ -61,3 +71,4 @@ End Property
 Public Property Let Orden(ByVal value As Integer)
     m_orden = value
 End Property
+

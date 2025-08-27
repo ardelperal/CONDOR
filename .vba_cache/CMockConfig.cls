@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' Mock para el servicio de configuración - Framework de Testing
 ' Implementa IConfig para permitir pruebas aisladas
@@ -35,6 +36,8 @@ Public GetUsuarioActual_WasCalled As Boolean
 Public GetUsuarioActual_CallCount As Long
 Public GetCorreoAdministrador_WasCalled As Boolean
 Public GetCorreoAdministrador_CallCount As Long
+Public GetIDAplicacionCondor_WasCalled As Boolean
+Public GetIDAplicacionCondor_CallCount As Long
 
 ' Constructor de la clase
 Private Sub Class_Initialize()
@@ -56,8 +59,8 @@ Public Sub AddSetting(ByVal key As String, ByVal value As Variant)
 End Sub
 
 ' Métodos de conveniencia para configurar valores específicos
-Public Sub SetDataPath(ByVal path As String)
-    AddSetting "BACKEND_DB_PATH", path
+Public Sub SetDataPath(ByVal Path As String)
+    AddSetting "BACKEND_DB_PATH", Path
 End Sub
 
 Public Sub SetDatabasePassword(ByVal password As String)
@@ -83,6 +86,8 @@ Public Sub Reset()
     GetUsuarioActual_CallCount = 0
     GetCorreoAdministrador_WasCalled = False
     GetCorreoAdministrador_CallCount = 0
+    GetIDAplicacionCondor_WasCalled = False
+    GetIDAplicacionCondor_CallCount = 0
 End Sub
 
 '******************************************************************************
@@ -100,18 +105,22 @@ ErrorHandler:
     GetMockSettingValue = Empty
 End Function
 
+' Método privado para rastrear llamadas y eliminar código duplicado
+Private Sub TrackCall(ByRef wasCalledFlag As Boolean, ByRef callCounter As Long)
+    wasCalledFlag = True
+    callCounter = callCounter + 1
+End Sub
+
 ' Implementación de IConfig_GetValue
 Private Function IConfig_GetValue(ByVal key As String) As Variant
-    GetValue_WasCalled = True
-    GetValue_CallCount = GetValue_CallCount + 1
+    TrackCall GetValue_WasCalled, GetValue_CallCount
     
     IConfig_GetValue = GetMockSettingValue(key)
 End Function
 
 ' Implementación de IConfig_HasKey
 Private Function IConfig_HasKey(ByVal key As String) As Boolean
-    HasKey_WasCalled = True
-    HasKey_CallCount = HasKey_CallCount + 1
+    TrackCall HasKey_WasCalled, HasKey_CallCount
     
     On Error GoTo ErrorHandler
     Dim temp As Variant
@@ -125,48 +134,99 @@ End Function
 
 ' Implementación de IConfig_GetDataPath
 Private Function IConfig_GetDataPath() As String
-    GetDataPath_WasCalled = True
-    GetDataPath_CallCount = GetDataPath_CallCount + 1
+    TrackCall GetDataPath_WasCalled, GetDataPath_CallCount
     
     IConfig_GetDataPath = GetMockSettingValue("BACKEND_DB_PATH")
 End Function
 
 ' Implementación de IConfig_GetDatabasePassword
 Private Function IConfig_GetDatabasePassword() As String
-    GetDatabasePassword_WasCalled = True
-    GetDatabasePassword_CallCount = GetDatabasePassword_CallCount + 1
+    TrackCall GetDatabasePassword_WasCalled, GetDatabasePassword_CallCount
     
     IConfig_GetDatabasePassword = GetMockSettingValue("DATABASE_PASSWORD")
 End Function
 
 ' Implementación de IConfig_GetAttachmentsPath
 Private Function IConfig_GetAttachmentsPath() As String
-    GetAttachmentsPath_WasCalled = True
-    GetAttachmentsPath_CallCount = GetAttachmentsPath_CallCount + 1
+    TrackCall GetAttachmentsPath_WasCalled, GetAttachmentsPath_CallCount
     
     IConfig_GetAttachmentsPath = GetMockSettingValue("ATTACHMENTS_PATH")
 End Function
 
 ' Implementación de IConfig_GetCorreosDBPath
 Private Function IConfig_GetCorreosDBPath() As String
-    GetCorreosDBPath_WasCalled = True
-    GetCorreosDBPath_CallCount = GetCorreosDBPath_CallCount + 1
+    TrackCall GetCorreosDBPath_WasCalled, GetCorreosDBPath_CallCount
     
     IConfig_GetCorreosDBPath = GetMockSettingValue("CORREOS_DB_PATH")
 End Function
 
 ' Implementación de IConfig_GetUsuarioActual
 Private Function IConfig_GetUsuarioActual() As String
-    GetUsuarioActual_WasCalled = True
-    GetUsuarioActual_CallCount = GetUsuarioActual_CallCount + 1
+    TrackCall GetUsuarioActual_WasCalled, GetUsuarioActual_CallCount
     
     IConfig_GetUsuarioActual = GetMockSettingValue("USUARIO_ACTUAL")
 End Function
 
 ' Implementación de IConfig_GetCorreoAdministrador
 Private Function IConfig_GetCorreoAdministrador() As String
-    GetCorreoAdministrador_WasCalled = True
-    GetCorreoAdministrador_CallCount = GetCorreoAdministrador_CallCount + 1
+    TrackCall GetCorreoAdministrador_WasCalled, GetCorreoAdministrador_CallCount
     
     IConfig_GetCorreoAdministrador = GetMockSettingValue("CORREO_ADMINISTRADOR")
 End Function
+
+' Implementación de IConfig_GetIDAplicacionCondor
+Private Function IConfig_GetIDAplicacionCondor() As String
+    TrackCall GetIDAplicacionCondor_WasCalled, GetIDAplicacionCondor_CallCount
+    
+    IConfig_GetIDAplicacionCondor = GetMockSettingValue("IDAplicacion_CONDOR")
+End Function
+
+'******************************************************************************
+' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
+'******************************************************************************
+
+' Método público de conveniencia para GetValue
+Public Function GetValue(ByVal key As String) As Variant
+    GetValue = IConfig_GetValue(key)
+End Function
+
+' Método público de conveniencia para HasKey
+Public Function HasKey(ByVal key As String) As Boolean
+    HasKey = IConfig_HasKey(key)
+End Function
+
+' Método público de conveniencia para GetDataPath
+Public Function GetDataPath() As String
+    GetDataPath = IConfig_GetDataPath()
+End Function
+
+' Método público de conveniencia para GetDatabasePassword
+Public Function GetDatabasePassword() As String
+    GetDatabasePassword = IConfig_GetDatabasePassword()
+End Function
+
+' Método público de conveniencia para GetAttachmentsPath
+Public Function GetAttachmentsPath() As String
+    GetAttachmentsPath = IConfig_GetAttachmentsPath()
+End Function
+
+' Método público de conveniencia para GetCorreosDBPath
+Public Function GetCorreosDBPath() As String
+    GetCorreosDBPath = IConfig_GetCorreosDBPath()
+End Function
+
+' Método público de conveniencia para GetUsuarioActual
+Public Function GetUsuarioActual() As String
+    GetUsuarioActual = IConfig_GetUsuarioActual()
+End Function
+
+' Método público de conveniencia para GetCorreoAdministrador
+Public Function GetCorreoAdministrador() As String
+    GetCorreoAdministrador = IConfig_GetCorreoAdministrador()
+End Function
+
+' Método público de conveniencia para GetIDAplicacionCondor
+Public Function GetIDAplicacionCondor() As String
+    GetIDAplicacionCondor = IConfig_GetIDAplicacionCondor()
+End Function
+

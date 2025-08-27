@@ -1,6 +1,7 @@
-Attribute VB_Name = "Test_modAssert"
+﻿Attribute VB_Name = "Test_modAssert"
 Option Compare Database
 Option Explicit
+
 
 #If DEV_MODE Then
 
@@ -47,12 +48,12 @@ Private Function Test_AssertTrue_WithTrueCondition_Passes() As CTestResult
     modAssert.AssertTrue True, "Esta aserción debe pasar"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "AssertTrue falló inesperadamente con condición True: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set Test_AssertTrue_WithTrueCondition_Passes = testResult
 End Function
 
@@ -68,7 +69,7 @@ Private Function Test_AssertTrue_WithFalseCondition_Fails() As CTestResult
     
     ' Si llegamos aquí, la aserción no falló como debería
     testResult.Fail "AssertTrue debería haber fallado con condición False"
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     ' Verificar que el error sea el esperado
@@ -78,7 +79,7 @@ ErrorHandler:
         testResult.Fail "AssertTrue falló con error incorrecto. Esperado: " & (vbObjectError + 510) & ", Actual: " & Err.Number
     End If
     
-CleanUp:
+Cleanup:
     Set Test_AssertTrue_WithFalseCondition_Fails = testResult
 End Function
 
@@ -97,12 +98,12 @@ Private Function Test_AssertFalse_WithFalseCondition_Passes() As CTestResult
     modAssert.AssertFalse False, "Esta aserción debe pasar"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "AssertFalse falló inesperadamente con condición False: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set Test_AssertFalse_WithFalseCondition_Passes = testResult
 End Function
 
@@ -118,7 +119,7 @@ Private Function Test_AssertFalse_WithTrueCondition_Fails() As CTestResult
     
     ' Si llegamos aquí, la aserción no falló como debería
     testResult.Fail "AssertFalse debería haber fallado con condición True"
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     ' Verificar que el error sea el esperado
@@ -128,7 +129,7 @@ ErrorHandler:
         testResult.Fail "AssertFalse falló con error incorrecto. Esperado: " & (vbObjectError + 511) & ", Actual: " & Err.Number
     End If
     
-CleanUp:
+Cleanup:
     Set Test_AssertFalse_WithTrueCondition_Fails = testResult
 End Function
 
@@ -149,12 +150,12 @@ Private Function Test_AssertEquals_WithEqualValues_Passes() As CTestResult
     modAssert.AssertEquals True, True, "Booleanos iguales deben pasar"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "AssertEquals falló inesperadamente con valores iguales: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set Test_AssertEquals_WithEqualValues_Passes = testResult
 End Function
 
@@ -170,7 +171,7 @@ Private Function Test_AssertEquals_WithDifferentValues_Fails() As CTestResult
     
     ' Si llegamos aquí, la aserción no falló como debería
     testResult.Fail "AssertEquals debería haber fallado con valores diferentes"
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     ' Verificar que el error sea el esperado
@@ -180,7 +181,7 @@ ErrorHandler:
         testResult.Fail "AssertEquals falló con error incorrecto. Esperado: " & (vbObjectError + 512) & ", Actual: " & Err.Number
     End If
     
-CleanUp:
+Cleanup:
     Set Test_AssertEquals_WithDifferentValues_Fails = testResult
 End Function
 
@@ -202,12 +203,12 @@ Private Function Test_AssertNotNull_WithValidObject_Passes() As CTestResult
     modAssert.AssertNotNull obj, "Objeto válido debe pasar"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "AssertNotNull falló inesperadamente con objeto válido: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set obj = Nothing
     Set Test_AssertNotNull_WithValidObject_Passes = testResult
 End Function
@@ -228,7 +229,7 @@ Private Function Test_AssertNotNull_WithNothingObject_Fails() As CTestResult
     
     ' Si llegamos aquí, la aserción no falló como debería
     testResult.Fail "AssertNotNull debería haber fallado con objeto Nothing"
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     ' Verificar que el error sea el esperado
@@ -238,7 +239,7 @@ ErrorHandler:
         testResult.Fail "AssertNotNull falló con error incorrecto. Esperado: " & (vbObjectError + 513) & ", Actual: " & Err.Number
     End If
     
-CleanUp:
+Cleanup:
     Set Test_AssertNotNull_WithNothingObject_Fails = testResult
 End Function
 
@@ -261,12 +262,12 @@ Private Function Test_AssertIsNull_WithNothingObject_Passes() As CTestResult
     modAssert.AssertIsNull obj, "Objeto Nothing debe pasar"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "AssertIsNull falló inesperadamente con objeto Nothing: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set Test_AssertIsNull_WithNothingObject_Passes = testResult
 End Function
 
@@ -285,7 +286,7 @@ Private Function Test_AssertIsNull_WithValidObject_Fails() As CTestResult
     
     ' Si llegamos aquí, la aserción no falló como debería
     testResult.Fail "AssertIsNull debería haber fallado con objeto válido"
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     ' Verificar que el error sea el esperado
@@ -295,7 +296,7 @@ ErrorHandler:
         testResult.Fail "AssertIsNull falló con error incorrecto. Esperado: " & (vbObjectError + 514) & ", Actual: " & Err.Number
     End If
     
-CleanUp:
+Cleanup:
     Set obj = Nothing
     Set Test_AssertIsNull_WithValidObject_Fails = testResult
 End Function
@@ -316,7 +317,7 @@ Private Function Test_Fail_AlwaysFails() As CTestResult
     
     ' Si llegamos aquí, Fail no falló como debería
     testResult.Fail "Fail debería haber fallado incondicionalmente"
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     ' Verificar que el error sea el esperado
@@ -326,8 +327,9 @@ ErrorHandler:
         testResult.Fail "Fail falló con error incorrecto. Esperado: " & (vbObjectError + 515) & ", Actual: " & Err.Number
     End If
     
-CleanUp:
+Cleanup:
     Set Test_Fail_AlwaysFails = testResult
 End Function
 
 #End If
+

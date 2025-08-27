@@ -1,5 +1,15 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CExpedienteService"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IExpedienteService
 
@@ -21,30 +31,35 @@ Public Sub Initialize(ByVal config As IConfig, _
     Set m_ExpedienteRepository = expedienteRepository
 End Sub
 
-' ImplementaciÃ³n de la interfaz IExpedienteService
-' Obtiene un expediente por su ID desde la base de datos de expedientes (mÃ©todo principal)
+' Implementación de la interfaz IExpedienteService
+' Obtiene un expediente por su ID desde la base de datos de expedientes (método principal)
 Public Function GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
     Set GetExpedienteById = IExpedienteService_GetExpedienteById(idExpediente)
 End Function
 
 ' Obtiene un expediente por su nemotécnico desde la base de datos de expedientes
-Public Function GetExpedienteByNemotecnico(ByVal nemotecnico As String) As T_Expediente
-    Set GetExpedienteByNemotecnico = IExpedienteService_GetExpedienteByNemotecnico(nemotecnico)
+Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As T_Expediente
+    Set GetExpedienteByNemotecnico = IExpedienteService_GetExpedienteByNemotecnico(Nemotecnico)
 End Function
 
-' ImplementaciÃ³n de la interfaz para GetExpedienteById
+' Obtiene expedientes para selector
+Public Function GetExpedientesParaSelector() As DAO.Recordset
+    Set GetExpedientesParaSelector = IExpedienteService_GetExpedientesParaSelector()
+End Function
+
+' Implementación de la interfaz para GetExpedienteById
 Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
-    Dim errorHandler As IErrorHandlerService
+    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim expediente As T_Expediente
     
     ' Instanciar el objeto expediente
     Set expediente = New T_Expediente
     
-    ' Log de la operaciÃ³n
+    ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "READ", CStr(idExpediente), "ExpedienteService: Consultando expediente ID: " & idExpediente
     End If
@@ -52,24 +67,24 @@ Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long
     ' Usar el repositorio para obtener el recordset
     Set rs = m_ExpedienteRepository.ObtenerExpedientePorId(idExpediente)
     
-    ' Verificar si se encontrÃ³ el expediente
+    ' Verificar si se encontró el expediente
     If Not rs Is Nothing And Not rs.EOF Then
         ' Mapear los datos del recordset a la estructura T_Expediente
         expediente.idExpediente = rs("idExpediente")
         expediente.NumeroExpediente = rs("NumeroExpediente") & ""
         expediente.Titulo = rs("Titulo") & ""
         expediente.Descripcion = rs("Descripcion") & ""
-        expediente.FechaCreacion = rs("FechaCreacion")
+        expediente.fechaCreacion = rs("FechaCreacion")
         expediente.Estado = rs("Estado") & ""
         expediente.IdUsuarioCreador = rs("IdUsuarioCreador")
         expediente.NombreUsuarioCreador = rs("NombreUsuarioCreador") & ""
     Else
-        ' Expediente no encontrado - devolver estructura vacÃ­a
+        ' Expediente no encontrado - devolver estructura vacía
         expediente.idExpediente = 0
         expediente.NumeroExpediente = ""
         expediente.Titulo = ""
         expediente.Descripcion = ""
-        expediente.FechaCreacion = #1/1/1900#
+        expediente.fechaCreacion = #1/1/1900#
         expediente.Estado = ""
         expediente.IdUsuarioCreador = 0
         expediente.NombreUsuarioCreador = ""
@@ -94,8 +109,8 @@ ErrorHandler:
     End If
     
     ' Log del error
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedienteById"
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedienteById"
     
     ' Devolver estructura vacía en caso de error
     Dim expedienteVacio As T_Expediente
@@ -107,14 +122,14 @@ End Function
 
 
 ' Implementa IExpedienteService.GetExpedientesParaSelector
-Private Function IExpedienteService_GetExpedientesParaSelector() As Object
-    Dim errorHandler As IErrorHandlerService
+Private Function IExpedienteService_GetExpedientesParaSelector() As DAO.Recordset
+    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     
-    ' Log de la operaciÃ³n
+    ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
         m_OperationLogger.LogOperation "READ", "", "ExpedienteService: Obteniendo lista de expedientes para selector"
     End If
@@ -129,48 +144,48 @@ Private Function IExpedienteService_GetExpedientesParaSelector() As Object
     
 ErrorHandler:
     ' Log del error
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedientesParaSelector"
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.GetExpedientesParaSelector"
     
     ' Devolver Nothing en caso de error
     Set IExpedienteService_GetExpedientesParaSelector = Nothing
 End Function
 
-' ImplementaciÃ³n de la interfaz para GetExpedienteByNemotecnico
-Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal nemotecnico As String) As T_Expediente
-    Dim errorHandler As IErrorHandlerService
+' Implementación de la interfaz para GetExpedienteByNemotecnico
+Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As T_Expediente
+    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim expediente As T_Expediente
     
-    ' Log de la operaciÃ³n
+    ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "ExpedienteService.GetExpedienteByNemotecnico", "Consultando expediente por nemotÃ©cnico: " & nemotecnico, ""
+        m_OperationLogger.LogOperation "ExpedienteService.GetExpedienteByNemotecnico", "Consultando expediente por nemotécnico: " & Nemotecnico, ""
     End If
     
     ' Usar el repositorio para obtener el recordset
-    Set rs = m_ExpedienteRepository.ObtenerExpedientePorNemotecnico(nemotecnico)
+    Set rs = m_ExpedienteRepository.ObtenerExpedientePorNemotecnico(Nemotecnico)
     
-    ' Verificar si se encontrÃ³ el expediente
+    ' Verificar si se encontró el expediente
     If Not rs Is Nothing And Not rs.EOF Then
         ' Mapear los datos del recordset a la estructura T_Expediente
         expediente.idExpediente = rs("idExpediente")
         expediente.NumeroExpediente = rs("NumeroExpediente") & ""
         expediente.Titulo = rs("Titulo") & ""
         expediente.Descripcion = rs("Descripcion") & ""
-        expediente.FechaCreacion = rs("FechaCreacion")
+        expediente.fechaCreacion = rs("FechaCreacion")
         expediente.Estado = rs("Estado") & ""
         expediente.IdUsuarioCreador = rs("IdUsuarioCreador")
         expediente.NombreUsuarioCreador = rs("NombreUsuarioCreador") & ""
     Else
-        ' Expediente no encontrado - devolver estructura vacÃ­a
+        ' Expediente no encontrado - devolver estructura vacía
         expediente.idExpediente = 0
         expediente.NumeroExpediente = ""
         expediente.Titulo = ""
         expediente.Descripcion = ""
-        expediente.FechaCreacion = #1/1/1900#
+        expediente.fechaCreacion = #1/1/1900#
         expediente.Estado = ""
         expediente.IdUsuarioCreador = 0
         expediente.NombreUsuarioCreador = ""
@@ -195,8 +210,8 @@ ErrorHandler:
     End If
     
     ' Log del error
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "CExpedienteService.IExpedienteService_GetExpedienteByNemotecnico", "NemotÃ©cnico: " & nemotecnico
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteService.IExpedienteService_GetExpedienteByNemotecnico", "Nemotécnico: " & Nemotecnico
     
     ' Devolver estructura vacía en caso de error
     Dim expedienteVacio As T_Expediente
@@ -204,6 +219,9 @@ ErrorHandler:
     expedienteVacio.idExpediente = 0
     Set IExpedienteService_GetExpedienteByNemotecnico = expedienteVacio
 End Function
+
+
+
 
 
 

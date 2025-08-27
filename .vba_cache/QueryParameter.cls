@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 ' Clase auxiliar para encapsular parámetros de consulta SQL
 ' Versión 1.0 - Soporte para consultas parametrizadas seguras
 
@@ -22,14 +23,16 @@ Public Sub Initialize(ByVal paramName As String, ByVal paramValue As Variant)
 End Sub
 
 ' Propiedades
-Public Property Get Name() As String
-    Name = m_name
+Public Property Get ParameterName() As String
+    ParameterName = m_name
 End Property
 
-Public Property Get Value() As Variant
+Public Property Get ParameterValue() As Variant
     If IsObject(m_value) Then
-        Set Value = m_value
+        Set ParameterValue = m_value
     Else
-        Value = m_value
+        ParameterValue = m_value
     End If
 End Property
+
+

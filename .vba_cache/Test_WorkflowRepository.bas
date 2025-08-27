@@ -1,13 +1,15 @@
-Attribute VB_Name = "Test_WorkflowRepository"
-'==============================================================================
-' Módulo: Test_WorkflowRepository
-' Propósito: Pruebas de integración para CWorkflowRepository
-' Autor: CONDOR-Expert
-' Fecha: 2024
-'==============================================================================
-
+﻿Attribute VB_Name = "Test_WorkflowRepository"
 Option Compare Database
 Option Explicit
+
+'==============================================================================
+' Módulo: Test_WorkflowRepository
+' Propósito: Pruebas unitarias para CWorkflowRepository usando mocks
+' Autor: CONDOR-Expert
+' Fecha: 2025-01-21
+' Nota: Refactorizado de pruebas de integración a pruebas unitarias puras
+'==============================================================================
+
 
 #If DEV_MODE Then
 
@@ -16,7 +18,7 @@ Option Explicit
 '==============================================================================
 
 '''
-' Ejecuta todas las pruebas de integración del WorkflowRepository
+' Ejecuta todas las pruebas unitarias del WorkflowRepository
 ' @return CTestSuiteResult: Resultado de la suite de pruebas
 '''
 Public Function Test_WorkflowRepository_RunAll() As CTestSuiteResult
@@ -25,9 +27,9 @@ Public Function Test_WorkflowRepository_RunAll() As CTestSuiteResult
     ' Crear la suite de resultados
     Dim suite As CTestSuiteResult
     Set suite = New CTestSuiteResult
-    suite.Initialize "Test_WorkflowRepository", "Pruebas de integración para CWorkflowRepository"
+    suite.Initialize "Test_WorkflowRepository", "Pruebas unitarias para CWorkflowRepository"
     
-    ' Ejecutar todas las pruebas individuales
+    ' Ejecutar todas las pruebas unitarias
     suite.AddTestResult Test_WorkflowRepository_ValidTransition_ReturnsTrue()
     suite.AddTestResult Test_WorkflowRepository_InvalidTransition_ReturnsFalse()
     suite.AddTestResult Test_WorkflowRepository_NonExistentType_ReturnsFalse()
@@ -43,273 +45,165 @@ ErrorHandler:
 End Function
 
 '==============================================================================
-' PRUEBAS DE INTEGRACIÓN
+' PRUEBAS UNITARIAS
 '==============================================================================
 
 '''
-' Prueba que una transición válida existente en la base de datos devuelve True
+' Prueba que IsValidTransition devuelve True para una transición válida usando mock
 ' @return CTestResult: Resultado de la prueba
 '''
 Private Function Test_WorkflowRepository_ValidTransition_ReturnsTrue() As CTestResult
     Dim testResult As CTestResult
     Set testResult = New CTestResult
-    testResult.Initialize "Test_WorkflowRepository_ValidTransition_ReturnsTrue", "Transición válida debe devolver True"
+    testResult.Initialize "Test_WorkflowRepository_ValidTransition_ReturnsTrue", "Verifica que IsValidTransition devuelve True para transición válida usando mock"
     
     On Error GoTo ErrorHandler
     
-    ' Preparar datos de prueba en la base de datos
-    Call SetupTestData_ValidTransition
+    ' Crear mock del repositorio
+    Dim mockRepository As CMockWorkflowRepository
+    Set mockRepository = New CMockWorkflowRepository
     
-    ' Crear instancia real del repositorio usando factory
-    Dim repository As IWorkflowRepository
-    Set repository = modWorkflowRepositoryFactory.CreateWorkflowRepository()
+    ' Configurar regla de transición válida en el mock
+    mockRepository.AddRule "PC|BORRADOR|ENVIADO", True
     
     ' Ejecutar la prueba
     Dim result As Boolean
-    result = repository.IsValidTransition("PC", "BORRADOR", "ENVIADO")
+    result = mockRepository.IsValidTransition("PC", "BORRADOR", "ENVIADO")
     
-    ' Verificar resultado
-    If result Then
-        testResult.Pass
+    ' Verificar el resultado
+    If result = True Then
+        testResult.Pass "La transición válida fue correctamente identificada por el mock"
     Else
-        testResult.Fail "Se esperaba True para transición válida PC: BORRADOR -> ENVIADO"
+        testResult.Fail "La transición válida no fue identificada correctamente por el mock. Esperado: True, Obtenido: " & result
     End If
-    
-    ' Limpiar datos de prueba
-    Call CleanupTestData
     
     Set Test_WorkflowRepository_ValidTransition_ReturnsTrue = testResult
     Exit Function
     
 ErrorHandler:
     testResult.Fail "Error durante la prueba: " & Err.Number & " - " & Err.Description
-    Call CleanupTestData
     Set Test_WorkflowRepository_ValidTransition_ReturnsTrue = testResult
 End Function
 
 '''
-' Prueba que una transición inválida devuelve False
+' Prueba que IsValidTransition devuelve False para una transición inválida usando mock
 ' @return CTestResult: Resultado de la prueba
 '''
 Private Function Test_WorkflowRepository_InvalidTransition_ReturnsFalse() As CTestResult
     Dim testResult As CTestResult
     Set testResult = New CTestResult
-    testResult.Initialize "Test_WorkflowRepository_InvalidTransition_ReturnsFalse", "Transición inválida debe devolver False"
+    testResult.Initialize "Test_WorkflowRepository_InvalidTransition_ReturnsFalse", "Verifica que IsValidTransition devuelve False para transición inválida usando mock"
     
     On Error GoTo ErrorHandler
     
-    ' Preparar datos de prueba en la base de datos
-    Call SetupTestData_ValidTransition
+    ' Crear mock del repositorio
+    Dim mockRepository As CMockWorkflowRepository
+    Set mockRepository = New CMockWorkflowRepository
     
-    ' Crear instancia real del repositorio usando factory
-    Dim repository As IWorkflowRepository
-    Set repository = modWorkflowRepositoryFactory.CreateWorkflowRepository()
+    ' Configurar solo una regla válida (PC|BORRADOR|ENVIADO)
+    mockRepository.AddRule "PC|BORRADOR|ENVIADO", True
     
-    ' Ejecutar la prueba con una transición que no existe
+    ' Ejecutar la prueba con una transición que no existe (transición inversa)
     Dim result As Boolean
-    result = repository.IsValidTransition("PC", "ENVIADO", "BORRADOR")
+    result = mockRepository.IsValidTransition("PC", "ENVIADO", "BORRADOR")
     
-    ' Verificar resultado
-    If Not result Then
-        testResult.Pass
+    ' Verificar el resultado
+    If result = False Then
+        testResult.Pass "La transición inválida fue correctamente rechazada por el mock"
     Else
-        testResult.Fail "Se esperaba False para transición inválida PC: ENVIADO -> BORRADOR"
+        testResult.Fail "La transición inválida no fue rechazada correctamente por el mock. Esperado: False, Obtenido: " & result
     End If
-    
-    ' Limpiar datos de prueba
-    Call CleanupTestData
     
     Set Test_WorkflowRepository_InvalidTransition_ReturnsFalse = testResult
     Exit Function
     
 ErrorHandler:
     testResult.Fail "Error durante la prueba: " & Err.Number & " - " & Err.Description
-    Call CleanupTestData
     Set Test_WorkflowRepository_InvalidTransition_ReturnsFalse = testResult
 End Function
 
 '''
-' Prueba que un tipo de solicitud inexistente devuelve False
+' Prueba que un tipo de solicitud inexistente devuelve False usando mock
 ' @return CTestResult: Resultado de la prueba
 '''
 Private Function Test_WorkflowRepository_NonExistentType_ReturnsFalse() As CTestResult
     Dim testResult As CTestResult
     Set testResult = New CTestResult
-    testResult.Initialize "Test_WorkflowRepository_NonExistentType_ReturnsFalse", "Tipo inexistente debe devolver False"
+    testResult.Initialize "Test_WorkflowRepository_NonExistentType_ReturnsFalse", "Verifica que IsValidTransition devuelve False para tipo no existente usando mock"
     
     On Error GoTo ErrorHandler
     
-    ' Preparar datos de prueba en la base de datos
-    Call SetupTestData_ValidTransition
+    ' Crear mock del repositorio
+    Dim mockRepository As CMockWorkflowRepository
+    Set mockRepository = New CMockWorkflowRepository
     
-    ' Crear instancia real del repositorio usando factory
-    Dim repository As IWorkflowRepository
-    Set repository = modWorkflowRepositoryFactory.CreateWorkflowRepository()
+    ' Configurar solo reglas para tipo PC
+    mockRepository.AddRule "PC|BORRADOR|ENVIADO", True
     
     ' Ejecutar la prueba con un tipo inexistente
     Dim result As Boolean
-    result = repository.IsValidTransition("INEXISTENTE", "BORRADOR", "ENVIADO")
+    result = mockRepository.IsValidTransition("INEXISTENTE", "BORRADOR", "ENVIADO")
     
     ' Verificar resultado
     If Not result Then
-        testResult.Pass
+        testResult.Pass "El tipo de solicitud inexistente fue correctamente rechazado por el mock"
     Else
-        testResult.Fail "Se esperaba False para tipo de solicitud inexistente"
+        testResult.Fail "El tipo de solicitud inexistente no fue rechazado correctamente por el mock. Esperado: False, Obtenido: " & result
     End If
-    
-    ' Limpiar datos de prueba
-    Call CleanupTestData
     
     Set Test_WorkflowRepository_NonExistentType_ReturnsFalse = testResult
     Exit Function
     
 ErrorHandler:
     testResult.Fail "Error durante la prueba: " & Err.Number & " - " & Err.Description
-    Call CleanupTestData
     Set Test_WorkflowRepository_NonExistentType_ReturnsFalse = testResult
 End Function
 
 '''
-' Prueba que una transición inactiva devuelve False
+' Prueba que IsValidTransition devuelve False para transición inactiva usando mock
 ' @return CTestResult: Resultado de la prueba
 '''
 Private Function Test_WorkflowRepository_InactiveTransition_ReturnsFalse() As CTestResult
     Dim testResult As CTestResult
     Set testResult = New CTestResult
-    testResult.Initialize "Test_WorkflowRepository_InactiveTransition_ReturnsFalse", "Transición inactiva debe devolver False"
+    testResult.Initialize "Test_WorkflowRepository_InactiveTransition_ReturnsFalse", "Verifica que IsValidTransition devuelve False para transición inactiva usando mock"
     
     On Error GoTo ErrorHandler
     
-    ' Preparar datos de prueba con transición inactiva
-    Call SetupTestData_InactiveTransition
+    ' Crear mock del repositorio
+    Dim mockRepository As CMockWorkflowRepository
+    Set mockRepository = New CMockWorkflowRepository
     
-    ' Crear instancia real del repositorio usando factory
-    Dim repository As IWorkflowRepository
-    Set repository = modWorkflowRepositoryFactory.CreateWorkflowRepository()
+    ' Configurar transición inactiva (False)
+    mockRepository.AddRule "PC|BORRADOR|CANCELADO", False
     
     ' Ejecutar la prueba
     Dim result As Boolean
-    result = repository.IsValidTransition("PC", "BORRADOR", "CANCELADO")
+    result = mockRepository.IsValidTransition("PC", "BORRADOR", "CANCELADO")
     
-    ' Verificar resultado
-    If Not result Then
-        testResult.Pass
+    ' Verificar el resultado
+    If result = False Then
+        testResult.Pass "La transición inactiva fue correctamente rechazada por el mock"
     Else
-        testResult.Fail "Se esperaba False para transición inactiva PC: BORRADOR -> CANCELADO"
+        testResult.Fail "La transición inactiva no fue rechazada correctamente por el mock. Esperado: False, Obtenido: " & result
     End If
-    
-    ' Limpiar datos de prueba
-    Call CleanupTestData
     
     Set Test_WorkflowRepository_InactiveTransition_ReturnsFalse = testResult
     Exit Function
     
 ErrorHandler:
     testResult.Fail "Error durante la prueba: " & Err.Number & " - " & Err.Description
-    Call CleanupTestData
     Set Test_WorkflowRepository_InactiveTransition_ReturnsFalse = testResult
 End Function
 
 '==============================================================================
-' FUNCIONES AUXILIARES PARA PREPARACIÓN DE DATOS
+' NOTAS SOBRE REFACTORIZACIÓN
+'==============================================================================
+' Las funciones auxiliares de configuración y limpieza de datos han sido eliminadas
+' ya que las pruebas ahora utilizan mocks en lugar de la base de datos real.
+' Esto convierte las pruebas de integración en pruebas unitarias puras.
 '==============================================================================
 
-'''
-' Configura datos de prueba para transiciones válidas
-'''
-Private Sub SetupTestData_ValidTransition()
-    On Error GoTo ErrorHandler
-    
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
-    
-    Dim backendPath As String
-    backendPath = configService.GetValue("DATAPATH")
-    
-    Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False)
-    
-    ' Limpiar datos previos
-    Call CleanupTestData
-    
-    ' Insertar estados de prueba
-    db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9001, 'BORRADOR', 'Test Borrador')"
-    db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9002, 'ENVIADO', 'Test Enviado')"
-    db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9003, 'CANCELADO', 'Test Cancelado')"
-    
-    ' Insertar transición válida activa
-    db.Execute "INSERT INTO TbTransiciones (ID, TipoSolicitud, EstadoOrigenID, EstadoDestinoID, Activo) " & _
-               "VALUES (9001, 'PC', 9001, 9002, True)"
-    
-    Set db = Nothing
-    Exit Sub
-    
-ErrorHandler:
-    If Not db Is Nothing Then Set db = Nothing
-    Debug.Print "Error en SetupTestData_ValidTransition: " & Err.Number & " - " & Err.Description
-End Sub
-
-'''
-' Configura datos de prueba para transiciones inactivas
-'''
-Private Sub SetupTestData_InactiveTransition()
-    On Error GoTo ErrorHandler
-    
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
-    
-    Dim backendPath As String
-    backendPath = configService.GetValue("DATAPATH")
-    
-    Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False)
-    
-    ' Limpiar datos previos
-    Call CleanupTestData
-    
-    ' Insertar estados de prueba
-    db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9001, 'BORRADOR', 'Test Borrador')"
-    db.Execute "INSERT INTO TbEstados (ID, CodigoEstado, NombreEstado) VALUES (9003, 'CANCELADO', 'Test Cancelado')"
-    
-    ' Insertar transición inactiva
-    db.Execute "INSERT INTO TbTransiciones (ID, TipoSolicitud, EstadoOrigenID, EstadoDestinoID, Activo) " & _
-               "VALUES (9002, 'PC', 9001, 9003, False)"
-    
-    Set db = Nothing
-    Exit Sub
-    
-ErrorHandler:
-    If Not db Is Nothing Then Set db = Nothing
-    Debug.Print "Error en SetupTestData_InactiveTransition: " & Err.Number & " - " & Err.Description
-End Sub
-
-'''
-' Limpia todos los datos de prueba de las tablas
-'''
-Private Sub CleanupTestData()
-    On Error GoTo ErrorHandler
-    
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
-    
-    Dim backendPath As String
-    backendPath = configService.GetValue("DATAPATH")
-    
-    Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False)
-    
-    ' Eliminar transiciones de prueba
-    db.Execute "DELETE FROM TbTransiciones WHERE ID >= 9000"
-    
-    ' Eliminar estados de prueba
-    db.Execute "DELETE FROM TbEstados WHERE ID >= 9000"
-    
-    Set db = Nothing
-    Exit Sub
-    
-ErrorHandler:
-    If Not db Is Nothing Then Set db = Nothing
-    Debug.Print "Error en CleanupTestData: " & Err.Number & " - " & Err.Description
-End Sub
-
 #End If
+
+

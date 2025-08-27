@@ -10,40 +10,34 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' CLASE: CSolicitudRepository
-' Arquitectura: ImplementaciÃ³n del Repositorio de Solicitudes
-' Version: 2.0 - ReconstrucciÃ³n Total
+' Arquitectura: Implementación del Repositorio de Solicitudes
+' Version: 2.0 - Reconstrucción Total
 ' ============================================================================
-' Implementa ISolicitudRepository con conexiÃ³n explÃ­cita al Backend.
-' Aplica principios de inyecciÃ³n de dependencias y consultas parametrizadas.
+' Implementa ISolicitudRepository con conexión explícita al Backend.
+' Aplica principios de inyección de dependencias y consultas parametrizadas.
 ' ============================================================================
 
 Implements ISolicitudRepository
 
 ' Dependencias inyectadas
 Private m_configService As IConfig
-Private m_operationLogger As IOperationLogger
 Private m_isInitialized As Boolean
 
 ' ============================================================================
-' INICIALIZACIÃ“N Y CONFIGURACIÃ“N
+' INICIALIZACIÓN Y CONFIGURACIÓN
 ' ============================================================================
 
 ' Inicializa el repositorio con sus dependencias
-' @param configService: Servicio de configuraciÃ³n para obtener ruta del Backend
-' @param operationLogger: Logger para registrar operaciones
-Public Sub Initialize(ByVal configService As IConfig, ByVal operationLogger As IOperationLogger)
+' @param configService: Servicio de configuración para obtener ruta del Backend
+Public Sub Initialize(ByVal configService As IConfig)
     If configService Is Nothing Then
         Err.Raise 5, "CSolicitudRepository.Initialize", "configService no puede ser Nothing"
     End If
     
-    If operationLogger Is Nothing Then
-        Err.Raise 5, "CSolicitudRepository.Initialize", "operationLogger no puede ser Nothing"
-    End If
-    
     Set m_configService = configService
-    Set m_operationLogger = operationLogger
     m_isInitialized = True
 End Sub
 
@@ -53,30 +47,30 @@ End Sub
 
 ' Obtiene una solicitud por su ID desde el Backend
 Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
-    Dim errorHandler As IErrorHandlerService
+    
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudRepository.GetSolicitudById", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
     End If
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim solicitud As T_Solicitud
     
     On Error GoTo ErrorHandler
     
-    ' Conectar al Backend usando la ruta de configuraciÃ³n
+    ' Conectar al Backend usando la ruta de configuración
     Dim backendPath As String
     backendPath = m_configService.GetDataPath()
     
     Dim backendPassword As String
     backendPassword = m_configService.GetDatabasePassword()
     
-    Set db = DBEngine.OpenDatabase(backendPath, False, False, ";PWD=" & backendPassword)
+    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
-    ' Crear consulta parametrizada para evitar inyecciÃ³n SQL
+    ' Crear consulta parametrizada para evitar inyección SQL
     Set qdf = db.CreateQueryDef("", "SELECT * FROM T_Solicitudes WHERE idSolicitud = ?")
-    qdf.Parameters(0) = idSolicitud
+    qdf.parameters(0) = idSolicitud
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
@@ -98,10 +92,10 @@ Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long
         ' Cargar datos específicos según el tipo de solicitud
         Call CargarDatosEspecificos(solicitud, db)
         
-        m_operationLogger.LogOperation "READ", CStr(idSolicitud), "Solicitud obtenida exitosamente"
+        ' Logging de auditoría removido - responsabilidad de la capa de servicio
     Else
         Set solicitud = Nothing
-        m_operationLogger.LogOperation "READ", CStr(idSolicitud), "Solicitud no encontrada"
+        ' Logging de auditoría removido - responsabilidad de la capa de servicio
     End If
     
     rs.Close
@@ -112,13 +106,13 @@ Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long
 ErrorHandler:
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
-    m_operationLogger.LogOperation "READ_ERROR", CStr(idSolicitud), "Error: " & Err.Description
+    ' Logging de errores removido - responsabilidad de la capa de servicio
     Err.Raise Err.Number, "CSolicitudRepository.GetSolicitudById", Err.Description
 End Function
 
 ' Guarda una solicitud en el Backend (INSERT o UPDATE)
 Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
-    Dim errorHandler As IErrorHandlerService
+    
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudRepository.SaveSolicitud", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
     End If
@@ -133,14 +127,14 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
     
     On Error GoTo ErrorHandler
     
-    ' Conectar al Backend usando la ruta de configuraciÃ³n
+    ' Conectar al Backend usando la ruta de configuración
     Dim backendPath As String
     backendPath = m_configService.GetDataPath()
     
     Dim backendPassword As String
     backendPassword = m_configService.GetDatabasePassword()
     
-    Set db = DBEngine.OpenDatabase(backendPath, False, False, ";PWD=" & backendPassword)
+    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
     If solicitud.idSolicitud = 0 Then
         ' INSERT - Nueva solicitud
@@ -149,13 +143,13 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
             "codigoSolicitud, idEstadoInterno, fechaCreacion, usuarioCreacion) " & _
             "VALUES (?, ?, ?, ?, ?, ?, ?)")
         
-        qdf.Parameters(0) = solicitud.idExpediente
-        qdf.Parameters(1) = solicitud.tipoSolicitud
-        qdf.Parameters(2) = solicitud.subTipoSolicitud
-        qdf.Parameters(3) = solicitud.codigoSolicitud
-        qdf.Parameters(4) = solicitud.idEstadoInterno
-        qdf.Parameters(5) = solicitud.fechaCreacion
-        qdf.Parameters(6) = solicitud.usuarioCreacion
+        qdf.parameters(0) = solicitud.idExpediente
+        qdf.parameters(1) = solicitud.tipoSolicitud
+        qdf.parameters(2) = solicitud.subTipoSolicitud
+        qdf.parameters(3) = solicitud.codigoSolicitud
+        qdf.parameters(4) = solicitud.idEstadoInterno
+        qdf.parameters(5) = solicitud.fechaCreacion
+        qdf.parameters(6) = solicitud.usuarioCreacion
         
         qdf.Execute dbFailOnError
         
@@ -163,7 +157,7 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
         resultId = db.OpenRecordset("SELECT @@IDENTITY")(0)
         solicitud.idSolicitud = resultId
         
-        m_operationLogger.LogOperation "CREATE", CStr(resultId), "Nueva solicitud creada exitosamente"
+        ' Logging de auditoría removido - responsabilidad de la capa de servicio
     Else
         ' UPDATE - Solicitud existente
         Set qdf = db.CreateQueryDef("", _
@@ -171,20 +165,20 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
             "codigoSolicitud=?, idEstadoInterno=?, fechaModificacion=?, usuarioModificacion=? " & _
             "WHERE idSolicitud=?")
         
-        qdf.Parameters(0) = solicitud.idExpediente
-        qdf.Parameters(1) = solicitud.tipoSolicitud
-        qdf.Parameters(2) = solicitud.subTipoSolicitud
-        qdf.Parameters(3) = solicitud.codigoSolicitud
-        qdf.Parameters(4) = solicitud.idEstadoInterno
-        qdf.Parameters(5) = Now()
-        qdf.Parameters(6) = solicitud.usuarioModificacion
-        qdf.Parameters(7) = solicitud.idSolicitud
+        qdf.parameters(0) = solicitud.idExpediente
+        qdf.parameters(1) = solicitud.tipoSolicitud
+        qdf.parameters(2) = solicitud.subTipoSolicitud
+        qdf.parameters(3) = solicitud.codigoSolicitud
+        qdf.parameters(4) = solicitud.idEstadoInterno
+        qdf.parameters(5) = Now()
+        qdf.parameters(6) = solicitud.usuarioModificacion
+        qdf.parameters(7) = solicitud.idSolicitud
         
         qdf.Execute dbFailOnError
         
         resultId = solicitud.idSolicitud
         
-        m_operationLogger.LogOperation "UPDATE", CStr(resultId), "Solicitud actualizada exitosamente"
+        ' Logging de auditoría removido - responsabilidad de la capa de servicio
     End If
     
     db.Close
@@ -193,50 +187,49 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
     
 ErrorHandler:
     If Not db Is Nothing Then db.Close
-    m_operationLogger.LogOperation "SAVE_ERROR", "", "Error: " & Err.Description
+    ' Logging de errores removido - responsabilidad de la capa de servicio
     Err.Raise Err.Number, "CSolicitudRepository.SaveSolicitud", Err.Description
 End Function
 
-' Ejecuta una consulta SQL con parÃ¡metros opcionales
-Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.Recordset
-    Dim errorHandler As IErrorHandlerService
+' Ejecuta una consulta SQL con parámetros opcionales
+Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
+    
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudRepository.ExecuteQuery", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
     End If
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     
     On Error GoTo ErrorHandler
     
-    ' Conectar al Backend usando la ruta de configuraciÃ³n
+    ' Conectar al Backend usando la ruta de configuración
     Dim backendPath As String
     backendPath = m_configService.GetDataPath()
     
     Dim backendPassword As String
     backendPassword = m_configService.GetDatabasePassword()
     
-    Set db = DBEngine.OpenDatabase(backendPath, False, False, ";PWD=" & backendPassword)
+    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
     ' Crear consulta parametrizada
     Set qdf = db.CreateQueryDef("", sql)
     
-    ' Aplicar parÃ¡metros si se proporcionaron
+    ' Aplicar parámetros si se proporcionaron
     If Not params Is Nothing Then
         Dim i As Integer
         Dim param As QueryParameter
         i = 0
         For Each param In params
-            qdf.Parameters(i) = param.Value
+            qdf.parameters(i) = param.ParameterValue
             i = i + 1
         Next param
     End If
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
-    ' Logging de auditorÃ­a
-    m_operationLogger.LogOperation "QUERY", "", "Consulta ejecutada: " & sql
+    ' Logging de auditoría removido - responsabilidad de la capa de servicio
     
     Set ISolicitudRepository_ExecuteQuery = rs
     Exit Function
@@ -244,7 +237,7 @@ Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String, Optional
 ErrorHandler:
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
-    m_operationLogger.LogOperation "QUERY_ERROR", "", "Error en consulta: " & Err.Description
+    ' Logging de errores removido - responsabilidad de la capa de servicio
     Err.Raise Err.Number, "CSolicitudRepository.ExecuteQuery", Err.Description
 End Function
 
@@ -255,14 +248,14 @@ End Function
 ' Carga los datos específicos según el tipo de solicitud
 Private Sub CargarDatosEspecificos(ByRef solicitud As T_Solicitud, ByRef db As DAO.Database)
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     
     On Error GoTo ErrorHandler
     
     Select Case UCase(solicitud.tipoSolicitud)
         Case "PC"
             Set qdf = db.CreateQueryDef("", "SELECT * FROM TbDatos_PC WHERE idSolicitud = ?")
-            qdf.Parameters(0) = solicitud.idSolicitud
+            qdf.parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
@@ -286,7 +279,7 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As T_Solicitud, ByRef db As D
             
         Case "CD_CA"
             Set qdf = db.CreateQueryDef("", "SELECT * FROM TbDatos_CD_CA WHERE idSolicitud = ?")
-            qdf.Parameters(0) = solicitud.idSolicitud
+            qdf.parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
@@ -308,7 +301,7 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As T_Solicitud, ByRef db As D
             
         Case "CD_CA_SUB"
             Set qdf = db.CreateQueryDef("", "SELECT * FROM TbDatos_CD_CA_SUB WHERE idSolicitud = ?")
-            qdf.Parameters(0) = solicitud.idSolicitud
+            qdf.parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
@@ -337,7 +330,7 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As T_Solicitud, ByRef db As D
 ErrorHandler:
     If Not rs Is Nothing Then rs.Close
     ' Log del error pero no propagar para no interrumpir la carga principal
-    m_operationLogger.LogOperation "LOAD_DATA_ERROR", CStr(solicitud.idSolicitud), "Error cargando datos específicos: " & Err.Description
+    ' Logging de errores removido - responsabilidad de la capa de servicio
 End Sub
 
 ' ============================================================================
@@ -357,6 +350,8 @@ Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
 End Function
 
 ' Método público de conveniencia para ExecuteQuery
-Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.Recordset
+Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
     Set ExecuteQuery = ISolicitudRepository_ExecuteQuery(sql, params)
 End Function
+
+

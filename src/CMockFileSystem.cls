@@ -1,5 +1,15 @@
-﻿Option Compare Database
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockFileSystem"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 Implements IFileSystem
 
 ' =====================================================
@@ -14,7 +24,7 @@ Implements IFileSystem
 ' las llamadas realizadas durante las pruebas unitarias
 ' sin interactuar con el sistema de ficheros real
 
-' Propiedades pÃºblicas para verificaciÃ³n en pruebas
+' Propiedades públicas para verificación en pruebas
 Public WasOpenTextFileCalled As Boolean
 Public LastPath As String
 Public LastMode As Long
@@ -42,7 +52,7 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' MÃ‰TODOS PÃšBLICOS PARA CONFIGURACIÃ“N DEL MOCK
+' MÉTODOS PÚBLICOS PARA CONFIGURACIÓN DEL MOCK
 ' ============================================================================
 
 ' Reinicia el estado del mock para una nueva prueba
@@ -55,7 +65,7 @@ Public Sub Reset()
     m_mockTextFile.Reset
 End Sub
 
-' Obtiene el mock del TextFile para configuraciÃ³n adicional
+' Obtiene el mock del TextFile para configuración adicional
 Public Function GetMockTextFile() As CMockTextFile
     Set GetMockTextFile = m_mockTextFile
 End Function
@@ -66,7 +76,7 @@ End Function
 
 ' Mock de la apertura de archivos de texto
 Private Function IFileSystem_OpenTextFile(ByVal Path As String, ByVal Mode As Long, ByVal Create As Boolean) As Object
-    ' Registrar la llamada para verificaciÃ³n
+    ' Registrar la llamada para verificación
     WasOpenTextFileCalled = True
     LastPath = Path
     LastMode = Mode
@@ -76,3 +86,14 @@ Private Function IFileSystem_OpenTextFile(ByVal Path As String, ByVal Mode As Lo
     ' Devolver el mock del TextFile
     Set IFileSystem_OpenTextFile = m_mockTextFile
 End Function
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
+' ============================================================================
+
+' Método público de conveniencia para OpenTextFile
+Public Function OpenTextFile(ByVal Path As String, ByVal Mode As Long, ByVal Create As Boolean) As Object
+    Set OpenTextFile = IFileSystem_OpenTextFile(Path, Mode, Create)
+End Function
+
+

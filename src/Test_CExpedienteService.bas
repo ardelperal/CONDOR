@@ -2,6 +2,7 @@ Attribute VB_Name = "Test_CExpedienteService"
 Option Compare Database
 Option Explicit
 
+
 #If DEV_MODE Then
 
 ' ============================================================================
@@ -37,13 +38,12 @@ Private Function Test_GetExpedienteById_Success() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks y datos de prueba
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockExpedienteRepository
     
     ' Crear recordset mock con datos de expediente
-    Dim mockRecordset As DAO.Recordset
+    Dim mockRecordset As DAO.recordset
     Set mockRecordset = CreateMockExpedienteRecordset(123, "EXP-2024-001", "Expediente de Prueba", "Descripción de prueba", #1/15/2024#, "Activo", 1, "Juan Pérez")
     mockRepository.SetObtenerExpedientePorIdReturnValue mockRecordset
     
@@ -52,25 +52,25 @@ Private Function Test_GetExpedienteById_Success() As CTestResult
     expedienteService.Initialize mockConfig, mockLogger, mockRepository
     
     ' Act - Ejecutar el método bajo prueba
-    Dim resultado As T_Expediente
-    resultado = expedienteService.GetExpedienteById(123)
+    Dim Resultado As T_Expediente
+    Resultado = expedienteService.GetExpedienteById(123)
     
     ' Assert - Verificar resultados
-    modAssert.AssertEquals 123, resultado.idExpediente, "ID del expediente debe coincidir"
-    modAssert.AssertEquals "EXP-2024-001", resultado.NumeroExpediente, "Número del expediente debe coincidir"
-    modAssert.AssertEquals "Expediente de Prueba", resultado.Titulo, "Título del expediente debe coincidir"
-    modAssert.AssertEquals "Descripción de prueba", resultado.Descripcion, "Descripción del expediente debe coincidir"
-    modAssert.AssertEquals "Activo", resultado.Estado, "Estado del expediente debe coincidir"
-    modAssert.AssertEquals 1, resultado.IdUsuarioCreador, "ID del usuario creador debe coincidir"
-    modAssert.AssertEquals "Juan Pérez", resultado.NombreUsuarioCreador, "Nombre del usuario creador debe coincidir"
+    modAssert.AssertEquals 123, Resultado.idExpediente, "ID del expediente debe coincidir"
+    modAssert.AssertEquals "EXP-2024-001", Resultado.NumeroExpediente, "Número del expediente debe coincidir"
+    modAssert.AssertEquals "Expediente de Prueba", Resultado.Titulo, "Título del expediente debe coincidir"
+    modAssert.AssertEquals "Descripción de prueba", Resultado.Descripcion, "Descripción del expediente debe coincidir"
+    modAssert.AssertEquals "Activo", Resultado.Estado, "Estado del expediente debe coincidir"
+    modAssert.AssertEquals 1, Resultado.IdUsuarioCreador, "ID del usuario creador debe coincidir"
+    modAssert.AssertEquals "Juan Pérez", Resultado.NombreUsuarioCreador, "Nombre del usuario creador debe coincidir"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     ' Limpiar recursos
     If Not mockRecordset Is Nothing Then
         mockRecordset.Close
@@ -87,13 +87,12 @@ Private Function Test_GetExpedienteById_NotFound() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks con recordset vacío
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockExpedienteRepository
     
     ' Crear recordset mock vacío (EOF = True)
-    Dim mockRecordset As DAO.Recordset
+    Dim mockRecordset As DAO.recordset
     Set mockRecordset = CreateEmptyRecordset()
     mockRepository.SetObtenerExpedientePorIdReturnValue mockRecordset
     
@@ -102,21 +101,21 @@ Private Function Test_GetExpedienteById_NotFound() As CTestResult
     expedienteService.Initialize mockConfig, mockLogger, mockRepository
     
     ' Act - Ejecutar el método bajo prueba
-    Dim resultado As T_Expediente
-    resultado = expedienteService.GetExpedienteById(999)
+    Dim Resultado As T_Expediente
+    Resultado = expedienteService.GetExpedienteById(999)
     
     ' Assert - Verificar que devuelve estructura vacía
-    modAssert.AssertEquals 0, resultado.idExpediente, "ID debe ser 0 para expediente no encontrado"
-    modAssert.AssertEquals "", resultado.NumeroExpediente, "Número debe estar vacío para expediente no encontrado"
-    modAssert.AssertEquals "", resultado.Titulo, "Título debe estar vacío para expediente no encontrado"
+    modAssert.AssertEquals 0, Resultado.idExpediente, "ID debe ser 0 para expediente no encontrado"
+    modAssert.AssertEquals "", Resultado.NumeroExpediente, "Número debe estar vacío para expediente no encontrado"
+    modAssert.AssertEquals "", Resultado.Titulo, "Título debe estar vacío para expediente no encontrado"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     ' Limpiar recursos
     If Not mockRecordset Is Nothing Then
         mockRecordset.Close
@@ -137,13 +136,12 @@ Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockExpedienteRepository
     
     ' Crear recordset mock con lista de expedientes
-    Dim mockRecordset As DAO.Recordset
+    Dim mockRecordset As DAO.recordset
     Set mockRecordset = CreateMockExpedientesListRecordset()
     mockRepository.SetObtenerExpedientesActivosParaSelectorReturnValue mockRecordset
     
@@ -152,25 +150,25 @@ Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     expedienteService.Initialize mockConfig, mockLogger, mockRepository
     
     ' Act - Ejecutar el método bajo prueba
-    Dim resultado As Object
-    Set resultado = expedienteService.GetExpedientesParaSelector()
+    Dim Resultado As Object
+    Set Resultado = expedienteService.GetExpedientesParaSelector()
     
     ' Assert - Verificar que devuelve un recordset válido
-    modAssert.AssertNotNothing resultado, "El resultado no debe ser Nothing"
-    modAssert.AssertEquals "DAO.Recordset", TypeName(resultado), "El resultado debe ser un recordset"
+    modAssert.AssertNotNull Resultado, "El resultado no debe ser Nothing"
+    modAssert.AssertEquals "DAO.Recordset", TypeName(Resultado), "El resultado debe ser un recordset"
     
     ' Verificar que el recordset tiene registros
-    Dim rs As DAO.Recordset
-    Set rs = resultado
+    Dim rs As DAO.recordset
+    Set rs = Resultado
     modAssert.AssertFalse rs.EOF, "El recordset debe tener registros"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set Test_GetExpedientesParaSelector_Success = testResult
 End Function
 
@@ -182,13 +180,12 @@ Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange - Configurar mocks con recordset vacío
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockRepository As New CMockExpedienteRepository
     
     ' Crear recordset mock vacío
-    Dim mockRecordset As DAO.Recordset
+    Dim mockRecordset As DAO.recordset
     Set mockRecordset = CreateEmptyRecordset()
     mockRepository.SetObtenerExpedientesActivosParaSelectorReturnValue mockRecordset
     
@@ -197,23 +194,23 @@ Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     expedienteService.Initialize mockConfig, mockLogger, mockRepository
     
     ' Act - Ejecutar el método bajo prueba
-    Dim resultado As Object
-    Set resultado = expedienteService.GetExpedientesParaSelector()
+    Dim Resultado As Object
+    Set Resultado = expedienteService.GetExpedientesParaSelector()
     
     ' Assert - Verificar que devuelve un recordset válido pero vacío
-    modAssert.AssertNotNothing resultado, "El resultado no debe ser Nothing"
+    modAssert.AssertNotNull Resultado, "El resultado no debe ser Nothing"
     
-    Dim rs As DAO.Recordset
-    Set rs = resultado
+    Dim rs As DAO.recordset
+    Set rs = Resultado
     modAssert.AssertTrue rs.EOF, "El recordset debe estar vacío"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set Test_GetExpedientesParaSelector_EmptyResult = testResult
 End Function
 
@@ -222,9 +219,9 @@ End Function
 ' ============================================================================
 
 ' Crea un recordset DAO con datos de un expediente específico usando BD temporal
-Private Function CreateMockExpedienteRecordset(idExp As Long, numero As String, titulo As String, descripcion As String, fecha As Date, estado As String, idUsuario As Long, nombreUsuario As String) As DAO.Recordset
+Private Function CreateMockExpedienteRecordset(idExp As Long, numero As String, Titulo As String, Descripcion As String, fecha As Date, Estado As String, idUsuario As Long, nombreUsuario As String) As DAO.recordset
     Dim db As DAO.Database
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim tempDbPath As String
     
     ' Crear base de datos temporal
@@ -244,7 +241,7 @@ Private Function CreateMockExpedienteRecordset(idExp As Long, numero As String, 
     
     ' Insertar datos de prueba
     db.Execute "INSERT INTO Expedientes (idExpediente, NumeroExpediente, Titulo, Descripcion, FechaCreacion, Estado, IdUsuarioCreador, NombreUsuarioCreador) " & _
-               "VALUES (" & idExp & ", '" & numero & "', '" & titulo & "', '" & descripcion & "', #" & Format(fecha, "mm/dd/yyyy") & "#, '" & estado & "', " & idUsuario & ", '" & nombreUsuario & "')"
+               "VALUES (" & idExp & ", '" & numero & "', '" & Titulo & "', '" & Descripcion & "', #" & Format(fecha, "mm/dd/yyyy") & "#, '" & Estado & "', " & idUsuario & ", '" & nombreUsuario & "')"
     
     ' Abrir recordset
     Set rs = db.OpenRecordset("SELECT * FROM Expedientes", dbOpenDynaset)
@@ -253,9 +250,9 @@ Private Function CreateMockExpedienteRecordset(idExp As Long, numero As String, 
 End Function
 
 ' Crea un recordset DAO con lista de expedientes para selector usando BD temporal
-Private Function CreateMockExpedientesListRecordset() As DAO.Recordset
+Private Function CreateMockExpedientesListRecordset() As DAO.recordset
     Dim db As DAO.Database
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim tempDbPath As String
     
     ' Crear base de datos temporal
@@ -282,9 +279,9 @@ Private Function CreateMockExpedientesListRecordset() As DAO.Recordset
 End Function
 
 ' Crea un recordset DAO vacío para simular casos donde no se encuentran datos
-Private Function CreateEmptyRecordset() As DAO.Recordset
+Private Function CreateEmptyRecordset() As DAO.recordset
     Dim db As DAO.Database
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim tempDbPath As String
     
     ' Crear base de datos temporal
@@ -301,6 +298,9 @@ Private Function CreateEmptyRecordset() As DAO.Recordset
 End Function
 
 #End If
+
+
+
 
 
 

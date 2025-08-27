@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 Implements IMapeoRepository
 
 Private m_Config As IConfig
@@ -18,24 +19,24 @@ Public Sub Initialize(ByVal configService As IConfig)
     Set m_Config = configService
 End Sub
 
-Public Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
-    Dim errorHandler As IErrorHandlerService
+Public Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.recordset
+    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Dim sql As String
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     ' Construir la consulta SQL parametrizada
     sql = "SELECT nombreCampoTabla, nombreCampoWord, valorAsociado FROM tbMapeoCampos WHERE nombrePlantilla = ?"
     
     ' Crear QueryDef con parámetro
     Set qdf = db.CreateQueryDef("", sql)
-    qdf.Parameters(0) = tipoSolicitud
+    qdf.parameters(0) = tipoSolicitud
     
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
@@ -55,8 +56,8 @@ ErrorHandler:
         db.Close
         Set db = Nothing
     End If
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "CMapeoRepository.GetMapeoPorTipo"
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ErrorHandler.LogError Err.Number, Err.Description, "CMapeoRepository.GetMapeoPorTipo"
     Set IMapeoRepository_GetMapeoPorTipo = Nothing
 End Function
 
@@ -67,6 +68,8 @@ End Function
 ' para facilitar las pruebas y el uso directo de la clase concreta
 
 ' Método público de conveniencia para GetMapeoPorTipo
-Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
+Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.recordset
     Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
 End Function
+
+

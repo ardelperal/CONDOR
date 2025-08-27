@@ -1,5 +1,15 @@
-﻿Option Compare Database
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockTextFile"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' CLASE: CMockTextFile
@@ -12,11 +22,12 @@ Option Explicit
 ' Mock del objeto TextFile que simula las operaciones
 ' de escritura en archivos sin interactuar con el disco
 
-' Propiedades pÃºblicas para verificaciÃ³n en pruebas
+' Propiedades públicas para verificación en pruebas
 Public WasWriteLineCalled As Boolean
 Public WasCloseCalled As Boolean
 Public LastWrittenLine As String
 Public WriteLineCallCount As Long
+Public CloseCallCount As Long
 Public AllWrittenLines As Collection
 
 ' ============================================================================
@@ -32,7 +43,7 @@ Private Sub Class_Terminate()
 End Sub
 
 ' ============================================================================
-' MÃ‰TODOS PÃšBLICOS PARA CONFIGURACIÃ“N DEL MOCK
+' MÉTODOS PÚBLICOS PARA CONFIGURACIÓN DEL MOCK
 ' ============================================================================
 
 ' Reinicia el estado del mock para una nueva prueba
@@ -41,14 +52,15 @@ Public Sub Reset()
     WasCloseCalled = False
     LastWrittenLine = ""
     WriteLineCallCount = 0
+    CloseCallCount = 0
     Set AllWrittenLines = New Collection
 End Sub
 
 ' ============================================================================
-' MÃ‰TODOS QUE SIMULAN EL COMPORTAMIENTO DEL TEXTFILE REAL
+' MÉTODOS QUE SIMULAN EL COMPORTAMIENTO DEL TEXTFILE REAL
 ' ============================================================================
 
-' Simula la escritura de una lÃ­nea en el archivo
+' Simula la escritura de una línea en el archivo
 Public Sub WriteLine(ByVal line As String)
     WasWriteLineCalled = True
     LastWrittenLine = line
@@ -57,6 +69,9 @@ Public Sub WriteLine(ByVal line As String)
 End Sub
 
 ' Simula el cierre del archivo
-Public Sub Close()
+Public Sub CloseFile()
     WasCloseCalled = True
+    CloseCallCount = CloseCallCount + 1
 End Sub
+
+

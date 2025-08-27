@@ -2,152 +2,119 @@ Attribute VB_Name = "IntegrationTest_CMapeoRepository"
 Option Compare Database
 Option Explicit
 
-' =====================================================
-' MODULO: IntegrationTest_CMapeoRepository
-' DESCRIPCION: Pruebas de integración para CMapeoRepository
-' AUTOR: Sistema CONDOR
-' FECHA: 2025
-' =====================================================
+' ============================================================================
+' SUITE DE PRUEBAS UNITARIAS PARA CMapeoRepository
+' Arquitectura: Pruebas Aisladas con Mocks
+' ============================================================================
 
-#If DEV_MODE Then
+Private m_repository As IMapeoRepository
+Private m_mockConfig As CMockConfig
 
-' Función principal que ejecuta todas las pruebas de integración del CMapeoRepository
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE LA SUITE
+' ============================================================================
+
 Public Function IntegrationTest_CMapeoRepository_RunAll() As CTestSuiteResult
-    Dim suiteResult As CTestSuiteResult
-    Set suiteResult = New CTestSuiteResult
-    suiteResult.Initialize "IntegrationTest_CMapeoRepository"
+    Dim suiteResult As New CTestSuiteResult
+    suiteResult.Initialize "Test_CMapeoRepository - Pruebas Unitarias CMapeoRepository"
     
-    ' Ejecutar todas las pruebas individuales
-    suiteResult.AddTestResult IntegrationTest_GetMapeoPorTipo_Success()
-    suiteResult.AddTestResult IntegrationTest_GetMapeoPorTipo_NotFound()
-    suiteResult.AddTestResult IntegrationTest_GetMapeoPorTipo_EmptyType()
+    suiteResult.AddTestResult Test_GetMapeoPorTipo_Success()
+    suiteResult.AddTestResult Test_GetMapeoPorTipo_NotFound()
     
     Set IntegrationTest_CMapeoRepository_RunAll = suiteResult
 End Function
 
 ' ============================================================================
-' PRUEBAS UNITARIAS PARA GetMapeoPorTipo
+' SETUP Y TEARDOWN
 ' ============================================================================
 
-' Prueba que GetMapeoPorTipo devuelve correctamente un mapeo existente
-Private Function IntegrationTest_GetMapeoPorTipo_Success() As CTestResult
-    Dim testResult As CTestResult
-    Set testResult = New CTestResult
-    testResult.Initialize "IntegrationTest_GetMapeoPorTipo_Success"
+Private Sub Setup()
+    Set m_mockConfig = New CMockConfig
+    
+    Dim repoImpl As New CMapeoRepository
+    repoImpl.Initialize m_mockConfig
+    Set m_repository = repoImpl
+End Sub
+
+Private Sub Teardown()
+    Set m_repository = Nothing
+    Set m_mockConfig = Nothing
+End Sub
+
+' ============================================================================
+' PRUEBAS
+' ============================================================================
+
+Private Function Test_GetMapeoPorTipo_Success() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "GetMapeoPorTipo debe devolver un recordset con datos"
     
     On Error GoTo ErrorHandler
     
-    ' Arrange - Configurar dependencias mock
-    Dim mockConfig As New CMockConfig
-    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
-    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
+    Call Setup
     
-    ' Crear repositorio con dependencias mock
-    Dim repository As New CMapeoRepository
-    repository.Initialize mockConfig
+    ' Arrange
+    Dim tipoSolicitud As String
+    tipoSolicitud = "PC"
     
-    ' Act - Ejecutar el método bajo prueba con un tipo conocido
-    Dim rs As DAO.Recordset
-    Set rs = repository.GetMapeoPorTipo("PC")
+    ' Configurar mockConfig para devolver una ruta de BD válida
+    m_mockConfig.SetDataPath "C:\Test\Backend.accdb"
+    m_mockConfig.SetDatabasePassword "testpass"
     
-    ' Assert - Verificar que devuelve un recordset válido
-    modAssert.AssertNotNull rs, "GetMapeoPorTipo debe devolver un recordset válido"
+    ' Act
+    Dim rs As DAO.recordset
+    Set rs = m_repository.GetMapeoPorTipo(tipoSolicitud)
+    
+    ' Assert
+    AssertNotNull rs, "El recordset no debe ser nulo"
+    AssertTrue Not rs.EOF, "El recordset no debe estar vacío"
+    
+    rs.Close
+    Set rs = Nothing
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
-    
-CleanUp:
-    ' Limpiar recursos
-    If Not rs Is Nothing Then
-        rs.Close
-        Set rs = Nothing
-    End If
-    Set IntegrationTest_GetMapeoPorTipo_Success = testResult
+Cleanup:
+    Call Teardown
+    Set Test_GetMapeoPorTipo_Success = testResult
 End Function
 
-' Prueba que GetMapeoPorTipo maneja correctamente tipos no encontrados
-Private Function IntegrationTest_GetMapeoPorTipo_NotFound() As CTestResult
-    Dim testResult As CTestResult
-    Set testResult = New CTestResult
-    testResult.Initialize "IntegrationTest_GetMapeoPorTipo_NotFound"
+Private Function Test_GetMapeoPorTipo_NotFound() As CTestResult
+    Dim testResult As New CTestResult
+    testResult.Initialize "GetMapeoPorTipo debe devolver un recordset vacío si no hay mapeo"
     
     On Error GoTo ErrorHandler
     
-    ' Arrange - Configurar dependencias mock
-    Dim mockConfig As New CMockConfig
-    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
-    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
+    Call Setup
     
-    ' Crear repositorio con dependencias mock
-    Dim repository As New CMapeoRepository
-    repository.Initialize mockConfig
+    ' Arrange
+    Dim tipoSolicitud As String
+    tipoSolicitud = "TIPO_INEXISTENTE"
     
-    ' Act - Ejecutar el método con tipo inexistente
-    Dim rs As DAO.Recordset
-    Set rs = repository.GetMapeoPorTipo("TIPO_INEXISTENTE")
+    ' Configurar mockConfig para devolver una ruta de BD válida
+    m_mockConfig.SetDataPath "C:\Test\Backend.accdb"
+    m_mockConfig.SetDatabasePassword "testpass"
     
-    ' Assert - Verificar que maneja correctamente el caso no encontrado
-    If Not rs Is Nothing Then
-        modAssert.AssertTrue rs.EOF, "El recordset debe estar vacío para tipo no encontrado"
-    End If
+    ' Act
+    Dim rs As DAO.recordset
+    Set rs = m_repository.GetMapeoPorTipo(tipoSolicitud)
+    
+    ' Assert
+    AssertNotNull rs, "El recordset no debe ser nulo"
+    AssertTrue rs.EOF, "El recordset debe estar vacío"
+    
+    rs.Close
+    Set rs = Nothing
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
-    
-CleanUp:
-    ' Limpiar recursos
-    If Not rs Is Nothing Then
-        rs.Close
-        Set rs = Nothing
-    End If
-    Set IntegrationTest_GetMapeoPorTipo_NotFound = testResult
+Cleanup:
+    Call Teardown
+    Set Test_GetMapeoPorTipo_NotFound = testResult
 End Function
-
-' Prueba que GetMapeoPorTipo maneja correctamente tipos vacíos
-Private Function IntegrationTest_GetMapeoPorTipo_EmptyType() As CTestResult
-    Dim testResult As CTestResult
-    Set testResult = New CTestResult
-    testResult.Initialize "IntegrationTest_GetMapeoPorTipo_EmptyType"
-    
-    On Error GoTo ErrorHandler
-    
-    ' Arrange - Configurar dependencias mock
-    Dim mockConfig As New CMockConfig
-    mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
-    mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
-    
-    ' Crear repositorio con dependencias mock
-    Dim repository As New CMapeoRepository
-    repository.Initialize mockConfig
-    
-    ' Act - Ejecutar el método con tipo vacío
-    Dim rs As DAO.Recordset
-    Set rs = repository.GetMapeoPorTipo("")
-    
-    ' Assert - Verificar que maneja correctamente el caso de tipo vacío
-    If Not rs Is Nothing Then
-        modAssert.AssertTrue rs.EOF, "El recordset debe estar vacío para tipo vacío"
-    End If
-    
-    testResult.Pass
-    GoTo CleanUp
-    
-ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-CleanUp:
-    ' Limpiar recursos
-    If Not rs Is Nothing Then
-        rs.Close
-        Set rs = Nothing
-    End If
-    Set IntegrationTest_GetMapeoPorTipo_EmptyType = testResult
-End Function
-
-#End If

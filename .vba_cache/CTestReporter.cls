@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' Clase: CTestReporter
 ' Propósito: Agrega resultados de múltiples suites y genera un informe consolidado.
@@ -25,7 +26,7 @@ End Sub
 
 ' --- Propiedades Calculadas Globales ---
 Public Property Get TotalSuites() As Long
-    TotalSuites = m_suiteResults.Count
+    TotalSuites = m_suiteResults.count
 End Property
 
 Public Property Get TotalTests() As Long
@@ -72,10 +73,10 @@ Public Function GenerateReport() As String
     report = report & "Pruebas fallidas: " & TotalFailed & vbCrLf
 
     If TotalFailed = 0 Then
-        report = report & "RESULTADO: ✅ TODAS LAS PRUEBAS PASARON" & vbCrLf
+        report = report & "RESULTADO: ? TODAS LAS PRUEBAS PASARON" & vbCrLf
         report = report & "RESULT: SUCCESS" & vbCrLf
     Else
-        report = report & "RESULTADO: ❌ HAY PRUEBAS FALLIDAS" & vbCrLf
+        report = report & "RESULTADO: ? HAY PRUEBAS FALLIDAS" & vbCrLf
         report = report & "RESULT: FAILED" & vbCrLf
     End If
 
@@ -96,3 +97,5 @@ End Sub
 Private Function ITestReporter_GenerateReport() As String
     ITestReporter_GenerateReport = GenerateReport()
 End Function
+
+

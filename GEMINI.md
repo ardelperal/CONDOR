@@ -29,7 +29,7 @@ The project uses a VBScript command-line interface (`condor_cli.vbs`) to manage 
     This command deletes all existing VBA modules from the database and re-imports them from the `src/` directory. This is a slower but more thorough way to ensure a clean build.
 
 *   **Run tests:**
-    To run the automated tests, open the `CONDOR.accdb` database, open the VBA editor (Alt+F11), and run the `_EJECUTAR_TODAS_LAS_PRUEBAS` macro. The test results will be displayed in the Immediate Window (Ctrl+G).
+    To run the automated tests, open the `CONDOR.accdb` database, open the VBA editor (Alt+F11), and execute the `EJECUTAR_TODAS_LAS_PRUEBAS` subroutine from the `modAppManager` module. The test results will be displayed in the Immediate Window (Ctrl+G).
 
 ## Development Conventions
 
@@ -41,7 +41,7 @@ The project uses a VBScript command-line interface (`condor_cli.vbs`) to manage 
 *   **Testing:** The project has an integrated testing framework.
     *   Test modules are named with the prefix `Test_`.
     *   The test runner is `modTestRunner.bas`.
-    *   Tests are executed by running the `_EJECUTAR_TODAS_LAS_PRUEBAS` macro.
+    *   Tests are executed by running the `EJECUTAR_TODAS_LAS_PRUEBAS` subroutine from the `modAppManager` module.
 *   **Configuration:** The application's configuration is managed in `modConfig.bas`. This module handles different environments (local vs. remote) and allows forcing a specific environment for testing purposes.
 
 ## Key Files and Directories

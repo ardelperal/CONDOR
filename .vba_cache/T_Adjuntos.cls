@@ -1,5 +1,15 @@
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "T_Adjuntos"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' Clase de tipo de datos para tbAdjuntos
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
@@ -22,11 +32,11 @@ Public Property Let IdAdjunto(ByVal value As Long)
     m_idAdjunto = value
 End Property
 
-Public Property Get IdSolicitud() As Long
-    IdSolicitud = m_idSolicitud
+Public Property Get idSolicitud() As Long
+    idSolicitud = m_idSolicitud
 End Property
 
-Public Property Let IdSolicitud(ByVal value As Long)
+Public Property Let idSolicitud(ByVal value As Long)
     m_idSolicitud = value
 End Property
 
@@ -61,3 +71,4 @@ End Property
 Public Property Let Descripcion(ByVal value As String)
     m_descripcion = value
 End Property
+

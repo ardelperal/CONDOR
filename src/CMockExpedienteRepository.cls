@@ -1,5 +1,15 @@
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockExpedienteRepository"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' CLASE: CMockExpedienteRepository
@@ -26,9 +36,9 @@ Public LastIdExpedienteRequested As Long
 Public LastNemotecnicoRequested As String
 
 ' Valores de retorno configurables
-Public ObtenerExpedientePorIdReturnValue As DAO.Recordset
-Public ObtenerExpedientePorNemotecnicoReturnValue As DAO.Recordset
-Public ObtenerExpedientesActivosParaSelectorReturnValue As DAO.Recordset
+Public ObtenerExpedientePorIdReturnValue As DAO.recordset
+Public ObtenerExpedientePorNemotecnicoReturnValue As DAO.recordset
+Public ObtenerExpedientesActivosParaSelectorReturnValue As DAO.recordset
 
 ' Contadores
 Public ObtenerExpedientePorIdCallCount As Long
@@ -70,17 +80,17 @@ Public Sub Reset()
 End Sub
 
 ' Configura el Recordset que debe devolver ObtenerExpedientePorId
-Public Sub SetObtenerExpedientePorIdReturnValue(ByVal rs As DAO.Recordset)
+Public Sub SetObtenerExpedientePorIdReturnValue(ByVal rs As DAO.recordset)
     Set ObtenerExpedientePorIdReturnValue = rs
 End Sub
 
 ' Configura el Recordset que debe devolver ObtenerExpedientePorNemotecnico
-Public Sub SetObtenerExpedientePorNemotecnicoReturnValue(ByVal rs As DAO.Recordset)
+Public Sub SetObtenerExpedientePorNemotecnicoReturnValue(ByVal rs As DAO.recordset)
     Set ObtenerExpedientePorNemotecnicoReturnValue = rs
 End Sub
 
 ' Configura el Recordset que debe devolver ObtenerExpedientesActivosParaSelector
-Public Sub SetObtenerExpedientesActivosParaSelectorReturnValue(ByVal rs As DAO.Recordset)
+Public Sub SetObtenerExpedientesActivosParaSelectorReturnValue(ByVal rs As DAO.recordset)
     Set ObtenerExpedientesActivosParaSelectorReturnValue = rs
 End Sub
 
@@ -89,18 +99,18 @@ End Sub
 ' ============================================================================
 
 ' Implementación mock de ObtenerExpedientePorId
-Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal IdExpediente As Long) As DAO.Recordset
+Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
     ' Registrar la llamada
     ObtenerExpedientePorIdCalled = True
     ObtenerExpedientePorIdCallCount = ObtenerExpedientePorIdCallCount + 1
-    LastIdExpedienteRequested = IdExpediente
+    LastIdExpedienteRequested = idExpediente
     
     ' Devolver el valor configurado
     Set IExpedienteRepository_ObtenerExpedientePorId = ObtenerExpedientePorIdReturnValue
 End Function
 
 ' Implementación mock de ObtenerExpedientePorNemotecnico
-Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.Recordset
+Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
     ' Registrar la llamada
     ObtenerExpedientePorNemotecnicoCalled = True
     ObtenerExpedientePorNemotecnicoCallCount = ObtenerExpedientePorNemotecnicoCallCount + 1
@@ -111,7 +121,7 @@ Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nem
 End Function
 
 ' Implementación mock de ObtenerExpedientesActivosParaSelector
-Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As DAO.Recordset
+Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As DAO.recordset
     ' Registrar la llamada
     ObtenerExpedientesActivosParaSelectorCalled = True
     ObtenerExpedientesActivosParaSelectorCallCount = ObtenerExpedientesActivosParaSelectorCallCount + 1
@@ -125,16 +135,17 @@ End Function
 ' ============================================================================
 
 ' Método público que delega a la implementación de la interfaz
-Public Function ObtenerExpedientePorId(ByVal IdExpediente As Long) As DAO.Recordset
-    Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(IdExpediente)
+Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
+    Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(idExpediente)
 End Function
 
 ' Método público que delega a la implementación de la interfaz
-Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.Recordset
+Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
     Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico)
 End Function
 
 ' Método público que delega a la implementación de la interfaz
-Public Function ObtenerExpedientesActivosParaSelector() As DAO.Recordset
+Public Function ObtenerExpedientesActivosParaSelector() As DAO.recordset
     Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector()
 End Function
+

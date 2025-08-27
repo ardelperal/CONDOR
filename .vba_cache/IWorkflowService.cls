@@ -1,5 +1,15 @@
-﻿Option Compare Database
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "IWorkflowService"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 ' ===================================================================
 ' Interfaz: IWorkflowService
 ' Descripción: Contrato para el servicio de workflow y estados.
@@ -10,3 +20,4 @@ End Function
 
 Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Collection
 End Function
+

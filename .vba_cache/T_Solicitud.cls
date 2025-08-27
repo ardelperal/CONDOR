@@ -1,5 +1,15 @@
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "T_Solicitud"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 ' Clase de tipo de datos para tbSolicitudes
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 
@@ -15,6 +25,9 @@ Private m_fechaPaseTecnico As Date
 Private m_fechaCompletadoTecnico As Date
 Private m_fechaModificacion As Date
 Private m_usuarioModificacion As String
+
+' Propiedad pública para observaciones (requerida por pruebas de integración)
+Public observaciones As String
 
 ' Propiedades para datos específicos según tipo de solicitud
 Private m_datosPC As T_Datos_PC
@@ -155,6 +168,8 @@ Public Property Get Datos() As Object
             Set Datos = Nothing
     End Select
 End Property
+
+
 
 
 

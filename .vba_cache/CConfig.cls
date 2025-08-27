@@ -9,26 +9,67 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
-' ImplementaciÃ³n del servicio de configuraciÃ³n. VersiÃ³n 2.0.
-' AutÃ³noma y sin dependencias externas.
+
+' Implementación del servicio de configuración. Versión 2.0.
+' Autónoma y sin dependencias externas.
 
 Implements IConfig
 
 ' Variables privadas
 Private m_Settings As Collection
-Private m_IsInitialized As Boolean
+Private m_isInitialized As Boolean
 
 ' Constructor de clase
 Private Sub Class_Initialize()
     Set m_Settings = New Collection
-    m_IsInitialized = False
+    m_isInitialized = False
 End Sub
 
 ' Método público para cargar configuración desde una Collection (para pruebas unitarias)
 Public Sub LoadFromCollection(ByVal settings As Collection)
     Set m_Settings = settings
-    m_IsInitialized = True
+    m_isInitialized = True
 End Sub
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
+' ============================================================================
+
+Public Function GetValue(ByVal key As String) As Variant
+    GetValue = IConfig_GetValue(key)
+End Function
+
+Public Function HasKey(ByVal key As String) As Boolean
+    HasKey = IConfig_HasKey(key)
+End Function
+
+Public Function GetDataPath() As String
+    GetDataPath = IConfig_GetDataPath()
+End Function
+
+Public Function GetDatabasePassword() As String
+    GetDatabasePassword = IConfig_GetDatabasePassword()
+End Function
+
+Public Function GetAttachmentsPath() As String
+    GetAttachmentsPath = IConfig_GetAttachmentsPath()
+End Function
+
+Public Function GetCorreosDBPath() As String
+    GetCorreosDBPath = IConfig_GetCorreosDBPath()
+End Function
+
+Public Function GetUsuarioActual() As String
+    GetUsuarioActual = IConfig_GetUsuarioActual()
+End Function
+
+Public Function GetCorreoAdministrador() As String
+    GetCorreoAdministrador = IConfig_GetCorreoAdministrador()
+End Function
+
+Public Function GetIDAplicacionCondor() As String
+    GetIDAplicacionCondor = IConfig_GetIDAplicacionCondor()
+End Function
 
 ' Función auxiliar privada para obtener valores de la colección m_Settings
 Private Function GetSettingValue(ByVal key As String) As Variant
@@ -41,26 +82,17 @@ ErrorHandler:
     GetSettingValue = Null
 End Function
 
-' ImplementaciÃ³n de IConfig.GetValue
+' Implementación de IConfig.GetValue
 Private Function IConfig_GetValue(ByVal key As String) As Variant
     IConfig_GetValue = GetSettingValue(key)
 End Function
 
-' ImplementaciÃ³n de IConfig.HasKey
+' Implementación de IConfig.HasKey
 Private Function IConfig_HasKey(ByVal key As String) As Boolean
-    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
-    
-    ' Usar bucle For Each para una comprobación más limpia y explícita
-    Dim settingKey As Variant
-    For Each settingKey In m_Settings.Keys
-        If UCase(settingKey) = UCase(key) Then
-            IConfig_HasKey = True
-            Exit Function
-        End If
-    Next settingKey
-    
-    IConfig_HasKey = False
+    Dim temp As Variant
+    temp = m_Settings(UCase(key))  ' Intenta acceder al elemento
+    IConfig_HasKey = True
     Exit Function
     
 ErrorHandler:
@@ -86,10 +118,9 @@ End Function
 
 ' Método público para cargar configuración desde una base de datos específica
 Public Sub Load(ByVal db As DAO.Database)
-    Dim errorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     
     ' Ejecutar consulta SELECT Clave, Valor FROM TbConfiguracion
     Set rs = db.OpenRecordset("SELECT Clave, Valor FROM TbConfiguracion", dbOpenSnapshot)
@@ -99,7 +130,7 @@ Public Sub Load(ByVal db As DAO.Database)
     
     ' Cargar todos los valores en la Collection privada
     Do While Not rs.EOF
-        m_Settings.Add rs.Fields("Valor").Value, UCase(rs.Fields("Clave").Value)
+        m_Settings.Add rs.Fields("Valor").value, UCase(rs.Fields("Clave").value)
         rs.MoveNext
     Loop
     
@@ -108,7 +139,7 @@ Public Sub Load(ByVal db As DAO.Database)
     Set rs = Nothing
     
     ' Marcar como inicializado
-    m_IsInitialized = True
+    m_isInitialized = True
     
     Exit Sub
     
@@ -118,7 +149,7 @@ ErrorHandler:
         rs.Close
         Set rs = Nothing
     End If
-    m_IsInitialized = False
+    m_isInitialized = False
 End Sub
 
 ' Implementación de IConfig.GetCorreosDBPath
@@ -134,6 +165,11 @@ End Function
 ' Implementación de IConfig.GetCorreoAdministrador
 Private Function IConfig_GetCorreoAdministrador() As String
     IConfig_GetCorreoAdministrador = GetSettingValue("CORREO_ADMINISTRADOR")
+End Function
+
+' Implementación de IConfig.GetIDAplicacionCondor
+Private Function IConfig_GetIDAplicacionCondor() As String
+    IConfig_GetIDAplicacionCondor = GetSettingValue("IDAplicacion_CONDOR")
 End Function
 
 

@@ -1,4 +1,7 @@
 Attribute VB_Name = "modTestRunner"
+Option Compare Database
+Option Explicit
+
 
 ' Colección privada para registrar nombres de funciones de suite
 Private m_SuiteNames As Collection
@@ -6,6 +9,10 @@ Private m_SuiteNames As Collection
 ' Función para compatibilidad con CLI (debe estar fuera del bloque condicional)
 Public Function RunAllTests() As String
     On Error GoTo ErrorHandler
+    
+    ' Obtener instancia del manejador de errores
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService() ' Created here for top-level entry point
     
     ' Inicializar colección de suites
     Set m_SuiteNames = New Collection
@@ -15,10 +22,11 @@ Public Function RunAllTests() As String
     
     ' Ejecutar todas las pruebas y devolver resultado como string
     Dim reporter As ITestReporter
-    Set reporter = New CTestReporter
+    Dim reporterImpl As New CTestReporter
+    Set reporter = reporterImpl
     
     Dim allResults As Collection
-    Set allResults = ExecuteAllSuites()
+    Set allResults = ExecuteAllSuites
     
     ' Inicializar el reportero con los resultados
     reporter.Initialize allResults
@@ -31,12 +39,12 @@ Public Function RunAllTests() As String
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests"
+    ' Usar el manejador de errores creado al inicio
+    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests", True ' Mark as critical
     
     RunAllTests = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS: " & Err.Description & vbCrLf & "RESULT: FAILED"
 End Function
+
 
 ' Alias para compatibilidad con CLI
 Public Function ExecuteAllTests() As String
@@ -55,6 +63,12 @@ End Function
 
 ' Función principal que orquesta todo el proceso: registrar, ejecutar y reportar
 Public Sub RunTestFramework()
+    On Error GoTo ErrorHandler
+    
+    ' Obtener instancia del manejador de errores
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService() ' Created here for top-level entry point
+    
     ' Inicializar colección de suites
     Set m_SuiteNames = New Collection
     
@@ -63,12 +77,21 @@ Public Sub RunTestFramework()
     
     ' Ejecutar todas las suites y obtener resultados
     Dim allResults As Collection
-    Set allResults = ExecuteAllSuites()
+    Set allResults = ExecuteAllSuites
     
     ' Generar y mostrar reporte
     Dim reporter As New CTestReporter
-    reporter.ShowReport allResults
+    reporter.Initialize allResults ' Initialize reporter with results
+    Dim reportString As String
+    reportString = reporter.GenerateReport()
+    MsgBox reportString, vbInformation, "Resultados de Pruebas CONDOR"
+    
+    Exit Sub
+    
+ErrorHandler:
+    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunTestFramework", True ' Mark as critical
 End Sub
+
 
 '******************************************************************************
 ' GESTIÓN DE DESCUBRIMIENTO AUTOMÁTICO DE SUITES
@@ -81,7 +104,7 @@ End Sub
 Private Sub DiscoverAndRegisterSuites()
     On Error GoTo ErrorHandler
     
-    ' Obtener referencia al proyecto VBA actual
+    ' Intentar descubrimiento automático primero
     Dim vbProject As Object
     Set vbProject = Application.VBE.ActiveVBProject
     
@@ -108,17 +131,44 @@ Private Sub DiscoverAndRegisterSuites()
     Exit Sub
     
 ErrorHandler:
-    ' En caso de error en el descubrimiento, registrar el error pero continuar
+    ' En caso de error en el descubrimiento automático, usar registro manual como fallback
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.DiscoverAndRegisterSuites"
+    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.DiscoverAndRegisterSuites - Usando fallback manual"
     
-    ' Si falla el descubrimiento automático, al menos intentar registrar las suites conocidas críticas
+    ' Fallback: Registro manual de suites conocidas
+    RegisterKnownSuites
+End Sub
+
+' Función de fallback que registra manualmente las suites conocidas
+Private Sub RegisterKnownSuites()
     On Error Resume Next
-    m_SuiteNames.Add "Test_CConfig_RunAll"
+    
+    ' Registrar suites unitarias
+    m_SuiteNames.Add "Test_AppManager_RunAll"
     m_SuiteNames.Add "Test_AuthService_RunAll"
+    m_SuiteNames.Add "Test_CExpedienteService_RunAll"
+    m_SuiteNames.Add "Test_CWordManager_RunAll"
+    m_SuiteNames.Add "Test_DocumentService_RunAll"
+    m_SuiteNames.Add "Test_ErrorHandlerService_RunAll"
+    m_SuiteNames.Add "Test_modAssert_RunAll"
+    m_SuiteNames.Add "Test_NotificationService_RunAll"
+    m_SuiteNames.Add "Test_OperationLogger_RunAll"
+    m_SuiteNames.Add "Test_Solicitud_RunAll"
+    m_SuiteNames.Add "Test_SolicitudService_RunAll"
+    m_SuiteNames.Add "Test_WorkflowService_RunAll"
+    
+    ' Registrar suites de integración
+    m_SuiteNames.Add "IntegrationTest_CConfig_RunAll"
+    m_SuiteNames.Add "IntegrationTest_CExpedienteRepository_RunAll"
+    m_SuiteNames.Add "IntegrationTest_CMapeoRepository_RunAll"
+    m_SuiteNames.Add "IntegrationTest_SolicitudRepository_RunAll"
+    m_SuiteNames.Add "IntegrationTest_WordManager_RunAll"
+    m_SuiteNames.Add "IntegrationTest_WorkflowRepository_RunAll"
+    
     On Error GoTo 0
 End Sub
+
 
 '******************************************************************************
 ' MOTOR DE EJECUCIÓN
@@ -129,7 +179,7 @@ Private Function ExecuteAllSuites() As Collection
     Dim allResults As New Collection
     Dim i As Integer
     
-    For i = 1 To m_SuiteNames.Count
+    For i = 1 To m_SuiteNames.count
         Dim suiteName As String
         suiteName = m_SuiteNames(i)
         
@@ -151,6 +201,11 @@ Private Function ExecuteAllSuites() As Collection
             
             errorSuite.AddTest errorTest
             allResults.Add errorSuite
+            
+            ' Log the error
+            Dim localErrorHandler As IErrorHandlerService
+            Set localErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+            localErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllSuites", True ' Mark as critical
         End If
         
         On Error GoTo 0
@@ -158,6 +213,18 @@ Private Function ExecuteAllSuites() As Collection
     
     Set ExecuteAllSuites = allResults
 End Function
+
+'******************************************************************************
+' FUNCIÓN DE COMPATIBILIDAD PARA EJECUCIÓN MANUAL
+'******************************************************************************
+
+' Función de compatibilidad para ejecución manual desde modAppManager
+Public Sub EjecutarTodasLasPruebas()
+    Call RunTestFramework
+End Sub
+
+
+
 
 
 

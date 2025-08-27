@@ -1,4 +1,7 @@
 ﻿Attribute VB_Name = "modWorkflowRepositoryFactory"
+Option Compare Database
+Option Explicit
+
 '==============================================================================
 ' Módulo: modWorkflowRepositoryFactory
 ' Propósito: Factory para crear instancias de IWorkflowRepository
@@ -6,8 +9,6 @@
 ' Fecha: 2024
 '==============================================================================
 
-Option Compare Database
-Option Explicit
 
 ' Variable privada para almacenar el mock durante las pruebas
 Private m_MockRepository As IWorkflowRepository
@@ -20,9 +21,10 @@ Private m_MockRepository As IWorkflowRepository
 ' Crea una instancia de IWorkflowRepository
 ' Durante las pruebas, devuelve el mock si está configurado
 ' En producción, devuelve la implementación real CWorkflowRepository
+' @param errorHandler: Servicio de manejo de errores
 ' @return IWorkflowRepository: Instancia del repositorio de workflow
 '''
-Public Function CreateWorkflowRepository() As IWorkflowRepository
+Public Function CreateWorkflowRepository(ByVal errorHandler As IErrorHandlerService) As IWorkflowRepository
     On Error GoTo ErrorHandler
     
     ' Si hay un mock configurado (para pruebas), devolverlo
@@ -37,7 +39,7 @@ Public Function CreateWorkflowRepository() As IWorkflowRepository
     
     ' Obtener instancia de configuración usando el nuevo factory
     Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Set configService = modConfig.CreateConfigService(errorHandler)
     repository.Initialize configService
     
     Set CreateWorkflowRepository = repository
@@ -45,8 +47,8 @@ Public Function CreateWorkflowRepository() As IWorkflowRepository
     Exit Function
     
 ErrorHandler:
-    Set CreateWorkflowRepository = Nothing
-    Debug.Print "Error en CreateWorkflowRepository: " & Err.Number & " - " & Err.Description
+    errorHandler.LogError Err.Number, Err.Description, "modWorkflowRepositoryFactory.CreateWorkflowRepository"
+    Err.Raise Err.Number, Err.Source, Err.Description
 End Function
 
 '==============================================================================
@@ -58,14 +60,24 @@ End Function
 ' @param mockRepo: Instancia del mock a usar en lugar de la implementación real
 '''
 Public Sub SetMockRepository(ByVal mockRepo As IWorkflowRepository)
+    On Error GoTo ErrorHandler
     Set m_MockRepository = mockRepo
+    Exit Sub
+ErrorHandler:
+    Debug.Print "Error en modWorkflowRepositoryFactory.SetMockRepository: " & Err.Number & " - " & Err.Description
+    Err.Raise Err.Number, Err.Source, Err.Description
 End Sub
 
 '''
 ' Resetea el mock repository, volviendo a usar la implementación real
 '''
 Public Sub ResetMock()
+    On Error GoTo ErrorHandler
     Set m_MockRepository = Nothing
+    Exit Sub
+ErrorHandler:
+    Debug.Print "Error en modWorkflowRepositoryFactory.ResetMock: " & Err.Number & " - " & Err.Description
+    Err.Raise Err.Number, Err.Source, Err.Description
 End Sub
 
 '''
@@ -73,5 +85,12 @@ End Sub
 ' @return Boolean: True si hay un mock activo, False en caso contrario
 '''
 Public Function HasMock() As Boolean
+    On Error GoTo ErrorHandler
     HasMock = Not (m_MockRepository Is Nothing)
+    Exit Function
+ErrorHandler:
+    Debug.Print "Error en modWorkflowRepositoryFactory.HasMock: " & Err.Number & " - " & Err.Description
+    Err.Raise Err.Number, Err.Source, Err.Description
 End Function
+
+

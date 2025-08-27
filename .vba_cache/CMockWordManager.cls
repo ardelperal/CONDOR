@@ -1,18 +1,28 @@
-﻿Option Compare Database
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockWordManager"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 ' ============================================================================
 ' Clase: CMockWordManager
-' DescripciÃ³n: Mock del gestor de Word para pruebas unitarias aisladas.
+' Descripción: Mock del gestor de Word para pruebas unitarias aisladas.
 ' Implementa: IWordManager
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-08-22
-' VersiÃ³n: 1.0
+' Versión: 1.0
 ' ============================================================================
 
 Implements IWordManager
 
 ' ============================================================================
-' PROPIEDADES PÃšBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
+' PROPIEDADES PÚBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
 ' ============================================================================
 
 ' Propiedades para AbrirDocumento
@@ -55,7 +65,7 @@ Private Sub Class_Initialize()
 End Sub
 
 ' ============================================================================
-' MÃ‰TODOS PÃšBLICOS PARA GESTIÃ“N DEL MOCK
+' MÉTODOS PÚBLICOS PARA GESTIÓN DEL MOCK
 ' ============================================================================
 
 ' Reinicia todas las propiedades del mock a sus valores por defecto
@@ -108,7 +118,7 @@ Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVa
     ReemplazarTexto_LastTextoABuscar = textoABuscar
     ReemplazarTexto_LastTextoReemplazo = textoReemplazo
     
-    ' Guardar la llamada en la colecciÃ³n para verificaciÃ³n detallada
+    ' Guardar la llamada en la colección para verificación detallada
     Dim callInfo As String
     callInfo = textoABuscar & "|" & textoReemplazo
     ReemplazarTexto_Calls.Add callInfo
@@ -134,3 +144,34 @@ Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As Stri
     LeerContenidoDocumento_LastRutaDocumento = rutaDocumento
     IWordManager_LeerContenidoDocumento = LeerContenidoDocumento_ReturnValue
 End Function
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
+' ============================================================================
+
+' Método público de conveniencia para AbrirDocumento
+Public Function AbrirDocumento(ByVal rutaDocumento As String) As Boolean
+    AbrirDocumento = IWordManager_AbrirDocumento(rutaDocumento)
+End Function
+
+' Método público de conveniencia para ReemplazarTexto
+Public Function ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
+    ReemplazarTexto = IWordManager_ReemplazarTexto(textoABuscar, textoReemplazo)
+End Function
+
+' Método público de conveniencia para GuardarDocumento
+Public Function GuardarDocumento(ByVal rutaDestino As String) As Boolean
+    GuardarDocumento = IWordManager_GuardarDocumento(rutaDestino)
+End Function
+
+' Método público de conveniencia para CerrarDocumento
+Public Sub CerrarDocumento()
+    IWordManager_CerrarDocumento
+End Sub
+
+' Método público de conveniencia para LeerContenidoDocumento
+Public Function LeerContenidoDocumento(ByVal rutaDocumento As String) As String
+    LeerContenidoDocumento = IWordManager_LeerContenidoDocumento(rutaDocumento)
+End Function
+
+

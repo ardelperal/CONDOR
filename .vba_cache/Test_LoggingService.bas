@@ -1,4 +1,7 @@
-Attribute VB_Name = "Test_LoggingService"
+﻿Attribute VB_Name = "Test_LoggingService"
+Option Compare Database
+Option Explicit
+
 '******************************************************************************
 ' Módulo: Test_LoggingService
 ' Propósito: Pruebas unitarias para CLoggingService usando mocks
@@ -6,8 +9,6 @@ Attribute VB_Name = "Test_LoggingService"
 ' Fecha: 2025-01-21
 '******************************************************************************
 
-Option Compare Database
-Option Explicit
 
 '******************************************************************************
 ' FUNCIÓN PRINCIPAL DE EJECUCIÓN
@@ -24,6 +25,7 @@ Public Function Test_LoggingService_RunAll() As CTestSuiteResult
     suite.AddTest Test_LogInfo_WithValidMessage_CallsFileSystemCorrectly
     suite.AddTest Test_LogWarning_WithValidMessage_CallsFileSystemCorrectly
     suite.AddTest Test_LogError_WithAllParameters_WritesCompleteLogEntry
+    suite.AddTest Test_EscapeJSON_WithSpecialCharacters_EscapesCorrectly
     
     Set Test_LoggingService_RunAll = suite
 End Function
@@ -249,3 +251,69 @@ Cleanup:
     Set mockTextFile = Nothing
     Set Test_LogError_WithAllParameters_WritesCompleteLogEntry = result
 End Function
+
+' Prueba que EscapeJSON escapa correctamente los caracteres especiales
+Private Function Test_EscapeJSON_WithSpecialCharacters_EscapesCorrectly() As CTestResult
+    Dim result As New CTestResult
+    result.Initialize "Test_EscapeJSON_WithSpecialCharacters_EscapesCorrectly"
+    
+    On Error GoTo ErrorHandler
+    
+    ' Arrange
+    Dim service As CLoggingService
+    Dim testString As String
+    Dim escapedResult As String
+    
+    Set service = New CLoggingService
+    
+    ' Test string with special characters: quotes, backslashes, tabs, newlines
+    testString = "Test with " & Chr(34) & "quotes" & Chr(34) & " and \backslash and " & vbTab & "tab and " & vbCrLf & "newline"
+    
+    ' Act - Using reflection to call private method (this is a simplified approach)
+    ' In a real scenario, you might need to make EscapeJSON public for testing or use a different approach
+    ' For now, we'll test indirectly through LogError and verify the output
+    Dim mockConfig As CMockConfig
+    Dim mockFileSystem As CMockFileSystem
+    Dim mockTextFile As CMockTextFile
+    
+    Set mockConfig = New CMockConfig
+    Set mockFileSystem = New CMockFileSystem
+    
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\test\escape.log"
+    service.Initialize mockConfig, mockFileSystem
+    
+    Set mockTextFile = mockFileSystem.GetMockTextFile()
+    
+    ' Act - Log a message with special characters
+    service.LogError 400, testString, "TestModule"
+    
+    ' Assert - Verify that the logged JSON doesn't contain unescaped quotes or backslashes
+    If mockTextFile.WasWriteLineCalled Then
+        Dim loggedLine As String
+        loggedLine = mockTextFile.LastWrittenLine
+        
+        ' Check that quotes are properly escaped (should not have unescaped quotes in the message part)
+        ' and that backslashes are escaped
+        If InStr(loggedLine, "\""quotes\"") > 0 And InStr(loggedLine, "\\") > 0 Then
+            result.Pass "EscapeJSON escapó correctamente los caracteres especiales"
+        Else
+            result.Fail "EscapeJSON no escapó correctamente los caracteres especiales. Resultado: " & loggedLine
+        End If
+    Else
+        result.Fail "No se escribió ninguna línea al log"
+    End If
+    
+    GoTo Cleanup
+    
+ErrorHandler:
+    result.Fail "Error durante la prueba: " & Err.Description
+    
+Cleanup:
+    Set service = Nothing
+    Set mockConfig = Nothing
+    Set mockFileSystem = Nothing
+    Set mockTextFile = Nothing
+    Set Test_EscapeJSON_WithSpecialCharacters_EscapesCorrectly = result
+End Function
+
+

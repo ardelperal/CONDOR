@@ -1,5 +1,15 @@
-﻿Option Compare Database
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "IFileSystem"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' INTERFAZ: IFileSystem
@@ -19,3 +29,5 @@ Option Explicit
 ' @return: Objeto TextStream para manipular el archivo
 Public Function OpenTextFile(ByVal Path As String, ByVal Mode As Long, ByVal Create As Boolean) As Object
 End Function
+
+

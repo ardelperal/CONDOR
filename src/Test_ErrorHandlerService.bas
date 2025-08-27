@@ -2,6 +2,7 @@ Attribute VB_Name = "Test_ErrorHandlerService"
 Option Compare Database
 Option Explicit
 
+
 #If DEV_MODE Then
 
 ' =====================================================
@@ -14,21 +15,22 @@ Option Explicit
 Public Function Test_ErrorHandlerService_RunAll() As CTestSuiteResult
     On Error GoTo ErrorHandler
     
+    Dim ErrorHandler As IErrorHandlerService
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "Test_ErrorHandlerService"
     
     ' Ejecutar todas las pruebas
-    suiteResult.AddTestResult(Test_LogError_WritesToFile_Success())
-    suiteResult.AddTestResult(Test_LogInfo_WritesToFile_Success())
-    suiteResult.AddTestResult(Test_LogWarning_WritesToFile_Success())
-    suiteResult.AddTestResult(Test_Initialize_WithValidConfig_Success())
+    suiteResult.AddTestResult (Test_LogError_WritesToFile_Success())
+    suiteResult.AddTestResult (Test_LogError_IsCritical_FlaggedCorrectly())
+    suiteResult.AddTestResult (Test_LogInfo_WritesCorrectly())
+    suiteResult.AddTestResult (Test_LogWarning_WritesCorrectly())
+    suiteResult.AddTestResult (Test_Initialize_WithValidConfig_Success())
     
     Set Test_ErrorHandlerService_RunAll = suiteResult
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_ErrorHandlerService_RunAll")
     Set Test_ErrorHandlerService_RunAll = Nothing
 End Function
@@ -37,22 +39,23 @@ End Function
 Public Function Test_LogError_WritesToFile_Success() As CTestResult
     On Error GoTo ErrorHandler
     
+    Dim ErrorHandler As IErrorHandlerService
     Dim testResult As New CTestResult
     testResult.Initialize "Test_LogError_WritesToFile_Success"
     
     ' Variables para la prueba
     Dim errorHandlerService As New CErrorHandlerService
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Dim mockConfig As New CMockConfig
     Dim mockFileSystem As New CMockFileSystem
     Dim mockTextFile As CMockTextFile
     Dim writtenContent As String
     
     ' Arrange: Configurar el mock y el servicio
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\temp\test.log"
     Set mockTextFile = mockFileSystem.GetMockTextFile()
     
-    ' Inicializar el servicio con el mock FileSystem
-    errorHandlerService.Initialize configService, mockFileSystem
+    ' Inicializar el servicio con mocks
+    errorHandlerService.Initialize mockConfig, mockFileSystem
     
     ' Act: Llamar al método LogError
     errorHandlerService.LogError 1001, "Error de prueba", "Test_Module.Test_Function"
@@ -74,31 +77,74 @@ Public Function Test_LogError_WritesToFile_Success() As CTestResult
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogError_WritesToFile_Success")
     testResult.Fail "Error durante la prueba: " & Err.Description
 End Function
 
-' Prueba: LogInfo escribe correctamente usando mock
-Public Function Test_LogInfo_WritesToFile_Success() As CTestResult
+' Prueba: LogError con isCritical=True se marca correctamente en el JSON
+Public Function Test_LogError_IsCritical_FlaggedCorrectly() As CTestResult
     On Error GoTo ErrorHandler
     
+    Dim ErrorHandler As IErrorHandlerService
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_LogInfo_WritesToFile_Success"
+    testResult.Initialize "Test_LogError_IsCritical_FlaggedCorrectly"
     
     ' Variables para la prueba
     Dim errorHandlerService As New CErrorHandlerService
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Dim mockConfig As New CMockConfig
+    Dim mockFileSystem As New CMockFileSystem
+    Dim mockTextFile As CMockTextFile
+    Dim writtenContent As String
+    
+    ' Arrange: Configurar el mock y el servicio
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\temp\test.log"
+    Set mockTextFile = mockFileSystem.GetMockTextFile()
+    
+    ' Inicializar el servicio con mocks
+    errorHandlerService.Initialize mockConfig, mockFileSystem
+    
+    ' Act: Llamar al método LogError con isCritical = True
+    errorHandlerService.LogError 2001, "Error crítico de prueba", "Test_Module.Test_Function", True
+    
+    ' Assert: Verificar que el JSON contiene "isCritical":true
+    writtenContent = mockTextFile.LastWrittenLine
+    
+    modAssert.IsTrue(InStr(writtenContent, """isCritical"" : true") > 0, "El JSON debe contener 'isCritical':true")
+    modAssert.IsTrue(InStr(writtenContent, "Error crítico de prueba") > 0, "La descripción del error debe estar en el log")
+    modAssert.IsTrue(InStr(writtenContent, "ERROR") > 0, "El nivel ERROR debe estar en el log")
+    
+    testResult.Pass "LogError con isCritical=True se marcó correctamente en el JSON"
+    
+    Set Test_LogError_IsCritical_FlaggedCorrectly = testResult
+    Exit Function
+    
+ErrorHandler:
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogError_IsCritical_FlaggedCorrectly")
+    testResult.Fail "Error durante la prueba: " & Err.Description
+End Function
+
+' Prueba: LogInfo escribe correctamente usando mock
+Public Function Test_LogInfo_WritesCorrectly() As CTestResult
+    On Error GoTo ErrorHandler
+    
+    Dim ErrorHandler As IErrorHandlerService
+    Dim testResult As New CTestResult
+    testResult.Initialize "Test_LogInfo_WritesCorrectly"
+    
+    ' Variables para la prueba
+    Dim errorHandlerService As New CErrorHandlerService
+    Dim mockConfig As New CMockConfig
     Dim mockFileSystem As New CMockFileSystem
     Dim mockTextFile As CMockTextFile
     Dim writtenContent As String
     
     ' Arrange
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\temp\test.log"
     Set mockTextFile = mockFileSystem.GetMockTextFile()
     
-    errorHandlerService.Initialize configService, mockFileSystem
+    errorHandlerService.Initialize mockConfig, mockFileSystem
     
     ' Act
     errorHandlerService.LogInfo "Información de prueba", "Test_Module.Test_Function"
@@ -112,37 +158,37 @@ Public Function Test_LogInfo_WritesToFile_Success() As CTestResult
     modAssert.IsTrue(InStr(writtenContent, "Información de prueba") > 0, "El mensaje de info debe estar en el log")
     modAssert.IsTrue(InStr(writtenContent, "INFO") > 0, "El nivel INFO debe estar en el log")
     
-    testResult.Pass "LogInfo escribió correctamente usando mock"
+    testResult.Pass "LogInfo escribió correctamente al archivo de log"
     
-    Set Test_LogInfo_WritesToFile_Success = testResult
+    Set Test_LogInfo_WritesCorrectly = testResult
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogInfo_WritesToFile_Success")
-    testResult.SetResult False, "Error durante la prueba: " & Err.Description
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogWarning_WritesCorrectly")
+    testResult.Fail "Error durante la prueba: " & Err.Description
 End Function
 
 ' Prueba: LogWarning escribe correctamente usando mock
-Public Function Test_LogWarning_WritesToFile_Success() As CTestResult
+Public Function Test_LogWarning_WritesCorrectly() As CTestResult
     On Error GoTo ErrorHandler
     
+    Dim ErrorHandler As IErrorHandlerService
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_LogWarning_WritesToFile_Success"
+    testResult.Initialize "Test_LogWarning_WritesCorrectly"
     
     ' Variables para la prueba
     Dim errorHandlerService As New CErrorHandlerService
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Dim mockConfig As New CMockConfig
     Dim mockFileSystem As New CMockFileSystem
     Dim mockTextFile As CMockTextFile
     Dim writtenContent As String
     
     ' Arrange
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\temp\test.log"
     Set mockTextFile = mockFileSystem.GetMockTextFile()
     
-    errorHandlerService.Initialize configService, mockFileSystem
+    errorHandlerService.Initialize mockConfig, mockFileSystem
     
     ' Act
     errorHandlerService.LogWarning "Advertencia de prueba", "Test_Module.Test_Function"
@@ -158,12 +204,11 @@ Public Function Test_LogWarning_WritesToFile_Success() As CTestResult
     
     testResult.Pass "LogWarning escribió correctamente usando mock"
     
-    Set Test_LogWarning_WritesToFile_Success = testResult
+    Set Test_LogWarning_WritesCorrectly = testResult
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_LogWarning_WritesToFile_Success")
     testResult.SetResult False, "Error durante la prueba: " & Err.Description
 End Function
@@ -172,20 +217,20 @@ End Function
 Public Function Test_Initialize_WithValidConfig_Success() As CTestResult
     On Error GoTo ErrorHandler
     
+    Dim ErrorHandler As IErrorHandlerService
     Dim testResult As New CTestResult
     testResult.Initialize "Test_Initialize_WithValidConfig_Success"
     
     ' Variables para la prueba
     Dim errorHandlerService As New CErrorHandlerService
-    Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Dim mockConfig As New CMockConfig
     Dim mockFileSystem As New CMockFileSystem
     
-    ' Arrange
-    ' Las pruebas usan el mock del sistema de ficheros para aislamiento completo
+    ' Arrange: Configurar el mock config
+    mockConfig.AddSetting "LOG_FILE_PATH", "C:\temp\test.log"
     
     ' Act
-    errorHandlerService.Initialize configService, mockFileSystem
+    errorHandlerService.Initialize mockConfig, mockFileSystem
     
     ' Assert: Si no hay error, la inicialización fue exitosa
     testResult.Pass "Initialize completado exitosamente con configuración válida y mock"
@@ -194,10 +239,10 @@ Public Function Test_Initialize_WithValidConfig_Success() As CTestResult
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError(Err.Number, Err.Description, "Test_ErrorHandlerService.Test_Initialize_WithValidConfig_Success")
     testResult.SetResult False, "Error durante la prueba: " & Err.Description
 End Function
 
 #End If
+

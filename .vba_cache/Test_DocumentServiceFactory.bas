@@ -1,5 +1,7 @@
-﻿Option Compare Database
+﻿Attribute VB_Name = "Test_DocumentServiceFactory"
+Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' MODULO: Test_DocumentServiceFactory
@@ -116,3 +118,5 @@ ErrorHandler:
 End Function
 
 #End If
+
+

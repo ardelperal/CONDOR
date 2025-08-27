@@ -1,6 +1,7 @@
-Attribute VB_Name = "Test_CConfig"
+﻿Attribute VB_Name = "Test_CConfig"
 Option Compare Database
 Option Explicit
+
 
 #If DEV_MODE Then
 
@@ -55,12 +56,12 @@ Private Function Test_GetValue_DATAPATH_Success() As CTestResult
     modAssert.AssertTrue InStr(dataPath, ".accdb") > 0, "BACKEND_DB_PATH debe contener .accdb"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set config = Nothing
     Set Test_GetValue_DATAPATH_Success = testResult
 End Function
@@ -87,12 +88,12 @@ Private Function Test_GetValue_DATABASEPASSWORD_Success() As CTestResult
     modAssert.AssertEquals "testpassword", password, "DATABASE_PASSWORD debe ser 'testpassword'"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set config = Nothing
     Set Test_GetValue_DATABASEPASSWORD_Success = testResult
 End Function
@@ -116,12 +117,12 @@ Private Function Test_HasKey_ExistingKey_ReturnsTrue() As CTestResult
     modAssert.AssertTrue config.HasKey("DATABASEPASSWORD"), "HasKey debe devolver True para DATABASEPASSWORD"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set config = Nothing
     Set Test_HasKey_ExistingKey_ReturnsTrue = testResult
 End Function
@@ -145,12 +146,12 @@ Private Function Test_HasKey_NonExistingKey_ReturnsFalse() As CTestResult
     modAssert.AssertFalse config.HasKey(""), "HasKey debe devolver False para clave vacÃ­a"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set config = Nothing
     Set Test_HasKey_NonExistingKey_ReturnsFalse = testResult
 End Function
@@ -170,20 +171,20 @@ Private Function Test_GetValue_NonExistingKey_ReturnsEmpty() As CTestResult
     config.LoadFromCollection settings
     
     ' Act & Assert
-    Dim value As String
-    value = config.GetValue("CLAVE_INEXISTENTE")
-    modAssert.AssertEquals "", value, "GetValue debe devolver cadena vacÃ­a para clave inexistente"
+    Dim configValue As String
+    configValue = config.GetValue("CLAVE_INEXISTENTE")
+    modAssert.AssertEquals "", configValue, "GetValue debe devolver cadena vacÃ­a para clave inexistente"
     
-    value = config.GetValue("")
-    modAssert.AssertEquals "", value, "GetValue debe devolver cadena vacÃ­a para clave vacÃ­a"
+    configValue = config.GetValue("")
+    modAssert.AssertEquals "", configValue, "GetValue debe devolver cadena vacÃ­a para clave vacÃ­a"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set config = Nothing
     Set Test_GetValue_NonExistingKey_ReturnsEmpty = testResult
 End Function
@@ -211,12 +212,12 @@ Private Function Test_GetDataPath_Success() As CTestResult
     modAssert.AssertTrue InStr(dataPath, ".accdb") > 0, "GetDataPath debe contener .accdb"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set config = Nothing
     Set Test_GetDataPath_Success = testResult
 End Function
@@ -243,12 +244,12 @@ Private Function Test_GetDatabasePassword_Success() As CTestResult
     modAssert.AssertEquals "testpassword123", password, "GetDatabasePassword debe devolver 'testpassword123'"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     Set config = Nothing
     Set Test_GetDatabasePassword_Success = testResult
 End Function

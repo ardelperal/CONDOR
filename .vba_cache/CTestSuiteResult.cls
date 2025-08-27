@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' CLASE INTELIGENTE DE RESULTADOS DE SUITE DE PRUEBAS
@@ -38,30 +39,30 @@ End Sub
 ' ============================================================================
 
 ' Propiedad para el nombre de la suite
-Public Property Get SuiteName() As String
-    SuiteName = m_suiteName
+Public Property Get suiteName() As String
+    suiteName = m_suiteName
 End Property
 
-Public Property Let SuiteName(ByVal value As String)
+Public Property Let suiteName(ByVal value As String)
     m_suiteName = value
 End Property
 
 ' Propiedades calculadas en tiempo real
 Public Property Get TotalTests() As Long
-    TotalTests = m_testResults.Count
+    TotalTests = m_testResults.count
 End Property
 
 Public Property Get TestsPassed() As Long
-    Dim count As Long
+    Dim passedCount As Long
     Dim testResult As CTestResult
     
     For Each testResult In m_testResults
         If testResult.Success Then
-            count = count + 1
+            passedCount = passedCount + 1
         End If
     Next testResult
     
-    TestsPassed = count
+    TestsPassed = passedCount
 End Property
 
 Public Property Get TestsFailed() As Long
@@ -103,11 +104,11 @@ Public Function GetFormattedResult() As String
     Dim testResult As CTestResult
     For Each testResult In m_testResults
         If testResult.Success Then
-            report = report & "[✅ PASS] " & testResult.TestName & vbCrLf
+            report = report & "[? PASS] " & testResult.testName & vbCrLf
         Else
-            report = report & "[❌ FAIL] " & testResult.TestName
-            If testResult.ErrorMessage <> "" Then
-                report = report & " - " & testResult.ErrorMessage
+            report = report & "[? FAIL] " & testResult.testName
+            If testResult.errorMessage <> "" Then
+                report = report & " - " & testResult.errorMessage
             End If
             report = report & vbCrLf
         End If
@@ -125,7 +126,7 @@ End Function
 
 ' Método para obtener un resultado específico por índice
 Public Function GetTestResult(ByVal index As Long) As CTestResult
-    If index < 1 Or index > m_testResults.Count Then
+    If index < 1 Or index > m_testResults.count Then
         Err.Raise 9, "CTestSuiteResult.GetTestResult", "Índice fuera de rango"
     End If
     
@@ -145,9 +146,11 @@ Public Function GetFailedTestNames() As String
     For Each testResult In m_testResults
         If Not testResult.Success Then
             If failedNames <> "" Then failedNames = failedNames & ", "
-            failedNames = failedNames & testResult.TestName
+            failedNames = failedNames & testResult.testName
         End If
     Next testResult
     
     GetFailedTestNames = failedNames
 End Function
+
+

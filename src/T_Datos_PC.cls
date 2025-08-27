@@ -1,5 +1,15 @@
-﻿Option Compare Database
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "T_Datos_PC"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 ' Clase de tipo de datos para tbDatosPC
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md - Sección 8.2
 
@@ -379,6 +389,8 @@ End Property
 Public Property Let fechaFirmaDecisionFinal(ByVal value As Date)
     m_fechaFirmaDecisionFinal = value
 End Property
+
+
 
 
 

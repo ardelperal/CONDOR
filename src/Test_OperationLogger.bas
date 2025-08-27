@@ -1,11 +1,13 @@
+﻿Attribute VB_Name = "Test_OperationLogger"
 Option Compare Database
 Option Explicit
+
 
 #If DEV_MODE Then
 
 ' ============================================================================
-' MÃ³dulo: Test_OperationLogger
-' DescripciÃ³n: Pruebas unitarias puras y aisladas para COperationLogger.
+' Módulo: Test_OperationLogger
+' Descripción: Pruebas unitarias puras y aisladas para COperationLogger.
 ' Arquitectura: Capa de Pruebas - Tests unitarios con mocks
 ' Autor: CONDOR-Expert
 ' Fecha: Enero 2025
@@ -17,7 +19,7 @@ Option Explicit
 
 Public Function Test_OperationLogger_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.SuiteName = "Test_OperationLogger"
+    suiteResult.suiteName = "Test_OperationLogger"
     
     ' Ejecutar todas las pruebas unitarias aisladas
     Call suiteResult.AddTestResult("Test_Initialize_WithValidDependencies_Success", Test_Initialize_WithValidDependencies_Success())
@@ -90,9 +92,9 @@ Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As 
     logger.LogOperation "CREATE", "EXP001", "Expediente creado exitosamente"
     
     ' Assert
-    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog deberÃ­a haber sido llamado")
-    Call modAssert.AreEqual(1, mockRepository.CallCount, "SaveLog deberÃ­a haber sido llamado exactamente 1 vez")
-    Call modAssert.AreEqual("CREATE", mockRepository.LastOperationType, "Tipo de operaciÃ³n incorrecto")
+    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
+    Call modAssert.AreEqual(1, mockRepository.CallCount, "SaveLog debería haber sido llamado exactamente 1 vez")
+    Call modAssert.AreEqual("CREATE", mockRepository.LastOperationType, "Tipo de operación incorrecto")
     Call modAssert.AreEqual("EXP001", mockRepository.LastEntityId, "ID de entidad incorrecto")
     Call modAssert.AreEqual("Expediente creado exitosamente", mockRepository.LastDetails, "Detalles incorrectos")
     
@@ -120,10 +122,10 @@ Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues
     logger.LogOperation "", "", ""
     
     ' Assert
-    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog deberÃ­a haber sido llamado")
-    Call modAssert.AreEqual("", mockRepository.LastOperationType, "Tipo de operaciÃ³n deberÃ­a estar vacÃ­o")
-    Call modAssert.AreEqual("", mockRepository.LastEntityId, "ID de entidad deberÃ­a estar vacÃ­o")
-    Call modAssert.AreEqual("", mockRepository.LastDetails, "Detalles deberÃ­an estar vacÃ­os")
+    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
+    Call modAssert.AreEqual("", mockRepository.LastOperationType, "Tipo de operación debería estar vacío")
+    Call modAssert.AreEqual("", mockRepository.LastEntityId, "ID de entidad debería estar vacío")
+    Call modAssert.AreEqual("", mockRepository.LastDetails, "Detalles deberían estar vacíos")
     
     Set Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = New CTestResult
     Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues.Pass
@@ -146,17 +148,17 @@ Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTime
     logger.Initialize mockConfig, mockRepository
     
     ' Act
-    logger.LogOperation "CREATE", "EXP001", "Primera operaciÃ³n"
-    logger.LogOperation "UPDATE", "EXP002", "Segunda operaciÃ³n"
-    logger.LogOperation "DELETE", "EXP003", "Tercera operaciÃ³n"
+    logger.LogOperation "CREATE", "EXP001", "Primera operación"
+    logger.LogOperation "UPDATE", "EXP002", "Segunda operación"
+    logger.LogOperation "DELETE", "EXP003", "Tercera operación"
     
     ' Assert
-    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog deberÃ­a haber sido llamado")
-    Call modAssert.AreEqual(3, mockRepository.CallCount, "SaveLog deberÃ­a haber sido llamado exactamente 3 veces")
-    ' Verificar que los Ãºltimos parÃ¡metros corresponden a la Ãºltima llamada
-    Call modAssert.AreEqual("DELETE", mockRepository.LastOperationType, "Ãšltimo tipo de operaciÃ³n incorrecto")
-    Call modAssert.AreEqual("EXP003", mockRepository.LastEntityId, "Ãšltimo ID de entidad incorrecto")
-    Call modAssert.AreEqual("Tercera operaciÃ³n", mockRepository.LastDetails, "Ãšltimos detalles incorrectos")
+    Call modAssert.IsTrue(mockRepository.SaveLogCalled, "SaveLog debería haber sido llamado")
+    Call modAssert.AreEqual(3, mockRepository.CallCount, "SaveLog debería haber sido llamado exactamente 3 veces")
+    ' Verificar que los últimos parámetros corresponden a la última llamada
+    Call modAssert.AreEqual("DELETE", mockRepository.LastOperationType, "Último tipo de operación incorrecto")
+    Call modAssert.AreEqual("EXP003", mockRepository.LastEntityId, "Último ID de entidad incorrecto")
+    Call modAssert.AreEqual("Tercera operación", mockRepository.LastDetails, "Últimos detalles incorrectos")
     
     Set Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = New CTestResult
     Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes.Pass
@@ -170,3 +172,5 @@ End Function
 
 
 #End If
+
+

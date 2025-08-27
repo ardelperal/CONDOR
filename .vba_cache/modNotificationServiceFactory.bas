@@ -1,5 +1,7 @@
-﻿Option Compare Database
+Attribute VB_Name = "modNotificationServiceFactory"
+Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' MÓDULO: modNotificationServiceFactory
@@ -9,21 +11,27 @@ Option Explicit
 ' =====================================================
 
 ' Función factory para crear y configurar el servicio de notificaciones
-Public Function CreateNotificationService() As INotificationService
+Public Function CreateNotificationService(ByVal errorHandler As IErrorHandlerService) As INotificationService
     On Error GoTo ErrorHandler
     
     ' Obtener las dependencias requeridas
     Dim config As IConfig
     Dim operationLogger As IOperationLogger
+    Dim notificationRepository As INotificationRepository
     
-    Set config = modConfig.CreateConfigService()
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
+    Set config = modConfig.CreateConfigService(errorHandler)
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
+    
+    ' Crear el repositorio de notificaciones
+    Dim repositoryInstance As New CNotificationRepository
+    repositoryInstance.Initialize config
+    Set notificationRepository = repositoryInstance
     
     ' Crear una instancia de la clase concreta
     Dim notificationServiceInstance As New CNotificationService
     
-    ' Inicializar la instancia concreta con ambas dependencias
-    notificationServiceInstance.Initialize config, operationLogger
+    ' Inicializar la instancia concreta con todas las dependencias
+    notificationServiceInstance.Initialize config, operationLogger, notificationRepository
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateNotificationService = notificationServiceInstance
@@ -31,8 +39,7 @@ Public Function CreateNotificationService() As INotificationService
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError Err.Number, Err.Description, "modNotificationServiceFactory.CreateNotificationService"
     Set CreateNotificationService = Nothing
 End Function
+

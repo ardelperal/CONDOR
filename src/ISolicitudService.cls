@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' INTERFAZ: ISolicitudService
 ' Arquitectura: Contrato Limpio para Lógica de Negocio de Solicitudes
@@ -31,6 +32,8 @@ End Function
 ' @return: True si se guardó correctamente, False en caso contrario
 Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
 End Function
+
+
 
 
 

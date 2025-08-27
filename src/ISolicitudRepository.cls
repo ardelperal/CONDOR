@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' INTERFAZ: ISolicitudRepository
 ' Arquitectura: Contrato Limpio para Acceso a Datos de Solicitudes
@@ -35,8 +36,10 @@ End Function
 ' @param sql: Consulta SQL a ejecutar
 ' @param params: Colección opcional de parámetros QueryParameter
 ' @return: Recordset con los resultados
-Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.Recordset
+Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
 End Function
+
+
 
 
 

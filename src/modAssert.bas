@@ -1,8 +1,9 @@
-Attribute VB_Name = "modAssert"
-' Modulo: modAssert
-' Proposito: Funciones de asercion para las pruebas.
+﻿Attribute VB_Name = "modAssert"
 Option Compare Database
 Option Explicit
+
+' Modulo: modAssert
+' Proposito: Funciones de asercion para las pruebas.
 
 ' ============================================================================
 ' FUNCIONES DE ASERCIÓN PARA VALORES BOOLEANOS
@@ -97,3 +98,5 @@ End Sub
 Public Sub Fail(ByVal message As String)
     Err.Raise vbObjectError + 515, "modAssert.Fail", "Test Failed: " & message
 End Sub
+
+

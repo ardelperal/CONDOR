@@ -1,15 +1,16 @@
-Attribute VB_Name = "Test_CSolicitudRepository"
+Attribute VB_Name = "IntegrationTest_CSolicitudRepository"
 Option Compare Database
 Option Explicit
+
 
 #If DEV_MODE Then
 
 ' ============================================================================
 ' SUITE DE PRUEBAS DE INTEGRACIÃ“N PARA CSolicitudRepository
-' Arquitectura: Pruebas Reales con ConexiÃ³n al Backend
-' Version: 2.0 - ReconstrucciÃ³n Total
+' Arquitectura: Pruebas Reales con Conexión al Backend
+' Version: 2.0 - Reconstrucción Total
 ' ============================================================================
-' Pruebas de integraciÃ³n que validan las operaciones de CSolicitudRepository
+' Pruebas de integración que validan las operaciones de CSolicitudRepository
 ' contra la base de datos real del backend.
 ' ============================================================================
 
@@ -17,9 +18,9 @@ Option Explicit
 ' FUNCIÃ“N PRINCIPAL DE LA SUITE DE PRUEBAS
 ' ============================================================================
 
-Public Function RunAllTests() As CTestSuiteResult
+Public Function IntegrationTest_CSolicitudRepository_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_CSolicitudRepository - Pruebas de IntegraciÃ³n"
+    suiteResult.Initialize "Test_CSolicitudRepository - Pruebas de Integración"
     
     ' Ejecutar todas las pruebas
     suiteResult.AddTestResult Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto()
@@ -28,7 +29,7 @@ Public Function RunAllTests() As CTestSuiteResult
     suiteResult.AddTestResult Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar()
     suiteResult.AddTestResult Test_Repository_SinInicializar_DebeLanzarError()
     
-    Set RunAllTests = suiteResult
+    Set IntegrationTest_CSolicitudRepository_RunAll = suiteResult
 End Function
 
 ' ============================================================================
@@ -37,7 +38,7 @@ End Function
 
 Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "SaveSolicitud y GetSolicitudById - Ciclo completo de guardado y recuperaciÃ³n"
+    testResult.Initialize "SaveSolicitud y GetSolicitudById - Ciclo completo de guardado y recuperación"
     
     On Error GoTo ErrorHandler
     
@@ -50,7 +51,7 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
     Dim mockLogger As New CMockOperationLogger
     
     ' Inicializar dependencias
-    repository.Initialize mockConfig, mockLogger
+    repository.Initialize mockConfig
     
     ' Crear solicitud de prueba
     Dim solicitudOriginal As New T_Solicitud
@@ -61,7 +62,7 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
         .idEstadoInterno = 1 ' ID del estado Borrador
         .fechaCreacion = Now()
         .usuarioCreacion = "TEST_USER"
-        .observaciones = "Solicitud de prueba de integraciÃ³n"
+        .observaciones = "Solicitud de prueba de integración"
     End With
     
     Dim idGenerado As Long
@@ -70,16 +71,16 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
     ' Act - Guardar solicitud
     idGenerado = repository.SaveSolicitud(solicitudOriginal)
     
-    ' Assert - Verificar que se asignÃ³ un ID
-    If idGenerado <= 0 Then
-        testResult.Fail "SaveSolicitud debe retornar un ID vÃ¡lido, pero retornÃ³ " & idGenerado
+    ' Assert - Verificar que se asignó un ID
+        If idGenerado <= 0 Then
+            testResult.Fail "SaveSolicitud debe retornar un ID válido, pero retornó " & idGenerado
         GoTo Cleanup
     End If
     
     ' Act - Recuperar solicitud
     Set solicitudRecuperada = repository.GetSolicitudById(idGenerado)
     
-    ' Assert - Verificar que se recuperÃ³ correctamente
+    ' Assert - Verificar que se recuperó correctamente
     If solicitudRecuperada Is Nothing Then
         testResult.Fail "GetSolicitudById debe retornar la solicitud guardada"
         GoTo Cleanup
@@ -106,7 +107,7 @@ Private Function Test_SaveSolicitud_Y_GetSolicitudById_CicloCompleto() As CTestR
     End If
     
     If solicitudRecuperada.usuarioCreacion <> solicitudOriginal.usuarioCreacion Then
-        testResult.Fail "El usuario de creaciÃ³n debe coincidir: esperado '" & solicitudOriginal.usuarioCreacion & "', obtenido '" & solicitudRecuperada.usuarioCreacion & "'"
+        testResult.Fail "El usuario de creación debe coincidir: esperado '" & solicitudOriginal.usuarioCreacion & "', obtenido '" & solicitudRecuperada.usuarioCreacion & "'"
         GoTo Cleanup
     End If
     
@@ -133,24 +134,29 @@ Private Function Test_GetSolicitudById_ConIdInexistente_DebeRetornarNothing() As
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim repository As New CSolicitudRepository
+    Dim repository As ISolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
     mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
     mockConfig.AddSetting "DATABASE_PASSWORD", "desarrollo2024"
     
     Dim mockLogger As New CMockOperationLogger
     
-    repository.Initialize mockConfig, mockLogger
+    ' Inicializar usando la implementación concreta
+    repositoryImpl.Initialize mockConfig, mockLogger
+    
+    ' Asignar a la variable de interfaz para la prueba
+    Set repository = repositoryImpl
     
     ' Act - Buscar solicitud con ID que no existe
     Dim idInexistente As Long
     idInexistente = -999999 ' ID que seguramente no existe
     
-    Dim resultado As T_Solicitud
-    Set resultado = repository.GetSolicitudById(idInexistente)
+    Dim Resultado As T_Solicitud
+    Set Resultado = repository.GetSolicitudById(idInexistente)
     
     ' Assert
-    If Not (resultado Is Nothing) Then
+    If Not (Resultado Is Nothing) Then
         testResult.Fail "GetSolicitudById con ID inexistente debe retornar Nothing"
         GoTo Cleanup
     End If
@@ -168,19 +174,24 @@ End Function
 
 Private Function Test_SaveSolicitud_ConSolicitudNueva_DebeAsignarId() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "SaveSolicitud con solicitud nueva debe asignar ID automÃ¡ticamente"
+    testResult.Initialize "SaveSolicitud con solicitud nueva debe asignar ID automáticamente"
     
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim repository As New CSolicitudRepository
+    Dim repository As ISolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
     mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
     mockConfig.AddSetting "DATABASE_PASSWORD", "desarrollo2024"
     
     Dim mockLogger As New CMockOperationLogger
     
-    repository.Initialize mockConfig, mockLogger
+    ' Inicializar usando la implementación concreta
+    repositoryImpl.Initialize mockConfig
+    
+    ' Asignar a la variable de interfaz para la prueba
+    Set repository = repositoryImpl
     
     Dim solicitud As New T_Solicitud
     With solicitud
@@ -198,7 +209,7 @@ Private Function Test_SaveSolicitud_ConSolicitudNueva_DebeAsignarId() As CTestRe
     
     ' Assert
     If idGenerado <= 0 Then
-        testResult.Fail "SaveSolicitud debe asignar un ID positivo, pero asignÃ³ " & idGenerado
+        testResult.Fail "SaveSolicitud debe asignar un ID positivo, pero asignó " & idGenerado
         GoTo Cleanup
     End If
     
@@ -225,14 +236,19 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim repository As New CSolicitudRepository
+    Dim repository As ISolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
     mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Proyectos\CONDOR\back\CONDOR_datos.accdb"
     mockConfig.AddSetting "DATABASE_PASSWORD", "desarrollo2024"
     
     Dim mockLogger As New CMockOperationLogger
     
-    repository.Initialize mockConfig, mockLogger
+    ' Inicializar usando la implementación concreta
+    repositoryImpl.Initialize mockConfig
+    
+    ' Asignar a la variable de interfaz para la prueba
+    Set repository = repositoryImpl
     
     ' Crear y guardar solicitud inicial
     Dim solicitudInicial As New T_Solicitud
@@ -243,7 +259,7 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         .idEstadoInterno = 1 ' ID del estado Borrador
         .fechaCreacion = Now()
         .usuarioCreacion = "TEST_USER"
-        .observaciones = "ObservaciÃ³n inicial"
+        .observaciones = "Observación inicial"
     End With
     
     Dim idGenerado As Long
@@ -265,7 +281,7 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         .usuarioCreacion = solicitudInicial.usuarioCreacion
         .fechaModificacion = Now()
         .usuarioModificacion = "TEST_USER_MOD"
-        .observaciones = "ObservaciÃ³n modificada" ' Cambiar observaciones
+        .observaciones = "Observación modificada" ' Cambiar observaciones
     End With
     
     ' Act - Actualizar solicitud
@@ -292,13 +308,13 @@ Private Function Test_SaveSolicitud_ConSolicitudExistente_DebeActualizar() As CT
         GoTo Cleanup
     End If
     
-    If solicitudRecuperada.observaciones <> "ObservaciÃ³n modificada" Then
-        testResult.Fail "Las observaciones deben haberse actualizado a 'ObservaciÃ³n modificada', pero son '" & solicitudRecuperada.observaciones & "'"
+    If solicitudRecuperada.observaciones <> "Observación modificada" Then
+        testResult.Fail "Las observaciones deben haberse actualizado a 'Observación modificada', pero son '" & solicitudRecuperada.observaciones & "'"
         GoTo Cleanup
     End If
     
     If solicitudRecuperada.usuarioModificacion <> "TEST_USER_MOD" Then
-        testResult.Fail "El usuario de modificaciÃ³n debe ser 'TEST_USER_MOD', pero es '" & solicitudRecuperada.usuarioModificacion & "'"
+        testResult.Fail "El usuario de modificación debe ser 'TEST_USER_MOD', pero es '" & solicitudRecuperada.usuarioModificacion & "'"
         GoTo Cleanup
     End If
     
@@ -325,8 +341,10 @@ Private Function Test_Repository_SinInicializar_DebeLanzarError() As CTestResult
     On Error GoTo ErrorHandler
     
     ' Arrange
-    Dim repository As New CSolicitudRepository
+    Dim repository As ISolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     ' No inicializar el repositorio
+    Set repository = repositoryImpl
     
     Dim solicitud As New T_Solicitud
     solicitud.idSolicitud = 0
@@ -336,13 +354,13 @@ Private Function Test_Repository_SinInicializar_DebeLanzarError() As CTestResult
     errorOcurred = False
     
     On Error Resume Next
-    Dim resultado As Long
-    resultado = repository.SaveSolicitud(solicitud)
+    Dim Resultado As Long
+    Resultado = repository.SaveSolicitud(solicitud)
     If Err.Number <> 0 Then errorOcurred = True
     On Error GoTo ErrorHandler
     
     If Not errorOcurred Then
-        testResult.Fail "SaveSolicitud debe lanzar un error cuando el repositorio no estÃ¡ inicializado"
+        testResult.Fail "SaveSolicitud debe lanzar un error cuando el repositorio no está inicializado"
         GoTo Cleanup
     End If
     
@@ -356,7 +374,7 @@ Private Function Test_Repository_SinInicializar_DebeLanzarError() As CTestResult
     On Error GoTo ErrorHandler
     
     If Not errorOcurred Then
-        testResult.Fail "GetSolicitudById debe lanzar un error cuando el repositorio no estÃ¡ inicializado"
+        testResult.Fail "GetSolicitudById debe lanzar un error cuando el repositorio no está inicializado"
         GoTo Cleanup
     End If
     
@@ -391,7 +409,7 @@ Private Sub LimpiarSolicitudDePrueba(ByVal idSolicitud As Long, ByRef mockConfig
     ' Eliminar la solicitud de prueba
     Dim qdf As DAO.QueryDef
     Set qdf = db.CreateQueryDef("", "DELETE FROM T_Solicitud WHERE idSolicitud = ?")
-    qdf.Parameters(0) = idSolicitud
+    qdf.parameters(0) = idSolicitud
     qdf.Execute
     
     ' Limpiar recursos
@@ -404,3 +422,5 @@ Private Sub LimpiarSolicitudDePrueba(ByVal idSolicitud As Long, ByRef mockConfig
 End Sub
 
 #End If
+
+

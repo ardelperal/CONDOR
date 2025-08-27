@@ -1,5 +1,15 @@
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "T_Expediente"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 '******************************************************************************
 ' CLASE: T_Expediente
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de expedientes
@@ -27,8 +37,8 @@ Private m_FechaInicio As Date
 Private m_FechaFinPrevista As Date
 Private m_FechaFinContrato As Date
 Private m_FechaFinGarantia As Date
-Private m_Descripcion As String
-Private m_FechaCreacion As Date
+Private m_descripcion As String
+Private m_fechaCreacion As Date
 Private m_Estado As String
 Private m_IdUsuarioCreador As Long
 Private m_NombreUsuarioCreador As String
@@ -143,17 +153,17 @@ Public Property Let FechaFinGarantia(ByVal value As Date)
 End Property
 
 Public Property Get Descripcion() As String
-    Descripcion = m_Descripcion
+    Descripcion = m_descripcion
 End Property
 Public Property Let Descripcion(ByVal value As String)
-    m_Descripcion = value
+    m_descripcion = value
 End Property
 
-Public Property Get FechaCreacion() As Date
-    FechaCreacion = m_FechaCreacion
+Public Property Get fechaCreacion() As Date
+    fechaCreacion = m_fechaCreacion
 End Property
-Public Property Let FechaCreacion(ByVal value As Date)
-    m_FechaCreacion = value
+Public Property Let fechaCreacion(ByVal value As Date)
+    m_fechaCreacion = value
 End Property
 
 Public Property Get Estado() As String
@@ -187,6 +197,9 @@ Public Function EsValido() As Boolean
                 Len(ResponsableCalidad) > 0 And _
                 Len(EmailResponsable) > 0)
 End Function
+
+
+
 
 
 

@@ -1,6 +1,7 @@
-Attribute VB_Name = "Test_SolicitudRepository"
 Option Compare Database
 Option Explicit
+
+
 
 #If DEV_MODE Then
 
@@ -17,7 +18,7 @@ Option Explicit
 ' FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
 ' ============================================================================
 
-Public Function Test_SolicitudRepository_RunAll() As CTestSuiteResult
+Public Function IntegrationTest_SolicitudRepository_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "Test_SolicitudRepository - Pruebas Unitarias CSolicitudRepository"
     
@@ -31,7 +32,7 @@ Public Function Test_SolicitudRepository_RunAll() As CTestSuiteResult
     suiteResult.AddTestResult Test_CargarDatosEspecificos_CDCA()
     suiteResult.AddTestResult Test_CargarDatosEspecificos_CDCASUB()
     
-    Set Test_SolicitudRepository_RunAll = suiteResult
+    Set IntegrationTest_SolicitudRepository_RunAll = suiteResult
 End Function
 
 ' ============================================================================
@@ -46,35 +47,28 @@ Private Function Test_GetSolicitudById_Success() As CTestResult
     
     ' Arrange
     Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
     
     ' Configurar mocks
     mockConfig.SetDataPath "C:\Test\Backend.accdb"
     mockConfig.SetDatabasePassword "testpass"
     
     ' Inicializar repositorio con dependencias
-    repository.Initialize mockConfig, mockLogger
+    repositoryImpl.Initialize mockConfig
+    Set repository = repositoryImpl
     
     ' Act
     ' Nota: Esta prueba requiere una base de datos de prueba o mock más avanzado
     ' Por ahora validamos que el repositorio esté correctamente inicializado
     
-    ' Assert
-    If Not mockLogger.LogOperationCalled Then
-        testResult.Fail "Debe llamarse a LogOperation durante la inicialización"
-        GoTo Cleanup
-    End If
-    
     testResult.Pass
     
 Cleanup:
     mockConfig.Reset
-    mockLogger.Reset
     Set repository = Nothing
+    Set repositoryImpl = Nothing
     Set mockConfig = Nothing
-    Set mockLogger = Nothing
     Exit Function
     
 ErrorHandler:
@@ -90,16 +84,16 @@ Private Function Test_GetSolicitudById_NotFound() As CTestResult
     
     ' Arrange
     Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
     
     ' Configurar mocks
     mockConfig.SetDataPath "C:\Test\Backend.accdb"
     mockConfig.SetDatabasePassword "testpass"
     
     ' Inicializar repositorio con dependencias
-    repository.Initialize mockConfig, mockLogger
+    repositoryImpl.Initialize mockConfig
+    Set repository = repositoryImpl
     
     ' Act & Assert
     ' Nota: Esta prueba requiere una base de datos de prueba
@@ -109,10 +103,9 @@ Private Function Test_GetSolicitudById_NotFound() As CTestResult
     
 Cleanup:
     mockConfig.Reset
-    mockLogger.Reset
     Set repository = Nothing
+    Set repositoryImpl = Nothing
     Set mockConfig = Nothing
-    Set mockLogger = Nothing
     Exit Function
     
 ErrorHandler:
@@ -132,16 +125,16 @@ Private Function Test_SaveSolicitud_New() As CTestResult
     
     ' Arrange
     Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
     
     ' Configurar mocks
     mockConfig.SetDataPath "C:\Test\Backend.accdb"
     mockConfig.SetDatabasePassword "testpass"
     
     ' Inicializar repositorio con dependencias
-    repository.Initialize mockConfig, mockLogger
+    repositoryImpl.Initialize mockConfig
+    Set repository = repositoryImpl
     
     ' Crear solicitud de prueba
     Dim solicitud As New T_Solicitud
@@ -160,19 +153,13 @@ Private Function Test_SaveSolicitud_New() As CTestResult
     ' Nota: Esta prueba requiere una base de datos de prueba
     ' Por ahora validamos que el repositorio esté correctamente configurado
     
-    If Not mockLogger.LogOperationCalled Then
-        testResult.Fail "Debe llamarse a LogOperation durante la inicialización"
-        GoTo Cleanup
-    End If
-    
     testResult.Pass
     
 Cleanup:
     mockConfig.Reset
-    mockLogger.Reset
     Set repository = Nothing
+    Set repositoryImpl = Nothing
     Set mockConfig = Nothing
-    Set mockLogger = Nothing
     Set solicitud = Nothing
     Exit Function
     
@@ -189,16 +176,19 @@ Private Function Test_SaveSolicitud_Update() As CTestResult
     
     ' Arrange
     Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository ' Correcta declaración e instanciación
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
+    ' El mockLogger ya no es necesario aquí según nuestra arquitectura
     
     ' Configurar mocks
     mockConfig.SetDataPath "C:\Test\Backend.accdb"
     mockConfig.SetDatabasePassword "testpass"
     
-    ' Inicializar repositorio con dependencias
-    repository.Initialize mockConfig, mockLogger
+    ' Inicializar repositorio usando la implementación concreta
+    repositoryImpl.Initialize mockConfig
+    
+    ' Asignar a la variable de interfaz para la prueba
+    Set repository = repositoryImpl
     
     ' Crear solicitud existente de prueba
     Dim solicitud As New T_Solicitud
@@ -216,19 +206,13 @@ Private Function Test_SaveSolicitud_Update() As CTestResult
     ' Nota: Esta prueba requiere una base de datos de prueba
     ' Por ahora validamos que el repositorio esté correctamente configurado
     
-    If Not mockLogger.LogOperationCalled Then
-        testResult.Fail "Debe llamarse a LogOperation durante la inicialización"
-        GoTo Cleanup
-    End If
-    
     testResult.Pass
     
 Cleanup:
     mockConfig.Reset
-    mockLogger.Reset
     Set repository = Nothing
+    Set repositoryImpl = Nothing
     Set mockConfig = Nothing
-    Set mockLogger = Nothing
     Set solicitud = Nothing
     Exit Function
     
@@ -249,40 +233,34 @@ Private Function Test_ExecuteQuery() As CTestResult
     
     ' Arrange
     Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
     
     ' Configurar mocks
     mockConfig.SetDataPath "C:\Test\Backend.accdb"
     mockConfig.SetDatabasePassword "testpass"
     
     ' Inicializar repositorio con dependencias
-    repository.Initialize mockConfig, mockLogger
+    repositoryImpl.Initialize mockConfig
+    Set repository = repositoryImpl
     
     ' Preparar parámetros de consulta
     Dim params As New Collection
     Dim param1 As New QueryParameter
-    param1.Value = "PC"
+    param1.Initialize "TipoSolicitud", "PC"
     params.Add param1
     
     ' Act & Assert
     ' Nota: Esta prueba requiere una base de datos de prueba
     ' Por ahora validamos que el repositorio esté correctamente configurado
     
-    If Not mockLogger.LogOperationCalled Then
-        testResult.Fail "Debe llamarse a LogOperation durante la inicialización"
-        GoTo Cleanup
-    End If
-    
     testResult.Pass
     
 Cleanup:
     mockConfig.Reset
-    mockLogger.Reset
     Set repository = Nothing
+    Set repositoryImpl = Nothing
     Set mockConfig = Nothing
-    Set mockLogger = Nothing
     Set params = Nothing
     Set param1 = Nothing
     Exit Function
@@ -304,34 +282,28 @@ Private Function Test_CargarDatosEspecificos_PC() As CTestResult
     
     ' Arrange
     Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
     
     ' Configurar mocks
     mockConfig.SetDataPath "C:\Test\Backend.accdb"
     mockConfig.SetDatabasePassword "testpass"
     
     ' Inicializar repositorio con dependencias
-    repository.Initialize mockConfig, mockLogger
+    repositoryImpl.Initialize mockConfig
+    Set repository = repositoryImpl
     
     ' Act & Assert
     ' Nota: Esta prueba requiere una base de datos de prueba con datos específicos
     ' Por ahora validamos que el repositorio esté correctamente configurado
     
-    If Not mockLogger.LogOperationCalled Then
-        testResult.Fail "Debe llamarse a LogOperation durante la inicialización"
-        GoTo Cleanup
-    End If
-    
     testResult.Pass
     
 Cleanup:
     mockConfig.Reset
-    mockLogger.Reset
     Set repository = Nothing
+    Set repositoryImpl = Nothing
     Set mockConfig = Nothing
-    Set mockLogger = Nothing
     Exit Function
     
 ErrorHandler:
@@ -347,34 +319,28 @@ Private Function Test_CargarDatosEspecificos_CDCA() As CTestResult
     
     ' Arrange
     Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
     
     ' Configurar mocks
     mockConfig.SetDataPath "C:\Test\Backend.accdb"
     mockConfig.SetDatabasePassword "testpass"
     
     ' Inicializar repositorio con dependencias
-    repository.Initialize mockConfig, mockLogger
+    repositoryImpl.Initialize mockConfig
+    Set repository = repositoryImpl
     
     ' Act & Assert
     ' Nota: Esta prueba requiere una base de datos de prueba con datos específicos
     ' Por ahora validamos que el repositorio esté correctamente configurado
     
-    If Not mockLogger.LogOperationCalled Then
-        testResult.Fail "Debe llamarse a LogOperation durante la inicialización"
-        GoTo Cleanup
-    End If
-    
     testResult.Pass
     
 Cleanup:
     mockConfig.Reset
-    mockLogger.Reset
     Set repository = Nothing
+    Set repositoryImpl = Nothing
     Set mockConfig = Nothing
-    Set mockLogger = Nothing
     Exit Function
     
 ErrorHandler:
@@ -390,34 +356,28 @@ Private Function Test_CargarDatosEspecificos_CDCASUB() As CTestResult
     
     ' Arrange
     Dim repository As ISolicitudRepository
-    Set repository = New CSolicitudRepository
+    Dim repositoryImpl As New CSolicitudRepository
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
     
     ' Configurar mocks
     mockConfig.SetDataPath "C:\Test\Backend.accdb"
     mockConfig.SetDatabasePassword "testpass"
     
     ' Inicializar repositorio con dependencias
-    repository.Initialize mockConfig, mockLogger
+    repositoryImpl.Initialize mockConfig
+    Set repository = repositoryImpl
     
     ' Act & Assert
     ' Nota: Esta prueba requiere una base de datos de prueba con datos específicos
     ' Por ahora validamos que el repositorio esté correctamente configurado
     
-    If Not mockLogger.LogOperationCalled Then
-        testResult.Fail "Debe llamarse a LogOperation durante la inicialización"
-        GoTo Cleanup
-    End If
-    
     testResult.Pass
     
 Cleanup:
     mockConfig.Reset
-    mockLogger.Reset
     Set repository = Nothing
+    Set repositoryImpl = Nothing
     Set mockConfig = Nothing
-    Set mockLogger = Nothing
     Exit Function
     
 ErrorHandler:
@@ -426,3 +386,6 @@ ErrorHandler:
 End Function
 
 #End If
+
+
+

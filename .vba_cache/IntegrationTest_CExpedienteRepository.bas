@@ -1,5 +1,7 @@
+﻿Attribute VB_Name = "IntegrationTest_CExpedienteRepository"
 Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' MODULO: IntegrationTest_CExpedienteRepository
@@ -44,26 +46,24 @@ Private Function IntegrationTest_ObtenerExpedientePorId_Success() As CTestResult
     mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
     mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    Dim mockLogger As New CMockOperationLogger
-    
     ' Crear repositorio con dependencias mock
     Dim repository As New CExpedienteRepository
-    repository.Initialize mockConfig, mockLogger
+    repository.Initialize mockConfig
     
     ' Act - Ejecutar el método bajo prueba
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Set rs = repository.ObtenerExpedientePorId(1)
     
     ' Assert - Verificar que devuelve un recordset válido
     modAssert.AssertNotNull rs, "ObtenerExpedientePorId debe devolver un recordset válido"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     ' Limpiar recursos
     If Not rs Is Nothing Then
         rs.Close
@@ -85,14 +85,12 @@ Private Function IntegrationTest_ObtenerExpedientePorId_NotFound() As CTestResul
     mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
     mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    Dim mockLogger As New CMockOperationLogger
-    
     ' Crear repositorio con dependencias mock
     Dim repository As New CExpedienteRepository
-    repository.Initialize mockConfig, mockLogger
+    repository.Initialize mockConfig
     
     ' Act - Ejecutar el método con ID inexistente
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Set rs = repository.ObtenerExpedientePorId(99999)
     
     ' Assert - Verificar que maneja correctamente el caso no encontrado
@@ -101,12 +99,12 @@ Private Function IntegrationTest_ObtenerExpedientePorId_NotFound() As CTestResul
     End If
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     ' Limpiar recursos
     If Not rs Is Nothing Then
         rs.Close
@@ -132,26 +130,24 @@ Private Function IntegrationTest_ObtenerExpedientePorNemotecnico_Success() As CT
     mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
     mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    Dim mockLogger As New CMockOperationLogger
-    
     ' Crear repositorio con dependencias mock
     Dim repository As New CExpedienteRepository
-    repository.Initialize mockConfig, mockLogger
+    repository.Initialize mockConfig
     
     ' Act - Ejecutar el método bajo prueba
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Set rs = repository.ObtenerExpedientePorNemotecnico("EXP-2024-001")
     
     ' Assert - Verificar que devuelve un recordset válido
     modAssert.AssertNotNull rs, "ObtenerExpedientePorNemotecnico debe devolver un recordset válido"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     ' Limpiar recursos
     If Not rs Is Nothing Then
         rs.Close
@@ -173,14 +169,12 @@ Private Function IntegrationTest_ObtenerExpedientePorNemotecnico_NotFound() As C
     mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
     mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    Dim mockLogger As New CMockOperationLogger
-    
     ' Crear repositorio con dependencias mock
     Dim repository As New CExpedienteRepository
-    repository.Initialize mockConfig, mockLogger
+    repository.Initialize mockConfig
     
     ' Act - Ejecutar el método con nemotécnico inexistente
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Set rs = repository.ObtenerExpedientePorNemotecnico("INEXISTENTE-999")
     
     ' Assert - Verificar que maneja correctamente el caso no encontrado
@@ -189,12 +183,12 @@ Private Function IntegrationTest_ObtenerExpedientePorNemotecnico_NotFound() As C
     End If
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     ' Limpiar recursos
     If Not rs Is Nothing Then
         rs.Close
@@ -220,26 +214,24 @@ Private Function IntegrationTest_ObtenerExpedientesActivosParaSelector_Success()
     mockConfig.AddSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
     mockConfig.AddSetting "DATABASE_PASSWORD", "testpassword"
     
-    Dim mockLogger As New CMockOperationLogger
-    
     ' Crear repositorio con dependencias mock
     Dim repository As New CExpedienteRepository
-    repository.Initialize mockConfig, mockLogger
+    repository.Initialize mockConfig
     
     ' Act - Ejecutar el método bajo prueba
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Set rs = repository.ObtenerExpedientesActivosParaSelector()
     
     ' Assert - Verificar que devuelve un recordset válido
     modAssert.AssertNotNull rs, "ObtenerExpedientesActivosParaSelector debe devolver un recordset válido"
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     ' Limpiar recursos
     If Not rs Is Nothing Then
         rs.Close
@@ -258,14 +250,13 @@ Private Function IntegrationTest_ObtenerExpedientesActivosParaSelector_EmptyResu
     
     ' Arrange - Configurar dependencias mock
     Dim mockConfig As New CMockConfig
-    Dim mockLogger As New CMockOperationLogger
     
     ' Crear repositorio con dependencias mock
     Dim repository As New CExpedienteRepository
-    repository.Initialize mockConfig, mockLogger
+    repository.Initialize mockConfig
     
     ' Act - Ejecutar el método bajo prueba
-    Dim rs As DAO.Recordset
+    Dim rs As DAO.recordset
     Set rs = repository.ObtenerExpedientesActivosParaSelector()
     
     ' Assert - Verificar que maneja correctamente el caso sin resultados
@@ -275,12 +266,12 @@ Private Function IntegrationTest_ObtenerExpedientesActivosParaSelector_EmptyResu
     End If
     
     testResult.Pass
-    GoTo CleanUp
+    GoTo Cleanup
     
 ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
     
-CleanUp:
+Cleanup:
     ' Limpiar recursos
     If Not rs Is Nothing Then
         rs.Close
@@ -290,3 +281,4 @@ CleanUp:
 End Function
 
 #End If
+

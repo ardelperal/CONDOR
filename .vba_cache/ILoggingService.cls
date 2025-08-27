@@ -1,5 +1,15 @@
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ILoggingService"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 ' Interfaz: ILoggingService
 ' Descripción: Define el contrato para servicios de logging del sistema CONDOR
 ' Arquitectura: Capa de Servicios - Interface
@@ -17,6 +27,8 @@ End Sub
 
 Public Sub LogWarning(ByVal message As String, Optional ByVal moduleName As String)
 End Sub
+
+
 
 
 

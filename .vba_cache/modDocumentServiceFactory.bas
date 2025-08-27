@@ -1,6 +1,7 @@
-Attribute VB_Name = "modDocumentServiceFactory"
+﻿Attribute VB_Name = "modDocumentServiceFactory"
 Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' MÓDULO: modDocumentServiceFactory
@@ -9,24 +10,24 @@ Option Explicit
 ' FECHA: 2025-08-22
 ' =====================================================
 
-Public Function CreateDocumentService() As IDocumentService
+Public Function CreateDocumentService(ByVal errorHandler As IErrorHandlerService) As IDocumentService
     On Error GoTo ErrorHandler
     
     ' Obtener las dependencias necesarias
     Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService()
+    Set configService = modConfig.CreateConfigService(errorHandler)
     
     Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
+    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository(errorHandler)
     
     Dim operationLogger As IOperationLogger
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
     
     Dim wordManager As IWordManager
-    Set wordManager = modWordManagerFactory.CreateWordManager()
+    Set wordManager = modWordManagerFactory.CreateWordManager(errorHandler)
     
     Dim mapeoRepository As IMapeoRepository
-    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository()
+    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository(errorHandler)
     
     ' Crear una instancia de la clase concreta
     Dim documentServiceInstance As New CDocumentService
@@ -40,8 +41,8 @@ Public Function CreateDocumentService() As IDocumentService
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError Err.Number, Err.Description, "modDocumentServiceFactory.CreateDocumentService"
     Set CreateDocumentService = Nothing
 End Function
+
+

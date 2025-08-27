@@ -41,6 +41,8 @@ Observación: Se ha detectado código que, si bien utiliza On Error GoTo ErrorHa
 Regla Inquebrantable: Un bloque ErrorHandler sin una llamada a modErrorHandler.LogError (o LogCriticalError) se considera una implementación incompleta y errónea.
 Acción Correctiva: Todos los prompts que impliquen la creación o modificación de código deben incluir la directiva de implementar el manejo de errores centralizado.
 
+Regla de Estilo Crítica: La variable del servicio de errores (Dim ErrorHandler As IErrorHandlerService) debe declararse una única vez al inicio del procedimiento, nunca repetirse dentro del bloque ErrorHandler:. Las declaraciones duplicadas causan errores de compilación que impiden el registro del error original, dejando el sistema en un estado inconsistente e inaceptable.
+
 Lección 9: La Auditoría de Operaciones es un Requisito, no una Opción
 Observación: La trazabilidad de las acciones de negocio (quién hizo qué y cuándo) es tan crítica como el registro de errores para la seguridad y el mantenimiento del sistema.
 Regla Inquebrantable: Toda función o procedimiento que represente una acción de negocio significativa debe registrar dicha acción a través del servicio IOperationLogger.
@@ -121,13 +123,18 @@ Observación: Se ha detectado que servicios como CExpedienteService dependían i
 Regla Inquebrantable: Cada repositorio debe gestionar una única entidad de negocio y sus datos relacionados. ISolicitudRepository solo debe manejar operaciones sobre la entidad Solicitud (T_Solicitud), IExpedienteRepository solo debe manejar operaciones sobre la entidad Expediente (T_Expediente), etc. Los servicios deben depender de los repositorios apropiados para cumplir sus contratos de interfaz.
 Acción Correctiva: Cuando un servicio no puede cumplir su contrato de interfaz con las dependencias actuales, se debe crear el repositorio específico para la entidad que necesita y refactorizar el servicio para usar la dependencia correcta. Nunca se debe "reutilizar" un repositorio de una entidad diferente para acceder a datos de otra entidad.
 
+Caso Crítico - CExpedienteService (2024): Se detectó un fallo de diseño arquitectónico crítico donde CExpedienteService estaba dependiendo de ISolicitudRepository en lugar de IExpedienteRepository. Este error causaba fallos de compilación al intentar llamar métodos como ObtenerExpedientePorNemotecnico que no existen en ISolicitudRepository. La corrección requirió:
+- Verificar que CExpedienteService dependa exclusivamente de IExpedienteRepository
+- Confirmar que modExpedienteServiceFactory inyecte la dependencia correcta
+- Validar que los tests usen CMockExpedienteRepository
+
 Ejemplo Práctico - Refactorización del AuthService:
 Antes: CAuthService dependía incorrectamente de ISolicitudRepository para consultar datos de usuarios y permisos, violando el principio de responsabilidad única.
 Después: Se creó IAuthRepository con CAuthRepository para gestionar exclusivamente las consultas de autenticación (TbUsuariosAplicaciones, TbUsuariosAplicacionesPermisos). CAuthService ahora depende de IAuthRepository, separando claramente las responsabilidades:
 - ISolicitudRepository: Gestiona T_Solicitud y datos relacionados
 - IAuthRepository: Gestiona consultas de usuarios y permisos de aplicación
 - IExpedienteRepository: Gestiona T_Expediente y datos relacionados
-Esta separación mejora la mantenibilidad, testabilidad y cumple el principio de responsabilidad única.
+Esta separación mejora la mantenibilidad, testabilidad y cumple el principio de responsabilidad única. NUNCA un servicio debe depender de un repositorio de otra entidad de negocio.
 
 Lección 18: La Prevención de Inyección de SQL con Consultas Parametrizadas es Obligatoria
 Observación: Se han detectado repositorios que construyen consultas SQL mediante la concatenación de strings, lo cual introduce una vulnerabilidad de seguridad crítica de Inyección de SQL.
@@ -142,6 +149,40 @@ Acción Correctiva: Refactorizar toda comunicación CLI-VBA para usar `objAccess
 Lección 20: La Automatización sobre la Configuración Manual (Principio de Cero Mantenimiento)
 Observación: El registro manual de suites de pruebas en la función RegisterAllSuites de modTestRunner.bas es una deuda técnica crítica. Cada vez que se añade un nuevo fichero de pruebas (Test_*.bas o IntegrationTest_*.bas), existe el riesgo de olvidar registrarlo manualmente, lo que resulta en pruebas que no se ejecutan y una falsa sensación de seguridad en la calidad del código.
 Regla Inquebrantable: Los sistemas deben auto-configurarse basándose en convenciones de nomenclatura, eliminando completamente la intervención manual. El descubrimiento automático de suites de pruebas debe basarse en la inspección dinámica del proyecto VBA, identificando módulos que cumplan con las convenciones establecidas (nombres que comiencen con "Test_" o "IntegrationTest_").
+
+Lección 25: Un Framework de Pruebas Robusto Requiere una Librería de Aserciones Completa
+Observación: Los errores de compilación como "AssertNotNull no existe" revelan que nuestra librería de aserciones (modAssert.bas) está incompleta. Una librería de aserciones incompleta limita la expresividad y legibilidad de nuestras pruebas, forzando a los desarrolladores a usar workarounds o aserciones menos específicas.
+Regla Inquebrantable: La librería de aserciones debe proporcionar funciones específicas para todos los casos de validación comunes en las pruebas. Esto incluye verificaciones de nulidad (AssertNotNull, AssertIsNull), igualdad, desigualdad, rangos, tipos de datos, y estados de objetos. Cada función de aserción debe proporcionar mensajes de error claros y específicos.
+Acción Correctiva: Ante errores de "método no encontrado" en aserciones, se debe implementar inmediatamente la función faltante en modAssert.bas siguiendo el patrón estándar: validación de la condición, lanzamiento de error con código específico (vbObjectError + número único) y mensaje descriptivo. La completitud de la librería de aserciones es un prerequisito para pruebas de calidad.
+
+Lección 27: Pruebas Automatizadas Desatendidas
+Observación: Las pruebas automatizadas fallaban en entornos desatendidos debido a diálogos de confirmación y alertas de Microsoft Access que requerían interacción del usuario.
+Regla Inquebrantable: Para pruebas automatizadas en Access, siempre configurar DisplayAlerts = False antes de ejecutar operaciones, usar dbFailOnError en lugar de False para conexiones de base de datos, diseñar funciones principales con parámetros opcionales para testing, y evitar cualquier dependencia de interacción del usuario en el flujo de pruebas.
+Acción Correctiva: Configurar Access en modo silencioso (objAccess.Application.DisplayAlerts = False, objAccess.Application.Echo False, objAccess.AutomationSecurity = 1), reemplazar False por dbFailOnError en todas las llamadas a DBEngine.OpenDatabase para evitar diálogos de confirmación, y refactorizar funciones críticas como App_Start para aceptar parámetros opcionales que permitan inyección de datos de prueba sin requerir autenticación interactiva.
+
+Ejemplo de Implementación Correcta:
+```vba
+' En condor_cli.vbs - Configuración para modo desatendido
+objAccess.Application.DisplayAlerts = False
+objAccess.Application.Echo False
+objAccess.AutomationSecurity = 1
+
+' En repositorios - Uso de dbFailOnError
+Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
+
+' En modAppManager.bas - Parámetro opcional para testing
+Public Function App_Start(Optional ByVal testUserEmail As String = "") As Boolean
+    If testUserEmail <> "" Then
+        ' Usar email de prueba sin autenticación
+        g_CurrentUserEmail = testUserEmail
+    Else
+        ' Flujo normal de autenticación
+        g_CurrentUserEmail = authService.GetCurrentUserEmail()
+    End If
+End Function
+```
+
+Impacto: Permite la ejecución completamente desatendida de pruebas, integración exitosa con pipelines de CI/CD, y eliminación de falsos positivos por diálogos de confirmación.
 Acción Correctiva: Implementar un sistema de descubrimiento automático que utilice la librería "Microsoft Visual Basic for Applications Extensibility 5.3" para inspeccionar dinámicamente todos los vbComponents del proyecto, identificar módulos de prueba por convención de nomenclatura, y registrarlos automáticamente sin intervención manual. Esto garantiza que todas las pruebas se ejecuten siempre, independientemente de errores humanos en el mantenimiento.
 
 Lección 21: Las Clases del Framework de Pruebas Deben Ser Robustas
@@ -152,6 +193,7 @@ Acción Correctiva: Implementar métodos Initialize en todas las clases de resul
 Lección 22: Los Mocks Deben Ser Clases Completas y Reutilizables
 Observación: Los errores de "tipo no definido" en las pruebas ocurren cuando se intenta usar mocks que no están completamente implementados. Un mock incompleto rompe el principio de aislamiento de las pruebas unitarias y hace que las pruebas dependan de implementaciones reales, violando la Lección 10.
 Regla Inquebrantable: Cada mock (CMock...) debe ser una clase completa que implemente su interfaz correspondiente, permita la configuración de sus valores de retorno (mediante métodos como .AddSetting) y registre las llamadas (..._WasCalled, ..._CallCount) para facilitar las aserciones en las pruebas. Los mocks deben ser reutilizables entre diferentes pruebas y suites.
+NOTA CRÍTICA: Nuestros mocks inteligentes (como CMockConfig) se configuran usando métodos de preparación (ej. .AddSetting), no asignando valores a propiedades ..._ReturnValue. El patrón correcto es mockConfig.AddSetting "CLAVE", valor en lugar de mockConfig.Propiedad_ReturnValue = valor.
 Acción Correctiva: Implementar clases mock completas para todas las interfaces del sistema, incluyendo variables privadas para almacenar configuraciones, métodos públicos para configurar valores de retorno, propiedades de seguimiento de llamadas, métodos Reset para limpiar el estado entre pruebas, y la implementación completa de todos los métodos de la interfaz correspondiente.
 
 Lección 23: Las Auditorías de Calidad de Pruebas Verifican el Aislamiento
@@ -218,3 +260,20 @@ Acción Correctiva: Revisar todo el código que declara variables de objeto para
 Observación: La gestión manual de cambios en el esquema y datos de la base de datos genera inconsistencias entre entornos, pérdida de trazabilidad de cambios, y dificultades para revertir modificaciones problemáticas. Los cambios manuales directos en la base de datos rompen el principio de versionado y automatización que rige el resto del proyecto.
 Regla Inquebrantable: La base de datos debe tratarse como un artefacto más del proyecto que puede ser versionado, automatizado y gestionado a través de scripts. Todos los cambios en el esquema (CREATE, ALTER, DROP) y en los datos de configuración (INSERT, UPDATE, DELETE) deben realizarse exclusivamente a través de scripts SQL versionados y ejecutados mediante herramientas automatizadas.
 Acción Correctiva: Implementar herramientas CLI que permitan ejecutar scripts SQL de forma automatizada y transaccional. Crear un repositorio de scripts SQL organizados por versiones o funcionalidades. Establecer un flujo de trabajo donde los cambios de base de datos se propongan, revisen y apliquen a través de scripts, no mediante modificaciones manuales. Esto garantiza la reproducibilidad, trazabilidad y consistencia de los cambios de base de datos entre todos los entornos del proyecto.
+
+## Lección 33: Identificar y Replicar el "Estándar de Oro"
+Observación: A lo largo del desarrollo, han surgido implementaciones que no solo son correctas, sino que representan la expresión ideal de nuestra arquitectura. Estos módulos, como CSolicitudService y su suite de pruebas, se convierten en el "Estándar de Oro".
+
+Regla Inquebrantable: Cuando se identifica un módulo o patrón como "Estándar de Oro", debe ser utilizado como la plantilla de referencia obligatoria para el desarrollo de todas las funcionalidades futuras de naturaleza similar. Ignorar estos patrones y reinventar la rueda introduce inconsistencias y reduce la calidad general del proyecto.
+
+Acción Correctiva: El Arquitecto (CONDOR-Expert) es responsable de identificar estos patrones de excelencia. Todos los prompts proactivos de refactorización deben instruir a Copilot para que tome estos módulos "Estándar de Oro" como base, asegurando que las mejores prácticas se repliquen de manera consistente en toda la base de código.
+
+## Lección 35: El Principio de Responsabilidad Única se Aplica a Todas las Clases
+
+Observación: Los errores de compilación como "ShowReport no existe" en modTestRunner revelan violaciones del Principio de Responsabilidad Única. Cuando una clase intenta realizar tareas que no son su responsabilidad principal, se generan dependencias incorrectas y métodos inexistentes. CTestReporter es un ejemplo perfecto: su responsabilidad es Generar reportes, no Mostrarlos.
+
+Regla Inquebrantable: Cada clase debe tener un único propósito bien definido y claramente delimitado. CTestReporter debe limitarse a generar reportes como strings a través de su método GenerateReport(). Mostrar esos reportes al usuario (mediante MsgBox, formularios, o archivos) es responsabilidad de la capa de presentación, no del reportero. Esta separación permite reutilizar el reportero en diferentes contextos (CLI, UI, archivos) sin modificar su código.
+
+Acción Correctiva: Auditar todas las clases del proyecto para verificar que cada una tenga una responsabilidad única y bien definida. Refactorizar cualquier clase que intente realizar múltiples responsabilidades, separando la lógica en clases especializadas. En el caso específico de CTestReporter, eliminar cualquier método de presentación (ShowReport) y mantener únicamente la generación de reportes (GenerateReport). La capa de presentación debe ser responsable de tomar el string generado y mostrarlo según el contexto apropiado.
+
+Caso Crítico - CTestReporter (2024): La clase CTestReporter violaba el Principio de Responsabilidad Única al intentar tanto generar como mostrar reportes. La corrección implicó: 1) Eliminar el método ShowReport inexistente, 2) Usar únicamente GenerateReport() para obtener el reporte como string, 3) Delegar la presentación a la capa apropiada (MsgBox en RunTestFramework). Esta separación permite que CTestReporter sea reutilizable en CLI, UI y otros contextos sin modificaciones.

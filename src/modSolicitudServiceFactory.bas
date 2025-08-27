@@ -1,6 +1,7 @@
 ﻿Attribute VB_Name = "modSolicitudServiceFactory"
 Option Compare Database
 Option Explicit
+
 '******************************************************************************
 ' MÓDULO: modSolicitudServiceFactory
 ' DESCRIPCIÓN: Factory para la inyección de dependencias del servicio de solicitudes
@@ -17,15 +18,15 @@ Option Explicit
 ' DESCRIPCIÓN: Crea una instancia del servicio de solicitudes con todas sus dependencias
 ' RETORNA: ISolicitudService - Instancia del servicio completamente inicializada
 '******************************************************************************
-Public Function CreateSolicitudService() As ISolicitudService
+Public Function CreateSolicitudService(ByVal errorHandler As IErrorHandlerService) As ISolicitudService
     On Error GoTo ErrorHandler
     
     ' Obtener todas las dependencias necesarias
     Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
+    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository(errorHandler)
     
     Dim operationLogger As IOperationLogger
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
     
     ' Crear la instancia del servicio
     Dim serviceInstance As New CSolicitudService
@@ -38,8 +39,7 @@ Public Function CreateSolicitudService() As ISolicitudService
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError Err.Number, Err.Description, "modSolicitudServiceFactory.CreateSolicitudService"
     Set CreateSolicitudService = Nothing
 End Function
+

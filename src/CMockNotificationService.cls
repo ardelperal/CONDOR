@@ -1,10 +1,20 @@
-﻿Option Compare Database
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockNotificationService"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 
 #If DEV_MODE Then
 
 ' CMockNotificationService.cls
-' Mock del servicio de notificaciones para pruebas unitarias
+' Mock del servicio de notificaciones para pruebas de integración
 ' Simula el comportamiento de CNotificationService sin acceder a bases de datos externas
 
 
@@ -23,15 +33,15 @@ Public ValorRetorno As Boolean
 ' Constructor
 Private Sub Class_Initialize()
     ' Inicializar valores por defecto
-    Me.LimpiarHistorial
+    Me.Reset
     SimularError = False
     ValorRetorno = True
 End Sub
 
 
 
-' MÃ©todo para limpiar el historial de llamadas
-Public Sub LimpiarHistorial()
+' Método para limpiar el historial de llamadas
+Public Sub Reset()
     UltimaLlamada_Destinatarios = ""
     UltimaLlamada_Asunto = ""
     UltimaLlamada_CuerpoHTML = ""
@@ -39,7 +49,7 @@ Public Sub LimpiarHistorial()
     NumeroLlamadas = 0
 End Sub
 
-' ImplementaciÃ³n mock del mÃ©todo EnviarNotificacion
+' Implementación mock del método EnviarNotificacion
 Private Function INotificationService_EnviarNotificacion( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
@@ -50,13 +60,13 @@ Private Function INotificationService_EnviarNotificacion( _
     ' Incrementar contador de llamadas
     NumeroLlamadas = NumeroLlamadas + 1
     
-    ' Guardar parÃ¡metros de la Ãºltima llamada
+    ' Guardar parámetros de la última llamada
     UltimaLlamada_Destinatarios = destinatarios
     UltimaLlamada_Asunto = asunto
     UltimaLlamada_CuerpoHTML = cuerpoHTML
     UltimaLlamada_URLAdjunto = urlAdjunto
     
-    ' Simular error si estÃ¡ configurado
+    ' Simular error si está configurado
     If SimularError Then
         Err.Raise 9999, "CMockNotificationService", "Error simulado para pruebas"
     End If
@@ -65,18 +75,18 @@ Private Function INotificationService_EnviarNotificacion( _
     INotificationService_EnviarNotificacion = ValorRetorno
 End Function
 
-' ImplementaciÃ³n pÃºblica del mÃ©todo EnviarNotificacion
+' Implementación pública del método EnviarNotificacion
 Public Function EnviarNotificacion( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
-    ' Delegar a la implementaciÃ³n de la interfaz
+    ' Delegar a la implementación de la interfaz
     EnviarNotificacion = INotificationService_EnviarNotificacion(destinatarios, asunto, cuerpoHTML, urlAdjunto)
 End Function
 
-' MÃ©todo helper para verificar si se llamÃ³ con parÃ¡metros especÃ­ficos
+' Método helper para verificar si se llamó con parámetros específicos
 Public Function FueLlamadoCon( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
@@ -91,6 +101,9 @@ Public Function FueLlamadoCon( _
 End Function
 
 #End If
+
+
+
 
 
 

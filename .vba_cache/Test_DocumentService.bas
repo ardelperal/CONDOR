@@ -1,5 +1,7 @@
+Attribute VB_Name = "Test_DocumentService"
 Option Compare Database
 Option Explicit
+
 ' ============================================================================
 ' Módulo: Test_DocumentService
 ' Descripción: Suite de pruebas unitarias para DocumentService
@@ -46,13 +48,13 @@ Private Function Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorre
     Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Configurar mocks
-    mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
-    mockConfig.GetGeneratedDocsPath_ReturnValue = "C:\Generated"
-    mockConfig.IsTestMode_ReturnValue = True
+    mockConfig.AddSetting "PLANTILLA_PATH", "C:\Templates"
+    mockConfig.AddSetting "GENERATED_DOCS_PATH", "C:\Generated"
+    mockConfig.AddSetting "IS_TEST_MODE", True
     
-    mockWordManager.AbrirDocumento_ReturnValue = True
-    mockWordManager.ReemplazarTexto_ReturnValue = True
-    mockWordManager.GuardarDocumento_ReturnValue = True
+    mockWordManager.AddSetting "ABRIR_DOCUMENTO", True
+    mockWordManager.AddSetting "REEMPLAZAR_TEXTO", True
+    mockWordManager.AddSetting "GUARDAR_DOCUMENTO", True
     
     ' Crear solicitud de prueba
     Dim solicitud As T_Solicitud
@@ -64,27 +66,27 @@ Private Function Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorre
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
-    Dim resultado As String
-    resultado = docService.GenerarDocumento(solicitud)
+    Dim Resultado As String
+    Resultado = docService.GenerarDocumento(solicitud)
     
     ' Assert
-    If resultado = "" Then
+    If Resultado = "" Then
         testResult.Fail "No se generó el documento"
         GoTo Cleanup
     End If
     
     If Not mockWordManager.AbrirDocumento_WasCalled Then
-        testResult.Fail "No se llamó a AbrirDocumento"
+        testResult.Fail "No se llamó a AbrirDocumento del WordManager"
         GoTo Cleanup
     End If
     
     If Not mockWordManager.GuardarDocumento_WasCalled Then
-        testResult.Fail "No se llamó a GuardarDocumento"
+        testResult.Fail "No se llamó a GuardarDocumento del WordManager"
         GoTo Cleanup
     End If
     
     If Not mockWordManager.CerrarDocumento_WasCalled Then
-        testResult.Fail "No se llamó a CerrarDocumento"
+        testResult.Fail "No se llamó a CerrarDocumento del WordManager"
         GoTo Cleanup
     End If
     
@@ -120,9 +122,9 @@ Private Function Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCaden
     Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Configurar mocks para simular error
-    mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
-    mockConfig.IsTestMode_ReturnValue = False ' Para que verifique existencia
-    mockWordManager.AbrirDocumento_ReturnValue = False ' Simular fallo
+    mockConfig.AddSetting "PLANTILLA_PATH", "C:\Templates"
+    mockConfig.AddSetting "IS_TEST_MODE", False ' Para que verifique existencia
+    mockWordManager.AddSetting "ABRIR_DOCUMENTO", False ' Simular fallo
     
     ' Crear solicitud de prueba
     Dim solicitud As T_Solicitud
@@ -134,11 +136,11 @@ Private Function Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCaden
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
-    Dim resultado As String
-    resultado = docService.GenerarDocumento(solicitud)
+    Dim Resultado As String
+    Resultado = docService.GenerarDocumento(solicitud)
     
     ' Assert
-    If resultado <> "" Then
+    If Resultado <> "" Then
         testResult.Fail "Debería haber retornado cadena vacía"
     Else
         testResult.Pass
@@ -174,10 +176,10 @@ Private Function Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaV
     Dim mockMapeoRepository As New CMockMapeoRepository
     
     ' Configurar mocks
-    mockConfig.GetPlantillaPath_ReturnValue = "C:\Templates"
-    mockConfig.IsTestMode_ReturnValue = True
-    mockWordManager.AbrirDocumento_ReturnValue = True
-    mockWordManager.GuardarDocumento_ReturnValue = False ' Simular fallo al guardar
+    mockConfig.AddSetting "PLANTILLA_PATH", "C:\Templates"
+    mockConfig.AddSetting "IS_TEST_MODE", True
+    mockWordManager.AddSetting "ABRIR_DOCUMENTO", True
+    mockWordManager.AddSetting "GUARDAR_DOCUMENTO", False ' Simular fallo al guardar
     
     ' Crear solicitud de prueba
     Dim solicitud As T_Solicitud
@@ -189,11 +191,11 @@ Private Function Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaV
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
-    Dim resultado As String
-    resultado = docService.GenerarDocumento(solicitud)
+    Dim Resultado As String
+    Resultado = docService.GenerarDocumento(solicitud)
     
     ' Assert
-    If resultado <> "" Then
+    If Resultado <> "" Then
         testResult.Fail "Debería haber retornado cadena vacía"
     Else
         testResult.Pass
@@ -237,24 +239,24 @@ Private Function Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud()
     solicitudMock.idSolicitud = 123
     solicitudMock.tipoSolicitud = "Permiso"
     
-    mockRepository.GetSolicitudById_ReturnValue = solicitudMock
-    mockRepository.SetSaveSolicitudReturnValue 1
-    mockWordManager.LeerContenidoDocumento_ReturnValue = "[nombre]Juan Pérez[/nombre][fecha]2025-01-01[/fecha]"
+    mockRepository.AddSetting "GET_SOLICITUD_BY_ID", solicitudMock
+    mockRepository.AddSetting "SAVE_SOLICITUD", 1
+    mockWordManager.AddSetting "LEER_CONTENIDO_DOCUMENTO", "[nombre]Juan Pérez[/nombre][fecha]2025-01-01[/fecha]"
     
     ' Inicializar servicio
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
-    Dim resultado As Boolean
-    resultado = docService.LeerDocumento("C:\test.docx", 123)
+    Dim Resultado As Boolean
+    Resultado = docService.LeerDocumento("C:\test.docx", 123)
     
     ' Assert
-    If Not resultado Then
+    If Not Resultado Then
         testResult.Fail "Fallo al leer documento"
         GoTo Cleanup
     End If
     
-    If Not mockRepository.GetSolicitudById_WasCalled Then
+    If Not mockRepository.GetSolicitudByIdCalled Then
         testResult.Fail "No se llamó a GetSolicitudById del repositorio"
         GoTo Cleanup
     End If
@@ -299,18 +301,18 @@ Private Function Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse() 
     Dim solicitudMock As New T_Solicitud
     solicitudMock.idSolicitud = 123
     
-    mockRepository.GetSolicitudById_ReturnValue = solicitudMock
-    mockWordManager.LeerContenidoDocumento_ReturnValue = "" ' Simular fallo
+    mockRepository.AddSetting "GET_SOLICITUD_BY_ID", solicitudMock
+    mockWordManager.AddSetting "LEER_CONTENIDO_DOCUMENTO", "" ' Simular fallo
     
     ' Inicializar servicio
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository
     
     ' Act
-    Dim resultado As Boolean
-    resultado = docService.LeerDocumento("C:\inexistente.docx", 123)
+    Dim Resultado As Boolean
+    Resultado = docService.LeerDocumento("C:\inexistente.docx", 123)
     
     ' Assert
-    If resultado Then
+    If Resultado Then
         testResult.Fail "Debería haber retornado False"
     Else
         testResult.Pass
@@ -370,3 +372,5 @@ ErrorHandler:
     testResult.Fail "Error inesperado durante inicialización: " & Err.Description
     Resume Cleanup
 End Function
+
+

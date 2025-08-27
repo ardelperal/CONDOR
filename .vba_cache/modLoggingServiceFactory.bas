@@ -1,4 +1,7 @@
-Attribute VB_Name = "modLoggingServiceFactory"
+﻿Attribute VB_Name = "modLoggingServiceFactory"
+Option Compare Database
+Option Explicit
+
 '******************************************************************************
 ' Módulo: modLoggingServiceFactory
 ' Propósito: Factory para crear instancias de ILoggingService con inyección de dependencias
@@ -6,8 +9,6 @@ Attribute VB_Name = "modLoggingServiceFactory"
 ' Fecha: 2025-01-21
 '******************************************************************************
 
-Option Compare Database
-Option Explicit
 
 '******************************************************************************
 ' FUNCIONES PÚBLICAS
@@ -15,7 +16,7 @@ Option Explicit
 
 ' Crea una instancia completamente configurada de ILoggingService
 ' Retorna: Instancia de ILoggingService lista para usar
-Public Function CreateLoggingService() As ILoggingService
+Public Function CreateLoggingService(ByVal errorHandler As IErrorHandlerService) As ILoggingService
     On Error GoTo ErrorHandler
     
     Dim service As CLoggingService
@@ -23,8 +24,8 @@ Public Function CreateLoggingService() As ILoggingService
     Dim fileSystem As IFileSystem
     
     ' Crear las dependencias
-    Set config = modConfig.CreateConfigService()
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    Set config = modConfig.CreateConfigService(errorHandler)
+    Set fileSystem = modFileSystemFactory.CreateFileSystem(errorHandler)
     
     ' Crear el servicio
     Set service = New CLoggingService
@@ -38,8 +39,7 @@ Public Function CreateLoggingService() As ILoggingService
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError Err.Number, Err.Description, "modLoggingServiceFactory.CreateLoggingService"
     Set CreateLoggingService = Nothing
 End Function
+

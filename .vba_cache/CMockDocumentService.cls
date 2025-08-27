@@ -1,18 +1,28 @@
-﻿Option Compare Database
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockDocumentService"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 ' ============================================================================
 ' Clase: CMockDocumentService
-' DescripciÃ³n: Mock del servicio de documentos para pruebas unitarias aisladas.
+' Descripción: Mock del servicio de documentos para pruebas unitarias aisladas.
 ' Implementa: IDocumentService
 ' Autor: CONDOR-Expert
 ' Fecha: 2025-08-22
-' VersiÃ³n: 1.0
+' Versión: 1.0
 ' ============================================================================
 
 Implements IDocumentService
 
 ' ============================================================================
-' PROPIEDADES PÃšBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
+' PROPIEDADES PÚBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
 ' ============================================================================
 
 ' Propiedades para GenerarDocumento
@@ -29,7 +39,7 @@ Public LeerDocumento_LastRutaDocumento As String
 Public LeerDocumento_LastIdSolicitud As Long
 
 ' ============================================================================
-' MÃ‰TODOS PÃšBLICOS PARA GESTIÃ“N DEL MOCK
+' MÉTODOS PÚBLICOS PARA GESTIÓN DEL MOCK
 ' ============================================================================
 
 ' Reinicia todas las propiedades del mock a sus valores por defecto
@@ -49,7 +59,7 @@ Public Sub Reset()
 End Sub
 
 ' ============================================================================
-' IMPLEMENTACIÃ“N DE LA INTERFAZ IDocumentService
+' IMPLEMENTACIÓN DE LA INTERFAZ IDocumentService
 ' ============================================================================
 
 Private Function IDocumentService_GenerarDocumento(ByVal laSolicitud As T_Solicitud) As String
@@ -66,3 +76,19 @@ Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, B
     LeerDocumento_LastIdSolicitud = idSolicitud
     IDocumentService_LeerDocumento = LeerDocumento_ReturnValue
 End Function
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
+' ============================================================================
+
+' Método público de conveniencia para GenerarDocumento
+Public Function GenerarDocumento(ByVal solicitud As T_Solicitud) As String
+    GenerarDocumento = IDocumentService_GenerarDocumento(solicitud)
+End Function
+
+' Método público de conveniencia para LeerDocumento
+Public Function LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
+    LeerDocumento = IDocumentService_LeerDocumento(rutaDocumento, idSolicitud)
+End Function
+
+

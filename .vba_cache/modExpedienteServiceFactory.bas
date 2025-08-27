@@ -1,5 +1,7 @@
-﻿Option Compare Database
+﻿Attribute VB_Name = "modExpedienteServiceFactory"
+Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' MODULO: modExpedienteServiceFactory
@@ -9,7 +11,7 @@ Option Explicit
 ' =====================================================
 
 ' Función factory para crear y configurar el servicio de expedientes
-Public Function CreateExpedienteService() As IExpedienteService
+Public Function CreateExpedienteService(ByVal errorHandler As IErrorHandlerService) As IExpedienteService
     On Error GoTo ErrorHandler
     
     ' Obtener todas las dependencias requeridas
@@ -17,9 +19,9 @@ Public Function CreateExpedienteService() As IExpedienteService
     Dim m_OperationLogger As IOperationLogger
     Dim m_ExpedienteRepository As IExpedienteRepository
     
-    Set m_Config = modConfig.CreateConfigService()
-    Set m_OperationLogger = modOperationLoggerFactory.CreateOperationLogger()
-    Set m_ExpedienteRepository = modRepositoryFactory.CreateExpedienteRepository()
+    Set m_Config = modConfig.CreateConfigService(errorHandler)
+    Set m_OperationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
+    Set m_ExpedienteRepository = modRepositoryFactory.CreateExpedienteRepository(errorHandler)
     
     ' Crear una instancia de la clase concreta
     Dim expedienteServiceInstance As New CExpedienteService
@@ -33,8 +35,7 @@ Public Function CreateExpedienteService() As IExpedienteService
     Exit Function
     
 ErrorHandler:
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     errorHandler.LogError Err.Number, Err.Description, "modExpedienteServiceFactory.CreateExpedienteService"
     Set CreateExpedienteService = Nothing
 End Function
+

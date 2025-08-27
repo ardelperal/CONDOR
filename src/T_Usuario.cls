@@ -1,5 +1,15 @@
-﻿Option Compare Database
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "T_Usuario"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
 Option Explicit
+
 '******************************************************************************
 ' CLASE: T_Usuario
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de usuarios del sistema
@@ -118,7 +128,7 @@ End Function
 
 ' Determina si el usuario tiene permisos de administrador
 Public Function TienePermisosAdmin() As Boolean
-    TienePermisosAdmin = (EsAdministrador Or Rol = Rol_Admin)
+    TienePermisosAdmin = (EsAdministrador Or Rol = ROL_ADMINISTRADOR)
 End Function
 
 ' Determina si el usuario puede crear solicitudes
@@ -132,6 +142,9 @@ Public Function PuedeConsultarSolicitudes() As Boolean
                                 EsUsuarioCalidad Or Rol = Rol_Calidad Or _
                                 TienePermisosAdmin())
 End Function
+
+
+
 
 
 

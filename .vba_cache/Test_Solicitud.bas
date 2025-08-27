@@ -1,6 +1,7 @@
-Attribute VB_Name = "Test_Solicitud"
+﻿Attribute VB_Name = "Test_Solicitud"
 Option Compare Database
 Option Explicit
+
 
 #If DEV_MODE Then
 
@@ -17,7 +18,7 @@ Option Explicit
 ' FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
 ' ============================================================================
 
-Public Function RunAllTests() As CTestSuiteResult
+Public Function Test_Solicitud_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "Test_Solicitud - Pruebas Unitarias CSolicitudService"
     
@@ -30,7 +31,7 @@ Public Function RunAllTests() As CTestSuiteResult
     suiteResult.AddTestResult Test_SaveSolicitud_ConSolicitudNula_DebeLanzarError()
     suiteResult.AddTestResult Test_SaveSolicitud_SinInicializar_DebeLanzarError()
     
-    Set RunAllTests = suiteResult
+    Set Test_Solicitud_RunAll = suiteResult
 End Function
 
 ' ============================================================================
@@ -45,7 +46,7 @@ Private Function Test_CreateSolicitud_ConParametrosValidos_DebeCrearSolicitudCon
     
     ' Arrange
     Dim solicitudService As ISolicitudService
-    Set solicitudService = New CSolicitudService
+    Dim solicitudServiceImpl As New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
@@ -53,35 +54,36 @@ Private Function Test_CreateSolicitud_ConParametrosValidos_DebeCrearSolicitudCon
     mockRepository.SetSaveSolicitudReturnValue 123 ' ID de la nueva solicitud
     
     ' Inicializar servicio con dependencias
-    solicitudService.Initialize mockRepository, mockLogger
+    solicitudServiceImpl.Initialize mockRepository, mockLogger
+    Set solicitudService = solicitudServiceImpl
     
     ' Act
-    Dim resultado As T_Solicitud
-    Set resultado = solicitudService.CreateSolicitud("EXP-2024-001", "PC")
+    Dim Resultado As T_Solicitud
+    Set Resultado = solicitudService.CreateSolicitud("EXP-2024-001", "PC")
     
     ' Assert
-    If resultado Is Nothing Then
+    If Resultado Is Nothing Then
         testResult.Fail "El resultado no debe ser Nothing"
         GoTo Cleanup
     End If
     
-    If resultado.idSolicitud <> 123 Then
-        testResult.Fail "El ID de la solicitud debe ser 123, pero fue " & resultado.idSolicitud
+    If Resultado.idSolicitud <> 123 Then
+        testResult.Fail "El ID de la solicitud debe ser 123, pero fue " & Resultado.idSolicitud
         GoTo Cleanup
     End If
     
-    If resultado.idExpediente <> "EXP-2024-001" Then
-        testResult.Fail "El ID del expediente debe ser 'EXP-2024-001', pero fue '" & resultado.idExpediente & "'"
+    If Resultado.idExpediente <> "EXP-2024-001" Then
+        testResult.Fail "El ID del expediente debe ser 'EXP-2024-001', pero fue '" & Resultado.idExpediente & "'"
         GoTo Cleanup
     End If
     
-    If resultado.tipoSolicitud <> "PC" Then
-        testResult.Fail "El tipo de solicitud debe ser 'PC', pero fue '" & resultado.tipoSolicitud & "'"
+    If Resultado.tipoSolicitud <> "PC" Then
+        testResult.Fail "El tipo de solicitud debe ser 'PC', pero fue '" & Resultado.tipoSolicitud & "'"
         GoTo Cleanup
     End If
     
-    If resultado.idEstadoInterno <> 1 Then
-        testResult.Fail "El estado interno debe ser ID 1 (Borrador), pero fue '" & resultado.idEstadoInterno & "'"
+    If Resultado.idEstadoInterno <> 1 Then
+        testResult.Fail "El estado interno debe ser ID 1 (Borrador), pero fue '" & Resultado.idEstadoInterno & "'"
         GoTo Cleanup
     End If
     
@@ -99,7 +101,7 @@ Private Function Test_CreateSolicitud_ConParametrosValidos_DebeCrearSolicitudCon
     
 Cleanup:
     mockRepository.Reset
-    mockLogger.ClearLog
+    mockLogger.Reset
     Set Test_CreateSolicitud_ConParametrosValidos_DebeCrearSolicitudConEstadoBorrador = testResult
     Exit Function
     
@@ -116,19 +118,20 @@ Private Function Test_CreateSolicitud_ConIdExpedienteVacio_DebeLanzarError() As 
     
     ' Arrange
     Dim solicitudService As ISolicitudService
-    Set solicitudService = New CSolicitudService
+    Dim solicitudServiceImpl As New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
-    solicitudService.Initialize mockRepository, mockLogger
+    solicitudServiceImpl.Initialize mockRepository, mockLogger
+    Set solicitudService = solicitudServiceImpl
     
     ' Act & Assert
     Dim errorOcurred As Boolean
     errorOcurred = False
     
     On Error Resume Next
-    Dim resultado As T_Solicitud
-    Set resultado = solicitudService.CreateSolicitud("", "PC")
+    Dim Resultado As T_Solicitud
+    Set Resultado = solicitudService.CreateSolicitud("", "PC")
     If Err.Number <> 0 Then errorOcurred = True
     On Error GoTo ErrorHandler
     
@@ -141,7 +144,7 @@ Private Function Test_CreateSolicitud_ConIdExpedienteVacio_DebeLanzarError() As 
     
 Cleanup:
     mockRepository.Reset
-    mockLogger.ClearLog
+    mockLogger.Reset
     Set Test_CreateSolicitud_ConIdExpedienteVacio_DebeLanzarError = testResult
     Exit Function
     
@@ -158,20 +161,21 @@ Private Function Test_CreateSolicitud_ConTipoVacio_DebeLanzarError() As CTestRes
     
     ' Arrange
     Dim solicitudService As ISolicitudService
-    Set solicitudService = New CSolicitudService
+    Dim solicitudServiceImpl As New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
     ' Inicializar servicio con dependencias
-    solicitudService.Initialize mockRepository, mockLogger
+    solicitudServiceImpl.Initialize mockRepository, mockLogger
+    Set solicitudService = solicitudServiceImpl
     
     ' Act & Assert
     Dim errorOcurred As Boolean
     errorOcurred = False
     
     On Error Resume Next
-    Dim resultado As T_Solicitud
-    Set resultado = solicitudService.CreateSolicitud("EXP-2024-001", "")
+    Dim Resultado As T_Solicitud
+    Set Resultado = solicitudService.CreateSolicitud("EXP-2024-001", "")
     If Err.Number <> 0 Then errorOcurred = True
     On Error GoTo ErrorHandler
     
@@ -184,7 +188,7 @@ Private Function Test_CreateSolicitud_ConTipoVacio_DebeLanzarError() As CTestRes
     
 Cleanup:
     mockRepository.Reset
-    mockLogger.ClearLog
+    mockLogger.Reset
     Set Test_CreateSolicitud_ConTipoVacio_DebeLanzarError = testResult
     Exit Function
     
@@ -201,16 +205,17 @@ Private Function Test_CreateSolicitud_SinInicializar_DebeLanzarError() As CTestR
     
     ' Arrange
     Dim solicitudService As ISolicitudService
-    Set solicitudService = New CSolicitudService
+    Dim solicitudServiceImpl As New CSolicitudService
     ' No inicializar el servicio
+    Set solicitudService = solicitudServiceImpl
     
     ' Act & Assert
     Dim errorOcurred As Boolean
     errorOcurred = False
     
     On Error Resume Next
-    Dim resultado As T_Solicitud
-    Set resultado = solicitudService.CreateSolicitud("EXP-2024-001", "PC")
+    Dim Resultado As T_Solicitud
+    Set Resultado = solicitudService.CreateSolicitud("EXP-2024-001", "PC")
     If Err.Number <> 0 Then errorOcurred = True
     On Error GoTo ErrorHandler
     
@@ -242,7 +247,7 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
     
     ' Arrange
     Dim solicitudService As ISolicitudService
-    Set solicitudService = New CSolicitudService
+    Dim solicitudServiceImpl As New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
@@ -250,7 +255,8 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
     mockRepository.SetSaveSolicitudReturnValue 456 ' ID exitoso
     
     ' Inicializar servicio con dependencias
-    solicitudService.Initialize mockRepository, mockLogger
+    solicitudServiceImpl.Initialize mockRepository, mockLogger
+    Set solicitudService = solicitudServiceImpl
     
     ' Crear solicitud de prueba
     Dim solicitud As New T_Solicitud
@@ -264,11 +270,11 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
     End With
     
     ' Act
-    Dim resultado As Boolean
-    resultado = solicitudService.SaveSolicitud(solicitud)
+    Dim Resultado As Boolean
+    Resultado = solicitudService.SaveSolicitud(solicitud)
     
     ' Assert
-    If Not resultado Then
+    If Not Resultado Then
         testResult.Fail "SaveSolicitud debe retornar True para una solicitud válida"
         GoTo Cleanup
     End If
@@ -297,7 +303,7 @@ Private Function Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModifi
     
 Cleanup:
     mockRepository.Reset
-    mockLogger.ClearLog
+    mockLogger.Reset
     Set Test_SaveSolicitud_ConSolicitudValida_DebeActualizarFechaModificacion = testResult
     Exit Function
     
@@ -314,19 +320,20 @@ Private Function Test_SaveSolicitud_ConSolicitudNula_DebeLanzarError() As CTestR
     
     ' Arrange
     Dim solicitudService As ISolicitudService
-    Set solicitudService = New CSolicitudService
+    Dim solicitudServiceImpl As New CSolicitudService
     Dim mockRepository As New CMockSolicitudRepository
     Dim mockLogger As New CMockOperationLogger
     
-    solicitudService.Initialize mockRepository, mockLogger
+    solicitudServiceImpl.Initialize mockRepository, mockLogger
+    Set solicitudService = solicitudServiceImpl
     
     ' Act & Assert
     Dim errorOcurred As Boolean
     errorOcurred = False
     
     On Error Resume Next
-    Dim resultado As Boolean
-    resultado = solicitudService.SaveSolicitud(Nothing)
+    Dim Resultado As Boolean
+    Resultado = solicitudService.SaveSolicitud(Nothing)
     If Err.Number <> 0 Then errorOcurred = True
     On Error GoTo ErrorHandler
     
@@ -339,7 +346,7 @@ Private Function Test_SaveSolicitud_ConSolicitudNula_DebeLanzarError() As CTestR
     
 Cleanup:
     mockRepository.Reset
-    mockLogger.ClearLog
+    mockLogger.Reset
     Set Test_SaveSolicitud_ConSolicitudNula_DebeLanzarError = testResult
     Exit Function
     
@@ -356,8 +363,9 @@ Private Function Test_SaveSolicitud_SinInicializar_DebeLanzarError() As CTestRes
     
     ' Arrange
     Dim solicitudService As ISolicitudService
-    Set solicitudService = New CSolicitudService
+    Dim solicitudServiceImpl As New CSolicitudService
     ' No inicializar el servicio
+    Set solicitudService = solicitudServiceImpl
     
     Dim solicitud As New T_Solicitud
     solicitud.idSolicitud = 123
@@ -367,8 +375,8 @@ Private Function Test_SaveSolicitud_SinInicializar_DebeLanzarError() As CTestRes
     errorOcurred = False
     
     On Error Resume Next
-    Dim resultado As Boolean
-    resultado = solicitudService.SaveSolicitud(solicitud)
+    Dim Resultado As Boolean
+    Resultado = solicitudService.SaveSolicitud(solicitud)
     If Err.Number <> 0 Then errorOcurred = True
     On Error GoTo ErrorHandler
     
@@ -389,3 +397,4 @@ ErrorHandler:
 End Function
 
 #End If
+

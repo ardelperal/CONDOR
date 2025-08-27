@@ -1,8 +1,10 @@
-﻿' Test_AppManager.bas - Suite de Pruebas Unitarias para modAppManager
-' Refactorizado para usar pruebas unitarias aisladas con mocks
-
+Attribute VB_Name = "Test_AppManager"
 Option Compare Database
 Option Explicit
+
+' Test_AppManager.bas - Suite de Pruebas Unitarias para modAppManager
+' Refactorizado para usar pruebas unitarias aisladas con mocks
+
 
 #If DEV_MODE Then
 
@@ -37,17 +39,19 @@ Private Function Test_App_Start_AdminUser_SetsCorrectGlobalRole() As CTestResult
     
     ' Arrange
     Dim mockAuthService As New CMockAuthService
-    mockAuthService.SetMockUserRole Rol_Admin
+    mockAuthService.SetMockUserRole ROL_ADMINISTRADOR
     modAuthFactory.SetMockAuthService mockAuthService
     
+    Dim mockErrorHandler As New CMockErrorHandlerService
+    
     ' Act
-    modAppManager.App_Start
+    modAppManager.App_Start mockErrorHandler, "admin@test.com"
     
     ' Assert
-    If modAppManager.g_CurrentUserRole = Rol_Admin Then
+    If modAppManager.g_CurrentUserRole = ROL_ADMINISTRADOR Then
         testResult.Pass
     Else
-        testResult.Fail "Expected g_CurrentUserRole to be Rol_Admin, but was " & modAppManager.g_CurrentUserRole
+        testResult.Fail "Expected g_CurrentUserRole to be Rol_Administrador, but was " & modAppManager.g_CurrentUserRole
     End If
     
     ' CleanUp
@@ -73,8 +77,10 @@ Private Function Test_App_Start_CalidadUser_SetsCorrectGlobalRole() As CTestResu
     mockAuthService.SetMockUserRole Rol_Calidad
     modAuthFactory.SetMockAuthService mockAuthService
     
+    Dim mockErrorHandler As New CMockErrorHandlerService
+    
     ' Act
-    modAppManager.App_Start
+    modAppManager.App_Start mockErrorHandler, "calidad@test.com"
     
     ' Assert
     If modAppManager.g_CurrentUserRole = Rol_Calidad Then
@@ -106,8 +112,10 @@ Private Function Test_App_Start_TecnicoUser_SetsCorrectGlobalRole() As CTestResu
     mockAuthService.SetMockUserRole Rol_Tecnico
     modAuthFactory.SetMockAuthService mockAuthService
     
+    Dim mockErrorHandler As New CMockErrorHandlerService
+    
     ' Act
-    modAppManager.App_Start
+    modAppManager.App_Start mockErrorHandler, "tecnico@test.com"
     
     ' Assert
     If modAppManager.g_CurrentUserRole = Rol_Tecnico Then
@@ -139,8 +147,10 @@ Private Function Test_App_Start_DesconocidoUser_SetsCorrectGlobalRole() As CTest
     mockAuthService.SetMockUserRole Rol_Desconocido
     modAuthFactory.SetMockAuthService mockAuthService
     
+    Dim mockErrorHandler As New CMockErrorHandlerService
+    
     ' Act
-    modAppManager.App_Start
+    modAppManager.App_Start mockErrorHandler, "desconocido@test.com"
     
     ' Assert
     If modAppManager.g_CurrentUserRole = Rol_Desconocido Then
@@ -191,6 +201,8 @@ TestFail:
 End Function
 
 #End If
+
+
 
 
 

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' CLASE: CMockMapeoRepository
@@ -32,7 +33,7 @@ Public GetMapeoPorTipoCalled As Boolean
 Public LastTipoSolicitudRequested As String
 
 ' Valores de retorno configurables
-Public GetMapeoPorTipoReturnValue As DAO.Recordset
+Public GetMapeoPorTipoReturnValue As DAO.recordset
 
 ' Contadores
 Public GetMapeoPorTipoCallCount As Long
@@ -50,7 +51,7 @@ Public Sub Reset()
 End Sub
 
 ' Configura el Recordset que debe devolver GetMapeoPorTipo
-Public Sub SetGetMapeoPorTipoReturnValue(ByVal rs As DAO.Recordset)
+Public Sub SetGetMapeoPorTipoReturnValue(ByVal rs As DAO.recordset)
     Set GetMapeoPorTipoReturnValue = rs
 End Sub
 
@@ -59,7 +60,7 @@ End Sub
 ' ============================================================================
 
 ' Implementación mock de GetMapeoPorTipo
-Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
+Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.recordset
     ' Registrar la llamada
     GetMapeoPorTipoCalled = True
     GetMapeoPorTipoCallCount = GetMapeoPorTipoCallCount + 1
@@ -74,6 +75,7 @@ End Function
 ' ============================================================================
 
 ' Método público que delega a la implementación de la interfaz
-Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
+Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.recordset
     Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
 End Function
+

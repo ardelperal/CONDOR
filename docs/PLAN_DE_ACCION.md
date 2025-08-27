@@ -119,7 +119,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - [X] Sistema de interfaces y mocks para testing
 - [X] Servicios de autenticación y configuración
 - [X] Framework de testing completo con reportes
-- [X] Método manual de ejecución de pruebas (_EJECUTAR_TODAS_LAS_PRUEBAS)
+- [X] Método manual de ejecución de pruebas (EJECUTAR_TODAS_LAS_PRUEBAS)
 - [X] Sistema de sincronización discrecional de archivos (comando update optimizado)
 - [X] Sistema de logging de operaciones
 - [X] Factory para servicios de configuración
@@ -321,7 +321,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - ✅ **Módulo de Solicitudes implementado:** ISolicitud, CSolicitudPC, modSolicitudFactory con Factory Pattern
 - ✅ **Estructuras de datos de solicitudes:** T_Datos_PC, T_Datos_CD_CA, T_Datos_CD_CA_SUB implementadas
 - ✅ **Pruebas de solicitudes:** Test_Solicitudes con cobertura completa del módulo
-- ✅ **Sistema de testing manual:** Implementado método manual _EJECUTAR_TODAS_LAS_PRUEBAS
+- ✅ **Sistema de testing manual:** Implementado método manual EJECUTAR_TODAS_LAS_PRUEBAS
 - ✅ **Sistema de manejo de errores centralizado:** modErrorHandler.bas implementado con función LogError
 - ✅ **Integración de manejo de errores:** Refactorizado CAuthService, CExpedienteService y modDatabase para usar sistema centralizado
 - ✅ **Pruebas de manejo de errores:** Test_ErrorHandler.bas con cobertura completa del sistema de errores
