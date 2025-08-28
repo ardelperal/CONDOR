@@ -34,32 +34,32 @@ Para garantizar que la aplicación CONDOR sea robusta, mantenible y testeable, t
 
 ---
 
-### **CICLO DE TRABAJO ASISTIDO (SUPERVISOR + IA)**
+### **CICLOS DE TRABAJO DE DESARROLLO (MODO TDD AUTÓNOMO)**
 
-**Objetivo:** Combinar la velocidad de la IA con la supervisión humana en el punto crítico de la compilación para garantizar la estabilidad del proyecto.
+El desarrollo en CONDOR se rige por dos modos operativos, dependiendo del estado de compilación del proyecto. El objetivo final es operar siempre en el "Modo Estándar".
 
-**Proceso a Seguir para Cada Tarea:**
+---
+#### **MODO 1: CICLO DE ESTABILIZACIÓN (Prioridad: Compilar)**
 
-1. **Iniciativa (CONDOR-Architect):** El Arquitecto le proporciona al Supervisor un prompt detallado para la tarea.
-2. **Ejecución de IA (Tu Rol, Copilot):**
-   a. Recibes el prompt del Supervisor.
-   b. Generas el código necesario y ejecutas sincronización discrecional:
+*Este protocolo se activa automáticamente siempre que el proyecto **no compile**. Su único objetivo es alcanzar un estado de compilación exitoso.*
 
-   - `cscript //nologo condor_cli.vbs update [modulos]` para sincronizar módulos específicos (recomendado)
-   - `cscript //nologo condor_cli.vbs update` para sincronización automática optimizada (solo abre BD si hay cambios)
-   - `cscript //nologo condor_cli.vbs rebuild` únicamente para problemas graves de sincronización
-   
-   **Nota:** Los comandos `update` y `rebuild` incluyen conversión automática de codificación UTF-8 a ANSI para soporte completo de caracteres especiales (ñ, tildes).
-     c. **Ventaja de la Sincronización Discrecional:** Permite actualizar solo los archivos modificados, mejorando la eficiencia y reduciendo el riesgo de afectar módulos no relacionados.
-     d. Pausa y espera la confirmación del Supervisor.
-3. **Verificación Manual (Rol del Supervisor):**
-   a. El Supervisor abre CONDOR.accdb y ejecuta Depuración -> Compilar Proyecto.
-   b. Si hay un error, el ciclo se detiene y el Supervisor lo reporta al Arquitecto.
-   c. Si el proyecto compila, el Supervisor te da la orden para continuar.
-4. **Finalización de IA (Tu Rol, Copilot):**
-   a. Tras la confirmación del Supervisor, ejecutas la secuencia final: `cscript //nologo condor_cli.vbs compile` y luego `cscript //nologo condor_cli.vbs test`.
-   b. Si las pruebas pasan, preparas el commit y ejecutas el push.
-5. **Informe Final (Tu Rol, Copilot):** Notificas al Supervisor que la tarea se ha completado con éxito.
+1.  **Reporte de Error (Supervisor):** El Supervisor reporta el error de compilación exacto al Arquitecto mediante una captura de pantalla.
+2.  **Prompt de Corrección (Arquitecto):** El Arquitecto genera un prompt específico para la corrección del error. Si detecta un patrón, puede generar un prompt de refactorización proactiva.
+3.  **Sincronización (IA):** La IA ejecuta la corrección y sincroniza con `cscript //nologo condor_cli.vbs rebuild`.
+4.  **Verificación de Compilación (Supervisor):** El Supervisor compila manualmente en Access (`Depuración -> Compilar`).
+5.  **Bucle de Corrección:** Si la compilación falla, se vuelve al paso 1. **El comando `test` está prohibido durante este ciclo.**
+6.  **Fin del Ciclo:** Cuando el Supervisor informa **"Compilación exitosa"**, este modo se desactiva y se pasa al Modo 2 para la siguiente tarea.
+
+---
+#### **MODO 2: CICLO DE TRABAJO ESTÁNDAR (Prioridad: Funcionalidad y Pruebas)**
+
+*Este es el flujo de trabajo por defecto para desarrollar nuevas funcionalidades o realizar cambios en un proyecto **que ya compila**.*
+
+1.  **Iniciativa (Arquitecto):** El Arquitecto proporciona un prompt detallado para la nueva tarea.
+2.  **Desarrollo y Sincronización (IA):** La IA implementa la funcionalidad (idealmente TDD) y sincroniza con `cscript //nologo condor_cli.vbs update`.
+3.  **Verificación de Compilación (Supervisor):** El Supervisor realiza la compilación manual en Access para validar la integración del nuevo código. Si falla, se entra en el **MODO 1**.
+4.  **Ejecución de Pruebas (IA):** Tras la confirmación de compilación, la IA ejecuta la suite de pruebas completa con `cscript //nologo condor_cli.vbs test`.
+5.  **Commit (IA):** Si las pruebas pasan, la IA prepara y realiza el commit.
 
 ---
 
@@ -113,13 +113,13 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - [X] Herramienta CLI (condor_cli.vbs)
 - [X] Sistema de pruebas unitarias
 - [X] Sistema de pruebas de integración
-- [X] Refactorización del sistema de pruebas (eliminación comando test CLI, método manual implementado)
+- [X] Refactorización del sistema de pruebas (comando test CLI reactivado y robustecido)
 - [X] Documentación inicial (README.md)
 - [X] Arquitectura en 3 capas implementada
 - [X] Sistema de interfaces y mocks para testing
 - [X] Servicios de autenticación y configuración
 - [X] Framework de testing completo con reportes
-- [X] Método manual de ejecución de pruebas (EJECUTAR_TODAS_LAS_PRUEBAS)
+- [X] Ejecución automatizada de pruebas desde CLI (comando test con códigos de salida estándar)
 - [X] Sistema de sincronización discrecional de archivos (comando update optimizado)
 - [X] Sistema de logging de operaciones
 - [X] Factory para servicios de configuración
@@ -321,7 +321,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - ✅ **Módulo de Solicitudes implementado:** ISolicitud, CSolicitudPC, modSolicitudFactory con Factory Pattern
 - ✅ **Estructuras de datos de solicitudes:** T_Datos_PC, T_Datos_CD_CA, T_Datos_CD_CA_SUB implementadas
 - ✅ **Pruebas de solicitudes:** Test_Solicitudes con cobertura completa del módulo
-- ✅ **Sistema de testing manual:** Implementado método manual EJECUTAR_TODAS_LAS_PRUEBAS
+- ✅ **Sistema de testing automatizado:** Comando test CLI reactivado con ExecuteAllTestsForCLI() y códigos de salida estándar
 - ✅ **Sistema de manejo de errores centralizado:** modErrorHandler.bas implementado con función LogError
 - ✅ **Integración de manejo de errores:** Refactorizado CAuthService, CExpedienteService y modDatabase para usar sistema centralizado
 - ✅ **Pruebas de manejo de errores:** Test_ErrorHandler.bas con cobertura completa del sistema de errores

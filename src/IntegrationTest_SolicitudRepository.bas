@@ -133,13 +133,16 @@ Private Function Test_GetSolicitudById_Success() As CTestResult
     Setup
     
     ' Arrange - Configurar repositorio con base de datos de prueba
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    testConfig.SetSetting "DB_PASSWORD", ""
+    Dim tempConfig As New CConfig
+    tempConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    tempConfig.SetSetting "DB_PASSWORD", ""
+    
+    Dim config As IConfig
+    Set config = tempConfig
     
     ' Crear instancia del repositorio con dependencias
     Dim repository As New CSolicitudRepository
-    repository.Initialize testConfig
+    repository.Initialize config
     
     ' Act - Ejecutar el método a probar
     Dim result As T_Solicitud
@@ -156,7 +159,8 @@ Cleanup:
     Teardown
     Set result = Nothing
     Set repository = Nothing
-    Set testConfig = Nothing
+    Set tempConfig = Nothing
+    Set config = Nothing
     Exit Function
     
 ErrorHandler:
@@ -174,13 +178,16 @@ Private Function Test_GetSolicitudById_NotFound() As CTestResult
     Setup
     
     ' Arrange - Configurar repositorio con base de datos de prueba
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    testConfig.SetSetting "DB_PASSWORD", ""
+    Dim tempConfig As New CConfig
+    tempConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    tempConfig.SetSetting "DB_PASSWORD", ""
+    
+    Dim config As IConfig
+    Set config = tempConfig
     
     ' Crear instancia del repositorio con dependencias
     Dim repository As New CSolicitudRepository
-    repository.Initialize testConfig
+    repository.Initialize config
     
     ' Act - Ejecutar el método a probar con ID inexistente
     Dim result As T_Solicitud
@@ -195,7 +202,8 @@ Cleanup:
     Teardown
     Set result = Nothing
     Set repository = Nothing
-    Set testConfig = Nothing
+    Set tempConfig = Nothing
+    Set config = Nothing
     Exit Function
     
 ErrorHandler:
@@ -217,13 +225,16 @@ Private Function Test_SaveSolicitud_New() As CTestResult
     Setup
     
     ' Arrange - Configurar repositorio con base de datos de prueba
-     Dim testConfig As New CConfig
-     testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-     testConfig.SetSetting "DB_PASSWORD", ""
+     Dim tempConfig As New CConfig
+     tempConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+     tempConfig.SetSetting "DB_PASSWORD", ""
+    
+     Dim config As IConfig
+     Set config = tempConfig
     
     ' Crear instancia del repositorio con dependencias
      Dim repository As New CSolicitudRepository
-     repository.Initialize testConfig
+     repository.Initialize config
     
     ' Crear nueva solicitud para insertar
     Dim nuevaSolicitud As New T_Solicitud
@@ -266,7 +277,8 @@ Cleanup:
     Teardown
     Set nuevaSolicitud = Nothing
     Set repository = Nothing
-    Set testConfig = Nothing
+    Set tempConfig = Nothing
+    Set config = Nothing
     Exit Function
     
 ErrorHandler:
@@ -284,13 +296,16 @@ Private Function Test_SaveSolicitud_Update() As CTestResult
     Setup
     
     ' Arrange - Configurar repositorio con base de datos de prueba
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    testConfig.SetSetting "DB_PASSWORD", ""
+    Dim tempConfig As New CConfig
+    tempConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    tempConfig.SetSetting "DB_PASSWORD", ""
+    
+    Dim config As IConfig
+    Set config = tempConfig
     
     ' Crear instancia del repositorio con dependencias
     Dim repository As New CSolicitudRepository
-    repository.Initialize testConfig
+    repository.Initialize config
     
     ' Obtener el objeto T_Solicitud con id = 1 usando GetSolicitudById(1)
     Dim solicitud As T_Solicitud
@@ -333,7 +348,8 @@ Cleanup:
     Teardown
     Set solicitud = Nothing
     Set repository = Nothing
-    Set testConfig = Nothing
+    Set tempConfig = Nothing
+    Set config = Nothing
     Exit Function
     
 ErrorHandler:
@@ -355,13 +371,16 @@ Private Function Test_ExecuteQuery() As CTestResult
     Setup
     
     ' Arrange - Configurar repositorio con base de datos de prueba
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    testConfig.SetSetting "DB_PASSWORD", ""
+    Dim tempConfig As New CConfig
+    tempConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    tempConfig.SetSetting "DB_PASSWORD", ""
+    
+    Dim config As IConfig
+    Set config = tempConfig
     
     ' Crear instancia del repositorio con dependencias
     Dim repository As New CSolicitudRepository
-    repository.Initialize testConfig
+    repository.Initialize config
     
     ' Define una consulta SQL parametrizada
     Dim sql As String
@@ -392,7 +411,8 @@ Cleanup:
     End If
     Teardown
     Set repository = Nothing
-    Set testConfig = Nothing
+    Set tempConfig = Nothing
+    Set config = Nothing
     Set params = Nothing
     Set param1 = Nothing
     Exit Function
@@ -416,13 +436,16 @@ Private Function Test_CargarDatosEspecificos_PC() As CTestResult
     Setup
     
     ' Arrange - Configurar repositorio con base de datos de prueba
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    testConfig.SetSetting "DB_PASSWORD", ""
+    Dim tempConfig As New CConfig
+    tempConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    tempConfig.SetSetting "DB_PASSWORD", ""
+    
+    Dim config As IConfig
+    Set config = tempConfig
     
     ' Crear instancia del repositorio con dependencias
     Dim repository As New CSolicitudRepository
-    repository.Initialize testConfig
+    repository.Initialize config
     
     ' Act - Llamar a GetSolicitudById con el ID correspondiente al tipo PC (ID 2)
     Dim solicitud As T_Solicitud
@@ -440,7 +463,8 @@ Cleanup:
     Teardown
     Set solicitud = Nothing
     Set repository = Nothing
-    Set testConfig = Nothing
+    Set tempConfig = Nothing
+    Set config = Nothing
     Exit Function
     
 ErrorHandler:
@@ -458,13 +482,16 @@ Private Function Test_CargarDatosEspecificos_CDCA() As CTestResult
     Setup
     
     ' Arrange - Configurar repositorio con base de datos de prueba
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    testConfig.SetSetting "DB_PASSWORD", ""
+    Dim tempConfig As New CConfig
+    tempConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    tempConfig.SetSetting "DB_PASSWORD", ""
+    
+    Dim config As IConfig
+    Set config = tempConfig
     
     ' Crear instancia del repositorio con dependencias
     Dim repository As New CSolicitudRepository
-    repository.Initialize testConfig
+    repository.Initialize config
     
     ' Act - Llamar a GetSolicitudById con el ID correspondiente al tipo CDCA (ID 3)
     Dim solicitud As T_Solicitud
@@ -482,7 +509,8 @@ Cleanup:
     Teardown
     Set solicitud = Nothing
     Set repository = Nothing
-    Set testConfig = Nothing
+    Set tempConfig = Nothing
+    Set config = Nothing
     Exit Function
     
 ErrorHandler:
@@ -500,13 +528,16 @@ Private Function Test_CargarDatosEspecificos_CDCASUB() As CTestResult
     Setup
     
     ' Arrange - Configurar repositorio con base de datos de prueba
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    testConfig.SetSetting "DB_PASSWORD", ""
+    Dim tempConfig As New CConfig
+    tempConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    tempConfig.SetSetting "DB_PASSWORD", ""
+    
+    Dim config As IConfig
+    Set config = tempConfig
     
     ' Crear instancia del repositorio con dependencias
     Dim repository As New CSolicitudRepository
-    repository.Initialize testConfig
+    repository.Initialize config
     
     ' Act - Llamar a GetSolicitudById con el ID correspondiente al tipo CDCASUB (ID 4)
     Dim solicitud As T_Solicitud
@@ -524,7 +555,8 @@ Cleanup:
     Teardown
     Set solicitud = Nothing
     Set repository = Nothing
-    Set testConfig = Nothing
+    Set tempConfig = Nothing
+    Set config = Nothing
     Exit Function
     
 ErrorHandler:

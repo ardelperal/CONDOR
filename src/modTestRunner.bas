@@ -53,6 +53,68 @@ Public Function ExecuteAllTests() As String
     ExecuteAllTests = RunAllTests()
 End Function
 
+' Función específica para CLI - Sin MsgBox, manejo robusto de errores
+Public Function ExecuteAllTestsForCLI() As String
+    On Error GoTo ErrorHandler
+    
+    ' Obtener instancia del manejador de errores
+    Dim errorHandler As IErrorHandlerService
+    Dim config As New CConfig
+    Dim fileSystem As New CFileSystem
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    
+    ' Inicializar colección de suites
+    Set m_SuiteNames = New Collection
+    
+    ' Descubrir y registrar automáticamente todas las suites disponibles
+    DiscoverAndRegisterSuites
+    
+    ' Ejecutar todas las pruebas y devolver resultado como string
+    Dim reporter As ITestReporter
+    Dim reporterImpl As New CTestReporter
+    Set reporter = reporterImpl
+    
+    Dim allResults As Collection
+    Set allResults = ExecuteAllSuites
+    
+    ' Inicializar el reportero con los resultados
+    reporter.Initialize allResults
+    
+    ' Generar reporte en formato string
+    Dim reportString As String
+    reportString = reporter.GenerateReport()
+    
+    ' Verificar si todas las pruebas pasaron
+    Dim allPassed As Boolean
+    allPassed = True
+    
+    Dim suiteResult As CTestSuiteResult
+    For Each suiteResult In allResults
+        If Not suiteResult.AllTestsPassed Then
+            allPassed = False
+            Exit For
+        End If
+    Next
+    
+    ' Añadir línea de resultado final
+    If allPassed Then
+        reportString = reportString & vbCrLf & "RESULT: SUCCESS"
+    Else
+        reportString = reportString & vbCrLf & "RESULT: FAILURE"
+    End If
+    
+    ExecuteAllTestsForCLI = reportString
+    Exit Function
+    
+ErrorHandler:
+    ' Usar el manejador de errores para logging
+    If Not errorHandler Is Nothing Then
+        errorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllTestsForCLI", True
+    End If
+    
+    ExecuteAllTestsForCLI = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS CLI: " & Err.Description & vbCrLf & "RESULT: FAILURE"
+End Function
+
 '******************************************************************************
 ' MOTOR DE EJECUCIÓN DE PRUEBAS - FRAMEWORK ORIENTADO A OBJETOS
 ' Arquitectura: Separación de Responsabilidades (Ejecución vs. Reporte)

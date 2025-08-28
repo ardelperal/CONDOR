@@ -30,12 +30,12 @@ Public Function IntegrationTest_FileSystem_RunAll() As CTestSuiteResult
     Setup
     
     ' Ejecutar tests individuales
-    suiteResult.AddResult Test_FileExists_Integration()
-    suiteResult.AddResult Test_FolderExists_Integration()
-    suiteResult.AddResult Test_CopyFile_Integration()
-    suiteResult.AddResult Test_DeleteFile_Integration()
-    suiteResult.AddResult Test_CreateFolder_Integration()
-    suiteResult.AddResult Test_DeleteFolder_Integration()
+    suiteResult.AddTestResult Test_FileExists_Integration()
+    suiteResult.AddTestResult Test_FolderExists_Integration()
+    suiteResult.AddTestResult Test_CopyFile_Integration()
+    suiteResult.AddTestResult Test_DeleteFile_Integration()
+    suiteResult.AddTestResult Test_CreateFolder_Integration()
+    suiteResult.AddTestResult Test_DeleteFolder_Integration()
     
     ' Limpiar entorno
     Teardown

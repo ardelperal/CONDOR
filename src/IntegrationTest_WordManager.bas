@@ -256,19 +256,13 @@ Private Sub LimpiarArchivosTemporales()
         Next i
     End If
     
-    ' Verificar si la carpeta está vacía usando FileSystemObject (funcionalidad no disponible en IFileSystem)
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    
-    ' Eliminar carpeta temporal si está vacía
+    ' Eliminar carpeta temporal usando exclusivamente IFileSystem service
     If fs.FolderExists(m_TempFolder) Then
-        If fso.GetFolder(m_TempFolder).Files.Count = 0 And fso.GetFolder(m_TempFolder).SubFolders.Count = 0 Then
-            fs.DeleteFolder m_TempFolder
-        End If
+        ' Intentar eliminar la carpeta - IFileSystem manejará si está vacía o no
+        fs.DeleteFolder m_TempFolder
     End If
     
     Set fs = Nothing
-    Set fso = Nothing
     
     On Error GoTo 0
 End Sub

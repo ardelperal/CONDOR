@@ -98,15 +98,16 @@ Private Function Test_GetUserAuthData_Admin() As CTestResult
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
     
-    ' Crear configuración específica para BD de prueba
-    Dim testConfig As New CConfig
+    ' Crear configuración específica para BD de prueba usando patrón de variable temporal
+    Dim tempConfig As New CConfig
     Dim settings As New Collection
     settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
     settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
-    testConfig.LoadFromCollection settings
+    tempConfig.LoadFromCollection settings
+    Set config = tempConfig
     
     Dim repository As New CAuthRepository
-    repository.Initialize testConfig, errorHandler
+    repository.Initialize config, errorHandler
     
     ' Act
     Dim authData As T_AuthData
@@ -151,15 +152,16 @@ Private Function Test_GetUserAuthData_Calidad() As CTestResult
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
     
-    ' Crear configuración específica para BD de prueba
-    Dim testConfig As New CConfig
+    ' Crear configuración específica para BD de prueba usando patrón de variable temporal
+    Dim tempConfig As New CConfig
     Dim settings As New Collection
     settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
     settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
-    testConfig.LoadFromCollection settings
+    tempConfig.LoadFromCollection settings
+    Set config = tempConfig
     
     Dim repository As New CAuthRepository
-    repository.Initialize testConfig, errorHandler
+    repository.Initialize config, errorHandler
     
     ' Act
     Dim authData As T_AuthData
@@ -205,15 +207,16 @@ Private Function Test_GetUserAuthData_Tecnico() As CTestResult
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
     
-    ' Crear configuración específica para BD de prueba
-    Dim testConfig As New CConfig
+    ' Crear configuración específica para BD de prueba usando patrón de variable temporal
+    Dim tempConfig As New CConfig
     Dim settings As New Collection
     settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
     settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
-    testConfig.LoadFromCollection settings
+    tempConfig.LoadFromCollection settings
+    Set config = tempConfig
     
     Dim repository As New CAuthRepository
-    repository.Initialize testConfig, errorHandler
+    repository.Initialize config, errorHandler
     
     ' Act
     Dim authData As T_AuthData
@@ -260,15 +263,16 @@ Private Function Test_GetUserAuthData_UserNotExists() As CTestResult
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
     
-    ' Crear configuración específica para BD de prueba
-    Dim testConfig As New CConfig
+    ' Crear configuración específica para BD de prueba usando patrón de variable temporal
+    Dim tempConfig As New CConfig
     Dim settings As New Collection
     settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
     settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
-    testConfig.LoadFromCollection settings
+    tempConfig.LoadFromCollection settings
+    Set config = tempConfig
     
     Dim repository As New CAuthRepository
-    repository.Initialize testConfig, errorHandler
+    repository.Initialize config, errorHandler
     
     ' Act
     Dim authData As T_AuthData

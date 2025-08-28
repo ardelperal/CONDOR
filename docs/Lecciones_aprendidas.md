@@ -277,3 +277,18 @@ Regla Inquebrantable: Cada clase debe tener un único propósito bien definido y
 Acción Correctiva: Auditar todas las clases del proyecto para verificar que cada una tenga una responsabilidad única y bien definida. Refactorizar cualquier clase que intente realizar múltiples responsabilidades, separando la lógica en clases especializadas. En el caso específico de CTestReporter, eliminar cualquier método de presentación (ShowReport) y mantener únicamente la generación de reportes (GenerateReport). La capa de presentación debe ser responsable de tomar el string generado y mostrarlo según el contexto apropiado.
 
 Caso Crítico - CTestReporter (2024): La clase CTestReporter violaba el Principio de Responsabilidad Única al intentar tanto generar como mostrar reportes. La corrección implicó: 1) Eliminar el método ShowReport inexistente, 2) Usar únicamente GenerateReport() para obtener el reporte como string, 3) Delegar la presentación a la capa apropiada (MsgBox en RunTestFramework). Esta separación permite que CTestReporter sea reutilizable en CLI, UI y otros contextos sin modificaciones.
+
+## Lección 36: El Autoaprovisionamiento del Entorno es Obligatorio para Pruebas de Integración Fiables
+
+**Observación:** Se ha observado que las pruebas de integración fallaban de forma intermitente y no eran portables entre diferentes máquinas. La causa raíz era la dependencia de un entorno de pruebas preexistente y configurado manualmente (bases de datos, carpetas), lo que generaba errores de "Archivo no encontrado" en lugar de detectar fallos reales en la lógica de la aplicación.
+
+**Regla Inquebrantable:** Toda suite de pruebas de integración (`IntegrationTest_*.bas`) debe ser completamente autónoma y responsable de crear y destruir su propio entorno de prueba en tiempo de ejecución. No se debe asumir la preexistencia de ningún archivo. Cada ejecución debe partir de un estado limpio, controlado y reproducible, copiado desde plantillas maestras versionadas.
+
+**Acción Correctiva:** Todos los módulos de prueba de integración deben implementar el patrón `Setup`/`Teardown`.
+1.  El procedimiento `Setup` debe utilizar las utilidades centralizadas en `modTestUtils.bas` (como `PrepareTestDatabase`) para:
+    * Crear los directorios de prueba necesarios usando rutas relativas.
+    * Copiar las bases de datos desde una plantilla maestra (`..._template.accdb`) a una copia de trabajo activa (`..._integration_test.accdb`).
+2.  El procedimiento `Teardown` debe utilizar el servicio `IFileSystem` para eliminar completamente todos los recursos creados durante el `Setup` (la base de datos activa y los directorios), sin dejar rastro.
+3.  Todas las rutas a los archivos deben definirse como constantes relativas, usando `modTestUtils.GetProjectPath()` para construir la ruta absoluta en tiempo de ejecución.
+
+**Caso Crítico - Refactorización del Framework de Pruebas (2025):** Se refactorizaron los 12 módulos de pruebas de integración para implementar este patrón, eliminando por completo los errores de entorno y garantizando que los fallos de las pruebas ahora solo pueden deberse a regresiones reales en el código de la aplicación.

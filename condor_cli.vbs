@@ -949,8 +949,8 @@ Sub ExecuteTests()
     ' Suprimir diálogos inesperados de Access durante las pruebas
     objAccess.Application.DisplayAlerts = False
     
-    ' Llamar directamente a ExecuteAllTests y capturar el valor de retorno
-    reportString = objAccess.Application.Run("ExecuteAllTests")
+    ' Llamar directamente a RunAllTests y capturar el valor de retorno
+    reportString = objAccess.Application.Run("modTestRunner.RunAllTests")
     
     If Err.Number <> 0 Then
         WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas."

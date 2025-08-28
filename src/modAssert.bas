@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modAssert"
+Attribute VB_Name = "modAssert"
 Option Compare Database
 Option Explicit
 
@@ -83,6 +83,19 @@ End Sub
 Public Sub AssertEquals(ByVal expected As Variant, ByVal actual As Variant, ByVal message As String)
     If expected <> actual Then
         Err.Raise vbObjectError + 512, "modAssert.AssertEquals", "Assertion Failed: " & message & " (Expected: '" & CStr(expected) & "', Actual: '" & CStr(actual) & "')"
+    End If
+End Sub
+
+' Función: AssertNotEquals
+' Propósito: Verifica que dos valores NO sean iguales
+' Parámetros:
+'   - notExpected: El valor no esperado
+'   - actual: El valor actual a comparar
+'   - message: Mensaje descriptivo para mostrar si la aserción falla
+' Error: Lanza vbObjectError + 516 si los valores son iguales
+Public Sub AssertNotEquals(ByVal notExpected As Variant, ByVal actual As Variant, ByVal message As String)
+    If notExpected = actual Then
+        Err.Raise vbObjectError + 516, "modAssert.AssertNotEquals", "Assertion Failed: " & message & " (Value should not have been: '" & CStr(notExpected) & "')"
     End If
 End Sub
 

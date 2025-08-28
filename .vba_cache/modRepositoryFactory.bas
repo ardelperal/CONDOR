@@ -36,7 +36,6 @@ Public Function CreateSolicitudRepository(ByVal errorHandler As IErrorHandlerSer
     If CBool(configService.GetValue("DEV_MODE")) Then
         ' Modo desarrollo - usar mock
         Dim mockRepository As New CMockSolicitudRepository
-        mockRepository.Initialize errorHandler
         Set CreateSolicitudRepository = mockRepository
     Else
         ' Modo producción - usar clase concreta

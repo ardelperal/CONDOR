@@ -866,7 +866,7 @@ Para un detalle exhaustivo de la estructura de las tablas, consultar el Anexo A.
 Para el mapeo de campos específico para la generación de documentos, consultar el Anexo B.
 
 ## 19. Ciclo de Trabajo de Desarrollo (TDD Asistido con Sincronización Discrecional)
-Este es el proceso estándar para cualquier tarea de desarrollo o corrección, optimizado para permitir actualizaciones selectivas de módulos.
+Este es el proceso estándar para cualquier tarea de desarrollo o corrección, optimizado para permitir actualizaciones selectivas de módulos y ejecución automatizada de pruebas.
 
 **Análisis y Prompt (Oráculo)**: El Arquitecto (CONDOR-Expert) genera un prompt detallado.
 
@@ -884,13 +884,19 @@ Luego se detiene y espera confirmación.
 
 **Verificación Manual (Supervisor)**: El Supervisor compila el proyecto en Access.
 
-**Pruebas y Commit (IA)**: Tras la luz verde, la IA ejecuta los tests y, si pasan, prepara el commit.
+**Ejecución Automatizada de Pruebas (IA)**: Tras la compilación exitosa, la IA ejecuta:
+- `cscript //nologo condor_cli.vbs test` para ejecutar todas las pruebas unitarias
+- El comando retorna código de salida 0 (éxito) o 1 (fallo) para automatización
+- Los resultados se muestran en consola con reporte detallado
+
+**Commit (IA)**: Solo si todas las pruebas pasan, la IA prepara el commit.
 
 **Ventajas de la Sincronización Discrecional:**
 - **Eficiencia**: Solo actualiza los módulos modificados, reduciendo el tiempo de sincronización
 - **Estabilidad**: Minimiza el riesgo de afectar módulos no relacionados con los cambios
 - **Desarrollo Iterativo**: Facilita ciclos rápidos de desarrollo-prueba-corrección
 - **Flexibilidad**: Permite trabajar en funcionalidades específicas sin impactar el proyecto completo
+- **Automatización**: Ejecución de pruebas desde CLI con códigos de salida estándar para integración continua
 
 ## 20. Lecciones Aprendidas (Resumen)
 **Interfaces en VBA**: La firma de los métodos debe ser idéntica.

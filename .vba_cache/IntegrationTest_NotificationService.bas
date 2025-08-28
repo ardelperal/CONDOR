@@ -87,10 +87,9 @@ Private Function Test_EnviarNotificacion_Success_CallsRepositoryCorrectly_Result
     Resultado = notificationService.EnviarNotificacion("dest@empresa.com", "Asunto Test", "<html>Cuerpo Test</html>")
     
     ' Assert - Verificar que la operación fue exitosa
-    Call modAssert.IsTrue(Resultado, "EnviarNotificacion debe retornar True en caso de éxito")
+    Call modAssert.AssertTrue(Resultado, "EnviarNotificacion debe retornar True en caso de éxito")
     
-    result.Passed = True
-    result.message = "Prueba exitosa: EnviarNotificacion funciona correctamente con dependencias reales"
+    result.Pass
     
     ' Cleanup - No hay mocks que resetear en tests de integración
     
@@ -98,8 +97,7 @@ Private Function Test_EnviarNotificacion_Success_CallsRepositoryCorrectly_Result
     Exit Function
     
 TestError:
-    result.Passed = False
-    result.message = "Error en Test_EnviarNotificacion_Success_CallsRepositoryCorrectly: " & Err.Description
+    result.Fail "Error en Test_EnviarNotificacion_Success_CallsRepositoryCorrectly: " & Err.Description
     Set Test_EnviarNotificacion_Success_CallsRepositoryCorrectly_Result = result
 End Function
 
@@ -124,10 +122,9 @@ Private Function Test_Initialize_WithValidDependencies_Result() As CTestResult
     Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig, operationLogger, errorHandler)
     
     ' Assert - Si no hay error, la inicialización fue exitosa
-    Call modAssert.IsNotNothing(notificationService, "El servicio debe crearse correctamente")
+    Call modAssert.AssertNotNull(notificationService, "El servicio debe crearse correctamente")
     
-    result.Passed = True
-    result.message = "Prueba exitosa: Initialize con todas las dependencias reales válidas"
+    result.Pass
     
     ' Cleanup - No hay mocks que resetear en tests de integración
     
@@ -135,8 +132,7 @@ Private Function Test_Initialize_WithValidDependencies_Result() As CTestResult
     Exit Function
     
 TestError:
-    result.Passed = False
-    result.message = "Error en Test_Initialize_WithValidDependencies: " & Err.Description
+    result.Fail "Error en Test_Initialize_WithValidDependencies: " & Err.Description
     Set Test_Initialize_WithValidDependencies_Result = result
 End Function
 
@@ -158,10 +154,9 @@ Private Function Test_EnviarNotificacion_WithoutInitialize_Result() As CTestResu
     Resultado = notificationService.EnviarNotificacion("test@empresa.com", "Asunto", "<html>Cuerpo</html>")
     
     ' Assert
-    Call modAssert.IsFalse(Resultado, "EnviarNotificacion debe fallar sin inicializar")
+    Call modAssert.AssertFalse(Resultado, "EnviarNotificacion debe fallar sin inicializar")
     
-    result.Passed = True
-    result.message = "Prueba exitosa: EnviarNotificacion falla correctamente sin Initialize"
+    result.Pass
     
     ' Cleanup - No hay dependencias que limpiar en esta prueba
     
@@ -169,8 +164,7 @@ Private Function Test_EnviarNotificacion_WithoutInitialize_Result() As CTestResu
     Exit Function
     
 TestError:
-    result.Passed = False
-    result.message = "Error en Test_EnviarNotificacion_WithoutInitialize: " & Err.Description
+    result.Fail "Error en Test_EnviarNotificacion_WithoutInitialize: " & Err.Description
     Set Test_EnviarNotificacion_WithoutInitialize_Result = result
 End Function
 
@@ -197,20 +191,19 @@ Private Function Test_EnviarNotificacion_WithInvalidParameters_Result() As CTest
     ' Act & Assert - Destinatarios vacío
     Dim resultado1 As Boolean
     resultado1 = notificationService.EnviarNotificacion("", "Asunto", "<html>Cuerpo</html>")
-    Call modAssert.IsFalse(resultado1, "Debe fallar con destinatarios vacío")
+    Call modAssert.AssertFalse(resultado1, "Debe fallar con destinatarios vacío")
     
     ' Act & Assert - Asunto vacío
     Dim resultado2 As Boolean
     resultado2 = notificationService.EnviarNotificacion("test@empresa.com", "", "<html>Cuerpo</html>")
-    Call modAssert.IsFalse(resultado2, "Debe fallar con asunto vacío")
+    Call modAssert.AssertFalse(resultado2, "Debe fallar con asunto vacío")
     
     ' Act & Assert - Cuerpo vacío
     Dim resultado3 As Boolean
     resultado3 = notificationService.EnviarNotificacion("test@empresa.com", "Asunto", "")
-    Call modAssert.IsFalse(resultado3, "Debe fallar con cuerpo vacío")
+    Call modAssert.AssertFalse(resultado3, "Debe fallar con cuerpo vacío")
     
-    result.Passed = True
-    result.message = "Prueba exitosa: EnviarNotificacion valida correctamente parámetros"
+    result.Pass
     
     ' Cleanup - No hay mocks que resetear en tests de integración
     
@@ -218,8 +211,7 @@ Private Function Test_EnviarNotificacion_WithInvalidParameters_Result() As CTest
     Exit Function
     
 TestError:
-    result.Passed = False
-    result.message = "Error en Test_EnviarNotificacion_WithInvalidParameters: " & Err.Description
+    result.Fail "Error en Test_EnviarNotificacion_WithInvalidParameters: " & Err.Description
     Set Test_EnviarNotificacion_WithInvalidParameters_Result = result
 End Function
 
@@ -250,10 +242,9 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     Resultado = notificationService.EnviarNotificacion("dest@empresa.com", "Asunto Config Test", "<html>Test Config</html>")
     
     ' Assert - Verificar que la operación fue exitosa (el config se usa internamente)
-    Call modAssert.IsTrue(Resultado, "EnviarNotificacion debe funcionar correctamente con config personalizado")
+    Call modAssert.AssertTrue(Resultado, "EnviarNotificacion debe funcionar correctamente con config personalizado")
     
-    result.Passed = True
-    result.message = "Prueba exitosa: EnviarNotificacion usa valores correctos del config con dependencias reales"
+    result.Pass
     
     ' Cleanup - No hay mocks que resetear en tests de integración
     
@@ -261,8 +252,7 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     Exit Function
     
 TestError:
-    result.Passed = False
-    result.message = "Error en Test_EnviarNotificacion_ConfigValuesUsed: " & Err.Description
+    result.Fail "Error en Test_EnviarNotificacion_ConfigValuesUsed: " & Err.Description
     Set Test_EnviarNotificacion_ConfigValuesUsed_Result = result
 End Function
 
