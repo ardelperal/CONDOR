@@ -46,7 +46,7 @@ End Sub
 ' ============================================================================
 
 ' Obtiene una solicitud por su ID desde el Backend
-Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
+Private Function ISolicitudRepository_GetSolicitudById(ByVal params As Collection) As E_Solicitud
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudRepository.GetSolicitudById", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
@@ -55,7 +55,7 @@ Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim solicitud As T_Solicitud
+    Dim solicitud As E_Solicitud
     
     On Error GoTo ErrorHandler
     
@@ -68,14 +68,22 @@ Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long
     
     Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
-    ' Crear consulta parametrizada para evitar inyección SQL
-    Set qdf = db.CreateQueryDef("", "SELECT * FROM T_Solicitudes WHERE idSolicitud = ?")
-    qdf.parameters(0) = idSolicitud
+    ' Crear consulta parametrizada usando modQueries
+    Set qdf = db.CreateQueryDef("", GET_SOLICITUD_BY_ID)
+    
+    ' Asignar parámetros desde la Collection
+    Dim i As Integer
+    Dim param As QueryParameter
+    i = 0
+    For Each param In params
+        qdf.parameters(i) = param.ParameterValue
+        i = i + 1
+    Next param
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     If Not rs.EOF Then
-        Set solicitud = New T_Solicitud
+        Set solicitud = New E_Solicitud
         With solicitud
             .idSolicitud = rs("idSolicitud")
             .idExpediente = rs("idExpediente") & ""
@@ -111,18 +119,20 @@ ErrorHandler:
 End Function
 
 ' Guarda una solicitud en el Backend (INSERT o UPDATE)
-Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
+Private Function ISolicitudRepository_SaveSolicitud(ByVal params As Collection) As Long
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudRepository.SaveSolicitud", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
     End If
     
-    If solicitud Is Nothing Then
-        Err.Raise 5, "CSolicitudRepository.SaveSolicitud", "solicitud no puede ser Nothing"
+    If params Is Nothing Then
+        Err.Raise 5, "CSolicitudRepository.SaveSolicitud", "params no puede ser Nothing"
     End If
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
+    Dim qdfIdentity As DAO.QueryDef
+    Dim rs As DAO.recordset
     Dim resultId As Long
     
     On Error GoTo ErrorHandler
@@ -136,47 +146,48 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
     
     Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
-    If solicitud.idSolicitud = 0 Then
-        ' INSERT - Nueva solicitud
-        Set qdf = db.CreateQueryDef("", _
-            "INSERT INTO T_Solicitudes (idExpediente, tipoSolicitud, subTipoSolicitud, " & _
-            "codigoSolicitud, idEstadoInterno, fechaCreacion, usuarioCreacion) " & _
-            "VALUES (?, ?, ?, ?, ?, ?, ?)")
+    ' Determinar si es INSERT o UPDATE basado en el primer parámetro (idSolicitud)
+    Dim firstParam As QueryParameter
+    Set firstParam = params(1)
+    
+    If firstParam.ParameterValue = 0 Then
+        ' INSERT - Nueva solicitud usando consulta centralizada
+        Set qdf = db.CreateQueryDef("", INSERT_SOLICITUD)
         
-        qdf.parameters(0) = solicitud.idExpediente
-        qdf.parameters(1) = solicitud.tipoSolicitud
-        qdf.parameters(2) = solicitud.subTipoSolicitud
-        qdf.parameters(3) = solicitud.codigoSolicitud
-        qdf.parameters(4) = solicitud.idEstadoInterno
-        qdf.parameters(5) = solicitud.fechaCreacion
-        qdf.parameters(6) = solicitud.usuarioCreacion
+        ' Asignar parámetros desde la Collection (saltando el idSolicitud para INSERT)
+        Dim i As Integer
+        Dim param As QueryParameter
+        i = 0
+        For Each param In params
+            If i > 0 Then ' Saltar el primer parámetro (idSolicitud) para INSERT
+                qdf.parameters(i - 1) = param.ParameterValue
+            End If
+            i = i + 1
+        Next param
         
         qdf.Execute dbFailOnError
         
-        ' Obtener el ID generado
-        resultId = db.OpenRecordset("SELECT @@IDENTITY")(0)
-        solicitud.idSolicitud = resultId
+        ' Obtener el ID generado usando consulta centralizada
+        Set qdfIdentity = db.CreateQueryDef("", GET_LAST_INSERT_ID)
+        Set rs = qdfIdentity.OpenRecordset(dbOpenSnapshot)
+        resultId = rs("LastID")
+        rs.Close
         
         ' Logging de auditoría removido - responsabilidad de la capa de servicio
     Else
-        ' UPDATE - Solicitud existente
-        Set qdf = db.CreateQueryDef("", _
-            "UPDATE T_Solicitudes SET idExpediente=?, tipoSolicitud=?, subTipoSolicitud=?, " & _
-            "codigoSolicitud=?, idEstadoInterno=?, fechaModificacion=?, usuarioModificacion=? " & _
-            "WHERE idSolicitud=?")
+        ' UPDATE - Solicitud existente usando consulta centralizada
+        Set qdf = db.CreateQueryDef("", UPDATE_SOLICITUD)
         
-        qdf.parameters(0) = solicitud.idExpediente
-        qdf.parameters(1) = solicitud.tipoSolicitud
-        qdf.parameters(2) = solicitud.subTipoSolicitud
-        qdf.parameters(3) = solicitud.codigoSolicitud
-        qdf.parameters(4) = solicitud.idEstadoInterno
-        qdf.parameters(5) = Now()
-        qdf.parameters(6) = solicitud.usuarioModificacion
-        qdf.parameters(7) = solicitud.idSolicitud
+        ' Asignar parámetros desde la Collection
+        i = 0
+        For Each param In params
+            qdf.parameters(i) = param.ParameterValue
+            i = i + 1
+        Next param
         
         qdf.Execute dbFailOnError
         
-        resultId = solicitud.idSolicitud
+        resultId = firstParam.ParameterValue
         
         ' Logging de auditoría removido - responsabilidad de la capa de servicio
     End If
@@ -186,13 +197,14 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As T_Solicit
     Exit Function
     
 ErrorHandler:
+    If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
     ' Logging de errores removido - responsabilidad de la capa de servicio
     Err.Raise Err.Number, "CSolicitudRepository.SaveSolicitud", Err.Description
 End Function
 
-' Ejecuta una consulta SQL con parámetros opcionales
-Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
+' Ejecuta una consulta SQL con parámetros
+Private Function ISolicitudRepository_ExecuteQuery(ByVal queryName As String, ByVal params As Collection) As DAO.recordset
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudRepository.ExecuteQuery", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
@@ -201,8 +213,12 @@ Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String, Optional
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
+    Dim sql As String
     
     On Error GoTo ErrorHandler
+    
+    ' Obtener la consulta SQL desde modQueries usando el nombre
+    sql = CallByName(modQueries, queryName, VbGet)
     
     ' Conectar al Backend usando la ruta de configuración
     Dim backendPath As String
@@ -216,16 +232,14 @@ Private Function ISolicitudRepository_ExecuteQuery(ByVal sql As String, Optional
     ' Crear consulta parametrizada
     Set qdf = db.CreateQueryDef("", sql)
     
-    ' Aplicar parámetros si se proporcionaron
-    If Not params Is Nothing Then
-        Dim i As Integer
-        Dim param As QueryParameter
-        i = 0
-        For Each param In params
-            qdf.parameters(i) = param.ParameterValue
-            i = i + 1
-        Next param
-    End If
+    ' Aplicar parámetros desde la Collection
+    Dim i As Integer
+    Dim param As QueryParameter
+    i = 0
+    For Each param In params
+        qdf.parameters(i) = param.ParameterValue
+        i = i + 1
+    Next param
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
@@ -246,7 +260,7 @@ End Function
 ' ============================================================================
 
 ' Carga los datos específicos según el tipo de solicitud
-Private Sub CargarDatosEspecificos(ByRef solicitud As T_Solicitud, ByRef db As DAO.Database)
+Private Sub CargarDatosEspecificos(ByRef solicitud As E_Solicitud, ByRef db As DAO.Database)
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
     
@@ -254,13 +268,13 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As T_Solicitud, ByRef db As D
     
     Select Case UCase(solicitud.tipoSolicitud)
         Case "PC"
-            Set qdf = db.CreateQueryDef("", "SELECT * FROM TbDatos_PC WHERE idSolicitud = ?")
+            Set qdf = db.CreateQueryDef("", GET_DATOS_PC_BY_SOLICITUD)
             qdf.parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
-                Dim datosPC As T_Datos_PC
-                Set datosPC = New T_Datos_PC
+                Dim datosPC As E_Datos_PC
+Set datosPC = New E_Datos_PC
                 ' Cargar propiedades de datosPC desde el recordset
                 With datosPC
                     .idDatosPC = rs("idDatosPC")
@@ -278,13 +292,13 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As T_Solicitud, ByRef db As D
             rs.Close
             
         Case "CD_CA"
-            Set qdf = db.CreateQueryDef("", "SELECT * FROM TbDatos_CD_CA WHERE idSolicitud = ?")
+            Set qdf = db.CreateQueryDef("", GET_DATOS_CD_CA_BY_SOLICITUD)
             qdf.parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
-                Dim datosCDCA As T_Datos_CD_CA
-                Set datosCDCA = New T_Datos_CD_CA
+                Dim datosCDCA As E_Datos_CD_CA
+Set datosCDCA = New E_Datos_CD_CA
                 ' Cargar propiedades de datosCDCA desde el recordset
                 With datosCDCA
                     .idDatosCDCA = rs("idDatosCDCA")
@@ -300,13 +314,13 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As T_Solicitud, ByRef db As D
             rs.Close
             
         Case "CD_CA_SUB"
-            Set qdf = db.CreateQueryDef("", "SELECT * FROM TbDatos_CD_CA_SUB WHERE idSolicitud = ?")
+            Set qdf = db.CreateQueryDef("", GET_DATOS_CD_CA_SUB_BY_SOLICITUD)
             qdf.parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
-                Dim datosCDCASUB As T_Datos_CD_CA_SUB
-                Set datosCDCASUB = New T_Datos_CD_CA_SUB
+                Dim datosCDCASUB As E_Datos_CD_CA_SUB
+Set datosCDCASUB = New E_Datos_CD_CA_SUB
                 ' Cargar propiedades de datosCDCASUB desde el recordset
                 With datosCDCASUB
                     .idDatosCDCASUB = rs("idDatosCDCASUB")
@@ -340,18 +354,107 @@ End Sub
 ' para facilitar las pruebas y el uso directo de la clase concreta
 
 ' Método público de conveniencia para GetSolicitudById
-Public Function GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
-    Set GetSolicitudById = ISolicitudRepository_GetSolicitudById(idSolicitud)
+Public Function GetSolicitudById(ByVal idSolicitud As Long) As E_Solicitud
+    Dim params As Collection
+    Set params = New Collection
+    
+    Dim param As QueryParameter
+    Set param = New QueryParameter
+    param.ParameterName = "idSolicitud"
+    param.ParameterValue = idSolicitud
+    param.DataType = dbLong
+    params.Add param
+    
+    Set GetSolicitudById = ISolicitudRepository_GetSolicitudById(params)
 End Function
 
 ' Método público de conveniencia para SaveSolicitud
-Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
-    SaveSolicitud = ISolicitudRepository_SaveSolicitud(solicitud)
+Public Function SaveSolicitud(ByVal solicitud As E_Solicitud) As Long
+    Dim params As Collection
+    Set params = New Collection
+    
+    ' Construir parámetros desde el objeto solicitud
+    Dim param As QueryParameter
+    
+    ' idSolicitud (0 para INSERT, valor existente para UPDATE)
+    Set param = New QueryParameter
+    param.ParameterName = "idSolicitud"
+    param.ParameterValue = solicitud.idSolicitud
+    param.DataType = dbLong
+    params.Add param
+    
+    ' idExpediente
+    Set param = New QueryParameter
+    param.ParameterName = "idExpediente"
+    param.ParameterValue = solicitud.idExpediente
+    param.DataType = dbText
+    params.Add param
+    
+    ' tipoSolicitud
+    Set param = New QueryParameter
+    param.ParameterName = "tipoSolicitud"
+    param.ParameterValue = solicitud.tipoSolicitud
+    param.DataType = dbText
+    params.Add param
+    
+    ' subTipoSolicitud
+    Set param = New QueryParameter
+    param.ParameterName = "subTipoSolicitud"
+    param.ParameterValue = solicitud.subTipoSolicitud
+    param.DataType = dbText
+    params.Add param
+    
+    ' codigoSolicitud
+    Set param = New QueryParameter
+    param.ParameterName = "codigoSolicitud"
+    param.ParameterValue = solicitud.codigoSolicitud
+    param.DataType = dbText
+    params.Add param
+    
+    ' idEstadoInterno
+    Set param = New QueryParameter
+    param.ParameterName = "idEstadoInterno"
+    param.ParameterValue = solicitud.idEstadoInterno
+    param.DataType = dbInteger
+    params.Add param
+    
+    ' fechaCreacion
+    Set param = New QueryParameter
+    param.ParameterName = "fechaCreacion"
+    param.ParameterValue = solicitud.fechaCreacion
+    param.DataType = dbDate
+    params.Add param
+    
+    ' usuarioCreacion
+    Set param = New QueryParameter
+    param.ParameterName = "usuarioCreacion"
+    param.ParameterValue = solicitud.usuarioCreacion
+    param.DataType = dbText
+    params.Add param
+    
+    ' fechaModificacion
+    Set param = New QueryParameter
+    param.ParameterName = "fechaModificacion"
+    param.ParameterValue = solicitud.fechaModificacion
+    param.DataType = dbDate
+    params.Add param
+    
+    ' usuarioModificacion
+    Set param = New QueryParameter
+    param.ParameterName = "usuarioModificacion"
+    param.ParameterValue = solicitud.usuarioModificacion
+    param.DataType = dbText
+    params.Add param
+    
+    SaveSolicitud = ISolicitudRepository_SaveSolicitud(solicitud, params)
 End Function
 
 ' Método público de conveniencia para ExecuteQuery
-Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
-    Set ExecuteQuery = ISolicitudRepository_ExecuteQuery(sql, params)
+Public Function ExecuteQuery(ByVal queryName As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
+    If params Is Nothing Then
+        Set params = New Collection
+    End If
+    Set ExecuteQuery = ISolicitudRepository_ExecuteQuery(queryName, params)
 End Function
 
 

@@ -114,13 +114,19 @@ Lección 15: No Documentar Cambios en el Desarrollo
 Observación: En esta fase del proyecto, documentar cada cambio en el desarrollo crea una sobrecarga innecesaria y ralentiza el progreso. Regla Inquebrantable: No se debe documentar el estado de los cambios durante el desarrollo. La única documentación requerida en esta etapa es el estado final del proyecto una vez que se considera un producto mínimo viable. Acción Correctiva: Los prompts para Copilot no deben incluir instrucciones para actualizar la documentación de desarrollo, como PLAN_DE_ACCION.md o README.md, o CONDOR_MASTER_PLAN.md hasta que el producto mínimo viable esté completo. La documentación se actualizará de forma integral al finalizar la fase actual.
 
 Lección 16: El Patrón Infalible para la Limpieza de Recursos en Error Handlers
-Observación: Los bloques ErrorHandler que contienen errores de compilación son inaceptables, ya que impiden el registro del error original y dejan el sistema en un estado inconsistente. Un patrón común de error es verificar el estado de objetos de base de datos (como rs.State) antes de cerrarlos, lo cual puede fallar si el error ocurrió antes de que el objeto fuera completamente inicializado.
-Regla Inquebrantable: La única forma aceptada para cerrar objetos de base de datos (Recordsets, QueryDefs, Database) dentro de un ErrorHandler es verificando primero que no sean Nothing. El patrón estándar es: `If Not [objeto] Is Nothing Then [objeto].Close`. Nunca se debe verificar el estado del objeto (.State) ya que esto puede generar errores adicionales.
-Acción Correctiva: Todos los bloques ErrorHandler deben usar exclusivamente el patrón `If Not rs Is Nothing Then rs.Close` para la limpieza de Recordsets, y patrones similares para otros objetos de base de datos. Cualquier verificación de .State debe ser eliminada.
+Observación: Los bloques ErrorHandler que contienen errores de compilación son inaceptables, ya que impiden el registro del error original y dejan el sistema en un estado inconsistente. Un patrón común de error es verificar el estado de objetos de base de datos (como rs.State) antes de cerrarlos, lo cual puede fallar si el error ocurrió antes de que el objeto fuera completamente inicializado. Además, se han detectado conflictos de nombres entre variables de objeto (ej. Dim ErrorHandler As IErrorHandlerService) y la etiqueta de la línea de error (ErrorHandler:), lo que causa errores de sintaxis engañosos.
+
+Regla Inquebrantable: La gestión de errores en las pruebas debe ser robusta y libre de ambigüedades.
+
+Etiquetas de Error Únicas: La etiqueta del bloque de manejo de errores en cualquier módulo de prueba debe ser TestFail:, y la instrucción de salto debe ser On Error GoTo TestFail. Esto elimina cualquier conflicto de nombres con variables de objeto.
+
+Cierre Seguro de Objetos: La única forma aceptada para cerrar objetos de base de datos (Recordsets, QueryDefs, Database) dentro de un ErrorHandler es verificando primero que no sean Nothing. El patrón estándar es: If Not [objeto] Is Nothing Then [objeto].Close. Nunca se debe verificar el estado del objeto (.State) ya que esto puede generar errores adicionales.
+
+Acción Correctiva: Todos los bloques de manejo de errores deben estandarizarse al patrón On Error GoTo TestFail / TestFail:. Además, deben usar exclusivamente el patrón If Not rs Is Nothing Then rs.Close para la limpieza de Recordsets, y patrones similares para otros objetos de base de datos. Cualquier verificación de .State o el uso de la etiqueta ErrorHandler: debe ser eliminado y refactorizado.
 
 Lección 17: Principio de Responsabilidad Única para Repositorios
 Observación: Se ha detectado que servicios como CExpedienteService dependían incorrectamente de ISolicitudRepository para obtener datos de expedientes, violando el principio de responsabilidad única y creando un acoplamiento inadecuado entre entidades de negocio diferentes.
-Regla Inquebrantable: Cada repositorio debe gestionar una única entidad de negocio y sus datos relacionados. ISolicitudRepository solo debe manejar operaciones sobre la entidad Solicitud (T_Solicitud), IExpedienteRepository solo debe manejar operaciones sobre la entidad Expediente (T_Expediente), etc. Los servicios deben depender de los repositorios apropiados para cumplir sus contratos de interfaz.
+Regla Inquebrantable: Cada repositorio debe gestionar una única entidad de negocio y sus datos relacionados. ISolicitudRepository solo debe manejar operaciones sobre la entidad Solicitud (E_Solicitud), IExpedienteRepository solo debe manejar operaciones sobre la entidad Expediente (E_Expediente), etc. Los servicios deben depender de los repositorios apropiados para cumplir sus contratos de interfaz.
 Acción Correctiva: Cuando un servicio no puede cumplir su contrato de interfaz con las dependencias actuales, se debe crear el repositorio específico para la entidad que necesita y refactorizar el servicio para usar la dependencia correcta. Nunca se debe "reutilizar" un repositorio de una entidad diferente para acceder a datos de otra entidad.
 
 Caso Crítico - CExpedienteService (2024): Se detectó un fallo de diseño arquitectónico crítico donde CExpedienteService estaba dependiendo de ISolicitudRepository en lugar de IExpedienteRepository. Este error causaba fallos de compilación al intentar llamar métodos como ObtenerExpedientePorNemotecnico que no existen en ISolicitudRepository. La corrección requirió:
@@ -131,9 +137,9 @@ Caso Crítico - CExpedienteService (2024): Se detectó un fallo de diseño arqui
 Ejemplo Práctico - Refactorización del AuthService:
 Antes: CAuthService dependía incorrectamente de ISolicitudRepository para consultar datos de usuarios y permisos, violando el principio de responsabilidad única.
 Después: Se creó IAuthRepository con CAuthRepository para gestionar exclusivamente las consultas de autenticación (TbUsuariosAplicaciones, TbUsuariosAplicacionesPermisos). CAuthService ahora depende de IAuthRepository, separando claramente las responsabilidades:
-- ISolicitudRepository: Gestiona T_Solicitud y datos relacionados
+- ISolicitudRepository: Gestiona E_Solicitud y datos relacionados
 - IAuthRepository: Gestiona consultas de usuarios y permisos de aplicación
-- IExpedienteRepository: Gestiona T_Expediente y datos relacionados
+- IExpedienteRepository: Gestiona E_Expediente y datos relacionados
 Esta separación mejora la mantenibilidad, testabilidad y cumple el principio de responsabilidad única. NUNCA un servicio debe depender de un repositorio de otra entidad de negocio.
 
 Lección 18: La Prevención de Inyección de SQL con Consultas Parametrizadas es Obligatoria
@@ -251,7 +257,7 @@ Acción Correctiva: Auditar todo el código que maneja recordsets para identific
 
 ## Lección 31: El Ciclo de Vida de los Objetos Debe Respetarse (Declarar, Instanciar, Usar, Liberar)
 
-Observación: En VBA, una variable de objeto declarada con Dim solo reserva memoria para la referencia, pero no crea el objeto. Intentar acceder a propiedades o métodos de una variable de objeto no instanciada genera el error "Object variable or With block variable not set" (Error 91). Este error es especialmente común al trabajar con clases personalizadas como T_Expediente.
+Observación: En VBA, una variable de objeto declarada con Dim solo reserva memoria para la referencia, pero no crea el objeto. Intentar acceder a propiedades o métodos de una variable de objeto no instanciada genera el error "Object variable or With block variable not set" (Error 91). Este error es especialmente común al trabajar con clases personalizadas como E_Expediente.
 Regla Inquebrantable: Toda variable de objeto debe seguir el ciclo completo: 1) Declaración con Dim, 2) Instanciación con Set ... = New ..., 3) Uso de propiedades y métodos, 4) Liberación con Set ... = Nothing. La instanciación debe ocurrir inmediatamente después de la declaración y antes de cualquier uso del objeto.
 Acción Correctiva: Revisar todo el código que declara variables de objeto para verificar que cada Dim vaya seguido de su correspondiente Set ... = New ... antes del primer uso. Implementar un patrón estándar en los métodos de servicio: declarar la variable, instanciarla inmediatamente, poblar sus propiedades, y devolverla. En caso de error, asegurar que la liberación (Set ... = Nothing) ocurra en la sección de limpieza del manejador de errores para evitar memory leaks.
 
@@ -292,3 +298,30 @@ Caso Crítico - CTestReporter (2024): La clase CTestReporter violaba el Principi
 3.  Todas las rutas a los archivos deben definirse como constantes relativas, usando `modTestUtils.GetProjectPath()` para construir la ruta absoluta en tiempo de ejecución.
 
 **Caso Crítico - Refactorización del Framework de Pruebas (2025):** Se refactorizaron los 12 módulos de pruebas de integración para implementar este patrón, eliminando por completo los errores de entorno y garantizando que los fallos de las pruebas ahora solo pueden deberse a regresiones reales en el código de la aplicación.
+
+## Lección 37: Estandarización de Factorías para una Arquitectura Predecible
+
+**Observación:** Se detectaron errores de compilación recurrentes y una gran inconsistencia en cómo se creaban los servicios y repositorios. No existía un patrón único, lo que dificultaba el mantenimiento y la inyección de dependencias.
+
+**Regla Inquebrantable:** La creación de objetos en CONDOR se rige por un patrón de factorías unificado y consistente:
+
+**Todas las Factorías (`mod...Factory.bas`):** Sus métodos públicos `Create...()` deben tener **CERO ARGUMENTOS**. Son el punto de entrada simple para el resto de la aplicación. Su única responsabilidad es orquestar la creación de todas las dependencias necesarias, llamando internamente a otras factorías según sea necesario.
+
+**Principio Fundamental:** Las dependencias se crean internamente por cada factoría, no se reciben como parámetros. Ejemplo: `modErrorHandlerFactory.CreateErrorHandlerService()` crea sus propias dependencias (`IConfig`, `IFileSystem`) sin recibirlas como argumentos.
+
+**Acción Correctiva:** Todas las factorías, incluyendo `modRepositoryFactory`, deben seguir este patrón unificado. La lógica para determinar si usar implementaciones reales o mocks debe residir dentro de cada factoría, consultando el flag `DEV_MODE` internamente. Este patrón elimina dependencias circulares y garantiza que la construcción de objetos sea consistente, predecible y completamente desacoplada.
+
+Lección 38: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)
+Observación: Se ha detectado que el CONDOR_MASTER_PLAN.md, aunque preciso en un momento dado, puede quedar rápidamente obsoleto si los cambios en el código (nuevas dependencias, eliminación de métodos, adición de propiedades a clases de datos) no se reflejan en él. Un plan desactualizado es peor que no tener ningún plan, ya que genera confusión y decisiones basadas en información incorrecta.
+
+Regla Inquebrantable: El CONDOR_MASTER_PLAN.md no es un documento estático, sino un reflejo directo y fiel del estado actual del código. Por lo tanto, cualquier tarea que modifique la estructura o las interacciones entre los componentes del sistema tiene la obligación ineludible de actualizar la documentación correspondiente en la misma operación.
+
+Acción Correctiva: Todo prompt que instruya a Copilot para realizar una refactorización, añadir o eliminar una dependencia, modificar la firma de un método público o cambiar las propiedades de una clase de datos (T_*), debe incluir obligatoriamente un paso final para actualizar el CONDOR_MASTER_PLAN.md. Este paso debe instruir explícitamente a Copilot para que:
+
+Abra el fichero CONDOR_MASTER_PLAN.md.
+
+Localice la sección de la funcionalidad afectada (ej. 3.4. Gestión de Solicitudes).
+
+Regenere por completo el listado de archivos y el diagrama de clases UML (Mermaid) de esa sección, basándose en el nuevo estado del código fuente.
+
+Este ciclo de "Código -> Documentación" asegura que nuestro plan maestro sea siempre la fuente de verdad más actualizada y fiable de la arquitectura del proyecto.

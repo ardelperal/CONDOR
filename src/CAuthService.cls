@@ -46,7 +46,7 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     End If
 
     Dim role As E_UserRole
-    Dim authData As T_AuthData
+    Dim authData As E_AuthData
 
     role = Rol_Desconocido
 
@@ -56,7 +56,7 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     If Not authData Is Nothing Then
         ' Verificar si el usuario existe
         If authData.UserExists Then
-            ' Determinar el rol basándose en las propiedades de T_AuthData
+            ' Determinar el rol basándose en las propiedades de E_AuthData
             ' Prioridad: Administrador Global > Administrador App > Calidad > Técnico
             If authData.IsGlobalAdmin Then
                 role = ROL_ADMINISTRADOR

@@ -25,10 +25,10 @@ Private m_SaveSolicitud_WasCalled As Boolean
 ' Propiedades para capturar parámetros
 Private m_LastExpedienteId As String
 Private m_LastTipoSolicitud As String
-Private m_LastSavedSolicitud As T_Solicitud
+Private m_LastSavedSolicitud As E_Solicitud
 
 ' Propiedades para configurar valores de retorno
-Private m_CreateSolicitudReturnValue As T_Solicitud
+Private m_CreateSolicitudReturnValue As E_Solicitud
 Private m_SaveSolicitudReturnValue As Boolean
 
 ' Contadores de llamadas
@@ -52,7 +52,7 @@ Public Property Get LastTipoSolicitud() As String
     LastTipoSolicitud = m_LastTipoSolicitud
 End Property
 
-Public Property Get LastSavedSolicitud() As T_Solicitud
+Public Property Get LastSavedSolicitud() As E_Solicitud
     Set LastSavedSolicitud = m_LastSavedSolicitud
 End Property
 
@@ -65,7 +65,7 @@ Public Property Get SaveSolicitudCallCount() As Long
 End Property
 
 ' Métodos para configurar valores de retorno
-Public Sub SetCreateSolicitudReturnValue(ByRef solicitud As T_Solicitud)
+Public Sub SetCreateSolicitudReturnValue(ByRef solicitud As E_Solicitud)
     Set m_CreateSolicitudReturnValue = solicitud
 End Sub
 
@@ -87,7 +87,7 @@ Public Sub Reset()
 End Sub
 
 ' Implementación de ISolicitudService
-Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As T_Solicitud
+Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As E_Solicitud
     m_CreateSolicitud_WasCalled = True
     m_LastExpedienteId = idExpediente
     m_LastTipoSolicitud = tipo
@@ -96,7 +96,7 @@ Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String,
     Set ISolicitudService_CreateSolicitud = m_CreateSolicitudReturnValue
 End Function
 
-Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
+Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As E_Solicitud) As Boolean
     m_SaveSolicitud_WasCalled = True
     Set m_LastSavedSolicitud = solicitud
     m_SaveSolicitudCallCount = m_SaveSolicitudCallCount + 1
@@ -105,10 +105,10 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As T_Solicitud)
 End Function
 
 ' Métodos públicos de conveniencia
-Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As T_Solicitud
+Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As E_Solicitud
     Set CreateSolicitud = ISolicitudService_CreateSolicitud(idExpediente, tipo)
 End Function
 
-Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
+Public Function SaveSolicitud(ByVal solicitud As E_Solicitud) As Boolean
     SaveSolicitud = ISolicitudService_SaveSolicitud(solicitud)
 End Function

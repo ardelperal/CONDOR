@@ -21,23 +21,24 @@ Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErr
     Set m_ErrorHandler = errorHandler
 End Sub
 
-Public Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.recordset
+Public Function IMapeoRepository_GetMapeoPorTipo(ByVal params As Collection) As DAO.recordset
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim sql As String
+    Dim prm As QueryParameter
     
     Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
-    ' Construir la consulta SQL parametrizada
-    sql = "SELECT nombreCampoTabla, nombreCampoWord, valorAsociado FROM tbMapeoCampos WHERE nombrePlantilla = ?"
+    ' Crear QueryDef con consulta desde modQueries
+    Set qdf = db.CreateQueryDef("", GET_MAPEO_POR_TIPO)
     
-    ' Crear QueryDef con parámetro
-    Set qdf = db.CreateQueryDef("", sql)
-    qdf.parameters(0) = tipoSolicitud
+    ' Asignar parámetros desde la colección
+    For Each prm In params
+        qdf.parameters(prm.ParameterName) = prm.ParameterValue
+    Next prm
     
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
@@ -69,7 +70,18 @@ End Function
 
 ' Método público de conveniencia para GetMapeoPorTipo
 Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.recordset
-    Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
+    Dim params As Collection
+    Dim prm As QueryParameter
+    
+    ' Crear colección de parámetros
+    Set params = New Collection
+    
+    Set prm = New QueryParameter
+    prm.ParameterName = "pNombrePlantilla"
+    prm.ParameterValue = tipoSolicitud
+    params.Add prm
+    
+    Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(params)
 End Function
 
 

@@ -1,197 +1,77 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
 Attribute VB_Name = "CMockWordManager"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
-
-' ============================================================================
-' Clase: CMockWordManager
-' Descripción: Mock del gestor de Word para pruebas unitarias aisladas.
-' Implementa: IWordManager
-' Autor: CONDOR-Expert
-' Fecha: 2025-08-22
-' Versión: 1.0
-' ============================================================================
-
 Implements IWordManager
 
-' ============================================================================
-' VARIABLES PRIVADAS PARA INYECCIÓN DE DEPENDENCIAS
-' ============================================================================
+' --- Variables de estado para configurar el comportamiento ---
+Private m_AbrirDocumento_ReturnValue As Boolean
+Private m_ReemplazarTexto_ReturnValue As Boolean
+Private m_GuardarDocumento_ReturnValue As Boolean
+Private m_LeerDocumento_ReturnValue As String
 
-Private m_WordApp As Object
-Private m_ErrorHandler As IErrorHandlerService
-
-' ============================================================================
-' PROPIEDADES PÚBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
-' ============================================================================
-
-' Propiedades para AbrirDocumento
-Public AbrirDocumento_ReturnValue As Boolean
+' --- Propiedades de seguimiento para las aserciones ---
 Public AbrirDocumento_WasCalled As Boolean
-Public AbrirDocumento_CallCount As Long
-Public AbrirDocumento_LastRutaDocumento As String
-
-' Propiedades para ReemplazarTexto
-Public ReemplazarTexto_ReturnValue As Boolean
-Public ReemplazarTexto_WasCalled As Boolean
-Public ReemplazarTexto_CallCount As Long
-Public ReemplazarTexto_LastTextoABuscar As String
-Public ReemplazarTexto_LastTextoReemplazo As String
-Public ReemplazarTexto_Calls As Collection
-
-' Propiedades para GuardarDocumento
-Public GuardarDocumento_ReturnValue As Boolean
 Public GuardarDocumento_WasCalled As Boolean
-Public GuardarDocumento_CallCount As Long
-Public GuardarDocumento_LastRutaDestino As String
+Public ReemplazarTexto_CallCount As Long
+Public LeerDocumento_CallCount As Long
+Public LeerDocumento_FilePath_Param As String
 
-' Propiedades para CerrarDocumento
-Public CerrarDocumento_WasCalled As Boolean
-Public CerrarDocumento_CallCount As Long
-
-' Propiedades para LeerContenidoDocumento
-Public LeerContenidoDocumento_ReturnValue As String
-Public LeerContenidoDocumento_WasCalled As Boolean
-Public LeerContenidoDocumento_CallCount As Long
-Public LeerContenidoDocumento_LastRutaDocumento As String
-
-' ============================================================================
-' CONSTRUCTOR
-' ============================================================================
-
-Private Sub Class_Initialize()
-    Set ReemplazarTexto_Calls = New Collection
-    Call Reset
+' --- Métodos públicos para configurar el mock ---
+Public Sub ConfigureAbrirDocumento(ByVal returnValue As Boolean)
+    m_AbrirDocumento_ReturnValue = returnValue
 End Sub
 
-' ============================================================================
-' INICIALIZACIÓN CON DEPENDENCIAS
-' ============================================================================
-
-Public Sub Initialize(ByVal wordApp As Object, ByVal errorHandler As IErrorHandlerService)
-    Set m_WordApp = wordApp
-    Set m_ErrorHandler = errorHandler
+Public Sub ConfigureReemplazarTexto(ByVal returnValue As Boolean)
+    m_ReemplazarTexto_ReturnValue = returnValue
 End Sub
 
-' ============================================================================
-' MÉTODOS PÚBLICOS PARA GESTIÓN DEL MOCK
-' ============================================================================
+Public Sub ConfigureGuardarDocumento(ByVal returnValue As Boolean)
+    m_GuardarDocumento_ReturnValue = returnValue
+End Sub
 
-' Reinicia todas las propiedades del mock a sus valores por defecto
+Public Sub ConfigureLeerDocumento(ByVal returnValue As String)
+    m_LeerDocumento_ReturnValue = returnValue
+End Sub
+
 Public Sub Reset()
-    ' Reset AbrirDocumento
-    AbrirDocumento_ReturnValue = True
+    m_AbrirDocumento_ReturnValue = False
+    m_ReemplazarTexto_ReturnValue = False
+    m_GuardarDocumento_ReturnValue = False
+    m_LeerDocumento_ReturnValue = ""
     AbrirDocumento_WasCalled = False
-    AbrirDocumento_CallCount = 0
-    AbrirDocumento_LastRutaDocumento = ""
-    
-    ' Reset ReemplazarTexto
-    ReemplazarTexto_ReturnValue = True
-    ReemplazarTexto_WasCalled = False
-    ReemplazarTexto_CallCount = 0
-    ReemplazarTexto_LastTextoABuscar = ""
-    ReemplazarTexto_LastTextoReemplazo = ""
-    Set ReemplazarTexto_Calls = New Collection
-    
-    ' Reset GuardarDocumento
-    GuardarDocumento_ReturnValue = True
     GuardarDocumento_WasCalled = False
-    GuardarDocumento_CallCount = 0
-    GuardarDocumento_LastRutaDestino = ""
-    
-    ' Reset CerrarDocumento
-    CerrarDocumento_WasCalled = False
-    CerrarDocumento_CallCount = 0
-    
-    ' Reset LeerContenidoDocumento
-    LeerContenidoDocumento_ReturnValue = ""
-    LeerContenidoDocumento_WasCalled = False
-    LeerContenidoDocumento_CallCount = 0
-    LeerContenidoDocumento_LastRutaDocumento = ""
-    
-    ' Reset ErrorHandler y WordApp
-    Set m_ErrorHandler = Nothing
-    Set m_WordApp = Nothing
+    ReemplazarTexto_CallCount = 0
+    LeerDocumento_CallCount = 0
+    LeerDocumento_FilePath_Param = ""
 End Sub
 
-' ============================================================================
-' IMPLEMENTACIÃ“N DE LA INTERFAZ IWordManager
-' ============================================================================
-
+' --- Implementación de la Interfaz ---
 Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As Boolean
     AbrirDocumento_WasCalled = True
-    AbrirDocumento_CallCount = AbrirDocumento_CallCount + 1
-    AbrirDocumento_LastRutaDocumento = rutaDocumento
-    IWordManager_AbrirDocumento = AbrirDocumento_ReturnValue
-End Function
-
-Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
-    ReemplazarTexto_WasCalled = True
-    ReemplazarTexto_CallCount = ReemplazarTexto_CallCount + 1
-    ReemplazarTexto_LastTextoABuscar = textoABuscar
-    ReemplazarTexto_LastTextoReemplazo = textoReemplazo
-    
-    ' Guardar la llamada en la colección para verificación detallada
-    Dim callInfo As String
-    callInfo = textoABuscar & "|" & textoReemplazo
-    ReemplazarTexto_Calls.Add callInfo
-    
-    IWordManager_ReemplazarTexto = ReemplazarTexto_ReturnValue
-End Function
-
-Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As Boolean
-    GuardarDocumento_WasCalled = True
-    GuardarDocumento_CallCount = GuardarDocumento_CallCount + 1
-    GuardarDocumento_LastRutaDestino = rutaDestino
-    IWordManager_GuardarDocumento = GuardarDocumento_ReturnValue
+    IWordManager_AbrirDocumento = m_AbrirDocumento_ReturnValue
 End Function
 
 Private Sub IWordManager_CerrarDocumento()
-    CerrarDocumento_WasCalled = True
-    CerrarDocumento_CallCount = CerrarDocumento_CallCount + 1
+    ' No necesita implementación para el mock
 End Sub
+
+Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As Boolean
+    GuardarDocumento_WasCalled = True
+    IWordManager_GuardarDocumento = m_GuardarDocumento_ReturnValue
+End Function
 
 Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As String) As String
-    LeerContenidoDocumento_WasCalled = True
-    LeerContenidoDocumento_CallCount = LeerContenidoDocumento_CallCount + 1
-    LeerContenidoDocumento_LastRutaDocumento = rutaDocumento
-    IWordManager_LeerContenidoDocumento = LeerContenidoDocumento_ReturnValue
+    ' Devuelve un valor por defecto, puede mejorarse si es necesario
+    IWordManager_LeerContenidoDocumento = "Contenido de prueba del mock."
 End Function
 
-' ============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
-' ============================================================================
-
-' Método público de conveniencia para AbrirDocumento
-Public Function AbrirDocumento(ByVal rutaDocumento As String) As Boolean
-    AbrirDocumento = IWordManager_AbrirDocumento(rutaDocumento)
+Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
+    ReemplazarTexto_CallCount = ReemplazarTexto_CallCount + 1
+    IWordManager_ReemplazarTexto = m_ReemplazarTexto_ReturnValue
 End Function
 
-' Método público de conveniencia para ReemplazarTexto
-Public Function ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
-    ReemplazarTexto = IWordManager_ReemplazarTexto(textoABuscar, textoReemplazo)
+Private Function IWordManager_LeerDocumento(ByVal filePath As String) As String
+    LeerDocumento_CallCount = LeerDocumento_CallCount + 1
+    LeerDocumento_FilePath_Param = filePath
+    IWordManager_LeerDocumento = m_LeerDocumento_ReturnValue
 End Function
-
-' Método público de conveniencia para GuardarDocumento
-Public Function GuardarDocumento(ByVal rutaDestino As String) As Boolean
-    GuardarDocumento = IWordManager_GuardarDocumento(rutaDestino)
-End Function
-
-' Método público de conveniencia para CerrarDocumento
-Public Sub CerrarDocumento()
-    IWordManager_CerrarDocumento
-End Sub
-
-' Método público de conveniencia para LeerContenidoDocumento
-Public Function LeerContenidoDocumento(ByVal rutaDocumento As String) As String
-    LeerContenidoDocumento = IWordManager_LeerContenidoDocumento(rutaDocumento)
-End Function
-
-

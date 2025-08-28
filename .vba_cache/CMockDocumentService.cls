@@ -29,7 +29,7 @@ Implements IDocumentService
 Public GenerarDocumento_ReturnValue As String
 Public GenerarDocumento_WasCalled As Boolean
 Public GenerarDocumento_CallCount As Long
-Public GenerarDocumento_LastSolicitud As T_Solicitud
+Public GenerarDocumento_LastSolicitud As E_Solicitud
 
 ' Propiedades para LeerDocumento
 Public LeerDocumento_ReturnValue As Boolean
@@ -62,7 +62,7 @@ End Sub
 ' IMPLEMENTACIÓN DE LA INTERFAZ IDocumentService
 ' ============================================================================
 
-Private Function IDocumentService_GenerarDocumento(ByVal solicitud As T_Solicitud) As String
+Private Function IDocumentService_GenerarDocumento(ByVal solicitud As E_Solicitud) As String
     GenerarDocumento_WasCalled = True
     GenerarDocumento_CallCount = GenerarDocumento_CallCount + 1
     Set GenerarDocumento_LastSolicitud = solicitud
@@ -82,7 +82,7 @@ End Function
 ' ============================================================================
 
 ' Método público de conveniencia para GenerarDocumento
-Public Function GenerarDocumento(ByVal solicitud As T_Solicitud) As String
+Public Function GenerarDocumento(ByVal solicitud As E_Solicitud) As String
     GenerarDocumento = IDocumentService_GenerarDocumento(solicitud)
 End Function
 

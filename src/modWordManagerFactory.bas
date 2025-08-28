@@ -10,14 +10,18 @@ Option Explicit
 ' FECHA: 2025-01-15
 ' =====================================================
 
-Public Function CreateWordManager(ByVal errorHandler As IErrorHandlerService) As IWordManager
+Public Function CreateWordManager() As IWordManager
     On Error GoTo ErrorHandler
     
     Dim wordApp As Object
     Dim configService As IConfig
+    Dim errorHandler As IErrorHandlerService
+    Dim fileSystem As IFileSystem
     
-    ' Obtener servicio de configuración
-    Set configService = modConfig.CreateConfigService(, errorHandler)
+    ' Crear dependencias internamente
+    Set configService = modConfig.CreateConfigService()
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(configService, fileSystem)
     
     ' Decidir si usar mock o clase concreta basado en DEV_MODE
     If CBool(configService.GetValue("DEV_MODE")) Then
@@ -27,7 +31,6 @@ Public Function CreateWordManager(ByVal errorHandler As IErrorHandlerService) As
         wordApp.DisplayAlerts = False
         
         Dim mockWordManager As New CMockWordManager
-        mockWordManager.Initialize wordApp, errorHandler
         Set CreateWordManager = mockWordManager
     Else
         ' Modo producción - crear instancia de Word y luego inicializar
@@ -43,7 +46,7 @@ Public Function CreateWordManager(ByVal errorHandler As IErrorHandlerService) As
     Exit Function
     
 ErrorHandler:
-    errorHandler.LogError Err.Number, Err.Description, "modWordManagerFactory.CreateWordManager"
-    Set CreateWordManager = Nothing
+    Debug.Print "Error en modWordManagerFactory.CreateWordManager: " & Err.Description
+    Err.Raise Err.Number, "modWordManagerFactory.CreateWordManager", Err.Description
 End Function
 

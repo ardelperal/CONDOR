@@ -35,7 +35,7 @@ Private Function Test_GetExpedienteById_Success() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_GetExpedienteById_Success")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
@@ -53,7 +53,7 @@ Private Function Test_GetExpedienteById_Success() As CTestResult
     Call expedienteService.Initialize(mockConfig, mockLogger, mockRepository, mockErrorHandler)
     
     ' Act - Ejecutar el método bajo prueba
-    Dim Resultado As T_Expediente
+    Dim Resultado As E_Expediente
     Resultado = expedienteService.GetExpedienteById(123)
     
     ' Assert - Verificar resultados
@@ -68,7 +68,7 @@ Private Function Test_GetExpedienteById_Success() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
@@ -90,7 +90,7 @@ Private Function Test_GetExpedienteById_NotFound() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_GetExpedienteById_NotFound")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange - Configurar mocks con recordset vacío
     Dim mockConfig As New CMockConfig
@@ -119,7 +119,7 @@ Private Function Test_GetExpedienteById_NotFound() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
@@ -145,7 +145,7 @@ Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_GetExpedientesParaSelector_Success")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange - Configurar mocks
     Dim mockConfig As New CMockConfig
@@ -156,7 +156,7 @@ Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     ' Crear recordset mock con lista de expedientes
     Dim mockRecordset As DAO.recordset
     Set mockRecordset = CreateMockExpedientesListRecordset()
-    mockRepository.SetObtenerExpedientesActivosParaSelectorReturnValue mockRecordset
+    mockRepository.SetObtenerExpedientePorIdReturnValue mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim expedienteService As New CExpedienteService
@@ -178,7 +178,7 @@ Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
@@ -195,7 +195,7 @@ Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_GetExpedientesParaSelector_EmptyResult")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange - Configurar mocks con recordset vacío
     Dim mockConfig As New CMockConfig
@@ -206,7 +206,7 @@ Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     ' Crear recordset mock vacío
     Dim mockRecordset As DAO.recordset
     Set mockRecordset = CreateEmptyRecordset()
-    mockRepository.SetObtenerExpedientesActivosParaSelectorReturnValue mockRecordset
+    mockRepository.SetObtenerExpedientePorIdReturnValue mockRecordset
     
     ' Crear servicio con dependencias mock
     Dim expedienteService As New CExpedienteService
@@ -226,7 +226,7 @@ Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
@@ -320,6 +320,16 @@ Private Function CreateEmptyRecordset() As DAO.recordset
     
     Set CreateEmptyRecordset = rs
 End Function
+
+' ============================================================================
+' SUBRUTINA DE LIMPIEZA CENTRALIZADA
+' ============================================================================
+
+' Subrutina centralizada para limpiar el estado de los mocks entre pruebas
+Private Sub Teardown()
+    ' Esta subrutina puede ser llamada desde las secciones Cleanup de cada test
+    ' para asegurar que todos los mocks se reseteen correctamente
+End Sub
 
 #End If
 

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -21,22 +21,22 @@ Option Explicit
 ' ============================================================================
 
 ' Obtiene una solicitud por su ID desde el Backend
-' @param idSolicitud: ID único de la solicitud
-' @return: Objeto T_Solicitud o Nothing si no existe
-Public Function GetSolicitudById(ByVal idSolicitud As Long) As T_Solicitud
+' @param params: Collection de objetos QueryParameter con los parámetros de la consulta
+' @return: Objeto ESolicitud o Nothing si no existe
+Public Function GetSolicitudById(ByVal params As Collection) As ESolicitud
 End Function
 
 ' Guarda una solicitud en el Backend (INSERT o UPDATE)
-' @param solicitud: Objeto T_Solicitud a persistir
+' @param params: Collection de objetos QueryParameter con los datos de la solicitud
 ' @return: ID de la solicitud guardada
-Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Long
+Public Function SaveSolicitud(ByVal params As Collection) As Long
 End Function
 
-' Ejecuta una consulta SQL con parámetros opcionales
-' @param sql: Consulta SQL a ejecutar
-' @param params: Colección opcional de parámetros QueryParameter
+' Ejecuta una consulta SQL con parámetros
+' @param queryName: Nombre de la consulta desde modQueries
+' @param params: Collection de objetos QueryParameter
 ' @return: Recordset con los resultados
-Public Function ExecuteQuery(ByVal sql As String, Optional ByVal params As Collection = Nothing) As DAO.recordset
+Public Function ExecuteQuery(ByVal queryName As String, ByVal params As Collection) As DAO.recordset
 End Function
 
 

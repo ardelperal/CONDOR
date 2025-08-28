@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -60,7 +60,7 @@ End Sub
 ' ============================================================================
 
 ' Crea una nueva solicitud con estado inicial "Borrador"
-Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As T_Solicitud
+Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As E_Solicitud
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudService.CreateSolicitud", "El servicio no ha sido inicializado. Llame a Initialize() primero."
@@ -77,8 +77,8 @@ Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String,
     On Error GoTo ErrorHandler
     
     ' Crear nueva solicitud con estado inicial "Borrador"
-    Dim nuevaSolicitud As T_Solicitud
-    Set nuevaSolicitud = New T_Solicitud
+    Dim nuevaSolicitud As E_Solicitud
+Set nuevaSolicitud = New E_Solicitud
     
     With nuevaSolicitud
         .idSolicitud = 0 ' Será asignado por el repositorio
@@ -118,7 +118,7 @@ ErrorHandler:
 End Function
 
 ' Guarda una solicitud existente
-Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
+Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As E_Solicitud) As Boolean
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudService.SaveSolicitud", "El servicio no ha sido inicializado. Llame a Initialize() primero."
@@ -176,12 +176,12 @@ End Function
 '==============================================================================
 
 ' Método público de conveniencia que delega a la implementación de la interfaz
-Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As T_Solicitud
+Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As E_Solicitud
     Set CreateSolicitud = ISolicitudService_CreateSolicitud(idExpediente, tipo)
 End Function
 
 ' Método público de conveniencia que delega a la implementación de la interfaz
-Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
+Public Function SaveSolicitud(ByVal solicitud As E_Solicitud) As Boolean
     SaveSolicitud = ISolicitudService_SaveSolicitud(solicitud)
 End Function
 

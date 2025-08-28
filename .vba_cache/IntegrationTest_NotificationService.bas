@@ -79,8 +79,8 @@ Private Function Test_EnviarNotificacion_Success_CallsRepositoryCorrectly_Result
     Call testConfig.SetSetting("USUARIO_ACTUAL", "testuser@empresa.com")
     Call testConfig.SetSetting("CORREO_ADMINISTRADOR", "admin@empresa.com")
     
-    ' Crear el servicio usando el factory
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig, operationLogger, errorHandler)
+    ' Crear el servicio usando el factory con testConfig
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig)
     
     ' Act
     Dim Resultado As Boolean
@@ -118,8 +118,8 @@ Private Function Test_Initialize_WithValidDependencies_Result() As CTestResult
     Call testConfig.SetSetting("CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH)
     Call testConfig.SetSetting("DATABASE_PASSWORD", "testpass123")
     
-    ' Act - Crear el servicio usando el factory (esto incluye la inicialización)
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig, operationLogger, errorHandler)
+    ' Act - Crear el servicio usando el factory con testConfig (esto incluye la inicialización)
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig)
     
     ' Assert - Si no hay error, la inicialización fue exitosa
     Call modAssert.AssertNotNull(notificationService, "El servicio debe crearse correctamente")
@@ -185,8 +185,8 @@ Private Function Test_EnviarNotificacion_WithInvalidParameters_Result() As CTest
     Call testConfig.SetSetting("CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH)
     Call testConfig.SetSetting("DATABASE_PASSWORD", "testpass123")
     
-    ' Crear el servicio usando el factory
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig, operationLogger, errorHandler)
+    ' Crear el servicio usando el factory con testConfig
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig)
     
     ' Act & Assert - Destinatarios vacío
     Dim resultado1 As Boolean
@@ -234,8 +234,8 @@ Private Function Test_EnviarNotificacion_ConfigValuesUsed_Result() As CTestResul
     Call testConfig.SetSetting("USUARIO_ACTUAL", "usuario.test@empresa.com")
     Call testConfig.SetSetting("CORREO_ADMINISTRADOR", "admin.test@empresa.com")
     
-    ' Crear el servicio usando el factory
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig, operationLogger, errorHandler)
+    ' Crear el servicio usando el factory con testConfig
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(testConfig)
     
     ' Act
     Dim Resultado As Boolean

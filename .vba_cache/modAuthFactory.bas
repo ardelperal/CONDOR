@@ -31,14 +31,13 @@ Public Function CreateAuthService() As IAuthService
     Set config = modConfig.CreateConfigService()
     
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     Dim operationLogger As IOperationLogger
-    Set operationLogger = New COperationLogger
-    operationLogger.Initialize config, errorHandler
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
     Dim authRepository As IAuthRepository
-    Set authRepository = modRepositoryFactory.CreateAuthRepository(errorHandler, config)
+    Set authRepository = modRepositoryFactory.CreateAuthRepository(config, errorHandler)
     
     ' Crear una instancia de la clase concreta
     Dim authServiceInstance As New CAuthService

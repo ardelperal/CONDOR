@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -27,6 +27,9 @@ Implements IWorkflowRepository
 ' Dependencia para acceso a configuración
 Private m_Config As IConfig
 
+' Dependencia para manejo de errores
+Private m_ErrorHandler As IErrorHandlerService
+
 '==============================================================================
 ' MÉTODOS PÚBLICOS
 '==============================================================================
@@ -34,9 +37,11 @@ Private m_Config As IConfig
 '''
 ' Inicializa el repositorio con sus dependencias
 ' @param config: Servicio de configuración para obtener rutas de base de datos
+' @param errorHandler: Servicio de manejo de errores
 '''
-Public Sub Initialize(config As IConfig)
+Public Sub Initialize(ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
     Set m_Config = config
+    Set m_ErrorHandler = errorHandler
 End Sub
 
 '==============================================================================

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -19,8 +19,8 @@ Option Explicit
 
 
 ' Obtiene todos los datos de autenticación de un usuario en una sola consulta
-' @param UserEmail: Email del usuario a buscar
-' @return: Objeto T_AuthData con toda la información de autenticación
-Public Function GetUserAuthData(ByVal UserEmail As String) As T_AuthData
+' @param params: Collection de objetos QueryParameter con los parámetros de la consulta
+' @return: Objeto E_AuthData con toda la información de autenticación
+Public Function GetUserAuthData(ByVal params As Collection) As E_AuthData
 End Function
 

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -23,14 +23,14 @@ Option Explicit
 ' Crea una nueva solicitud con estado inicial "Borrador"
 ' @param idExpediente: ID del expediente al que pertenece la solicitud
 ' @param tipo: Tipo de solicitud (ej: "PC", "RAC", etc.)
-' @return: Objeto T_Solicitud creado y guardado
-Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As T_Solicitud
+' @return: Objeto ESolicitud creado y guardado
+Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As ESolicitud
 End Function
 
 ' Guarda una solicitud existente
-' @param solicitud: Objeto T_Solicitud a guardar
+' @param solicitud: Objeto ESolicitud a guardar
 ' @return: True si se guardó correctamente, False en caso contrario
-Public Function SaveSolicitud(ByVal solicitud As T_Solicitud) As Boolean
+Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Boolean
 End Function
 
 

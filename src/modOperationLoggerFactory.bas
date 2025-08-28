@@ -8,12 +8,17 @@ Option Explicit
 
 Private g_MockLogger As IOperationLogger ' Para inyectar un mock en tests
 
-Public Function CreateOperationLogger(ByVal errorHandler As IErrorHandlerService) As IOperationLogger
+Public Function CreateOperationLogger() As IOperationLogger
     On Error GoTo ErrorHandler
     
-    ' Obtener la instancia de configuración
+    ' Crear dependencias internamente
+    Dim errorHandler As IErrorHandlerService
     Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService(errorHandler)
+    Dim fileSystem As IFileSystem
+    
+    Set configService = modConfig.CreateConfigService()
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(configService, fileSystem)
     
     ' Decidir si usar mock o clase concreta basado en DEV_MODE
     If CBool(configService.GetValue("DEV_MODE")) Then
@@ -40,9 +45,8 @@ Public Function CreateOperationLogger(ByVal errorHandler As IErrorHandlerService
     Exit Function
     
 ErrorHandler:
-    ' Usar el manejador de errores inyectado
-    errorHandler.LogError Err.Number, Err.Description, "modOperationLoggerFactory.CreateOperationLogger", True ' Mark as critical
-    Err.Raise Err.Number, Err.Source, Err.Description
+    Debug.Print "Error en modOperationLoggerFactory.CreateOperationLogger: " & Err.Description
+    Err.Raise Err.Number, "modOperationLoggerFactory.CreateOperationLogger", Err.Description
 End Function
 
 ' Método para configurar el mock logger en tests

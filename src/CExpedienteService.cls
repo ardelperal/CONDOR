@@ -36,12 +36,12 @@ End Sub
 
 ' Implementación de la interfaz IExpedienteService
 ' Obtiene un expediente por su ID desde la base de datos de expedientes (método principal)
-Public Function GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
+Public Function GetExpedienteById(ByVal idExpediente As Long) As E_Expediente
     Set GetExpedienteById = IExpedienteService_GetExpedienteById(idExpediente)
 End Function
 
 ' Obtiene un expediente por su nemotécnico desde la base de datos de expedientes
-Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As T_Expediente
+Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As E_Expediente
     Set GetExpedienteByNemotecnico = IExpedienteService_GetExpedienteByNemotecnico(Nemotecnico)
 End Function
 
@@ -51,16 +51,16 @@ Public Function GetExpedientesParaSelector() As DAO.Recordset
 End Function
 
 ' Implementación de la interfaz para GetExpedienteById
-Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As T_Expediente
+Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As E_Expediente
     Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables
     Dim rs As DAO.recordset
-    Dim expediente As T_Expediente
+    Dim expediente As E_Expediente
     
     ' Instanciar el objeto expediente
-    Set expediente = New T_Expediente
+    Set expediente = New E_Expediente
     
     ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
@@ -72,7 +72,7 @@ Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long
     
     ' Verificar si se encontró el expediente
     If Not rs Is Nothing And Not rs.EOF Then
-        ' Mapear los datos del recordset a la estructura T_Expediente
+        ' Mapear los datos del recordset a la estructura E_Expediente
         expediente.idExpediente = rs("idExpediente")
         expediente.NumeroExpediente = rs("NumeroExpediente") & ""
         expediente.Titulo = rs("Titulo") & ""
@@ -117,8 +117,8 @@ ErrorHandler:
     End If
     
     ' Devolver estructura vacía en caso de error
-    Dim expedienteVacio As T_Expediente
-    Set expedienteVacio = New T_Expediente
+    Dim expedienteVacio As E_Expediente
+Set expedienteVacio = New E_Expediente
     expedienteVacio.idExpediente = 0
     Set IExpedienteService_GetExpedienteById = expedienteVacio
 End Function
@@ -157,16 +157,16 @@ ErrorHandler:
 End Function
 
 ' Implementación de la interfaz para GetExpedienteByNemotecnico
-Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As T_Expediente
+Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As E_Expediente
     Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables
     Dim rs As DAO.recordset
-    Dim expediente As T_Expediente
+    Dim expediente As E_Expediente
     
     ' Instanciar el objeto expediente
-    Set expediente = New T_Expediente
+    Set expediente = New E_Expediente
     
     ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
@@ -178,7 +178,7 @@ Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico
     
     ' Verificar si se encontró el expediente
     If Not rs Is Nothing And Not rs.EOF Then
-        ' Mapear los datos del recordset a la estructura T_Expediente
+        ' Mapear los datos del recordset a la estructura E_Expediente
         expediente.idExpediente = rs("idExpediente")
         expediente.NumeroExpediente = rs("NumeroExpediente") & ""
         expediente.Titulo = rs("Titulo") & ""
@@ -223,8 +223,8 @@ ErrorHandler:
     End If
     
     ' Devolver estructura vacía en caso de error
-    Dim expedienteVacio As T_Expediente
-    Set expedienteVacio = New T_Expediente
+    Dim expedienteVacio As E_Expediente
+Set expedienteVacio = New E_Expediente
     expedienteVacio.idExpediente = 0
     Set IExpedienteService_GetExpedienteByNemotecnico = expedienteVacio
 End Function

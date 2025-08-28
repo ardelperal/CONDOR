@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -11,7 +11,7 @@ Option Compare Database
 Option Explicit
 
 
-Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.recordset
+Public Function GetMapeoPorTipo(ByVal params As Collection) As DAO.recordset
 End Function
 
 

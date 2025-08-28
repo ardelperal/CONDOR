@@ -53,8 +53,12 @@ Private Sub Setup()
     m_tempTemplatePath = Environ("TEMP") & "\CondorTests\TestTemplate.docx"
     CreateDummyWordDocument m_tempTemplatePath, "[MARCADOR_TEST]"
     
+    Dim wordApp As Object
+    Set wordApp = CreateObject("Word.Application")
+    wordApp.Visible = False ' Esencial para tests desatendidos
+    
     Dim managerImpl As New CWordManager
-    Call managerImpl.Initialize(m_mockErrorHandler) ' Injected
+    Call managerImpl.Initialize(wordApp, m_mockErrorHandler) ' Injected
     Set m_wordManager = managerImpl
 End Sub
 
@@ -123,7 +127,7 @@ Private Function Test_AbrirCerrarDocumento_Success() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("AbrirDocumento y CerrarDocumento deben funcionar correctamente")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     Call Setup
     
@@ -139,7 +143,7 @@ Private Function Test_AbrirCerrarDocumento_Success() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
 Cleanup:
     Call Teardown
@@ -150,7 +154,7 @@ Private Function Test_ReemplazarTexto_Success() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "ReemplazarTexto debe sustituir el marcador correctamente"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     Call Setup
     
@@ -211,7 +215,7 @@ Private Function Test_ReemplazarTexto_Success() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
 Cleanup:
     Call Teardown
@@ -222,7 +226,7 @@ Private Function Test_GuardarDocumento_Success() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "GuardarDocumento debe guardar el documento en la ruta especificada"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     Call Setup
     
@@ -247,7 +251,7 @@ Private Function Test_GuardarDocumento_Success() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
 Cleanup:
     Call Teardown

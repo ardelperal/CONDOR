@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -22,19 +22,20 @@ Option Explicit
 ' ============================================================================
 
 ' Obtiene un expediente por su ID desde el Backend
-' @param IdExpediente: ID único del expediente
+' @param params: Collection de QueryParameter con los parámetros de consulta
 ' @return: Recordset con los datos del expediente o Nothing si no existe
-Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
+Public Function ObtenerExpedientePorId(ByVal params As Collection) As DAO.recordset
 End Function
 
 ' Obtiene un expediente por su nemotécnico desde el Backend
-' @param Nemotecnico: Nemotécnico único del expediente
+' @param params: Collection de QueryParameter con los parámetros de consulta
 ' @return: Recordset con los datos del expediente o Nothing si no existe
-Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
+Public Function ObtenerExpedientePorNemotecnico(ByVal params As Collection) As DAO.recordset
 End Function
 
 ' Obtiene la lista de expedientes activos para selectores
+' @param params: Collection de QueryParameter (puede estar vacía para esta consulta)
 ' @return: Recordset con expedientes en estado 'Activo' o 'En Proceso'
-Public Function ObtenerExpedientesActivosParaSelector() As DAO.recordset
+Public Function ObtenerExpedientesActivosParaSelector(ByVal params As Collection) As DAO.recordset
 End Function
 

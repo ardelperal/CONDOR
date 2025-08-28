@@ -125,9 +125,13 @@ Public Sub Load(ByVal db As DAO.Database)
     On Error GoTo ErrorHandler
     
     Dim rs As DAO.recordset
+    Dim qdf As DAO.QueryDef
     
-    ' Ejecutar consulta SELECT Clave, Valor FROM TbConfiguracion
-    Set rs = db.OpenRecordset("SELECT Clave, Valor FROM TbConfiguracion", dbOpenSnapshot)
+    ' Crear QueryDef con la consulta centralizada
+    Set qdf = db.CreateQueryDef("", GET_ALL_CONFIGURATION)
+    
+    ' Ejecutar consulta
+    Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     ' Limpiar colección anterior
     Set m_Settings = New Collection
@@ -141,6 +145,7 @@ Public Sub Load(ByVal db As DAO.Database)
     ' Cerrar recursos
     rs.Close
     Set rs = Nothing
+    Set qdf = Nothing
     
     ' Marcar como inicializado
     m_isInitialized = True
@@ -152,6 +157,9 @@ ErrorHandler:
     If Not rs Is Nothing Then
         rs.Close
         Set rs = Nothing
+    End If
+    If Not qdf Is Nothing Then
+        Set qdf = Nothing
     End If
     m_isInitialized = False
 End Sub

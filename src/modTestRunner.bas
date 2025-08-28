@@ -164,8 +164,8 @@ End Sub
 '******************************************************************************
 
 ' Función que descubre automáticamente todas las suites de prueba basándose en convenciones de nomenclatura
-' Convención: Los módulos de prueba deben comenzar con "Test_" o "IntegrationTest_"
-' Patrón de función: [NombreModulo]_RunAll (ej: Test_CConfig_RunAll, IntegrationTest_CMapeoRepository_RunAll)
+' Convención: Los módulos de prueba deben comenzar con "Test" o "IntegrationTest"
+' Patrón de función: [NombreModulo]RunAll (ej: TestCConfigRunAll, IntegrationTestCMapeoRepositoryRunAll)
 ' Requiere: Referencia a "Microsoft Visual Basic for Applications Extensibility 5.3"
 Private Sub DiscoverAndRegisterSuites()
     On Error GoTo ErrorHandler
@@ -182,11 +182,11 @@ Private Sub DiscoverAndRegisterSuites()
             Dim componentName As String
             componentName = vbComponent.Name
             
-            ' Verificar si el nombre comienza con "Test_" o "IntegrationTest_"
-            If Left(componentName, 5) = "Test_" Or Left(componentName, 16) = "IntegrationTest_" Then
-                ' Construir el nombre de la función de ejecución siguiendo el patrón [NombreModulo]_RunAll
+            ' Verificar si el nombre comienza con "Test" o "IntegrationTest"
+            If Left(componentName, 4) = "Test" Or Left(componentName, 15) = "IntegrationTest" Then
+                ' Construir el nombre de la función de ejecución siguiendo el patrón [NombreModulo]RunAll
                 Dim suiteFunction As String
-                suiteFunction = componentName & "_RunAll"
+                suiteFunction = componentName & "RunAll"
                 
                 ' Añadir a la colección de suites
                 m_SuiteNames.Add suiteFunction
@@ -213,26 +213,26 @@ Private Sub RegisterKnownSuites()
     On Error Resume Next
     
     ' Registrar suites unitarias
-    m_SuiteNames.Add "Test_AppManager_RunAll"
-    m_SuiteNames.Add "Test_AuthService_RunAll"
-    m_SuiteNames.Add "Test_CExpedienteService_RunAll"
-    m_SuiteNames.Add "Test_CWordManager_RunAll"
-    m_SuiteNames.Add "Test_DocumentService_RunAll"
-    m_SuiteNames.Add "Test_ErrorHandlerService_RunAll"
-    m_SuiteNames.Add "Test_modAssert_RunAll"
-    m_SuiteNames.Add "Test_NotificationService_RunAll"
-    m_SuiteNames.Add "Test_OperationLogger_RunAll"
-    m_SuiteNames.Add "Test_SolicitudService_RunAll"
-    m_SuiteNames.Add "Test_WorkflowService_RunAll"
+    m_SuiteNames.Add "TestAppManagerRunAll"
+    m_SuiteNames.Add "TestAuthServiceRunAll"
+    m_SuiteNames.Add "TestCExpedienteServiceRunAll"
+    m_SuiteNames.Add "TestCWordManagerRunAll"
+    m_SuiteNames.Add "TestDocumentServiceRunAll"
+    m_SuiteNames.Add "TestErrorHandlerServiceRunAll"
+    m_SuiteNames.Add "TestModAssertRunAll"
+    m_SuiteNames.Add "TestNotificationServiceRunAll"
+    m_SuiteNames.Add "TestOperationLoggerRunAll"
+    m_SuiteNames.Add "TestSolicitudServiceRunAll"
+    m_SuiteNames.Add "TestWorkflowServiceRunAll"
     
     ' Registrar suites de integración
-    m_SuiteNames.Add "IntegrationTest_CConfig_RunAll"
-    m_SuiteNames.Add "IntegrationTest_CExpedienteRepository_RunAll"
-    m_SuiteNames.Add "IntegrationTest_CMapeoRepository_RunAll"
-    m_SuiteNames.Add "IntegrationTest_NotificationService_RunAll"
-    m_SuiteNames.Add "IntegrationTest_SolicitudRepository_RunAll"
-    m_SuiteNames.Add "IntegrationTest_WordManager_RunAll"
-    m_SuiteNames.Add "IntegrationTest_WorkflowRepository_RunAll"
+    m_SuiteNames.Add "IntegrationTestCConfigRunAll"
+    m_SuiteNames.Add "IntegrationTestCExpedienteRepositoryRunAll"
+    m_SuiteNames.Add "IntegrationTestCMapeoRepositoryRunAll"
+    m_SuiteNames.Add "IntegrationTestNotificationServiceRunAll"
+    m_SuiteNames.Add "IntegrationTestSolicitudRepositoryRunAll"
+    m_SuiteNames.Add "IntegrationTestWordManagerRunAll"
+    m_SuiteNames.Add "IntegrationTestWorkflowRepositoryRunAll"
     
     On Error GoTo 0
 End Sub

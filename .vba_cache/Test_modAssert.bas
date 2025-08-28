@@ -42,7 +42,7 @@ Private Function Test_AssertTrue_WithTrueCondition_Passes() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertTrue_WithTrueCondition_Passes")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Act & Assert - No debe lanzar error
     modAssert.AssertTrue True, "Esta aserción debe pasar"
@@ -50,7 +50,7 @@ Private Function Test_AssertTrue_WithTrueCondition_Passes() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "AssertTrue falló inesperadamente con condición True: " & Err.Description
     
 Cleanup:
@@ -62,7 +62,7 @@ Private Function Test_AssertTrue_WithFalseCondition_Fails() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertTrue_WithFalseCondition_Fails")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Act - Debe lanzar error
     modAssert.AssertTrue False, "Esta aserción debe fallar"
@@ -71,7 +71,7 @@ Private Function Test_AssertTrue_WithFalseCondition_Fails() As CTestResult
     testResult.Fail "AssertTrue debería haber fallado con condición False"
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     ' Verificar que el error sea el esperado
     If Err.Number = vbObjectError + 510 Then
         testResult.Pass
@@ -92,7 +92,7 @@ Private Function Test_AssertFalse_WithFalseCondition_Passes() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertFalse_WithFalseCondition_Passes")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Act & Assert - No debe lanzar error
     modAssert.AssertFalse False, "Esta aserción debe pasar"
@@ -100,7 +100,7 @@ Private Function Test_AssertFalse_WithFalseCondition_Passes() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "AssertFalse falló inesperadamente con condición False: " & Err.Description
     
 Cleanup:
@@ -112,7 +112,7 @@ Private Function Test_AssertFalse_WithTrueCondition_Fails() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertFalse_WithTrueCondition_Fails")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Act - Debe lanzar error
     modAssert.AssertFalse True, "Esta aserción debe fallar"
@@ -121,7 +121,7 @@ Private Function Test_AssertFalse_WithTrueCondition_Fails() As CTestResult
     testResult.Fail "AssertFalse debería haber fallado con condición True"
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     ' Verificar que el error sea el esperado
     If Err.Number = vbObjectError + 511 Then
         testResult.Pass
@@ -142,7 +142,7 @@ Private Function Test_AssertEquals_WithEqualValues_Passes() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertEquals_WithEqualValues_Passes")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Act & Assert - No debe lanzar error
     modAssert.AssertEquals "test", "test", "Valores iguales deben pasar"
@@ -152,7 +152,7 @@ Private Function Test_AssertEquals_WithEqualValues_Passes() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     Call testResult.Fail("AssertEquals falló inesperadamente con valores iguales: " & Err.Description)
     
 Cleanup:
@@ -164,7 +164,7 @@ Private Function Test_AssertEquals_WithDifferentValues_Fails() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertEquals_WithDifferentValues_Fails")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Act - Debe lanzar error
     modAssert.AssertEquals "expected", "actual", "Esta aserción debe fallar"
@@ -173,7 +173,7 @@ Private Function Test_AssertEquals_WithDifferentValues_Fails() As CTestResult
     Call testResult.Fail("AssertEquals debería haber fallado con valores diferentes")
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     ' Verificar que el error sea el esperado
     If Err.Number = vbObjectError + 512 Then
         testResult.Pass
@@ -194,7 +194,7 @@ Private Function Test_AssertNotNull_WithValidObject_Passes() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertNotNull_WithValidObject_Passes")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
     Dim obj As New Collection
@@ -205,7 +205,7 @@ Private Function Test_AssertNotNull_WithValidObject_Passes() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "AssertNotNull falló inesperadamente con objeto válido: " & Err.Description
     
 Cleanup:
@@ -218,7 +218,7 @@ Private Function Test_AssertNotNull_WithNothingObject_Fails() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertNotNull_WithNothingObject_Fails")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
     Dim obj As Object
@@ -231,7 +231,7 @@ Private Function Test_AssertNotNull_WithNothingObject_Fails() As CTestResult
     testResult.Fail "AssertNotNull debería haber fallado con objeto Nothing"
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     ' Verificar que el error sea el esperado
     If Err.Number = vbObjectError + 513 Then
         testResult.Pass
@@ -252,7 +252,7 @@ Private Function Test_AssertIsNull_WithNothingObject_Passes() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertIsNull_WithNothingObject_Passes")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
     Dim obj As Object
@@ -264,7 +264,7 @@ Private Function Test_AssertIsNull_WithNothingObject_Passes() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "AssertIsNull falló inesperadamente con objeto Nothing: " & Err.Description
     
 Cleanup:
@@ -276,7 +276,7 @@ Private Function Test_AssertIsNull_WithValidObject_Fails() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_AssertIsNull_WithValidObject_Fails")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
     Dim obj As New Collection
@@ -288,7 +288,7 @@ Private Function Test_AssertIsNull_WithValidObject_Fails() As CTestResult
     testResult.Fail "AssertIsNull debería haber fallado con objeto válido"
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     ' Verificar que el error sea el esperado
     If Err.Number = vbObjectError + 514 Then
         testResult.Pass
@@ -310,7 +310,7 @@ Private Function Test_Fail_AlwaysFails() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_Fail_AlwaysFails")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Act - Debe lanzar error
     Call modAssert.Fail("Esta función siempre debe fallar")
@@ -319,7 +319,7 @@ Private Function Test_Fail_AlwaysFails() As CTestResult
     testResult.Fail "Fail debería haber fallado incondicionalmente"
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     ' Verificar que el error sea el esperado
     If Err.Number = vbObjectError + 515 Then
         testResult.Pass

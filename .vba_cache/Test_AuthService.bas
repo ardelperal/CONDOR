@@ -35,7 +35,7 @@ Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador(
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
@@ -46,8 +46,8 @@ Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador(
     Dim mockAuthRepository As New CMockAuthRepository
     Dim mockErrorHandler As New CMockErrorHandlerService
     
-    ' Configurar T_AuthData para usuario administrador
-    Dim authData As New T_AuthData
+    ' Configurar E_AuthData para usuario administrador
+    Dim authData As New E_AuthData
     authData.UserExists = True
     authData.IsGlobalAdmin = True
     authData.IsAppAdmin = False
@@ -70,7 +70,7 @@ Private Function Test_GetUserRole_UsuarioAdministrador_DevuelveRolAdministrador(
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
@@ -88,7 +88,7 @@ Private Function Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad() As CTestRe
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
@@ -99,8 +99,8 @@ Private Function Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad() As CTestRe
     Dim mockAuthRepository As New CMockAuthRepository
     Dim mockErrorHandler As New CMockErrorHandlerService
     
-    ' Configurar T_AuthData para usuario de calidad
-    Dim authData As New T_AuthData
+    ' Configurar E_AuthData para usuario de calidad
+    Dim authData As New E_AuthData
     authData.UserExists = True
     authData.IsGlobalAdmin = False
     authData.IsAppAdmin = False
@@ -123,7 +123,7 @@ Private Function Test_GetUserRole_UsuarioCalidad_DevuelveRolCalidad() As CTestRe
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
@@ -141,7 +141,7 @@ Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestRe
     Dim testResult As New CTestResult
     testResult.Initialize "Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
@@ -152,8 +152,8 @@ Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestRe
     Dim mockAuthRepository As New CMockAuthRepository
     Dim mockErrorHandler As New CMockErrorHandlerService
     
-    ' Configurar T_AuthData para usuario técnico
-    Dim authData As New T_AuthData
+    ' Configurar E_AuthData para usuario técnico
+    Dim authData As New E_AuthData
     authData.UserExists = True
     authData.IsGlobalAdmin = False
     authData.IsAppAdmin = False
@@ -176,7 +176,7 @@ Private Function Test_GetUserRole_UsuarioTecnico_DevuelveRolTecnico() As CTestRe
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
@@ -194,7 +194,7 @@ Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As
     Dim testResult As New CTestResult
     testResult.Initialize "Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
@@ -205,8 +205,8 @@ Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As
     Dim mockAuthRepository As New CMockAuthRepository
     Dim mockErrorHandler As New CMockErrorHandlerService
     
-    ' Configurar T_AuthData para usuario no encontrado
-    Dim authData As New T_AuthData
+    ' Configurar E_AuthData para usuario no encontrado
+    Dim authData As New E_AuthData
     authData.UserExists = False
     authData.IsGlobalAdmin = False
     authData.IsAppAdmin = False
@@ -229,7 +229,7 @@ Private Function Test_GetUserRole_UsuarioDesconocido_DevuelveRolDesconocido() As
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:

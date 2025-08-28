@@ -7,15 +7,19 @@ Option Explicit
 ' Arquitectura: Capa de Servicios - Factory Pattern
 
 ' Crea una instancia configurada de IErrorHandlerService
-' @param config IConfig: Instancia de configuración
-' @param fileSystem IFileSystem: Instancia del sistema de ficheros
 ' @return IErrorHandlerService: Instancia lista para usar
-Public Function CreateErrorHandlerService(ByVal config As IConfig, ByVal fileSystem As IFileSystem) As IErrorHandlerService
+Public Function CreateErrorHandlerService() As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Dim errorHandlerInstance As New CErrorHandlerService
+    Dim config As IConfig
+    Dim fileSystem As IFileSystem
     
-    ' Inicializar el servicio con las dependencias recibidas
+    ' Crear dependencias internamente según Lección 37
+    Set config = modConfig.CreateConfig()
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    
+    ' Inicializar el servicio con las dependencias creadas internamente
     errorHandlerInstance.Initialize config, fileSystem
     
     ' Devolver la interfaz

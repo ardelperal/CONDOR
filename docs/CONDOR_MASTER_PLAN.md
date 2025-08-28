@@ -70,10 +70,12 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 - Interfaces: IAuthService, **IOperationLogger**
 - Clases: CAuthService, **COperationLogger**
 - Módulos: modDatabase, **modOperationLoggerFactory**, **modConfigFactory**
-- Tipos de Datos: T_Usuario
+- Tipos de Datos: E_Usuario
 - Miembros: camelCase (sin guiones bajos).
 
 **Testing contra la Interfaz**: En los módulos de prueba (Test_*), las variables de servicio siempre se declaran del tipo de la interfaz.
+
+**Principio de Fábricas**: Los métodos `Create` de las factorías (mod*Factory) NO deben recibir argumentos. Las dependencias deben ser creadas internamente por cada factoría llamando a otras factorías. Ejemplo: `modErrorHandlerFactory.CreateErrorHandlerService()` crea sus propias dependencias (`IConfig`, `IFileSystem`) sin recibirlas como parámetros.
 
 - **Manejo de Errores Centralizado**: Todo procedimiento susceptible de fallar debe implementar un bloque `On Error GoTo` que obligatoriamente registre el error a través del servicio central `modErrorHandler`. Los errores silenciosos están prohibidos.
 
@@ -93,15 +95,136 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🧪 CMockAuthService.cls      ← Mock para testing           │
 │ 🧪 CMockAuthRepository.cls   ← Mock para testing           │
 │ 🏭 modAuthFactory.bas        ← Factory                     │
+│ 📊 E_AuthData.cls           ← Entidad de datos             │
 │ ✅ Test_AuthService.bas      ← Tests unitarios             │
 │ 🔬 IntegrationTest_AuthRepository.bas ← Tests integración  │
+│                                                             │
+│ 📊 Análisis de Código Fuente: 10 archivos identificados    │
 └─────────────────────────────────────────────────────────────┘
+```
+
+#### Diagrama de Clases UML
+
+```mermaid
+classDiagram
+    %% Interfaces
+    class IAuthService {
+        <<interface>>
+        +GetUserRole(UserEmail: String) E_UserRole
+    }
+    
+    class IAuthRepository {
+        <<interface>>
+        +GetUserAuthData(UserEmail: String) E_AuthData
+    }
+    
+    %% Implementaciones
+    class CAuthService {
+        -configSvc: IConfig
+        -m_OperationLogger: IOperationLogger
+        -m_AuthRepository: IAuthRepository
+        -m_ErrorHandler: IErrorHandlerService
+        +Initialize(config: IConfig, operationLogger: IOperationLogger, authRepository: IAuthRepository, errorHandler: IErrorHandlerService)
+        +IAuthService_GetUserRole(UserEmail: String) E_UserRole
+        +GetUserRole(UserEmail: String) E_UserRole
+    }
+    
+    class CAuthRepository {
+        -m_configService: IConfig
+        -m_ErrorHandler: IErrorHandlerService
+        -m_isInitialized: Boolean
+        +Initialize(configService: IConfig, errorHandler: IErrorHandlerService)
+        +IAuthRepository_GetUserAuthData(UserEmail: String) E_AuthData
++GetUserAuthData(UserEmail: String) E_AuthData
+    }
+    
+    %% Entidad de Datos
+    class E_AuthData {
+        +UserExists: Boolean
+        +IsGlobalAdmin: Boolean
+        +IsAppAdmin: Boolean
+        +IsCalidad: Boolean
+        +IsTecnico: Boolean
+    }
+    
+    %% Mocks para Testing
+    class CMockAuthService {
+        <<mock>>
+        -m_MockUserRole: E_UserRole
+        +SetMockUserRole(role: E_UserRole)
+        +IAuthService_GetUserRole(UserEmail: String) E_UserRole
+    }
+    
+    class CMockAuthRepository {
+        <<mock>>
+        -m_MockAuthData: E_AuthData
++SetMockAuthData(authData: E_AuthData)
++IAuthRepository_GetUserAuthData(UserEmail: String) E_AuthData
+    }
+    
+    %% Factory
+    class modAuthFactory {
+        <<factory>>
+        -m_MockAuthService: IAuthService
+        +CreateAuthService() IAuthService
+        +SetMockAuthService(mock: IAuthService)
+        +ResetMock()
+    }
+    
+    %% Relaciones
+    IAuthService <|.. CAuthService : implements
+    IAuthRepository <|.. CAuthRepository : implements
+    IAuthService <|.. CMockAuthService : implements
+    IAuthRepository <|.. CMockAuthRepository : implements
+    
+    CAuthService --> IAuthRepository : uses
+    CAuthService --> IConfig : uses
+    CAuthService --> IOperationLogger : uses
+    CAuthService --> IErrorHandlerService : uses
+    
+    CAuthRepository --> IConfig : uses
+    CAuthRepository --> IErrorHandlerService : uses
+    CAuthRepository --> E_AuthData : creates
+    
+    modAuthFactory --> CAuthService : creates
+    modAuthFactory --> IAuthService : returns
+    
+    CMockAuthRepository --> E_AuthData : creates
+```
+
+#### Patrón Mock para Testing
+
+El sistema de autenticación implementa un patrón Mock completo para facilitar las pruebas unitarias:
+
+- **CMockAuthService**: Mock de `IAuthService` que permite configurar el rol de usuario devuelto mediante `SetMockUserRole()`
+- **CMockAuthRepository**: Mock de `IAuthRepository` que permite configurar los datos de autenticación devueltos mediante `SetMockAuthData()`
+- **modAuthFactory**: Incluye funcionalidad para inyectar mocks mediante `SetMockAuthService()` y resetear el estado con `ResetMock()`
+
+#### Dependencias Externas
 
 🔗 **Dependencias:**
-- CAuthService ➜ IAuthRepository
-- CAuthService ➜ IErrorHandlerService
-- CAuthRepository ➜ IConfig
-```
+- CAuthService ➜ IAuthRepository (inyección de dependencia)
+- CAuthService ➜ IConfig (configuración del sistema)
+- CAuthService ➜ IOperationLogger (logging de operaciones)
+- CAuthService ➜ IErrorHandlerService (manejo de errores)
+- CAuthRepository ➜ IConfig (configuración de base de datos)
+- CAuthRepository ➜ IErrorHandlerService (manejo de errores)
+
+#### Funcionalidades Clave
+
+1. **Gestión de Roles de Usuario**: Determinación del rol basada en datos de autenticación de base de datos
+2. **Consulta Optimizada**: Una sola consulta SQL con LEFT JOIN para obtener todos los datos de autenticación
+3. **Jerarquía de Roles**: Prioridad definida (Administrador Global > Administrador App > Calidad > Técnico)
+4. **Logging de Auditoría**: Registro completo de consultas de roles y asignaciones
+5. **Manejo de Errores**: Gestión robusta de errores con logging detallado
+
+#### Patrones Implementados
+
+- **Dependency Injection**: Inyección de dependencias en constructores
+- **Repository Pattern**: Separación de lógica de acceso a datos
+- **Factory Pattern**: Creación centralizada de servicios con gestión de mocks
+- **Interface Segregation**: Interfaces específicas para cada responsabilidad
+- **Mock Pattern**: Implementación completa de mocks para testing
 
 ### 3.2. Gestión de Documentos (Document)
 ```text
@@ -131,17 +254,176 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 📄 IExpedienteRepository.cls ← Interface                   │
 │ 🔧 CExpedienteService.cls    ← Implementación              │
 │ 🔧 CExpedienteRepository.cls ← Implementación              │
+│ 🧪 CMockExpedienteService.cls ← Mock para testing          │
 │ 🧪 CMockExpedienteRepository.cls ← Mock para testing       │
 │ 🏭 modExpedienteServiceFactory.bas ← Factory               │
+│ 📊 E_Expediente.cls         ← Entidad principal            │
 │ ✅ Test_CExpedienteService.bas ← Tests unitarios           │
 │ 🔬 IntegrationTest_CExpedienteRepository.bas ← Tests integración │
+│                                                             │
+│ 📊 Análisis de Código Fuente: 10 archivos identificados    │
 └─────────────────────────────────────────────────────────────┘
+```
+
+#### Diagrama de Clases UML
+
+```mermaid
+classDiagram
+    %% Interfaces
+    class IExpedienteService {
+        <<interface>>
+        +GetExpedienteById(idExpediente: Long) E_Expediente
++GetExpedienteByNemotecnico(Nemotecnico: String) E_Expediente
+        +GetExpedientesParaSelector() DAO.Recordset
+    }
+    
+    class IExpedienteRepository {
+        <<interface>>
+        +ObtenerExpedientePorId(idExpediente: Long) DAO.Recordset
+        +ObtenerExpedientePorNemotecnico(Nemotecnico: String) DAO.Recordset
+        +ObtenerExpedientesActivosParaSelector() DAO.Recordset
+    }
+    
+    %% Implementaciones
+    class CExpedienteService {
+        -m_Config: IConfig
+        -m_OperationLogger: IOperationLogger
+        -m_ExpedienteRepository: IExpedienteRepository
+        -m_ErrorHandler: IErrorHandlerService
+        +Initialize(config: IConfig, logger: IOperationLogger, repo: IExpedienteRepository, errorHandler: IErrorHandlerService)
+        +IExpedienteService_GetExpedienteById(idExpediente: Long) E_Expediente
++IExpedienteService_GetExpedienteByNemotecnico(Nemotecnico: String) E_Expediente
+        +IExpedienteService_GetExpedientesParaSelector() DAO.Recordset
+    }
+    
+    class CExpedienteRepository {
+        -m_Config: IConfig
+        -m_ErrorHandler: IErrorHandlerService
+        +Initialize(config: IConfig, errorHandler: IErrorHandlerService)
+        +IExpedienteRepository_ObtenerExpedientePorId(idExpediente: Long) DAO.Recordset
+        +IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico: String) DAO.Recordset
+        +IExpedienteRepository_ObtenerExpedientesActivosParaSelector() DAO.Recordset
+        +ObtenerExpedientePorId(idExpediente: Long) DAO.Recordset
+        +ObtenerExpedientePorNemotecnico(Nemotecnico: String) DAO.Recordset
+    }
+    
+    %% Entidad de Datos
+    class E_Expediente {
+        +idExpediente: Long
+        +Nemotecnico: String
+        +Titulo: String
+        +ResponsableCalidad: String
+        +ResponsableTecnico: String
+        +Pecal: String
+        +NumeroExpediente: String
+        +EstadoExpediente: String
+        +EmailResponsable: String
+        +JefeProyecto: String
+        +ContratistaPrincipal: String
+        +FechaInicio: Date
+        +FechaFinPrevista: Date
+        +FechaFinContrato: Date
+        +FechaFinGarantia: Date
+        +Descripcion: String
+        +fechaCreacion: Date
+        +Estado: String
+        +IdUsuarioCreador: Long
+        +NombreUsuarioCreador: String
+        +EsValido() Boolean
+    }
+    
+    %% Mocks
+    class CMockExpedienteService {
+        <<mock>>
+        +GetExpedienteByIdCalled: Boolean
+        +GetExpedienteByNemotecnicoCalled: Boolean
+        +GetExpedientesParaSelectorCalled: Boolean
+        +LastIdExpedienteRequested: Long
+        +LastNemotecnicoRequested: String
+        +GetExpedienteByIdReturnValue: E_Expediente
++GetExpedienteByNemotecnicoReturnValue: E_Expediente
+        +GetExpedientesParaSelectorReturnValue: DAO.Recordset
+        +GetExpedienteByIdCallCount: Long
+        +GetExpedienteByNemotecnicoCallCount: Long
+        +GetExpedientesParaSelectorCallCount: Long
+        +Reset()
+        +SetGetExpedienteByIdReturnValue(expediente: E_Expediente)
++SetGetExpedienteByNemotecnicoReturnValue(expediente: E_Expediente)
+        +SetGetExpedientesParaSelectorReturnValue(rs: DAO.Recordset)
+    }
+    
+    class CMockExpedienteRepository {
+        <<mock>>
+        -m_mockRecordset: DAO.Recordset
+        +SetObtenerExpedientePorIdReturnValue(rs: DAO.Recordset)
+        +Reset()
+        +IExpedienteRepository_ObtenerExpedientePorId(idExpediente: Long) DAO.Recordset
+        +IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico: String) DAO.Recordset
+        +IExpedienteRepository_ObtenerExpedientesActivosParaSelector() DAO.Recordset
+    }
+    
+    %% Factory
+    class modExpedienteServiceFactory {
+        <<factory>>
+        +CreateExpedienteService() IExpedienteService
+    }
+    
+    %% Relaciones
+    IExpedienteService <|.. CExpedienteService : implements
+    IExpedienteRepository <|.. CExpedienteRepository : implements
+    IExpedienteService <|.. CMockExpedienteService : implements
+    IExpedienteRepository <|.. CMockExpedienteRepository : implements
+    
+    CExpedienteService --> IExpedienteRepository : uses
+    CExpedienteService --> IConfig : uses
+    CExpedienteService --> IOperationLogger : uses
+    CExpedienteService --> IErrorHandlerService : uses
+    CExpedienteService --> E_Expediente : creates
+    
+    CExpedienteRepository --> IConfig : uses
+    CExpedienteRepository --> IErrorHandlerService : uses
+    
+    modExpedienteServiceFactory --> CExpedienteService : creates
+    modExpedienteServiceFactory --> IExpedienteService : returns
+```
+
+#### Patrón Mock para Testing
+
+El módulo implementa un sistema completo de mocks para aislamiento de pruebas:
+
+- **CMockExpedienteService**: Mock del servicio que permite configurar valores de retorno y verificar llamadas
+- **CMockExpedienteRepository**: Mock del repositorio que simula el acceso a datos
+- **Verificación de Llamadas**: Los mocks registran todas las llamadas realizadas para validación en tests
+- **Configuración Flexible**: Permite establecer diferentes escenarios de prueba (éxito, error, datos vacíos)
+
+#### Dependencias Externas
 
 🔗 **Dependencias:**
-- CExpedienteService ➜ IExpedienteRepository
-- CExpedienteService ➜ IErrorHandlerService
-- CExpedienteRepository ➜ IConfig
-```
+- CExpedienteService ➜ IExpedienteRepository (Acceso a datos)
+- CExpedienteService ➜ IOperationLogger (Logging de operaciones)
+- CExpedienteService ➜ IErrorHandlerService (Manejo de errores)
+- CExpedienteService ➜ IConfig (Configuración)
+- CExpedienteRepository ➜ IConfig (Configuración de BD)
+- CExpedienteRepository ➜ IErrorHandlerService (Manejo de errores)
+- modExpedienteServiceFactory ➜ Múltiples factories (Inyección de dependencias)
+
+#### Funcionalidades Clave
+
+1. **Consulta por ID**: Obtiene expedientes específicos por identificador único
+2. **Consulta por Nemotécnico**: Búsqueda por código nemotécnico del expediente
+3. **Lista para Selectores**: Obtiene expedientes activos para componentes de UI
+4. **Mapeo de Datos**: Conversión automática de recordsets a objetos E_Expediente
+5. **Manejo de Errores**: Gestión robusta de errores con logging detallado
+6. **Consultas Parametrizadas**: Prevención de inyección SQL mediante parámetros
+7. **Gestión de Recursos**: Limpieza automática de conexiones y recordsets
+
+#### Patrones Implementados
+
+- **Repository Pattern**: Separación entre lógica de negocio y acceso a datos
+- **Dependency Injection**: Inyección de dependencias para bajo acoplamiento
+- **Factory Pattern**: Creación centralizada de servicios con dependencias
+- **Mock Pattern**: Objetos simulados para testing aislado
+- **Interface Segregation**: Interfaces específicas y cohesivas
 
 ### 3.4. Gestión de Solicitudes (Solicitud)
 ```text
@@ -152,24 +434,241 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 📄 ISolicitudRepository.cls  ← Interface                   │
 │ 🔧 CSolicitudService.cls     ← Implementación              │
 │ 🔧 CSolicitudRepository.cls  ← Implementación              │
+│ 🧪 CMockSolicitudService.cls ← Mock para testing           │
 │ 🧪 CMockSolicitudRepository.cls ← Mock para testing        │
-│ 🏭 modSolicitudServiceFactory.bas ← Factory                 │
+│ 🏭 modSolicitudServiceFactory.bas ← Factory                │
+│ 📊 E_Solicitud.cls          ← Entidad principal            │
+│ 📊 E_Datos_PC.cls           ← Datos específicos PC         │
+│ 📊 E_Datos_CD_CA.cls        ← Datos específicos CD/CA      │
+│ 📊 E_Datos_CD_CA_SUB.cls    ← Datos específicos CD/CA/SUB  │
 │ ✅ Test_SolicitudService.bas ← Tests unitarios             │
 │ 🔬 IntegrationTest_SolicitudRepository.bas ← Tests integración │
+│                                                             │
+│ 📊 Análisis de Código Fuente: 10 archivos identificados    │
 └─────────────────────────────────────────────────────────────┘
+```
+
+#### Diagrama de Clases UML
+
+```mermaid
+classDiagram
+    %% Interfaces
+    class ISolicitudService {
+        <<interface>>
+        +CreateSolicitud(tipoSolicitud: String) E_Solicitud
++SaveSolicitud(solicitud: E_Solicitud) Boolean
+    }
+    
+    class ISolicitudRepository {
+        <<interface>>
+        +GetSolicitudById(id: Long) E_Solicitud
++SaveSolicitud(solicitud: E_Solicitud) Boolean
+        +ExecuteQuery(sql: String) Variant
+        +Initialize(config: IConfig)
+    }
+    
+    %% Implementaciones
+    class CSolicitudService {
+        -repository: ISolicitudRepository
+        -logger: IOperationLogger
+        -errorHandler: IErrorHandlerService
+        +Initialize(repo: ISolicitudRepository, log: IOperationLogger, err: IErrorHandlerService)
+        +ISolicitudService_CreateSolicitud(tipoSolicitud: String) E_Solicitud
++ISolicitudService_SaveSolicitud(solicitud: E_Solicitud) Boolean
+        -GenerateCodigoSolicitud() String
+    }
+    
+    class CSolicitudRepository {
+        -config: IConfig
+        +Initialize(cfg: IConfig)
+        +ISolicitudRepository_GetSolicitudById(id: Long) E_Solicitud
+        +ISolicitudRepository_SaveSolicitud(solicitud: E_Solicitud) Boolean
+        +ISolicitudRepository_ExecuteQuery(sql: String) Variant
+        -LoadDatosPC(idSolicitud: Long) E_Datos_PC
+        -LoadDatosCDCA(idSolicitud: Long) E_Datos_CD_CA
+        -LoadDatosCDCASUB(idSolicitud: Long) E_Datos_CD_CA_SUB
+    }
+    
+    %% Entidades de Datos
+    class E_Solicitud {
+        +idSolicitud: Long
+        +tipoSolicitud: String
+        +codigoSolicitud: String
+        +fechaCreacion: Date
+        +estadoInterno: String
+        +usuarioCreacion: String
+        +fechaModificacion: Date
+        +usuarioModificacion: String
+        +Datos: Object
+        -datosPC: E_Datos_PC
+        -datosCDCA: E_Datos_CD_CA
+        -datosCDCASUB: E_Datos_CD_CA_SUB
+    }
+    
+    class E_Datos_PC {
+        +idDatosPC: Long
+        +idSolicitud: Long
+        +refContratoInspeccionOficial: String
+        +refSuministrador: String
+        +suministradorNombreDir: String
+        +objetoContrato: String
+        +descripcionMaterialAfectado: String
+        +numPlanoEspecificacion: String
+        +descripcionPropuestaCambio: String
+        +motivoCorregirDeficiencias: Boolean
+        +motivoMejorarCapacidad: Boolean
+        +motivoAumentarNacionalizacion: Boolean
+        +incidenciaCoste: String
+        +incidenciaPlazo: String
+        +incidenciaSeguridad: Boolean
+        +racCodigo: String
+        +decisionFinal: String
+        +fechaFirmaDecisionFinal: Date
+    }
+    
+    class E_Datos_CD_CA {
+        +idDatosCDCA: Long
+        +idSolicitud: Long
+        +refSuministrador: String
+        +numContrato: String
+        +identificacionMaterial: String
+        +numPlanoEspecificacion: String
+        +cantidadPeriodo: String
+        +numSerieLote: String
+        +descripcionImpactoNC: String
+        +causaNC: String
+        +impactoCoste: String
+        +clasificacionNC: String
+        +requiereModificacionContrato: Boolean
+        +efectoFechaEntrega: String
+        +identificacionAutoridadDiseno: String
+        +esSuministradorAD: Boolean
+        +racRef: String
+        +racCodigo: String
+        +decisionFinal: String
+        +fechaFirmaDecisionFinal: Date
+    }
+    
+    class E_Datos_CD_CA_SUB {
+        +idDatosCDCASUB: Long
+        +idSolicitud: Long
+        +refSuministrador: String
+        +refSubSuministrador: String
+        +suministradorPrincipalNombreDir: String
+        +subSuministradorNombreDir: String
+        +identificacionMaterial: String
+        +numPlanoEspecificacion: String
+        +cantidadPeriodo: Long
+        +numSerieLote: String
+        +descripcionImpactoNC: String
+        +causaNC: String
+        +impactoCoste: String
+        +clasificacionNC: String
+        +afectaPrestaciones: Boolean
+        +afectaSeguridad: Boolean
+        +afectaFiabilidad: Boolean
+        +afectaVidaUtil: Boolean
+        +afectaMedioambiente: Boolean
+        +requiereModificacionContrato: Boolean
+        +efectoFechaEntrega: String
+        +identificacionAutoridadDiseno: String
+        +esSubSuministradorAD: Boolean
+        +nombreRepSubSuministrador: String
+        +racRef: String
+        +racCodigo: String
+        +decisionSuministradorPrincipal: String
+        +fechaFirmaSuministradorPrincipal: Date
+    }
+    
+    %% Mocks
+    class CMockSolicitudService {
+        <<mock>>
+        +CreateSolicitudCalled: Boolean
+        +SaveSolicitudCalled: Boolean
+        +LastTipoSolicitudCreated: String
+        +LastSolicitudSaved: E_Solicitud
+        +CreateSolicitudResult: E_Solicitud
+        +SaveSolicitudResult: Boolean
+        +Reset()
+        +ISolicitudService_CreateSolicitud(tipoSolicitud: String) E_Solicitud
+        +ISolicitudService_SaveSolicitud(solicitud: E_Solicitud) Boolean
+    }
+    
+    class CMockSolicitudRepository {
+        <<mock>>
+        +GetSolicitudByIdResult: E_Solicitud
+        +SaveSolicitudResult: Boolean
+        +ExecuteQueryResult: Variant
+        +GetSolicitudByIdCalled: Boolean
+        +SaveSolicitudCalled: Boolean
+        +ExecuteQueryCalled: Boolean
+        +LastIdRequested: Long
+        +LastSolicitudSaved: E_Solicitud
+        +LastQueryExecuted: String
+        +Reset()
+        +ISolicitudRepository_GetSolicitudById(id: Long) E_Solicitud
+        +ISolicitudRepository_SaveSolicitud(solicitud: E_Solicitud) Boolean
+        +ISolicitudRepository_ExecuteQuery(sql: String) Variant
+    }
+    
+    %% Factory
+    class modSolicitudServiceFactory {
+        <<factory>>
+        +CreateSolicitudService() ISolicitudService
+    }
+    
+    %% Relaciones de Implementación
+    CSolicitudService ..|> ISolicitudService
+    CSolicitudRepository ..|> ISolicitudRepository
+    CMockSolicitudService ..|> ISolicitudService
+    CMockSolicitudRepository ..|> ISolicitudRepository
+    
+    %% Relaciones de Dependencia
+    CSolicitudService --> ISolicitudRepository
+    CSolicitudService --> IOperationLogger
+    CSolicitudService --> IErrorHandlerService
+    CSolicitudRepository --> IConfig
+    modSolicitudServiceFactory --> CSolicitudService
+    modSolicitudServiceFactory --> ISolicitudRepository
+    modSolicitudServiceFactory --> IOperationLogger
+    modSolicitudServiceFactory --> IErrorHandlerService
+    
+    %% Relaciones de Composición
+    E_Solicitud *-- E_Datos_PC
+    E_Solicitud *-- E_Datos_CD_CA
+    E_Solicitud *-- E_Datos_CD_CA_SUB
+```
+
+#### Mock Pattern para testing
+
+**CMockSolicitudService**: Mock del servicio de solicitudes que implementa ISolicitudService. Permite verificar llamadas a CreateSolicitud y SaveSolicitud, capturar parámetros de entrada (tipoSolicitud, solicitud), configurar valores de retorno personalizados y resetear su estado para pruebas independientes.
+
+**CMockSolicitudRepository**: Mock del repositorio de solicitudes que implementa ISolicitudRepository. Proporciona control total sobre GetSolicitudById, SaveSolicitud y ExecuteQuery, permitiendo configurar resultados específicos, rastrear llamadas realizadas y verificar parámetros pasados durante las pruebas unitarias.
 
 🔗 **Dependencias:**
 - CSolicitudService ➜ ISolicitudRepository (inyectado)
 - CSolicitudService ➜ IOperationLogger (inyectado)
 - CSolicitudService ➜ IErrorHandlerService (inyectado)
+- CSolicitudRepository ➜ IConfig (inyectado)
 - modSolicitudServiceFactory ➜ modConfig (para IConfig)
 - modSolicitudServiceFactory ➜ modFileSystemFactory (para IFileSystem)
 - modSolicitudServiceFactory ➜ modErrorHandlerFactory (para IErrorHandlerService)
 - modSolicitudServiceFactory ➜ modRepositoryFactory (para ISolicitudRepository)
 - modSolicitudServiceFactory ➜ modOperationLoggerFactory (para IOperationLogger)
 
+**Funcionalidades clave:**
+- Creación y validación de solicitudes
+- Generación automática de códigos de solicitud
+- Persistencia con manejo de transacciones
+- Carga de datos específicos según tipo de solicitud (PC, CD_CA, CD_CA_SUB)
+- Integración con el sistema de workflow
 
-```
+**Patrones implementados:**
+- Repository Pattern para acceso a datos
+- Service Layer para lógica de negocio
+- Dependency Injection para desacoplamiento
+- Factory Pattern para creación de instancias
+- Mock Pattern para testing unitario
 
 ### 3.5. Gestión de Flujos de Trabajo (Workflow)
 ```text
@@ -180,17 +679,252 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 📄 IWorkflowRepository.cls   ← Interface                   │
 │ 🔧 CWorkflowService.cls      ← Implementación              │
 │ 🔧 CWorkflowRepository.cls   ← Implementación              │
+│ 🧪 CMockWorkflowService.cls  ← Mock para testing           │
 │ 🧪 CMockWorkflowRepository.cls ← Mock para testing         │
-│ 🏭 modWorkflowRepositoryFactory.bas ← Factory              │
+│ 🏭 modRepositoryFactory.bas  ← Factory (CreateWorkflowRepository) │
+│ 📊 E_Estado.cls             ← Entidad de Estado            │
+│ 📊 E_Transicion.cls         ← Entidad de Transición       │
 │ ✅ Test_WorkflowService.bas  ← Tests unitarios             │
 │ 🔬 IntegrationTest_WorkflowRepository.bas ← Tests integración │
+│                                                             │
+│ 📊 Análisis de Código Fuente: 11 archivos identificados    │
 └─────────────────────────────────────────────────────────────┘
+```
+
+#### Diagrama de Clases UML
+
+```mermaid
+classDiagram
+    %% Interfaces
+    class IWorkflowService {
+        <<interface>>
+        +ValidateTransition(SolicitudID: Long, estadoOrigen: String, estadoDestino: String, tipoSolicitud: String, usuarioRol: String) Boolean
+        +GetAvailableStates(tipoSolicitud: String) Collection
+        +GetNextStates(estadoActual: String, tipoSolicitud: String, usuarioRol: String) Collection
+        +GetInitialState(tipoSolicitud: String) String
+        +IsStateFinal(estadoCodigo: String, tipoSolicitud: String) Boolean
+        +RecordStateChange(SolicitudID: Long, estadoAnterior: String, estadoNuevo: String, usuario: String, comentarios: String) Boolean
+        +GetStateHistory(SolicitudID: Long) Collection
+        +HasTransitionPermission(usuarioRol: String, estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +RequiresApproval(estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+    }
+    
+    class IWorkflowRepository {
+        <<interface>>
+        +GetInitialState(tipoSolicitud: String) String
+        +IsValidTransition(tipoSolicitud: String, estadoOrigen: String, estadoDestino: String) Boolean
+        +GetAvailableStates(tipoSolicitud: String) Collection
+        +GetNextStates(estadoActual: String, tipoSolicitud: String, usuarioRol: String) Collection
+        +IsStateFinal(estadoCodigo: String, tipoSolicitud: String) Boolean
+        +RecordStateChange(SolicitudID: Long, estadoAnterior: String, estadoNuevo: String, usuario: String, comentarios: String) Boolean
+        +GetStateHistory(SolicitudID: Long) Collection
+        +HasTransitionPermission(usuarioRol: String, estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +RequiresApproval(estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +GetTransitionRequiredRole(estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) String
+    }
+    
+    %% Implementaciones
+    class CWorkflowService {
+        -m_Config: IConfig
+        -m_OperationLogger: IOperationLogger
+        -m_WorkflowRepository: IWorkflowRepository
+        +Initialize(config: IConfig, operationLogger: IOperationLogger, workflowRepository: IWorkflowRepository)
+        +IWorkflowService_ValidateTransition(SolicitudID: Long, estadoOrigen: String, estadoDestino: String, tipoSolicitud: String, usuarioRol: String) Boolean
+        +IWorkflowService_GetAvailableStates(tipoSolicitud: String) Collection
+        +IWorkflowService_GetNextStates(estadoActual: String, tipoSolicitud: String, usuarioRol: String) Collection
+        +IWorkflowService_GetInitialState(tipoSolicitud: String) String
+        +IWorkflowService_IsStateFinal(estadoCodigo: String, tipoSolicitud: String) Boolean
+        +IWorkflowService_RecordStateChange(SolicitudID: Long, estadoAnterior: String, estadoNuevo: String, usuario: String, comentarios: String) Boolean
+        +IWorkflowService_GetStateHistory(SolicitudID: Long) Collection
+        +IWorkflowService_HasTransitionPermission(usuarioRol: String, estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +IWorkflowService_RequiresApproval(estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +ValidateTransition(SolicitudID: Long, estadoOrigen: String, estadoDestino: String, tipoSolicitud: String, usuarioRol: String) Boolean
+        +GetNextStates(estadoActual: String, tipoSolicitud: String, usuarioRol: String) Collection
+    }
+    
+    class CWorkflowRepository {
+        -m_Config: IConfig
+        -m_ErrorHandler: IErrorHandlerService
+        +Initialize(config: IConfig, errorHandler: IErrorHandlerService)
+        +IWorkflowRepository_GetInitialState(tipoSolicitud: String) String
+        +IWorkflowRepository_IsValidTransition(tipoSolicitud: String, estadoOrigen: String, estadoDestino: String) Boolean
+        +IWorkflowRepository_GetAvailableStates(tipoSolicitud: String) Collection
+        +IWorkflowRepository_GetNextStates(estadoActual: String, tipoSolicitud: String, usuarioRol: String) Collection
+        +IWorkflowRepository_IsStateFinal(estadoCodigo: String, tipoSolicitud: String) Boolean
+        +IWorkflowRepository_RecordStateChange(SolicitudID: Long, estadoAnterior: String, estadoNuevo: String, usuario: String, comentarios: String) Boolean
+        +IWorkflowRepository_GetStateHistory(SolicitudID: Long) Collection
+        +IWorkflowRepository_HasTransitionPermission(usuarioRol: String, estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +IWorkflowRepository_RequiresApproval(estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +IWorkflowRepository_GetTransitionRequiredRole(estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) String
+        +IsValidTransition(tipoSolicitud: String, estadoOrigen: String, estadoDestino: String) Boolean
+        +GetAvailableStates(tipoSolicitud: String) Collection
+        +GetNextStates(estadoActual: String, tipoSolicitud: String, usuarioRol: String) Collection
+        +GetInitialState(tipoSolicitud: String) String
+        +IsStateFinal(estadoCodigo: String, tipoSolicitud: String) Boolean
+        +RecordStateChange(SolicitudID: Long, estadoAnterior: String, estadoNuevo: String, usuario: String, comentarios: String) Boolean
+        +GetStateHistory(SolicitudID: Long) Collection
+        +HasTransitionPermission(usuarioRol: String, estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +RequiresApproval(estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) Boolean
+        +GetTransitionRequiredRole(estadoOrigen: String, estadoDestino: String, tipoSolicitud: String) String
+    }
+    
+    %% Entidades de Datos
+    class E_Estado {
+        +idEstado: Long
+        +CodigoEstado: String
+        +NombreEstado: String
+        +DescripcionEstado: String
+        +TipoSolicitud: String
+        +EsEstadoInicial: Boolean
+        +EsEstadoFinal: Boolean
+        +RequiereAprobacion: Boolean
+        +OrdenVisualizacion: Integer
+        +Estado: String
+        +fechaCreacion: Date
+        +IdUsuarioCreador: Long
+        +NombreUsuarioCreador: String
+    }
+    
+    class E_Transicion {
+        +idTransicion: Long
+        +EstadoOrigen: String
+        +EstadoDestino: String
+        +TipoSolicitud: String
+        +RolRequerido: String
+        +RequiereAprobacion: Boolean
+        +CondicionesAdicionales: String
+        +AccionesPost: String
+        +Estado: String
+        +fechaCreacion: Date
+        +IdUsuarioCreador: Long
+        +NombreUsuarioCreador: String
+    }
+    
+    %% Mocks
+    class CMockWorkflowService {
+        <<mock>>
+        +ValidateTransitionCalled: Boolean
+        +GetAvailableStatesCalled: Boolean
+        +GetNextStatesCalled: Boolean
+        +GetInitialStateCalled: Boolean
+        +IsStateFinalCalled: Boolean
+        +RecordStateChangeCalled: Boolean
+        +GetStateHistoryCalled: Boolean
+        +HasTransitionPermissionCalled: Boolean
+        +RequiresApprovalCalled: Boolean
+        +ValidateTransitionReturnValue: Boolean
+        +GetAvailableStatesReturnValue: Collection
+        +GetNextStatesReturnValue: Collection
+        +GetInitialStateReturnValue: String
+        +IsStateFinalReturnValue: Boolean
+        +RecordStateChangeReturnValue: Boolean
+        +GetStateHistoryReturnValue: Collection
+        +HasTransitionPermissionReturnValue: Boolean
+        +RequiresApprovalReturnValue: Boolean
+        +Reset()
+        +SetValidateTransitionReturnValue(value: Boolean)
+        +SetGetAvailableStatesReturnValue(states: Collection)
+        +SetGetNextStatesReturnValue(states: Collection)
+        +SetGetInitialStateReturnValue(state: String)
+        +SetIsStateFinalReturnValue(value: Boolean)
+        +SetRecordStateChangeReturnValue(value: Boolean)
+        +SetGetStateHistoryReturnValue(history: Collection)
+        +SetHasTransitionPermissionReturnValue(value: Boolean)
+        +SetRequiresApprovalReturnValue(value: Boolean)
+    }
+    
+    class CMockWorkflowRepository {
+        <<mock>>
+        +IsValidTransition_WasCalled: Boolean
+        +GetAvailableStates_WasCalled: Boolean
+        +GetNextStates_WasCalled: Boolean
+        +GetInitialState_WasCalled: Boolean
+        +IsStateFinal_WasCalled: Boolean
+        +RecordStateChange_WasCalled: Boolean
+        +GetStateHistory_WasCalled: Boolean
+        +HasTransitionPermission_WasCalled: Boolean
+        +RequiresApproval_WasCalled: Boolean
+        +GetTransitionRequiredRole_WasCalled: Boolean
+        +AddRule(tipoSolicitud: String, estadoOrigen: String, estadoDestino: String, isValid: Boolean)
+        +Reset()
+    }
+    
+    %% Factory
+    class modRepositoryFactory {
+        <<factory>>
+        +CreateWorkflowRepository() IWorkflowRepository
+    }
+    
+    %% Relaciones
+    IWorkflowService <|.. CWorkflowService : implements
+    IWorkflowRepository <|.. CWorkflowRepository : implements
+    IWorkflowService <|.. CMockWorkflowService : implements
+    IWorkflowRepository <|.. CMockWorkflowRepository : implements
+    
+    CWorkflowService --> IWorkflowRepository : uses
+    CWorkflowService --> IConfig : uses
+    CWorkflowService --> IOperationLogger : uses
+    
+    CWorkflowRepository --> IConfig : uses
+    CWorkflowRepository --> IErrorHandlerService : uses
+    CWorkflowRepository --> E_Estado : queries
+    CWorkflowRepository --> E_Transicion : queries
+    
+    modRepositoryFactory --> CWorkflowRepository : creates
+    modRepositoryFactory --> CMockWorkflowRepository : creates
+    modRepositoryFactory --> IWorkflowRepository : returns
+```
+
+#### Patrón Mock para Testing
+
+El módulo implementa un sistema completo de mocks para aislamiento de pruebas:
+
+- **CMockWorkflowService**: Mock del servicio que permite configurar valores de retorno para todas las operaciones de workflow y verificar llamadas realizadas
+- **CMockWorkflowRepository**: Mock del repositorio que simula el acceso a datos de estados y transiciones, con capacidad de configurar reglas de transición específicas
+- **Verificación de Llamadas**: Los mocks registran todas las llamadas realizadas para validación en tests
+- **Configuración de Reglas**: Permite establecer reglas de transición específicas para diferentes escenarios de prueba
+- **Reset de Estado**: Métodos para limpiar el estado entre pruebas independientes
+
+#### Dependencias Externas
 
 🔗 **Dependencias:**
-- CWorkflowService ➜ IWorkflowRepository
-- CWorkflowService ➜ IErrorHandlerService
-- CWorkflowRepository ➜ IConfig
-```
+- CWorkflowService ➜ IWorkflowRepository (Acceso a datos de workflow)
+- CWorkflowService ➜ IOperationLogger (Logging de operaciones)
+- CWorkflowService ➜ IConfig (Configuración)
+- CWorkflowRepository ➜ IConfig (Configuración de BD)
+- CWorkflowRepository ➜ IErrorHandlerService (Manejo de errores)
+- modRepositoryFactory ➜ CWorkflowRepository/CMockWorkflowRepository (Creación de instancias)
+
+#### Funcionalidades Clave
+
+1. **Validación de Transiciones**: Verifica si una transición de estado es válida según las reglas de negocio
+2. **Gestión de Estados**: Obtiene estados disponibles, iniciales y finales por tipo de solicitud
+3. **Control de Permisos**: Valida permisos de usuario para realizar transiciones específicas
+4. **Historial de Estados**: Registra y consulta el historial completo de cambios de estado
+5. **Estados Siguientes**: Calcula los estados disponibles desde un estado actual según el rol del usuario
+6. **Aprobaciones**: Determina si una transición requiere aprobación adicional
+7. **Roles Requeridos**: Identifica qué rol se necesita para ejecutar una transición específica
+8. **Logging de Operaciones**: Registra todas las operaciones de workflow para auditoría
+
+#### Patrones Implementados
+
+- **State Machine Pattern**: Implementa una máquina de estados completa para el workflow
+- **Repository Pattern**: Separación entre lógica de workflow y acceso a datos
+- **Dependency Injection**: Inyección de dependencias para bajo acoplamiento
+- **Factory Pattern**: Creación centralizada de repositorios con dependencias
+- **Mock Pattern**: Objetos simulados para testing aislado
+- **Command Pattern**: Encapsulación de transiciones como comandos validables
+- **Observer Pattern**: Logging automático de cambios de estado
+
+#### Reglas de Negocio del Workflow
+
+1. **Estados por Tipo**: Cada tipo de solicitud (PC, CD_CA, CD_CA_SUB) tiene su propio conjunto de estados
+2. **Transiciones Controladas**: Solo se permiten transiciones explícitamente definidas en la base de datos
+3. **Control de Roles**: Cada transición puede requerir un rol específico para ser ejecutada
+4. **Aprobaciones**: Ciertas transiciones críticas requieren aprobación adicional
+5. **Historial Completo**: Todos los cambios de estado se registran con timestamp y usuario
+6. **Estados Finales**: Los estados finales no permiten transiciones adicionales
+7. **Validación Previa**: Toda transición debe ser validada antes de ser ejecutada
 
 ### 3.6. Gestión de Mapeos (Mapeo)
 ```text
@@ -199,12 +933,93 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IMapeoRepository.cls      ← Interface                   │
 │ 🔧 CMapeoRepository.cls      ← Implementación              │
+│ 🧪 CMockMapeoRepository.cls  ← Mock para testing           │
+│ 📊 E_Mapeo.cls               ← Entidad de datos            │
+│ ✅ Test_CMapeoRepository.bas ← Tests unitarios             │
 │ 🔬 IntegrationTest_CMapeoRepository.bas ← Tests integración │
+│ 🏭 modRepositoryFactory.bas  ← Factory (CreateMapeoRepository) │
 └─────────────────────────────────────────────────────────────┘
+
+#### Diagrama de Clases UML
+```mermaid
+classDiagram
+    class IMapeoRepository {
+        <<interface>>
+        +GetMapeoPorTipo(tipoSolicitud: String) DAO.Recordset
+    }
+    
+    class CMapeoRepository {
+        -config: IConfig
+        -errorHandler: IErrorHandlerService
+        +Class_Initialize()
+        +GetMapeoPorTipo(tipoSolicitud: String) DAO.Recordset
+    }
+    
+    class CMockMapeoRepository {
+        -mockRecordset: DAO.Recordset
+        +SetMockRecordset(rs: DAO.Recordset)
+        +GetMapeoPorTipo(tipoSolicitud: String) DAO.Recordset
+    }
+    
+    class E_Mapeo {
+        +idMapeo: Long
+        +nombrePlantilla: String
+        +nombreCampoTabla: String
+        +valorAsociado: String
+        +nombreCampoWord: String
+    }
+    
+    class modRepositoryFactory {
+        +CreateMapeoRepository() IMapeoRepository
+    }
+    
+    IMapeoRepository <|.. CMapeoRepository
+    IMapeoRepository <|.. CMockMapeoRepository
+    CMapeoRepository --> IConfig
+    CMapeoRepository --> IErrorHandlerService
+    modRepositoryFactory --> IMapeoRepository
+    E_Mapeo --> "tbMapeoCampos"
+```
+
+#### Patrón Mock para Testing
+- **CMockMapeoRepository**: Implementa `IMapeoRepository` permitiendo configurar un `DAO.Recordset` de retorno
+- **Configuración Flexible**: Permite simular diferentes escenarios de mapeo en pruebas unitarias
+- **Integración con DocumentService**: Utilizado en `Test_DocumentService.bas` para aislar dependencias
+
+#### Dependencias Externas
+- **IConfig**: Configuración de conexión a base de datos
+- **IErrorHandlerService**: Manejo centralizado de errores
+- **DAO.Database**: Acceso directo a la base de datos Access
+- **tbMapeoCampos**: Tabla que almacena la configuración de mapeo
+
+#### Funcionalidades Clave
+1. **Mapeo de Campos**: Relaciona campos de tablas de datos con marcadores en plantillas Word
+2. **Consulta Parametrizada**: Obtiene mapeos específicos por tipo de solicitud
+3. **Integración con DocumentService**: Proporciona datos para reemplazo de marcadores
+4. **Soporte para Testing**: Mock configurable para pruebas unitarias
+
+#### Patrones Implementados
+- **Repository Pattern**: Abstrae el acceso a datos de mapeo
+- **Dependency Injection**: Inyección de configuración y manejo de errores
+- **Mock Pattern**: Simulación de comportamiento para testing
+- **Factory Pattern**: Creación controlada de instancias
+
+#### Estructura de Datos de Mapeo
+- **idMapeo**: Identificador único del mapeo
+- **nombrePlantilla**: Nombre de la plantilla Word asociada
+- **nombreCampoTabla**: Campo de la tabla de datos origen
+- **valorAsociado**: Valor específico para el mapeo
+- **nombreCampoWord**: Marcador en la plantilla Word a reemplazar
+
+#### Integración con Generación de Documentos
+- **CDocumentService**: Utiliza `IMapeoRepository` para obtener configuración de mapeo
+- **Reemplazo de Marcadores**: Los mapeos definen qué datos van en cada marcador
+- **Flexibilidad**: Permite diferentes mapeos según el tipo de solicitud
 
 🔗 **Dependencias:**
 - CMapeoRepository ➜ IConfig
-```
+- CMapeoRepository ➜ IErrorHandlerService
+- CDocumentService ➜ IMapeoRepository
 
 ### 3.7. Gestión de Notificaciones (Notification)
 ```text
@@ -220,12 +1035,95 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🔬 IntegrationTest_NotificationService.bas ← Tests integración │
 └─────────────────────────────────────────────────────────────┘
 
+#### Diagrama de Clases UML
+```mermaid
+classDiagram
+    class INotificationService {
+        <<interface>>
+        +SendNotification(mensaje: String, destinatario: String) Boolean
+        +SendBulkNotification(mensaje: String, destinatarios: Collection) Boolean
+        +GetNotificationHistory(filtros: Dictionary) DAO.Recordset
+    }
+    
+    class CNotificationService {
+        -repository: INotificationRepository
+        -operationLogger: IOperationLogger
+        -errorHandler: IErrorHandlerService
+        +Class_Initialize()
+        +SendNotification(mensaje: String, destinatario: String) Boolean
+        +SendBulkNotification(mensaje: String, destinatarios: Collection) Boolean
+        +GetNotificationHistory(filtros: Dictionary) DAO.Recordset
+    }
+    
+    class CMockNotificationService {
+        -mockResult: Boolean
+        -mockRecordset: DAO.Recordset
+        +SetMockResult(result: Boolean)
+        +SetMockRecordset(rs: DAO.Recordset)
+        +SendNotification(mensaje: String, destinatario: String) Boolean
+        +SendBulkNotification(mensaje: String, destinatarios: Collection) Boolean
+        +GetNotificationHistory(filtros: Dictionary) DAO.Recordset
+    }
+    
+    class INotificationRepository {
+        <<interface>>
+        +SaveNotification(notificacion: Dictionary) Boolean
+        +GetNotifications(filtros: Dictionary) DAO.Recordset
+        +UpdateNotificationStatus(id: Long, estado: String) Boolean
+    }
+    
+    class CNotificationRepository {
+        -config: IConfig
+        +Class_Initialize()
+        +SaveNotification(notificacion: Dictionary) Boolean
+        +GetNotifications(filtros: Dictionary) DAO.Recordset
+        +UpdateNotificationStatus(id: Long, estado: String) Boolean
+    }
+    
+    class modNotificationServiceFactory {
+        +CreateNotificationService() INotificationService
+    }
+    
+    INotificationService <|.. CNotificationService
+    INotificationService <|.. CMockNotificationService
+    INotificationRepository <|.. CNotificationRepository
+    CNotificationService --> INotificationRepository
+    CNotificationService --> IOperationLogger
+    CNotificationService --> IErrorHandlerService
+    CNotificationRepository --> IConfig
+    modNotificationServiceFactory --> INotificationService
+```
+
+#### Patrón Mock para Testing
+- **CMockNotificationService**: Implementa `INotificationService` permitiendo simular envío de notificaciones
+- **Configuración de Resultados**: Permite configurar respuestas exitosas o fallidas
+- **Simulación de Historial**: Puede devolver recordsets simulados para pruebas
+
+#### Dependencias Externas
+- **INotificationRepository**: Persistencia de notificaciones
+- **IOperationLogger**: Registro de operaciones de notificación
+- **IErrorHandlerService**: Manejo centralizado de errores
+- **IConfig**: Configuración del sistema de notificaciones
+
+#### Funcionalidades Clave
+1. **Envío Individual**: Notificaciones a destinatarios específicos
+2. **Envío Masivo**: Notificaciones a múltiples destinatarios
+3. **Historial de Notificaciones**: Consulta de notificaciones enviadas
+4. **Persistencia**: Almacenamiento de notificaciones en base de datos
+5. **Seguimiento de Estado**: Control del estado de las notificaciones
+
+#### Patrones Implementados
+- **Service Pattern**: Lógica de negocio de notificaciones
+- **Repository Pattern**: Abstracción del acceso a datos
+- **Dependency Injection**: Inyección de dependencias
+- **Mock Pattern**: Simulación para testing
+- **Factory Pattern**: Creación controlada de servicios
+
 🔗 **Dependencias:**
 - CNotificationService ➜ INotificationRepository
 - CNotificationService ➜ IOperationLogger
 - CNotificationService ➜ IErrorHandlerService
 - CNotificationRepository ➜ IConfig
-```
 
 ### 3.8. Gestión de Operaciones y Logging (Operation)
 ```text
@@ -237,16 +1135,127 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🔧 COperationLogger.cls      ← Implementación              │
 │ 🔧 COperationRepository.cls  ← Implementación              │
 │ 🧪 CMockOperationLogger.cls  ← Mock para testing           │
+│ 📊 E_OperacionLog.cls        ← Entidad de datos            │
 │ 🏭 modOperationLoggerFactory.bas ← Factory                 │
 │ ✅ Test_OperationLogger.bas  ← Tests unitarios             │
 │ 🔬 IntegrationTest_OperationRepository.bas ← Tests integración │
 └─────────────────────────────────────────────────────────────┘
 
+#### Diagrama de Clases UML
+```mermaid
+classDiagram
+    class IOperationLogger {
+        <<interface>>
+        +LogOperation(operacion: String, detalles: String) Boolean
+        +LogOperationWithUser(operacion: String, usuario: String, detalles: String) Boolean
+        +GetOperationHistory(filtros: Dictionary) DAO.Recordset
+        +GetOperationsByUser(usuario: String) DAO.Recordset
+    }
+    
+    class COperationLogger {
+        -repository: IOperationRepository
+        -errorHandler: IErrorHandlerService
+        +Class_Initialize()
+        +LogOperation(operacion: String, detalles: String) Boolean
+        +LogOperationWithUser(operacion: String, usuario: String, detalles: String) Boolean
+        +GetOperationHistory(filtros: Dictionary) DAO.Recordset
+        +GetOperationsByUser(usuario: String) DAO.Recordset
+    }
+    
+    class CMockOperationLogger {
+        -mockResult: Boolean
+        -mockRecordset: DAO.Recordset
+        -loggedOperations: Collection
+        +SetMockResult(result: Boolean)
+        +SetMockRecordset(rs: DAO.Recordset)
+        +GetLoggedOperations() Collection
+        +LogOperation(operacion: String, detalles: String) Boolean
+        +LogOperationWithUser(operacion: String, usuario: String, detalles: String) Boolean
+        +GetOperationHistory(filtros: Dictionary) DAO.Recordset
+        +GetOperationsByUser(usuario: String) DAO.Recordset
+    }
+    
+    class IOperationRepository {
+        <<interface>>
+        +SaveOperation(operacion: Dictionary) Boolean
+        +GetOperations(filtros: Dictionary) DAO.Recordset
+        +GetOperationsByUser(usuario: String) DAO.Recordset
+        +GetOperationsByDateRange(fechaInicio: Date, fechaFin: Date) DAO.Recordset
+    }
+    
+    class COperationRepository {
+        -config: IConfig
+        +Class_Initialize()
+        +SaveOperation(operacion: Dictionary) Boolean
+        +GetOperations(filtros: Dictionary) DAO.Recordset
+        +GetOperationsByUser(usuario: String) DAO.Recordset
+        +GetOperationsByDateRange(fechaInicio: Date, fechaFin: Date) DAO.Recordset
+    }
+    
+    class E_OperacionLog {
+        +idOperacion: Long
+        +tipoOperacion: String
+        +usuario: String
+        +fechaHora: Date
+        +detalles: String
+        +resultado: String
+        +duracion: Long
+    }
+    
+    class modOperationLoggerFactory {
+        +CreateOperationLogger() IOperationLogger
+    }
+    
+    IOperationLogger <|.. COperationLogger
+    IOperationLogger <|.. CMockOperationLogger
+    IOperationRepository <|.. COperationRepository
+    COperationLogger --> IOperationRepository
+    COperationLogger --> IErrorHandlerService
+    COperationRepository --> IConfig
+    modOperationLoggerFactory --> IOperationLogger
+    E_OperacionLog --> "tbOperacionesLog"
+```
+
+#### Patrón Mock para Testing
+- **CMockOperationLogger**: Implementa `IOperationLogger` para simular logging de operaciones
+- **Colección de Operaciones**: Mantiene registro de operaciones loggeadas para verificación
+- **Configuración de Resultados**: Permite simular éxito o fallo en operaciones de logging
+- **Recordsets Simulados**: Devuelve datos de prueba para consultas de historial
+
+#### Dependencias Externas
+- **IOperationRepository**: Persistencia de logs de operaciones
+- **IErrorHandlerService**: Manejo de errores durante el logging
+- **IConfig**: Configuración de la base de datos
+- **tbOperacionesLog**: Tabla de almacenamiento de logs
+
+#### Funcionalidades Clave
+1. **Logging de Operaciones**: Registro detallado de operaciones del sistema
+2. **Logging con Usuario**: Asociación de operaciones con usuarios específicos
+3. **Consulta de Historial**: Recuperación de logs con filtros
+4. **Consultas por Usuario**: Logs específicos de un usuario
+5. **Consultas por Rango de Fechas**: Filtrado temporal de operaciones
+6. **Medición de Duración**: Registro del tiempo de ejecución
+
+#### Patrones Implementados
+- **Logger Pattern**: Registro centralizado de operaciones
+- **Repository Pattern**: Abstracción del acceso a datos de logs
+- **Dependency Injection**: Inyección de repositorio y manejo de errores
+- **Mock Pattern**: Simulación para testing sin persistencia real
+- **Factory Pattern**: Creación controlada de loggers
+
+#### Estructura de Datos de Log
+- **idOperacion**: Identificador único del log
+- **tipoOperacion**: Tipo de operación ejecutada
+- **usuario**: Usuario que ejecutó la operación
+- **fechaHora**: Timestamp de la operación
+- **detalles**: Información detallada de la operación
+- **resultado**: Resultado de la operación (éxito/fallo)
+- **duracion**: Tiempo de ejecución en milisegundos
+
 🔗 **Dependencias:**
 - COperationLogger ➜ IOperationRepository
 - COperationLogger ➜ IErrorHandlerService
 - COperationRepository ➜ IConfig
-```
 
 ## 4. Configuración
 ```text
@@ -357,19 +1366,19 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 ┌─────────────────────────────────────────────────────────────┐
 │                   MODELOS DE DATOS                         │
 ├─────────────────────────────────────────────────────────────┤
-│ 📊 T_Usuario.cls             ← Modelo de Usuario           │
-│ 📊 T_Solicitud.cls           ← Modelo de Solicitud         │
-│ 📊 T_Expediente.cls          ← Modelo de Expediente        │
-│ 📊 T_DatosPC.cls             ← Modelo de Datos PC          │
-│ 📊 T_DatosCDCA.cls           ← Modelo de Datos CDCA        │
-│ 📊 T_DatosCDCASUB.cls        ← Modelo de Datos CDCASUB     │
-│ 📊 T_Estado.cls              ← Modelo de Estado            │
-│ 📊 T_Transicion.cls          ← Modelo de Transición        │
-│ 📊 T_Mapeo.cls               ← Modelo de Mapeo             │
-│ 📊 T_Adjunto.cls             ← Modelo de Adjunto           │
-│ 📊 T_LogCambio.cls           ← Modelo de Log de Cambio     │
-│ 📊 T_LogError.cls            ← Modelo de Log de Error      │
-│ 📊 T_OperacionLog.cls        ← Modelo de Log de Operación  │
+│ 📊 E_Usuario.cls             ← Modelo de Usuario           │
+│ 📊 E_Solicitud.cls           ← Modelo de Solicitud         │
+│ 📊 E_Expediente.cls          ← Modelo de Expediente        │
+│ 📊 E_DatosPC.cls             ← Modelo de Datos PC          │
+│ 📊 E_DatosCDCA.cls           ← Modelo de Datos CDCA        │
+│ 📊 E_DatosCDCASUB.cls        ← Modelo de Datos CDCASUB     │
+│ 📊 E_Estado.cls              ← Modelo de Estado            │
+│ 📊 E_Transicion.cls          ← Modelo de Transición        │
+│ 📊 E_Mapeo.cls               ← Modelo de Mapeo             │
+│ 📊 E_Adjunto.cls             ← Modelo de Adjunto           │
+│ 📊 E_LogCambio.cls           ← Modelo de Log de Cambio     │
+│ 📊 E_LogError.cls            ← Modelo de Log de Error      │
+│ 📊 E_OperacionLog.cls        ← Modelo de Log de Operación  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -468,7 +1477,9 @@ graph TD
 ### 🏭 **Factory Pattern**
 - **Propósito**: Centralizar la creación de objetos y sus dependencias
 - **Implementación**: Cada servicio principal tiene su factory correspondiente
-- **Beneficios**: Desacoplamiento, configuración centralizada, facilita testing
+- **Principio Fundamental**: Los métodos `Create` NO reciben argumentos - las dependencias se crean internamente
+- **Ejemplo**: `modErrorHandlerFactory.CreateErrorHandlerService()` crea `IConfig` y `IFileSystem` internamente
+- **Beneficios**: Desacoplamiento total, configuración centralizada, facilita testing, elimina dependencias circulares
 
 ### 🗄️ **Repository Pattern**
 - **Propósito**: Abstraer el acceso a datos

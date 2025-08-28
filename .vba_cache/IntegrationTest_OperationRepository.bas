@@ -30,7 +30,7 @@ End Function
 ' ============================================================================
 
 Private Sub Setup()
-    On Error GoTo ErrorHandler
+    On Error GoTo TestError
     
     ' Aprovisionar la base de datos de prueba antes de cada ejecución
     Dim fullTemplatePath As String
@@ -44,7 +44,7 @@ Private Sub Setup()
     Debug.Print "Setup completado: BD de prueba preparada"
     Exit Sub
     
-ErrorHandler:
+TestError:
     Debug.Print "Error en Setup (" & Err.Number & "): " & Err.Description
     Err.Raise Err.Number, "IntegrationTest_OperationRepository.Setup", Err.Description
 End Sub
@@ -56,7 +56,7 @@ End Sub
 ' ============================================================================
 
 Private Sub Teardown()
-    On Error GoTo ErrorHandler
+    On Error GoTo TestError
     
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
@@ -73,7 +73,7 @@ Private Sub Teardown()
     Set fs = Nothing
     Exit Sub
     
-ErrorHandler:
+TestError:
     Debug.Print "ERROR en Teardown: " & Err.Description
     ' No relanzar error en Teardown para evitar enmascarar errores de prueba
 End Sub
@@ -86,7 +86,7 @@ Private Function Test_SaveLog_Integration_Success() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("Test_SaveLog_Integration_Success - Debe guardar correctamente un log de operación")
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestError
     
     ' Preparar entorno
     Call Setup
@@ -98,14 +98,13 @@ Private Function Test_SaveLog_Integration_Success() As CTestResult
     
     Set config = New CConfig
     Set errorHandler = New CErrorHandlerService
-    Set repository = New COperationRepository
     
     ' Configurar CConfig para apuntar a la BD de prueba
     config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
     config.SetSetting "DB_PASSWORD", "" ' Asumiendo que la BD de prueba no tiene contraseña
     
-    ' Inyectar dependencias
-    Call repository.Initialize(config, errorHandler)
+    ' Crear repositorio usando factory
+    Set repository = modRepositoryFactory.CreateOperationRepository(config, errorHandler)
     
     ' ACT: Ejecutar la operación a probar
     Dim testOperationType As String
@@ -149,7 +148,7 @@ Private Function Test_SaveLog_Integration_Success() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-ErrorHandler:
+TestError:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:

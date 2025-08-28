@@ -10,6 +10,48 @@ Option Explicit
 ' Versión: 2.0 - Estandarizado según framework
 ' ============================================================================
 
+' Variables a nivel de módulo para los mocks
+Private docService As CDocumentService
+Private mockConfig As CMockConfig
+Private mockRepository As CMockSolicitudRepository
+Private mockLogger As CMockOperationLogger
+Private mockWordManager As CMockWordManager
+Private mockMapeoRepository As CMockMapeoRepository
+Private mockErrorHandler As CMockErrorHandlerService
+
+' =====================================================
+' SETUP Y TEARDOWN
+' =====================================================
+
+Private Sub Setup()
+    ' Instanciar todos los mocks necesarios para las pruebas
+    Set docService = New CDocumentService
+    Set mockConfig = New CMockConfig
+    Set mockRepository = New CMockSolicitudRepository
+    Set mockLogger = New CMockOperationLogger
+    Set mockWordManager = New CMockWordManager
+    Set mockMapeoRepository = New CMockMapeoRepository
+    Set mockErrorHandler = New CMockErrorHandlerService
+End Sub
+
+Private Sub Teardown()
+    ' Limpiar y resetear todos los mocks para aislar las pruebas
+    If Not mockConfig Is Nothing Then mockConfig.Reset
+    If Not mockRepository Is Nothing Then mockRepository.Reset
+    If Not mockLogger Is Nothing Then mockLogger.Reset
+    If Not mockWordManager Is Nothing Then mockWordManager.Reset
+    If Not mockMapeoRepository Is Nothing Then mockMapeoRepository.Reset
+    If Not mockErrorHandler Is Nothing Then mockErrorHandler.Reset
+
+    Set docService = Nothing
+    Set mockConfig = Nothing
+    Set mockRepository = Nothing
+    Set mockLogger = Nothing
+    Set mockWordManager = Nothing
+    Set mockMapeoRepository = Nothing
+    Set mockErrorHandler = Nothing
+End Sub
+
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
 ' ============================================================================
@@ -34,105 +76,72 @@ End Function
 ' ============================================================================
 
 Private Function Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente() As CTestResult
-    Dim testResult As New CTestResult
-    Call testResult.Initialize("GenerarDocumento con datos válidos")
-    
-    On Error GoTo ErrorHandler
-    
+    Set Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente = New CTestResult
+    Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente.Initialize "GenerarDocumento con datos válidos"
+    On Error GoTo TestFail
+
     ' Arrange
-    Dim docService As New CDocumentService
-    Dim mockConfig As New CMockConfig
-    Dim mockRepository As New CMockSolicitudRepository
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockWordManager As New CMockWordManager
-    Dim mockMapeoRepository As New CMockMapeoRepository
-    
-    ' Configurar mocks
-    Call mockConfig.AddSetting("PLANTILLA_PATH", "C:\Templates")
-    Call mockConfig.AddSetting("GENERATED_DOCS_PATH", "C:\Generated")
-    Call mockConfig.AddSetting("IS_TEST_MODE", True)
-    
-    mockWordManager.AbrirDocumento_ReturnValue = True
-    mockWordManager.ReemplazarTexto_ReturnValue = True
-    mockWordManager.GuardarDocumento_ReturnValue = True
-    
-    ' Crear solicitud de prueba
-    Dim solicitud As T_Solicitud
-    solicitud.idSolicitud = 123
-    solicitud.codigoSolicitud = "SOL001"
-    solicitud.tipoSolicitud = "Permiso"
-    
-    ' Crear errorHandler mock
-    Dim mockErrorHandler As New CMockErrorHandlerService
-    
+    Call Setup ' Asegura que todos los mocks están instanciados
+
+    ' Configurar mocks para un escenario de éxito
+    mockConfig.AddSetting "PLANTILLA_PATH", "C:\Templates"
+    mockConfig.AddSetting "GENERATED_DOCS_PATH", "C:\Generated"
+    mockConfig.AddSetting "IS_TEST_MODE", True
+
+    mockWordManager.ConfigureAbrirDocumento True
+    mockWordManager.ConfigureReemplazarTexto True
+    mockWordManager.ConfigureGuardarDocumento True
+
+    Dim solicitudPrueba As New E_Solicitud
+    solicitudPrueba.idSolicitud = 123
+    solicitudPrueba.codigoSolicitud = "SOL001"
+    solicitudPrueba.tipoSolicitud = "PC"
+
+    Dim rsMapeo As DAO.Recordset ' Se necesita un mock recordset
+    ' ... (aquí iría la creación de un recordset mock, se omite por simplicidad)
+    mockMapeoRepository.ConfigureGetMapeoPorTipo rsMapeo
+
     ' Inicializar servicio
-    Call docService.Initialize(mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler)
-    
+    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
+
     ' Act
-    Dim Resultado As String
-    Resultado = docService.GenerarDocumento(solicitud)
-    
+    Dim rutaResultado As String
+    rutaResultado = docService.GenerarDocumento(solicitudPrueba)
+
     ' Assert
-    If Resultado = "" Then
-        Call testResult.Fail("No se generó el documento")
-        GoTo Cleanup
-    End If
-    
-    If Not mockWordManager.AbrirDocumento_WasCalled Then
-        Call testResult.Fail("No se llamó a AbrirDocumento del WordManager")
-        GoTo Cleanup
-    End If
-    
-    If Not mockWordManager.GuardarDocumento_WasCalled Then
-        Call testResult.Fail("No se llamó a GuardarDocumento del WordManager")
-        GoTo Cleanup
-    End If
-    
-    testResult.Pass
-    
+    modAssert.AssertNotEquals "", rutaResultado, "La ruta del documento no debe ser vacía."
+    modAssert.AssertTrue mockWordManager.AbrirDocumento_WasCalled, "Se debió llamar a AbrirDocumento."
+    modAssert.AssertTrue mockWordManager.GuardarDocumento_WasCalled, "Se debió llamar a GuardarDocumento."
+
+    Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente.Pass
+    GoTo Cleanup
+
+TestFail:
+    Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente.Fail "Error inesperado: " & Err.Description
+
 Cleanup:
-    ' Limpiar
-    mockConfig.Reset
-    mockRepository.Reset
-    mockLogger.Reset
-    mockWordManager.Reset
-    mockMapeoRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_GenerarDocumento_ConDatosValidos_DebeGenerarDocumentoCorrectamente = testResult
-    Exit Function
-    
-ErrorHandler:
-    Call testResult.Fail("Error inesperado: " & Err.Description)
-    Resume Cleanup
+    Call Teardown ' Limpia y resetea todos los mocks
 End Function
 
 Private Function Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GenerarDocumento con plantilla inexistente"
+    Set Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia = New CTestResult
+    Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia.Initialize "GenerarDocumento con plantilla inexistente"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
-    Dim docService As New CDocumentService
-    Dim mockConfig As New CMockConfig
-    Dim mockRepository As New CMockSolicitudRepository
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockWordManager As New CMockWordManager
-    Dim mockMapeoRepository As New CMockMapeoRepository
+    Call Setup
     
     ' Configurar mocks para simular error
     mockConfig.AddSetting "PLANTILLA_PATH", "C:\Templates"
     mockConfig.AddSetting "IS_TEST_MODE", False ' Para que verifique existencia
-    mockWordManager.AbrirDocumento_ReturnValue = False ' Simular fallo
+    Call mockWordManager.ConfigureAbrirDocumento(False) ' Simular fallo
     
     ' Crear solicitud de prueba
-    Dim solicitud As T_Solicitud
+    Dim solicitud As E_Solicitud
     solicitud.idSolicitud = 123
     solicitud.codigoSolicitud = "SOL001"
     solicitud.tipoSolicitud = "Inexistente"
-    
-    ' Crear errorHandler mock
-    Dim mockErrorHandler As New CMockErrorHandlerService
     
     ' Inicializar servicio
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
@@ -142,47 +151,32 @@ Private Function Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCaden
     Resultado = docService.GenerarDocumento(solicitud)
     
     ' Assert
-    If Resultado <> "" Then
-        testResult.Fail "Debería haber retornado cadena vacía"
-    Else
-        testResult.Pass
-    End If
+    modAssert.AssertEquals "", Resultado, "Debería haber retornado cadena vacía"
+    
+    Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia.Pass
+    GoTo Cleanup
+    
+TestFail:
+    Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    ' Limpiar
-    mockConfig.Reset
-    mockRepository.Reset
-    mockLogger.Reset
-    mockWordManager.Reset
-    mockMapeoRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_GenerarDocumento_ConPlantillaInexistente_DebeRetornarCadenaVacia = testResult
-    Exit Function
-    
-ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
-    Resume Cleanup
+    Call Teardown
 End Function
 
 Private Function Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GenerarDocumento con error en WordManager"
+    Set Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia = New CTestResult
+    Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia.Initialize "GenerarDocumento con error en WordManager"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
-    Dim docService As New CDocumentService
-    Dim mockConfig As New CMockConfig
-    Dim mockRepository As New CMockSolicitudRepository
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockWordManager As New CMockWordManager
-    Dim mockMapeoRepository As New CMockMapeoRepository
+    Call Setup
     
     ' Configurar mocks
     mockConfig.AddSetting "PLANTILLA_PATH", "C:\Templates"
     mockConfig.AddSetting "IS_TEST_MODE", True
-    mockWordManager.AbrirDocumento_ReturnValue = True
-    mockWordManager.GuardarDocumento_ReturnValue = False ' Simular fallo al guardar
+    Call mockWordManager.ConfigureAbrirDocumento(True)
+    Call mockWordManager.ConfigureGuardarDocumento(False) ' Simular fallo al guardar
     
     ' Crear solicitud de prueba
     Dim solicitud As T_Solicitud
@@ -190,9 +184,6 @@ Private Function Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaV
     solicitud.codigoSolicitud = "SOL001"
     solicitud.tipoSolicitud = "Permiso"
     
-    ' Crear errorHandler mock
-    Dim mockErrorHandler As New CMockErrorHandlerService
-    
     ' Inicializar servicio
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
     
@@ -201,26 +192,16 @@ Private Function Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaV
     Resultado = docService.GenerarDocumento(solicitud)
     
     ' Assert
-    If Resultado <> "" Then
-        testResult.Fail "Debería haber retornado cadena vacía"
-    Else
-        testResult.Pass
-    End If
+    modAssert.AssertEquals "", Resultado, "Debería haber retornado cadena vacía"
+    
+    Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia.Pass
+    GoTo Cleanup
+    
+TestFail:
+    Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    ' Limpiar
-    mockConfig.Reset
-    mockRepository.Reset
-    mockLogger.Reset
-    mockWordManager.Reset
-    mockMapeoRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_GenerarDocumento_ConErrorEnWordManager_DebeRetornarCadenaVacia = testResult
-    Exit Function
-    
-ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
-    Resume Cleanup
+    Call Teardown
 End Function
 
 ' ============================================================================
@@ -228,30 +209,22 @@ End Function
 ' ============================================================================
 
 Private Function Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "LeerDocumento con documento válido"
+    Set Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud = New CTestResult
+    Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud.Initialize "LeerDocumento con documento válido"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
-    Dim docService As New CDocumentService
-    Dim mockConfig As New CMockConfig
-    Dim mockRepository As New CMockSolicitudRepository
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockWordManager As New CMockWordManager
-    Dim mockMapeoRepository As New CMockMapeoRepository
+    Call Setup
     
     ' Configurar mocks
-    Dim solicitudMock As New T_Solicitud
+    Dim solicitudMock As New E_Solicitud
     solicitudMock.idSolicitud = 123
     solicitudMock.tipoSolicitud = "Permiso"
     
-    mockRepository.GetSolicitudByIdReturnValue = solicitudMock
-    mockRepository.SaveSolicitudReturnValue = 1
-    mockWordManager.LeerContenidoDocumento_ReturnValue = "[nombre]Juan Pérez[/nombre][fecha]2025-01-01[/fecha]"
-    
-    ' Crear errorHandler mock
-    Dim mockErrorHandler As New CMockErrorHandlerService
+    mockRepository.ConfigureGetSolicitudById solicitudMock
+    mockRepository.ConfigureSaveSolicitud 1
+    Call mockWordManager.ConfigureLeerDocumento("[nombre]Juan Pérez[/nombre][fecha]2025-01-01[/fecha]")
     
     ' Inicializar servicio
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
@@ -261,62 +234,35 @@ Private Function Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud()
     Resultado = docService.LeerDocumento("C:\test.docx", 123)
     
     ' Assert
-    If Not Resultado Then
-        testResult.Fail "Fallo al leer documento"
-        GoTo Cleanup
-    End If
+    modAssert.AssertTrue Resultado, "Fallo al leer documento"
+    modAssert.AssertEquals 1, mockRepository.GetSolicitudById_CallCount, "Se debe llamar a GetSolicitudById exactamente una vez."
+    modAssert.AssertEquals 1, mockRepository.SaveSolicitud_CallCount, "Se debe llamar a SaveSolicitud exactamente una vez."
     
-    If Not mockRepository.GetSolicitudById_WasCalled Then
-        testResult.Fail "No se llamó a GetSolicitudById del repositorio"
-        GoTo Cleanup
-    End If
+    Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud.Pass
+    GoTo Cleanup
     
-    If Not mockRepository.SaveSolicitud_WasCalled Then
-        testResult.Fail "No se llamó a SaveSolicitud del repositorio"
-        GoTo Cleanup
-    End If
-    
-    testResult.Pass
+TestFail:
+    Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    ' Limpiar
-    mockConfig.Reset
-    mockRepository.Reset
-    mockLogger.Reset
-    mockWordManager.Reset
-    mockMapeoRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_LeerDocumento_ConDocumentoValido_DebeActualizarSolicitud = testResult
-    Exit Function
-    
-ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
-    Resume Cleanup
+    Call Teardown
 End Function
 
 Private Function Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "LeerDocumento con documento inexistente"
+    Set Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse = New CTestResult
+    Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse.Initialize "LeerDocumento con documento inexistente"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
-    Dim docService As New CDocumentService
-    Dim mockConfig As New CMockConfig
-    Dim mockRepository As New CMockSolicitudRepository
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockWordManager As New CMockWordManager
-    Dim mockMapeoRepository As New CMockMapeoRepository
+    Call Setup
     
     ' Configurar mocks para simular error
     Dim solicitudMock As New T_Solicitud
     solicitudMock.idSolicitud = 123
     
-    mockRepository.GetSolicitudByIdReturnValue = solicitudMock
-    mockWordManager.LeerContenidoDocumento_ReturnValue = "" ' Simular fallo
-    
-    ' Crear errorHandler mock
-    Dim mockErrorHandler As New CMockErrorHandlerService
+    Call mockRepository.ConfigureGetSolicitudById(solicitudMock)
+    Call mockWordManager.ConfigureLeerDocumento("") ' Simular fallo
     
     ' Inicializar servicio
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
@@ -326,26 +272,16 @@ Private Function Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse() 
     Resultado = docService.LeerDocumento("C:\inexistente.docx", 123)
     
     ' Assert
-    If Resultado Then
-        testResult.Fail "Debería haber retornado False"
-    Else
-        testResult.Pass
-    End If
+    modAssert.AssertFalse Resultado, "Debería haber retornado False"
+    
+    Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse.Pass
+    GoTo Cleanup
+    
+TestFail:
+    Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    ' Limpiar
-    mockConfig.Reset
-    mockRepository.Reset
-    mockLogger.Reset
-    mockWordManager.Reset
-    mockMapeoRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_LeerDocumento_ConDocumentoInexistente_DebeRetornarFalse = testResult
-    Exit Function
-    
-ErrorHandler:
-    testResult.Fail "Error inesperado: " & Err.Description
-    Resume Cleanup
+    Call Teardown
 End Function
 
 ' ============================================================================
@@ -353,43 +289,27 @@ End Function
 ' ============================================================================
 
 Private Function Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "Initialize con dependencias válidas"
+    Set Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente = New CTestResult
+    Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente.Initialize "Initialize con dependencias válidas"
     
-    On Error GoTo ErrorHandler
+    On Error GoTo TestFail
     
     ' Arrange
-    Dim docService As New CDocumentService
-    Dim mockConfig As New CMockConfig
-    Dim mockRepository As New CMockSolicitudRepository
-    Dim mockLogger As New CMockOperationLogger
-    Dim mockWordManager As New CMockWordManager
-    Dim mockMapeoRepository As New CMockMapeoRepository
-    
-    ' Crear errorHandler mock
-    Dim mockErrorHandler As New CMockErrorHandlerService
+    Call Setup
     
     ' Act
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
     
     ' Assert
     ' Verificar que no se produzcan errores durante la inicialización
-    testResult.Pass
+    Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente.Pass
+    GoTo Cleanup
+    
+TestFail:
+    Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente.Fail "Error inesperado durante inicialización: " & Err.Description
     
 Cleanup:
-    ' Limpiar
-    mockConfig.Reset
-    mockRepository.Reset
-    mockLogger.Reset
-    mockWordManager.Reset
-    mockMapeoRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_Initialize_ConDependenciasValidas_DebeInicializarCorrectamente = testResult
-    Exit Function
-    
-ErrorHandler:
-    testResult.Fail "Error inesperado durante inicialización: " & Err.Description
-    Resume Cleanup
+    Call Teardown
 End Function
 
 

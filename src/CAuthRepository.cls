@@ -42,8 +42,8 @@ Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErr
 End Sub
 
 ' Implementación de IAuthRepository_GetUserAuthData
-Private Function IAuthRepository_GetUserAuthData(ByVal UserEmail As String) As T_AuthData
-    Dim authData As New T_AuthData
+Private Function IAuthRepository_GetUserAuthData(ByVal params As Collection) As E_AuthData
+Dim authData As New E_AuthData
     
     If Not m_isInitialized Then
         Err.Raise 5, "CAuthRepository.GetUserAuthData", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
@@ -52,7 +52,8 @@ Private Function IAuthRepository_GetUserAuthData(ByVal UserEmail As String) As T
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim sql As String
+    Dim params As Collection
+    Dim prm As QueryParameter
     
     On Error GoTo ErrorHandler
     
@@ -65,25 +66,19 @@ Private Function IAuthRepository_GetUserAuthData(ByVal UserEmail As String) As T
     
     Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
-    ' Consulta SQL única optimizada con LEFT JOIN para obtener todos los datos de autenticación
-    sql = "SELECT " & _
-          "    ua.EsAdministrador, " & _
-          "    ISNULL(uap.EsUsuarioAdministrador, 'No') AS EsUsuarioAdministrador, " & _
-          "    ISNULL(uap.EsUsuarioCalidad, 'No') AS EsUsuarioCalidad, " & _
-          "    ISNULL(uap.EsUsuarioTecnico, 'No') AS EsUsuarioTecnico " & _
-          "FROM TbUsuariosAplicaciones ua " & _
-          "LEFT JOIN TbUsuariosAplicacionesPermisos uap " & _
-          "    ON ua.CorreoUsuario = uap.CorreoUsuario " & _
-          "    AND uap.IDAplicacion = ? " & _
-          "WHERE ua.CorreoUsuario = ?"
+    ' Crear QueryDef con consulta desde modQueries
+    Set qdf = db.CreateQueryDef("", GET_AUTH_DATA_BY_EMAIL)
     
-    Set qdf = db.CreateQueryDef("", sql)
-    qdf.parameters(0) = m_configService.GetIDAplicacionCondor()
-    qdf.parameters(1) = UserEmail
+
+    
+    ' Asignar parámetros desde la colección
+    For Each prm In params
+        qdf.parameters(prm.ParameterName) = prm.ParameterValue
+    Next prm
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
-    ' Poblar el objeto T_AuthData basándose en los resultados
+    ' Poblar el objeto E_AuthData basándose en los resultados
     If Not rs.EOF Then
         authData.UserExists = True
         
@@ -105,7 +100,7 @@ Private Function IAuthRepository_GetUserAuthData(ByVal UserEmail As String) As T
             authData.IsTecnico = True
         End If
     Else
-        ' Usuario no encontrado - T_AuthData ya inicializado con valores False
+        ' Usuario no encontrado - E_AuthData ya inicializado con valores False
         authData.UserExists = False
     End If
     
@@ -135,8 +130,24 @@ ErrorHandler:
 End Function
 
 ' Método público para acceso directo
-Public Function GetUserAuthData(ByVal UserEmail As String) As T_AuthData
-    Set GetUserAuthData = IAuthRepository_GetUserAuthData(UserEmail)
+Public Function GetUserAuthData(ByVal UserEmail As String) As E_AuthData
+    Dim params As Collection
+    Dim prm As QueryParameter
+    
+    ' Crear colección de parámetros
+    Set params = New Collection
+    
+    Set prm = New QueryParameter
+    prm.ParameterName = "pIDAplicacion"
+    prm.ParameterValue = m_configService.GetIDAplicacionCondor()
+    params.Add prm
+    
+    Set prm = New QueryParameter
+    prm.ParameterName = "pCorreoUsuario"
+    prm.ParameterValue = UserEmail
+    params.Add prm
+    
+    Set GetUserAuthData = IAuthRepository_GetUserAuthData(params)
 End Function
 
 

@@ -173,7 +173,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - [X] Crear nueva solicitud (Factory Pattern implementado)
 - [X] Interfaz común ISolicitud para todos los tipos de solicitud
 - [X] Implementación CSolicitudPC para solicitudes de PC
-- [X] Estructura de datos T_Datos_PC, T_Datos_CD_CA, T_Datos_CD_CA_SUB
+- [X] Estructura de datos E_Datos_PC, E_Datos_CD_CA, E_Datos_CD_CA_SUB
 - [X] Pruebas unitarias completas para módulo de solicitudes
 - [X] Cambio de estados de solicitud (CSolicitudService.ChangeState con validación de workflow)
 - [ ] Vincular solicitud a expediente
@@ -317,9 +317,9 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - ✅ **Herramientas de desarrollo:** CLI funcional con importación y testing automatizado
 - ✅ **ExpedienteService implementado:** Interfaz IExpedienteService, clase CExpedienteService, mock CMockExpedienteService y pruebas completas
 - ✅ **Integración con BD Expedientes:** Consulta SQL compleja implementada con conexión a base de datos externa
-- ✅ **Type T_Expediente:** Estructura de datos definida para manejar información completa de expedientes
+- ✅ **Type E_Expediente:** Estructura de datos definida para manejar información completa de expedientes
 - ✅ **Módulo de Solicitudes implementado:** ISolicitud, CSolicitudPC, modSolicitudFactory con Factory Pattern
-- ✅ **Estructuras de datos de solicitudes:** T_Datos_PC, T_Datos_CD_CA, T_Datos_CD_CA_SUB implementadas
+- ✅ **Estructuras de datos de solicitudes:** E_Datos_PC, E_Datos_CD_CA, E_Datos_CD_CA_SUB implementadas
 - ✅ **Pruebas de solicitudes:** Test_Solicitudes con cobertura completa del módulo
 - ✅ **Sistema de testing automatizado:** Comando test CLI reactivado con ExecuteAllTestsForCLI() y códigos de salida estándar
 - ✅ **Sistema de manejo de errores centralizado:** modErrorHandler.bas implementado con función LogError

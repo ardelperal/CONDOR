@@ -98,13 +98,10 @@ Private Sub InitializeRealDependencies()
     m_Config.SetSetting "EXPEDIENTES_DB_PATH", modTestUtils.GetProjectPath() & EXPEDIENTES_ACTIVE_PATH
     
     ' Crear errorHandler real
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    Set m_ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(m_Config, fileSystem)
+    Set m_ErrorHandler = New CErrorHandlerService
     
-    ' Crear repositorio real
-    Set m_Repository = New CExpedienteRepository
-    m_Repository.Initialize m_Config, m_ErrorHandler
+    ' Crear repositorio real usando factory
+    Set m_Repository = modRepositoryFactory.CreateExpedienteRepository(m_Config, m_ErrorHandler)
     
     Exit Sub
     

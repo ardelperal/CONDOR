@@ -62,7 +62,7 @@ End Sub
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
 ' ============================================================================
 
-Public Function GenerarDocumento(ByVal solicitud As T_Solicitud) As String
+Public Function GenerarDocumento(ByVal solicitud As E_Solicitud) As String
     GenerarDocumento = IDocumentService_GenerarDocumento(solicitud)
 End Function
 
@@ -74,7 +74,7 @@ End Function
 ' IMPLEMENTACIÓN DE IDocumentService - ESCRITURA DE DOCUMENTOS
 ' ============================================================================
 
-Private Function IDocumentService_GenerarDocumento(ByVal solicitud As T_Solicitud) As String
+Private Function IDocumentService_GenerarDocumento(ByVal solicitud As E_Solicitud) As String
     On Error GoTo ErrorHandler
     
     Dim rutaPlantilla As String
@@ -153,7 +153,7 @@ End Function
 Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
     On Error GoTo ErrorHandler
     
-    Dim solicitudLeida As T_Solicitud
+    Dim solicitudLeida As E_Solicitud
     Dim rsMapeo As Object ' Recordset
     Dim campoTabla As String, campoWord As String, valorLeido As String
     
@@ -236,7 +236,7 @@ End Function
 ' MÉTODOS PRIVADOS AUXILIARES
 ' ============================================================================
 
-Private Function ReemplazarCamposEnPlantilla(ByVal solicitud As T_Solicitud) As Boolean
+Private Function ReemplazarCamposEnPlantilla(ByVal solicitud As E_Solicitud) As Boolean
     On Error GoTo ErrorHandler
     
     Dim rsMapeo As Object ' Recordset

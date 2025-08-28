@@ -11,12 +11,29 @@ Option Explicit
 ' =====================================================
 
 ' Función factory para crear y configurar el servicio de notificaciones
-Public Function CreateNotificationService(ByVal config As IConfig, ByVal operationLogger As IOperationLogger, ByVal errorHandler As IErrorHandlerService) As INotificationService
+Public Function CreateNotificationService(Optional ByVal testConfig As IConfig = Nothing) As INotificationService
     On Error GoTo ErrorHandler
+    
+    ' Crear las dependencias necesarias usando sus respectivas factorías
+    Dim fileSystem As IFileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    
+    Dim config As IConfig
+    If Not testConfig Is Nothing Then
+        Set config = testConfig
+    Else
+        Set config = modConfig.CreateConfigService()
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    
+    Dim operationLogger As IOperationLogger
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
     ' Crear el repositorio usando el factory
     Dim notificationRepository As INotificationRepository
-    Set notificationRepository = modRepositoryFactory.CreateNotificationRepository(errorHandler, config)
+    Set notificationRepository = modRepositoryFactory.CreateNotificationRepository(config, errorHandler)
     
     ' Crear una instancia de la clase concreta
     Dim notificationServiceInstance As New CNotificationService
@@ -30,7 +47,7 @@ Public Function CreateNotificationService(ByVal config As IConfig, ByVal operati
     Exit Function
     
 ErrorHandler:
-    errorHandler.LogError Err.Number, Err.Description, "modNotificationServiceFactory.CreateNotificationService"
-    Set CreateNotificationService = Nothing
+    Debug.Print "Error en modNotificationServiceFactory.CreateNotificationService: " & Err.Number & " - " & Err.Description
+    Err.Raise Err.Number, Err.Source, Err.Description
 End Function
 

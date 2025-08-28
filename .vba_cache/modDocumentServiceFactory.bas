@@ -10,18 +10,35 @@ Option Explicit
 ' FECHA: 2025-08-22
 ' =====================================================
 
-Public Function CreateDocumentService(ByVal errorHandler As IErrorHandlerService) As IDocumentService
+Public Function CreateDocumentService(Optional ByVal testConfig As IConfig = Nothing) As IDocumentService
     On Error GoTo ErrorHandler
     
-    ' Obtener las dependencias necesarias
+    ' Crear las dependencias necesarias usando sus respectivas factorías
+    Dim fileSystem As IFileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    
     Dim configService As IConfig
-    Set configService = modConfig.CreateConfigService(errorHandler)
+    If Not testConfig Is Nothing Then
+        Set configService = testConfig
+    Else
+        Set configService = modConfig.CreateConfigService()
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(configService, fileSystem)
     
     ' Crear las dependencias usando los factories correspondientes
-    Set wordManager = modWordManagerFactory.CreateWordManager(errorHandler, configService)
-    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository(errorHandler, configService)
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository(errorHandler, configService)
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
+    Dim wordManager As IWordManager
+    Set wordManager = modWordManagerFactory.CreateWordManager()
+    
+    Dim mapeoRepository As IMapeoRepository
+    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository(configService, errorHandler)
+    
+    Dim solicitudRepository As ISolicitudRepository
+    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository(configService, errorHandler)
+    
+    Dim operationLogger As IOperationLogger
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
     ' Crear una instancia de la clase concreta
     Dim documentServiceInstance As New CDocumentService
@@ -35,8 +52,8 @@ Public Function CreateDocumentService(ByVal errorHandler As IErrorHandlerService
     Exit Function
     
 ErrorHandler:
-    errorHandler.LogError Err.Number, Err.Description, "modDocumentServiceFactory.CreateDocumentService"
-    Set CreateDocumentService = Nothing
+    Debug.Print "Error en modDocumentServiceFactory.CreateDocumentService: " & Err.Number & " - " & Err.Description
+    Err.Raise Err.Number, Err.Source, Err.Description
 End Function
 
 

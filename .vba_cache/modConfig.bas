@@ -15,9 +15,7 @@ Public Function CreateConfigService(Optional ByVal dbFrontend As DAO.Database = 
     Dim backendPassword As String
     Dim entorno As String
     
-    ' Constantes con las rutas base según el entorno
-    Const BASE_PATH_LOCAL As String = "C:\Proyectos\CONDOR\"
-    Const BASE_PATH_OFICINA As String = "\\datoste\aplicaciones_dys\Aplicaciones PpD\CONDOR"
+    ' Las rutas se determinan dinámicamente a partir de la ubicación del frontend
     
     ' PASO 1: Conectarse al Frontend local para leer configuración de arranque
     If dbFrontend Is Nothing Then
@@ -41,20 +39,9 @@ Public Function CreateConfigService(Optional ByVal dbFrontend As DAO.Database = 
     rs.Close
     Set rs = Nothing
     
-    ' PASO 3: Construir ruta al Backend usando valor de Entorno
-    Select Case UCase(entorno)
-        Case "LOCAL"
-            backendPath = BASE_PATH_LOCAL & "back\CONDOR_datos.accdb"
-        Case "OFICINA"
-            backendPath = BASE_PATH_OFICINA & "\back\CONDOR_datos.accdb"
-        Case Else
-            If Not errorHandler Is Nothing Then
-                errorHandler.LogError vbObjectError + 1002, "Entorno no válido: '" & entorno & "'. Los valores válidos son 'LOCAL' o 'OFICINA'", "modConfig.CreateConfigService"
-            Else
-                Debug.Print "Error en modConfig.CreateConfigService: Entorno no válido: '" & entorno & "'"
-            End If
-            Err.Raise vbObjectError + 1002, "CreateConfigService", "Entorno no válido: '" & entorno & "'. Los valores válidos son 'LOCAL' o 'OFICINA'"
-    End Select
+    ' PASO 3: Construir ruta al Backend usando rutas relativas dinámicas
+    ' La ruta base se determina a partir de la ubicación del frontend
+    backendPath = CurrentProject.Path & "\..\back\CONDOR_datos.accdb"
     
     ' Contraseña fija para el backend
     backendPassword = "dpddpd"

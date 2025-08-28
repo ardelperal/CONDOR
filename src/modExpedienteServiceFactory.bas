@@ -24,11 +24,11 @@ Public Function CreateExpedienteService() As IExpedienteService
     Set config = modConfig.CreateConfigService()
     Dim fileSystem As IFileSystem
     Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Crear las demás dependencias
-    Set repo = modRepositoryFactory.CreateExpedienteRepository(errorHandler)
-    Set logger = modOperationLoggerFactory.CreateOperationLogger(errorHandler)
+    Set repo = modRepositoryFactory.CreateExpedienteRepository(config, errorHandler)
+    Set logger = modOperationLoggerFactory.CreateOperationLogger()
     
     ' 2. Crear e inicializar el servicio
     Dim expedienteServiceInstance As New CExpedienteService
