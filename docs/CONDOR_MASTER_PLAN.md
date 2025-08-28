@@ -198,7 +198,7 @@ El sistema de autenticación implementa un patrón Mock completo para facilitar 
 
 - **CMockAuthService**: Mock de `IAuthService` que permite configurar el rol de usuario devuelto mediante `SetMockUserRole()`
 - **CMockAuthRepository**: Mock de `IAuthRepository` que permite configurar los datos de autenticación devueltos mediante `SetMockAuthData()`
-- **modAuthFactory**: Incluye funcionalidad para inyectar mocks mediante `SetMockAuthService()` y resetear el estado con `ResetMock()`
+- **ModAuthFactory**: Incluye funcionalidad para inyectar mocks mediante `SetMockAuthService()` y resetear el estado con `ResetMock()`
 
 #### Dependencias Externas
 
@@ -234,9 +234,9 @@ El sistema de autenticación implementa un patrón Mock completo para facilitar 
 │ 📄 IDocumentService.cls      ← Interface                   │
 │ 🔧 CDocumentService.cls      ← Implementación              │
 │ 🧪 CMockDocumentService.cls  ← Mock para testing           │
-│ 🏭 modDocumentServiceFactory.bas ← Factory                 │
-│ ✅ Test_DocumentService.bas  ← Tests unitarios             │
-│ 🔬 IntegrationTest_DocumentService.bas ← Tests integración │
+│ 🏭 ModDocumentServiceFactory.bas ← Factory                 │
+│ ✅ TestDocumentService.bas  ← Tests unitarios             │
+│ 🔬 IntegrationTestDocumentService.bas ← Tests integración │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -256,10 +256,10 @@ El sistema de autenticación implementa un patrón Mock completo para facilitar 
 │ 🔧 CExpedienteRepository.cls ← Implementación              │
 │ 🧪 CMockExpedienteService.cls ← Mock para testing          │
 │ 🧪 CMockExpedienteRepository.cls ← Mock para testing       │
-│ 🏭 modExpedienteServiceFactory.bas ← Factory               │
+│ 🏭 ModExpedienteServiceFactory.bas ← Factory               │
 │ 📊 E_Expediente.cls         ← Entidad principal            │
-│ ✅ Test_CExpedienteService.bas ← Tests unitarios           │
-│ 🔬 IntegrationTest_CExpedienteRepository.bas ← Tests integración │
+│ ✅ TestCExpedienteService.bas ← Tests unitarios           │
+│ 🔬 IntegrationTestCExpedienteRepository.bas ← Tests integración │
 │                                                             │
 │ 📊 Análisis de Código Fuente: 10 archivos identificados    │
 └─────────────────────────────────────────────────────────────┘
@@ -405,7 +405,7 @@ El módulo implementa un sistema completo de mocks para aislamiento de pruebas:
 - CExpedienteService ➜ IConfig (Configuración)
 - CExpedienteRepository ➜ IConfig (Configuración de BD)
 - CExpedienteRepository ➜ IErrorHandlerService (Manejo de errores)
-- modExpedienteServiceFactory ➜ Múltiples factories (Inyección de dependencias)
+- ModSolicitudServiceFactory ➜ Múltiples factories (Inyección de dependencias)
 
 #### Funcionalidades Clave
 
@@ -436,13 +436,13 @@ El módulo implementa un sistema completo de mocks para aislamiento de pruebas:
 │ 🔧 CSolicitudRepository.cls  ← Implementación              │
 │ 🧪 CMockSolicitudService.cls ← Mock para testing           │
 │ 🧪 CMockSolicitudRepository.cls ← Mock para testing        │
-│ 🏭 modSolicitudServiceFactory.bas ← Factory                │
+│ 🏭 ModSolicitudServiceFactory.bas ← Factory                │
 │ 📊 E_Solicitud.cls          ← Entidad principal            │
 │ 📊 E_Datos_PC.cls           ← Datos específicos PC         │
 │ 📊 E_Datos_CD_CA.cls        ← Datos específicos CD/CA      │
 │ 📊 E_Datos_CD_CA_SUB.cls    ← Datos específicos CD/CA/SUB  │
-│ ✅ Test_SolicitudService.bas ← Tests unitarios             │
-│ 🔬 IntegrationTest_SolicitudRepository.bas ← Tests integración │
+│ ✅ TestSolicitudService.bas ← Tests unitarios             │
+│ 🔬 IntegrationTestSolicitudRepository.bas ← Tests integración │
 │                                                             │
 │ 📊 Análisis de Código Fuente: 10 archivos identificados    │
 └─────────────────────────────────────────────────────────────┘
@@ -612,7 +612,7 @@ classDiagram
     }
     
     %% Factory
-    class modSolicitudServiceFactory {
+    class ModSolicitudServiceFactory {
         <<factory>>
         +CreateSolicitudService() ISolicitudService
     }
@@ -628,10 +628,10 @@ classDiagram
     CSolicitudService --> IOperationLogger
     CSolicitudService --> IErrorHandlerService
     CSolicitudRepository --> IConfig
-    modSolicitudServiceFactory --> CSolicitudService
-    modSolicitudServiceFactory --> ISolicitudRepository
-    modSolicitudServiceFactory --> IOperationLogger
-    modSolicitudServiceFactory --> IErrorHandlerService
+    ModSolicitudServiceFactory --> CSolicitudService
+    ModSolicitudServiceFactory --> ISolicitudRepository
+    ModSolicitudServiceFactory --> IOperationLogger
+    ModSolicitudServiceFactory --> IErrorHandlerService
     
     %% Relaciones de Composición
     E_Solicitud *-- E_Datos_PC
@@ -650,11 +650,11 @@ classDiagram
 - CSolicitudService ➜ IOperationLogger (inyectado)
 - CSolicitudService ➜ IErrorHandlerService (inyectado)
 - CSolicitudRepository ➜ IConfig (inyectado)
-- modSolicitudServiceFactory ➜ modConfig (para IConfig)
-- modSolicitudServiceFactory ➜ modFileSystemFactory (para IFileSystem)
-- modSolicitudServiceFactory ➜ modErrorHandlerFactory (para IErrorHandlerService)
-- modSolicitudServiceFactory ➜ modRepositoryFactory (para ISolicitudRepository)
-- modSolicitudServiceFactory ➜ modOperationLoggerFactory (para IOperationLogger)
+- ModSolicitudServiceFactory ➜ ModConfig (para IConfig)
+- ModSolicitudServiceFactory ➜ ModFileSystemFactory (para IFileSystem)
+- ModSolicitudServiceFactory ➜ ModErrorHandlerFactory (para IErrorHandlerService)
+- ModSolicitudServiceFactory ➜ ModRepositoryFactory (para ISolicitudRepository)
+- ModSolicitudServiceFactory ➜ ModOperationLoggerFactory (para IOperationLogger)
 
 **Funcionalidades clave:**
 - Creación y validación de solicitudes
@@ -681,11 +681,11 @@ classDiagram
 │ 🔧 CWorkflowRepository.cls   ← Implementación              │
 │ 🧪 CMockWorkflowService.cls  ← Mock para testing           │
 │ 🧪 CMockWorkflowRepository.cls ← Mock para testing         │
-│ 🏭 modRepositoryFactory.bas  ← Factory (CreateWorkflowRepository) │
+│ 🏭 ModRepositoryFactory.bas  ← Factory (CreateWorkflowRepository) │
 │ 📊 E_Estado.cls             ← Entidad de Estado            │
 │ 📊 E_Transicion.cls         ← Entidad de Transición       │
-│ ✅ Test_WorkflowService.bas  ← Tests unitarios             │
-│ 🔬 IntegrationTest_WorkflowRepository.bas ← Tests integración │
+│ ✅ TestWorkflowService.bas  ← Tests unitarios             │
+│ 🔬 IntegrationTestWorkflowRepository.bas ← Tests integración │
 │                                                             │
 │ 📊 Análisis de Código Fuente: 11 archivos identificados    │
 └─────────────────────────────────────────────────────────────┘
@@ -850,7 +850,7 @@ classDiagram
     }
     
     %% Factory
-    class modRepositoryFactory {
+    class ModRepositoryFactory {
         <<factory>>
         +CreateWorkflowRepository() IWorkflowRepository
     }
@@ -870,9 +870,9 @@ classDiagram
     CWorkflowRepository --> E_Estado : queries
     CWorkflowRepository --> E_Transicion : queries
     
-    modRepositoryFactory --> CWorkflowRepository : creates
-    modRepositoryFactory --> CMockWorkflowRepository : creates
-    modRepositoryFactory --> IWorkflowRepository : returns
+    ModRepositoryFactory --> CWorkflowRepository : creates
+    ModRepositoryFactory --> CMockWorkflowRepository : creates
+    ModRepositoryFactory --> IWorkflowRepository : returns
 ```
 
 #### Patrón Mock para Testing
@@ -893,7 +893,7 @@ El módulo implementa un sistema completo de mocks para aislamiento de pruebas:
 - CWorkflowService ➜ IConfig (Configuración)
 - CWorkflowRepository ➜ IConfig (Configuración de BD)
 - CWorkflowRepository ➜ IErrorHandlerService (Manejo de errores)
-- modRepositoryFactory ➜ CWorkflowRepository/CMockWorkflowRepository (Creación de instancias)
+- ModRepositoryFactory ➜ CWorkflowRepository/CMockWorkflowRepository (Creación de instancias)
 
 #### Funcionalidades Clave
 
@@ -935,9 +935,9 @@ El módulo implementa un sistema completo de mocks para aislamiento de pruebas:
 │ 🔧 CMapeoRepository.cls      ← Implementación              │
 │ 🧪 CMockMapeoRepository.cls  ← Mock para testing           │
 │ 📊 E_Mapeo.cls               ← Entidad de datos            │
-│ ✅ Test_CMapeoRepository.bas ← Tests unitarios             │
-│ 🔬 IntegrationTest_CMapeoRepository.bas ← Tests integración │
-│ 🏭 modRepositoryFactory.bas  ← Factory (CreateMapeoRepository) │
+│ ✅ TestCMapeoRepository.bas ← Tests unitarios             │
+│ 🔬 IntegrationTestCMapeoRepository.bas ← Tests integración │
+│ 🏭 ModRepositoryFactory.bas  ← Factory (CreateMapeoRepository) │
 └─────────────────────────────────────────────────────────────┘
 
 #### Diagrama de Clases UML
@@ -969,7 +969,7 @@ classDiagram
         +nombreCampoWord: String
     }
     
-    class modRepositoryFactory {
+    class ModRepositoryFactory {
         +CreateMapeoRepository() IMapeoRepository
     }
     
@@ -977,7 +977,7 @@ classDiagram
     IMapeoRepository <|.. CMockMapeoRepository
     CMapeoRepository --> IConfig
     CMapeoRepository --> IErrorHandlerService
-    modRepositoryFactory --> IMapeoRepository
+    ModRepositoryFactory --> IMapeoRepository
     E_Mapeo --> "tbMapeoCampos"
 ```
 
@@ -1031,8 +1031,8 @@ classDiagram
 │ 🔧 CNotificationService.cls  ← Implementación              │
 │ 🔧 CNotificationRepository.cls ← Implementación            │
 │ 🧪 CMockNotificationService.cls ← Mock para testing        │
-│ 🏭 modNotificationServiceFactory.bas ← Factory             │
-│ 🔬 IntegrationTest_NotificationService.bas ← Tests integración │
+│ 🏭 ModNotificationServiceFactory.bas ← Factory             │
+│ 🔬 IntegrationTestNotificationService.bas ← Tests integración │
 └─────────────────────────────────────────────────────────────┘
 
 #### Diagrama de Clases UML
@@ -1080,7 +1080,7 @@ classDiagram
         +UpdateNotificationStatus(id: Long, estado: String) Boolean
     }
     
-    class modNotificationServiceFactory {
+    class ModNotificationServiceFactory {
         +CreateNotificationService() INotificationService
     }
     
@@ -1091,7 +1091,7 @@ classDiagram
     CNotificationService --> IOperationLogger
     CNotificationService --> IErrorHandlerService
     CNotificationRepository --> IConfig
-    modNotificationServiceFactory --> INotificationService
+    ModNotificationServiceFactory --> INotificationService
 ```
 
 #### Patrón Mock para Testing
@@ -1136,9 +1136,9 @@ classDiagram
 │ 🔧 COperationRepository.cls  ← Implementación              │
 │ 🧪 CMockOperationLogger.cls  ← Mock para testing           │
 │ 📊 E_OperacionLog.cls        ← Entidad de datos            │
-│ 🏭 modOperationLoggerFactory.bas ← Factory                 │
-│ ✅ Test_OperationLogger.bas  ← Tests unitarios             │
-│ 🔬 IntegrationTest_OperationRepository.bas ← Tests integración │
+│ 🏭 ModOperationLoggerFactory.bas ← Factory                 │
+│ ✅ TestOperationLogger.bas  ← Tests unitarios             │
+│ 🔬 IntegrationTestOperationRepository.bas ← Tests integración │
 └─────────────────────────────────────────────────────────────┘
 
 #### Diagrama de Clases UML
@@ -1202,7 +1202,7 @@ classDiagram
         +duracion: Long
     }
     
-    class modOperationLoggerFactory {
+    class ModOperationLoggerFactory {
         +CreateOperationLogger() IOperationLogger
     }
     
@@ -1212,7 +1212,7 @@ classDiagram
     COperationLogger --> IOperationRepository
     COperationLogger --> IErrorHandlerService
     COperationRepository --> IConfig
-    modOperationLoggerFactory --> IOperationLogger
+    ModOperationLoggerFactory --> IOperationLogger
     E_OperacionLog --> "tbOperacionesLog"
 ```
 
@@ -1265,8 +1265,8 @@ classDiagram
 │ 📄 IConfig.cls               ← Interface                   │
 │ 🔧 CConfig.cls               ← Implementación              │
 │ 🧪 CMockConfig.cls           ← Mock para testing           │
-│ 🏭 modConfigFactory.bas      ← Factory                     │
-│ ✅ Test_CConfig.bas          ← Tests unitarios             │
+│ 🏭 ModConfigFactory.bas      ← Factory                     │
+│ ✅ TestCConfig.bas           ← Tests unitarios             │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -1281,9 +1281,9 @@ classDiagram
 │ 📄 IFileSystem.cls           ← Interface                   │
 │ 🔧 CFileSystem.cls           ← Implementación              │
 │ 🧪 CMockFileSystem.cls       ← Mock para testing           │
-│ 🏭 modFileSystemFactory.bas  ← Factory                     │
-│ ✅ Test_FileSystem.bas       ← Tests unitarios             │
-│ 🔬 IntegrationTest_FileSystem.bas ← Tests integración      │
+│ 🏭 ModFileSystemFactory.bas  ← Factory                     │
+│ ✅ TestFileSystem.bas        ← Tests unitarios             │
+│ 🔬 IntegrationTestFileSystem.bas ← Tests integración       │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -1298,9 +1298,9 @@ classDiagram
 │ 📄 IWordManager.cls          ← Interface                   │
 │ 🔧 CWordManager.cls          ← Implementación              │
 │ 🧪 CMockWordManager.cls      ← Mock para testing           │
-│ 🏭 modWordManagerFactory.bas ← Factory                     │
-│ ✅ Test_WordManager.bas      ← Tests unitarios             │
-│ 🔬 IntegrationTest_WordManager.bas ← Tests integración     │
+│ 🏭 ModWordManagerFactory.bas ← Factory                     │
+│ ✅ TestWordManager.bas       ← Tests unitarios             │
+│ 🔬 IntegrationTestWordManager.bas ← Tests integración      │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -1316,9 +1316,9 @@ classDiagram
 │ 📄 IErrorHandlerService.cls  ← Interface                   │
 │ 🔧 CErrorHandlerService.cls  ← Implementación              │
 │ 🧪 CMockErrorHandlerService.cls ← Mock para testing        │
-│ 🏭 modErrorHandlerFactory.bas ← Factory                    │
-│ 📋 modErrorHandler.bas       ← Módulo de utilidades        │
-│ ✅ Test_ErrorHandlerService.bas ← Tests unitarios          │
+│ 🏭 ModErrorHandlerFactory.bas ← Factory                    │
+│ 📋 ModErrorHandler.bas       ← Módulo de utilidades        │
+│ ✅ TestErrorHandlerService.bas ← Tests unitarios           │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -1333,9 +1333,9 @@ classDiagram
 │ 🔧 CTestResult.cls           ← Resultado individual        │
 │ 🔧 CTestSuiteResult.cls      ← Resultado de suite          │
 │ 🔧 CTestReporter.cls         ← Generador de informes       │
-│ 📋 modTestRunner.bas         ← Motor de ejecución          │
-│ 📋 modTestUtils.bas          ← Utilidades de testing       │
-│ 📋 modAssert.bas             ← Aserciones                  │
+│ 📋 ModTestRunner.bas         ← Motor de ejecución          │
+│ 📋 ModTestUtils.bas          ← Utilidades de testing       │
+│ 📋 ModAssert.bas             ← Aserciones                  │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -1351,8 +1351,8 @@ classDiagram
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IAppManager.cls           ← Interface                   │
 │ 🔧 CAppManager.cls           ← Implementación              │
-│ 🏭 modAppManagerFactory.bas  ← Factory                     │
-│ ✅ Test_AppManager.bas       ← Tests unitarios             │
+│ 🏭 ModAppManagerFactory.bas  ← Factory                     │
+│ ✅ TestAppManager.bas        ← Tests unitarios             │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -1387,9 +1387,9 @@ classDiagram
 ┌─────────────────────────────────────────────────────────────┐
 │              UTILIDADES Y ENUMERACIONES                    │
 ├─────────────────────────────────────────────────────────────┤
-│ 📋 modDatabase.bas           ← Utilidades de BD            │
-│ 📋 modRepositoryFactory.bas  ← Factory de Repositorios     │
-│ 📋 modUtils.bas              ← Utilidades generales        │
+│ 📋 ModDatabase.bas           ← Utilidades de BD            │
+│ 📋 ModRepositoryFactory.bas  ← Factory de Repositorios     │
+│ 📋 ModUtils.bas              ← Utilidades generales        │
 │ 🔢 E_TipoSolicitud.bas       ← Enum Tipo de Solicitud      │
 │ 🔢 E_EstadoSolicitud.bas     ← Enum Estado de Solicitud    │
 │ 🔢 E_RolUsuario.bas          ← Enum Rol de Usuario         │
@@ -1453,12 +1453,12 @@ graph TD
 - **Interfaces**: 15 interfaces (I*)
 - **Implementaciones**: 25 clases (C*)
 - **Mocks**: 12 mocks para testing (CMock*)
-- **Factories**: 11 factories (mod*Factory)
-- **Tests Unitarios**: 15 módulos (Test_*)
-- **Tests de Integración**: 10 módulos (IntegrationTest_*)
+- **Factories**: 11 factories (Mod*Factory)
+- **Tests Unitarios**: 15 módulos (Test*)
+- **Tests de Integración**: 10 módulos (IntegrationTest*)
 - **Modelos de Datos**: 13 tipos (T_*)
 - **Enumeraciones**: 5 enums (E_*)
-- **Módulos de Utilidades**: 8 módulos (mod*)
+- **Módulos de Utilidades**: 8 módulos (Mod*)
 
 ### 🎯 Cobertura de Testing
 - **Cobertura Unitaria**: 85% de las clases principales
@@ -1478,7 +1478,7 @@ graph TD
 - **Propósito**: Centralizar la creación de objetos y sus dependencias
 - **Implementación**: Cada servicio principal tiene su factory correspondiente
 - **Principio Fundamental**: Los métodos `Create` NO reciben argumentos - las dependencias se crean internamente
-- **Ejemplo**: `modErrorHandlerFactory.CreateErrorHandlerService()` crea `IConfig` y `IFileSystem` internamente
+- **Ejemplo**: `ModErrorHandlerFactory.CreateErrorHandlerService()` crea `IConfig` y `IFileSystem` internamente
 - **Beneficios**: Desacoplamiento total, configuración centralizada, facilita testing, elimina dependencias circulares
 
 ### 🗄️ **Repository Pattern**
@@ -1530,8 +1530,8 @@ back/test_db/
 ```
 
 #### 🛠️ **Utilidades Centrales**
-- `modTestUtils.GetProjectPath()`: Obtiene la ruta base del proyecto
-- `modTestUtils.PrepareTestDatabase()`: Copia plantilla a directorio activo
+- `ModTestUtils.GetProjectPath()`: Obtiene la ruta base del proyecto
+- `ModTestUtils.PrepareTestDatabase()`: Copia plantilla a directorio activo
 - `CreateTestDirectories()`: Crea directorios necesarios
 - `CreateTestDatabase()`: Copia y configura BD de prueba
 - `CopyTestTemplate()`: Prepara plantillas de documentos
@@ -1541,13 +1541,13 @@ back/test_db/
 
 | Archivo de Test | Tipo | Recursos Aprovisionados |
 |----------------|------|------------------------|
-| `IntegrationTest_DocumentService.bas` | Integración | BD + Plantillas + Directorios |
-| `IntegrationTest_FileSystem.bas` | Integración | Directorios de prueba |
-| `IntegrationTest_AuthRepository.bas` | Integración | BD de prueba |
-| `IntegrationTest_SolicitudRepository.bas` | Integración | BD de prueba |
-| `IntegrationTest_WorkflowRepository.bas` | Integración | BD de prueba |
-| `IntegrationTest_OperationRepository.bas` | Integración | BD de prueba |
-| `IntegrationTest_CExpedienteRepository.bas` | Integración | BD de prueba |
+| `IntegrationTestDocumentService.bas` | Integración | BD + Plantillas + Directorios |
+| `IntegrationTestFileSystem.bas` | Integración | Directorios de prueba |
+| `IntegrationTestAuthRepository.bas` | Integración | BD de prueba |
+| `IntegrationTestSolicitudRepository.bas` | Integración | BD de prueba |
+| `IntegrationTestWorkflowRepository.bas` | Integración | BD de prueba |
+| `IntegrationTestOperationRepository.bas` | Integración | BD de prueba |
+| `IntegrationTestCExpedienteRepository.bas` | Integración | BD de prueba |
 
 #### 🎯 **Beneficios del Sistema**
 
@@ -1594,7 +1594,7 @@ El objetivo del autoaprovisionamiento es eliminar la dependencia de un entorno d
 **Predecible**: Cada prueba debe ejecutarse siempre sobre un conjunto de datos limpio y conocido, garantizando que los resultados sean consistentes y reproducibles en cualquier máquina.
 
 **2. Cómo Funciona el Sistema de Autoaprovisionamiento**
-El sistema se basa en un patrón Setup / Teardown orquestado por el módulo de utilidades modTestUtils.bas.
+El sistema se basa en un patrón Setup / Teardown orquestado por el módulo de utilidades ModTestUtils.bas.
 
 **Plantillas Maestras (Templates)**:
 
@@ -1606,7 +1606,7 @@ En el directorio back/test_db/active/ es donde se realizarán las pruebas. Este 
 
 **El Ciclo de Vida de un Test de Integración**:
 
-**Setup (Antes de cada test)**: Se invoca el procedimiento Setup del módulo de pruebas. Este, a su vez, llama a modTestUtils.PrepareTestDatabase.
+**Setup (Antes de cada test)**: Se invoca el procedimiento Setup del módulo de pruebas. Este, a su vez, llama a ModTestUtils.PrepareTestDatabase.
 
 PrepareTestDatabase borra la base de datos activa anterior (si existe) del directorio active/.
 
@@ -1622,7 +1622,7 @@ Para mantener la consistencia, cualquier nuevo módulo de pruebas de integració
 **Plantilla de Código Obligatoria**:
 ```vba
 ' =====================================================
-' MÓDULO: IntegrationTest_[MiRepositorio]
+' MÓDULO: IntegrationTest[MiRepositorio]
 ' DESCRIPCIÓN: Pruebas de integración para C[MiRepositorio]
 ' =====================================================
 
@@ -1633,15 +1633,15 @@ Private Const MI_DB_TEMPLATE_PATH As String = "back\test_db\templates\MiDB_test_
 Private Const MI_DB_ACTIVE_PATH As String = "back\test_db\active\MiDB_integration_test.accdb"
 
 ' 2. FUNCIÓN PRINCIPAL DE LA SUITE
-Public Function IntegrationTest_[MiRepositorio]_RunAll() As CTestSuiteResult
+Public Function IntegrationTest[MiRepositorio]RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "IntegrationTest_[MiRepositorio]"
+    suiteResult.Initialize "IntegrationTest[MiRepositorio]"
 
     ' Añadir cada función de prueba individual aquí
     suiteResult.AddTestResult Test_MiMetodo_Exitoso()
     suiteResult.AddTestResult Test_MiMetodo_FallaComoSeEspera()
 
-    Set IntegrationTest_[MiRepositorio]_RunAll = suiteResult
+    Set IntegrationTest[MiRepositorio]RunAll = suiteResult
 End Function
 
 ' 3. SETUP Y TEARDOWN
@@ -1652,24 +1652,24 @@ Private Sub Setup()
     Dim fullTemplatePath As String
     Dim fullTestPath As String
     
-    fullTemplatePath = modTestUtils.GetProjectPath() & MI_DB_TEMPLATE_PATH
-    fullTestPath = modTestUtils.GetProjectPath() & MI_DB_ACTIVE_PATH
+    fullTemplatePath = ModTestUtils.GetProjectPath() & MI_DB_TEMPLATE_PATH
+    fullTestPath = ModTestUtils.GetProjectPath() & MI_DB_ACTIVE_PATH
     
-    modTestUtils.PrepareTestDatabase fullTemplatePath, fullTestPath
+    ModTestUtils.PrepareTestDatabase fullTemplatePath, fullTestPath
     
     Exit Sub
 ErrorHandler:
-    Err.Raise Err.Number, "IntegrationTest_[MiRepositorio].Setup", Err.Description
+    Err.Raise Err.Number, "IntegrationTest[MiRepositorio].Setup", Err.Description
 End Sub
 
 Private Sub Teardown()
     On Error Resume Next ' Ignorar errores en la limpieza
     
     Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
+    Set fs = ModFileSystemFactory.CreateFileSystem()
     
     Dim testPath As String
-    testPath = modTestUtils.GetProjectPath() & MI_DB_ACTIVE_PATH
+    testPath = ModTestUtils.GetProjectPath() & MI_DB_ACTIVE_PATH
     
     If fs.FileExists(testPath) Then
         fs.DeleteFile testPath, True ' Forzar borrado
@@ -1693,7 +1693,7 @@ Private Function Test_MiMetodo_Exitoso() As CTestResult
     
     ' ACT: Ejecutar el método a probar
     
-    ' ASSERT: Verificar los resultados con modAssert
+    ' ASSERT: Verificar los resultados con ModAssert
 
     Test_MiMetodo_Exitoso.Pass
     GoTo Cleanup
@@ -1928,6 +1928,12 @@ Luego se detiene y espera confirmación.
 - **CTestSuiteResult.cls**: Encapsula los resultados de cada suite de pruebas
 - **Integración Simplificada**: Nuevos módulos de prueba se registran en `RegisterTestSuites()` siguiendo el patrón establecido
 **Arquitectura 100% orientada a objetos con separación clara de responsabilidades.**
+
+**Herramientas de Análisis de Código para Colaboración con IA**: La implementación de herramientas especializadas para el análisis y empaquetado de código es fundamental para facilitar la colaboración con sistemas de IA y mejorar la productividad del desarrollo. La nueva funcionalidad `bundle` en `condor_cli.vbs` permite empaquetar archivos de código por funcionalidad específica (Auth, Config, Expediente, Solicitud, Workflow, Document, Word, FileSystem, Error, Operation, TestFramework), creando paquetes organizados con timestamp que facilitan el análisis contextual del código. Esta herramienta es especialmente valiosa para:
+- **Análisis de Impacto**: Identificar rápidamente todos los componentes relacionados con una funcionalidad específica
+- **Revisiones de Código**: Proporcionar contexto completo a revisores humanos o sistemas de IA
+- **Documentación Automática**: Generar documentación basada en análisis de código agrupado por funcionalidad
+- **Refactoring Seguro**: Asegurar que todas las dependencias de una funcionalidad están identificadas antes de realizar cambios
 
 (Este es un resumen. El documento completo Lecciones_aprendidas.md contiene más detalles).
 

@@ -141,7 +141,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 
 - [X] Interfaces y clases base (IAuthService, CAuthService, CMockAuthService)
 - [X] Clase ExpedienteService (interfaz con aplicación existente)
-- [X] Módulo de gestión de solicitudes (ISolicitud, CSolicitudPC, modSolicitudFactory)
+- [X] Módulo de gestión de solicitudes (ISolicitud, CSolicitudPC, ModSolicitudFactory)
 - [ ] Módulo de workflow y estados
 - [ ] Módulo de validaciones de negocio
 - [ ] Módulo de cálculos y reglas
@@ -149,7 +149,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 
 ### 1.3 Capa de Presentación
 
-- [X] Sistema de gestión de aplicaciones (modAppManager)
+- [X] Sistema de gestión de aplicaciones (ModAppManager)
 - [ ] Formulario principal de navegación
 - [ ] Formulario de consulta de expedientes (solo lectura desde app existente)
 - [ ] Formulario de gestión de solicitudes
@@ -213,7 +213,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 
 ### 3.3 Configuración y Administración
 
-- [X] Sistema de configuración base (modConfig)
+- [X] Sistema de configuración base (ModConfig)
 - [X] Gestión de usuarios y permisos (AuthService)
 - [ ] Configuración de tipos de expediente
 - [ ] Configuración de estados y transiciones
@@ -228,7 +228,7 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - [X] Framework de pruebas unitarias
 - [X] Pruebas de integración básicas
 - [X] Pruebas unitarias para módulo de solicitudes (Test_Solicitudes)
-- [X] Integración de pruebas de solicitudes en modTestRunner
+- [X] Integración de pruebas de solicitudes en ModTestRunner
 - [X] Auditoría y corrección completa de Test_CSolicitudPC.bas
 - [X] Creación de stubs para funciones de prueba faltantes en CSolicitudPC
 - [X] Integración de Test_CSolicitudPC_RunAll en batería completa de pruebas
@@ -322,16 +322,16 @@ La funcionalidad utiliza `DoCmd.LoadFromText` para importar módulos específico
 - ✅ **Estructuras de datos de solicitudes:** E_Datos_PC, E_Datos_CD_CA, E_Datos_CD_CA_SUB implementadas
 - ✅ **Pruebas de solicitudes:** Test_Solicitudes con cobertura completa del módulo
 - ✅ **Sistema de testing automatizado:** Comando test CLI reactivado con ExecuteAllTestsForCLI() y códigos de salida estándar
-- ✅ **Sistema de manejo de errores centralizado:** modErrorHandler.bas implementado con función LogError
-- ✅ **Integración de manejo de errores:** Refactorizado CAuthService, CExpedienteService y modDatabase para usar sistema centralizado
+- [X] Sistema de manejo de errores centralizado:** ModErrorHandler.bas implementado con función LogError
+- ✅ **Integración de manejo de errores:** Refactorizado CAuthService, CExpedienteService y ModDatabase para usar sistema centralizado
 - ✅ **Pruebas de manejo de errores:** Test_ErrorHandler.bas con cobertura completa del sistema de errores
-- ✅ **Sistema de pruebas completo:** 23 módulos de prueba integrados en modTestRunner con 38 pruebas ejecutándose exitosamente
-- ✅ **Test_CSolicitudPC.bas implementado:** Suite completa con 7 funciones de prueba (Test_CSolicitudPC_Properties_SetAndGet, Test_CSolicitudPC_Load_Success, Test_CSolicitudPC_Save_Success, Test_CSolicitudPC_ChangeState_Success, Test_CSolicitudPC_DatosPC_SetAndGet) integrada en modTestRunner.bas
+- [X] Sistema de pruebas completo:** 23 módulos de prueba integrados en ModTestRunner con 38 pruebas ejecutándose exitosamente
+- [X] Test_CSolicitudPC.bas implementado:** Suite completa con 7 funciones de prueba (Test_CSolicitudPC_Properties_SetAndGet, Test_CSolicitudPC_Load_Success, Test_CSolicitudPC_Save_Success, Test_CSolicitudPC_ChangeState_Success, Test_CSolicitudPC_DatosPC_SetAndGet) integrada en ModTestRunner.bas
 - ✅ **Ciclo de Trabajo Asistido completado:** Tests de CSolicitudPC implementados completamente. Sistema con 38 tests ejecutándose exitosamente, garantizando la estabilidad del proyecto
 - 🔧 **Próximo objetivo:** Implementar workflow y estados de solicitudes
 - 📋 **Decisión arquitectónica:** Uso de interfaces para permitir mocking y testing efectivo
-- ✅ Sistema de Logging de Operaciones implementado (IOperationLogger, COperationLogger, CMockOperationLogger, modOperationLoggerFactory, Test_OperationLogger)
-- ✅ Factory de Configuración implementado (modConfigFactory)
+- ✅ Sistema de Logging de Operaciones implementado (IOperationLogger, COperationLogger, CMockOperationLogger, ModOperationLoggerFactory, Test_OperationLogger)
+- ✅ Factory de Configuración implementado (ModConfigFactory)
 
 ---
 

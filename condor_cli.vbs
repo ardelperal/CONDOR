@@ -31,7 +31,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "  test       - Ejecutar suite de pruebas unitarias"
     WScript.Echo "  update     - Sincronizar modulos VBA (automatico o selectivo)"
     WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
-
+    WScript.Echo "  bundle <funcionalidad> [ruta_destino] - Empaquetar archivos de codigo por funcionalidad"
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
@@ -46,6 +46,19 @@ If objArgs.Count = 0 Then
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
     WScript.Echo "  1. cscript condor_cli.vbs update    (sincronizacion rapida de cambios)"
     WScript.Echo "  2. cscript condor_cli.vbs rebuild   (reconstruccion completa si es necesario)"
+    WScript.Echo ""
+    WScript.Echo "PARÁMETROS DE FUNCIONALIDAD PARA 'bundle':"
+    WScript.Echo "  Auth: Empaqueta todo lo relacionado con Autenticación (IAuthService, CAuthService, TestAuthService, etc.)"
+    WScript.Echo "  Config: Empaqueta todo lo relacionado con Configuración"
+    WScript.Echo "  Expediente: Empaqueta todo lo relacionado con Expedientes"
+    WScript.Echo "  Solicitud: Empaqueta todo lo relacionado con Solicitudes"
+    WScript.Echo "  Workflow: Empaqueta todo lo relacionado con Flujo de Trabajo"
+    WScript.Echo "  Document: Empaqueta todo lo relacionado con Documentos"
+    WScript.Echo "  Word: Empaqueta todo lo relacionado con Microsoft Word"
+    WScript.Echo "  FileSystem: Empaqueta todo lo relacionado con Sistema de Archivos"
+    WScript.Echo "  Error: Empaqueta todo lo relacionado con Manejo de Errores"
+    WScript.Echo "  Operation: Empaqueta todo lo relacionado con Operaciones"
+    WScript.Echo "  TestFramework: Empaqueta todo lo relacionado con Framework de Pruebas"
     WScript.Echo ""
     WScript.Echo "OPCIONES ESPECIALES:"
     WScript.Echo "  --dry-run  - Simular operacion sin modificar Access (solo con import)"
@@ -62,12 +75,18 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "update" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint' o 'update'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "update" And strAction <> "bundle" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'update' o 'bundle'"
     WScript.Quit 1
 End If
 
 Set objFSO = CreateObject("Scripting.FileSystemObject")
+
+' El comando bundle no requiere Access
+If strAction = "bundle" Then
+    Call BundleFunctionality()
+    WScript.Quit 0
+End If
 
 ' Determinar qué base de datos usar según la acción
 If strAction = "createtable" Or strAction = "droptable" Then
@@ -2473,6 +2492,101 @@ Sub CopyModifiedFilesToCache(cachePath)
     Next
     
     WScript.Echo "✓ Archivos modificados copiados a cache: " & copiedCount & " archivos"
+    
+    On Error GoTo 0
+End Sub
+
+' Subrutina para empaquetar archivos de código por funcionalidad
+Sub BundleFunctionality()
+    On Error Resume Next
+    
+    Dim strFunctionality, strDestPath, strBundlePath
+    Dim objFolder, objFile
+    Dim foundFiles, copiedFiles
+    Dim timestamp
+    
+    ' Verificar argumentos
+    If objArgs.Count < 2 Then
+        WScript.Echo "Error: Se requiere nombre de funcionalidad"
+        WScript.Echo "Uso: cscript condor_cli.vbs bundle <funcionalidad> [ruta_destino]"
+        WScript.Quit 1
+    End If
+    
+    strFunctionality = objArgs(1)
+    
+    ' Determinar ruta de destino
+    If objArgs.Count >= 3 Then
+        strDestPath = objArgs(2)
+    Else
+        strDestPath = objFSO.GetParentFolderName(WScript.ScriptFullName)
+    End If
+    
+    ' Crear timestamp
+    timestamp = Year(Now) & Right("0" & Month(Now), 2) & Right("0" & Day(Now), 2) & "_" & _
+                Right("0" & Hour(Now), 2) & Right("0" & Minute(Now), 2) & Right("0" & Second(Now), 2)
+    
+    ' Crear nombre de carpeta bundle
+    strBundlePath = objFSO.BuildPath(strDestPath, "bundle_" & strFunctionality & "_" & timestamp)
+    
+    WScript.Echo "=== EMPAQUETANDO FUNCIONALIDAD: " & strFunctionality & " ==="
+    WScript.Echo "Buscando archivos en: " & strSourcePath
+    WScript.Echo "Carpeta destino: " & strBundlePath
+    WScript.Echo ""
+    
+    ' Verificar que existe la carpeta src
+    If Not objFSO.FolderExists(strSourcePath) Then
+        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
+        WScript.Quit 1
+    End If
+    
+    ' Crear carpeta de destino
+    If Not objFSO.FolderExists(strBundlePath) Then
+        objFSO.CreateFolder strBundlePath
+        If Err.Number <> 0 Then
+            WScript.Echo "Error creando carpeta de destino: " & Err.Description
+            WScript.Quit 1
+        End If
+    End If
+    
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    foundFiles = 0
+    copiedFiles = 0
+    
+    ' Buscar archivos que contengan el nombre de la funcionalidad
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            ' Verificar si el nombre del archivo contiene la funcionalidad (sin distinguir mayúsculas)
+            If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
+                foundFiles = foundFiles + 1
+                
+                ' Copiar archivo con extensión .txt añadida
+                Dim destFilePath
+                destFilePath = objFSO.BuildPath(strBundlePath, objFile.Name & ".txt")
+                
+                objFSO.CopyFile objFile.Path, destFilePath, True
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "  ❌ Error copiando " & objFile.Name & ": " & Err.Description
+                    Err.Clear
+                Else
+                    WScript.Echo "  ✓ " & objFile.Name & " -> " & objFile.Name & ".txt"
+                    copiedFiles = copiedFiles + 1
+                End If
+            End If
+        End If
+    Next
+    
+    WScript.Echo ""
+    WScript.Echo "=== RESULTADO DEL EMPAQUETADO ==="
+    WScript.Echo "Archivos encontrados: " & foundFiles
+    WScript.Echo "Archivos copiados: " & copiedFiles
+    WScript.Echo "Ubicación del paquete: " & strBundlePath
+    
+    If copiedFiles = 0 Then
+        WScript.Echo "⚠️ No se encontraron archivos que contengan '" & strFunctionality & "'"
+    Else
+        WScript.Echo "✅ Empaquetado completado exitosamente"
+    End If
     
     On Error GoTo 0
 End Sub

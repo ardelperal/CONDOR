@@ -33,12 +33,12 @@ Acción Correctiva: Ante este error, se debe realizar una auditoría proactiva c
 
 Lección 7: La Batería de Pruebas Debe Ser Exhaustiva
 Observación: Se han detectado nuevos módulos de prueba que no se han añadido a la función principal de ejecución de pruebas en modTestRunner.bas.
-Regla Inquebrantable: Cada vez que se cree un nuevo módulo de pruebas (Test_...bas), su función de ejecución principal (Test_*_RunAll) debe ser registrada inmediatamente dentro de la función RegisterTestSuites en modTestRunner.bas.
-Acción Correctiva: Todos los prompts que impliquen la creación de un nuevo módulo de pruebas deben incluir explícitamente un paso final para modificar modTestRunner.bas y añadir la llamada a la nueva suite.
+Regla Inquebrantable: Cada vez que se cree un nuevo módulo de pruebas (Test_...bas), su función de ejecución principal (Test_*_RunAll) debe ser registrada inmediatamente dentro de la función RegisterTestSuites en ModTestRunner.bas.
+Acción Correctiva: Todos los prompts que impliquen la creación de un nuevo módulo de pruebas deben incluir explícitamente un paso final para modificar ModTestRunner.bas y añadir la llamada a la nueva suite.
 
 Lección 8: La Centralización del Manejo de Errores es Obligatoria
 Observación: Se ha detectado código que, si bien utiliza On Error GoTo ErrorHandler, no registra el error capturado en nuestro servicio central modErrorHandler.
-Regla Inquebrantable: Un bloque ErrorHandler sin una llamada a modErrorHandler.LogError (o LogCriticalError) se considera una implementación incompleta y errónea.
+Regla Inquebrantable: Un bloque ErrorHandler sin una llamada a ModErrorHandler.LogError (o LogCriticalError) se considera una implementación incompleta y errónea.
 Acción Correctiva: Todos los prompts que impliquen la creación o modificación de código deben incluir la directiva de implementar el manejo de errores centralizado.
 
 Regla de Estilo Crítica: La variable del servicio de errores (Dim ErrorHandler As IErrorHandlerService) debe declararse una única vez al inicio del procedimiento, nunca repetirse dentro del bloque ErrorHandler:. Las declaraciones duplicadas causan errores de compilación que impiden el registro del error original, dejando el sistema en un estado inconsistente e inaceptable.
@@ -60,7 +60,7 @@ Acción Correctiva: Utilizar la plantilla estándar para la creación de nuevas 
 
 Lección 12: La Separación del Frontend y el Backend es Crítica
 Observación: El uso de CurrentDb en módulos que acceden a datos rompe la arquitectura cliente-servidor. El código del frontend no debe interactuar directamente con la base de datos de datos.
-Regla Inquebrantable: La base de datos de datos (_datos.accdb) debe ser accedida exclusivamente a través de conexiones DAO, utilizando la ruta y la contraseña almacenadas en el servicio de configuración (modConfig). El uso de CurrentDb solo es válido para operaciones en la base de datos del frontend (código VBA, formularios, etc.).
+Regla Inquebrantable: La base de datos de datos (_datos.accdb) debe ser accedida exclusivamente a través de conexiones DAO, utilizando la ruta y la contraseña almacenadas en el servicio de configuración (ModConfig). El uso de CurrentDb solo es válido para operaciones en la base de datos del frontend (código VBA, formularios, etc.).
 
 Ejemplo de Violación (CAuthRepository antes de refactorización):
 ```vba
@@ -99,7 +99,7 @@ Lección 13: La Centralización de la Configuración y la Seguridad
 Observación: Las configuraciones sensibles, como las contraseñas, no deben estar hardcodeadas directamente en el código de la aplicación. Además, el uso de strings genéricos con GetValue() es propenso a errores tipográficos y dificulta el mantenimiento.
 Regla Inquebrantable: Todos los valores de configuración, especialmente los sensibles, deben ser gestionados por una única fuente de verdad: el servicio de configuración (CConfig). Para configuraciones críticas y frecuentemente utilizadas, se deben crear métodos específicos en la interfaz IConfig (como GetDataPath(), GetDatabasePassword()) en lugar de usar strings genéricos con GetValue(). Esto proporciona seguridad de tipos, detección temprana de errores y facilita la refactorización.
 
-Sistema de Configuración de Dos Niveles (Frontend/Backend): La aplicación implementa una arquitectura de configuración de dos niveles. TbLocalConfig (ubicada en el Frontend) actúa como tabla de arranque (bootstrap) que contiene únicamente el indicador de entorno ('LOCAL' o 'OFICINA'). tbConfiguracion (ubicada en el Backend) contiene todos los parámetros globales de la aplicación. El sistema lee el entorno desde TbLocalConfig y utiliza constantes de ruta base definidas en modConfig.bas para construir dinámicamente la ruta del backend, accediendo luego a tbConfiguracion para obtener la configuración completa. Esta separación hace la aplicación completamente portable entre entornos sin necesidad de modificar datos o código, cumpliendo el principio de "configuración sobre convención" y eliminando errores de despliegue.
+Sistema de Configuración de Dos Niveles (Frontend/Backend): La aplicación implementa una arquitectura de configuración de dos niveles. TbLocalConfig (ubicada en el Frontend) actúa como tabla de arranque (bootstrap) que contiene únicamente el indicador de entorno ('LOCAL' o 'OFICINA'). tbConfiguracion (ubicada en el Backend) contiene todos los parámetros globales de la aplicación. El sistema lee el entorno desde TbLocalConfig y utiliza constantes de ruta base definidas en ModConfig.bas para construir dinámicamente la ruta del backend, accediendo luego a tbConfiguracion para obtener la configuración completa. Esta separación hace la aplicación completamente portable entre entornos sin necesidad de modificar datos o código, cumpliendo el principio de "configuración sobre convención" y eliminando errores de despliegue.
 
 Acción Correctiva: Eliminar todas las cadenas de contraseña hardcodeadas del código de la aplicación y reemplazarlas por llamadas al servicio de configuración. Para configuraciones críticas, crear métodos específicos en IConfig y refactorizar el código existente para usar estos métodos en lugar de GetValue() con strings. Implementar validación robusta de entornos con mensajes de error descriptivos para configuraciones incorrectas.
 
