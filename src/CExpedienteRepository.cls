@@ -32,15 +32,13 @@ End Sub
 ' ============================================================================
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientePorId
-Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal params As Collection) As DAO.recordset
-    Dim ErrorHandler As IErrorHandlerService
+Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim prm As QueryParameter
     
     ' Logging removido - responsabilidad de la capa de servicio
     
@@ -50,10 +48,8 @@ Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal params As Co
     ' Crear QueryDef con consulta desde modQueries
     Set qdf = db.CreateQueryDef("", GET_EXPEDIENTE_BY_ID)
     
-    ' Asignar parámetros desde la colección
-    For Each prm In params
-        qdf.parameters(prm.ParameterName) = prm.ParameterValue
-    Next prm
+    ' Asignar parámetro directo
+    qdf.parameters("pIdExpediente") = idExpediente
     
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
@@ -82,15 +78,13 @@ ErrorHandler:
 End Function
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientePorNemotecnico
-Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal params As Collection) As DAO.recordset
-    Dim ErrorHandler As IErrorHandlerService
+Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim prm As QueryParameter
     
     ' Logging removido - responsabilidad de la capa de servicio
     
@@ -100,10 +94,8 @@ Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal par
     ' Crear QueryDef con consulta desde modQueries
     Set qdf = db.CreateQueryDef("", GET_EXPEDIENTE_BY_NEMOTECNICO)
     
-    ' Asignar parámetros desde la colección
-    For Each prm In params
-        qdf.parameters(prm.ParameterName) = prm.ParameterValue
-    Next prm
+    ' Asignar parámetro directo
+    qdf.parameters("pNemotecnico") = Nemotecnico
     
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
@@ -132,15 +124,13 @@ ErrorHandler:
 End Function
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientesActivosParaSelector
-Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector(ByVal params As Collection) As DAO.recordset
-    Dim ErrorHandler As IErrorHandlerService
+Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As DAO.recordset
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim prm As QueryParameter
     
     ' Logging removido - responsabilidad de la capa de servicio
     
@@ -150,12 +140,7 @@ Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector(ByV
     ' Crear QueryDef con consulta desde modQueries
     Set qdf = db.CreateQueryDef("", GET_EXPEDIENTES_ACTIVOS_SELECTOR)
     
-    ' Asignar parámetros desde la colección (si los hay)
-    If Not params Is Nothing Then
-        For Each prm In params
-            qdf.parameters(prm.ParameterName) = prm.ParameterValue
-        Next prm
-    End If
+    ' Esta consulta no requiere parámetros
     
     ' Ejecutar consulta
     Set rs = qdf.OpenRecordset()
@@ -190,26 +175,17 @@ End Function
 
 ' Método público de conveniencia para ObtenerExpedientePorId
 Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
-    Dim params As Collection
-    Set params = New Collection
-    params.Add CreateQueryParameter("pIdExpediente", idExpediente)
-    Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(params)
+    Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(idExpediente)
 End Function
 
 ' Método público de conveniencia para ObtenerExpedientePorNemotecnico
 Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
-    Dim params As Collection
-    Set params = New Collection
-    params.Add CreateQueryParameter("pNemotecnico", Nemotecnico)
-    Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(params)
+    Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico)
 End Function
 
 ' Método público de conveniencia para ObtenerExpedientesActivosParaSelector
 Public Function ObtenerExpedientesActivosParaSelector() As DAO.recordset
-    Dim params As Collection
-    Set params = New Collection
-    ' Esta consulta no requiere parámetros, pero mantenemos la consistencia
-    Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector(params)
+    Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector()
 End Function
 
 

@@ -11,22 +11,15 @@ Option Explicit
 ' =====================================================
 
 ' Función factory para crear y configurar el servicio de notificaciones
-Public Function CreateNotificationService(Optional ByVal testConfig As IConfig = Nothing) As INotificationService
+Public Function CreateNotificationService() As INotificationService
     On Error GoTo ErrorHandler
     
     ' Crear las dependencias necesarias usando sus respectivas factorías
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    
     Dim config As IConfig
-    If Not testConfig Is Nothing Then
-        Set config = testConfig
-    Else
-        Set config = modConfig.CreateConfigService()
-    End If
+    Set config = modConfigFactory.CreateConfigService()
     
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()

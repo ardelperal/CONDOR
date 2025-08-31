@@ -11,8 +11,6 @@ Option Compare Database
 Option Explicit
 
 
-#If DEV_MODE Then
-
 ' Clase: CMockOperationLogger
 ' Descripción: Mock del servicio de logging de operaciones para pruebas unitarias.
 '              Almacena las operaciones loggeadas en una colección para su verificación.
@@ -143,7 +141,5 @@ End Sub
 Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
     IOperationLogger_LogError errNumber, errDescription, moduleName, isCritical
 End Sub
-
-#End If
 
 

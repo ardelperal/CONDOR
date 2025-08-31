@@ -10,85 +10,55 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-' ============================================================================
-' Clase: CMockDocumentService
-' Descripción: Mock del servicio de documentos para pruebas unitarias aisladas.
-' Implementa: IDocumentService
-' Autor: CONDOR-Expert
-' Fecha: 2025-08-22
-' Versión: 1.0
-' ============================================================================
-
 Implements IDocumentService
 
-' ============================================================================
-' PROPIEDADES PÚBLICAS PARA CONTROL DE COMPORTAMIENTO EN PRUEBAS
-' ============================================================================
-
-' Propiedades para GenerarDocumento
+' Propiedades para configurar el comportamiento del mock
 Public GenerarDocumento_ReturnValue As String
-Public GenerarDocumento_WasCalled As Boolean
-Public GenerarDocumento_CallCount As Long
-Public GenerarDocumento_LastSolicitud As E_Solicitud
-
-' Propiedades para LeerDocumento
 Public LeerDocumento_ReturnValue As Boolean
+
+' Propiedades para verificar si los métodos fueron llamados
+Public GenerarDocumento_WasCalled As Boolean
 Public LeerDocumento_WasCalled As Boolean
-Public LeerDocumento_CallCount As Long
-Public LeerDocumento_LastRutaDocumento As String
-Public LeerDocumento_LastIdSolicitud As Long
 
-' ============================================================================
-' MÉTODOS PÚBLICOS PARA GESTIÓN DEL MOCK
-' ============================================================================
+' Propiedades para capturar los últimos parámetros pasados
+Private GenerarDocumento_LastSolicitud As ESolicitud
+Private LeerDocumento_LastRutaDocumento As String
+Private LeerDocumento_LastIdSolicitud As Long
 
-' Reinicia todas las propiedades del mock a sus valores por defecto
-Public Sub Reset()
-    ' Reset GenerarDocumento
-    GenerarDocumento_ReturnValue = ""
-    GenerarDocumento_WasCalled = False
-    GenerarDocumento_CallCount = 0
-    Set GenerarDocumento_LastSolicitud = Nothing
-    
-    ' Reset LeerDocumento
-    LeerDocumento_ReturnValue = False
-    LeerDocumento_WasCalled = False
-    LeerDocumento_CallCount = 0
-    LeerDocumento_LastRutaDocumento = ""
-    LeerDocumento_LastIdSolicitud = 0
+' Implementación de la interfaz IDocumentService
+Private Sub IDocumentService_Initialize(ByVal configService As IConfig, ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal wordManager As IWordManager, ByVal mapeoRepository As IMapeoRepository, ByVal errorHandler As IErrorHandlerService)
+    ' No se necesita inicialización real para el mock
 End Sub
 
-' ============================================================================
-' IMPLEMENTACIÓN DE LA INTERFAZ IDocumentService
-' ============================================================================
-
-Private Function IDocumentService_GenerarDocumento(ByVal solicitud As E_Solicitud) As String
+Private Function IDocumentService_GenerarDocumento(ByVal solicitud As ESolicitud) As String
     GenerarDocumento_WasCalled = True
-    GenerarDocumento_CallCount = GenerarDocumento_CallCount + 1
     Set GenerarDocumento_LastSolicitud = solicitud
     IDocumentService_GenerarDocumento = GenerarDocumento_ReturnValue
 End Function
 
 Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
     LeerDocumento_WasCalled = True
-    LeerDocumento_CallCount = LeerDocumento_CallCount + 1
     LeerDocumento_LastRutaDocumento = rutaDocumento
     LeerDocumento_LastIdSolicitud = idSolicitud
     IDocumentService_LeerDocumento = LeerDocumento_ReturnValue
 End Function
 
-' ============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
-' ============================================================================
-
-' Método público de conveniencia para GenerarDocumento
-Public Function GenerarDocumento(ByVal solicitud As E_Solicitud) As String
+' Métodos públicos de conveniencia
+Public Function GenerarDocumento(ByVal solicitud As ESolicitud) As String
     GenerarDocumento = IDocumentService_GenerarDocumento(solicitud)
 End Function
 
-' Método público de conveniencia para LeerDocumento
 Public Function LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
     LeerDocumento = IDocumentService_LeerDocumento(rutaDocumento, idSolicitud)
 End Function
 
-
+' Método para resetear el estado del mock
+Public Sub Reset()
+    GenerarDocumento_ReturnValue = ""
+    LeerDocumento_ReturnValue = False
+    GenerarDocumento_WasCalled = False
+    LeerDocumento_WasCalled = False
+    Set GenerarDocumento_LastSolicitud = Nothing
+    LeerDocumento_LastRutaDocumento = ""
+    LeerDocumento_LastIdSolicitud = 0
+End Sub

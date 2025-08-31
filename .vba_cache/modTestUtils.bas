@@ -1,3 +1,4 @@
+Attribute VB_Name = "modTestUtils"
 Option Compare Database
 Option Explicit
 '******************************************************************************
@@ -23,6 +24,13 @@ Public Sub PrepareTestDatabase(ByVal templatePath As String, ByVal activeTestPat
     ' Borrar la base de datos de prueba activa si ya existe
     If fs.FileExists(activeTestPath) Then
         fs.DeleteFile activeTestPath, True ' True para forzar el borrado
+    End If
+
+    ' Crear el directorio de destino si no existe
+    Dim destinationFolder As String
+    destinationFolder = fs.GetParentFolderName(activeTestPath)
+    If Not fs.FolderExists(destinationFolder) Then
+        fs.CreateFolder destinationFolder
     End If
 
     ' Copiar la plantilla para crear la nueva base de datos de prueba activa

@@ -145,7 +145,7 @@ Public Const GET_ALL_CONFIGURATION As String = "SELECT Clave, Valor FROM TbConfi
 Public Const GET_MAPEO_POR_TIPO As String = _
     "SELECT nombreCampoTabla, nombreCampoWord, valorAsociado " & _
     "FROM tbMapeoCampos " & _
-    "WHERE nombrePlantilla = [pTipoSolicitud];"
+    "WHERE nombrePlantilla = [pNombrePlantilla];"
 
 ' ============================================================================
 ' CONSULTAS DE CONFIGURACIÓN
@@ -156,3 +156,11 @@ Public Const GET_CONFIG_VALUE As String = _
 
 Public Const GET_ALL_CONFIG As String = _
     "SELECT ConfigKey, ConfigValue FROM TbConfiguracion ORDER BY ConfigKey;"
+
+' ============================================================================
+' CONSULTAS DE OPERACIONES Y LOGGING
+' ============================================================================
+
+Public Const INSERT_OPERATION_LOG As String = _
+    "INSERT INTO tbOperacionesLog (FechaHora, Usuario, TipoOperacion, IDEntidadAfectada, Detalles) " & _
+    "VALUES ([pFechaHora], [pUsuario], [pTipoOperacion], [pIDEntidadAfectada], [pDetalles]);"

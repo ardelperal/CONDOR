@@ -36,12 +36,12 @@ End Sub
 
 ' Implementación de la interfaz IExpedienteService
 ' Obtiene un expediente por su ID desde la base de datos de expedientes (método principal)
-Public Function GetExpedienteById(ByVal idExpediente As Long) As E_Expediente
+Public Function GetExpedienteById(ByVal idExpediente As Long) As EExpediente
     Set GetExpedienteById = IExpedienteService_GetExpedienteById(idExpediente)
 End Function
 
 ' Obtiene un expediente por su nemotécnico desde la base de datos de expedientes
-Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As E_Expediente
+Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpediente
     Set GetExpedienteByNemotecnico = IExpedienteService_GetExpedienteByNemotecnico(Nemotecnico)
 End Function
 
@@ -51,16 +51,16 @@ Public Function GetExpedientesParaSelector() As DAO.Recordset
 End Function
 
 ' Implementación de la interfaz para GetExpedienteById
-Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As E_Expediente
+Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As EExpediente
     Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables
     Dim rs As DAO.recordset
-    Dim expediente As E_Expediente
+    Dim expediente As EExpediente
     
     ' Instanciar el objeto expediente
-    Set expediente = New E_Expediente
+    Set expediente = New EExpediente
     
     ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
@@ -117,8 +117,8 @@ ErrorHandler:
     End If
     
     ' Devolver estructura vacía en caso de error
-    Dim expedienteVacio As E_Expediente
-Set expedienteVacio = New E_Expediente
+    Dim expedienteVacio As EExpediente
+    Set expedienteVacio = New EExpediente
     expedienteVacio.idExpediente = 0
     Set IExpedienteService_GetExpedienteById = expedienteVacio
 End Function
@@ -157,16 +157,16 @@ ErrorHandler:
 End Function
 
 ' Implementación de la interfaz para GetExpedienteByNemotecnico
-Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As E_Expediente
+Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpediente
     Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables
     Dim rs As DAO.recordset
-    Dim expediente As E_Expediente
+    Dim expediente As EExpediente
     
     ' Instanciar el objeto expediente
-    Set expediente = New E_Expediente
+    Set expediente = New EExpediente
     
     ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
@@ -223,8 +223,8 @@ ErrorHandler:
     End If
     
     ' Devolver estructura vacía en caso de error
-    Dim expedienteVacio As E_Expediente
-Set expedienteVacio = New E_Expediente
+    Dim expedienteVacio As EExpediente
+    Set expedienteVacio = New EExpediente
     expedienteVacio.idExpediente = 0
     Set IExpedienteService_GetExpedienteByNemotecnico = expedienteVacio
 End Function

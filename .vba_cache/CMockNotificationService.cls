@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -49,8 +49,8 @@ Public Sub Reset()
     NumeroLlamadas = 0
 End Sub
 
-' Implementación mock del método EnviarNotificacion
-Private Function INotificationService_EnviarNotificacion( _
+' Implementación mock del método SendNotification
+Private Function INotificationService_SendNotification( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
@@ -72,18 +72,18 @@ Private Function INotificationService_EnviarNotificacion( _
     End If
     
     ' Retornar valor configurado
-    INotificationService_EnviarNotificacion = ValorRetorno
+    INotificationService_SendNotification = ValorRetorno
 End Function
 
-' Implementación pública del método EnviarNotificacion
-Public Function EnviarNotificacion( _
+' Implementación pública del método SendNotification
+Public Function SendNotification( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
     ' Delegar a la implementación de la interfaz
-    EnviarNotificacion = INotificationService_EnviarNotificacion(destinatarios, asunto, cuerpoHTML, urlAdjunto)
+    SendNotification = INotificationService_SendNotification(destinatarios, asunto, cuerpoHTML, urlAdjunto)
 End Function
 
 ' Método helper para verificar si se llamó con parámetros específicos

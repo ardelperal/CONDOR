@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "E_Solicitud"
+Attribute VB_Name = "ESolicitud"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
@@ -30,9 +30,9 @@ Private m_usuarioModificacion As String
 Public observaciones As String
 
 ' Propiedades para datos específicos según tipo de solicitud
-Private m_datosPC As E_Datos_PC
-Private m_datosCDCA As E_Datos_CD_CA
-Private m_datosCDCASUB As E_Datos_CD_CA_SUB
+Private m_datosPC As EDatosPc
+Private m_datosCDCA As EDatosCdCa
+Private m_datosCDCASUB As EDatosCdCaSub
 
 Public Property Get idSolicitud() As Long
     idSolicitud = m_idSolicitud
@@ -115,27 +115,27 @@ Public Property Let fechaCompletadoTecnico(ByVal value As Date)
 End Property
 
 ' Propiedades para objetos de datos específicos
-Public Property Get datosPC() As E_Datos_PC
+Public Property Get datosPC() As EDatosPc
     Set datosPC = m_datosPC
 End Property
 
-Public Property Set datosPC(ByVal value As E_Datos_PC)
+Public Property Set datosPC(ByVal value As EDatosPc)
     Set m_datosPC = value
 End Property
 
-Public Property Get datosCDCA() As E_Datos_CD_CA
+Public Property Get datosCDCA() As EDatosCdCa
     Set datosCDCA = m_datosCDCA
 End Property
 
-Public Property Set datosCDCA(ByVal value As E_Datos_CD_CA)
+Public Property Set datosCDCA(ByVal value As EDatosCdCa)
     Set m_datosCDCA = value
 End Property
 
-Public Property Get datosCDCASUB() As E_Datos_CD_CA_SUB
+Public Property Get datosCDCASUB() As EDatosCdCaSub
     Set datosCDCASUB = m_datosCDCASUB
 End Property
 
-Public Property Set datosCDCASUB(ByVal value As E_Datos_CD_CA_SUB)
+Public Property Set datosCDCASUB(ByVal value As EDatosCdCaSub)
     Set m_datosCDCASUB = value
 End Property
 

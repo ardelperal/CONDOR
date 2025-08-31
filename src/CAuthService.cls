@@ -37,41 +37,41 @@ ErrorHandler:
     End If
 End Sub
 
-Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRole
+Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
     On Error GoTo ErrorHandler
 
     ' Logging de auditoría: Consulta de rol de usuario
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "ROLE_QUERY", "Consultando rol para usuario: " & UserEmail, "CAuthService.GetUserRole"
+        m_OperationLogger.LogOperation "ROLE_QUERY", "Consultando rol para usuario: " & userEmail, "CAuthService.GetUserRole"
     End If
 
-    Dim role As E_UserRole
-    Dim authData As E_AuthData
+    Dim role As UserRole
+    Dim authData As EAuthData
 
-    role = Rol_Desconocido
+    role = RolDesconocido
 
     ' Obtener todos los datos de autenticación en una sola llamada
-    Set authData = m_AuthRepository.GetUserAuthData(UserEmail)
+    Set authData = m_AuthRepository.GetUserAuthData(userEmail)
 
     If Not authData Is Nothing Then
         ' Verificar si el usuario existe
         If authData.UserExists Then
-            ' Determinar el rol basándose en las propiedades de E_AuthData
+            ' Determinar el rol basándose en las propiedades de EAuthData
             ' Prioridad: Administrador Global > Administrador App > Calidad > Técnico
             If authData.IsGlobalAdmin Then
-                role = ROL_ADMINISTRADOR
+                role = RolAdmin
             ElseIf authData.IsAppAdmin Then
-                role = ROL_ADMINISTRADOR
+                role = RolAdmin
             ElseIf authData.IsCalidad Then
-                role = Rol_Calidad
+                role = RolCalidad
             ElseIf authData.IsTecnico Then
-                role = Rol_Tecnico
+                role = RolTecnico
             Else
-                role = Rol_Desconocido
+                role = RolDesconocido
             End If
         Else
             ' Usuario no encontrado
-            role = Rol_Desconocido
+            role = RolDesconocido
         End If
     End If
     
@@ -81,24 +81,24 @@ Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRo
     If Not m_OperationLogger Is Nothing Then
         Dim roleText As String
         Select Case role
-            Case ROL_ADMINISTRADOR: roleText = "Administrador"
-            Case Rol_Calidad: roleText = "Calidad"
-            Case Rol_Tecnico: roleText = "Técnico"
+            Case RolAdmin: roleText = "Administrador"
+            Case RolCalidad: roleText = "Calidad"
+            Case RolTecnico: roleText = "Técnico"
             Case Else: roleText = "Desconocido"
         End Select
-        m_OperationLogger.LogOperation "ROLE_ASSIGNED", "Rol asignado a " & UserEmail & ": " & roleText, "CAuthService.GetUserRole"
+        m_OperationLogger.LogOperation "ROLE_ASSIGNED", "Rol asignado a " & userEmail & ": " & roleText, "CAuthService.GetUserRole"
     End If
     
     IAuthService_GetUserRole = role
     Exit Function
 
 ErrorHandler:
-    IAuthService_GetUserRole = Rol_Desconocido
+    IAuthService_GetUserRole = RolDesconocido
     If Not authData Is Nothing Then
         Set authData = Nothing
     End If
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "ROLE_ERROR", "Error consultando rol para " & UserEmail & ": " & Err.Description, "CAuthService.GetUserRole"
+        m_OperationLogger.LogOperation "ROLE_ERROR", "Error consultando rol para " & userEmail & ": " & Err.Description, "CAuthService.GetUserRole"
     End If
     If Not m_ErrorHandler Is Nothing Then
         m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthService.GetUserRole"
@@ -106,8 +106,8 @@ ErrorHandler:
 End Function
 
 ' Método público para acceso directo
-Public Function GetUserRole(ByVal UserEmail As String) As E_UserRole
-    GetUserRole = IAuthService_GetUserRole(UserEmail)
+Public Function GetUserRole(ByVal userEmail As String) As UserRole
+    GetUserRole = IAuthService_GetUserRole(userEmail)
 End Function
 
 

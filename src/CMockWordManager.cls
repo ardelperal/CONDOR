@@ -1,4 +1,12 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
 Attribute VB_Name = "CMockWordManager"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 Implements IWordManager
@@ -68,10 +76,4 @@ End Function
 Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
     ReemplazarTexto_CallCount = ReemplazarTexto_CallCount + 1
     IWordManager_ReemplazarTexto = m_ReemplazarTexto_ReturnValue
-End Function
-
-Private Function IWordManager_LeerDocumento(ByVal filePath As String) As String
-    LeerDocumento_CallCount = LeerDocumento_CallCount + 1
-    LeerDocumento_FilePath_Param = filePath
-    IWordManager_LeerDocumento = m_LeerDocumento_ReturnValue
 End Function

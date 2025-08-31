@@ -38,6 +38,10 @@ Public GetCorreoAdministrador_WasCalled As Boolean
 Public GetCorreoAdministrador_CallCount As Long
 Public GetIDAplicacionCondor_WasCalled As Boolean
 Public GetIDAplicacionCondor_CallCount As Long
+Public GetLanzaderaDataPath_WasCalled As Boolean
+Public GetLanzaderaDataPath_CallCount As Long
+Public GetLanzaderaPassword_WasCalled As Boolean
+Public GetLanzaderaPassword_CallCount As Long
 
 ' Constructor de la clase
 Private Sub Class_Initialize()
@@ -88,6 +92,10 @@ Public Sub Reset()
     GetCorreoAdministrador_CallCount = 0
     GetIDAplicacionCondor_WasCalled = False
     GetIDAplicacionCondor_CallCount = 0
+    GetLanzaderaDataPath_WasCalled = False
+    GetLanzaderaDataPath_CallCount = 0
+    GetLanzaderaPassword_WasCalled = False
+    GetLanzaderaPassword_CallCount = 0
 End Sub
 
 '******************************************************************************
@@ -181,6 +189,20 @@ Private Function IConfig_GetIDAplicacionCondor() As String
     IConfig_GetIDAplicacionCondor = GetMockSettingValue("IDAplicacion_CONDOR")
 End Function
 
+' Implementación de IConfig_GetLanzaderaDataPath
+Private Function IConfig_GetLanzaderaDataPath() As String
+    TrackCall GetLanzaderaDataPath_WasCalled, GetLanzaderaDataPath_CallCount
+    
+    IConfig_GetLanzaderaDataPath = GetMockSettingValue("LANZADERA_DB_PATH")
+End Function
+
+' Implementación de IConfig_GetLanzaderaPassword
+Private Function IConfig_GetLanzaderaPassword() As String
+    TrackCall GetLanzaderaPassword_WasCalled, GetLanzaderaPassword_CallCount
+    
+    IConfig_GetLanzaderaPassword = GetMockSettingValue("LANZADERA_DB_PASSWORD")
+End Function
+
 ' Implementación de IConfig_SetSetting
 Private Sub IConfig_SetSetting(ByVal key As String, ByVal value As Variant)
     AddSetting key, value
@@ -233,6 +255,16 @@ End Function
 ' Método público de conveniencia para GetIDAplicacionCondor
 Public Function GetIDAplicacionCondor() As String
     GetIDAplicacionCondor = IConfig_GetIDAplicacionCondor()
+End Function
+
+' Método público de conveniencia para GetLanzaderaDataPath
+Public Function GetLanzaderaDataPath() As String
+    GetLanzaderaDataPath = IConfig_GetLanzaderaDataPath()
+End Function
+
+' Método público de conveniencia para GetLanzaderaPassword
+Public Function GetLanzaderaPassword() As String
+    GetLanzaderaPassword = IConfig_GetLanzaderaPassword()
 End Function
 
 ' Método público de conveniencia para SetSetting

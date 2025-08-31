@@ -199,6 +199,51 @@ Las pruebas de integración están organizadas en:
 - Pruebas individuales para cada componente
 - Validación de eliminación de hardcoding
 
+### ✅ Refactorización del Servicio de Notificaciones
+
+**Estado:** COMPLETADA
+**Fecha:** $(Get-Date -Format "yyyy-MM-dd")
+
+#### Objetivos Alcanzados:
+
+1. **Simplificación de la Arquitectura:**
+   - ✅ Eliminada la interfaz `INotificationRepository` y su implementación `CNotificationRepository`
+   - ✅ Refactorizado `CNotificationService` para manejar directamente el envío de correos
+   - ✅ Simplificada la factoría `modNotificationServiceFactory` para crear servicios sin argumentos
+   - ✅ Arquitectura más directa y mantenible
+
+2. **Actualización de Interfaces:**
+   - ✅ Modificada `INotificationService` con nuevos métodos: `Initialize`, `SendNotification`, `IsInitialized`
+   - ✅ Eliminados métodos obsoletos: `EnviarNotificacion`, `SetRepository`
+   - ✅ Añadidas propiedades: `SmtpServer`, `SmtpPort`, `SmtpUsername`, `SmtpPassword`, `FromEmail`
+   - ✅ Interfaz más clara y específica para notificaciones
+
+3. **Refactorización de Implementaciones:**
+   - ✅ `CNotificationService`: Implementación completa con manejo directo de SMTP
+   - ✅ `CMockNotificationService`: Mock actualizado para pruebas unitarias
+   - ✅ Eliminación de dependencias innecesarias del repositorio
+   - ✅ Integración directa con `IConfig`, `IOperationLogger` e `IErrorHandlerService`
+
+4. **Actualización de Pruebas de Integración:**
+   - ✅ Refactorizado `IntegrationTestNotificationService.bas` para usar la nueva factoría
+   - ✅ Actualizados nombres de métodos de `EnviarNotificacion` a `SendNotification`
+   - ✅ Eliminada creación manual de dependencias en las pruebas
+   - ✅ Pruebas más simples y mantenibles
+
+5. **Actualización de Documentación:**
+   - ✅ Actualizado diagrama UML en `CONDOR_MASTER_PLAN.md` sección 3.7
+   - ✅ Modificadas funcionalidades clave para reflejar la nueva arquitectura
+   - ✅ Actualizadas dependencias en la documentación técnica
+   - ✅ Actualizada herramienta CLI para incluir `CMockNotificationRepository.cls`
+
+#### Beneficios Obtenidos:
+
+- **Arquitectura Simplificada:** Eliminación de capas innecesarias
+- **Mantenibilidad Mejorada:** Menos archivos y dependencias que mantener
+- **Testabilidad:** Pruebas más directas y fáciles de entender
+- **Consistencia:** Alineación con patrones establecidos en el proyecto
+- **Documentación Actualizada:** Refleja el estado real del sistema
+
 ## Métricas del Proyecto
 
 - **Archivos Modificados:** 6

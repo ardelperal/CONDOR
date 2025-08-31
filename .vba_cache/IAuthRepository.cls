@@ -19,8 +19,8 @@ Option Explicit
 
 
 ' Obtiene todos los datos de autenticación de un usuario en una sola consulta
-' @param params: Collection de objetos QueryParameter con los parámetros de la consulta
-' @return: Objeto E_AuthData con toda la información de autenticación
-Public Function GetUserAuthData(ByVal params As Collection) As E_AuthData
+' @param userEmail: Email del usuario para autenticación
+' @return: Objeto EAuthData con toda la información de autenticación
+Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
 End Function
 

@@ -19,29 +19,18 @@ Public Function CreateWordManager() As IWordManager
     Dim fileSystem As IFileSystem
     
     ' Crear dependencias internamente
-    Set configService = modConfig.CreateConfigService()
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(configService, fileSystem)
+    Set configService = modConfigFactory.CreateConfigService()
+    Set fileSystem = modFileSystemFactory.CreateFileSystem
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService
     
-    ' Decidir si usar mock o clase concreta basado en DEV_MODE
-    If CBool(configService.GetValue("DEV_MODE")) Then
-        ' Modo desarrollo - crear instancia de Word dentro del factory
-        Set wordApp = CreateObject("Word.Application")
-        wordApp.Visible = False
-        wordApp.DisplayAlerts = False
-        
-        Dim mockWordManager As New CMockWordManager
-        Set CreateWordManager = mockWordManager
-    Else
-        ' Modo producción - crear instancia de Word y luego inicializar
-        Set wordApp = CreateObject("Word.Application")
-        wordApp.Visible = False
-        wordApp.DisplayAlerts = False
-        
-        Dim wordManagerInstance As New CWordManager
-        wordManagerInstance.Initialize wordApp, errorHandler
-        Set CreateWordManager = wordManagerInstance
-    End If
+    ' Crear instancia de Word y luego inicializar
+    Set wordApp = CreateObject("Word.Application")
+    wordApp.Visible = False
+    wordApp.DisplayAlerts = False
+    
+    Dim wordManagerInstance As New CWordManager
+    wordManagerInstance.Initialize wordApp, errorHandler
+    Set CreateWordManager = wordManagerInstance
     
     Exit Function
     

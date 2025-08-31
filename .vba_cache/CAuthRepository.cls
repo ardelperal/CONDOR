@@ -42,8 +42,8 @@ Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErr
 End Sub
 
 ' Implementación de IAuthRepository_GetUserAuthData
-Private Function IAuthRepository_GetUserAuthData(ByVal params As Collection) As E_AuthData
-Dim authData As New E_AuthData
+Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As EAuthData
+    Dim authData As New EAuthData
     
     If Not m_isInitialized Then
         Err.Raise 5, "CAuthRepository.GetUserAuthData", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
@@ -52,33 +52,32 @@ Dim authData As New E_AuthData
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim params As Collection
-    Dim prm As QueryParameter
+    Dim prm As EQueryParameter
     
     On Error GoTo ErrorHandler
     
-    ' Conectar al Backend usando la ruta de configuración
+    ' Conectar a la base de datos Lanzadera
     Dim backendPath As String
-    backendPath = m_configService.GetDataPath()
+    backendPath = m_configService.GetLanzaderaDataPath()
     
     Dim backendPassword As String
-    backendPassword = m_configService.GetDatabasePassword()
+    backendPassword = m_configService.GetLanzaderaPassword()
     
     Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
     ' Crear QueryDef con consulta desde modQueries
     Set qdf = db.CreateQueryDef("", GET_AUTH_DATA_BY_EMAIL)
     
-
-    
-    ' Asignar parámetros desde la colección
-    For Each prm In params
-        qdf.parameters(prm.ParameterName) = prm.ParameterValue
-    Next prm
+    ' Crear y asignar parámetros
+    ' Crear y asignar parámetros
+    Set prm = New EQueryParameter
+    prm.ParameterName = "pEmail"
+    prm.ParameterValue = userEmail
+    qdf.parameters(prm.ParameterName) = prm.ParameterValue
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
-    ' Poblar el objeto E_AuthData basándose en los resultados
+    ' Poblar el objeto AuthData basándose en los resultados
     If Not rs.EOF Then
         authData.UserExists = True
         
@@ -100,7 +99,7 @@ Dim authData As New E_AuthData
             authData.IsTecnico = True
         End If
     Else
-        ' Usuario no encontrado - E_AuthData ya inicializado con valores False
+        ' Usuario no encontrado - EAuthData ya inicializado con valores False
         authData.UserExists = False
     End If
     
@@ -129,25 +128,9 @@ ErrorHandler:
     Set IAuthRepository_GetUserAuthData = authData
 End Function
 
-' Método público para acceso directo
-Public Function GetUserAuthData(ByVal UserEmail As String) As E_AuthData
-    Dim params As Collection
-    Dim prm As QueryParameter
-    
-    ' Crear colección de parámetros
-    Set params = New Collection
-    
-    Set prm = New QueryParameter
-    prm.ParameterName = "pIDAplicacion"
-    prm.ParameterValue = m_configService.GetIDAplicacionCondor()
-    params.Add prm
-    
-    Set prm = New QueryParameter
-    prm.ParameterName = "pCorreoUsuario"
-    prm.ParameterValue = UserEmail
-    params.Add prm
-    
-    Set GetUserAuthData = IAuthRepository_GetUserAuthData(params)
+' Método público de conveniencia que delega a la interfaz
+Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
+    Set GetUserAuthData = IAuthRepository_GetUserAuthData(userEmail)
 End Function
 
 

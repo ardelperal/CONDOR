@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -48,17 +48,13 @@ Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal en
     
     Set db = DBEngine.OpenDatabase(logDbPath, dbFailOnError, False, ";PWD=" & logDbPassword)
     
-    ' Construir la consulta INSERT parametrizada
-    sql = "INSERT INTO Tb_Operaciones_Log (FechaHora, Usuario, TipoOperacion, IDEntidadAfectada, Detalles) " & _
-          "VALUES (?, ?, ?, ?, ?)"
-    
-    ' Crear QueryDef con parámetros
-    Set qdf = db.CreateQueryDef("", sql)
-    qdf.parameters(0) = Now
-    qdf.parameters(1) = Environ("USERNAME") ' O el usuario autenticado de la aplicación
-    qdf.parameters(2) = operationType
-    qdf.parameters(3) = entityId
-    qdf.parameters(4) = details
+    ' Usar la consulta centralizada con parámetros con nombre
+    Set qdf = db.CreateQueryDef("", INSERT_OPERATION_LOG)
+    qdf.parameters("pFechaHora") = Now
+    qdf.parameters("pUsuario") = Environ("USERNAME") ' O el usuario autenticado de la aplicación
+    qdf.parameters("pTipoOperacion") = operationType
+    qdf.parameters("pIDEntidadAfectada") = entityId
+    qdf.parameters("pDetalles") = details
     
     ' Ejecutar la consulta parametrizada
     qdf.Execute

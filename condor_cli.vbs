@@ -21,6 +21,15 @@ strSourcePath = "C:\Proyectos\CONDOR\src"
 
 ' Obtener argumentos de linea de comandos
 Set objArgs = WScript.Arguments
+
+' Verificar si se solicita ayuda
+If objArgs.Count > 0 Then
+    If LCase(objArgs(0)) = "--help" Or LCase(objArgs(0)) = "-h" Or LCase(objArgs(0)) = "help" Then
+        Call ShowHelp()
+        WScript.Quit 0
+    End If
+End If
+
 If objArgs.Count = 0 Then
     WScript.Echo "=== CONDOR CLI - Herramienta de linea de comandos ==="
     WScript.Echo "Uso: cscript condor_cli.vbs [comando] [opciones]"
@@ -47,18 +56,22 @@ If objArgs.Count = 0 Then
     WScript.Echo "  1. cscript condor_cli.vbs update    (sincronizacion rapida de cambios)"
     WScript.Echo "  2. cscript condor_cli.vbs rebuild   (reconstruccion completa si es necesario)"
     WScript.Echo ""
-    WScript.Echo "PARÁMETROS DE FUNCIONALIDAD PARA 'bundle':"
-    WScript.Echo "  Auth: Empaqueta todo lo relacionado con Autenticación (IAuthService, CAuthService, TestAuthService, etc.)"
-    WScript.Echo "  Config: Empaqueta todo lo relacionado con Configuración"
-    WScript.Echo "  Expediente: Empaqueta todo lo relacionado con Expedientes"
-    WScript.Echo "  Solicitud: Empaqueta todo lo relacionado con Solicitudes"
-    WScript.Echo "  Workflow: Empaqueta todo lo relacionado con Flujo de Trabajo"
-    WScript.Echo "  Document: Empaqueta todo lo relacionado con Documentos"
-    WScript.Echo "  Word: Empaqueta todo lo relacionado con Microsoft Word"
-    WScript.Echo "  FileSystem: Empaqueta todo lo relacionado con Sistema de Archivos"
-    WScript.Echo "  Error: Empaqueta todo lo relacionado con Manejo de Errores"
-    WScript.Echo "  Operation: Empaqueta todo lo relacionado con Operaciones"
-    WScript.Echo "  TestFramework: Empaqueta todo lo relacionado con Framework de Pruebas"
+    WScript.Echo "PARÁMETROS DE FUNCIONALIDAD PARA 'bundle' (según CONDOR_MASTER_PLAN.md):"
+    WScript.Echo "  Auth: Empaqueta Autenticación + dependencias (Config, Error, Modelos)"
+    WScript.Echo "  Document: Empaqueta Gestión de Documentos + dependencias (Config, FileSystem, Error, Word, Modelos)"
+    WScript.Echo "  Expediente: Empaqueta Gestión de Expedientes + dependencias (Config, Error, Modelos, Utilidades)"
+    WScript.Echo "  Solicitud: Empaqueta Gestión de Solicitudes + dependencias (Config, Error, Modelos, Utilidades)"
+    WScript.Echo "  Workflow: Empaqueta Flujos de Trabajo + dependencias (Config, Error, Modelos, Utilidades)"
+    WScript.Echo "  Mapeo: Empaqueta Gestión de Mapeos + dependencias (Config, Error, Modelos)"
+    WScript.Echo "  Config: Empaqueta Configuración del Sistema + dependencias (Error, Modelos)"
+    WScript.Echo "  FileSystem: Empaqueta Sistema de Archivos + dependencias (Error, Modelos)"
+    WScript.Echo "  Error: Empaqueta Manejo de Errores + dependencias (Modelos)"
+    WScript.Echo "  Word: Empaqueta Microsoft Word + dependencias (Error, Modelos)"
+    WScript.Echo "  TestFramework: Empaqueta Framework de Pruebas + dependencias (10 archivos: CTestResult, CTestSuiteResult, CTestReporter, modTestRunner, modTestUtils, ModAssert, TestModAssert, IFileSystem, IConfig, IErrorHandlerService)"
+    WScript.Echo "  App: Empaqueta Gestión de Aplicación + dependencias (Config, Error, Modelos)"
+    WScript.Echo "  Models: Empaqueta Modelos de Datos (entidades base)"
+    WScript.Echo "  Utils: Empaqueta Utilidades y Enumeraciones + dependencias (Error, Modelos)"
+    WScript.Echo "  Tests: Empaqueta todos los archivos de pruebas (Test* e IntegrationTest*)"
     WScript.Echo ""
     WScript.Echo "OPCIONES ESPECIALES:"
     WScript.Echo "  --dry-run  - Simular operacion sin modificar Access (solo con import)"
@@ -70,6 +83,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "  cscript condor_cli.vbs validate"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
     WScript.Echo "  cscript condor_cli.vbs rebuild"
+    WScript.Echo "  cscript condor_cli.vbs bundle Tests"
     WScript.Quit 1
 End If
 
@@ -84,6 +98,13 @@ Set objFSO = CreateObject("Scripting.FileSystemObject")
 
 ' El comando bundle no requiere Access
 If strAction = "bundle" Then
+    ' Verificar si se solicita ayuda específica para bundle
+    If objArgs.Count > 1 Then
+        If LCase(objArgs(1)) = "--help" Or LCase(objArgs(1)) = "-h" Or LCase(objArgs(1)) = "help" Then
+            Call ShowBundleHelp()
+            WScript.Quit 0
+        End If
+    End If
     Call BundleFunctionality()
     WScript.Quit 0
 End If
@@ -923,6 +944,129 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
     On Error GoTo 0
 End Sub
 
+' Subrutina para mostrar ayuda completa
+Sub ShowHelp()
+    WScript.Echo "=== CONDOR CLI - Herramienta de línea de comandos ==="
+    WScript.Echo "Versión: 2.0 - Sistema de gestión y sincronización VBA para proyecto CONDOR"
+    WScript.Echo ""
+    WScript.Echo "SINTAXIS:"
+    WScript.Echo "  cscript condor_cli.vbs [comando] [opciones] [parámetros]"
+    WScript.Echo ""
+    WScript.Echo "COMANDOS PRINCIPALES:"
+    WScript.Echo ""
+    WScript.Echo "📤 EXPORTACIÓN:"
+    WScript.Echo "  export [--verbose]           - Exportar módulos VBA desde Access a /src"
+    WScript.Echo "                                 Codificación: ANSI para compatibilidad"
+    WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
+    WScript.Echo ""
+    WScript.Echo "🔄 SINCRONIZACIÓN:"
+    WScript.Echo "  update                       - Sincronización automática (solo archivos modificados)"
+    WScript.Echo "  update <módulo1,módulo2>     - Sincronización selectiva de módulos específicos"
+    WScript.Echo "                                 Ejemplo: update CAuthService,CExpedienteService"
+    WScript.Echo "  rebuild                      - Reconstrucción completa del proyecto VBA"
+    WScript.Echo "                                 (Elimina todos los módulos y reimporta)"
+    WScript.Echo ""
+    WScript.Echo "✅ VALIDACIÓN Y PRUEBAS:"
+    WScript.Echo "  validate [--verbose]         - Validar sintaxis VBA sin importar a Access"
+    WScript.Echo "                                 --verbose: Mostrar detalles de validación"
+    WScript.Echo "  test                         - Ejecutar suite completa de pruebas unitarias"
+    WScript.Echo "  lint                         - Auditar código VBA (detectar cabeceras duplicadas)"
+    WScript.Echo ""
+    WScript.Echo "📦 EMPAQUETADO:"
+    WScript.Echo "  bundle <funcionalidad> [destino] - Empaquetar archivos por funcionalidad"
+    WScript.Echo "                                      Destino opcional (por defecto: directorio actual)"
+    WScript.Echo ""
+    WScript.Echo "🗄️ GESTIÓN DE BASE DE DATOS:"
+    WScript.Echo "  createtable <nombre> <sql>   - Crear tabla con consulta SQL personalizada"
+    WScript.Echo "  droptable <nombre>           - Eliminar tabla de la base de datos"
+    WScript.Echo "  listtables [db_path]         - Listar todas las tablas"
+    WScript.Echo "                                 db_path opcional (por defecto: CONDOR_datos.accdb)"
+    WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
+    WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
+    WScript.Echo ""
+    WScript.Echo "FUNCIONALIDADES DISPONIBLES PARA 'bundle' (con dependencias automáticas):"
+    WScript.Echo "(Basadas en CONDOR_MASTER_PLAN.md)"
+    WScript.Echo ""
+    WScript.Echo "🔐 Auth          - Autenticación + dependencias (Config, Error, Modelos)"
+    WScript.Echo "                   Incluye archivos de autenticación y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "📄 Document      - Gestión de Documentos + dependencias (Config, FileSystem, Error, Word, Modelos)"
+    WScript.Echo "                   Incluye archivos de documentos y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "📁 Expediente    - Gestión de Expedientes + dependencias (Config, Error, Modelos, Utilidades)"
+    WScript.Echo "                   Incluye archivos de expedientes y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "📋 Solicitud     - Gestión de Solicitudes + dependencias (Config, Error, Modelos, Utilidades)"
+    WScript.Echo "                   Incluye archivos de solicitudes y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "🔄 Workflow      - Flujos de Trabajo + dependencias (Config, Error, Modelos, Utilidades)"
+    WScript.Echo "                   Incluye archivos de workflow y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "🗺️ Mapeo         - Gestión de Mapeos + dependencias (Config, Error, Modelos)"
+    WScript.Echo "                   Incluye archivos de mapeos y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "🔔 Notification  - Notificaciones + dependencias (Config, Error, Modelos)"
+    WScript.Echo "                   Incluye archivos de notificaciones y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "📊 Operation     - Operaciones y Logging + dependencias (Config, Error, Modelos)"
+    WScript.Echo "                   Incluye archivos de operaciones y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "⚙️ Config        - Configuración del Sistema + dependencias (Error, Modelos)"
+    WScript.Echo "                   Incluye archivos de configuración y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "📂 FileSystem    - Sistema de Archivos + dependencias (Error, Modelos)"
+    WScript.Echo "                   Incluye archivos de sistema de archivos y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "❌ Error         - Manejo de Errores + dependencias (Modelos)"
+    WScript.Echo "                   Incluye archivos de manejo de errores y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "📝 Word          - Microsoft Word + dependencias (Error, Modelos)"
+    WScript.Echo "                   Incluye archivos de Word y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "🧪 TestFramework - Framework de Pruebas + dependencias (10 archivos)"
+    WScript.Echo "                   Incluye CTestResult, CTestSuiteResult, CTestReporter, modTestRunner,"
+    WScript.Echo "                   modTestUtils, ModAssert, TestModAssert, IFileSystem, IConfig, IErrorHandlerService"
+    WScript.Echo ""
+    WScript.Echo "🖥️ Aplicacion    - Gestión de Aplicación + dependencias (Config, Error, Modelos)"
+    WScript.Echo "                   Incluye archivos de gestión de aplicación y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "📊 Modelos       - Modelos de Datos (entidades base)"
+    WScript.Echo "                   Incluye todas las entidades de datos del sistema"
+    WScript.Echo ""
+    WScript.Echo "🔧 Utilidades    - Utilidades y Enumeraciones + dependencias (Error, Modelos)"
+    WScript.Echo "                   Incluye utilidades, enumeraciones y sus dependencias"
+    WScript.Echo ""
+    WScript.Echo "OPCIONES GLOBALES:"
+    WScript.Echo "  --help, -h, help             - Mostrar esta ayuda completa"
+    WScript.Echo "  --dry-run                    - Simular operación sin modificar Access (solo import)"
+    WScript.Echo "  --verbose                    - Mostrar información detallada durante la operación"
+    WScript.Echo ""
+    WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
+    WScript.Echo "  1. cscript condor_cli.vbs validate     (validar sintaxis antes de importar)"
+    WScript.Echo "  2. cscript condor_cli.vbs update       (sincronización rápida de cambios)"
+    WScript.Echo "  3. cscript condor_cli.vbs test         (ejecutar pruebas unitarias)"
+    WScript.Echo "  4. cscript condor_cli.vbs rebuild      (reconstrucción completa si es necesario)"
+    WScript.Echo ""
+    WScript.Echo "EJEMPLOS DE USO:"
+    WScript.Echo "  cscript condor_cli.vbs --help"
+    WScript.Echo "  cscript condor_cli.vbs update"
+    WScript.Echo "  cscript condor_cli.vbs update CAuthService,CExpedienteService"
+    WScript.Echo "  cscript condor_cli.vbs validate --verbose"
+    WScript.Echo "  cscript condor_cli.vbs export --verbose"
+    WScript.Echo "  cscript condor_cli.vbs bundle Auth"
+    WScript.Echo "  cscript condor_cli.vbs bundle Document C:\\\\temp"
+    WScript.Echo "  cscript condor_cli.vbs createtable MiTabla ""CREATE TABLE MiTabla (ID LONG)"""
+    WScript.Echo "  cscript condor_cli.vbs listtables"
+    WScript.Echo "  cscript condor_cli.vbs relink --all"
+    WScript.Echo ""
+    WScript.Echo "CONFIGURACIÓN:"
+    WScript.Echo "  Base de datos desarrollo: C:\\Proyectos\\CONDOR\\back\\Desarrollo\\CONDOR.accdb"
+    WScript.Echo "  Base de datos datos:      C:\\Proyectos\\CONDOR\\back\\CONDOR_datos.accdb"
+    WScript.Echo "  Directorio fuente:        C:\\Proyectos\\CONDOR\\src"
+    WScript.Echo ""
+    WScript.Echo "Para más información, consulte la documentación en docs/CONDOR_MASTER_PLAN.md"
+End Sub
+
 ' Nueva función que usa DoCmd.LoadFromText para evitar confirmaciones
 Sub ImportModuleWithLoadFromText(strSourceFile, moduleName, fileExtension)
     On Error Resume Next
@@ -968,8 +1112,8 @@ Sub ExecuteTests()
     ' Suprimir diálogos inesperados de Access durante las pruebas
     objAccess.Application.DisplayAlerts = False
     
-    ' Llamar directamente a RunAllTests y capturar el valor de retorno
-    reportString = objAccess.Application.Run("modTestRunner.RunAllTests")
+    ' Llamar directamente a ExecuteAllTestsForCLI y capturar el valor de retorno
+    reportString = objAccess.Application.Run("modTestRunner.ExecuteAllTestsForCLI")
     
     If Err.Number <> 0 Then
         WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas."
@@ -2496,6 +2640,240 @@ Sub CopyModifiedFilesToCache(cachePath)
     On Error GoTo 0
 End Sub
 
+' Subrutina para mostrar ayuda específica del comando bundle
+Sub ShowBundleHelp()
+    WScript.Echo "=== CONDOR CLI - AYUDA DEL COMANDO BUNDLE ==="
+    WScript.Echo "Empaqueta archivos de código por funcionalidad según CONDOR_MASTER_PLAN.md"
+    WScript.Echo ""
+    WScript.Echo "USO:"
+    WScript.Echo "  cscript condor_cli.vbs bundle <funcionalidad> [ruta_destino]"
+    WScript.Echo "  cscript condor_cli.vbs bundle --help"
+    WScript.Echo ""
+    WScript.Echo "PARÁMETROS:"
+    WScript.Echo "  <funcionalidad>  - Nombre de la funcionalidad a empaquetar (obligatorio)"
+    WScript.Echo "  [ruta_destino]   - Carpeta donde crear el paquete (opcional, por defecto: carpeta actual)"
+    WScript.Echo ""
+    WScript.Echo "FUNCIONALIDADES DISPONIBLES:"
+    WScript.Echo ""
+    WScript.Echo "🔐 Auth - Autenticación y Autorización"
+    WScript.Echo "   Incluye: IAuthService, CAuthService, CMockAuthService, IAuthRepository,"
+    WScript.Echo "            CAuthRepository, CMockAuthRepository, AuthData, modAuthFactory,"
+    WScript.Echo "            TestCAuthService, IntegrationTestCAuthRepository + dependencias"
+    WScript.Echo ""
+    WScript.Echo "📄 Document - Gestión de Documentos"
+    WScript.Echo "   Incluye: IDocumentService, CDocumentService, CMockDocumentService,"
+    WScript.Echo "            IWordManager, CWordManager, CMockWordManager + dependencias"
+    WScript.Echo ""
+    WScript.Echo "📁 Expediente - Gestión de Expedientes"
+    WScript.Echo "   Incluye: IExpedienteService, CExpedienteService, CMockExpedienteService,"
+    WScript.Echo "            IExpedienteRepository, CExpedienteRepository + dependencias"
+    WScript.Echo ""
+    WScript.Echo "📋 Solicitud - Gestión de Solicitudes"
+    WScript.Echo "   Incluye: ISolicitudService, CSolicitudService, CMockSolicitudService,"
+    WScript.Echo "            ISolicitudRepository, CSolicitudRepository + modelos de datos"
+    WScript.Echo ""
+    WScript.Echo "🔄 Workflow - Flujos de Trabajo"
+    WScript.Echo "   Incluye: IWorkflowService, CWorkflowService, CMockWorkflowService,"
+    WScript.Echo "            IWorkflowRepository, CWorkflowRepository + modelos de estado"
+    WScript.Echo ""
+    WScript.Echo "🗺️ Mapeo - Gestión de Mapeos"
+    WScript.Echo "   Incluye: IMapeoRepository, CMapeoRepository, CMockMapeoRepository,"
+    WScript.Echo "            EMapeo, IntegrationTestCMapeoRepository + dependencias"
+    WScript.Echo ""
+    WScript.Echo "⚙️ Config - Configuración del Sistema"
+    WScript.Echo "   Incluye: IConfig, CConfig, CMockConfig, modConfigFactory,"
+    WScript.Echo "            TestCConfig + dependencias de error"
+    WScript.Echo ""
+    WScript.Echo "📂 FileSystem - Sistema de Archivos"
+    WScript.Echo "   Incluye: IFileSystem, CFileSystem, CMockFileSystem,"
+    WScript.Echo "            ModFileSystemFactory, TestFileSystem + dependencias"
+    WScript.Echo ""
+    WScript.Echo "❌ Error - Manejo de Errores"
+    WScript.Echo "   Incluye: IErrorHandlerService, CErrorHandlerService, CMockErrorHandlerService,"
+    WScript.Echo "            modErrorHandlerFactory, modErrorHandler + dependencias"
+    WScript.Echo ""
+    WScript.Echo "📝 Word - Integración con Microsoft Word"
+    WScript.Echo "   Incluye: IWordManager, CWordManager, CMockWordManager,"
+    WScript.Echo "            ModWordManagerFactory, TestWordManager + dependencias"
+    WScript.Echo ""
+    WScript.Echo "🧪 TestFramework - Framework de Pruebas"
+    WScript.Echo "   Incluye: CTestResult, CTestSuiteResult, CTestReporter, modTestRunner,"
+    WScript.Echo "            modTestUtils, ModAssert, TestModAssert + interfaces base"
+    WScript.Echo ""
+    WScript.Echo "🚀 App - Gestión de Aplicación"
+    WScript.Echo "   Incluye: IAppManager, CAppManager, ModAppManagerFactory,"
+    WScript.Echo "            TestAppManager + dependencias de autenticación y config"
+    WScript.Echo ""
+    WScript.Echo "🏗️ Models - Modelos de Datos"
+    WScript.Echo "   Incluye: Todas las entidades E_* (Usuario, Solicitud, Expediente,"
+    WScript.Echo "            DatosPC, DatosCDCA, Estado, Transicion, Mapeo, etc.)"
+    WScript.Echo ""
+    WScript.Echo "🔧 Utils - Utilidades y Enumeraciones"
+    WScript.Echo "   Incluye: ModDatabase, ModRepositoryFactory, ModUtils,"
+    WScript.Echo "            E_TipoSolicitud, E_EstadoSolicitud, E_RolUsuario, etc."
+    WScript.Echo ""
+    WScript.Echo "🧪 Tests - Archivos de Pruebas"
+    WScript.Echo "   Incluye: Todos los archivos Test* e IntegrationTest* del proyecto"
+    WScript.Echo "            (TestAppManager, TestAuthService, TestCConfig, etc.)"
+    WScript.Echo ""
+    WScript.Echo "EJEMPLOS DE USO:"
+    WScript.Echo "  cscript condor_cli.vbs bundle Auth"
+    WScript.Echo "  cscript condor_cli.vbs bundle Document C:\\temp"
+    WScript.Echo "  cscript condor_cli.vbs bundle TestFramework"
+    WScript.Echo "  cscript condor_cli.vbs bundle Tests"
+    WScript.Echo "  cscript condor_cli.vbs bundle Config"
+    WScript.Echo ""
+    WScript.Echo "NOTAS:"
+    WScript.Echo "  • Los archivos se copian con extensión .txt para fácil visualización"
+    WScript.Echo "  • Se crea una carpeta con timestamp: bundle_<funcionalidad>_YYYYMMDD_HHMMSS"
+    WScript.Echo "  • Cada funcionalidad incluye automáticamente sus dependencias"
+    WScript.Echo "  • Si un archivo no existe, se muestra una advertencia pero continúa"
+End Sub
+
+' Función para obtener la lista de archivos por funcionalidad según CONDOR_MASTER_PLAN.md
+' Incluye dependencias para cada funcionalidad
+Function GetFunctionalityFiles(strFunctionality)
+    Dim arrFiles
+    
+    Select Case LCase(strFunctionality)
+        Case "auth", "autenticacion", "authentication"
+            ' Sección 3.1 - Autenticación + Dependencias
+            arrFiles = Array("IAuthService.cls", "CAuthService.cls", "CMockAuthService.cls", _
+                           "IAuthRepository.cls", "CAuthRepository.cls", "CMockAuthRepository.cls", _
+                           "AuthData.cls", "modAuthFactory.bas", "TestAuthService.bas", _
+                           "TIAuthRepository.bas", _
+                           "IConfig.cls", "IErrorHandlerService.cls", "modEnumeraciones.bas")
+        
+        Case "document", "documentos", "documents"
+            ' Sección 3.2 - Gestión de Documentos + Dependencias
+            arrFiles = Array("IDocumentService.cls", "CDocumentService.cls", "CMockDocumentService.cls", _
+                           "IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
+                           "IMapeoRepository.cls", "CMapeoRepository.cls", "CMockMapeoRepository.cls", _
+                           "EMapeo.cls", "modDocumentServiceFactory.bas", "TestDocumentService.bas", _
+                           "TIDocumentService.bas", _
+                           "ISolicitudRepository.cls", "IOperationLogger.cls", "IConfig.cls", _
+                           "IErrorHandlerService.cls", "IFileSystem.cls")
+        
+        Case "expediente", "expedientes"
+            ' Sección 3.3 - Gestión de Expedientes + Dependencias
+            arrFiles = Array("IExpedienteService.cls", "CExpedienteService.cls", "CMockExpedienteService.cls", _
+                           "IExpedienteRepository.cls", "CExpedienteRepository.cls", "CMockExpedienteRepository.cls", _
+                           "EExpediente.cls", "TestCExpedienteService.bas", _
+                           "TIExpedienteRepository.bas", _
+                           "IConfig.cls", "IOperationLogger.cls", "IErrorHandlerService.cls")
+        
+        
+
+        
+        Case "solicitud", "solicitudes"
+            ' Sección 3.4 - Gestión de Solicitudes + Dependencias
+            arrFiles = Array("ISolicitudService.cls", "CSolicitudService.cls", "CMockSolicitudService.cls", _
+                           "ISolicitudRepository.cls", "CSolicitudRepository.cls", "CMockSolicitudRepository.cls", _
+                           "ESolicitud.cls", "EDatosPc.cls", "EDatosCdCa.cls", "EDatosCdCaSub.cls", _
+                           "modSolicitudServiceFactory.bas", "TestSolicitudService.bas", _
+                           "TISolicitudRepository.bas", _
+                           "IOperationLogger.cls", "IErrorHandlerService.cls", "IConfig.cls")
+        
+        Case "workflow", "flujo"
+            ' Sección 3.5 - Gestión de Workflow + Dependencias
+            arrFiles = Array("IWorkflowService.cls", "CWorkflowService.cls", "CMockWorkflowService.cls", _
+                           "IWorkflowRepository.cls", "CWorkflowRepository.cls", "CMockWorkflowRepository.cls", _
+                           "EEstado.cls", "ETransicion.cls", "TestWorkflowService.bas", _
+                           "TIWorkflowRepository.bas", _
+                           "IOperationLogger.cls", "IConfig.cls", "IErrorHandlerService.cls")
+        
+        Case "mapeo", "mapping"
+            ' Sección 3.6 - Gestión de Mapeos + Dependencias
+            arrFiles = Array("IMapeoRepository.cls", "CMapeoRepository.cls", "CMockMapeoRepository.cls", _
+                           "EMapeo.cls", "TIMapeoRepository.bas", _
+                           "IConfig.cls", "IErrorHandlerService.cls")
+        
+        Case "notification", "notificacion"
+            ' Sección 3.7 - Gestión de Notificaciones + Dependencias
+            arrFiles = Array("INotificationService.cls", "CNotificationService.cls", "CMockNotificationService.cls", _
+                           "INotificationRepository.cls", "CNotificationRepository.cls", "CMockNotificationRepository.cls", _
+                           "modNotificationServiceFactory.bas", "TINotificationService.bas", _
+                           "IOperationLogger.cls", "IErrorHandlerService.cls", "IConfig.cls")
+        
+        Case "operation", "operacion", "logging"
+            ' Sección 3.8 - Gestión de Operaciones y Logging + Dependencias
+            arrFiles = Array("IOperationLogger.cls", "COperationLogger.cls", "CMockOperationLogger.cls", _
+                           "IOperationRepository.cls", "COperationRepository.cls", "OperationLog.cls", _
+                           "modOperationLoggerFactory.bas", "TestOperationLogger.bas", _
+                           "TIOperationRepository.bas", _
+                           "IErrorHandlerService.cls", "IConfig.cls")
+        
+        Case "config", "configuracion"
+            ' Sección 4 - Configuración + Dependencias
+            arrFiles = Array("IConfig.cls", "CConfig.cls", "CMockConfig.cls", "modConfigFactory.bas", _
+                           "TestCConfig.bas", "IErrorHandlerService.cls")
+        
+        Case "filesystem", "archivos"
+            ' Sección 5 - Sistema de Archivos + Dependencias
+            arrFiles = Array("IFileSystem.cls", "CFileSystem.cls", "CMockFileSystem.cls", _
+                           "modFileSystemFactory.bas", "TestCFileSystem.bas", "TIFileSystem.bas", _
+                           "IErrorHandlerService.cls")
+        
+        Case "word"
+            ' Sección 6 - Gestión de Word + Dependencias
+            arrFiles = Array("IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
+                           "modWordManagerFactory.bas", "TestCWordManager.bas", "TIWordManager.bas", _
+                           "IFileSystem.cls", "IErrorHandlerService.cls")
+        
+        Case "error", "errores", "errors"
+            ' Sección 7 - Gestión de Errores + Dependencias
+            arrFiles = Array("IErrorHandlerService.cls", "CErrorHandlerService.cls", "CMockErrorHandlerService.cls", _
+                           "modErrorHandlerFactory.bas", "modErrorHandler.bas", "TestErrorHandlerService.bas", _
+                           "IConfig.cls")
+        
+        Case "testframework", "testing", "framework"
+            ' Sección 8 - Framework de Testing + Dependencias (Actualizado con refactorización)
+            arrFiles = Array("CTestResult.cls", "CTestSuiteResult.cls", "CTestReporter.cls", _
+                           "modTestRunner.bas", "modTestUtils.bas", "ModAssert.bas", _
+                           "TestModAssert.bas", "IFileSystem.cls", "IConfig.cls", _
+                           "IErrorHandlerService.cls")
+        
+        Case "app", "aplicacion", "application"
+            ' Sección 9 - Gestión de Aplicación + Dependencias
+            arrFiles = Array("IAppManager.cls", "CAppManager.cls", "modAppManagerFactory.bas", _
+                           "TestAppManager.bas", "IAuthService.cls", "IConfig.cls", "IErrorHandlerService.cls")
+        
+        Case "models", "modelos", "datos"
+            ' Sección 10 - Modelos de Datos
+            arrFiles = Array("EUsuario.cls", "ESolicitud.cls", "EExpediente.cls", "EDatosPc.cls", _
+                           "EDatosCdCa.cls", "EDatosCdCaSub.cls", "EEstado.cls", "ETransicion.cls", _
+                           "EMapeo.cls", "EAdjuntos.cls", "ELogCambios.cls", "ELogErrores.cls", "EOperationLog.cls")
+        
+        Case "utils", "utilidades", "enumeraciones"
+            ' Sección 11 - Utilidades y Enumeraciones
+            arrFiles = Array("modDatabase.bas", "modRepositoryFactory.bas", "modUtils.bas", _
+                           "modEnumeraciones.bas", "modQueries.bas")
+        
+        Case "tests", "pruebas", "testing"
+            ' Sección 12 - Archivos de Pruebas
+            arrFiles = Array("TestAppManager.bas", "TestAuthService.bas", "TestCConfig.bas", _
+                           "TestCExpedienteService.bas", "TestCWordManager.bas", "TestDocumentService.bas", _
+                           "TestErrorHandlerService.bas", "TestModAssert.bas", "TestOperationLogger.bas", _
+                           "TestSolicitudService.bas", "TestWorkflowService.bas", _
+                           "TIAuthRepository.bas", "TIExpedienteRepository.bas", _
+                           "TIMapeoRepository.bas", "TIDocumentService.bas", _
+                           "TIFileSystem.bas", "TINotificationService.bas", _
+                           "TIOperationRepository.bas", "TISolicitudRepository.bas", _
+                           "TIWordManager.bas", "TIWorkflowRepository.bas")
+        
+        Case Else
+            ' Para funcionalidades no definidas, usar búsqueda por nombre (comportamiento anterior)
+            arrFiles = Array()
+    End Select
+    
+    GetFunctionalityFiles = arrFiles
+End Function
+
+
+
+        
+
+
 ' Subrutina para empaquetar archivos de código por funcionalidad
 Sub BundleFunctionality()
     On Error Resume Next
@@ -2504,6 +2882,8 @@ Sub BundleFunctionality()
     Dim objFolder, objFile
     Dim foundFiles, copiedFiles
     Dim timestamp
+    Dim arrFunctionalityFiles, i
+    Dim usePredefinedList
     
     ' Verificar argumentos
     If objArgs.Count < 2 Then
@@ -2531,6 +2911,17 @@ Sub BundleFunctionality()
     WScript.Echo "=== EMPAQUETANDO FUNCIONALIDAD: " & strFunctionality & " ==="
     WScript.Echo "Buscando archivos en: " & strSourcePath
     WScript.Echo "Carpeta destino: " & strBundlePath
+    
+    ' Obtener lista de archivos para la funcionalidad
+    arrFunctionalityFiles = GetFunctionalityFiles(strFunctionality)
+    usePredefinedList = (UBound(arrFunctionalityFiles) >= 0)
+    
+    If usePredefinedList Then
+        WScript.Echo "Usando lista predefinida de archivos según CONDOR_MASTER_PLAN.md"
+        WScript.Echo "Archivos esperados: " & (UBound(arrFunctionalityFiles) + 1)
+    Else
+        WScript.Echo "Usando búsqueda por nombre de funcionalidad"
+    End If
     WScript.Echo ""
     
     ' Verificar que existe la carpeta src
@@ -2552,29 +2943,57 @@ Sub BundleFunctionality()
     foundFiles = 0
     copiedFiles = 0
     
-    ' Buscar archivos que contengan el nombre de la funcionalidad
-    For Each objFile In objFolder.Files
-        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-            ' Verificar si el nombre del archivo contiene la funcionalidad (sin distinguir mayúsculas)
-            If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
+    If usePredefinedList Then
+        ' Usar lista predefinida de archivos
+        For i = 0 To UBound(arrFunctionalityFiles)
+            Dim fileName, filePath, destFilePath
+            fileName = arrFunctionalityFiles(i)
+            filePath = objFSO.BuildPath(strSourcePath, fileName)
+            
+            If objFSO.FileExists(filePath) Then
                 foundFiles = foundFiles + 1
                 
                 ' Copiar archivo con extensión .txt añadida
-                Dim destFilePath
-                destFilePath = objFSO.BuildPath(strBundlePath, objFile.Name & ".txt")
+                destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
                 
-                objFSO.CopyFile objFile.Path, destFilePath, True
+                objFSO.CopyFile filePath, destFilePath, True
                 
                 If Err.Number <> 0 Then
-                    WScript.Echo "  ❌ Error copiando " & objFile.Name & ": " & Err.Description
+                    WScript.Echo "  ❌ Error copiando " & fileName & ": " & Err.Description
                     Err.Clear
                 Else
-                    WScript.Echo "  ✓ " & objFile.Name & " -> " & objFile.Name & ".txt"
+                    WScript.Echo "  ✓ " & fileName & " -> " & fileName & ".txt"
                     copiedFiles = copiedFiles + 1
                 End If
+            Else
+                WScript.Echo "  ⚠️ Archivo no encontrado: " & fileName
             End If
-        End If
-    Next
+        Next
+    Else
+        ' Usar búsqueda por nombre (comportamiento anterior)
+        For Each objFile In objFolder.Files
+            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+                ' Verificar si el nombre del archivo contiene la funcionalidad (sin distinguir mayúsculas)
+                If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
+                    foundFiles = foundFiles + 1
+                    
+                    ' Copiar archivo con extensión .txt añadida
+                    Dim destFilePathLegacy
+                    destFilePathLegacy = objFSO.BuildPath(strBundlePath, objFile.Name & ".txt")
+                    
+                    objFSO.CopyFile objFile.Path, destFilePathLegacy, True
+                    
+                    If Err.Number <> 0 Then
+                        WScript.Echo "  ❌ Error copiando " & objFile.Name & ": " & Err.Description
+                        Err.Clear
+                    Else
+                        WScript.Echo "  ✓ " & objFile.Name & " -> " & objFile.Name & ".txt"
+                        copiedFiles = copiedFiles + 1
+                    End If
+                End If
+            End If
+        Next
+    End If
     
     WScript.Echo ""
     WScript.Echo "=== RESULTADO DEL EMPAQUETADO ==="
@@ -2583,7 +3002,11 @@ Sub BundleFunctionality()
     WScript.Echo "Ubicación del paquete: " & strBundlePath
     
     If copiedFiles = 0 Then
-        WScript.Echo "⚠️ No se encontraron archivos que contengan '" & strFunctionality & "'"
+        If usePredefinedList Then
+            WScript.Echo "⚠️ No se encontraron archivos de la funcionalidad '" & strFunctionality & "' según CONDOR_MASTER_PLAN.md"
+        Else
+            WScript.Echo "⚠️ No se encontraron archivos que contengan '" & strFunctionality & "'"
+        End If
     Else
         WScript.Echo "✅ Empaquetado completado exitosamente"
     End If

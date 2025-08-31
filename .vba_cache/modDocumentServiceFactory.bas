@@ -10,43 +10,34 @@ Option Explicit
 ' FECHA: 2025-08-22
 ' =====================================================
 
-Public Function CreateDocumentService(Optional ByVal testConfig As IConfig = Nothing) As IDocumentService
+Public Function CreateDocumentService() As IDocumentService
     On Error GoTo ErrorHandler
     
-    ' Crear las dependencias necesarias usando sus respectivas factorías
     Dim fileSystem As IFileSystem
     Set fileSystem = modFileSystemFactory.CreateFileSystem()
     
     Dim configService As IConfig
-    If Not testConfig Is Nothing Then
-        Set configService = testConfig
-    Else
-        Set configService = modConfig.CreateConfigService()
-    End If
+    Set configService = modConfigFactory.CreateConfigService()
     
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(configService, fileSystem)
     
-    ' Crear las dependencias usando los factories correspondientes
     Dim wordManager As IWordManager
     Set wordManager = modWordManagerFactory.CreateWordManager()
     
     Dim mapeoRepository As IMapeoRepository
-    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository(configService, errorHandler)
+    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository()
     
     Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository(configService, errorHandler)
+    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
     
-    ' Crear una instancia de la clase concreta
     Dim documentServiceInstance As New CDocumentService
     
-    ' Inicializar la instancia concreta con las dependencias (incluyendo errorHandler)
     documentServiceInstance.Initialize configService, solicitudRepository, operationLogger, wordManager, mapeoRepository, errorHandler
     
-    ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateDocumentService = documentServiceInstance
     
     Exit Function

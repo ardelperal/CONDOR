@@ -26,7 +26,7 @@ Option Explicit
 ' Parámetros:
 '   - laSolicitud: El objeto de solicitud que contiene todos los datos.
 ' Retorna: Ruta completa del documento generado o una cadena vacía si falla.
-Public Function GenerarDocumento(ByVal solicitud As E_Solicitud) As String
+Public Function GenerarDocumento(ByVal solicitud As ESolicitud) As String
 End Function
 
 ' Lee un documento Word y actualiza la solicitud correspondiente en la base de datos.

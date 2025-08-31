@@ -93,11 +93,13 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🧪 CMockAuthService.cls      ← Mock para testing           │
 │ 🧪 CMockAuthRepository.cls   ← Mock para testing           │
 │ 🏭 modAuthFactory.bas        ← Factory                     │
-│ ✅ Test_AuthService.bas      ← Tests unitarios             │
-│ 🔬 IntegrationTest_AuthRepository.bas ← Tests integración  │
+│ ✅ TestAuthService.bas       ← Tests unitarios             │
+│ 🔬 TIAuthRepository.bas      ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
+- CErrorHandlerService ➜ IConfig
+- CErrorHandlerService ➜ IFileSystem
 - CAuthService ➜ IAuthRepository
 - CAuthService ➜ IErrorHandlerService
 - CAuthRepository ➜ IConfig
@@ -112,8 +114,8 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🔧 CDocumentService.cls      ← Implementación              │
 │ 🧪 CMockDocumentService.cls  ← Mock para testing           │
 │ 🏭 modDocumentServiceFactory.bas ← Factory                 │
-│ ✅ Test_DocumentService.bas  ← Tests unitarios             │
-│ 🔬 IntegrationTest_DocumentService.bas ← Tests integración │
+│ ✅ TestDocumentService.bas   ← Tests unitarios             │
+│ 🔬 TIDocumentService.bas     ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -131,10 +133,11 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 📄 IExpedienteRepository.cls ← Interface                   │
 │ 🔧 CExpedienteService.cls    ← Implementación              │
 │ 🔧 CExpedienteRepository.cls ← Implementación              │
-│ 🧪 CMockExpedienteRepository.cls ← Mock para testing       │
+│ 🧪 CMockExpedienteService.cls ← Mock Service para testing  │
+│ 🧪 CMockExpedienteRepository.cls ← Mock Repository para testing │
 │ 🏭 modExpedienteServiceFactory.bas ← Factory               │
-│ ✅ Test_CExpedienteService.bas ← Tests unitarios           │
-│ 🔬 IntegrationTest_CExpedienteRepository.bas ← Tests integración │
+│ ✅ TestCExpedienteService.bas ← Tests unitarios            │
+│ 🔬 TIExpedienteRepository.bas ← Tests integración          │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -152,11 +155,72 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 📄 ISolicitudRepository.cls  ← Interface                   │
 │ 🔧 CSolicitudService.cls     ← Implementación              │
 │ 🔧 CSolicitudRepository.cls  ← Implementación              │
-│ 🧪 CMockSolicitudRepository.cls ← Mock para testing        │
-│ 🏭 modSolicitudServiceFactory.bas ← Factory                 │
-│ ✅ Test_SolicitudService.bas ← Tests unitarios             │
-│ 🔬 IntegrationTest_SolicitudRepository.bas ← Tests integración │
+│ 🧪 CMockSolicitudService.cls ← Mock Service para testing   │
+│ 🧪 CMockSolicitudRepository.cls ← Mock Repository para testing │
+│ 🏭 modSolicitudServiceFactory.bas ← Factory                │
+│ ✅ TestSolicitudService.bas  ← Tests unitarios             │
+│ 🔬 TISolicitudRepository.bas ← Tests integración           │
+│ 📊 ESolicitud.cls            ← Entidad Principal           │
+│ 📊 EUsuario.cls              ← Entidad Usuario             │
+│ 📊 EDatosPc.cls              ← Entidad Datos PC            │
+│ 📊 EDatosCdCa.cls            ← Entidad Datos CDCA          │
+│ 📊 EDatosCdCaSub.cls         ← Entidad Datos CDCASUB       │
 └─────────────────────────────────────────────────────────────┘
+
+#### 🏗️ Diagrama UML de Entidades
+```mermaid
+classDiagram
+    class ESolicitud {
+        -Long m_idSolicitud
+        -String m_tipoSolicitud
+        -Date m_fechaCreacion
+        -Date m_fechaPaseTecnico
+        -Date m_fechaCompletadoTecnico
+        -Date m_fechaModificacion
+        -String m_usuarioModificacion
+        -EDatosPc m_datosPC
+        -EDatosCdCa m_datosCDCA
+        -EDatosCdCaSub m_datosCDCASUB
+        +Property Get IdSolicitud() Long
+        +Property Let IdSolicitud(Long)
+        +Property Get TipoSolicitud() String
+        +Property Let TipoSolicitud(String)
+        +Property Get DatosPC() EDatosPc
+        +Property Set DatosPC(EDatosPc)
+        +Property Get DatosCDCA() EDatosCdCa
+        +Property Set DatosCDCA(EDatosCdCa)
+        +Property Get DatosCDCASUB() EDatosCdCaSub
+        +Property Set DatosCDCASUB(EDatosCdCaSub)
+    }
+    
+    class EUsuario {
+        -Long m_ID
+        -String m_Email
+        -UserRole m_Rol
+        +Property Get ID() Long
+        +Property Let ID(Long)
+        +Property Get Email() String
+        +Property Let Email(String)
+        +Property Get Rol() UserRole
+        +Property Let Rol(UserRole)
+    }
+    
+    class EDatosPc {
+        +Property Get/Let campos específicos PC
+    }
+    
+    class EDatosCdCa {
+        +Property Get/Let campos específicos CDCA
+    }
+    
+    class EDatosCdCaSub {
+        +Property Get/Let campos específicos CDCASUB
+    }
+    
+    ESolicitud ||--o{ EDatosPc : "contiene según tipo"
+    ESolicitud ||--o{ EDatosCdCa : "contiene según tipo"
+    ESolicitud ||--o{ EDatosCdCaSub : "contiene según tipo"
+```
 
 🔗 **Dependencias:**
 - CSolicitudService ➜ ISolicitudRepository (inyectado)
@@ -167,8 +231,8 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 - modSolicitudServiceFactory ➜ modErrorHandlerFactory (para IErrorHandlerService)
 - modSolicitudServiceFactory ➜ modRepositoryFactory (para ISolicitudRepository)
 - modSolicitudServiceFactory ➜ modOperationLoggerFactory (para IOperationLogger)
-
-
+- ESolicitud ➜ EDatosPc, EDatosCdCa, EDatosCdCaSub (composición)
+- EUsuario ➜ UserRole (enumeración estandarizada)
 ```
 
 ### 3.5. Gestión de Flujos de Trabajo (Workflow)
@@ -180,10 +244,11 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 📄 IWorkflowRepository.cls   ← Interface                   │
 │ 🔧 CWorkflowService.cls      ← Implementación              │
 │ 🔧 CWorkflowRepository.cls   ← Implementación              │
-│ 🧪 CMockWorkflowRepository.cls ← Mock para testing         │
+│ 🧪 CMockWorkflowService.cls  ← Mock Service para testing   │
+│ 🧪 CMockWorkflowRepository.cls ← Mock Repository para testing │
 │ 🏭 modWorkflowRepositoryFactory.bas ← Factory              │
-│ ✅ Test_WorkflowService.bas  ← Tests unitarios             │
-│ 🔬 IntegrationTest_WorkflowRepository.bas ← Tests integración │
+│ ✅ TestWorkflowService.bas   ← Tests unitarios             │
+│ 🔬 TIWorkflowRepository.bas  ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -199,7 +264,8 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IMapeoRepository.cls      ← Interface                   │
 │ 🔧 CMapeoRepository.cls      ← Implementación              │
-│ 🔬 IntegrationTest_CMapeoRepository.bas ← Tests integración │
+│ 🧪 CMockMapeoRepository.cls  ← Mock para testing           │
+│ 🔬 TIMapeoRepository.bas     ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -215,9 +281,10 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 📄 INotificationRepository.cls ← Interface                 │
 │ 🔧 CNotificationService.cls  ← Implementación              │
 │ 🔧 CNotificationRepository.cls ← Implementación            │
-│ 🧪 CMockNotificationService.cls ← Mock para testing        │
+│ 🧪 CMockNotificationService.cls ← Mock Service para testing │
+│ 🧪 CMockNotificationRepository.cls ← Mock Repository para testing │
 │ 🏭 modNotificationServiceFactory.bas ← Factory             │
-│ 🔬 IntegrationTest_NotificationService.bas ← Tests integración │
+│ 🔬 TINotificationRepository.bas ← Tests integración        │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -236,10 +303,11 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 📄 IOperationRepository.cls  ← Interface                   │
 │ 🔧 COperationLogger.cls      ← Implementación              │
 │ 🔧 COperationRepository.cls  ← Implementación              │
-│ 🧪 CMockOperationLogger.cls  ← Mock para testing           │
+│ 🧪 CMockOperationLogger.cls  ← Mock Logger para testing    │
+│ 🧪 CMockOperationRepository.cls ← Mock Repository para testing │
 │ 🏭 modOperationLoggerFactory.bas ← Factory                 │
-│ ✅ Test_OperationLogger.bas  ← Tests unitarios             │
-│ 🔬 IntegrationTest_OperationRepository.bas ← Tests integración │
+│ ✅ TestOperationLogger.bas   ← Tests unitarios             │
+│ 🔬 TIOperationRepository.bas ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -257,7 +325,7 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🔧 CConfig.cls               ← Implementación              │
 │ 🧪 CMockConfig.cls           ← Mock para testing           │
 │ 🏭 modConfigFactory.bas      ← Factory                     │
-│ ✅ Test_CConfig.bas          ← Tests unitarios             │
+│ ✅ TestCConfig.bas           ← Tests unitarios             │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -273,8 +341,7 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🔧 CFileSystem.cls           ← Implementación              │
 │ 🧪 CMockFileSystem.cls       ← Mock para testing           │
 │ 🏭 modFileSystemFactory.bas  ← Factory                     │
-│ ✅ Test_FileSystem.bas       ← Tests unitarios             │
-│ 🔬 IntegrationTest_FileSystem.bas ← Tests integración      │
+│ 🔬 TIFileSystem.bas          ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -290,8 +357,8 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🔧 CWordManager.cls          ← Implementación              │
 │ 🧪 CMockWordManager.cls      ← Mock para testing           │
 │ 🏭 modWordManagerFactory.bas ← Factory                     │
-│ ✅ Test_WordManager.bas      ← Tests unitarios             │
-│ 🔬 IntegrationTest_WordManager.bas ← Tests integración     │
+│ ✅ TestCWordManager.bas      ← Tests unitarios             │
+│ 🔬 TIWordManagerRepository.bas ← Tests integración         │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -309,11 +376,12 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🧪 CMockErrorHandlerService.cls ← Mock para testing        │
 │ 🏭 modErrorHandlerFactory.bas ← Factory                    │
 │ 📋 modErrorHandler.bas       ← Módulo de utilidades        │
-│ ✅ Test_ErrorHandlerService.bas ← Tests unitarios          │
+│ ✅ TestErrorHandlerService.bas ← Tests unitarios           │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
 - CErrorHandlerService ➜ IConfig
+- CErrorHandlerService ➜ IFileSystem
 ```
 
 ## 8. Framework de Testing
@@ -324,7 +392,7 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🔧 CTestResult.cls           ← Resultado individual        │
 │ 🔧 CTestSuiteResult.cls      ← Resultado de suite          │
 │ 🔧 CTestReporter.cls         ← Generador de informes       │
-│ 📋 modTestRunner.bas         ← Motor de ejecución          │
+│ 📋 modTestRunner.bas         ← Motor con descubrimiento 100% automático │
 │ 📋 modTestUtils.bas          ← Utilidades de testing       │
 │ 📋 modAssert.bas             ← Aserciones                  │
 └─────────────────────────────────────────────────────────────┘
@@ -333,6 +401,7 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 - CTestReporter ➜ IFileSystem
 - modTestUtils ➜ IFileSystem
 - modTestUtils ➜ IConfig
+- modTestRunner ➜ Microsoft Visual Basic for Applications Extensibility 5.3 (CRÍTICO)
 ```
 
 ## 9. Gestión de Aplicación
@@ -342,8 +411,8 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IAppManager.cls           ← Interface                   │
 │ 🔧 CAppManager.cls           ← Implementación              │
-│ 🏭 modAppManagerFactory.bas  ← Factory                     │
-│ ✅ Test_AppManager.bas       ← Tests unitarios             │
+│ 🏭 ModAppManagerFactory.bas  ← Factory                     │
+│ ✅ TestAppManager.bas        ← Tests unitarios             │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -445,8 +514,8 @@ graph TD
 - **Implementaciones**: 25 clases (C*)
 - **Mocks**: 12 mocks para testing (CMock*)
 - **Factories**: 11 factories (mod*Factory)
-- **Tests Unitarios**: 15 módulos (Test_*)
-- **Tests de Integración**: 10 módulos (IntegrationTest_*)
+- **Tests Unitarios**: 15 módulos (Test*)
+- **Tests de Integración**: 10 módulos (TI*)
 - **Modelos de Datos**: 13 tipos (T_*)
 - **Enumeraciones**: 5 enums (E_*)
 - **Módulos de Utilidades**: 8 módulos (mod*)
@@ -530,13 +599,16 @@ back/test_db/
 
 | Archivo de Test | Tipo | Recursos Aprovisionados |
 |----------------|------|------------------------|
-| `IntegrationTest_DocumentService.bas` | Integración | BD + Plantillas + Directorios |
-| `IntegrationTest_FileSystem.bas` | Integración | Directorios de prueba |
-| `IntegrationTest_AuthRepository.bas` | Integración | BD de prueba |
-| `IntegrationTest_SolicitudRepository.bas` | Integración | BD de prueba |
-| `IntegrationTest_WorkflowRepository.bas` | Integración | BD de prueba |
-| `IntegrationTest_OperationRepository.bas` | Integración | BD de prueba |
-| `IntegrationTest_CExpedienteRepository.bas` | Integración | BD de prueba |
+| `TIDocumentService.bas` | Integración | BD + Plantillas + Directorios |
+| `TIFileSystemRepository.bas` | Integración | Directorios de prueba |
+| `TIAuthRepository.bas` | Integración | BD de prueba |
+| `TISolicitudRepository.bas` | Integración | BD de prueba |
+| `TIWorkflowRepository.bas` | Integración | BD de prueba |
+| `TIOperationRepository.bas` | Integración | BD de prueba |
+| `TIExpedienteRepository.bas` | Integración | BD de prueba |
+| `TIMapeoRepository.bas` | Integración | BD de prueba |
+| `TINotificationRepository.bas` | Integración | BD de prueba |
+| `TIWordManagerRepository.bas` | Integración | BD de prueba |
 
 #### 🎯 **Beneficios del Sistema**
 

@@ -153,8 +153,8 @@ Regla Inquebrantable: Las funciones VBA llamadas desde el CLI deben devolver res
 Acción Correctiva: Refactorizar toda comunicación CLI-VBA para usar `objAccess.Application.Run("FuncionVBA")` capturando el valor de retorno directamente. Las funciones VBA deben devolver strings estructurados que incluyan tanto el reporte legible como indicadores parseables (ej: "RESULT: SUCCESS" o "RESULT: FAILED") para facilitar la automatización.
 
 Lección 20: La Automatización sobre la Configuración Manual (Principio de Cero Mantenimiento)
-Observación: El registro manual de suites de pruebas en la función RegisterAllSuites de modTestRunner.bas es una deuda técnica crítica. Cada vez que se añade un nuevo fichero de pruebas (Test_*.bas o IntegrationTest_*.bas), existe el riesgo de olvidar registrarlo manualmente, lo que resulta en pruebas que no se ejecutan y una falsa sensación de seguridad en la calidad del código.
-Regla Inquebrantable: Los sistemas deben auto-configurarse basándose en convenciones de nomenclatura, eliminando completamente la intervención manual. El descubrimiento automático de suites de pruebas debe basarse en la inspección dinámica del proyecto VBA, identificando módulos que cumplan con las convenciones establecidas (nombres que comiencen con "Test_" o "IntegrationTest_").
+Observación: El registro manual de suites de pruebas en la función RegisterAllSuites de modTestRunner.bas es una deuda técnica crítica. Cada vez que se añade un nuevo fichero de pruebas (Test_*.bas o IntegrationTest*.bas), existe el riesgo de olvidar registrarlo manualmente, lo que resulta en pruebas que no se ejecutan y una falsa sensación de seguridad en la calidad del código.
+Regla Inquebrantable: Los sistemas deben auto-configurarse basándose en convenciones de nomenclatura, eliminando completamente la intervención manual. El descubrimiento automático de suites de pruebas debe basarse en la inspección dinámica del proyecto VBA, identificando módulos que cumplan con las convenciones establecidas (nombres que comiencen con "Test_" o "IntegrationTest").
 
 Lección 25: Un Framework de Pruebas Robusto Requiere una Librería de Aserciones Completa
 Observación: Los errores de compilación como "AssertNotNull no existe" revelan que nuestra librería de aserciones (modAssert.bas) está incompleta. Una librería de aserciones incompleta limita la expresividad y legibilidad de nuestras pruebas, forzando a los desarrolladores a usar workarounds o aserciones menos específicas.
@@ -204,7 +204,7 @@ Acción Correctiva: Implementar clases mock completas para todas las interfaces 
 
 Lección 23: Las Auditorías de Calidad de Pruebas Verifican el Aislamiento
 Observación: Con el tiempo, las pruebas unitarias pueden degradarse y comenzar a depender de clases reales en lugar de mocks, convirtiéndose en "falsos unitarios" que pueden ocultar errores o fallar por razones equivocadas. Esta degradación compromete la fiabilidad de la red de seguridad de pruebas.
-Regla Inquebrantable: Se deben realizar auditorías periódicas de calidad para verificar que todas las pruebas unitarias (módulos Test_*.bas, excluyendo IntegrationTest_*) usen exclusivamente mocks para sus dependencias externas. Cualquier instanciación de clases concretas (New C...) en lugar de mocks (New CMock...) debe ser corregida inmediatamente.
+Regla Inquebrantable: Se deben realizar auditorías periódicas de calidad para verificar que todas las pruebas unitarias (módulos Test_*.bas, excluyendo IntegrationTest*) usen exclusivamente mocks para sus dependencias externas. Cualquier instanciación de clases concretas (New C...) en lugar de mocks (New CMock...) debe ser corregida inmediatamente.
 Acción Correctiva: Implementar un proceso de auditoría sistemática que revise todos los módulos de prueba unitaria, identifique instanciaciones incorrectas de clases concretas, las reemplace por sus mocks correspondientes, y verifique que las variables se declaren con el tipo de interfaz apropiado. Esta auditoría debe ejecutarse antes de cada release y después de refactorizaciones significativas.
 
 Lección 24: Las Clases Concretas Deben Exponer Métodos Públicos de Conveniencia
@@ -226,7 +226,7 @@ Funciones de Aserción Estándar Implementadas:
 - Fail(message As String) - Error: vbObjectError + 515
 - IsTrue(condition As Boolean) - Función de compatibilidad que no lanza errores
 
-Meta-Testing: El módulo Test_modAssert.bas contiene pruebas unitarias para cada función de aserción, verificando tanto casos de éxito como de fallo, garantizando que el framework se pruebe a sí mismo.
+Meta-Testing: El módulo TestModAssert.bas contiene pruebas unitarias para cada función de aserción, verificando tanto casos de éxito como de fallo, garantizando que el framework se pruebe a sí mismo.
 
 Lección 26: Encapsulación de Lógica Común en Clases que Implementan Interfaces
 Observación: Los errores de compilación "IConfig_GetValue no se puede llamar con Me" ocurren cuando los métodos de implementación de interfaz intentan llamarse entre ellos usando Me.IInterfaz_Metodo. Esto viola la naturaleza estricta de las interfaces en VBA, donde los métodos Private Function IInterfaz_Metodo no pueden ser invocados directamente.
@@ -288,7 +288,7 @@ Caso Crítico - CTestReporter (2024): La clase CTestReporter violaba el Principi
 
 **Observación:** Se ha observado que las pruebas de integración fallaban de forma intermitente y no eran portables entre diferentes máquinas. La causa raíz era la dependencia de un entorno de pruebas preexistente y configurado manualmente (bases de datos, carpetas), lo que generaba errores de "Archivo no encontrado" en lugar de detectar fallos reales en la lógica de la aplicación.
 
-**Regla Inquebrantable:** Toda suite de pruebas de integración (`IntegrationTest_*.bas`) debe ser completamente autónoma y responsable de crear y destruir su propio entorno de prueba en tiempo de ejecución. No se debe asumir la preexistencia de ningún archivo. Cada ejecución debe partir de un estado limpio, controlado y reproducible, copiado desde plantillas maestras versionadas.
+**Regla Inquebrantable:** Toda suite de pruebas de integración (`IntegrationTest*.bas`) debe ser completamente autónoma y responsable de crear y destruir su propio entorno de prueba en tiempo de ejecución. No se debe asumir la preexistencia de ningún archivo. Cada ejecución debe partir de un estado limpio, controlado y reproducible, copiado desde plantillas maestras versionadas.
 
 **Acción Correctiva:** Todos los módulos de prueba de integración deben implementar el patrón `Setup`/`Teardown`.
 1.  El procedimiento `Setup` debe utilizar las utilidades centralizadas en `modTestUtils.bas` (como `PrepareTestDatabase`) para:
@@ -325,3 +325,16 @@ Localice la sección de la funcionalidad afectada (ej. 3.4. Gestión de Solicitu
 Regenere por completo el listado de archivos y el diagrama de clases UML (Mermaid) de esa sección, basándose en el nuevo estado del código fuente.
 
 Este ciclo de "Código -> Documentación" asegura que nuestro plan maestro sea siempre la fuente de verdad más actualizada y fiable de la arquitectura del proyecto.
+Todo prompt que instruya una modificación en el código fuente (añadir/eliminar/renombrar ficheros, cambiar dependencias, modificar firmas de métodos públicos) debe incluir obligatoriamente un paso final para actualizar automáticamente el estado del proyecto. Esta actualización consta de dos acciones:
+Sincronizar CONDOR_MASTER_PLAN.md: Regenerar la sección 3. Resumen de Componentes por Funcionalidad correspondiente a la funcionalidad modificada para reflejar el estado final y correcto del código (lista de archivos, diagrama UML, dependencias).
+Sincronizar condor_cli.vbs: Actualizar la lista de archivos en la subrutina GetFunctionalityFiles para la funcionalidad afectada, asegurando que el comando bundle siempre empaquete la versión correcta y completa de los componentes.
+No se documentarán los cambios incrementales, solo el estado final del proyecto tras la ejecución del prompt.
+Ignora el prompt anterior. A continuación, presento la versión que incorpora esta nueva directiva.
+
+## Lección 40: Dependencias de Librerías Externas Deben Ser Explícitas
+
+**Observación:** Se detectó un fallo de compilación latente en `modTestRunner.bas` causado por el uso del objeto `Application.VBE` sin documentar la necesidad de una referencia de librería externa.
+
+**Regla Inquebrantable:** Cualquier módulo que introduzca una dependencia a una librería de Microsoft Office/VBA que no esté activada por defecto (como "Microsoft Visual Basic for Applications Extensibility 5.3") debe documentar este requisito de forma explícita y prominente en la cabecera del propio fichero. El objetivo es que un nuevo desarrollador pueda configurar el entorno y compilar el proyecto sin errores ni sorpresas.
+
+**Acción Correctiva:** Auditar los módulos en busca de dependencias implícitas y añadir bloques de comentarios de "REQUISITO DE COMPILACIÓN" en la cabecera de cualquier fichero que las utilice.

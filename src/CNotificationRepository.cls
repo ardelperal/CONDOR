@@ -41,21 +41,21 @@ Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErr
     m_isInitialized = True
 End Sub
 
-' Implementación de INotificationRepository_EncolarCorreo
-Private Function INotificationRepository_EncolarCorreo(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpo As String, ByVal cc As String, ByVal bcc As String, ByVal adjunto As String) As Boolean
+' Implementación de INotificationRepository_EnqueueEmail
+Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpoHTML As String, ByVal usuario As String, ByVal adminEmail As String, Optional ByVal adjuntoPath As String = "") As Boolean
     On Error GoTo ErrorHandler
     
     ' Validar inicialización
     If Not m_isInitialized Then
-        m_ErrorHandler.LogError 5, "Repositorio no inicializado", "CNotificationRepository.EncolarCorreo"
-        INotificationRepository_EncolarCorreo = False
+        m_ErrorHandler.LogError 5, "Repositorio no inicializado", "CNotificationRepository.EnqueueEmail"
+        INotificationRepository_EnqueueEmail = False
         Exit Function
     End If
     
     ' Validar parámetros obligatorios
-    If Len(Trim(destinatarios)) = 0 Or Len(Trim(asunto)) = 0 Or Len(Trim(cuerpo)) = 0 Then
-        m_ErrorHandler.LogError 5, "Parámetros obligatorios vacíos", "CNotificationRepository.EncolarCorreo"
-        INotificationRepository_EncolarCorreo = False
+    If Len(Trim(destinatarios)) = 0 Or Len(Trim(asunto)) = 0 Or Len(Trim(cuerpoHTML)) = 0 Then
+        m_ErrorHandler.LogError 5, "Parámetros obligatorios vacíos", "CNotificationRepository.EnqueueEmail"
+        INotificationRepository_EnqueueEmail = False
         Exit Function
     End If
     
@@ -70,8 +70,8 @@ Private Function INotificationRepository_EncolarCorreo(ByVal destinatarios As St
     
     ' Validar que la configuración esté disponible
     If Len(Trim(correosDbPath)) = 0 Then
-        m_ErrorHandler.LogError 5, "Ruta de base de datos de correos no configurada", "CNotificationRepository.EncolarCorreo"
-        INotificationRepository_EncolarCorreo = False
+        m_ErrorHandler.LogError 5, "Ruta de base de datos de correos no configurada", "CNotificationRepository.EnqueueEmail"
+        INotificationRepository_EnqueueEmail = False
         Exit Function
     End If
     
@@ -83,16 +83,16 @@ Private Function INotificationRepository_EncolarCorreo(ByVal destinatarios As St
     End If
     
     ' Abrir tabla de correos para insertar nuevo registro
-    Set rs = db.OpenRecordset("Tb_Correos", dbOpenDynaset)
+    Set rs = db.OpenRecordset("TbCorreosEnviados", dbOpenDynaset)
     
     ' Insertar nuevo registro
     rs.AddNew
     rs("Destinatarios") = destinatarios
     rs("Asunto") = asunto
-    rs("Cuerpo") = cuerpo
-    rs("CC") = cc
-    rs("BCC") = bcc
-    rs("Adjunto") = adjunto
+    rs("CuerpoHTML") = cuerpoHTML
+    rs("CC") = usuario
+    rs("BCC") = adminEmail
+    rs("Adjunto") = adjuntoPath
     rs("FechaCreacion") = Now()
     rs("Estado") = "PENDIENTE"
     rs.Update
@@ -104,7 +104,7 @@ Private Function INotificationRepository_EncolarCorreo(ByVal destinatarios As St
     Set rs = Nothing
     Set db = Nothing
     
-    INotificationRepository_EncolarCorreo = True
+    INotificationRepository_EnqueueEmail = True
     Exit Function
     
 ErrorHandler:
@@ -120,8 +120,19 @@ ErrorHandler:
         Set db = Nothing
     End If
     
-    m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationRepository.EncolarCorreo"
-    INotificationRepository_EncolarCorreo = False
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationRepository.EnqueueEmail"
+    INotificationRepository_EnqueueEmail = False
+End Function
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA
+' ============================================================================
+' Estos métodos exponen públicamente la funcionalidad de la interfaz
+' para facilitar las pruebas y el uso directo de la clase concreta
+
+' Método público de conveniencia para EnqueueEmail
+Public Function EnqueueEmail(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpoHTML As String, ByVal usuario As String, ByVal adminEmail As String, Optional ByVal adjuntoPath As String = "") As Boolean
+    EnqueueEmail = INotificationRepository_EnqueueEmail(destinatarios, asunto, cuerpoHTML, usuario, adminEmail, adjuntoPath)
 End Function
 
 ' Destructor

@@ -16,7 +16,7 @@ Public Function CreateErrorHandlerService() As IErrorHandlerService
     Dim fileSystem As IFileSystem
     
     ' Crear dependencias internamente según Lección 37
-    Set config = modConfig.CreateConfig()
+    Set config = modConfigFactory.CreateConfigService()
     Set fileSystem = modFileSystemFactory.CreateFileSystem()
     
     ' Inicializar el servicio con las dependencias creadas internamente

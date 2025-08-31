@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "E_Usuario"
+Attribute VB_Name = "EUsuario"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
@@ -25,7 +25,7 @@ Option Explicit
 Private m_ID As Long
 Private m_Email As String
 Private m_NombreCompleto As String
-Private m_Rol As E_UserRole
+Private m_Rol As UserRole
 Private m_EsAdministrador As Boolean
 Private m_EsUsuarioCalidad As Boolean
 Private m_EsUsuarioTecnico As Boolean
@@ -59,10 +59,10 @@ Public Property Let NombreCompleto(ByVal value As String)
     m_NombreCompleto = value
 End Property
 
-Public Property Get Rol() As E_UserRole
+Public Property Get Rol() As UserRole
     Rol = m_Rol
 End Property
-Public Property Let Rol(ByVal value As E_UserRole)
+Public Property Let Rol(ByVal value As UserRole)
     m_Rol = value
 End Property
 
@@ -123,23 +123,23 @@ End Property
 Public Function EsValido() As Boolean
     EsValido = (Len(Email) > 0 And _
                 InStr(Email, "@") > 1 And _
-                Rol <> Rol_Desconocido)
+                Rol <> RolDesconocido)
 End Function
 
 ' Determina si el usuario tiene permisos de administrador
 Public Function TienePermisosAdmin() As Boolean
-    TienePermisosAdmin = (EsAdministrador Or Rol = ROL_ADMINISTRADOR)
+    TienePermisosAdmin = (EsAdministrador Or Rol = RolAdmin)
 End Function
 
 ' Determina si el usuario puede crear solicitudes
 Public Function PuedeCrearSolicitudes() As Boolean
-    PuedeCrearSolicitudes = (EsUsuarioCalidad Or Rol = Rol_Calidad Or TienePermisosAdmin())
+    PuedeCrearSolicitudes = (EsUsuarioCalidad Or Rol = RolCalidad Or TienePermisosAdmin())
 End Function
 
 ' Determina si el usuario puede consultar solicitudes
 Public Function PuedeConsultarSolicitudes() As Boolean
-    PuedeConsultarSolicitudes = (EsUsuarioTecnico Or Rol = Rol_Tecnico Or _
-                                EsUsuarioCalidad Or Rol = Rol_Calidad Or _
+    PuedeConsultarSolicitudes = (EsUsuarioTecnico Or Rol = RolTecnico Or _
+                                EsUsuarioCalidad Or Rol = RolCalidad Or _
                                 TienePermisosAdmin())
 End Function
 

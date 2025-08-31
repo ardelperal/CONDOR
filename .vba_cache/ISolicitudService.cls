@@ -10,27 +10,25 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
 ' ============================================================================
 ' INTERFAZ: ISolicitudService
 ' Arquitectura: Contrato Limpio para Lógica de Negocio de Solicitudes
-' Version: 2.0 - Reconstrucción Total
+' Version: 3.0 - Refactorización Total
 ' ============================================================================
 ' Define el contrato para operaciones de negocio relacionadas con solicitudes.
 ' Implementa el patrón Service con delegación al repositorio.
 ' ============================================================================
 
 ' Crea una nueva solicitud con estado inicial "Borrador"
-' @param idExpediente: ID del expediente al que pertenece la solicitud
-' @param tipo: Tipo de solicitud (ej: "PC", "RAC", etc.)
+' @param paraExpediente: Objeto EExpediente al que pertenece la solicitud
 ' @return: Objeto ESolicitud creado y guardado
-Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As ESolicitud
+Public Function CreateSolicitud(ByVal paraExpediente As EExpediente) As ESolicitud
 End Function
 
 ' Guarda una solicitud existente
 ' @param solicitud: Objeto ESolicitud a guardar
-' @return: True si se guardó correctamente, False en caso contrario
-Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Boolean
+' @return: ID de la solicitud guardada (Long), 0 en caso de error
+Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
 End Function
 
 

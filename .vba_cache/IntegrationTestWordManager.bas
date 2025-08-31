@@ -1,16 +1,12 @@
-Attribute VB_Name = "IntegrationTest_WordManager"
+Attribute VB_Name = "IntegrationTestWordManager"
 Option Compare Database
 Option Explicit
 
 ' ============================================================================
-' Módulo: IntegrationTest_WordManager
+' Módulo: IntegrationTestWordManager
 ' Descripción: Pruebas de integración para CWordManager
-' Autor: CONDOR-Expert
-' Fecha: 2025-01-15
-' Versión: 2.0
 ' ============================================================================
 
-' Variables para manejo de archivos temporales
 Private m_TempFolder As String
 Private m_TempFiles As Collection
 
@@ -18,44 +14,27 @@ Private m_TempFiles As Collection
 ' CONFIGURACIÓN DE PRUEBAS
 ' ============================================================================
 
-Public Function IntegrationTestWordManager_RunAll() As CTestSuiteResult
+Public Function IntegrationTestWordManagerRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "IntegrationTestWordManager"
     
-    On Error GoTo TestError
+    suiteResult.AddTestResult IntegrationTestWordManagerCicloCompletoSuccess()
+    suiteResult.AddTestResult IntegrationTestWordManagerAbrirFicheroInexistenteDevuelveFalse()
     
-    ' Inicializar setup centralizado
-    Call InicializarSetup
-    
-    ' Ejecutar pruebas individuales
-    suiteResult.AddTestResult IntegrationTestWordManager_CicloCompleto_Success()
-    suiteResult.AddTestResult IntegrationTestWordManager_AbrirFicheroInexistente_DevuelveFalse()
-    
-    ' Limpiar recursos
-    Call LimpiarArchivosTemporales
-    
-    Set IntegrationTestWordManager_RunAll = suiteResult
-    Exit Function
-    
-TestError:
-    Dim errorResult As New CTestResult
-    errorResult.Initialize "IntegrationTestWordManager_RunAll_Setup"
-    errorResult.Fail "Error en setup/teardown: " & Err.Number & " - " & Err.Description
-    suiteResult.AddTestResult errorResult
-    
-    Call LimpiarArchivosTemporales
-    Set IntegrationTest_WordManager_RunAll = suiteResult
+    Set IntegrationTestWordManagerRunAll = suiteResult
 End Function
 
 ' ============================================================================
 ' PRUEBAS DE INTEGRACIÓN
 ' ============================================================================
 
-Private Function IntegrationTestWordManager_CicloCompleto_Success() As CTestResult
+Private Function IntegrationTestWordManagerCicloCompletoSuccess() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "IntegrationTestWordManager_CicloCompleto_Success"
+    testResult.Initialize "Ciclo completo de WordManager (Abrir, Reemplazar, Guardar, Cerrar) debe tener éxito"
     
     On Error GoTo TestError
+    
+    Setup
     
     ' Arrange
     Dim wordManager As IWordManager
@@ -64,65 +43,51 @@ Private Function IntegrationTestWordManager_CicloCompleto_Success() As CTestResu
     Dim archivoGuardado As String
     Dim contenidoFinal As String
     
-    ' Crear instancia real de ErrorHandler y WordManager usando factory
     Dim config As IConfig
     Dim fileSystem As IFileSystem
-    Set config = New CConfig
-    Set fileSystem = New CFileSystem
+    Set config = modConfigFactory.CreateConfigService()
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
     Set wordManager = modWordManagerFactory.CreateWordManager()
     
-    ' Crear archivo de prueba con marcador
     archivoOriginal = m_TempFolder & "documento_original.docx"
-    Call CrearDocumentoPrueba(archivoOriginal, "Hola [NOMBRE], este es un documento de prueba.")
+    CrearDocumentoPrueba archivoOriginal, "Hola [NOMBRE], este es un documento de prueba."
     m_TempFiles.Add archivoOriginal
     
     archivoGuardado = m_TempFolder & "documento_modificado.docx"
     m_TempFiles.Add archivoGuardado
     
     ' Act & Assert
-    ' 1. Abrir documento
     modAssert.AssertTrue wordManager.AbrirDocumento(archivoOriginal), "Debería abrir el documento correctamente"
-    
-    ' 2. Reemplazar texto
     modAssert.AssertTrue wordManager.ReemplazarTexto("[NOMBRE]", "CONDOR"), "Debería reemplazar el texto correctamente"
-    
-    ' 3. Guardar documento
     modAssert.AssertTrue wordManager.GuardarDocumento(archivoGuardado), "Debería guardar el documento correctamente"
-    
-    ' 4. Cerrar documento
     wordManager.CerrarDocumento
     
-    ' 5. Verificar contenido del archivo guardado
     contenidoFinal = wordManager.LeerContenidoDocumento(archivoGuardado)
     modAssert.AssertTrue InStr(contenidoFinal, "CONDOR") > 0, "El contenido debería incluir 'CONDOR'"
-    modAssert.AssertTrue InStr(contenidoFinal, "[NOMBRE]") = 0, "El contenido no debería incluir '[NOMBRE]'"
+    modAssert.AssertTrue InStr(contenidoFinal, "[ NOMBRE]") = 0, "El contenido no debería incluir '[NOMBRE]'"
     
     testResult.Pass
     GoTo Cleanup
     
 TestError:
     testResult.Fail "Error inesperado: " & Err.Number & " - " & Err.Description
-    
-    ' Limpiar recursos en caso de error
     On Error Resume Next
     wordManager.CerrarDocumento
     On Error GoTo 0
     
 Cleanup:
-    ' Limpiar recursos
-    On Error Resume Next
-    Set wordManager = Nothing
-    On Error GoTo 0
-    
-    Set IntegrationTestWordManager_CicloCompleto_Success = testResult
+    Teardown
+    Set IntegrationTestWordManagerCicloCompletoSuccess = testResult
 End Function
 
-Private Function IntegrationTestWordManager_AbrirFicheroInexistente_DevuelveFalse() As CTestResult
+Private Function IntegrationTestWordManagerAbrirFicheroInexistenteDevuelveFalse() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "IntegrationTestWordManager_AbrirFicheroInexistente_DevuelveFalse"
+    testResult.Initialize "AbrirDocumento con un fichero inexistente debe devolver False"
     
     On Error GoTo TestError
+    
+    Setup
     
     ' Arrange
     Dim wordManager As IWordManager
@@ -130,11 +95,10 @@ Private Function IntegrationTestWordManager_AbrirFicheroInexistente_DevuelveFals
     Dim rutaInvalida As String
     Dim resultado As Boolean
     
-    ' Crear instancia real de ErrorHandler y WordManager usando factory
     Dim config As IConfig
     Dim fileSystem As IFileSystem
-    Set config = New CConfig
-    Set fileSystem = New CFileSystem
+    Set config = modConfigFactory.CreateConfigService()
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
     Set wordManager = modWordManagerFactory.CreateWordManager()
     
@@ -153,41 +117,27 @@ TestError:
     testResult.Fail "Error inesperado: " & Err.Number & " - " & Err.Description
     
 Cleanup:
-    ' Limpiar recursos
-    On Error Resume Next
-    Set wordManager = Nothing
-    On Error GoTo 0
-    
-    Set IntegrationTestWordManager_AbrirFicheroInexistente_DevuelveFalse = testResult
+    Teardown
+    Set IntegrationTestWordManagerAbrirFicheroInexistenteDevuelveFalse = testResult
 End Function
 
 ' ============================================================================
 ' MÉTODOS DE SETUP Y TEARDOWN CENTRALIZADOS
 ' ============================================================================
 
-Private Sub InicializarSetup()
+Private Sub Setup()
     On Error GoTo TestError
-    
-    ' Inicializar colección de archivos temporales
     Set m_TempFiles = New Collection
-    
-    ' Configurar carpeta temporal usando ruta estandarizada del proyecto
     m_TempFolder = modTestUtils.GetProjectPath() & "back\test_env\word_tests\"
-    
-    ' Crear carpeta temporal si no existe usando IFileSystem
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
-    
     If Not fs.FolderExists(m_TempFolder) Then
         fs.CreateFolder m_TempFolder
     End If
-    
     Set fs = Nothing
-    
     Exit Sub
-    
 TestError:
-    Err.Raise Err.Number, "InicializarSetup", "Error en inicialización: " & Err.Description
+    Err.Raise Err.Number, "Setup", "Error en inicialización: " & Err.Description
 End Sub
 
 ' ============================================================================
@@ -196,34 +146,20 @@ End Sub
 
 Private Sub CrearDocumentoPrueba(ByVal rutaArchivo As String, ByVal contenido As String)
     On Error GoTo TestError
-    
     Dim wordApp As Object
     Dim wordDoc As Object
-    
-    ' Crear aplicación Word temporal
     Set wordApp = CreateObject("Word.Application")
     wordApp.Visible = False
     wordApp.DisplayAlerts = False
-    
-    ' Crear nuevo documento
     Set wordDoc = wordApp.Documents.Add
-    
-    ' Insertar contenido
     wordDoc.content.Text = contenido
-    
-    ' Guardar como .docx
     wordDoc.SaveAs2 rutaArchivo, 16 ' wdFormatXMLDocument
-    
-    ' Cerrar y limpiar
     wordDoc.Close False
     wordApp.Quit
     Set wordDoc = Nothing
     Set wordApp = Nothing
-    
     Exit Sub
-    
 TestError:
-    ' Limpiar recursos en caso de error
     On Error Resume Next
     If Not wordDoc Is Nothing Then
         wordDoc.Close False
@@ -234,19 +170,15 @@ TestError:
         Set wordApp = Nothing
     End If
     On Error GoTo 0
-    
     Err.Raise Err.Number, "CrearDocumentoPrueba", "Error creando documento: " & Err.Description
 End Sub
 
-Private Sub LimpiarArchivosTemporales()
+Private Sub Teardown()
     On Error Resume Next
-    
     Dim i As Integer
     Dim archivo As String
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
-    
-    ' Eliminar archivos temporales creados durante las pruebas usando IFileSystem
     If Not m_TempFiles Is Nothing Then
         For i = 1 To m_TempFiles.Count
             archivo = m_TempFiles(i)
@@ -255,14 +187,9 @@ Private Sub LimpiarArchivosTemporales()
             End If
         Next i
     End If
-    
-    ' Eliminar carpeta temporal usando exclusivamente IFileSystem service
     If fs.FolderExists(m_TempFolder) Then
-        ' Intentar eliminar la carpeta - IFileSystem manejará si está vacía o no
         fs.DeleteFolder m_TempFolder
     End If
-    
     Set fs = Nothing
-    
     On Error GoTo 0
 End Sub

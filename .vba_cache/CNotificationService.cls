@@ -41,8 +41,8 @@ ErrorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.Initialize"
 End Sub
 
-' Implementación del método EnviarNotificacion de la interfaz
-Private Function INotificationService_EnviarNotificacion( _
+' Implementación del método SendNotification de la interfaz
+Private Function INotificationService_SendNotification( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
@@ -52,13 +52,13 @@ Private Function INotificationService_EnviarNotificacion( _
     
     ' Validar que las dependencias estén inyectadas
     If m_Config Is Nothing Or m_OperationLogger Is Nothing Or m_NotificationRepository Is Nothing Then
-        INotificationService_EnviarNotificacion = False
+        INotificationService_SendNotification = False
         Exit Function
     End If
     
     ' Validar parámetros
     If Len(Trim(destinatarios)) = 0 Or Len(Trim(asunto)) = 0 Or Len(Trim(cuerpoHTML)) = 0 Then
-        INotificationService_EnviarNotificacion = False
+        INotificationService_SendNotification = False
         Exit Function
     End If
     
@@ -71,10 +71,10 @@ Private Function INotificationService_EnviarNotificacion( _
     
     ' Llamar al repositorio para encolar el correo (el repositorio calcula el ID)
     Dim resultado As Boolean
-    resultado = m_NotificationRepository.EncolarCorreo(destinatarios, asunto, cuerpoHTML, usuarioActual, correoAdministrador, urlAdjunto)
+    resultado = m_NotificationRepository.EnqueueEmail(destinatarios, asunto, cuerpoHTML, usuarioActual, correoAdministrador, urlAdjunto)
     
     If Not resultado Then
-        INotificationService_EnviarNotificacion = False
+        INotificationService_SendNotification = False
         Exit Function
     End If
     
@@ -82,15 +82,15 @@ Private Function INotificationService_EnviarNotificacion( _
     m_OperationLogger.LogOperation "NOTIFICATION", "SUCCESS", _
         "Correo encolado exitosamente. Destinatarios: " & destinatarios
     
-    INotificationService_EnviarNotificacion = True
+    INotificationService_SendNotification = True
     Exit Function
     
 ErrorHandler:
-    m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.EnviarNotificacion"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.SendNotification"
     
     ' No hay recursos específicos que limpiar ya que el repositorio maneja la BD
     
-    INotificationService_EnviarNotificacion = False
+    INotificationService_SendNotification = False
 End Function
 
 '==============================================================================
@@ -98,13 +98,13 @@ End Function
 '==============================================================================
 
 ' Método público de conveniencia que delega a la implementación de la interfaz
-Public Function EnviarNotificacion( _
+Public Function SendNotification( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
-    EnviarNotificacion = INotificationService_EnviarNotificacion(destinatarios, asunto, cuerpoHTML, urlAdjunto)
+    SendNotification = INotificationService_SendNotification(destinatarios, asunto, cuerpoHTML, urlAdjunto)
 End Function
 
 ' Destructor

@@ -1,29 +1,26 @@
-Attribute VB_Name = "Test_CExpedienteService"
+Attribute VB_Name = "TestCExpedienteService"
 Option Compare Database
 Option Explicit
-
-
-#If DEV_MODE Then
 
 ' ============================================================================
 ' MÓDULO DE PRUEBAS UNITARIAS PARA CExpedienteService
 ' ============================================================================
 ' Este módulo contiene pruebas unitarias aisladas para CExpedienteService
 ' utilizando mocks para todas las dependencias externas.
-' Sigue la Lección 10: El Aislamiento de las Pruebas Unitarias con Mocks no es Negociable
+' ============================================================================
 
 ' Función principal que ejecuta todas las pruebas del módulo
-Public Function Test_CExpedienteService_RunAll() As CTestSuiteResult
+Public Function TestCExpedienteServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    Call suiteResult.Initialize("Test_CExpedienteService")
+    Call suiteResult.Initialize("TestCExpedienteService")
     
     ' Ejecutar todas las pruebas unitarias
-    Call suiteResult.AddTestResult(Test_GetExpedienteById_Success())
-    Call suiteResult.AddTestResult(Test_GetExpedienteById_NotFound())
-    Call suiteResult.AddTestResult(Test_GetExpedientesParaSelector_Success())
-    Call suiteResult.AddTestResult(Test_GetExpedientesParaSelector_EmptyResult())
+    Call suiteResult.AddTestResult(TestGetExpedienteByIdSuccess())
+    Call suiteResult.AddTestResult(TestGetExpedienteByIdNotFound())
+    Call suiteResult.AddTestResult(TestGetExpedientesParaSelectorSuccess())
+    Call suiteResult.AddTestResult(TestGetExpedientesParaSelectorEmptyResult())
     
-    Set Test_CExpedienteService_RunAll = suiteResult
+    Set TestCExpedienteServiceRunAll = suiteResult
 End Function
 
 ' ============================================================================
@@ -31,9 +28,9 @@ End Function
 ' ============================================================================
 
 ' Prueba que GetExpedienteById devuelve correctamente un expediente cuando existe
-Private Function Test_GetExpedienteById_Success() As CTestResult
+Private Function TestGetExpedienteByIdSuccess() As CTestResult
     Dim testResult As New CTestResult
-    Call testResult.Initialize("Test_GetExpedienteById_Success")
+    Call testResult.Initialize("GetExpedienteById debe devolver un expediente cuando existe")
     
     On Error GoTo TestFail
     
@@ -54,7 +51,7 @@ Private Function Test_GetExpedienteById_Success() As CTestResult
     
     ' Act - Ejecutar el método bajo prueba
     Dim Resultado As EExpediente
-    Resultado = expedienteService.GetExpedienteById(123)
+    Set Resultado = expedienteService.GetExpedienteById(123)
     
     ' Assert - Verificar resultados
     Call modAssert.AssertEquals(123, Resultado.idExpediente, "ID del expediente debe coincidir")
@@ -77,18 +74,13 @@ Cleanup:
         mockRecordset.Close
         Set mockRecordset = Nothing
     End If
-    ' Reset mocks
-    mockConfig.Reset
-    mockLogger.Reset
-    mockRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_GetExpedienteById_Success = testResult
+    Set TestGetExpedienteByIdSuccess = testResult
 End Function
 
 ' Prueba que GetExpedienteById maneja correctamente cuando no se encuentra el expediente
-Private Function Test_GetExpedienteById_NotFound() As CTestResult
+Private Function TestGetExpedienteByIdNotFound() As CTestResult
     Dim testResult As New CTestResult
-    Call testResult.Initialize("Test_GetExpedienteById_NotFound")
+    Call testResult.Initialize("GetExpedienteById debe devolver un objeto vacío si no se encuentra")
     
     On Error GoTo TestFail
     
@@ -108,8 +100,8 @@ Private Function Test_GetExpedienteById_NotFound() As CTestResult
     Call expedienteService.Initialize(mockConfig, mockLogger, mockRepository, mockErrorHandler)
     
     ' Act - Ejecutar el método bajo prueba
-    Dim Resultado As T_Expediente
-    Resultado = expedienteService.GetExpedienteById(999)
+    Dim Resultado As EExpediente
+    Set Resultado = expedienteService.GetExpedienteById(999)
     
     ' Assert - Verificar que devuelve estructura vacía
     Call modAssert.AssertEquals(0, Resultado.idExpediente, "ID debe ser 0 para expediente no encontrado")
@@ -128,12 +120,7 @@ Cleanup:
         mockRecordset.Close
         Set mockRecordset = Nothing
     End If
-    ' Reset mocks
-    mockConfig.Reset
-    mockLogger.Reset
-    mockRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_GetExpedienteById_NotFound = testResult
+    Set TestGetExpedienteByIdNotFound = testResult
 End Function
 
 ' ============================================================================
@@ -141,9 +128,9 @@ End Function
 ' ============================================================================
 
 ' Prueba que GetExpedientesParaSelector devuelve correctamente una lista de expedientes
-Private Function Test_GetExpedientesParaSelector_Success() As CTestResult
+Private Function TestGetExpedientesParaSelectorSuccess() As CTestResult
     Dim testResult As New CTestResult
-    Call testResult.Initialize("Test_GetExpedientesParaSelector_Success")
+    Call testResult.Initialize("GetExpedientesParaSelector debe devolver una lista de expedientes")
     
     On Error GoTo TestFail
     
@@ -182,18 +169,13 @@ TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
-    ' Reset mocks
-    mockConfig.Reset
-    mockLogger.Reset
-    mockRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_GetExpedientesParaSelector_Success = testResult
+    Set TestGetExpedientesParaSelectorSuccess = testResult
 End Function
 
 ' Prueba que GetExpedientesParaSelector maneja correctamente cuando no hay expedientes
-Private Function Test_GetExpedientesParaSelector_EmptyResult() As CTestResult
+Private Function TestGetExpedientesParaSelectorEmptyResult() As CTestResult
     Dim testResult As New CTestResult
-    Call testResult.Initialize("Test_GetExpedientesParaSelector_EmptyResult")
+    Call testResult.Initialize("GetExpedientesParaSelector debe devolver un recordset vacío si no hay datos")
     
     On Error GoTo TestFail
     
@@ -230,12 +212,7 @@ TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
-    ' Reset mocks
-    mockConfig.Reset
-    mockLogger.Reset
-    mockRepository.Reset
-    mockErrorHandler.Reset
-    Set Test_GetExpedientesParaSelector_EmptyResult = testResult
+    Set TestGetExpedientesParaSelectorEmptyResult = testResult
 End Function
 
 ' ============================================================================
@@ -320,32 +297,3 @@ Private Function CreateEmptyRecordset() As DAO.recordset
     
     Set CreateEmptyRecordset = rs
 End Function
-
-' ============================================================================
-' SUBRUTINA DE LIMPIEZA CENTRALIZADA
-' ============================================================================
-
-' Subrutina centralizada para limpiar el estado de los mocks entre pruebas
-Private Sub Teardown()
-    ' Esta subrutina puede ser llamada desde las secciones Cleanup de cada test
-    ' para asegurar que todos los mocks se reseteen correctamente
-End Sub
-
-#End If
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

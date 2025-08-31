@@ -60,32 +60,30 @@ End Sub
 ' ============================================================================
 
 ' Crea una nueva solicitud con estado inicial "Borrador"
-Private Function ISolicitudService_CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As E_Solicitud
+Private Function ISolicitudService_CreateSolicitud(ByVal paraExpediente As EExpediente) As ESolicitud
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudService.CreateSolicitud", "El servicio no ha sido inicializado. Llame a Initialize() primero."
     End If
     
-    If Len(Trim(idExpediente)) = 0 Then
-        Err.Raise 5, "CSolicitudService.CreateSolicitud", "idExpediente no puede estar vacío"
+    If paraExpediente Is Nothing Then
+        Err.Raise 5, "CSolicitudService.CreateSolicitud", "paraExpediente no puede ser Nothing"
     End If
     
-    If Len(Trim(tipo)) = 0 Then
-        Err.Raise 5, "CSolicitudService.CreateSolicitud", "tipo no puede estar vacío"
-    End If
+
     
     On Error GoTo ErrorHandler
     
     ' Crear nueva solicitud con estado inicial "Borrador"
-    Dim nuevaSolicitud As E_Solicitud
-Set nuevaSolicitud = New E_Solicitud
+    Dim nuevaSolicitud As ESolicitud
+    Set nuevaSolicitud = New ESolicitud
     
     With nuevaSolicitud
         .idSolicitud = 0 ' Será asignado por el repositorio
-        .idExpediente = Trim(idExpediente)
-        .tipoSolicitud = Trim(tipo)
+        .idExpediente = paraExpediente.idExpediente
+        .tipoSolicitud = "PC" ' Tipo por defecto
         .subTipoSolicitud = ""
-        .codigoSolicitud = GenerateCodigoSolicitud(idExpediente, tipo)
+        .codigoSolicitud = GenerateCodigoSolicitud(CStr(paraExpediente.idExpediente), "PC")
         .idEstadoInterno = 1 ' ID del estado Borrador en tbEstados
         .fechaCreacion = Now()
         .usuarioCreacion = Environ("USERNAME") ' Usuario actual del sistema
@@ -94,18 +92,14 @@ Set nuevaSolicitud = New E_Solicitud
     End With
     
     ' Delegar al repositorio para guardar
-    Dim nuevoId As Long
-    nuevoId = m_solicitudRepository.SaveSolicitud(nuevaSolicitud)
-    
-    If nuevoId > 0 Then
-        nuevaSolicitud.idSolicitud = nuevoId
-        m_OperationLogger.LogOperation "CREATE", CStr(nuevoId), _
-            "Nueva solicitud creada: ID=" & nuevoId & ", Expediente=" & idExpediente & ", Tipo=" & tipo
+    If m_solicitudRepository.SaveSolicitud(nuevaSolicitud) Then
+        m_OperationLogger.LogOperation "CREATE", CStr(nuevaSolicitud.idSolicitud), _
+            "Nueva solicitud creada: ID=" & nuevaSolicitud.idSolicitud & ", Expediente=" & paraExpediente.idExpediente & ", Tipo=PC"
         
         Set ISolicitudService_CreateSolicitud = nuevaSolicitud
     Else
-        m_OperationLogger.LogOperation "CREATE_ERROR", CStr(idExpediente), _
-            "Error: No se pudo crear la solicitud para expediente " & idExpediente
+        m_OperationLogger.LogOperation "CREATE_ERROR", CStr(paraExpediente.idExpediente), _
+            "Error: No se pudo crear la solicitud para expediente " & paraExpediente.idExpediente
         Err.Raise 5, "CSolicitudService.CreateSolicitud", "No se pudo crear la solicitud"
     End If
     
@@ -118,7 +112,7 @@ ErrorHandler:
 End Function
 
 ' Guarda una solicitud existente
-Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As E_Solicitud) As Boolean
+Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudService.SaveSolicitud", "El servicio no ha sido inicializado. Llame a Initialize() primero."
@@ -135,17 +129,16 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As E_Solicitud)
     solicitud.usuarioModificacion = Environ("USERNAME")
     
     ' Delegar al repositorio para guardar
-    Dim resultId As Long
-    resultId = m_solicitudRepository.SaveSolicitud(solicitud)
-    
-    If resultId > 0 Then
+    Dim resultado As Long
+    resultado = m_solicitudRepository.SaveSolicitud(solicitud)
+    If resultado > 0 Then
         m_OperationLogger.LogOperation "SAVE", CStr(solicitud.idSolicitud), _
             "Solicitud guardada correctamente: ID=" & solicitud.idSolicitud
-        ISolicitudService_SaveSolicitud = True
+        ISolicitudService_SaveSolicitud = resultado
     Else
         m_OperationLogger.LogOperation "SAVE_ERROR", CStr(solicitud.idSolicitud), _
             "Error: No se pudo guardar la solicitud ID=" & solicitud.idSolicitud
-        ISolicitudService_SaveSolicitud = False
+        ISolicitudService_SaveSolicitud = 0
     End If
     
     Exit Function
@@ -153,7 +146,7 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As E_Solicitud)
 ErrorHandler:
     m_OperationLogger.LogOperation "SAVE_ERROR", "", "Error: " & Err.Description
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.SaveSolicitud"
-    ISolicitudService_SaveSolicitud = False
+    ISolicitudService_SaveSolicitud = 0
 End Function
 
 ' ============================================================================
@@ -176,12 +169,12 @@ End Function
 '==============================================================================
 
 ' Método público de conveniencia que delega a la implementación de la interfaz
-Public Function CreateSolicitud(ByVal idExpediente As String, ByVal tipo As String) As E_Solicitud
-    Set CreateSolicitud = ISolicitudService_CreateSolicitud(idExpediente, tipo)
+Public Function CreateSolicitud(ByVal paraExpediente As EExpediente) As ESolicitud
+    Set CreateSolicitud = ISolicitudService_CreateSolicitud(paraExpediente)
 End Function
 
 ' Método público de conveniencia que delega a la implementación de la interfaz
-Public Function SaveSolicitud(ByVal solicitud As E_Solicitud) As Boolean
+Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud = ISolicitudService_SaveSolicitud(solicitud)
 End Function
 

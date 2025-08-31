@@ -1,13 +1,11 @@
-Attribute VB_Name = "IntegrationTest_DocumentService"
+Attribute VB_Name = "IntegrationTestDocumentService"
 ' =====================================================
-' Módulo: IntegrationTest_DocumentService
+' Módulo: IntegrationTestDocumentService
 ' Descripción: Pruebas de integración para CDocumentService
 ' Versión: 3.0 (Refactorización completa)
 ' =====================================================
 
 Option Explicit
-
-#If DEV_MODE Then
 
 ' --- Constantes para el entorno de prueba ---
 Private Const TEST_ENV_PATH As String = "back\test_db\active\doc_service_test\"
@@ -26,18 +24,18 @@ Private m_OperationLogger As IOperationLogger
 Private m_ErrorHandler As IErrorHandlerService
 Private m_DocumentService As IDocumentService
 Private m_FileSystem As IFileSystem
-Private m_ExpedienteRepo As IExpedienteRepository ' Necesario para inicializar el servicio completo
+Private m_ExpedienteRepo As IExpedienteRepository
 
 ' =====================================================
 ' FUNCIÓN PRINCIPAL DEL FRAMEWORK ESTÁNDAR
 ' =====================================================
-Public Function IntegrationTest_DocumentService_RunAll() As CTestSuiteResult
+Public Function IntegrationTestDocumentServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "IntegrationTest_DocumentService"
+    suiteResult.Initialize "IntegrationTestDocumentService"
 
-    suiteResult.AddTestResult Test_GenerarDocumento_Success()
+    suiteResult.AddTestResult TestGenerarDocumentoSuccess()
 
-    Set IntegrationTest_DocumentService_RunAll = suiteResult
+    Set IntegrationTestDocumentServiceRunAll = suiteResult
 End Function
 
 ' =====================================================
@@ -67,7 +65,7 @@ Private Sub Setup()
 
     Exit Sub
 TestError:
-    Err.Raise Err.Number, "IntegrationTest_DocumentService.Setup", "Fallo en el Setup: " & Err.Description
+    Err.Raise Err.Number, "IntegrationTestDocumentService.Setup", "Fallo en el Setup: " & Err.Description
 End Sub
 
 Private Sub Teardown()
@@ -100,9 +98,9 @@ End Sub
 ' =====================================================
 ' TEST DE INTEGRACIÓN PRINCIPAL
 ' =====================================================
-Private Function Test_GenerarDocumento_Success() As CTestResult
-    Set Test_GenerarDocumento_Success = New CTestResult
-    Test_GenerarDocumento_Success.Initialize "GenerarDocumento debe crear un archivo Word con datos reales"
+Private Function TestGenerarDocumentoSuccess() As CTestResult
+    Set TestGenerarDocumentoSuccess = New CTestResult
+    TestGenerarDocumentoSuccess.Initialize "GenerarDocumento debe crear un archivo Word con datos reales"
 
     On Error GoTo TestFail
 
@@ -110,7 +108,7 @@ Private Function Test_GenerarDocumento_Success() As CTestResult
     Call Setup
 
     ' Obtener la solicitud de prueba (ID 999) que hemos insertado
-    Dim solicitudPrueba As E_Solicitud
+    Dim solicitudPrueba As Solicitud
     Set solicitudPrueba = m_SolicitudRepo.GetSolicitudById(999)
     modAssert.AssertNotNull solicitudPrueba, "La solicitud de prueba no se pudo cargar desde la BD."
 
@@ -122,11 +120,11 @@ Private Function Test_GenerarDocumento_Success() As CTestResult
     modAssert.AssertNotEquals "", rutaGenerada, "La ruta del documento generado no debe estar vacía."
     modAssert.AssertTrue m_FileSystem.FileExists(rutaGenerada), "El archivo generado debe existir en el disco."
 
-    Test_GenerarDocumento_Success.Pass
+    TestGenerarDocumentoSuccess.Pass
     GoTo Cleanup
 
 TestFail:
-    Test_GenerarDocumento_Success.Fail "Error en tiempo de ejecución: " & Err.Description & " en línea " & Erl
+    TestGenerarDocumentoSuccess.Fail "Error en tiempo de ejecución: " & Err.Description & " en línea " & Erl
 
 Cleanup:
     Call Teardown
@@ -138,29 +136,27 @@ End Function
 Private Sub InitializeRealDependencies()
     ' Crea e inicializa todas las dependencias en el orden correcto
 
-    ' 1. Crear configuración de prueba
-    Dim testConfig As New CConfig
+    ' 1. Crear configuración de prueba desde una colección
     Dim settings As New Collection
     settings.Add modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH, "DATABASE_PATH"
     settings.Add "", "DB_PASSWORD"
     settings.Add modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH, "PLANTILLA_PATH"
     settings.Add modTestUtils.GetProjectPath() & TEST_GENERATED_PATH, "GENERATED_DOCS_PATH"
-    testConfig.LoadFromCollection settings
-    Set m_Config = testConfig
+    Set m_Config = modConfigFactory.CreateConfigServiceFromCollection(settings)
 
     Set m_ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(m_Config, m_FileSystem)
 
-    ' 2. Repositorios usando factory con testConfig
-    Set m_MapeoRepo = modRepositoryFactory.CreateMapeoRepository(testConfig, m_ErrorHandler)
-    Set m_SolicitudRepo = modRepositoryFactory.CreateSolicitudRepository(testConfig, m_ErrorHandler)
-    Set m_ExpedienteRepo = modRepositoryFactory.CreateExpedienteRepository(testConfig, m_ErrorHandler)
+    ' 2. Repositorios usando factory
+    Set m_MapeoRepo = modRepositoryFactory.CreateMapeoRepository()
+    Set m_SolicitudRepo = modRepositoryFactory.CreateSolicitudRepository()
+    Set m_ExpedienteRepo = modRepositoryFactory.CreateExpedienteRepository()
 
     ' 3. Servicios de Infraestructura
     Set m_OperationLogger = modOperationLoggerFactory.CreateOperationLogger()
     Set m_WordManager = modWordManagerFactory.CreateWordManager()
 
-    ' 4. Servicio Principal a Probar usando factory con testConfig
-    Set m_DocumentService = modDocumentServiceFactory.CreateDocumentService(testConfig)
+    ' 4. Servicio Principal a Probar usando factory
+    Set m_DocumentService = modDocumentServiceFactory.CreateDocumentService()
 End Sub
 
 Private Sub InsertTestData()
@@ -168,12 +164,10 @@ Private Sub InsertTestData()
     Dim db As DAO.Database
     Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH)
 
-    db.Execute "INSERT INTO T_Solicitudes (idSolicitud, tipoSolicitud, codigoSolicitud, idExpediente) VALUES (999, 'PC', 'TEST-001', 1)"
-    db.Execute "INSERT INTO T_Datos_PC (idSolicitud, Parte0_1) VALUES (999, 'DATO_PRUEBA_PARTE0_1')"
+    db.Execute "INSERT INTO tbSolicitudes (idSolicitud, tipoSolicitud, codigoSolicitud, idExpediente) VALUES (999, 'PC', 'TEST-001', 1)"
+    db.Execute "INSERT INTO tbDatosPC (idSolicitud, Parte0_1) VALUES (999, 'DATO_PRUEBA_PARTE0_1')"
     db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) VALUES ('PC', 'Parte0_1', 'MARCADOR_PARTE0_1')"
 
     db.Close
     Set db = Nothing
 End Sub
-
-#End If

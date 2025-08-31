@@ -1,0 +1,160 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CAppManager"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
+Option Explicit
+
+Implements IAppManager
+
+' =====================================================
+' CLASE: CAppManager
+' PROPOSITO: Implementación de la gestión centralizada de la aplicación
+' AUTOR: CONDOR-Expert
+' FECHA: 2025-01-14
+' =====================================================
+
+' Variables privadas para dependencias
+Private m_AuthService As IAuthService
+Private m_Config As IConfig
+Private m_ErrorHandler As IErrorHandlerService
+Private m_IsInitialized As Boolean
+Private m_CurrentUserRole As UserRole
+
+' Definir constante de compilacion condicional para modo desarrollo
+
+
+' =====================================================
+' METODO: Initialize (IAppManager)
+' =====================================================
+Private Sub IAppManager_Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
+    Set m_AuthService = authService
+    Set m_Config = config
+    Set m_ErrorHandler = errorHandler
+    m_IsInitialized = False
+    m_CurrentUserRole = RolDesconocido
+End Sub
+
+' =====================================================
+' METODO: StartApplication (IAppManager)
+' =====================================================
+Private Function IAppManager_StartApplication(Optional ByVal userEmail As String = "") As Boolean
+    On Error GoTo ErrorHandler
+    
+    ' 1. Obtener el email del usuario actual
+    Dim UserEmail As String
+    If userEmail <> "" Then
+        ' Usar email de prueba si se proporciona (modo test)
+        UserEmail = userEmail
+    Else
+        ' Usar lógica normal de producción/desarrollo
+        UserEmail = GetCurrentUserEmail()
+    End If
+
+    If UserEmail = "" Then
+        m_ErrorHandler.LogError vbObjectError + 514, "No se pudo obtener el email del usuario para la autenticación.", "CAppManager.StartApplication", "CRITICAL_STARTUP_FAILURE"
+        IAppManager_StartApplication = False
+        Exit Function
+    End If
+
+    ' 2. Determinar el rol del usuario y guardarlo
+    m_CurrentUserRole = m_AuthService.GetUserRole(UserEmail)
+
+    ' 3. Verificar que la configuración se haya cargado correctamente
+    If Not m_Config.GetValue("IsInitialized") Then
+        ' El error específico ya ha sido logueado por CConfig.ValidateConfiguration
+        IAppManager_StartApplication = False
+        Exit Function
+    End If
+
+    ' 4. Continuar con la inicialización según el rol
+    Select Case m_CurrentUserRole
+        Case RolAdmin
+            Debug.Print "Usuario autenticado como Administrador."
+            ' TODO: Implementar inicialización específica para Admin
+        Case RolCalidad
+            Debug.Print "Usuario autenticado como Calidad."
+            ' TODO: Implementar inicialización específica para Calidad
+        Case RolTecnico
+            Debug.Print "Usuario autenticado como Técnico."
+            ' TODO: Implementar inicialización específica para Técnico
+        Case RolDesconocido
+            m_ErrorHandler.LogError vbObjectError + 515, "El usuario '" & UserEmail & "' no tiene un rol definido en el sistema.", "CAppManager.StartApplication", "CRITICAL_AUTH_FAILURE"
+            IAppManager_StartApplication = False
+            Exit Function
+    End Select
+    
+    m_IsInitialized = True
+    IAppManager_StartApplication = True
+    Exit Function
+    
+ErrorHandler:
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CAppManager.StartApplication", "CRITICAL_STARTUP_ERROR"
+    IAppManager_StartApplication = False
+End Function
+
+' =====================================================
+' METODO: GetCurrentUserRole (IAppManager)
+' =====================================================
+Private Function IAppManager_GetCurrentUserRole() As UserRole
+    IAppManager_GetCurrentUserRole = m_CurrentUserRole
+End Function
+
+' =====================================================
+' METODO: IsApplicationInitialized (IAppManager)
+' =====================================================
+Private Function IAppManager_IsApplicationInitialized() As Boolean
+    IAppManager_IsApplicationInitialized = m_IsInitialized
+End Function
+
+' =====================================================
+' METODO: Ping (IAppManager)
+' =====================================================
+Private Function IAppManager_Ping() As String
+    IAppManager_Ping = "Pong"
+End Function
+
+' =====================================================
+' METODOS PUBLICOS DE CONVENIENCIA (Lección 24)
+' =====================================================
+Public Sub Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
+    IAppManager_Initialize authService, config, errorHandler
+End Sub
+
+Public Function StartApplication(Optional ByVal userEmail As String = "") As Boolean
+    StartApplication = IAppManager_StartApplication(userEmail)
+End Function
+
+Public Function GetCurrentUserRole() As UserRole
+    GetCurrentUserRole = IAppManager_GetCurrentUserRole()
+End Function
+
+Public Function IsApplicationInitialized() As Boolean
+    IsApplicationInitialized = IAppManager_IsApplicationInitialized()
+End Function
+
+Public Function Ping() As String
+    Ping = IAppManager_Ping()
+End Function
+
+' =====================================================
+' FUNCION PRIVADA: GetCurrentUserEmail
+' PROPOSITO: Obtener el email del usuario actual con capacidad de suplantación en desarrollo
+' =====================================================
+Private Function GetCurrentUserEmail() As String
+    On Error GoTo ErrorHandler
+    
+    ' Usar el usuario actual de Windows
+    GetCurrentUserEmail = Environ("USERNAME") & "@" & m_Config.GetValue("DEFAULT_DOMAIN")
+    
+    Exit Function
+    
+ErrorHandler:
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CAppManager.GetCurrentUserEmail"
+    GetCurrentUserEmail = "unknown@domain.com"
+End Function

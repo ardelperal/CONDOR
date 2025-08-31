@@ -11,13 +11,13 @@ Option Compare Database
 Option Explicit
 
 
-Public Function GetExpedienteById(ByVal idExpediente As Long) As E_Expediente
+Public Function GetExpedienteById(ByVal idExpediente As Long) As EExpediente
 End Function
 
 Public Function GetExpedientesParaSelector() As DAO.Recordset
 End Function
 
-Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As E_Expediente
+Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpediente
 End Function
 
 

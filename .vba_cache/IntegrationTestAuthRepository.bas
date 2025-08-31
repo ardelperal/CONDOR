@@ -1,112 +1,83 @@
-Attribute VB_Name = "IntegrationTest_AuthRepository"
+Attribute VB_Name = "IntegrationTestAuthRepository"
 Option Compare Database
 Option Explicit
 
-#If DEV_MODE Then
-
 ' ============================================================================
-' MÓDULO DE PRUEBAS DE INTEGRACIÓN PARA CAuthRepository
+' MÓDULO DE PRUEBAS DE INTEGRACIÓN PARA CAuthRepository 
 ' ============================================================================
-' Este módulo contiene pruebas de integración para CAuthRepository
-' que validan la conexión y consultas contra la base de datos real de la Lanzadera.
+' Este módulo contiene pruebas de integración para CAuthRepository 
+' que validan la conexión y consultas contra la base de datos real de la Lanzadera. 
 
 ' Constantes para el autoaprovisionamiento de bases de datos
 Private Const LANZADERA_TEMPLATE_PATH As String = "back\test_db\templates\Lanzadera_test_template.accdb"
 Private Const LANZADERA_ACTIVE_PATH As String = "back\test_db\active\Lanzadera_integration_test.accdb"
 
 ' Función principal que ejecuta todas las pruebas del módulo
-Public Function IntegrationTest_AuthRepository_RunAll() As CTestSuiteResult
+Public Function IntegrationTestAuthRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "IntegrationTest_AuthRepository"
+    suiteResult.Initialize "IntegrationTestAuthRepository"
     
     ' Ejecutar todas las pruebas de integración
-    suiteResult.AddTestResult Test_GetUserAuthData_Admin()
-    suiteResult.AddTestResult Test_GetUserAuthData_Calidad()
-    suiteResult.AddTestResult Test_GetUserAuthData_Tecnico()
-    suiteResult.AddTestResult Test_GetUserAuthData_UserNotExists()
+    suiteResult.AddTestResult TestGetUserAuthDataAdmin()
+    suiteResult.AddTestResult TestGetUserAuthDataCalidad()
+    suiteResult.AddTestResult TestGetUserAuthDataTecnico()
+    suiteResult.AddTestResult TestGetUserAuthDataUserNotExists()
     
-    Set IntegrationTest_AuthRepository_RunAll = suiteResult
+    Set IntegrationTestAuthRepositoryRunAll = suiteResult
 End Function
 
 ' ============================================================================
-' SETUP Y TEARDOWN
+' SETUP Y TEARDOWN 
 ' ============================================================================
 
-' Prepara el entorno de prueba copiando la plantilla de BD a BD de prueba
 Private Sub Setup()
     On Error GoTo TestError
-    
-    ' Aprovisionar la base de datos de prueba usando el sistema estándar
-    Dim fullTemplatePath As String
-    Dim fullTestPath As String
-    
-    fullTemplatePath = modTestUtils.GetProjectPath() & LANZADERA_TEMPLATE_PATH
-    fullTestPath = modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
-    
-    modTestUtils.PrepareTestDatabase fullTemplatePath, fullTestPath
-    
+    modTestUtils.PrepareTestDatabase modTestUtils.GetProjectPath() & LANZADERA_TEMPLATE_PATH, modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
     Exit Sub
-    
 TestError:
-    Debug.Print "Error en Setup (" & Err.Number & "): " & Err.Description
-    Err.Raise Err.Number, "IntegrationTest_AuthRepository.Setup", Err.Description
+    Err.Raise Err.Number, "IntegrationTestAuthRepository.Setup", Err.Description
 End Sub
 
-' Limpia el entorno de prueba
 Private Sub Teardown()
-    On Error GoTo TestError
-    
+    On Error Resume Next
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
-    
     Dim testPath As String
     testPath = modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
-    
-    ' Eliminar BD de prueba
     If fs.FileExists(testPath) Then
         fs.DeleteFile testPath
     End If
-    
     Set fs = Nothing
-    Exit Sub
-    
-TestError:
-    Debug.Print "Error en Teardown: " & Err.Number & " - " & Err.Description
 End Sub
 
 ' ============================================================================
-' PRUEBAS DE INTEGRACIÓN
+' PRUEBAS DE INTEGRACIÓN 
 ' ============================================================================
 
-' Prueba que GetUserAuthData devuelve datos correctos para usuario Admin
-Private Function Test_GetUserAuthData_Admin() As CTestResult
+Private Function TestGetUserAuthDataAdmin() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetUserAuthData_Admin"
-    
-    On Error GoTo TestError
-    
-    ' Setup
-    Call Setup
-    
-    ' Arrange
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "LANZADERA_DB_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
-    testConfig.SetSetting "LANZADERA_DB_PASSWORD", "dpddpd"
-    
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fileSystem)
+    testResult.Initialize "GetUserAuthData debe devolver datos correctos para un usuario Admin"
     
     Dim repository As IAuthRepository
+    Dim errorHandler As IErrorHandlerService
+    Dim testConfig As IConfig
+    Dim fs As IFileSystem
+
+    On Error GoTo TestError
+    
+    Setup
+    
+    Dim settings As New Collection
+    settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
+    settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fs)
     Set repository = modRepositoryFactory.CreateAuthRepository(testConfig, errorHandler)
     
-    ' Act
-    Dim authData As E_AuthData
+    Dim authData As AuthData
     Set authData = repository.GetUserAuthData("admin@test.com")
     
-    ' Assert
     modAssert.AssertTrue authData.UserExists, "Usuario admin debe existir"
     modAssert.AssertTrue authData.IsGlobalAdmin, "Usuario admin debe tener rol de administrador global"
     
@@ -117,41 +88,34 @@ TestError:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    Call Teardown
-    Set repository = Nothing
-    Set errorHandler = Nothing
-    Set Test_GetUserAuthData_Admin = testResult
+    Teardown
+    Set TestGetUserAuthDataAdmin = testResult
 End Function
 
-' Prueba que GetUserAuthData devuelve datos correctos para usuario de Calidad
-Private Function Test_GetUserAuthData_Calidad() As CTestResult
+Private Function TestGetUserAuthDataCalidad() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetUserAuthData_Calidad"
-    
-    On Error GoTo TestError
-    
-    ' Setup
-    Call Setup
-    
-    ' Arrange
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "LANZADERA_DB_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
-    testConfig.SetSetting "LANZADERA_DB_PASSWORD", "dpddpd"
-    
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fileSystem)
+    testResult.Initialize "GetUserAuthData debe devolver datos correctos para un usuario de Calidad"
     
     Dim repository As IAuthRepository
+    Dim errorHandler As IErrorHandlerService
+    Dim testConfig As IConfig
+    Dim fs As IFileSystem
+
+    On Error GoTo TestError
+    
+    Setup
+
+    Dim settings As New Collection
+    settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
+    settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fs)
     Set repository = modRepositoryFactory.CreateAuthRepository(testConfig, errorHandler)
     
-    ' Act
-    Dim authData As T_AuthData
+    Dim authData As AuthData
     Set authData = repository.GetUserAuthData("calidad@test.com")
     
-    ' Assert
     modAssert.AssertTrue authData.UserExists, "Usuario calidad debe existir"
     modAssert.AssertTrue authData.IsCalidad, "Usuario calidad debe tener rol de calidad"
     modAssert.AssertFalse authData.IsGlobalAdmin, "Usuario calidad no debe ser administrador global"
@@ -163,41 +127,34 @@ TestError:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    Call Teardown
-    Set repository = Nothing
-    Set errorHandler = Nothing
-    Set Test_GetUserAuthData_Calidad = testResult
+    Teardown
+    Set TestGetUserAuthDataCalidad = testResult
 End Function
 
-' Prueba que GetUserAuthData devuelve datos correctos para usuario Técnico
-Private Function Test_GetUserAuthData_Tecnico() As CTestResult
+Private Function TestGetUserAuthDataTecnico() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetUserAuthData_Tecnico"
-    
-    On Error GoTo TestError
-    
-    ' Setup
-    Call Setup
-    
-    ' Arrange
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "LANZADERA_DB_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
-    testConfig.SetSetting "LANZADERA_DB_PASSWORD", "dpddpd"
-    
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fileSystem)
+    testResult.Initialize "GetUserAuthData debe devolver datos correctos para un usuario Técnico"
     
     Dim repository As IAuthRepository
+    Dim errorHandler As IErrorHandlerService
+    Dim testConfig As IConfig
+    Dim fs As IFileSystem
+
+    On Error GoTo TestError
+    
+    Setup
+
+    Dim settings As New Collection
+    settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
+    settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fs)
     Set repository = modRepositoryFactory.CreateAuthRepository(testConfig, errorHandler)
     
-    ' Act
-    Dim authData As T_AuthData
+    Dim authData As AuthData
     Set authData = repository.GetUserAuthData("tecnico@test.com")
     
-    ' Assert
     modAssert.AssertTrue authData.UserExists, "Usuario técnico debe existir"
     modAssert.AssertTrue authData.IsTecnico, "Usuario técnico debe tener rol técnico"
     modAssert.AssertFalse authData.IsGlobalAdmin, "Usuario técnico no debe ser administrador global"
@@ -210,41 +167,34 @@ TestError:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    Call Teardown
-    Set repository = Nothing
-    Set errorHandler = Nothing
-    Set Test_GetUserAuthData_Tecnico = testResult
+    Teardown
+    Set TestGetUserAuthDataTecnico = testResult
 End Function
 
-' Prueba que GetUserAuthData maneja correctamente usuarios inexistentes
-Private Function Test_GetUserAuthData_UserNotExists() As CTestResult
+Private Function TestGetUserAuthDataUserNotExists() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetUserAuthData_UserNotExists"
-    
-    On Error GoTo TestError
-    
-    ' Setup
-    Call Setup
-    
-    ' Arrange
-    Dim testConfig As New CConfig
-    testConfig.SetSetting "LANZADERA_DB_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
-    testConfig.SetSetting "LANZADERA_DB_PASSWORD", "dpddpd"
-    
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fileSystem)
+    testResult.Initialize "GetUserAuthData debe manejar correctamente usuarios inexistentes"
     
     Dim repository As IAuthRepository
+    Dim errorHandler As IErrorHandlerService
+    Dim testConfig As IConfig
+    Dim fs As IFileSystem
+
+    On Error GoTo TestError
+    
+    Setup
+
+    Dim settings As New Collection
+    settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
+    settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fs)
     Set repository = modRepositoryFactory.CreateAuthRepository(testConfig, errorHandler)
     
-    ' Act
-    Dim authData As T_AuthData
+    Dim authData As AuthData
     Set authData = repository.GetUserAuthData("inexistente@test.com")
     
-    ' Assert
     modAssert.AssertFalse authData.UserExists, "Usuario inexistente no debe existir"
     modAssert.AssertFalse authData.IsGlobalAdmin, "Usuario inexistente no debe ser administrador global"
     modAssert.AssertFalse authData.IsCalidad, "Usuario inexistente no debe tener rol de calidad"
@@ -257,10 +207,6 @@ TestError:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    Call Teardown
-    Set repository = Nothing
-    Set errorHandler = Nothing
-    Set Test_GetUserAuthData_UserNotExists = testResult
+    Teardown
+    Set TestGetUserAuthDataUserNotExists = testResult
 End Function
-
-#End If

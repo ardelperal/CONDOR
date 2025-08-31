@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "E_Expediente"
+Attribute VB_Name = "EExpediente"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
@@ -11,7 +11,7 @@ Option Compare Database
 Option Explicit
 
 '******************************************************************************
-' CLASE: E_Expediente
+' CLASE: EExpediente
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de expedientes
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024

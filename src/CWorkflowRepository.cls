@@ -57,7 +57,6 @@ End Sub
 ' @return Boolean: True si la transición es válida, False en caso contrario
 '''
 Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As String, ByVal estadoOrigen As String, ByVal estadoDestino As String) As Boolean
-    Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
@@ -137,8 +136,7 @@ End Function
 Private Function IWorkflowRepository_GetAvailableStates(ByVal tipoSolicitud As String) As Collection
     On Error GoTo ErrorHandler
     
-    Dim db As DAO.Database
-    Dim qdf As DAO.QueryDef
+    Dim db As DAO.Database   Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
     Dim colEstados As New Collection
     

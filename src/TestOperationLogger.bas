@@ -1,12 +1,9 @@
-Attribute VB_Name = "Test_OperationLogger"
+Attribute VB_Name = "TestOperationLogger"
 Option Compare Database
 Option Explicit
 
-
-#If DEV_MODE Then
-
 ' ============================================================================
-' Módulo: Test_OperationLogger
+' Módulo: TestOperationLogger
 ' Descripción: Pruebas unitarias puras y aisladas para COperationLogger.
 ' Arquitectura: Capa de Pruebas - Tests unitarios con mocks
 ' Autor: CONDOR-Expert
@@ -14,28 +11,30 @@ Option Explicit
 ' ============================================================================
 
 ' ============================================================================
-' FUNCIÃ“N PRINCIPAL DE EJECUCIÃ“N DE PRUEBAS
+' FUNCIÓN PRINCIPAL DE EJECUCIÓN DE PRUEBAS
 ' ============================================================================
 
-Public Function Test_OperationLogger_RunAll() As CTestSuiteResult
+Public Function TestOperationLoggerRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.suiteName = "Test_OperationLogger"
+    suiteResult.Initialize "TestOperationLogger"
     
     ' Ejecutar todas las pruebas unitarias aisladas
-    Call suiteResult.AddTestResult("Test_Initialize_WithValidDependencies_Success", Test_Initialize_WithValidDependencies_Success())
-    Call suiteResult.AddTestResult("Test_LogOperation_WithoutInitialize_HandlesError", Test_LogOperation_WithoutInitialize_HandlesError())
-    Call suiteResult.AddTestResult("Test_LogOperation_WithValidParams_CallsRepositoryCorrectly", Test_LogOperation_WithValidParams_CallsRepositoryCorrectly())
-    Call suiteResult.AddTestResult("Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues", Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues())
-    Call suiteResult.AddTestResult("Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes", Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes())
+    Call suiteResult.AddTestResult(TestInitializeWithValidDependenciesSuccess())
+    Call suiteResult.AddTestResult(TestLogOperationWithoutInitializeHandlesError())
+    Call suiteResult.AddTestResult(TestLogOperationWithValidParamsCallsRepositoryCorrectly())
+    Call suiteResult.AddTestResult(TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues())
+    Call suiteResult.AddTestResult(TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes())
     
-    Set Test_OperationLogger_RunAll = suiteResult
+    Set TestOperationLoggerRunAll = suiteResult
 End Function
 
 ' ============================================================================
 ' PRUEBAS UNITARIAS PURAS Y AISLADAS PARA COperationLogger
 ' ============================================================================
 
-Public Function Test_Initialize_WithValidDependencies_Success() As CTestResult
+Public Function TestInitializeWithValidDependenciesSuccess() As CTestResult
+    Set TestInitializeWithValidDependenciesSuccess = New CTestResult
+    TestInitializeWithValidDependenciesSuccess.Initialize "Initialize con dependencias válidas debe tener éxito"
     On Error GoTo TestFail
     
     ' Arrange
@@ -48,16 +47,16 @@ Public Function Test_Initialize_WithValidDependencies_Success() As CTestResult
     Call logger.Initialize(mockConfig, mockRepository, mockErrorHandler)
     
     ' Assert - Si no hay error, la inicialización fue exitosa
-    Set Test_Initialize_WithValidDependencies_Success = New CTestResult
-    Test_Initialize_WithValidDependencies_Success.Pass
+    TestInitializeWithValidDependenciesSuccess.Pass
     Exit Function
     
 TestFail:
-    Set Test_Initialize_WithValidDependencies_Success = New CTestResult
-    Call Test_Initialize_WithValidDependencies_Success.Fail("Error en inicialización: " & Err.Description)
+    Call TestInitializeWithValidDependenciesSuccess.Fail("Error en inicialización: " & Err.Description)
 End Function
 
-Public Function Test_LogOperation_WithoutInitialize_HandlesError() As CTestResult
+Public Function TestLogOperationWithoutInitializeHandlesError() As CTestResult
+    Set TestLogOperationWithoutInitializeHandlesError = New CTestResult
+    TestLogOperationWithoutInitializeHandlesError.Initialize "LogOperation sin inicializar debe manejar el error"
     On Error GoTo TestFail
     
     ' Arrange
@@ -68,17 +67,17 @@ Public Function Test_LogOperation_WithoutInitialize_HandlesError() As CTestResul
     Call logger.LogOperation("TestType", "TestEntity", "TestDetails")
     
     ' Si llegamos aquí sin crash, el manejo de errores funcionó
-    Set Test_LogOperation_WithoutInitialize_HandlesError = New CTestResult
-    Test_LogOperation_WithoutInitialize_HandlesError.Pass
+    TestLogOperationWithoutInitializeHandlesError.Pass
     Exit Function
     
 TestFail:
     ' El error es esperado, pero debe ser manejado internamente
-    Set Test_LogOperation_WithoutInitialize_HandlesError = New CTestResult
-    Test_LogOperation_WithoutInitialize_HandlesError.Pass
+    TestLogOperationWithoutInitializeHandlesError.Pass
 End Function
 
-Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As CTestResult
+Public Function TestLogOperationWithValidParamsCallsRepositoryCorrectly() As CTestResult
+    Set TestLogOperationWithValidParamsCallsRepositoryCorrectly = New CTestResult
+    TestLogOperationWithValidParamsCallsRepositoryCorrectly.Initialize "LogOperation con parámetros válidos debe llamar al repositorio correctamente"
     On Error GoTo TestFail
     
     ' Arrange
@@ -100,16 +99,16 @@ Public Function Test_LogOperation_WithValidParams_CallsRepositoryCorrectly() As 
     Call modAssert.AreEqual("EXP001", mockRepository.LastEntityId, "ID de entidad incorrecto")
     Call modAssert.AreEqual("Expediente creado exitosamente", mockRepository.LastDetails, "Detalles incorrectos")
     
-    Set Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = New CTestResult
-    Test_LogOperation_WithValidParams_CallsRepositoryCorrectly.Pass
+    TestLogOperationWithValidParamsCallsRepositoryCorrectly.Pass
     Exit Function
     
 TestFail:
-    Set Test_LogOperation_WithValidParams_CallsRepositoryCorrectly = New CTestResult
-    Call Test_LogOperation_WithValidParams_CallsRepositoryCorrectly.Fail("Error en prueba: " & Err.Description)
+    Call TestLogOperationWithValidParamsCallsRepositoryCorrectly.Fail("Error en prueba: " & Err.Description)
 End Function
 
-Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues() As CTestResult
+Public Function TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues() As CTestResult
+    Set TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues = New CTestResult
+    TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues.Initialize "LogOperation con parámetros vacíos debe llamar al repositorio con valores vacíos"
     On Error GoTo TestFail
     
     ' Arrange
@@ -130,16 +129,16 @@ Public Function Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues
     Call modAssert.AreEqual("", mockRepository.LastEntityId, "ID de entidad debería estar vacío")
     Call modAssert.AreEqual("", mockRepository.LastDetails, "Detalles deberían estar vacíos")
     
-    Set Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = New CTestResult
-    Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues.Pass
+    TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues.Pass
     Exit Function
     
 TestFail:
-    Set Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues = New CTestResult
-    Call Test_LogOperation_WithEmptyParams_CallsRepositoryWithEmptyValues.Fail("Error en prueba: " & Err.Description)
+    Call TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues.Fail("Error en prueba: " & Err.Description)
 End Function
 
-Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes() As CTestResult
+Public Function TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes() As CTestResult
+    Set TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes = New CTestResult
+    TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes.Initialize "LogOperation con múltiples operaciones debe llamar al repositorio múltiples veces"
     On Error GoTo TestFail
     
     ' Arrange
@@ -164,17 +163,9 @@ Public Function Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTime
     Call modAssert.AreEqual("EXP003", mockRepository.LastEntityId, "Último ID de entidad incorrecto")
     Call modAssert.AreEqual("Tercera operación", mockRepository.LastDetails, "Últimos detalles incorrectos")
     
-    Set Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = New CTestResult
-    Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes.Pass
+    TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes.Pass
     Exit Function
     
 TestFail:
-    Set Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes = New CTestResult
-    Call Test_LogOperation_MultipleOperations_CallsRepositoryMultipleTimes.Fail("Error en prueba: " & Err.Description)
+    Call TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes.Fail("Error en prueba: " & Err.Description)
 End Function
-
-
-
-#End If
-
-

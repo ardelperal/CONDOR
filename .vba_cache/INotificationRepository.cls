@@ -10,14 +10,5 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-'******************************************************************************
-' INTERFAZ: INotificationRepository
-' Propósito: Define el contrato para el repositorio de notificaciones
-' Patrón: Repository Pattern para separación de responsabilidades
-' Versión: 1.0
-'******************************************************************************
-
-' Método para encolar un correo en la base de datos
-' El repositorio es responsable de generar el ID
-Public Function EncolarCorreo(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpo As String, ByVal cc As String, ByVal bcc As String, ByVal adjunto As String) As Boolean
-End Function   ' Implementación debe ser proporcionada por las clases concretas
+Public Function EnqueueEmail(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpoHTML As String, ByVal usuario As String, ByVal adminEmail As String, Optional ByVal adjuntoPath As String = "") As Boolean
+End Function

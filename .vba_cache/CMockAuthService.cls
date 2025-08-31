@@ -10,54 +10,31 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
-#If DEV_MODE Then
-
 Implements IAuthService
 
 ' Variable privada para almacenar el rol configurado
-Private m_MockUserRole As E_UserRole
+Private m_MockUserRole As UserRole
 
 ' Implementación de la interfaz IAuthService
 Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository, errorHandler As IErrorHandlerService)
-    ' Mock no requiere configuración específica, pero mantiene la interfaz
-    ' para compatibilidad con el patrón de inyección de dependencias
-    m_MockUserRole = Rol_Desconocido ' Valor por defecto
+    m_MockUserRole = RolDesconocido ' Valor por defecto
 End Sub
 
 ' Método público para configurar el rol que debe devolver el mock
-Public Sub SetMockUserRole(ByVal role As E_UserRole)
+Public Sub SetMockUserRole(ByVal role As UserRole)
     m_MockUserRole = role
 End Sub
 
-Private Function IAuthService_GetUserRole(ByVal UserEmail As String) As E_UserRole
-    ' El mock devuelve el rol configurado mediante SetMockUserRole
-    ' independientemente del email proporcionado
+Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
     IAuthService_GetUserRole = m_MockUserRole
 End Function
 
 ' Método público de conveniencia que delega a la implementación de interfaz
-Public Function GetUserRole(ByVal UserEmail As String) As E_UserRole
-    GetUserRole = IAuthService_GetUserRole(UserEmail)
+Public Function GetUserRole(ByVal userEmail As String) As UserRole
+    GetUserRole = IAuthService_GetUserRole(userEmail)
 End Function
 
 ' Método para resetear el estado del mock
 Public Sub Reset()
-    m_MockUserRole = Rol_Desconocido
+    m_MockUserRole = RolDesconocido
 End Sub
-
-#End If
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -20,27 +20,20 @@ Public Function CreateOperationLogger() As IOperationLogger
     Set fileSystem = modFileSystemFactory.CreateFileSystem()
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(configService, fileSystem)
     
-    ' Decidir si usar mock o clase concreta basado en DEV_MODE
-    If CBool(configService.GetValue("DEV_MODE")) Then
-        ' Modo desarrollo - usar mock
-        Dim mockLogger As New CMockOperationLogger
-        Set CreateOperationLogger = mockLogger
-    Else
-        ' Modo producción - usar clase concreta
-        Dim loggerInstance As COperationLogger
-        Dim repositoryInstance As COperationRepository
-        
-        Set loggerInstance = New COperationLogger
-        Set repositoryInstance = New COperationRepository
-        
-        ' Inicializar el repositorio con la configuración y errorHandler
-        repositoryInstance.Initialize configService, errorHandler
-        
-        ' Inyectar las dependencias en el logger
-        loggerInstance.Initialize configService, repositoryInstance, errorHandler
-        
-        Set CreateOperationLogger = loggerInstance
-    End If
+    ' Crear instancia real del logger
+    Dim loggerInstance As COperationLogger
+    Dim repositoryInstance As COperationRepository
+    
+    Set loggerInstance = New COperationLogger
+    Set repositoryInstance = New COperationRepository
+    
+    ' Inicializar el repositorio con la configuración y errorHandler
+    repositoryInstance.Initialize configService, errorHandler
+    
+    ' Inyectar las dependencias en el logger
+    loggerInstance.Initialize configService, repositoryInstance, errorHandler
+    
+    Set CreateOperationLogger = loggerInstance
     
     Exit Function
     

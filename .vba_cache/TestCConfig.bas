@@ -1,9 +1,6 @@
-Attribute VB_Name = "Test_CConfig"
+Attribute VB_Name = "TestCConfig"
 Option Compare Database
 Option Explicit
-
-
-#If DEV_MODE Then
 
 ' ============================================================================
 ' MÓDULO DE PRUEBAS UNITARIAS PARA CConfig
@@ -13,45 +10,42 @@ Option Explicit
 ' Las pruebas son ultrarrápidas y completamente aisladas.
 
 ' Función principal que ejecuta todas las pruebas del módulo
-Public Function Test_CConfig_RunAll() As CTestSuiteResult
+Public Function TestCConfigRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "Test_CConfig"
+    suiteResult.Initialize "TestCConfig"
     
     ' Ejecutar todas las pruebas unitarias
-    suiteResult.AddTestResult Test_GetValue_DATAPATH_Success()
-    suiteResult.AddTestResult Test_GetValue_DATABASEPASSWORD_Success()
-    suiteResult.AddTestResult Test_GetDataPath_Success()
-    suiteResult.AddTestResult Test_GetDatabasePassword_Success()
-    suiteResult.AddTestResult Test_HasKey_ExistingKey_ReturnsTrue()
-    suiteResult.AddTestResult Test_HasKey_NonExistingKey_ReturnsFalse()
-    suiteResult.AddTestResult Test_GetValue_NonExistingKey_ReturnsEmpty()
+    suiteResult.AddTestResult TestGetValueDatapathSuccess()
+    suiteResult.AddTestResult TestGetValueDatabasepasswordSuccess()
+    suiteResult.AddTestResult TestGetDataPathSuccess()
+    suiteResult.AddTestResult TestGetDatabasePasswordSuccess()
+    suiteResult.AddTestResult TestHasKeyExistingKeyReturnsTrue()
+    suiteResult.AddTestResult TestHasKeyNonExistingKeyReturnsFalse()
+    suiteResult.AddTestResult TestGetValueNonExistingKeyReturnsEmpty()
     
-    Set Test_CConfig_RunAll = suiteResult
+    Set TestCConfigRunAll = suiteResult
 End Function
 
 ' ============================================================================
-' PRUEBAS DE INTEGRACIÓN PARA CConfig
+' PRUEBAS UNITARIAS PARA CConfig
 ' ============================================================================
 
-' Prueba que CConfig puede obtener el valor DATAPATH correctamente
-Private Function Test_GetValue_DATAPATH_Success() As CTestResult
+' Prueba que GetValue puede obtener el valor BACKEND_DB_PATH correctamente
+Private Function TestGetValueDatapathSuccess() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetValue_DATAPATH_Success"
+    testResult.Initialize "GetValue debe obtener BACKEND_DB_PATH correctamente"
     
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig      ' Variable para la implementación
-    Dim config As IConfig              ' Variable para la interfaz
+    Dim configImpl As New CConfig
+    Dim config As IConfig
     Dim settings As New Collection
     
     settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
     settings.Add "testpassword", "DATABASE_PASSWORD"
     
-    ' 1. Configurar usando la variable de la clase concreta
     configImpl.LoadFromCollection settings
-    
-    ' 2. Asignar a la variable de la interfaz para la prueba
     Set config = configImpl
     
     ' Act
@@ -60,7 +54,6 @@ Private Function Test_GetValue_DATAPATH_Success() As CTestResult
     
     ' Assert
     modAssert.AssertEquals "C:\Test\CONDOR_Backend.accdb", dataPath, "BACKEND_DB_PATH debe ser el valor configurado"
-    modAssert.AssertTrue InStr(dataPath, ".accdb") > 0, "BACKEND_DB_PATH debe contener .accdb"
     
     testResult.Pass
     GoTo Cleanup
@@ -70,28 +63,25 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
-    Set Test_GetValue_DATAPATH_Success = testResult
+    Set TestGetValueDatapathSuccess = testResult
 End Function
 
-' Prueba que CConfig puede obtener el valor DATABASEPASSWORD correctamente
-Private Function Test_GetValue_DATABASEPASSWORD_Success() As CTestResult
+' Prueba que GetValue puede obtener el valor DATABASE_PASSWORD correctamente
+Private Function TestGetValueDatabasepasswordSuccess() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetValue_DATABASEPASSWORD_Success"
+    testResult.Initialize "GetValue debe obtener DATABASE_PASSWORD correctamente"
     
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig      ' Variable para la implementación
-    Dim config As IConfig              ' Variable para la interfaz
+    Dim configImpl As New CConfig
+    Dim config As IConfig
     Dim settings As New Collection
     
     settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
     settings.Add "testpassword", "DATABASE_PASSWORD"
     
-    ' 1. Configurar usando la variable de la clase concreta
     configImpl.LoadFromCollection settings
-    
-    ' 2. Asignar a la variable de la interfaz para la prueba
     Set config = configImpl
     
     ' Act
@@ -109,33 +99,28 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
-    Set Test_GetValue_DATABASEPASSWORD_Success = testResult
+    Set TestGetValueDatabasepasswordSuccess = testResult
 End Function
 
 ' Prueba que HasKey devuelve True para claves existentes
-Private Function Test_HasKey_ExistingKey_ReturnsTrue() As CTestResult
+Private Function TestHasKeyExistingKeyReturnsTrue() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_HasKey_ExistingKey_ReturnsTrue"
+    testResult.Initialize "HasKey debe devolver True para una clave existente"
     
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig      ' Variable para la implementación
-    Dim config As IConfig              ' Variable para la interfaz
+    Dim configImpl As New CConfig
+    Dim config As IConfig
     Dim settings As New Collection
     
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "DATAPATH"
-    settings.Add "testpassword", "DATABASEPASSWORD"
+    settings.Add "some_value", "EXISTING_KEY"
     
-    ' 1. Configurar usando la variable de la clase concreta
     configImpl.LoadFromCollection settings
-    
-    ' 2. Asignar a la variable de la interfaz para la prueba
     Set config = configImpl
     
     ' Act & Assert
-    modAssert.AssertTrue config.HasKey("DATAPATH"), "HasKey debe devolver True para DATAPATH"
-    modAssert.AssertTrue config.HasKey("DATABASEPASSWORD"), "HasKey debe devolver True para DATABASEPASSWORD"
+    modAssert.AssertTrue config.HasKey("EXISTING_KEY"), "HasKey debe devolver True para EXISTING_KEY"
     
     testResult.Pass
     GoTo Cleanup
@@ -145,32 +130,28 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
-    Set Test_HasKey_ExistingKey_ReturnsTrue = testResult
+    Set TestHasKeyExistingKeyReturnsTrue = testResult
 End Function
 
 ' Prueba que HasKey devuelve False para claves no existentes
-Private Function Test_HasKey_NonExistingKey_ReturnsFalse() As CTestResult
+Private Function TestHasKeyNonExistingKeyReturnsFalse() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_HasKey_NonExistingKey_ReturnsFalse"
+    testResult.Initialize "HasKey debe devolver False para una clave inexistente"
     
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig      ' Variable para la implementación
-    Dim config As IConfig              ' Variable para la interfaz
+    Dim configImpl As New CConfig
+    Dim config As IConfig
     Dim settings As New Collection
     
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "DATAPATH"
-    settings.Add "testpassword", "DATABASEPASSWORD"
-    
-    ' 1. Configurar usando la variable de la clase concreta
+    settings.Add "some_value", "EXISTING_KEY"
+
     configImpl.LoadFromCollection settings
-    
-    ' 2. Asignar a la variable de la interfaz para la prueba
     Set config = configImpl
     
     ' Act & Assert
-    modAssert.AssertFalse config.HasKey("CLAVE_INEXISTENTE"), "HasKey debe devolver False para clave inexistente"
+    modAssert.AssertFalse config.HasKey("NON_EXISTING_KEY"), "HasKey debe devolver False para clave inexistente"
     modAssert.AssertFalse config.HasKey(""), "HasKey debe devolver False para clave vacía"
     
     testResult.Pass
@@ -181,33 +162,29 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
-    Set Test_HasKey_NonExistingKey_ReturnsFalse = testResult
+    Set TestHasKeyNonExistingKeyReturnsFalse = testResult
 End Function
 
 ' Prueba que GetValue devuelve cadena vacía para claves no existentes
-Private Function Test_GetValue_NonExistingKey_ReturnsEmpty() As CTestResult
+Private Function TestGetValueNonExistingKeyReturnsEmpty() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetValue_NonExistingKey_ReturnsEmpty"
+    testResult.Initialize "GetValue debe devolver una cadena vacía para una clave inexistente"
     
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig      ' Variable para la implementación
-    Dim config As IConfig              ' Variable para la interfaz
+    Dim configImpl As New CConfig
+    Dim config As IConfig
     Dim settings As New Collection
     
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "DATAPATH"
-    settings.Add "testpassword", "DATABASEPASSWORD"
-    
-    ' 1. Configurar usando la variable de la clase concreta
+    settings.Add "some_value", "EXISTING_KEY"
+
     configImpl.LoadFromCollection settings
-    
-    ' 2. Asignar a la variable de la interfaz para la prueba
     Set config = configImpl
     
     ' Act & Assert
     Dim configValue As String
-    configValue = config.GetValue("CLAVE_INEXISTENTE")
+    configValue = config.GetValue("NON_EXISTING_KEY")
     modAssert.AssertEquals "", configValue, "GetValue debe devolver cadena vacía para clave inexistente"
     
     configValue = config.GetValue("")
@@ -221,28 +198,24 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
-    Set Test_GetValue_NonExistingKey_ReturnsEmpty = testResult
+    Set TestGetValueNonExistingKeyReturnsEmpty = testResult
 End Function
 
 ' Prueba que GetDataPath devuelve la ruta correcta de la base de datos
-Private Function Test_GetDataPath_Success() As CTestResult
+Private Function TestGetDataPathSuccess() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetDataPath_Success"
+    testResult.Initialize "GetDataPath debe devolver la ruta de la BD correctamente"
     
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig      ' Variable para la implementación
-    Dim config As IConfig              ' Variable para la interfaz
+    Dim configImpl As New CConfig
+    Dim config As IConfig
     Dim settings As New Collection
     
     settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
-    settings.Add "testpassword", "DATABASE_PASSWORD"
     
-    ' 1. Configurar usando la variable de la clase concreta
     configImpl.LoadFromCollection settings
-    
-    ' 2. Asignar a la variable de la interfaz para la prueba
     Set config = configImpl
     
     ' Act
@@ -251,7 +224,6 @@ Private Function Test_GetDataPath_Success() As CTestResult
     
     ' Assert
     modAssert.AssertEquals "C:\Test\CONDOR_Backend.accdb", dataPath, "GetDataPath debe devolver el valor de BACKEND_DB_PATH"
-    modAssert.AssertTrue InStr(dataPath, ".accdb") > 0, "GetDataPath debe contener .accdb"
     
     testResult.Pass
     GoTo Cleanup
@@ -261,28 +233,24 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
-    Set Test_GetDataPath_Success = testResult
+    Set TestGetDataPathSuccess = testResult
 End Function
 
 ' Prueba que GetDatabasePassword devuelve la contraseña correcta
-Private Function Test_GetDatabasePassword_Success() As CTestResult
+Private Function TestGetDatabasePasswordSuccess() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Test_GetDatabasePassword_Success"
+    testResult.Initialize "GetDatabasePassword debe devolver la contraseña correctamente"
     
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig      ' Variable para la implementación
-    Dim config As IConfig              ' Variable para la interfaz
+    Dim configImpl As New CConfig
+    Dim config As IConfig
     Dim settings As New Collection
     
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
     settings.Add "testpassword123", "DATABASE_PASSWORD"
     
-    ' 1. Configurar usando la variable de la clase concreta
     configImpl.LoadFromCollection settings
-    
-    ' 2. Asignar a la variable de la interfaz para la prueba
     Set config = configImpl
     
     ' Act
@@ -300,14 +268,5 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
-    Set Test_GetDatabasePassword_Success = testResult
+    Set TestGetDatabasePasswordSuccess = testResult
 End Function
-
-#End If
-
-
-
-
-
-
-

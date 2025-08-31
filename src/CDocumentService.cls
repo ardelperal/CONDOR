@@ -62,7 +62,7 @@ End Sub
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
 ' ============================================================================
 
-Public Function GenerarDocumento(ByVal solicitud As E_Solicitud) As String
+Public Function GenerarDocumento(ByVal solicitud As ESolicitud) As String
     GenerarDocumento = IDocumentService_GenerarDocumento(solicitud)
 End Function
 
@@ -74,7 +74,7 @@ End Function
 ' IMPLEMENTACIÓN DE IDocumentService - ESCRITURA DE DOCUMENTOS
 ' ============================================================================
 
-Private Function IDocumentService_GenerarDocumento(ByVal solicitud As E_Solicitud) As String
+Private Function IDocumentService_GenerarDocumento(ByVal solicitud As ESolicitud) As String
     On Error GoTo ErrorHandler
     
     Dim rutaPlantilla As String
@@ -153,8 +153,8 @@ End Function
 Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
     On Error GoTo ErrorHandler
     
-    Dim solicitudLeida As E_Solicitud
-    Dim rsMapeo As Object ' Recordset
+    Dim solicitudLeida As ESolicitud
+    Dim rsMapeo As DAO.Recordset
     Dim campoTabla As String, campoWord As String, valorLeido As String
     
     If m_Config Is Nothing Or m_solicitudRepository Is Nothing Or m_OperationLogger Is Nothing Then
@@ -211,7 +211,7 @@ Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, B
     Loop
     
     ' 5. Guardar la solicitud actualizada
-    If m_solicitudRepository.SaveSolicitud(solicitudLeida) = 0 Then
+    If Not m_solicitudRepository.SaveSolicitud(solicitudLeida) Then
         m_OperationLogger.LogOperation "DocRead_SaveFail", CStr(idSolicitud), "Fallo al guardar la solicitud usando método ISolicitudRepository.SaveSolicitud"
         IDocumentService_LeerDocumento = False
         Exit Function
@@ -236,10 +236,10 @@ End Function
 ' MÉTODOS PRIVADOS AUXILIARES
 ' ============================================================================
 
-Private Function ReemplazarCamposEnPlantilla(ByVal solicitud As E_Solicitud) As Boolean
+Private Function ReemplazarCamposEnPlantilla(ByVal solicitud As ESolicitud) As Boolean
     On Error GoTo ErrorHandler
     
-    Dim rsMapeo As Object ' Recordset
+    Dim rsMapeo As DAO.Recordset
     Dim Datos As Object
     Dim campoTabla As String, campoWord As String, ValorAsociado As String
     Dim valorPropiedad As Variant
@@ -301,37 +301,30 @@ End Function
 
 
 Private Function ExtraerValorMarcador(ByVal contenidoDocumento As String, ByVal nombreMarcador As String) As String
-    ' Implementación simplificada para extraer valores de marcadores
-    ' En una implementación real, se necesitaría un parser más sofisticado
-    ' que maneje el formato específico de los marcadores de Word
-    
     On Error GoTo ErrorHandler
     
-    Dim posicionInicio As Long
-    Dim posicionFin As Long
-    Dim marcadorInicio As String
-    Dim marcadorFin As String
+    Dim inicioTag As Long, finTag As Long, inicioValor As Long, finValor As Long
+    Dim tagInicio As String, tagFin As String
     
-    ' Buscar patrones típicos de marcadores en documentos Word
-    marcadorInicio = "[" & nombreMarcador & "]"
-    marcadorFin = "[/" & nombreMarcador & "]"
+    tagInicio = "[" & nombreMarcador & "]"
+    tagFin = "[/" & nombreMarcador & "]"
     
-    posicionInicio = InStr(contenidoDocumento, marcadorInicio)
-    If posicionInicio > 0 Then
-        posicionInicio = posicionInicio + Len(marcadorInicio)
-        posicionFin = InStr(posicionInicio, contenidoDocumento, marcadorFin)
-        
-        If posicionFin > posicionInicio Then
-            ExtraerValorMarcador = Mid(contenidoDocumento, posicionInicio, posicionFin - posicionInicio)
-        Else
-            ExtraerValorMarcador = ""
-        End If
-    Else
+    inicioTag = InStr(1, contenidoDocumento, tagInicio, vbTextCompare)
+    If inicioTag = 0 Then
         ExtraerValorMarcador = ""
+        Exit Function
     End If
     
-    Exit Function
+    inicioValor = inicioTag + Len(tagInicio)
+    finTag = InStr(inicioValor, contenidoDocumento, tagFin, vbTextCompare)
+    If finTag = 0 Then
+        ExtraerValorMarcador = ""
+        Exit Function
+    End If
     
+    ExtraerValorMarcador = Mid(contenidoDocumento, inicioValor, finTag - inicioValor)
+    Exit Function
+
 ErrorHandler:
     m_ErrorHandlerService.LogError Err.Number, Err.Description, "CDocumentService.ExtraerValorMarcador"
     ExtraerValorMarcador = ""

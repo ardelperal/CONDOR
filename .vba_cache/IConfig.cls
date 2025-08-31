@@ -39,6 +39,12 @@ End Function
 Public Function GetIDAplicacionCondor() As String
 End Function
 
+Public Function GetLanzaderaDataPath() As String
+End Function
+
+Public Function GetLanzaderaPassword() As String
+End Function
+
 Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
 End Sub
 

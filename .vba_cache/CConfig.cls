@@ -71,6 +71,14 @@ Public Function GetIDAplicacionCondor() As String
     GetIDAplicacionCondor = IConfig_GetIDAplicacionCondor()
 End Function
 
+Public Function GetLanzaderaDataPath() As String
+    GetLanzaderaDataPath = IConfig_GetLanzaderaDataPath()
+End Function
+
+Public Function GetLanzaderaPassword() As String
+    GetLanzaderaPassword = IConfig_GetLanzaderaPassword()
+End Function
+
 Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
     IConfig_SetSetting key, value
 End Sub
@@ -182,6 +190,16 @@ End Function
 ' Implementación de IConfig.GetIDAplicacionCondor
 Private Function IConfig_GetIDAplicacionCondor() As String
     IConfig_GetIDAplicacionCondor = GetSettingValue("IDAplicacion_CONDOR")
+End Function
+
+' Implementación de IConfig.GetLanzaderaDataPath
+Private Function IConfig_GetLanzaderaDataPath() As String
+    IConfig_GetLanzaderaDataPath = GetSettingValue("LANZADERA_DB_PATH")
+End Function
+
+' Implementación de IConfig.GetLanzaderaPassword
+Private Function IConfig_GetLanzaderaPassword() As String
+    IConfig_GetLanzaderaPassword = GetSettingValue("LANZADERA_DB_PASSWORD")
 End Function
 
 ' Implementación de IConfig.SetSetting

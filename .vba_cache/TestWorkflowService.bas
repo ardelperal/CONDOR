@@ -1,4 +1,4 @@
-Attribute VB_Name = "Test_WorkflowService"
+Attribute VB_Name = "TestWorkflowService"
 Option Compare Database
 Option Explicit
 
@@ -16,24 +16,24 @@ Option Explicit
 '******************************************************************************
 
 ' Ejecuta todas las pruebas del WorkflowService
-Public Function Test_WorkflowService_RunAll() As CTestSuiteResult
+Public Function TestWorkflowServiceRunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
-    Call suite.Initialize("Test_WorkflowService")
+    Call suite.Initialize("TestWorkflowService")
     
     ' Ejecutar todas las pruebas
-    Call suite.AddTest(Test_ValidateTransition_Valid)
-    Call suite.AddTest(Test_ValidateTransition_Invalid)
-    Call suite.AddTest(Test_ValidateTransition_NoPermissions)
-    Call suite.AddTest(Test_GetNextStates)
-    Call suite.AddTest(Test_GetAvailableStates)
-    Call suite.AddTest(Test_GetInitialState)
-    Call suite.AddTest(Test_IsStateFinal)
-    Call suite.AddTest(Test_RecordStateChange)
-    Call suite.AddTest(Test_GetStateHistory)
-    Call suite.AddTest(Test_HasTransitionPermission)
-    Call suite.AddTest(Test_RequiresApproval)
+    Call suite.AddTestResult(TestValidateTransitionValid())
+    Call suite.AddTestResult(TestValidateTransitionInvalid())
+    Call suite.AddTestResult(TestValidateTransitionNoPermissions())
+    Call suite.AddTestResult(TestGetNextStates())
+    Call suite.AddTestResult(TestGetAvailableStates())
+    Call suite.AddTestResult(TestGetInitialState())
+    Call suite.AddTestResult(TestIsStateFinal())
+    Call suite.AddTestResult(TestRecordStateChange())
+    Call suite.AddTestResult(TestGetStateHistory())
+    Call suite.AddTestResult(TestHasTransitionPermission())
+    Call suite.AddTestResult(TestRequiresApproval())
     
-    Set Test_WorkflowService_RunAll = suite
+    Set TestWorkflowServiceRunAll = suite
 End Function
 
 '******************************************************************************
@@ -41,7 +41,7 @@ End Function
 '******************************************************************************
 
 ' Test que verifica que una transición válida retorna True
-Private Function Test_ValidateTransition_Valid() As CTestResult
+Private Function TestValidateTransitionValid() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("ValidateTransition con transición válida retorna True")
     
@@ -87,7 +87,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_ValidateTransition_Valid = testResult
+    Set TestValidateTransitionValid = testResult
     Exit Function
     
 TestFail:
@@ -96,7 +96,7 @@ TestFail:
 End Function
 
 ' Test que verifica que una transición inválida retorna False
-Private Function Test_ValidateTransition_Invalid() As CTestResult
+Private Function TestValidateTransitionInvalid() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "ValidateTransition con transición inválida retorna False"
     
@@ -142,7 +142,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_ValidateTransition_Invalid = testResult
+    Set TestValidateTransitionInvalid = testResult
     Exit Function
     
 TestFail:
@@ -151,7 +151,7 @@ TestFail:
 End Function
 
 ' Test que verifica que una transición sin los permisos correctos retorna False
-Private Function Test_ValidateTransition_NoPermissions() As CTestResult
+Private Function TestValidateTransitionNoPermissions() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "ValidateTransition sin permisos retorna False"
     
@@ -165,6 +165,8 @@ Private Function Test_ValidateTransition_NoPermissions() As CTestResult
     
     ' Configurar el mock para que IsValidTransition retorne True (la transición es válida)
     mockWorkflowRepo.AddRule "PC", "Borrador", "Aprobado", True
+    ' Configurar el mock para que HasTransitionPermission retorne False
+    mockWorkflowRepo.SetHasTransitionPermissionReturnValue False
     
     ' Inicializar el servicio con los mocks
     workflowService.Initialize mockConfig, mockLogger, mockWorkflowRepo
@@ -197,7 +199,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_ValidateTransition_NoPermissions = testResult
+    Set TestValidateTransitionNoPermissions = testResult
     Exit Function
     
 TestFail:
@@ -206,7 +208,7 @@ TestFail:
 End Function
 
 ' Test que verifica que GetNextStates devuelve la colección correcta
-Private Function Test_GetNextStates() As CTestResult
+Private Function TestGetNextStates() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "GetNextStates devuelve colección correcta"
     
@@ -239,7 +241,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_GetNextStates = testResult
+    Set TestGetNextStates = testResult
     Exit Function
     
 TestFail:
@@ -248,7 +250,7 @@ TestFail:
 End Function
 
 ' Test que verifica que GetAvailableStates devuelve la colección correcta
-Private Function Test_GetAvailableStates() As CTestResult
+Private Function TestGetAvailableStates() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "GetAvailableStates devuelve colección correcta"
     
@@ -281,7 +283,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_GetAvailableStates = testResult
+    Set TestGetAvailableStates = testResult
     Exit Function
     
 TestFail:
@@ -290,7 +292,7 @@ TestFail:
 End Function
 
 ' Test que verifica que GetInitialState devuelve el estado inicial correcto
-Private Function Test_GetInitialState() As CTestResult
+Private Function TestGetInitialState() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "GetInitialState devuelve estado inicial correcto"
     
@@ -323,7 +325,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_GetInitialState = testResult
+    Set TestGetInitialState = testResult
     Exit Function
     
 TestFail:
@@ -332,7 +334,7 @@ TestFail:
 End Function
 
 ' Test que verifica que IsStateFinal funciona correctamente
-Private Function Test_IsStateFinal() As CTestResult
+Private Function TestIsStateFinal() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "IsStateFinal funciona correctamente"
     
@@ -365,7 +367,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_IsStateFinal = testResult
+    Set TestIsStateFinal = testResult
     Exit Function
     
 TestFail:
@@ -374,7 +376,7 @@ TestFail:
 End Function
 
 ' Test que verifica que RecordStateChange funciona correctamente
-Private Function Test_RecordStateChange() As CTestResult
+Private Function TestRecordStateChange() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "RecordStateChange funciona correctamente"
     
@@ -402,7 +404,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_RecordStateChange = testResult
+    Set TestRecordStateChange = testResult
     Exit Function
     
 TestFail:
@@ -411,7 +413,7 @@ TestFail:
 End Function
 
 ' Test que verifica que GetStateHistory devuelve el historial correcto
-Private Function Test_GetStateHistory() As CTestResult
+Private Function TestGetStateHistory() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "GetStateHistory devuelve historial correcto"
     
@@ -444,7 +446,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_GetStateHistory = testResult
+    Set TestGetStateHistory = testResult
     Exit Function
     
 TestFail:
@@ -453,7 +455,7 @@ TestFail:
 End Function
 
 ' Test que verifica que HasTransitionPermission funciona correctamente
-Private Function Test_HasTransitionPermission() As CTestResult
+Private Function TestHasTransitionPermission() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "HasTransitionPermission funciona correctamente"
     
@@ -486,7 +488,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_HasTransitionPermission = testResult
+    Set TestHasTransitionPermission = testResult
     Exit Function
     
 TestFail:
@@ -495,7 +497,7 @@ TestFail:
 End Function
 
 ' Test que verifica que RequiresApproval funciona correctamente
-Private Function Test_RequiresApproval() As CTestResult
+Private Function TestRequiresApproval() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "RequiresApproval funciona correctamente"
     
@@ -528,7 +530,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockWorkflowRepo = Nothing
     
-    Set Test_RequiresApproval = testResult
+    Set TestRequiresApproval = testResult
     Exit Function
     
 TestFail:

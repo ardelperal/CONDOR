@@ -1,4 +1,4 @@
-Attribute VB_Name = "Test_SolicitudService"
+Attribute VB_Name = "TestSolicitudService"
 Option Compare Database
 Option Explicit
 
@@ -16,15 +16,15 @@ Private m_mockErrorHandler As CMockErrorHandlerService
 ' FUNCIÓN PRINCIPAL DE LA SUITE
 ' ============================================================================
 
-Public Function Test_SolicitudService_RunAll() As CTestSuiteResult
+Public Function TestSolicitudServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    Call suiteResult.Initialize("Test_SolicitudService - Pruebas Unitarias CSolicitudService")
+    Call suiteResult.Initialize("TestSolicitudService - Pruebas Unitarias CSolicitudService")
     
-    Call suiteResult.AddTestResult(Test_CreateSolicitud_Success())
-    Call suiteResult.AddTestResult(Test_CreateSolicitud_FailsWithEmptyExpediente())
-    Call suiteResult.AddTestResult(Test_SaveSolicitud_Success())
+    Call suiteResult.AddTestResult(TestCreateSolicitudSuccess())
+    Call suiteResult.AddTestResult(TestCreateSolicitudFailsWithEmptyExpediente())
+    Call suiteResult.AddTestResult(TestSaveSolicitudSuccess())
     
-    Set Test_SolicitudService_RunAll = suiteResult
+    Set TestSolicitudServiceRunAll = suiteResult
 End Function
 
 ' ============================================================================
@@ -55,7 +55,7 @@ End Sub
 ' PRUEBAS
 ' ============================================================================
 
-Private Function Test_CreateSolicitud_Success() As CTestResult
+Private Function TestCreateSolicitudSuccess() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("CreateSolicitud debe crear una solicitud con valores por defecto correctos")
     
@@ -64,16 +64,15 @@ Private Function Test_CreateSolicitud_Success() As CTestResult
     Call Setup
     
     ' Arrange
-    Dim idExpediente As String
-    idExpediente = "EXP001"
-    Dim tipo As String
-    tipo = "PC"
+    Dim expediente As New EExpediente
+    expediente.idExpediente = "EXP001"
+    expediente.Tipo = "PC"
     
     Call m_mockRepo.SetSaveSolicitudReturnValue(123) ' Simular que el guardado devuelve un nuevo ID
     
     ' Act
     Dim result As ESolicitud
-    Set result = m_service.CreateSolicitud(idExpediente, tipo)
+    Set result = m_service.CreateSolicitud(expediente)
     
     ' Assert
     AssertNotNull result, "La solicitud devuelta no debe ser nula"
@@ -84,9 +83,9 @@ Private Function Test_CreateSolicitud_Success() As CTestResult
     
     AssertNotNull savedSolicitud, "El objeto solicitud debe haber sido pasado al repositorio"
     AssertEquals 1, savedSolicitud.idEstadoInterno, "El estado inicial debe ser 1 (Borrador)"
-    AssertEquals idExpediente, savedSolicitud.idExpediente, "El idExpediente no es correcto"
-    AssertEquals tipo, savedSolicitud.tipoSolicitud, "El tipoSolicitud no es correcto"
-    AssertTrue InStr(savedSolicitud.codigoSolicitud, tipo & "-" & idExpediente) > 0, "El código de solicitud no tiene el formato esperado"
+    AssertEquals expediente.idExpediente, savedSolicitud.idExpediente, "El idExpediente no es correcto"
+    AssertEquals expediente.Tipo, savedSolicitud.tipoSolicitud, "El tipoSolicitud no es correcto"
+    AssertTrue InStr(savedSolicitud.codigoSolicitud, expediente.Tipo & "-" & expediente.idExpediente) > 0, "El código de solicitud no tiene el formato esperado"
     AssertEquals Environ("USERNAME"), savedSolicitud.usuarioCreacion, "El usuario de creación no es el esperado"
     
     AssertEquals 123, result.idSolicitud, "El ID devuelto por el repo debe asignarse a la solicitud resultante"
@@ -98,10 +97,10 @@ TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
 Cleanup:
     Call Teardown
-    Set Test_CreateSolicitud_Success = testResult
+    Set TestCreateSolicitudSuccess = testResult
 End Function
 
-Private Function Test_CreateSolicitud_FailsWithEmptyExpediente() As CTestResult
+Private Function TestCreateSolicitudFailsWithEmptyExpediente() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("CreateSolicitud debe fallar si idExpediente está vacío")
     
@@ -109,9 +108,14 @@ Private Function Test_CreateSolicitud_FailsWithEmptyExpediente() As CTestResult
     
     Call Setup
     
+    ' Arrange
+    Dim expediente As New EExpediente
+    expediente.idExpediente = " "
+    expediente.Tipo = "PC"
+    
     ' Act & Assert
     On Error Resume Next
-    Call m_service.CreateSolicitud(" ", "PC")
+    Call m_service.CreateSolicitud(expediente)
     AssertEquals 5, Err.Number, "Debe lanzar un error si idExpediente está vacío"
     On Error GoTo TestFail
     
@@ -122,10 +126,10 @@ TestFail:
     Call testResult.Fail("La prueba no debería haber llegado al manejador de errores principal")
 Cleanup:
     Call Teardown
-    Set Test_CreateSolicitud_FailsWithEmptyExpediente = testResult
+    Set TestCreateSolicitudFailsWithEmptyExpediente = testResult
 End Function
 
-Private Function Test_SaveSolicitud_Success() As CTestResult
+Private Function TestSaveSolicitudSuccess() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("SaveSolicitud debe establecer los campos de modificación")
     
@@ -157,5 +161,5 @@ TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
 Cleanup:
     Call Teardown
-    Set Test_SaveSolicitud_Success = testResult
+    Set TestSaveSolicitudSuccess = testResult
 End Function

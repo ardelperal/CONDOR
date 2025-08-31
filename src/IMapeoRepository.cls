@@ -11,7 +11,7 @@ Option Compare Database
 Option Explicit
 
 
-Public Function GetMapeoPorTipo(ByVal params As Collection) As DAO.recordset
+Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
 End Function
 
 

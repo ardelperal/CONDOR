@@ -1,4 +1,12 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
 Attribute VB_Name = "CMockMapeoRepository"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 Implements IMapeoRepository
@@ -20,4 +28,13 @@ End Sub
 Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
     ' Devuelve el recordset configurado por el test
     Set IMapeoRepository_GetMapeoPorTipo = m_GetMapeoPorTipo_Result
+End Function
+
+' ============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA
+' ============================================================================
+
+' Método público de conveniencia para GetMapeoPorTipo
+Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
+    Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
 End Function

@@ -36,8 +36,8 @@ Public LastIdExpedienteRequested As Long
 Public LastNemotecnicoRequested As String
 
 ' Valores de retorno configurables
-Public GetExpedienteByIdReturnValue As E_Expediente
-Public GetExpedienteByNemotecnicoReturnValue As E_Expediente
+Public GetExpedienteByIdReturnValue As EExpediente
+Public GetExpedienteByNemotecnicoReturnValue As EExpediente
 Public GetExpedientesParaSelectorReturnValue As DAO.recordset
 
 ' Contadores
@@ -79,13 +79,13 @@ Public Sub Reset()
     GetExpedientesParaSelectorCallCount = 0
 End Sub
 
-' Configura el E_Expediente que debe devolver GetExpedienteById
-Public Sub SetGetExpedienteByIdReturnValue(ByVal expediente As E_Expediente)
+' Configura el Expediente que debe devolver GetExpedienteById
+Public Sub SetGetExpedienteByIdReturnValue(ByVal expediente As EExpediente)
     Set GetExpedienteByIdReturnValue = expediente
 End Sub
 
-' Configura el E_Expediente que debe devolver GetExpedienteByNemotecnico
-Public Sub SetGetExpedienteByNemotecnicoReturnValue(ByVal expediente As E_Expediente)
+' Configura el Expediente que debe devolver GetExpedienteByNemotecnico
+Public Sub SetGetExpedienteByNemotecnicoReturnValue(ByVal expediente As EExpediente)
     Set GetExpedienteByNemotecnicoReturnValue = expediente
 End Sub
 
@@ -99,7 +99,7 @@ End Sub
 ' ============================================================================
 
 ' Implementación mock de GetExpedienteById
-Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As E_Expediente
+Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long) As EExpediente
     ' Registrar la llamada
     GetExpedienteByIdCalled = True
     GetExpedienteByIdCallCount = GetExpedienteByIdCallCount + 1
@@ -110,7 +110,7 @@ Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long
 End Function
 
 ' Implementación mock de GetExpedienteByNemotecnico
-Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As E_Expediente
+Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpediente
     ' Registrar la llamada
     GetExpedienteByNemotecnicoCalled = True
     GetExpedienteByNemotecnicoCallCount = GetExpedienteByNemotecnicoCallCount + 1
@@ -135,12 +135,12 @@ End Function
 ' ============================================================================
 
 ' Método público que delega a la implementación de la interfaz
-Public Function GetExpedienteById(ByVal idExpediente As Long) As E_Expediente
+Public Function GetExpedienteById(ByVal idExpediente As Long) As EExpediente
     Set GetExpedienteById = IExpedienteService_GetExpedienteById(idExpediente)
 End Function
 
 ' Método público que delega a la implementación de la interfaz
-Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As E_Expediente
+Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpediente
     Set GetExpedienteByNemotecnico = IExpedienteService_GetExpedienteByNemotecnico(Nemotecnico)
 End Function
 

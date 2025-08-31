@@ -10,32 +10,20 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
-' ============================================================================
+' =====================================================
 ' INTERFAZ: IExpedienteRepository
-' Arquitectura: Contrato Limpio para Acceso a Datos de Expedientes
-' Versión: 1.0 - Creación Inicial
-' ============================================================================
-' Define el contrato para operaciones de persistencia de expedientes.
-' Implementa el patrón Repository con conexión explícita al Backend.
-' Cumple con el Principio de Responsabilidad Única: solo gestiona datos de expedientes.
-' ============================================================================
+' DESCRIPCIÓN: Define el contrato para el repositorio de expedientes.
+'              Proporciona métodos para obtener expedientes.
+' AUTOR: CONDOR-Architect
+' FECHA: 2025-08-28
+' =====================================================
 
-' Obtiene un expediente por su ID desde el Backend
-' @param params: Collection de QueryParameter con los parámetros de consulta
-' @return: Recordset con los datos del expediente o Nothing si no existe
-Public Function ObtenerExpedientePorId(ByVal params As Collection) As DAO.recordset
+Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.Recordset
 End Function
 
-' Obtiene un expediente por su nemotécnico desde el Backend
-' @param params: Collection de QueryParameter con los parámetros de consulta
-' @return: Recordset con los datos del expediente o Nothing si no existe
-Public Function ObtenerExpedientePorNemotecnico(ByVal params As Collection) As DAO.recordset
+Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.Recordset
 End Function
 
-' Obtiene la lista de expedientes activos para selectores
-' @param params: Collection de QueryParameter (puede estar vacía para esta consulta)
-' @return: Recordset con expedientes en estado 'Activo' o 'En Proceso'
-Public Function ObtenerExpedientesActivosParaSelector(ByVal params As Collection) As DAO.recordset
+Public Function ObtenerExpedientesActivosParaSelector() As DAO.Recordset
 End Function
 

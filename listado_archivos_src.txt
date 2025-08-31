@@ -1,0 +1,138 @@
+LISTADO DE ARCHIVOS EN EL DIRECTORIO SRC
+=============================================
+
+Total de archivos: 107
+
+CLASES DE ENTIDADES (.cls):
+- EAdjuntos.cls
+- EAuthData.cls
+- EDatosCdCa.cls
+- EDatosCdCaSub.cls
+- EDatosPc.cls
+- EEstado.cls
+- EExpediente.cls
+- ELogCambios.cls
+- ELogErrores.cls
+- EMapeo.cls
+- EOperacion.cls
+- EOperationLog.cls
+- EQueryParameter.cls
+- ESolicitud.cls
+- ETransicion.cls
+- EUsuario.cls
+
+INTERFACES (.cls):
+- IAppManager.cls
+- IAuthRepository.cls
+- IAuthService.cls
+- IConfig.cls
+- IDocumentService.cls
+- IErrorHandlerService.cls
+- IExpedienteRepository.cls
+- IExpedienteService.cls
+- IFileSystem.cls
+- IMapeoRepository.cls
+- INotificationRepository.cls
+- INotificationService.cls
+- IOperationLogger.cls
+- IOperationRepository.cls
+- ISolicitudRepository.cls
+- ISolicitudService.cls
+- ITestReporter.cls
+- IWordManager.cls
+- IWorkflowRepository.cls
+- IWorkflowService.cls
+
+IMPLEMENTACIONES (.cls):
+- CAppManager.cls
+- CAuthRepository.cls
+- CAuthService.cls
+- CConfig.cls
+- CDocumentService.cls
+- CErrorHandlerService.cls
+- CExpedienteRepository.cls
+- CExpedienteService.cls
+- CFileSystem.cls
+- CMapeoRepository.cls
+- CNotificationRepository.cls
+- CNotificationService.cls
+- COperationLogger.cls
+- COperationRepository.cls
+- CSolicitudRepository.cls
+- CSolicitudService.cls
+- CTestReporter.cls
+- CTestResult.cls
+- CTestSuiteResult.cls
+- CWordManager.cls
+- CWorkflowRepository.cls
+- CWorkflowService.cls
+
+MOCKS PARA TESTING (.cls):
+- CMockAuthRepository.cls
+- CMockAuthService.cls
+- CMockConfig.cls
+- CMockDocumentService.cls
+- CMockErrorHandlerService.cls
+- CMockExpedienteRepository.cls
+- CMockExpedienteService.cls
+- CMockFileSystem.cls
+- CMockMapeoRepository.cls
+- CMockNotificationRepository.cls
+- CMockNotificationService.cls
+- CMockOperationLogger.cls
+- CMockOperationRepository.cls
+- CMockSolicitudRepository.cls
+- CMockSolicitudService.cls
+- CMockTextFile.cls
+- CMockWordManager.cls
+- CMockWorkflowRepository.cls
+- CMockWorkflowService.cls
+
+MÓDULOS DE TESTING (.bas):
+- TIAuthRepository.bas
+- TIDocumentService.bas
+- TIExpedienteRepository.bas
+- TIFileSystem.bas
+- TIMapeoRepository.bas
+- TINotificationService.bas
+- TIOperationRepository.bas
+- TISolicitudRepository.bas
+- TIWordManager.bas
+- TIWorkflowRepository.bas
+- TestAppManager.bas
+- TestAuthService.bas
+- TestCConfig.bas
+- TestCExpedienteService.bas
+- TestCWordManager.bas
+- TestDocumentService.bas
+- TestErrorHandlerService.bas
+- TestModAssert.bas
+- TestOperationLogger.bas
+- TestSolicitudService.bas
+- TestWorkflowService.bas
+- modAssert.bas
+- modTestRunner.bas
+- modTestUtils.bas
+
+MÓDULOS DE FACTORÍA (.bas):
+- ModAppManagerFactory.bas
+- modAuthFactory.bas
+- modConfigFactory.bas
+- modDocumentServiceFactory.bas
+- modErrorHandlerFactory.bas
+- modExpedienteServiceFactory.bas
+- modFileSystemFactory.bas
+- modNotificationServiceFactory.bas
+- modOperationLoggerFactory.bas
+- modRepositoryFactory.bas
+- modSolicitudServiceFactory.bas
+- modWordManagerFactory.bas
+
+MÓDULOS DE UTILIDADES (.bas):
+- modEnumeraciones.bas
+- modQueries.bas
+
+=============================================
+Generado automáticamente por CONDOR-Expert
+Fecha: 20/01/2025
+=============================================

@@ -21,35 +21,32 @@ Option Explicit
 Public Function CreateSolicitudService() As ISolicitudService
     On Error GoTo ErrorHandler
     
-    ' 1. Obtener dependencias de sus propias factorías
-    Dim repo As ISolicitudRepository
-    Dim logger As IOperationLogger
-    Dim errorHandler As IErrorHandlerService
-    Dim config As IConfig
+    ' 1. Crear dependencias de nivel más bajo primero, llamando a sus factorías SIN argumentos.
+    Dim configService As IConfig
+    Set configService = modConfigFactory.CreateConfigService()
     
-    ' Crear errorHandler primero para poder usarlo en caso de errores
-    Set config = modConfig.CreateConfigService()
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim errorHandlerService As IErrorHandlerService
+    Set errorHandlerService = modErrorHandlerFactory.CreateErrorHandlerService()
     
-    ' Crear las demás dependencias
-    Set repo = modRepositoryFactory.CreateSolicitudRepository(config, errorHandler)
-    Set logger = modOperationLoggerFactory.CreateOperationLogger()
+    Dim operationLoggerService As IOperationLogger
+    Set operationLoggerService = modOperationLoggerFactory.CreateOperationLogger()
     
-    ' 2. Crear e inicializar el servicio
+    ' 2. Crear el repositorio
+    Dim solicitudRepo As ISolicitudRepository
+    Set solicitudRepo = modRepositoryFactory.CreateSolicitudRepository()
+    
+    ' 3. Crear e inicializar la instancia del servicio
     Dim serviceInstance As New CSolicitudService
-    serviceInstance.Initialize repo, logger, errorHandler
+    serviceInstance.Initialize solicitudRepo, operationLoggerService, errorHandlerService
     
-    ' 3. Devolver la instancia
+    ' 4. Devolver la instancia como el tipo de la interfaz
     Set CreateSolicitudService = serviceInstance
     
     Exit Function
     
 ErrorHandler:
-    If Not errorHandler Is Nothing Then
-        errorHandler.LogError Err.Number, Err.Description, "modSolicitudServiceFactory.CreateSolicitudService"
-    End If
+    ' Usar Debug.Print en una factoría es aceptable si errorHandler falla.
+    Debug.Print "Error crítico en modSolicitudServiceFactory.CreateSolicitudService: " & Err.Description
     Set CreateSolicitudService = Nothing
 End Function
 
