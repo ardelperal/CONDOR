@@ -105,9 +105,19 @@ ErrorHandler:
     End If
 End Function
 
+Private Function IAuthService_AuthenticateUser(ByVal userEmail As String, ByVal password As String) As Boolean
+    ' TODO: Implementar la lógica real de autenticación.
+    ' Por ahora, devolvemos False para que compile.
+    IAuthService_AuthenticateUser = False
+End Function
+
 ' Método público para acceso directo
 Public Function GetUserRole(ByVal userEmail As String) As UserRole
     GetUserRole = IAuthService_GetUserRole(userEmail)
+End Function
+
+Public Function AuthenticateUser(ByVal userEmail As String, ByVal password As String) As Boolean
+    AuthenticateUser = IAuthService_AuthenticateUser(userEmail, password)
 End Function
 
 

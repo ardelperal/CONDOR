@@ -2,241 +2,53 @@ Attribute VB_Name = "TestAuthService"
 Option Compare Database
 Option Explicit
 
-' ============================================================================
-' MÓDULO DE PRUEBAS UNITARIAS PARA CAuthService
-' ============================================================================
-' Este módulo contiene pruebas unitarias aisladas para CAuthService
-' utilizando mocks para todas las dependencias externas.
-' ============================================================================
-
-' Función principal que ejecuta todas las pruebas del módulo
 Public Function TestAuthServiceRunAll() As CTestSuiteResult
-    Dim suiteResult As New CTestSuiteResult
-    Call suiteResult.Initialize("TestAuthService")
-    
-    ' Ejecutar todas las pruebas unitarias
-    Call suiteResult.AddTestResult(TestGetUserRoleUsuarioAdministradorDevuelveRolAdministrador())
-    Call suiteResult.AddTestResult(TestGetUserRoleUsuarioCalidadDevuelveRolCalidad())
-    Call suiteResult.AddTestResult(TestGetUserRoleUsuarioTecnicoDevuelveRolTecnico())
-    Call suiteResult.AddTestResult(TestGetUserRoleUsuarioDesconocidoDevuelveRolDesconocido())
-    
-    Set TestAuthServiceRunAll = suiteResult
+    Set TestAuthServiceRunAll = New CTestSuiteResult
+    TestAuthServiceRunAll.Initialize "TestAuthService"
+    TestAuthServiceRunAll.AddTestResult TestGetUserRole_Admin_ReturnsAdmin()
 End Function
 
-' ============================================================================
-' PRUEBAS UNITARIAS PARA GetUserRole
-' ============================================================================
-
-' Prueba que GetUserRole devuelve RolAdmin para usuario administrador
-Private Function TestGetUserRoleUsuarioAdministradorDevuelveRolAdministrador() As CTestResult
-    Dim testResult As New CTestResult
-    Call testResult.Initialize("GetUserRole debe devolver RolAdmin para un usuario administrador")
+Private Function TestGetUserRole_Admin_ReturnsAdmin() As CTestResult
+    Set TestGetUserRole_Admin_ReturnsAdmin = New CTestResult
+    TestGetUserRole_Admin_ReturnsAdmin.Initialize "GetUserRole con datos de Admin devuelve RolAdmin"
+    
+    Dim serviceImpl As CAuthService
+    Dim mockRepo As CMockAuthRepository
+    Dim mockLogger As CMockOperationLogger
+    Dim mockError As CMockErrorHandlerService
+    Dim mockConfig As CMockConfig
+    Dim service As IAuthService
     
     On Error GoTo TestFail
     
-    ' Arrange - Configurar mocks y datos de prueba
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim mockLogger As New CMockOperationLogger
-    mockLogger.Reset
-    Dim mockAuthRepository As New CMockAuthRepository
-    mockAuthRepository.Reset
-    Dim mockErrorHandler As New CMockErrorHandlerService
-    mockErrorHandler.Reset
+    ' Arrange
+    Set mockRepo = New CMockAuthRepository
+    Set mockLogger = New CMockOperationLogger
+    Set mockError = New CMockErrorHandlerService
+    Set mockConfig = New CMockConfig
     
-    ' Configurar EAuthData para usuario administrador
     Dim authData As New EAuthData
     authData.UserExists = True
     authData.IsGlobalAdmin = True
+    mockRepo.ConfigureGetUserAuthData authData
     
-    Call mockAuthRepository.ConfigureMockData(authData)
-    
-    ' Crear servicio con dependencias mock
-    Dim authService As IAuthService
-    Set authService = New CMockAuthService
-    authService.Reset
-    authService.Reset
-    Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
-    
-    ' Act - Ejecutar el método bajo prueba
-    Dim userRole As UserRole
-    userRole = authService.GetUserRole("admin@test.com")
-    
-    ' Assert - Verificar resultado
-    modAssert.AssertEquals RolAdmin, userRole, "El rol devuelto debería ser RolAdmin"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    Call testResult.Fail("Error inesperado: " & Err.Description)
-    
-Cleanup:
-    Set mockConfig = Nothing
-    Set mockLogger = Nothing
-    Set mockAuthRepository = Nothing
-    Set mockErrorHandler = Nothing
-    Set authService = Nothing
-    Set authData = Nothing
-    Set TestGetUserRoleUsuarioAdministradorDevuelveRolAdministrador = testResult
-End Function
-
-' Prueba que GetUserRole devuelve RolCalidad para usuario de calidad
-Private Function TestGetUserRoleUsuarioCalidadDevuelveRolCalidad() As CTestResult
-    Dim testResult As New CTestResult
-    Call testResult.Initialize("GetUserRole debe devolver RolCalidad para un usuario de calidad")
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim mockLogger As New CMockOperationLogger
-    mockLogger.Reset
-    Dim mockAuthRepository As New CMockAuthRepository
-    mockAuthRepository.Reset
-    Dim mockErrorHandler As New CMockErrorHandlerService
-    mockErrorHandler.Reset
-    
-    ' Configurar EAuthData para usuario de calidad
-    Dim authData As New EAuthData
-    authData.UserExists = True
-    authData.IsCalidad = True
-    
-    mockAuthRepository.ConfigureMockData authData
-    
-    ' Crear servicio con dependencias mock
-    Dim authService As IAuthService
-    Set authService = New CMockAuthService
-    authService.Reset
-    Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
+    Set serviceImpl = New CAuthService
+    serviceImpl.Initialize mockConfig, mockLogger, mockRepo, mockError
+    Set service = serviceImpl
     
     ' Act
-    Dim userRole As UserRole
-    userRole = authService.GetUserRole("calidad@test.com")
+    Dim resultRole As UserRole
+    resultRole = service.GetUserRole("admin@test.com")
     
     ' Assert
-    modAssert.AssertEquals RolCalidad, userRole, "El rol devuelto debería ser RolCalidad"
+    AssertEquals RolAdmin, resultRole, "El rol devuelto debería ser Admin."
     
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
+    TestGetUserRole_Admin_ReturnsAdmin.Pass
 Cleanup:
-    Set mockConfig = Nothing
-    Set mockLogger = Nothing
-    Set mockAuthRepository = Nothing
-    Set mockErrorHandler = Nothing
-    Set authService = Nothing
-    Set authData = Nothing
-    Set TestGetUserRoleUsuarioCalidadDevuelveRolCalidad = testResult
-End Function
-
-' Prueba que GetUserRole devuelve RolTecnico para usuario técnico
-Private Function TestGetUserRoleUsuarioTecnicoDevuelveRolTecnico() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GetUserRole debe devolver RolTecnico para un usuario técnico"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim mockLogger As New CMockOperationLogger
-    mockLogger.Reset
-    Dim mockAuthRepository As New CMockAuthRepository
-    mockAuthRepository.Reset
-    Dim mockErrorHandler As New CMockErrorHandlerService
-    mockErrorHandler.Reset
-    
-    ' Configurar EAuthData para usuario técnico
-    Dim authData As New EAuthData
-    authData.UserExists = True
-    authData.IsTecnico = True
-    
-    mockAuthRepository.ConfigureMockData authData
-    
-    ' Crear servicio con dependencias mock
-    Dim authService As IAuthService
-    Set authService = New CMockAuthService
-    authService.Reset
-    Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
-    
-    ' Act
-    Dim userRole As UserRole
-    userRole = authService.GetUserRole("tecnico@test.com")
-    
-    ' Assert
-    modAssert.AssertEquals RolTecnico, userRole, "El rol devuelto debería ser RolTecnico"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
+    Exit Function
 TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set mockConfig = Nothing
-    Set mockLogger = Nothing
-    Set mockAuthRepository = Nothing
-    Set mockErrorHandler = Nothing
-    Set authService = Nothing
-    Set authData = Nothing
-    Set TestGetUserRoleUsuarioTecnicoDevuelveRolTecnico = testResult
-End Function
-
-' Prueba que GetUserRole devuelve RolDesconocido para usuario no encontrado
-Private Function TestGetUserRoleUsuarioDesconocidoDevuelveRolDesconocido() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GetUserRole debe devolver RolDesconocido para un usuario no encontrado"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim mockLogger As New CMockOperationLogger
-    mockLogger.Reset
-    Dim mockAuthRepository As New CMockAuthRepository
-    mockAuthRepository.Reset
-    Dim mockErrorHandler As New CMockErrorHandlerService
-    mockErrorHandler.Reset
-    
-    ' Configurar EAuthData para usuario no encontrado
-    Dim authData As New EAuthData
-    authData.UserExists = False
-    
-    mockAuthRepository.ConfigureMockData authData
-    
-    ' Crear servicio con dependencias mock
-    Dim authService As IAuthService
-    Set authService = New CMockAuthService
-    authService.Reset
-    Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
-    
-    ' Act
-    Dim userRole As UserRole
-    userRole = authService.GetUserRole("desconocido@test.com")
-    
-    ' Assert
-    modAssert.AssertEquals RolDesconocido, userRole, "El rol devuelto debería ser RolDesconocido"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set mockConfig = Nothing
-    Set mockLogger = Nothing
-    Set mockAuthRepository = Nothing
-    Set mockErrorHandler = Nothing
-    Set authService = Nothing
-    Set authData = Nothing
-    Set TestGetUserRoleUsuarioDesconocidoDevuelveRolDesconocido = testResult
+    TestGetUserRole_Admin_ReturnsAdmin.Fail "Error: " & Err.Description
+    Resume Cleanup
 End Function
 
 

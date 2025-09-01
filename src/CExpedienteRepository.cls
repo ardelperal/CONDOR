@@ -10,266 +10,122 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
 Implements IExpedienteRepository
 
-' Dependencias inyectadas
+Private Const MODULE_NAME As String = "CExpedienteRepository"
+
 Private m_Config As IConfig
 Private m_ErrorHandler As IErrorHandlerService
 
-' ============================================================================
-' MÉTODOS DE INICIALIZACIÓN
-' ============================================================================
-
-' Inicializa el repositorio con sus dependencias
 Public Sub Initialize(ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
     Set m_Config = config
     Set m_ErrorHandler = errorHandler
 End Sub
 
-' ============================================================================
-' IMPLEMENTACIÓN DE LA INTERFAZ IExpedienteRepository
-' ============================================================================
+' --- IMPLEMENTACIÓN DE LA INTERFAZ (PRIVADA) ---
 
-' Implementación de IExpedienteRepository.ObtenerExpedientePorId
 Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente As Long) As EExpediente
-    On Error GoTo ErrorHandler
-    
-    ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.recordset
+    Dim rs As DAO.Recordset
     Dim expediente As EExpediente
     
-    ' Logging removido - responsabilidad de la capa de servicio
+    On Error GoTo ErrorHandler
     
-    ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, ";PWD=" & m_Config.GetDatabasePassword())
+    Set db = GetDatabaseConnection()
     
-    ' Crear QueryDef con consulta desde modQueries
-    Set qdf = db.CreateQueryDef("", GET_EXPEDIENTE_BY_ID)
+    Set qdf = db.CreateQueryDef("", "SELECT * FROM TbExpedientes WHERE IDExpediente = [pIdExpediente]")
+    qdf.Parameters("[pIdExpediente]").Value = idExpediente
     
-    ' Asignar parámetro directo
-    qdf.parameters("pIdExpediente") = idExpediente
+    Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
-    ' Ejecutar consulta parametrizada
-    Set rs = qdf.OpenRecordset()
-    
-    ' Mapear recordset a objeto de dominio
     If Not rs.EOF Then
-        Set expediente = New EExpediente
-        expediente.idExpediente = rs!ID
-        expediente.Nemotecnico = rs!Nemotecnico & ""
-        expediente.Titulo = rs!Titulo & ""
-        expediente.ResponsableCalidad = rs!ResponsableCalidad & ""
-        expediente.ResponsableTecnico = rs!ResponsableTecnico & ""
-        expediente.Pecal = rs!Pecal & ""
-        expediente.NumeroExpediente = rs!NumeroExpediente & ""
-        expediente.EstadoExpediente = rs!EstadoExpediente & ""
-        expediente.EmailResponsable = rs!EmailResponsable & ""
-        expediente.JefeProyecto = rs!JefeProyecto & ""
-        expediente.ContratistaPrincipal = rs!ContratistaPrincipal & ""
-        If Not IsNull(rs!FechaInicio) Then expediente.FechaInicio = rs!FechaInicio
-        If Not IsNull(rs!FechaFinPrevista) Then expediente.FechaFinPrevista = rs!FechaFinPrevista
-        If Not IsNull(rs!FechaFinContrato) Then expediente.FechaFinContrato = rs!FechaFinContrato
-        If Not IsNull(rs!FechaFinGarantia) Then expediente.FechaFinGarantia = rs!FechaFinGarantia
+        Set expediente = MapRecordsetToExpediente(rs)
     End If
     
-    ' Limpiar recursos
-    rs.Close
-    Set rs = Nothing
-    Set qdf = Nothing
-    db.Close
-    Set db = Nothing
-    
-    ' Devolver el objeto mapeado
     Set IExpedienteRepository_ObtenerExpedientePorId = expediente
-    
-    Exit Function
-    
-ErrorHandler:
-    ' Limpiar recursos en caso de error
+
+Cleanup:
+    On Error Resume Next
     If Not rs Is Nothing Then rs.Close
-    If Not qdf Is Nothing Then Set qdf = Nothing
-    If Not db Is Nothing Then db.Close: Set db = Nothing
-    
-    ' Log del error
-    If Not m_ErrorHandler Is Nothing Then
-        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorId"
-    End If
-    
-    ' Devolver Nothing en caso de error
-    Set IExpedienteRepository_ObtenerExpedientePorId = Nothing
+    If Not qdf Is Nothing Then qdf.Close
+    If Not db Is Nothing Then db.Close
+    Set rs = Nothing
+    Set qdf = Nothing
+    Set db = Nothing
+    Set expediente = Nothing
+    Exit Function
+
+ErrorHandler:
+    m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".IExpedienteRepository_ObtenerExpedientePorId: " & Err.Description
+    Resume Cleanup
 End Function
 
-' Implementación de IExpedienteRepository.ObtenerExpedientePorNemotecnico
 Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
-    On Error GoTo ErrorHandler
-    
-    ' Variables para la consulta parametrizada
-    Dim db As DAO.Database
-    Dim qdf As DAO.QueryDef
-    Dim rs As DAO.recordset
-    Dim expediente As EExpediente
-    
-    ' Logging removido - responsabilidad de la capa de servicio
-    
-    ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, ";PWD=" & m_Config.GetDatabasePassword())
-    
-    ' Crear QueryDef con consulta desde modQueries
-    Set qdf = db.CreateQueryDef("", GET_EXPEDIENTE_BY_NEMOTECNICO)
-    
-    ' Asignar parámetro directo
-    qdf.parameters("pNemotecnico") = Nemotecnico
-    
-    ' Ejecutar consulta parametrizada
-    Set rs = qdf.OpenRecordset()
-    
-    ' Mapear recordset a objeto de dominio
-    If Not rs.EOF Then
-        Set expediente = New EExpediente
-        expediente.idExpediente = rs!ID
-        expediente.Nemotecnico = rs!Nemotecnico & ""
-        expediente.Titulo = rs!Titulo & ""
-        expediente.ResponsableCalidad = rs!ResponsableCalidad & ""
-        expediente.ResponsableTecnico = rs!ResponsableTecnico & ""
-        expediente.Pecal = rs!Pecal & ""
-        expediente.NumeroExpediente = rs!NumeroExpediente & ""
-        expediente.EstadoExpediente = rs!EstadoExpediente & ""
-        expediente.EmailResponsable = rs!EmailResponsable & ""
-        expediente.JefeProyecto = rs!JefeProyecto & ""
-        expediente.ContratistaPrincipal = rs!ContratistaPrincipal & ""
-        If Not IsNull(rs!FechaInicio) Then expediente.FechaInicio = rs!FechaInicio
-        If Not IsNull(rs!FechaFinPrevista) Then expediente.FechaFinPrevista = rs!FechaFinPrevista
-        If Not IsNull(rs!FechaFinContrato) Then expediente.FechaFinContrato = rs!FechaFinContrato
-        If Not IsNull(rs!FechaFinGarantia) Then expediente.FechaFinGarantia = rs!FechaFinGarantia
-    End If
-    
-    ' Limpiar recursos
-    rs.Close
-    Set rs = Nothing
-    Set qdf = Nothing
-    db.Close
-    Set db = Nothing
-    
-    ' Devolver el objeto mapeado
-    Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = expediente
-    
-    Exit Function
-    
-ErrorHandler:
-    ' Limpiar recursos en caso de error
-    If Not rs Is Nothing Then rs.Close
-    If Not qdf Is Nothing Then Set qdf = Nothing
-    If Not db Is Nothing Then db.Close: Set db = Nothing
-    
-    ' Log del error
-    If Not m_ErrorHandler Is Nothing Then
-        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientePorNemotecnico"
-    End If
-    
-    ' Devolver Nothing en caso de error
-    Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = Nothing
+    ' TODO: Implementar lógica de base de datos
+    Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = New EExpediente
 End Function
 
-' Implementación de IExpedienteRepository.ObtenerExpedientesActivosParaSelector
 Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
-    On Error GoTo ErrorHandler
-    
-    ' Variables para la consulta
-    Dim db As DAO.Database
-    Dim qdf As DAO.QueryDef
-    Dim rs As DAO.recordset
-    Dim expedientes As Scripting.Dictionary
-    Dim expediente As EExpediente
-    
-    ' Logging removido - responsabilidad de la capa de servicio
-    
-    ' Inicializar diccionario
-    Set expedientes = New Scripting.Dictionary
-    expedientes.CompareMode = TextCompare ' Opcional pero recomendado
-    
-    ' Obtener conexión al Backend usando configuración
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, ";PWD=" & m_Config.GetDatabasePassword())
-    
-    ' Crear QueryDef con consulta desde modQueries
-    Set qdf = db.CreateQueryDef("", GET_EXPEDIENTES_ACTIVOS_SELECTOR)
-    
-    ' Esta consulta no requiere parámetros
-    
-    ' Ejecutar consulta
-    Set rs = qdf.OpenRecordset()
-    
-    ' Mapear cada registro a un objeto EExpediente
-    Do While Not rs.EOF
-        Set expediente = New EExpediente
-        expediente.idExpediente = rs!ID
-        expediente.Nemotecnico = rs!Nemotecnico & ""
-        expediente.Titulo = rs!Titulo & ""
-        expediente.ResponsableCalidad = rs!ResponsableCalidad & ""
-        expediente.ResponsableTecnico = rs!ResponsableTecnico & ""
-        expediente.Pecal = rs!Pecal & ""
-        expediente.NumeroExpediente = rs!NumeroExpediente & ""
-        expediente.EstadoExpediente = rs!EstadoExpediente & ""
-        expediente.EmailResponsable = rs!EmailResponsable & ""
-        expediente.JefeProyecto = rs!JefeProyecto & ""
-        expediente.ContratistaPrincipal = rs!ContratistaPrincipal & ""
-        If Not IsNull(rs!FechaInicio) Then expediente.FechaInicio = rs!FechaInicio
-        If Not IsNull(rs!FechaFinPrevista) Then expediente.FechaFinPrevista = rs!FechaFinPrevista
-        If Not IsNull(rs!FechaFinContrato) Then expediente.FechaFinContrato = rs!FechaFinContrato
-        If Not IsNull(rs!FechaFinGarantia) Then expediente.FechaFinGarantia = rs!FechaFinGarantia
-        
-        expedientes.Add Key:=expediente.idExpediente, Item:=expediente ' Usar ID como clave
-        rs.MoveNext
-    Loop
-    
-    ' Limpiar recursos
-    rs.Close
-    Set rs = Nothing
-    Set qdf = Nothing
-    db.Close
-    Set db = Nothing
-    
-    ' Devolver la colección
-    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = expedientes
-    
-    Exit Function
-    
-ErrorHandler:
-    ' Limpiar recursos en caso de error
-    If Not rs Is Nothing Then rs.Close
-    If Not qdf Is Nothing Then Set qdf = Nothing
-    If Not db Is Nothing Then db.Close: Set db = Nothing
-    
-    ' Log del error
-    If Not m_ErrorHandler Is Nothing Then
-        m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientesActivosParaSelector"
-    End If
-    
-    ' Devolver colección vacía en caso de error
-    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = New Collection
+    ' TODO: Implementar lógica de base de datos
+    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = New Scripting.Dictionary
 End Function
 
-' ============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA
-' ============================================================================
-' Estos métodos exponen públicamente la funcionalidad de la interfaz
-' para facilitar las pruebas y el uso directo de la clase concreta
+' --- MÉTODOS PÚBLICOS DE CONVENIENCIA (LECCIÓN 24) ---
 
-' Método público de conveniencia para ObtenerExpedientePorId
 Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As EExpediente
     Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(idExpediente)
 End Function
 
-' Método público de conveniencia para ObtenerExpedientePorNemotecnico
 Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
     Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico)
 End Function
 
-' Método público de conveniencia para ObtenerExpedientesActivosParaSelector
-Public Function ObtenerExpedientesActivosParaSelector() As Collection
+Public Function ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
     Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector()
+End Function
+
+' --- FUNCIONES AUXILIARES (PRIVADAS) ---
+
+Private Function GetDatabaseConnection() As DAO.Database
+    On Error GoTo ErrorHandler
+    
+    Dim dbPath As String
+    dbPath = m_Config.GetValue("ExpedientesDBPath")
+    
+    Dim dbPassword As String
+    dbPassword = m_Config.GetDatabasePassword()
+    
+    If Dir(dbPath) = "" Then
+        Err.Raise vbObjectError + 1001, MODULE_NAME, "La base de datos de expedientes no se encontró en la ruta: " & dbPath
+    End If
+    
+    Set GetDatabaseConnection = DBEngine.OpenDatabase(dbPath, False, True, ";PWD=" & dbPassword)
+    Exit Function
+    
+ErrorHandler:
+    m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".GetDatabaseConnection: " & Err.Description
+    Set GetDatabaseConnection = Nothing
+End Function
+
+Private Function MapRecordsetToExpediente(ByVal rs As DAO.Recordset) As EExpediente
+    On Error GoTo ErrorHandler
+    
+    Dim expediente As New EExpediente
+    
+    ' Mapeo completo y seguro de propiedades
+    expediente.idExpediente = Nz(rs!IDExpediente, 0)
+    expediente.Nemotecnico = Nz(rs!Nemotecnico, "")
+    expediente.Titulo = Nz(rs!Titulo, "")
+    expediente.ContratistaPrincipal = Nz(rs!ContratistaPrincipal, "")
+    expediente.Pecal = Nz(rs!Pecal, "")
+    
+    Set MapRecordsetToExpediente = expediente
+    
+    Exit Function
+ErrorHandler:
+    m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".MapRecordsetToExpediente: " & Err.Description
+    Set MapRecordsetToExpediente = Nothing
 End Function
 
 

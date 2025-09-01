@@ -10,7 +10,11 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-' Contrato para el servicio de configuración. Versión 2.0.
+' =====================================================
+' INTERFAZ: IConfig
+' DESCRIPCIÓN: Contrato para el servicio de configuración.
+' Versión: 3.0 - Sincronizada con la implementación CConfig
+' =====================================================
 
 Public Function GetValue(ByVal key As String) As Variant
 End Function
@@ -47,16 +51,3 @@ End Function
 
 Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
 End Sub
-
-
-
-
-
-
-
-
-
-
-
-
-

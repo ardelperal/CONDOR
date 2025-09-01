@@ -43,8 +43,8 @@ Private Function TestGetValueDatapathSuccess() As CTestResult
     Dim config As IConfig
     
     mockConfig.Reset
-    mockConfig.ConfigureGetValue "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
-    mockConfig.ConfigureGetValue "testpassword", "DATABASE_PASSWORD"
+    mockConfig.SetSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.SetSetting "DATABASE_PASSWORD", "testpassword"
     
     Set config = mockConfig
     
@@ -80,8 +80,8 @@ Private Function TestGetValueDatabasepasswordSuccess() As CTestResult
     Dim config As IConfig
     
     mockConfig.Reset
-    mockConfig.ConfigureGetValue "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
-    mockConfig.ConfigureGetValue "testpassword", "DATABASE_PASSWORD"
+    mockConfig.SetSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.SetSetting "DATABASE_PASSWORD", "testpassword"
     
     Set config = mockConfig
     
@@ -117,7 +117,7 @@ Private Function TestHasKeyExistingKeyReturnsTrue() As CTestResult
     Dim config As IConfig
     
     mockConfig.Reset
-    mockConfig.ConfigureHasKey True, "EXISTING_KEY"
+    mockConfig.SetSetting "EXISTING_KEY", "some_value"
     
     Set config = mockConfig
     
@@ -149,8 +149,7 @@ Private Function TestHasKeyNonExistingKeyReturnsFalse() As CTestResult
     Dim config As IConfig
     
     mockConfig.Reset
-    mockConfig.ConfigureHasKey False, "NON_EXISTING_KEY"
-    mockConfig.ConfigureHasKey False, ""
+    ' No configuramos las claves inexistentes para que HasKey devuelva False
 
     Set config = mockConfig
     
@@ -183,7 +182,7 @@ Private Function TestGetValueNonExistingKeyReturnsEmpty() As CTestResult
     Dim config As IConfig
     
     mockConfig.Reset
-    mockConfig.ConfigureGetValue "", "NON_EXISTING_KEY"
+    ' No configuramos la clave inexistente para que GetValue devuelva Empty
     
     Set config = mockConfig
     
@@ -219,7 +218,7 @@ Private Function TestGetDataPathSuccess() As CTestResult
     Dim config As IConfig
     
     mockConfig.Reset
-    mockConfig.ConfigureGetDataPath "C:\Test\CONDOR_Backend.accdb"
+    mockConfig.SetSetting "DATA_PATH", "C:\Test\CONDOR_Backend.accdb"
     
     Set config = mockConfig
     
@@ -254,7 +253,7 @@ Private Function TestGetDatabasePasswordSuccess() As CTestResult
     Dim config As IConfig
     
     mockConfig.Reset
-    mockConfig.ConfigureGetDatabasePassword "testpassword123"
+    mockConfig.SetSetting "DATABASE_PASSWORD", "testpassword123"
     
     Set config = mockConfig
     

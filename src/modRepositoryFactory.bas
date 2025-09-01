@@ -2,140 +2,47 @@ Attribute VB_Name = "modRepositoryFactory"
 Option Compare Database
 Option Explicit
 
-' =================================================================
+' =====================================================
 ' FACTORY: modRepositoryFactory
-' RESPONSABILIDAD: Crear instancias de TODOS los repositorios.
-'                  Centraliza la lógica DEV_MODE para decidir
-'                  entre repositorios reales y mocks.
-' PATRÓN: CERO ARGUMENTOS en métodos Create.
-' =================================================================
+' DESCRIPCIÓN: Crea instancias de repositorios.
+' PATRÓN ARQUITECTÓNICO: Factory con inyección de dependencias opcional para testing.
+' =====================================================
 
-Public Function CreateAuthRepository() As IAuthRepository
-#If DEV_MODE Then
-    Set CreateAuthRepository = New CMockAuthRepository
-#Else
-    Dim repoImpl As CAuthRepository
-    Set repoImpl = New CAuthRepository
-    
-    Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService() ' Llama a otra factoría
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    
-    repoImpl.Initialize config, errorHandler
-    Set CreateAuthRepository = repoImpl
-#End If
-End Function
+' Flag para alternar entre implementaciones reales y mocks
+Public Const DEV_MODE As Boolean = True
 
-Public Function CreateSolicitudRepository() As ISolicitudRepository
-#If DEV_MODE Then
-    Set CreateSolicitudRepository = New CMockSolicitudRepository
-#Else
-    ' Implementación real aquí...
-    Dim repoImpl As CSolicitudRepository
-    Set repoImpl = New CSolicitudRepository
+Public Function CreateExpedienteRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IExpedienteRepository
+    On Error GoTo ErrorHandler
     
-    Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService()
+    Dim repoImpl As New CExpedienteRepository
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ' CORRECCIÓN ARQUITECTÓNICA: Usar dependencias inyectadas si existen (para tests),
+    ' o crearlas si no (para la aplicación).
     
-    repoImpl.Initialize config, errorHandler
-    Set CreateSolicitudRepository = repoImpl
-#End If
-End Function
-
-Public Function CreateExpedienteRepository() As IExpedienteRepository
-#If DEV_MODE Then
-    Set CreateExpedienteRepository = New CMockExpedienteRepository
-#Else
-    Dim repoImpl As CExpedienteRepository
-    Set repoImpl = New CExpedienteRepository
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        Set effectiveConfig = modConfigFactory.CreateConfigService()
+    Else
+        Set effectiveConfig = config
+    End If
     
-    Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService()
+    Dim effectiveErrorHandler As IErrorHandlerService
+    If errorHandler Is Nothing Then
+        Set effectiveErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Else
+        Set effectiveErrorHandler = errorHandler
+    End If
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    repoImpl.Initialize effectiveConfig, effectiveErrorHandler
     
-    repoImpl.Initialize config, errorHandler
     Set CreateExpedienteRepository = repoImpl
-#End If
+    
+    Exit Function
+ErrorHandler:
+    ' Implementar manejo de errores robusto
+    Debug.Print "Error en modRepositoryFactory.CreateExpedienteRepository: " & Err.Description
+    Set CreateExpedienteRepository = Nothing
 End Function
 
-Public Function CreateNotificationRepository() As INotificationRepository
-#If DEV_MODE Then
-    Set CreateNotificationRepository = New CMockNotificationRepository
-#Else
-    Dim repoImpl As CNotificationRepository
-    Set repoImpl = New CNotificationRepository
-    
-    Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService()
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    
-    repoImpl.Initialize config, errorHandler
-    Set CreateNotificationRepository = repoImpl
-#End If
-End Function
-
-Public Function CreateMapeoRepository() As IMapeoRepository
-#If DEV_MODE Then
-    Set CreateMapeoRepository = New CMockMapeoRepository
-#Else
-    Dim repoImpl As CMapeoRepository
-    Set repoImpl = New CMapeoRepository
-    
-    Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService()
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    
-    repoImpl.Initialize config, errorHandler
-    Set CreateMapeoRepository = repoImpl
-#End If
-End Function
-
-Public Function CreateWorkflowRepository() As IWorkflowRepository
-#If DEV_MODE Then
-    Set CreateWorkflowRepository = New CMockWorkflowRepository
-#Else
-    Dim repoImpl As CWorkflowRepository
-    Set repoImpl = New CWorkflowRepository
-    
-    Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService()
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    
-    repoImpl.Initialize config, errorHandler
-    Set CreateWorkflowRepository = repoImpl
-#End If
-End Function
-
-Public Function CreateOperationRepository() As IOperationRepository
-#If DEV_MODE Then
-    Set CreateOperationRepository = New CMockOperationRepository
-#Else
-    Dim repoImpl As COperationRepository
-    Set repoImpl = New COperationRepository
-    
-    Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService()
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    
-    repoImpl.Initialize config, errorHandler
-    Set CreateOperationRepository = repoImpl
-#End If
-End Function
-
-' ... Y así sucesivamente para CADA repositorio del sistema ...
-' (CreateExpedienteRepository, CreateWorkflowRepository, etc.)
+' Añadir aquí el resto de funciones Create... para otros repositorios (ISolicitudRepository, etc.)
+' siguiendo el mismo patrón de parámetros opcionales.

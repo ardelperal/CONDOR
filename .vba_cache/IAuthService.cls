@@ -10,9 +10,10 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
-' Contrato para obtener el rol de un usuario a partir de su email.
 Public Function GetUserRole(ByVal userEmail As String) As UserRole
+End Function
+
+Public Function AuthenticateUser(ByVal userEmail As String, ByVal password As String) As Boolean
 End Function
 
 

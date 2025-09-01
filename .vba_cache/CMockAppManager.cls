@@ -9,127 +9,54 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
-
 Implements IAppManager
 
-' =====================================================
-' CLASE: CMockAppManager
-' PROPOSITO: Mock del gestor de aplicación para pruebas unitarias
-' AUTOR: CONDOR-Expert
-' FECHA: 2025-01-14
-' =====================================================
+Private m_StartApplication_Result As Boolean
+Private m_GetCurrentUserRole_Result As UserRole
+Private m_IsInitialized_Result As Boolean
+Private m_Ping_Result As String
 
-' Variables públicas para seguimiento de llamadas
-Public Initialize_WasCalled As Boolean
-Public Initialize_CallCount As Long
-Public StartApplication_WasCalled As Boolean
-Public StartApplication_CallCount As Long
-Public StartApplication_ReturnValue As Boolean
-Public StartApplication_LastUserEmail As String
-Public GetCurrentUserRole_WasCalled As Boolean
-Public GetCurrentUserRole_CallCount As Long
-Public GetCurrentUserRole_ReturnValue As UserRole
-Public IsApplicationInitialized_WasCalled As Boolean
-Public IsApplicationInitialized_CallCount As Long
-Public IsApplicationInitialized_ReturnValue As Boolean
-Public Ping_WasCalled As Boolean
-Public Ping_CallCount As Long
-Public Ping_ReturnValue As String
+Private m_StartApplication_WasCalled As Boolean
 
-' Variables para almacenar parámetros de Initialize
-Public LastAuthService As IAuthService
-Public LastConfig As IConfig
-Public LastErrorHandler As IErrorHandlerService
+Private Sub Class_Initialize(): Call Reset: End Sub
 
-' ============================================================================
-' CONSTRUCTOR
-' ============================================================================
-Private Sub Class_Initialize()
-    Reset
-End Sub
-
-' ============================================================================
-' MÉTODO PÚBLICO RESET
-' ============================================================================
 Public Sub Reset()
-    Initialize_WasCalled = False
-    Initialize_CallCount = 0
-    StartApplication_WasCalled = False
-    StartApplication_CallCount = 0
-    StartApplication_ReturnValue = True
-    StartApplication_LastUserEmail = ""
-    GetCurrentUserRole_WasCalled = False
-    GetCurrentUserRole_CallCount = 0
-    GetCurrentUserRole_ReturnValue = RolDesconocido
-    IsApplicationInitialized_WasCalled = False
-    IsApplicationInitialized_CallCount = 0
-    IsApplicationInitialized_ReturnValue = True
-    Ping_WasCalled = False
-    Ping_CallCount = 0
-    Ping_ReturnValue = "Pong"
-    
-    Set LastAuthService = Nothing
-    Set LastConfig = Nothing
-    Set LastErrorHandler = Nothing
+    m_StartApplication_Result = True
+    m_GetCurrentUserRole_Result = RolDesconocido
+    m_IsInitialized_Result = True
+    m_Ping_Result = "Pong"
+    m_StartApplication_WasCalled = False
 End Sub
 
-' ============================================================================
-' IMPLEMENTACIÓN DE LA INTERFAZ IAppManager
-' ============================================================================
+Public Property Get StartApplication_WasCalled() As Boolean
+    StartApplication_WasCalled = m_StartApplication_WasCalled
+End Property
+
+Public Sub ConfigureStartApplication(ByVal value As Boolean)
+    m_StartApplication_Result = value
+End Sub
+
+Public Sub ConfigureGetCurrentUserRole(ByVal value As UserRole)
+    m_GetCurrentUserRole_Result = value
+End Sub
 
 Private Sub IAppManager_Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
-    Initialize_WasCalled = True
-    Initialize_CallCount = Initialize_CallCount + 1
-    Set LastAuthService = authService
-    Set LastConfig = config
-    Set LastErrorHandler = errorHandler
+    ' En el mock, la inicialización no necesita hacer nada.
 End Sub
 
 Private Function IAppManager_StartApplication(Optional ByVal userEmail As String = "") As Boolean
-    StartApplication_WasCalled = True
-    StartApplication_CallCount = StartApplication_CallCount + 1
-    StartApplication_LastUserEmail = userEmail
-    IAppManager_StartApplication = StartApplication_ReturnValue
+    m_StartApplication_WasCalled = True
+    IAppManager_StartApplication = m_StartApplication_Result
 End Function
 
 Private Function IAppManager_GetCurrentUserRole() As UserRole
-    GetCurrentUserRole_WasCalled = True
-    GetCurrentUserRole_CallCount = GetCurrentUserRole_CallCount + 1
-    IAppManager_GetCurrentUserRole = GetCurrentUserRole_ReturnValue
+    IAppManager_GetCurrentUserRole = m_GetCurrentUserRole_Result
 End Function
 
 Private Function IAppManager_IsApplicationInitialized() As Boolean
-    IsApplicationInitialized_WasCalled = True
-    IsApplicationInitialized_CallCount = IsApplicationInitialized_CallCount + 1
-    IAppManager_IsApplicationInitialized = IsApplicationInitialized_ReturnValue
+    IAppManager_IsApplicationInitialized = m_IsInitialized_Result
 End Function
 
 Private Function IAppManager_Ping() As String
-    Ping_WasCalled = True
-    Ping_CallCount = Ping_CallCount + 1
-    IAppManager_Ping = Ping_ReturnValue
-End Function
-
-' ============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
-' ============================================================================
-
-Public Sub Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
-    IAppManager_Initialize authService, config, errorHandler
-End Sub
-
-Public Function StartApplication(Optional ByVal userEmail As String = "") As Boolean
-    StartApplication = IAppManager_StartApplication(userEmail)
-End Function
-
-Public Function GetCurrentUserRole() As UserRole
-    GetCurrentUserRole = IAppManager_GetCurrentUserRole()
-End Function
-
-Public Function IsApplicationInitialized() As Boolean
-    IsApplicationInitialized = IAppManager_IsApplicationInitialized()
-End Function
-
-Public Function Ping() As String
-    Ping = IAppManager_Ping()
+    IAppManager_Ping = m_Ping_Result
 End Function

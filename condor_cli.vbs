@@ -202,7 +202,8 @@ If Err.Number <> 0 Then
 End If
 
 On Error GoTo 0
-WScript.Echo "Base de datos abierta correctamente (modo seguro)"
+WScript.Echo "Base de datos abierta correctamente."
+Call EnsureVBReferences
 
 ' Verificar opciones especiales
 Dim bDryRun, bVerbose, i
@@ -941,6 +942,30 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
         Err.Clear
     End If
     
+    On Error GoTo 0
+End Sub
+
+Sub EnsureVBReferences()
+    WScript.Echo "Verificando referencias VBA críticas..."
+    On Error Resume Next
+    Dim vbProj: Set vbProj = objAccess.VBE.ActiveVBProject
+    If vbProj Is Nothing Then Exit Sub
+    
+    Dim refs(1, 2)
+    refs(0, 0) = "{420B2830-E718-11CF-893D-00A0C9054228}": refs(0, 1) = "1.0": refs(0, 2) = "Scripting Runtime"
+    refs(1, 0) = "{0002E157-0000-0000-C000-000000000046}": refs(1, 1) = "5.3": refs(1, 2) = "VBIDE Extensibility"
+
+    Dim i, ref, found
+    For i = 0 To 1
+        found = False
+        For Each ref In vbProj.References
+            If ref.Guid = refs(i, 0) Then found = True: Exit For
+        Next
+        If Not found Then
+            WScript.Echo "  -> Añadiendo: " & refs(i, 2)
+            vbProj.References.AddFromGuid refs(i, 0), CInt(Split(refs(i, 1), ".")(0)), CInt(Split(refs(i, 1), ".")(1))
+        End If
+    Next
     On Error GoTo 0
 End Sub
 
@@ -2682,7 +2707,7 @@ Sub ShowBundleHelp()
     WScript.Echo ""
     WScript.Echo "⚙️ Config - Configuración del Sistema"
     WScript.Echo "   Incluye: IConfig, CConfig, CMockConfig, modConfigFactory,"
-    WScript.Echo "            TestCConfig + dependencias de error"
+    WScript.Echo "            TestConfig (simplificado tras Misión de Emergencia)"
     WScript.Echo ""
     WScript.Echo "📂 FileSystem - Sistema de Archivos"
     WScript.Echo "   Incluye: IFileSystem, CFileSystem, CMockFileSystem,"
@@ -2755,11 +2780,11 @@ Function GetFunctionalityFiles(strFunctionality)
                            "IOperationLogger.cls", "IConfig.cls", "IErrorHandlerService.cls", "IFileSystem.cls")
         
         Case "expediente", "expedientes"
-            ' Sección 3.3 - Gestión de Expedientes + Dependencias
+            ' Sección 3.3 - Gestión de Expedientes + Dependencias (Actualizado tras refactorización)
             arrFiles = Array("IExpedienteService.cls", "CExpedienteService.cls", "CMockExpedienteService.cls", _
                            "IExpedienteRepository.cls", "CExpedienteRepository.cls", "CMockExpedienteRepository.cls", _
-                           "EExpediente.cls", "modExpedienteServiceFactory.bas", "TestExpedienteService.bas", _
-                           "TIExpedienteRepository.bas", _
+                           "EExpediente.cls", "modExpedienteServiceFactory.bas", "TestCExpedienteService.bas", _
+                           "TIExpedienteRepository.bas", "modRepositoryFactory.bas", _
                            "IConfig.cls", "IOperationLogger.cls", "IErrorHandlerService.cls")
         
         
@@ -2775,10 +2800,10 @@ Function GetFunctionalityFiles(strFunctionality)
                            "IOperationLogger.cls", "IErrorHandlerService.cls", "IConfig.cls")
         
         Case "workflow", "flujo"
-            ' Sección 3.5 - Gestión de Workflow + Dependencias
+            ' Sección 3.5 - Gestión de Workflow (v2.0 Simplificada) + Dependencias
             arrFiles = Array("IWorkflowService.cls", "CWorkflowService.cls", "CMockWorkflowService.cls", _
                            "IWorkflowRepository.cls", "CWorkflowRepository.cls", "CMockWorkflowRepository.cls", _
-                           "EEstado.cls", "ETransicion.cls", "TestWorkflowService.bas", _
+                           "modWorkflowServiceFactory.bas", "TestWorkflowService.bas", _
                            "TIWorkflowRepository.bas", _
                            "IOperationLogger.cls", "IConfig.cls", "IErrorHandlerService.cls")
         
@@ -2804,9 +2829,9 @@ Function GetFunctionalityFiles(strFunctionality)
                            "IErrorHandlerService.cls", "IConfig.cls")
         
         Case "config", "configuracion"
-            ' Sección 4 - Configuración + Dependencias
+            ' Sección 4 - Configuración + Dependencias (Simplificado tras Misión de Emergencia)
             arrFiles = Array("IConfig.cls", "CConfig.cls", "CMockConfig.cls", "modConfigFactory.bas", _
-                           "TestConfig.bas", "IErrorHandlerService.cls")
+                           "TestConfig.bas")
         
         Case "filesystem", "archivos"
             ' Sección 5 - Sistema de Archivos + Dependencias
@@ -2853,7 +2878,7 @@ Function GetFunctionalityFiles(strFunctionality)
         Case "tests", "pruebas", "testing"
             ' Sección 12 - Archivos de Pruebas
             arrFiles = Array("TestAppManager.bas", "TestAuthService.bas", "TestConfig.bas", _
-                           "TestExpedienteService.bas", "TestWordManager.bas", "TestDocumentService.bas", _
+                           "TestCExpedienteService.bas", "TestWordManager.bas", "TestDocumentService.bas", _
                            "TestErrorHandlerService.bas", "TestModAssert.bas", "TestOperationLogger.bas", _
                            "TestSolicitudService.bas", "TestWorkflowService.bas", _
                            "TIAuthRepository.bas", "TIExpedienteRepository.bas", _

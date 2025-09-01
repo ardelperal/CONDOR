@@ -72,12 +72,12 @@ Private Function TestGetNextStatesIntegration() As CTestResult
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     Set repository = modRepositoryFactory.CreateWorkflowRepository()
 
-    Dim nextStates As Collection
+    Dim nextStates As Scripting.Dictionary
     Set nextStates = repository.GetNextStates(ESTADO_BORRADOR, TEST_TIPO_SOLICITUD, TEST_ROL)
 
-    modAssert.AssertNotNull nextStates, "La colección de siguientes estados no debe ser nula."
+    modAssert.AssertNotNull nextStates, "El diccionario de siguientes estados no debe ser nulo."
     modAssert.AssertEquals 1, nextStates.Count, "Debe haber exactamente un estado siguiente desde BORRADOR."
-    modAssert.AssertEquals "EN_REVISION", nextStates(1), "El siguiente estado debe ser EN_REVISION."
+    modAssert.AssertTrue nextStates.Exists("EN_REVISION"), "El diccionario de siguientes estados debe contener la clave EN_REVISION."
 
     TestGetNextStatesIntegration.Pass
     GoTo Cleanup

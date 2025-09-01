@@ -11,65 +11,95 @@ Option Compare Database
 Option Explicit
 Implements IExpedienteRepository
 
-Private m_mockExpediente As EExpediente
-Private m_mockExpedientes As Scripting.Dictionary
+' --- Variables para Configuración de Retorno ---
+Private m_GetById_Result As EExpediente
+Private m_GetByNemo_Result As EExpediente
+Private m_GetSelector_Result As Scripting.Dictionary
 
-' Constructor
+' --- Variables para Verificación de Llamadas (Spy Properties) ---
+Private m_ObtenerPorId_WasCalled As Boolean
+Private m_ObtenerPorId_LastId As Long
+Private m_ObtenerPorNemotecnico_WasCalled As Boolean
+Private m_ObtenerPorNemotecnico_LastNemo As String
+Private m_ObtenerSelector_WasCalled As Boolean
+
+' --- Inicialización y Limpieza ---
+
 Private Sub Class_Initialize()
-    Reset
+    Call Reset
 End Sub
 
-' Método para que los tests configuren el expediente que debe devolver el mock
-Public Sub ConfigureObtenerExpedientePorId(ByVal expediente As EExpediente)
-    Set m_mockExpediente = expediente
-End Sub
-
-' Método para que los tests configuren el expediente que debe devolver el mock por nemotécnico
-Public Sub ConfigureObtenerExpedientePorNemotecnico(ByVal expediente As EExpediente)
-    Set m_mockExpediente = expediente
-End Sub
-
-' Método para que los tests configuren la colección de expedientes que debe devolver el mock
-Public Sub ConfigureObtenerExpedientesActivosParaSelector(ByVal expedientes As Scripting.Dictionary)
-    Set m_mockExpedientes = expedientes
-End Sub
-
-' Resetea el estado del mock para asegurar el aislamiento entre tests
 Public Sub Reset()
-    Set m_mockExpediente = Nothing
-    Set m_mockExpedientes = Nothing
+    ' Limpiar resultados configurados
+    Set m_GetById_Result = Nothing
+    Set m_GetByNemo_Result = Nothing
+    Set m_GetSelector_Result = Nothing
+    
+    ' Limpiar propiedades de verificación
+    m_ObtenerPorId_WasCalled = False
+    m_ObtenerPorId_LastId = 0
+    m_ObtenerPorNemotecnico_WasCalled = False
+    m_ObtenerPorNemotecnico_LastNemo = ""
+    m_ObtenerSelector_WasCalled = False
 End Sub
+
+' --- Propiedades Públicas de Verificación (Solo Lectura) ---
+
+Public Property Get ObtenerExpedientePorId_WasCalled() As Boolean
+    ObtenerExpedientePorId_WasCalled = m_ObtenerPorId_WasCalled
+End Property
+
+Public Property Get ObtenerExpedientePorId_LastId() As Long
+    ObtenerExpedientePorId_LastId = m_ObtenerPorId_LastId
+End Property
+
+Public Property Get ObtenerExpedientePorNemotecnico_WasCalled() As Boolean
+    ObtenerExpedientePorNemotecnico_WasCalled = m_ObtenerPorNemotecnico_WasCalled
+End Property
+
+Public Property Get ObtenerExpedientePorNemotecnico_LastNemo() As String
+    ObtenerExpedientePorNemotecnico_LastNemo = m_ObtenerPorNemotecnico_LastNemo
+End Property
+
+Public Property Get ObtenerExpedientesActivosParaSelector_WasCalled() As Boolean
+    ObtenerExpedientesActivosParaSelector_WasCalled = m_ObtenerSelector_WasCalled
+End Property
+
+' --- Métodos de Configuración ---
+
+Public Sub ConfigureObtenerExpedientePorId(ByVal value As EExpediente)
+    Set m_GetById_Result = value
+End Sub
+
+Public Sub ConfigureObtenerExpedientePorNemotecnico(ByVal value As EExpediente)
+    Set m_GetByNemo_Result = value
+End Sub
+
+Public Sub ConfigureObtenerExpedientesActivosParaSelector(ByVal value As Scripting.Dictionary)
+    Set m_GetSelector_Result = value
+End Sub
+
+' --- Implementación de la Interfaz ---
 
 Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente As Long) As EExpediente
-    ' Devuelve el expediente configurado por el test
-    Set IExpedienteRepository_ObtenerExpedientePorId = m_mockExpediente
+    ' Registrar la llamada
+    m_ObtenerPorId_WasCalled = True
+    m_ObtenerPorId_LastId = idExpediente
+    ' Devolver el resultado configurado
+    Set IExpedienteRepository_ObtenerExpedientePorId = m_GetById_Result
 End Function
 
 Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
-    ' Devuelve el expediente configurado por el test
-    Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = m_mockExpediente
+    ' Registrar la llamada
+    m_ObtenerPorNemotecnico_WasCalled = True
+    m_ObtenerPorNemotecnico_LastNemo = Nemotecnico
+    ' Devolver el resultado configurado
+    Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = m_GetByNemo_Result
 End Function
 
 Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
-    ' Devuelve la colección de expedientes configurada por el test
-    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = m_mockExpedientes
-End Function
-
-' ============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
-' ============================================================================
-
-' Método público de conveniencia para ObtenerExpedientePorId
-Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As EExpediente
-    Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(idExpediente)
-End Function
-
-' Método público de conveniencia para ObtenerExpedientePorNemotecnico
-Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
-    Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico)
-End Function
-
-' Método público de conveniencia para ObtenerExpedientesActivosParaSelector
-Public Function ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
-    Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector()
+    ' Registrar la llamada
+    m_ObtenerSelector_WasCalled = True
+    ' Devolver el resultado configurado
+    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = m_GetSelector_Result
 End Function

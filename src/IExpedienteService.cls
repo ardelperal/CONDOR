@@ -10,14 +10,13 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
-Public Function GetExpedienteById(ByVal idExpediente As Long) As EExpediente
+Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As EExpediente
 End Function
 
-Public Function GetExpedientesParaSelector() As Scripting.Dictionary
+Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
 End Function
 
-Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpediente
+Public Function ObtenerExpedientesParaSelector() As Scripting.Dictionary
 End Function
 
 

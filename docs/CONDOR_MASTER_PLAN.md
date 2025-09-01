@@ -247,36 +247,48 @@ graph TD
 ### 3.3. Gestión de Expedientes (Expediente)
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                GESTIÓN DE EXPEDIENTES                      │
+│                GESTIÓN DE EXPEDIENTES (Estabilizada)       │
 ├─────────────────────────────────────────────────────────────┤
-│ 📄 IExpedienteService.cls    ← Interface                   │
-│    ├─ ObtenerExpedientePorId(id) ← Obtiene por ID          │
-│    ├─ ObtenerExpedientePorNemotecnico(nem) ← Obtiene por nemotécnico │
-│    └─ ObtenerExpedientesParaSelector() ← Lista para selector │
-│ 📄 IExpedienteRepository.cls ← Interface                   │
-│    ├─ ObtenerExpedientePorId(id) ← Obtiene por ID          │
-│    ├─ ObtenerExpedientePorNemotecnico(nem) ← Obtiene por nemotécnico │
-│    └─ ObtenerExpedientesActivosParaSelector() ← Lista activos │
-│ 🔧 CExpedienteService.cls    ← Implementación Simplificada │
-│    ├─ Initialize(repo, logger, errorHandler) ← Inyección DI │
-│    ├─ Métodos públicos de conveniencia (ObtenerExpedientePorId, etc.) │
-│    └─ Delega todas las llamadas al repositorio            │
-│ 🔧 CExpedienteRepository.cls ← Implementación Simplificada │
-│    ├─ Initialize(config, errorHandler) ← Inyección DI      │
-│    └─ Métodos públicos de conveniencia + implementación interfaz │
-│ 🧪 CMockExpedienteService.cls ← Mock Service Estándar ✅   │
-│    ├─ ConfigureObtenerExpedientePorId(result) ← Config mock │
-│    ├─ ConfigureObtenerExpedientePorNemotecnico(result) ← Config mock │
-│    └─ ConfigureObtenerExpedientesParaSelector(result) ← Config mock │
-│ 🧪 CMockExpedienteRepository.cls ← Mock Repository Estándar │
-│    ├─ ConfigureObtenerExpedientePorId(result) ← Config mock │
-│    ├─ ConfigureObtenerExpedientePorNemotecnico(result) ← Config mock │
-│    └─ ConfigureObtenerExpedientesActivosParaSelector(result) ← Config mock │
-│ 🏭 modExpedienteServiceFactory.bas ← Factory Actualizada   │
-│ ✅ TestExpedienteService.bas ← Test Unitario Simplificado ✅ │
-│ 🔬 TIExpedienteRepository.bas ← Test Integración Simplificado ✅ │
-│ 📊 EExpediente.cls           ← Entidad Principal           │
+│ 📄 IExpedienteService.cls    ← Interface (Contrato simple) │
+│ 📄 IExpedienteRepository.cls ← Interface (Acceso a datos)   │
+│ 🔧 CExpedienteService.cls    ← Implementación (Delega 100%)│
+│ 🔧 CExpedienteRepository.cls ← Implementación (Lógica DB)   │
+│ 🧪 CMockExpedienteService.cls ← Mock Pasivo (Configurable)  │
+│ 🧪 CMockExpedienteRepository.cls← Mock Inteligente v2.0 (Spy)│
+│ 🏭 modExpedienteServiceFactory.bas ← Factoría Estándar      │
+│ 🏭 modRepositoryFactory.bas  ← Factoría Testeable (Params Op)│
+│ ✅ TestCExpedienteService.bas← Test Unitario (Verifica deleg.)│
+│ 🔬 TIExpedienteRepository.bas← Test Integración (BD real)   │
+│ 📊 EExpediente.cls           ← Entidad de Datos            │
 └─────────────────────────────────────────────────────────────┘
+
+#### 🏗️ Diagrama de Dependencias Expediente (Arquitectura Estabilizada)
+```mermaid
+graph TD
+    subgraph "Capa de Pruebas"
+        A[TestCExpedienteService.bas] --> B[CMockExpedienteRepository]
+        A --> C[CMockOperationLogger]
+        A --> D[CMockErrorHandlerService]
+        E[TIExpedienteRepository.bas] --> M[modRepositoryFactory.bas]
+        E --> G[IConfig]
+        M --> F[CExpedienteRepository]
+    end
+    
+    subgraph "Capa de Lógica de Negocio"
+        H[CExpedienteService] --> I[IExpedienteRepository]
+        H --> J[IOperationLogger]
+        H --> K[IErrorHandlerService]
+    end
+    
+    subgraph "Capa de Factorías"
+        L[modExpedienteServiceFactory.bas] --> H
+        M[modRepositoryFactory.bas] --> F
+    end
+    
+    subgraph "Capa de Datos"
+        F --> G
+    end
+```
 
 #### 🏗️ Diagrama de Dependencias Expediente (Arquitectura Estabilizada)
 ```mermaid
@@ -285,8 +297,9 @@ graph TD
         A[TestExpedienteService.bas] --> B[CMockExpedienteRepository]
         A --> C[CMockOperationLogger]
         A --> D[CMockErrorHandlerService]
-        E[TIExpedienteRepository.bas] --> F[CExpedienteRepository]
+        E[TIExpedienteRepository.bas] --> M[modRepositoryFactory.bas]
         E --> G[IConfig]
+        M --> F[CExpedienteRepository]
     end
     
     subgraph "Capa de Lógica de Negocio"
@@ -320,18 +333,23 @@ graph TD
 - CExpedienteService ➜ IErrorHandlerService (inyectado)
 - CExpedienteRepository ➜ IConfig (inyectado)
 - CExpedienteRepository ➜ IErrorHandlerService (inyectado)
+- TIExpedienteRepository ➜ modRepositoryFactory (con inyección de IConfig)
 - modExpedienteServiceFactory ➜ modRepositoryFactory, modOperationLoggerFactory, modErrorHandlerFactory
 
-🔧 **Mock Inteligente Estándar:**
+🔧 **Mock Inteligente v2.0 con Propiedades Espía:**
 - CMockExpedienteRepository.ConfigureObtenerExpedientePorId(result As EExpediente)
 - CMockExpedienteRepository.ConfigureObtenerExpedientePorNemotecnico(result As EExpediente)
 - CMockExpedienteRepository.ConfigureObtenerExpedientesActivosParaSelector(result As Scripting.Dictionary)
+- **Propiedades de Verificación**: ObtenerExpedientePorId_WasCalled, ObtenerExpedientePorId_LastId
+- **Propiedades de Verificación**: ObtenerExpedientePorNemotecnico_WasCalled, ObtenerExpedientePorNemotecnico_LastNemotecnico
+- **Propiedades de Verificación**: ObtenerExpedientesActivosParaSelector_WasCalled
 - CMockExpedienteService.ConfigureObtenerExpedientePorId(result As EExpediente)
 - CMockExpedienteService.ConfigureObtenerExpedientePorNemotecnico(result As EExpediente)
 - CMockExpedienteService.ConfigureObtenerExpedientesParaSelector(result As Scripting.Dictionary)
 
 🧪 **Patrones de Testing Implementados ✅:**
 - **Arquitectura Limpia**: Interfaces simplificadas, implementaciones delegadas ✅
+- **Mock Inteligente v2.0**: Patrón Configure/Reset + propiedades espía para verificación de comportamiento ✅
 - **Mocks Estándar**: Patrón Configure/Reset consistente en todos los mocks ✅
 - **Tests Unitarios Focalizados**: Un test por funcionalidad principal ✅
 - **Tests de Integración Mínimos**: Un test de integración con BD real ✅
@@ -339,6 +357,11 @@ graph TD
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes ✅
 - **Limpieza de Recursos**: Liberación explícita de todos los objetos en el bloque Cleanup ✅
 - **Sincronización de Interfaces**: Métodos de implementación alineados con interfaces ✅
+- **Inyección de Dependencias Opcionales**: Factoría refactorizada permite inyección para testing ✅
+- **Repositorio Completamente Funcional**: CExpedienteRepository implementa conexión real a BD, consultas SQL parametrizadas, mapeo completo de datos y manejo robusto de errores ✅
+- **Mapeo de Datos Completo**: Función MapRecordsetToExpediente maneja todos los campos de EExpediente con validación de valores nulos ✅
+- **Tests de Integración Fortalecidos**: TIExpedienteRepository incluye aserciones sobre Titulo y ContratistaPrincipal además de campos básicos ✅
+- **Test Unitario "Estándar de Oro"**: TestCExpedienteService verifica delegación correcta usando propiedades espía del Mock Inteligente v2.0 (verificación de *_WasCalled y *_LastId) ✅
 ```
 
 ### 3.4. Gestión de Solicitudes (Solicitud)
@@ -1225,11 +1248,12 @@ encapsulación correcta con variables privadas (m_*) y propiedades públicas
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 🏭 **modRepositoryFactory.bas - Características Técnicas**
-- **Inyección de Dependencias Consistente**: Todas las funciones `Create*` inicializan repositorios con `config` y `errorHandler`
+### 🏭 **modRepositoryFactory.bas - Características Técnicas (Refactorizado v2.0)**
+- **Inyección de Dependencias Opcionales**: Patrón de "parámetros opcionales" permite inyectar dependencias para testing o crear nuevas instancias
+- **Testeabilidad Mejorada**: `CreateExpedienteRepository(Optional config As IConfig = Nothing, Optional errorHandler As IErrorHandlerService = Nothing)`
 - **Modo Desarrollo**: Flag `DEV_MODE` permite testing con mocks sin modificar código de producción
 - **Gestión Centralizada**: Punto único para creación de todos los repositorios del sistema
-- **Manejo de Errores**: Cada repositorio recibe su instancia de `IErrorHandlerService` para logging centralizado
+- **Flexibilidad de Testing**: Permite inyección de configuración específica para tests de integración
 
 ## 12. Mapa de Dependencias Principales
 
