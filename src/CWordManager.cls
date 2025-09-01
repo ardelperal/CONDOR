@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' Clase: CWordManager
 ' Descripción: Implementación concreta del gestor de Word.
@@ -55,7 +56,7 @@ End Sub
 ' ============================================================================
 
 Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As Boolean
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Verificar que la aplicación Word esté disponible
     If m_WordApp Is Nothing Then
@@ -70,7 +71,7 @@ Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As B
     IWordManager_AbrirDocumento = True
     Exit Function
     
-ErrorHandler:
+errorHandler:
     ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
     m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_AbrirDocumento"
     
@@ -94,7 +95,7 @@ ErrorHandler:
 End Function
 
 Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     If m_WordDoc Is Nothing Then
         ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
@@ -113,14 +114,14 @@ Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVa
     IWordManager_ReemplazarTexto = True
     Exit Function
     
-ErrorHandler:
+errorHandler:
     ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
     m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_ReemplazarTexto"
     IWordManager_ReemplazarTexto = False
 End Function
 
 Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As Boolean
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     If m_WordDoc Is Nothing Then
         ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
@@ -135,7 +136,7 @@ Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As B
     IWordManager_GuardarDocumento = True
     Exit Function
     
-ErrorHandler:
+errorHandler:
     ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
     m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_GuardarDocumento"
     IWordManager_GuardarDocumento = False
@@ -149,7 +150,7 @@ Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As Stri
     Dim contenido As String
     Dim tempWordDoc As Object
     
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Verificar que la aplicación Word esté disponible
     If m_WordApp Is Nothing Then
@@ -171,7 +172,7 @@ Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As Stri
     IWordManager_LeerContenidoDocumento = contenido
     Exit Function
     
-ErrorHandler:
+errorHandler:
     ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
     m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_LeerContenidoDocumento"
     
@@ -228,4 +229,6 @@ Private Sub LimpiarRecursos()
         m_IsWordAppCreated = False
     End If
 End Sub
+
+
 

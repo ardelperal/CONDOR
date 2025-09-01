@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,6 +7,9 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Compare Database
+Option Explicit
+
 ' =============================================================================
 ' Proyecto: CONDOR
 ' Clase: EAuthData
@@ -15,7 +18,6 @@ Attribute VB_Exposed = False
 ' Fecha: 2024
 ' =============================================================================
 
-Option Explicit
 
 ' Variables privadas para encapsulación
 Private m_UserExists As Boolean
@@ -73,3 +75,4 @@ End Property
 Public Property Let IsTecnico(ByVal value As Boolean)
     m_IsTecnico = value
 End Property
+

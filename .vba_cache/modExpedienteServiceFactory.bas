@@ -1,9 +1,10 @@
-Attribute VB_Name = "modExpedienteServiceFactory"
+﻿Attribute VB_Name = "modExpedienteServiceFactory"
 Option Compare Database
 Option Explicit
 
+
 Public Function CreateExpedienteService() As IExpedienteService
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Dim serviceImpl As New CExpedienteService
     
@@ -22,8 +23,10 @@ Public Function CreateExpedienteService() As IExpedienteService
     Set CreateExpedienteService = serviceImpl
     Exit Function
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error crítico en modExpedienteServiceFactory: " & Err.Description
     Set CreateExpedienteService = Nothing
 End Function
+
+
 

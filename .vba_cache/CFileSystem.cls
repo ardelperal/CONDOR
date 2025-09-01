@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 Implements IFileSystem
 
 ' =====================================================
@@ -77,6 +78,11 @@ Private Sub IFileSystem_DeleteFolder(ByVal Path As String)
     fso.DeleteFolder Path
 End Sub
 
+' Implementa la eliminación recursiva de carpetas
+Private Sub IFileSystem_DeleteFolderRecursive(ByVal Path As String)
+    Me.DeleteFolderRecursive Path
+End Sub
+
 ' ============================================================================
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
 ' ============================================================================
@@ -108,5 +114,17 @@ End Sub
 Public Sub DeleteFolder(ByVal Path As String)
     IFileSystem_DeleteFolder Path
 End Sub
+
+Public Sub DeleteFolderRecursive(ByVal Path As String)
+    On Error Resume Next
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    If fso.FolderExists(Path) Then
+        fso.DeleteFolder Path, True ' El True fuerza el borrado de contenidos
+    End If
+    Set fso = Nothing
+End Sub
+
+
 
 

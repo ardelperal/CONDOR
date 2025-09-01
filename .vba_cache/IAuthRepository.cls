@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' Interfaz: IAuthRepository
@@ -23,4 +24,6 @@ Option Explicit
 ' @return: Objeto EAuthData con toda la información de autenticación
 Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
 End Function
+
+
 

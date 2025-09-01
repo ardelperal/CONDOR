@@ -1,6 +1,7 @@
-Attribute VB_Name = "modNotificationServiceFactory"
+﻿Attribute VB_Name = "modNotificationServiceFactory"
 Option Compare Database
 Option Explicit
+
 
 
 ' =====================================================
@@ -12,7 +13,7 @@ Option Explicit
 
 ' Función factory para crear y configurar el servicio de notificaciones
 Public Function CreateNotificationService() As INotificationService
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Crear las dependencias necesarias usando sus respectivas factorías
     Dim config As IConfig
@@ -39,8 +40,10 @@ Public Function CreateNotificationService() As INotificationService
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error en modNotificationServiceFactory.CreateNotificationService: " & Err.Number & " - " & Err.Description
     Err.Raise Err.Number, Err.Source, Err.Description
 End Function
+
+
 

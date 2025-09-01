@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' Interfaz: IWordManager
 ' Descripción: Define el contrato para el manejo de documentos Word.
@@ -54,5 +55,7 @@ End Sub
 ' Retorna: El contenido de texto del documento o cadena vacía si falla
 Public Function LeerContenidoDocumento(ByVal rutaDocumento As String) As String
 End Function
+
+
 
 

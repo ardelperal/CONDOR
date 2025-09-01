@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestAppManager"
+﻿Attribute VB_Name = "TestAppManager"
 Option Compare Database
 Option Explicit
+
 
 Public Function TestAppManagerRunAll() As CTestSuiteResult
     Set TestAppManagerRunAll = New CTestSuiteResult
@@ -37,7 +38,7 @@ Private Function TestStartApplication_AdminUser_Success() As CTestResult
     success = appManager.StartApplication("admin@test.com")
     
     ' Assert
-    AssertTrue success, "La aplicación debería iniciarse."
+    modAssert.AssertTrue success, "La aplicación debería iniciarse."
     AssertEquals RolAdmin, appManager.GetCurrentUserRole(), "El rol debería ser Admin."
     
     TestStartApplication_AdminUser_Success.Pass
@@ -47,6 +48,8 @@ TestFail:
     TestStartApplication_AdminUser_Success.Fail "Error: " & Err.Description
     Resume Cleanup
 End Function
+
+
 
 
 

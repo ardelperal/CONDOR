@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IExpedienteRepository
 
@@ -30,12 +31,12 @@ Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente
     Dim rs As DAO.Recordset
     Dim expediente As EExpediente
     
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Set db = GetDatabaseConnection()
     
     Set qdf = db.CreateQueryDef("", "SELECT * FROM TbExpedientes WHERE IDExpediente = [pIdExpediente]")
-    qdf.Parameters("[pIdExpediente]").Value = idExpediente
+    qdf.Parameters("[pIdExpediente]").value = idExpediente
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
@@ -56,7 +57,7 @@ Cleanup:
     Set expediente = Nothing
     Exit Function
 
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".IExpedienteRepository_ObtenerExpedientePorId: " & Err.Description
     Resume Cleanup
 End Function
@@ -88,7 +89,7 @@ End Function
 ' --- FUNCIONES AUXILIARES (PRIVADAS) ---
 
 Private Function GetDatabaseConnection() As DAO.Database
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Dim dbPath As String
     dbPath = m_Config.GetValue("ExpedientesDBPath")
@@ -103,18 +104,18 @@ Private Function GetDatabaseConnection() As DAO.Database
     Set GetDatabaseConnection = DBEngine.OpenDatabase(dbPath, False, True, ";PWD=" & dbPassword)
     Exit Function
     
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".GetDatabaseConnection: " & Err.Description
     Set GetDatabaseConnection = Nothing
 End Function
 
 Private Function MapRecordsetToExpediente(ByVal rs As DAO.Recordset) As EExpediente
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Dim expediente As New EExpediente
     
     ' Mapeo completo y seguro de propiedades
-    expediente.idExpediente = Nz(rs!IDExpediente, 0)
+    expediente.idExpediente = Nz(rs!idExpediente, 0)
     expediente.Nemotecnico = Nz(rs!Nemotecnico, "")
     expediente.Titulo = Nz(rs!Titulo, "")
     expediente.ContratistaPrincipal = Nz(rs!ContratistaPrincipal, "")
@@ -123,9 +124,11 @@ Private Function MapRecordsetToExpediente(ByVal rs As DAO.Recordset) As EExpedie
     Set MapRecordsetToExpediente = expediente
     
     Exit Function
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".MapRecordsetToExpediente: " & Err.Description
     Set MapRecordsetToExpediente = Nothing
 End Function
+
+
 
 

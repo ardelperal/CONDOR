@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' Clase: CAuthRepository
@@ -51,10 +52,10 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.recordset
+    Dim rs As DAO.Recordset
     Dim prm As EQueryParameter
     
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Conectar a la base de datos Lanzadera
     Dim backendPath As String
@@ -72,7 +73,7 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     Set prm = New EQueryParameter
     prm.ParameterName = "pEmail"
     prm.ParameterValue = userEmail
-    qdf.parameters(prm.ParameterName) = prm.ParameterValue
+    qdf.Parameters(prm.ParameterName) = prm.ParameterValue
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
@@ -114,7 +115,7 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     Set IAuthRepository_GetUserAuthData = authData
     Exit Function
     
-ErrorHandler:
+errorHandler:
     If Not rs Is Nothing Then rs.Close
     If Not qdf Is Nothing Then Set qdf = Nothing
     If Not db Is Nothing Then db.Close
@@ -131,5 +132,7 @@ End Function
 Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
     Set GetUserAuthData = IAuthRepository_GetUserAuthData(userEmail)
 End Function
+
+
 
 

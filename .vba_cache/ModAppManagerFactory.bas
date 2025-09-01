@@ -1,9 +1,10 @@
-Attribute VB_Name = "ModAppManagerFactory"
+﻿Attribute VB_Name = "ModAppManagerFactory"
 Option Compare Database
 Option Explicit
 
+
 Public Function CreateAppManager() As IAppManager
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Dim appManagerImpl As New CAppManager
     
@@ -24,7 +25,8 @@ Public Function CreateAppManager() As IAppManager
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error fatal en ModAppManagerFactory.CreateAppManager: " & Err.Description
     Set CreateAppManager = Nothing
 End Function
+

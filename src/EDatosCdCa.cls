@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' Clase de tipo de datos para tbDatosCDCA
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md - Sección 8.3
@@ -254,6 +255,8 @@ End Property
 Public Property Let cargoFirmanteFinal(ByVal value As String)
     m_cargoFirmanteFinal = value
 End Property
+
+
 
 
 

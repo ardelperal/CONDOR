@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 Implements IMapeoRepository
@@ -22,7 +23,7 @@ Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErr
 End Sub
 
 Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
@@ -46,7 +47,7 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     
     ' Asignar parámetros desde la colección
     For Each prm In params
-        qdf.parameters(prm.ParameterName) = prm.ParameterValue
+        qdf.Parameters(prm.ParameterName) = prm.ParameterValue
     Next prm
     
     ' Ejecutar consulta parametrizada
@@ -73,7 +74,7 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     Set IMapeoRepository_GetMapeoPorTipo = mapeo
     
     Exit Function
-ErrorHandler:
+errorHandler:
     ' Limpiar recursos en caso de error
     If Not rs Is Nothing Then rs.Close
     If Not qdf Is Nothing Then Set qdf = Nothing
@@ -104,5 +105,7 @@ End Function
 Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
     Set ObtenerMapeosPorCategoria = IMapeoRepository_ObtenerMapeosPorCategoria(categoria)
 End Function
+
+
 
 

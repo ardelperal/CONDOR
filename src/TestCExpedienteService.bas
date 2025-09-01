@@ -1,3 +1,7 @@
+﻿Attribute VB_Name = "TestCExpedienteService"
+Option Compare Database
+Option Explicit
+
 '===============================================================================
 ' MÓDULO: TestCExpedienteService
 ' DESCRIPCIÓN: Pruebas unitarias para la clase CExpedienteService.
@@ -7,8 +11,6 @@
 
 #If DEV_MODE Then
 
-Option Compare Database
-Option Explicit
 
 '===============================================================================
 '                    FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
@@ -93,3 +95,4 @@ Cleanup:
 End Function
 
 #End If
+

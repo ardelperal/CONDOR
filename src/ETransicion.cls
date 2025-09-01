@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' Clase de tipo de datos para tbTransiciones
@@ -80,4 +81,6 @@ End Property
 Public Property Let Activa(ByVal value As Boolean)
     m_activa = value
 End Property
+
+
 

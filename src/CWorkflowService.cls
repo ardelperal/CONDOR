@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 Implements IWorkflowService
 
 Private m_Repo As IWorkflowRepository
@@ -29,6 +30,8 @@ End Function
 Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
     Set IWorkflowService_GetNextStates = m_Repo.GetNextStates(estadoActual, tipoSolicitud, usuarioRol)
 End Function
+
+
 
 
 

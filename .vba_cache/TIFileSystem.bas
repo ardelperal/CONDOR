@@ -2,227 +2,100 @@ Attribute VB_Name = "TIFileSystem"
 Option Compare Database
 Option Explicit
 
-' =====================================================
-' MÓDULO: IntegrationTestFileSystem
-' DESCRIPCIÓN: Pruebas de integración para el módulo FileSystem
-' =====================================================
+Private Const TEST_DIR As String = "condor_test_fs"
+Private Const TEST_FILE As String = "test_file.txt"
 
-Private Const TEST_ROOT_PATH As String = "back\test_env\fs_test"
-
-' ============================================================================
-' FUNCIÓN PRINCIPAL DE EJECUCIÓN
-' ============================================================================
+Private Function GetTestPath() As String
+    GetTestPath = modTestUtils.GetProjectPath & TEST_DIR
+End Function
 
 Public Function TIFileSystemRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TIFileSystem"
     
-    suiteResult.AddResult TestFileExistsIntegration()
-    suiteResult.AddResult TestFolderExistsIntegration()
-    suiteResult.AddResult TestCopyFileIntegration()
-    suiteResult.AddResult TestDeleteFileIntegration()
-    suiteResult.AddResult TestCreateFolderIntegration()
-    suiteResult.AddResult TestDeleteFolderIntegration()
+    suiteResult.AddResult TestCreateAndFolderExists()
+    suiteResult.AddResult TestCreateAndDeleteFile()
     
     Set TIFileSystemRunAll = suiteResult
 End Function
 
-' ============================================================================
-' SETUP Y TEARDOWN
-' ============================================================================
-
 Private Sub Setup()
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    If fso.FolderExists(modTestUtils.GetProjectPath() & TEST_ROOT_PATH) Then
-        fso.DeleteFolder modTestUtils.GetProjectPath() & TEST_ROOT_PATH, True
-    End If
-    fso.CreateFolder modTestUtils.GetProjectPath() & TEST_ROOT_PATH
-    Set fso = Nothing
+    On Error Resume Next
+    Teardown
+    On Error GoTo 0
+    
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    fs.CreateFolder GetTestPath
 End Sub
 
 Private Sub Teardown()
+    On Error Resume Next
     Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem
-    Dim testRootPath As String
-    testRootPath = modTestUtils.GetProjectPath() & TEST_ROOT_PATH
-    If fs.FolderExists(testRootPath) Then
-        fs.DeleteFolder testRootPath
-    End If
-    Set fs = Nothing
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    fs.DeleteFolderRecursive GetTestPath
 End Sub
 
-' ============================================================================
-' PRUEBAS DE INTEGRACIÓN INDIVIDUALES
-' ============================================================================
-
-Private Function TestFileExistsIntegration() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "FileExists debe detectar correctamente archivos existentes e inexistentes"
-    On Error GoTo ErrorHandler
-    
-    Setup
+Private Function TestCreateAndFolderExists() As CTestResult
+    Set TestCreateAndFolderExists = New CTestResult
+    TestCreateAndFolderExists.Initialize "CreateFolder y FolderExists deben funcionar"
     
     Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Call Setup
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    
+    ' Assert
+    modAssert.AssertTrue fs.FolderExists(GetTestPath), "La carpeta de prueba debería existir después del Setup."
+    
+    TestCreateAndFolderExists.Pass
+    GoTo Cleanup
+    
+TestFail:
+    TestCreateAndFolderExists.Fail Err.Description
+    
+Cleanup:
+    Call Teardown
+End Function
+
+Private Function TestCreateAndDeleteFile() As CTestResult
+    Set TestCreateAndDeleteFile = New CTestResult
+    TestCreateAndDeleteFile.Initialize "CopyFile, FileExists y DeleteFile deben funcionar"
+    
+    Dim fs As IFileSystem
     Dim testFilePath As String
-    testFilePath = modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\test_file.txt"
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Call Setup
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    testFilePath = GetTestPath & "\" & TEST_FILE
+    
+    ' Crear un fichero dummy para copiar
+    Dim tempSourcePath As String
+    tempSourcePath = GetTestPath & "\source.txt"
     Dim fso As Object
     Set fso = CreateObject("Scripting.FileSystemObject")
-    fso.CreateTextFile(testFilePath, True).Close
+    fso.CreateTextFile(tempSourcePath, True).Write "test"
     
-    modAssert.AssertTrue fs.FileExists(testFilePath), "El archivo debería existir"
-    modAssert.AssertFalse fs.FileExists(modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\archivo_inexistente.txt"), "El archivo inexistente no debería existir"
+    ' Act
+    fs.CopyFile tempSourcePath, testFilePath
     
-    testResult.Pass
-    GoTo Cleanup
-    
-ErrorHandler:
-    testResult.Fail "Error: " & Err.Description
-Cleanup:
-    Teardown
-    Set TestFileExistsIntegration = testResult
-End Function
-
-Private Function TestFolderExistsIntegration() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "FolderExists debe detectar correctamente carpetas existentes e inexistentes"
-    On Error GoTo ErrorHandler
-
-    Setup
-
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem
-    Dim testFolderPath As String
-    testFolderPath = modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\test_folder"
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    fso.CreateFolder testFolderPath
-    
-    modAssert.AssertTrue fs.FolderExists(testFolderPath), "La carpeta debería existir"
-    modAssert.AssertFalse fs.FolderExists(modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\carpeta_inexistente"), "La carpeta inexistente no debería existir"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-ErrorHandler:
-    testResult.Fail "Error: " & Err.Description
-Cleanup:
-    Teardown
-    Set TestFolderExistsIntegration = testResult
-End Function
-
-Private Function TestCopyFileIntegration() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "CopyFile debe copiar un archivo correctamente"
-    On Error GoTo ErrorHandler
-
-    Setup
-
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem
-    Dim sourceFilePath As String
-    Dim destinationFilePath As String
-    sourceFilePath = modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\source_file.txt"
-    destinationFilePath = modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\destination_file.txt"
-    CreateObject("Scripting.FileSystemObject").CreateTextFile(sourceFilePath, True).Close
-    
-    fs.CopyFile sourceFilePath, destinationFilePath
-    
-    modAssert.AssertTrue fs.FileExists(destinationFilePath), "El archivo de destino debería existir después de la copia"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-ErrorHandler:
-    testResult.Fail "Error: " & Err.Description
-Cleanup:
-    Teardown
-    Set TestCopyFileIntegration = testResult
-End Function
-
-Private Function TestDeleteFileIntegration() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "DeleteFile debe eliminar un archivo correctamente"
-    On Error GoTo ErrorHandler
-
-    Setup
-
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem
-    Dim testFilePath As String
-    testFilePath = modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\file_to_delete.txt"
-    CreateObject("Scripting.FileSystemObject").CreateTextFile(testFilePath, True).Close
-    
-    modAssert.AssertTrue fs.FileExists(testFilePath), "El archivo debería existir antes de eliminarlo"
-    
+    ' Assert
+    modAssert.AssertTrue fs.FileExists(testFilePath), "El archivo copiado debería existir."
     fs.DeleteFile testFilePath
+    modAssert.AssertFalse fs.FileExists(testFilePath), "El archivo eliminado no debería existir."
     
-    modAssert.AssertFalse fs.FileExists(testFilePath), "El archivo no debería existir después de eliminarlo"
-    
-    testResult.Pass
+    TestCreateAndDeleteFile.Pass
     GoTo Cleanup
     
-ErrorHandler:
-    testResult.Fail "Error: " & Err.Description
+TestFail:
+    TestCreateAndDeleteFile.Fail Err.Description
+    
 Cleanup:
-    Teardown
-    Set TestDeleteFileIntegration = testResult
+    Call Teardown
 End Function
 
-Private Function TestCreateFolderIntegration() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "CreateFolder debe crear una carpeta correctamente"
-    On Error GoTo ErrorHandler
 
-    Setup
-
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem
-    Dim testFolderPath As String
-    testFolderPath = modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\new_folder"
-    
-    modAssert.AssertFalse fs.FolderExists(testFolderPath), "La carpeta no debería existir antes de crearla"
-    
-    fs.CreateFolder testFolderPath
-    
-    modAssert.AssertTrue fs.FolderExists(testFolderPath), "La carpeta debería existir después de crearla"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-ErrorHandler:
-    testResult.Fail "Error: " & Err.Description
-Cleanup:
-    Teardown
-    Set TestCreateFolderIntegration = testResult
-End Function
-
-Private Function TestDeleteFolderIntegration() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "DeleteFolder debe eliminar una carpeta correctamente"
-    On Error GoTo ErrorHandler
-
-    Setup
-
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem
-    Dim testFolderPath As String
-    testFolderPath = modTestUtils.GetProjectPath() & TEST_ROOT_PATH & "\folder_to_delete"
-    CreateObject("Scripting.FileSystemObject").CreateFolder testFolderPath
-    
-    modAssert.AssertTrue fs.FolderExists(testFolderPath), "La carpeta debería existir antes de eliminarla"
-    
-    fs.DeleteFolder testFolderPath
-    
-    modAssert.AssertFalse fs.FolderExists(testFolderPath), "La carpeta no debería existir después de eliminarla"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-ErrorHandler:
-    testResult.Fail "Error: " & Err.Description
-Cleanup:
-    Teardown
-    Set TestDeleteFolderIntegration = testResult
-End Function

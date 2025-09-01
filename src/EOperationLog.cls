@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' Clase: EOperationLog
@@ -24,43 +25,43 @@ Private m_IDEntidadAfectada As String
 Private m_Detalles As String
 
 ' Propiedades públicas
-Public Property Get FechaHora() As Date
-    FechaHora = m_FechaHora
+Public Property Get fechaHora() As Date
+    fechaHora = m_FechaHora
 End Property
 
-Public Property Let FechaHora(ByVal value As Date)
+Public Property Let fechaHora(ByVal value As Date)
     m_FechaHora = value
 End Property
 
-Public Property Get Usuario() As String
-    Usuario = m_Usuario
+Public Property Get usuario() As String
+    usuario = m_Usuario
 End Property
 
-Public Property Let Usuario(ByVal value As String)
+Public Property Let usuario(ByVal value As String)
     m_Usuario = value
 End Property
 
-Public Property Get TipoOperacion() As String
-    TipoOperacion = m_TipoOperacion
+Public Property Get tipoOperacion() As String
+    tipoOperacion = m_TipoOperacion
 End Property
 
-Public Property Let TipoOperacion(ByVal value As String)
+Public Property Let tipoOperacion(ByVal value As String)
     m_TipoOperacion = value
 End Property
 
-Public Property Get IDEntidadAfectada() As String
-    IDEntidadAfectada = m_IDEntidadAfectada
+Public Property Get idEntidadAfectada() As String
+    idEntidadAfectada = m_IDEntidadAfectada
 End Property
 
-Public Property Let IDEntidadAfectada(ByVal value As String)
+Public Property Let idEntidadAfectada(ByVal value As String)
     m_IDEntidadAfectada = value
 End Property
 
-Public Property Get Detalles() As String
-    Detalles = m_Detalles
+Public Property Get detalles() As String
+    detalles = m_Detalles
 End Property
 
-Public Property Let Detalles(ByVal value As String)
+Public Property Let detalles(ByVal value As String)
     m_Detalles = value
 End Property
 
@@ -72,3 +73,4 @@ Public Sub Initialize(ByVal fechaHora As Date, ByVal usuario As String, ByVal ti
     m_IDEntidadAfectada = idEntidadAfectada
     m_Detalles = detalles
 End Sub
+

@@ -1,6 +1,7 @@
-Attribute VB_Name = "TIOperationRepository"
+﻿Attribute VB_Name = "TIOperationRepository"
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' MÓDULO: IntegrationTestOperationRepository
@@ -94,15 +95,15 @@ Private Function TestSaveLogIntegrationSuccess() As CTestResult
     Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, False, False)
     
     Set rs = db.OpenRecordset("SELECT COUNT(*) AS RecordCount FROM Tb_Operaciones_Log")
-    modAssert.AssertEquals 1, rs!RecordCount, "Debe haber exactamente 1 registro en Tb_Operaciones_Log"
+    modAssert.AssertEquals 1, rs!recordCount, "Debe haber exactamente 1 registro en Tb_Operaciones_Log"
     rs.Close
     
     Set rs = db.OpenRecordset("SELECT * FROM Tb_Operaciones_Log")
-    modAssert.AssertEquals testOperationType, rs!TipoOperacion, "TipoOperacion debe coincidir"
-    modAssert.AssertEquals testEntityId, rs!IDEntidadAfectada, "IDEntidadAfectada debe coincidir"
-    modAssert.AssertEquals testDetails, rs!Detalles, "Detalles debe coincidir"
-    modAssert.AssertTrue Not IsNull(rs!FechaHora), "FechaHora no debe ser nulo"
-    modAssert.AssertTrue Not IsNull(rs!Usuario), "Usuario no debe ser nulo"
+    modAssert.AssertEquals testOperationType, rs!tipoOperacion, "TipoOperacion debe coincidir"
+    modAssert.AssertEquals testEntityId, rs!idEntidadAfectada, "IDEntidadAfectada debe coincidir"
+    modAssert.AssertEquals testDetails, rs!detalles, "Detalles debe coincidir"
+    modAssert.AssertTrue Not IsNull(rs!fechaHora), "FechaHora no debe ser nulo"
+    modAssert.AssertTrue Not IsNull(rs!usuario), "Usuario no debe ser nulo"
     
     testResult.Pass
     GoTo Cleanup
@@ -116,3 +117,5 @@ Cleanup:
     Call Teardown
     Set TestSaveLogIntegrationSuccess = testResult
 End Function
+
+

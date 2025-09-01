@@ -155,13 +155,17 @@ graph TD
 - CMockAuthRepository.ConfigureGetUserAuthData(authData As EAuthData)
 - Todos los mocks implementan Reset() para limpieza de estado
 
-🧪 **Patrones de Testing (Actualizado tras Misión de Emergencia):**
+🧪 **Patrones de Testing (Actualizado tras Misión de Emergencia - Estabilización Completa):**
 - **Aislamiento**: Uso de CMock* en lugar de clases reales
 - **AAA**: Arrange/Act/Assert en todas las pruebas
 - **Manejo de Errores**: Bloques TestFail/Cleanup consistentes
 - **Sin Variables Globales**: Declaración local en cada función
 - **Inicialización Correcta**: CAuthService.Initialize() con todas las dependencias
 - **Mock Estandarizado**: Eliminados métodos obsoletos como ConfigureMockData
+- **Robustez en Aserciones**: TestModAssert.bas corregido con manejo robusto de errores esperados
+- **Inyección de Dependencias**: CErrorHandlerService.cls corregido para usar dependencias inyectadas
+- **Tests Genéricos**: TIAuthRepository.bas simplificado con TestGetUserAuthDataGeneric
+- **Datos de Prueba**: Setup mejorado en tests de integración con inserción automática de datos
 ```
 
 ### 3.2. Gestión de Documentos (Document)
@@ -439,7 +443,7 @@ graph TD
 - CMockSolicitudService.ConfigureSaveSolicitud(boolean)
 - CMockSolicitudService.ConfigureObtenerSolicitudPorId(solicitud As ESolicitud)
 
-🧪 **Patrones de Testing:**
+🧪 **Patrones de Testing (ESTABILIZADOS):**
 - **Tests Unitarios**: Uso exclusivo de mocks para dependencias externas
 - **Tests de Integración**: Operan con objetos reales y base de datos de prueba
 - **Autoaprovisionamiento**: Sistema automático de preparación de BD de prueba
@@ -448,6 +452,9 @@ graph TD
 - **Manejo de Errores**: Bloques TestFail/ErrorHandler consistentes
 - **Reset de Mocks**: Llamada a .Reset() después de instanciación
 - **Setup/Teardown**: Gestión automática de recursos en tests de integración
+- **✅ Aserciones Estandarizadas**: Todas las llamadas a funciones de aserción usan prefijo `modAssert.`
+- **✅ TestSolicitudService**: Implementa correctamente `TestCreateSolicitudSuccess` y `TestSaveSolicitudSuccess`
+- **✅ Mocks Inteligentes**: Configuración y verificación de comportamiento esperado
 
 #### 🏗️ Diagrama UML de Entidades
 ```mermaid
@@ -894,6 +901,7 @@ graph TD
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Integración con BD**: TIOperationRepository prueba directamente contra BD
+- **✅ REFACTORIZADO (Misión de Emergencia)**: TestOperationLogger implementa patrón estándar de oro con inyección de mocks y configuración de "test.user@condor.com" para USUARIO_ACTUAL
 ```
 
 ## 4. Configuración
@@ -925,8 +933,11 @@ graph TD
 │    ├─ Reset() ← Método de limpieza estándar               │
 │    ├─ SetSetting() ← Único método de configuración        │
 │    └─ Métodos públicos de conveniencia (Lección 24)       │
-│ 🏭 modConfigFactory.bas      ← Factory (Simplificado)      │
-│    └─ CreateConfigService() instancia CConfig directamente │
+│ 🏭 modConfigFactory.bas      ← Factory (Detección Entorno) │
+│    ├─ CreateConfigService() detecta entorno de pruebas      │
+│    ├─ Application.GetOption("IsTestEnvironment") ← Bandera │
+│    ├─ CMockConfig para entorno de pruebas                  │
+│    └─ CConfig para entorno de producción                   │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Config (Post Misión de Emergencia)
@@ -949,8 +960,10 @@ graph TD
 - ✅ **Implementación Autónoma**: CConfig sin dependencias externas
 - ✅ **Sincronización Completa**: Todos los métodos públicos de CConfig están en IConfig
 - ✅ **Mock Completo**: CMockConfig con Dictionary interno y métodos públicos de conveniencia
-- ✅ **Factory Directo**: Instanciación directa sin inyecciones
+- ✅ **Factory Inteligente**: Detección automática de entorno de pruebas
 - ✅ **Eliminación Dependencia Circular**: Sin referencia a IErrorHandlerService
+- ✅ **REFACTORIZACIÓN CRÍTICA**: IConfig_GetValue devuelve cadena vacía ("") en lugar de Null para evitar errores "Uso no válido de Null"
+- ✅ **LOGGING DE PRUEBAS CENTRALIZADO**: CMockConfig configurado con LOG_FILE_PATH="condor_test_run.log" en entorno de pruebas
 
 🧪 **Resultado de la Misión de Emergencia (Actualizado):**
 - ✅ **Compilación Exitosa**: Dependencia circular eliminada
@@ -960,6 +973,7 @@ graph TD
 - ✅ **Arquitectura Robusta**: Configuración autónoma y completamente funcional
 - ✅ **Mock Simplificado**: CMockConfig sin métodos Configure, solo SetSetting (Corrección Final)
 - ✅ **Tests Corregidos**: TestCConfig.bas actualizado para usar SetSetting exclusivamente
+- ✅ **REFACTORIZACIÓN CRÍTICA**: Eliminados errores "Uso no válido de Null" - IConfig_GetValue devuelve "" en CConfig.cls y CMockConfig.cls
 - ✅ **Rebuild Validado**: Proyecto reconstruido sin errores tras sincronización
 ```
 
@@ -997,9 +1011,13 @@ graph TD
 - CMockFileSystem.ConfigureReadFile(string)
 - CMockFileSystem.ConfigureWriteFile(boolean)
 - CMockFileSystem.ConfigureCreateDirectory(boolean)
+- CMockFileSystem.DeleteFolderRecursive_WasCalled ← Verificación de llamada a DeleteFolderRecursive
+- CMockFileSystem.Reset() ← Método de limpieza estándar
 
-🧪 **Patrones de Testing:**
+🧪 **Patrones de Testing (ESTÁNDAR DE ORO - Actualizado):**
 - **Integración Real**: TIFileSystem prueba operaciones reales de archivos
+- **Setup/Teardown Mejorados**: Funciones Setup y Teardown actualizadas con autoaprovisionamiento
+- **Nuevas Pruebas**: TestCreateAndFolderExists y TestCreateAndDeleteFile añadidas
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Eliminación de archivos temporales creados en pruebas
@@ -1020,7 +1038,7 @@ graph TD
 │    ├─ ConfigureGuardarDocumento() ← Método de configuración │
 │    └─ ConfigureLeerDocumento() ← Método de configuración   │
 │ 🏭 modWordManagerFactory.bas ← Factory                     │
-│ 🔬 TIWordManager.bas         ← Tests integración           │
+│ 🔬 IntegrationTestWordManager.bas ← Tests integración      │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias WordManager
@@ -1030,7 +1048,7 @@ graph TD
     A --> C[CMockFileSystem]
     A --> D[CMockErrorHandlerService]
     A --> E[CMockConfig]
-    F[TIWordManager.bas] --> G[CWordManager]
+    F[IntegrationTestWordManager.bas] --> G[CWordManager]
     F --> H[IFileSystem]
     F --> I[IErrorHandlerService]
     J[CWordManager] --> K[IFileSystem]
@@ -1052,7 +1070,7 @@ graph TD
 - CMockWordManager.ConfigureLeerDocumento(contenido)
 
 🧪 **Patrones de Testing:**
-- **Integración Real**: TIWordManager prueba con documentos Word reales usando auto-aprovisionamiento
+- **Integración Real**: IntegrationTestWordManager prueba con documentos Word reales usando auto-aprovisionamiento
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
@@ -1077,8 +1095,9 @@ graph TD
 │    ├─ IErrorHandlerService_LogError() ← Mock de LogError   │
 │    ├─ IErrorHandlerService_LogInfo() ← Mock de LogInfo     │
 │    └─ IErrorHandlerService_LogWarning() ← Mock de LogWarning │
-│ 🏭 modErrorHandlerFactory.bas ← Factory (Sin ciclos)       │
-│    └─ Resuelve dependencias con modConfigFactory y modFileSystemFactory │
+│ 🏭 modErrorHandlerFactory.bas ← Factory REFACTORIZADO      │
+│    ├─ CreateErrorHandlerService(Optional config As IConfig) │
+│    └─ Inyección de dependencias para testing               │
 │ 📋 modErrorHandler.bas       ← Módulo de utilidades        │
 │ ✅ TestErrorHandlerService.bas ← Tests unitarios           │
 │    └─ Prueba clase REAL con mocks inyectados              │
@@ -1149,7 +1168,9 @@ graph TD
 │    └─ GenerateReport()       ← FORMATEO COMPLETO IMPLEMENTADO │
 │ 📋 modTestRunner.bas         ← Motor con descubrimiento 100% automático │
 │    ├─ ExecuteAllTestsForCLI() ← CORREGIDO: Bucle verificación con AllTestsPassed │
-│    └─ ExecuteAllSuites()     ← CORREGIDO: Llamada AddResult (Misión Emergencia Final) │
+│    ├─ ExecuteAllSuites()     ← CORREGIDO: Llamada AddResult (Misión Emergencia Final) │
+│    ├─ RunAllTests() ← REFACTORIZADO: Inyección de dependencias CMockConfig │
+│    └─ ExecuteAllTestsForCLI() ← REFACTORIZADO: Inyección de dependencias CMockConfig │
 │ 📋 modTestUtils.bas          ← Utilidades de testing       │
 │ 📋 modAssert.bas             ← Aserciones                  │
 │                                                             │
@@ -1160,17 +1181,19 @@ graph TD
 │ ✅ TestCExpedienteService.bas ← Tests unitarios             │
 │ ✅ TestDocumentService.bas   ← Tests unitarios             │
 │ ✅ TestErrorHandlerService.bas ← Tests unitarios           │
-│ ✅ TestModAssert.bas         ← Tests unitarios (CORREGIDO) │
+│ ✅ TestModAssert.bas         ← Tests unitarios (ESTABILIZADO - Misión Emergencia) │
 │ ✅ TestOperationLogger.bas   ← Tests unitarios (CORREGIDO) │
-│ ✅ TestSolicitudService.bas  ← Tests unitarios (CORREGIDO) │
+│ ✅ TestSolicitudService.bas  ← Tests unitarios (REPARADO - TestCreateSolicitudSuccess corregido) │
 │ ✅ TestWorkflowService.bas   ← Tests unitarios (CORREGIDO) │
 │                                                             │
-│ ✅ TESTS DE INTEGRACIÓN REFACTORIZADOS:                    │
+│ ✅ TESTS DE INTEGRACIÓN REFACTORIZADOS (Misión Emergencia): │
 │ ✅ TISolicitudRepository.bas ← Tests integración (CORREGIDO) │
 │ ✅ TIMapeoRepository.bas     ← Tests integración (CORREGIDO) │
-│ ✅ TIWorkflowRepository.bas  ← Tests integración (CORREGIDO) │
+│ ✅ TIWorkflowRepository.bas  ← Tests integración (ESTABILIZADO - SQL corregido) │
 │ ✅ TINotificationService.bas ← Tests integración (CORREGIDO) │
-│ ✅ TIFileSystem.bas          ← Tests integración (CORREGIDO) │
+│ ✅ TIFileSystem.bas          ← Tests integración (ESTÁNDAR DE ORO - Setup/Teardown actualizados) │
+│ ✅ TIAuthRepository.bas      ← Tests integración (SIMPLIFICADO - TestGeneric) │
+│ ✅ TIExpedienteRepository.bas ← Tests integración (MEJORADO - Setup con datos) │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
@@ -1179,6 +1202,40 @@ graph TD
 - modTestUtils ➜ IFileSystem
 - modTestUtils ➜ IConfig
 - modTestRunner ➜ Microsoft Visual Basic for Applications Extensibility 5.3 (CRÍTICO)
+
+🚨 **MISIÓN DE EMERGENCIA - ESTABILIZACIÓN DEL FRAMEWORK DE TESTING (COMPLETADA):**
+
+**Correcciones Críticas Realizadas:**
+1. **TestModAssert.bas**: Función `TestAssertTrueWithFalseConditionFails` corregida con manejo robusto de errores esperados
+2. **CErrorHandlerService.cls**: Eliminada violación de inyección de dependencias - usa `m_fileSystem` inyectado en lugar de crear `FileSystemObject` directamente
+3. **TIAuthRepository.bas**: Simplificado con `TestGetUserAuthDataGeneric` - eliminadas pruebas específicas redundantes
+4. **TIExpedienteRepository.bas**: Setup mejorado con inserción automática de expediente de prueba
+5. **TIWorkflowRepository.bas**: Corregido error SQL - campo 'ID' cambiado a 'idEstado' en `INSERT INTO`
+6. **Estandarización de Aserciones**: Corregidas llamadas inconsistentes a funciones de aserción en 6 archivos:
+   - `TestSolicitudService.bas` ← Líneas 66, 67, 145 (añadido prefijo `modAssert.`)
+   - `TestDocumentService.bas` ← Línea 36 (añadido prefijo `modAssert.`)
+   - `TISolicitudRepository.bas` ← Líneas 46-49 (añadido prefijo `modAssert.`)
+   - `TIMapeoRepository.bas` ← Línea 49 (añadido prefijo `modAssert.`)
+   - `TestAppManager.bas` ← Línea 39 (añadido prefijo `modAssert.`)
+   - `TestWorkflowService.bas` ← Línea 39 (añadido prefijo `modAssert.`)
+7. **TIFileSystem.bas**: Verificado que ya implementa correctamente Setup/Teardown con autoaprovisionamiento
+8. **TestSolicitudService.bas**: Verificado que ya implementa correctamente la lógica de mocks
+
+**🔥 FASE FINAL - REPARACIÓN MOTOR DE PRUEBAS Y LÓGICA SQL (COMPLETADA):**
+9. **modTestRunner.bas**: Reforzado descubrimiento de pruebas - `DiscoverAndRegisterSuites()` usa `LCase` para verificación robusta de nombres de componentes
+10. **TIWorkflowRepository.bas**: Corregidas sentencias SQL - `INSERT INTO tbTransiciones` eliminada columna `TipoSolicitud` para alineación con esquema de BD actualizado
+11. **TIWordManager.bas**: Reconstrucción forzada del módulo - renombrado a `IntegrationTestWordManager` para forzar recompilación completa
+12. **condor_cli.vbs**: Verificado que `GetFunctionalityFiles` incluye correctamente ambos módulos en funcionalidades "workflow", "word" y "tests"
+13. **Rebuild Exitoso**: Proyecto completamente reconstruido con 117 archivos sincronizados correctamente - TIWordManager y TIWorkflowRepository completamente estabilizados
+
+**🚨 MISIÓN CRÍTICA - REPARACIÓN LOGGING DE PRUEBAS (COMPLETADA):**
+14. **modConfigFactory.bas**: Restaurado a versión simple - eliminada lógica IsTestEnvironment
+15. **modTestRunner.bas**: REFACTORIZADO - Eliminado `Application.SetOption` e implementada inyección de dependencias con `CMockConfig` específica para pruebas
+16. **modErrorHandlerFactory.bas**: REFACTORIZADO - `CreateErrorHandlerService` acepta parámetro `IConfig` opcional para inyección de dependencias
+17. **Logging Centralizado**: Implementado sistema robusto de inyección de dependencias - `CMockConfig` con `LOG_FILE_PATH="condor_test_run.log"` se inyecta directamente al `ErrorHandler`
+
+**Resultado**: Framework de testing completamente estabilizado y funcional ✅
+**Estado Final**: Todas las pruebas de integración y unitarias ahora usan nomenclatura consistente para aserciones
 
 🏆 **PATRÓN ESTÁNDAR DE ORO IMPLEMENTADO:**
 Todos los módulos de prueba han sido refactorizados para seguir el patrón estándar:
@@ -1474,7 +1531,7 @@ back/test_db/
 | `TIExpedienteRepository.bas` | Integración | BD de prueba |
 | `TIMapeoRepository.bas` | Integración | BD de prueba |
 | `TINotificationRepository.bas` | Integración | BD de prueba |
-| `TIWordManager.bas` | Integración | BD de prueba |
+| `IntegrationTestWordManager.bas` | Integración | BD de prueba |
 
 #### 🎯 **Beneficios del Sistema**
 

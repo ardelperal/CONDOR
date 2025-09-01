@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 Implements ISolicitudRepository
 
 ' --- Variables de estado para configurar el comportamiento del mock ---
@@ -66,11 +67,12 @@ Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
 End Function
 
 ' --- Implementación de la interfaz para ObtenerSolicitudPorId ---
-Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
     Set ISolicitudRepository_ObtenerSolicitudPorId = m_ObtenerSolicitudPorId_Result
 End Function
 
 ' Método público de conveniencia para ObtenerSolicitudPorId
-Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
-    Set ObtenerSolicitudPorId = ISolicitudRepository_ObtenerSolicitudPorId(solicitudId)
+Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
+    Set ObtenerSolicitudPorId = ISolicitudRepository_ObtenerSolicitudPorId(SolicitudID)
 End Function
+

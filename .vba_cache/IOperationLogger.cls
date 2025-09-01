@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' Interfaz: IOperationLogger
@@ -46,5 +47,7 @@ End Sub
 ' @param isCritical: Indica si el error es crítico (opcional, por defecto False)
 Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
 End Sub
+
+
 
 

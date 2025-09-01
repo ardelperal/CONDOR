@@ -1,6 +1,7 @@
-Attribute VB_Name = "TINotificationService"
+﻿Attribute VB_Name = "TINotificationService"
 Option Compare Database
 Option Explicit
+
 
 ' Constantes para rutas de bases de datos
 Private Const CORREOS_TEMPLATE_PATH As String = "back\test_db\templates\correos_test_template.accdb"
@@ -157,3 +158,4 @@ Cleanup:
     Call Teardown
     Set TestSendNotificationConfigValuesUsed = result
 End Function
+

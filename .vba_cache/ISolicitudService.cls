@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' INTERFAZ: ISolicitudService
@@ -34,8 +35,10 @@ End Function
 ' Obtiene una solicitud por su ID
 ' @param solicitudId: ID de la solicitud a obtener
 ' @return: Objeto ESolicitud encontrado
-Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
 End Function
+
+
 
 
 

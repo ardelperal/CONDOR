@@ -1,6 +1,7 @@
-Attribute VB_Name = "modSolicitudServiceFactory"
+﻿Attribute VB_Name = "modSolicitudServiceFactory"
 Option Compare Database
 Option Explicit
+
 
 '******************************************************************************
 ' MÓDULO: modSolicitudServiceFactory
@@ -19,7 +20,7 @@ Option Explicit
 ' RETORNA: ISolicitudService - Instancia del servicio completamente inicializada
 '******************************************************************************
 Public Function CreateSolicitudService() As ISolicitudService
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' 1. Crear dependencias de nivel más bajo primero, llamando a sus factorías SIN argumentos.
     Dim configService As IConfig
@@ -44,9 +45,11 @@ Public Function CreateSolicitudService() As ISolicitudService
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     ' Usar Debug.Print en una factoría es aceptable si errorHandler falla.
     Debug.Print "Error crítico en modSolicitudServiceFactory.CreateSolicitudService: " & Err.Description
     Set CreateSolicitudService = Nothing
 End Function
+
+
 

@@ -1,17 +1,24 @@
 Attribute VB_Name = "modTestUtils"
 Option Compare Database
 Option Explicit
+
 '******************************************************************************
 ' MÓDULO: modTestUtils
 ' DESCRIPCIÓN: Utilidades compartidas para el framework de pruebas.
 '******************************************************************************
 
 Public Function GetProjectPath() As String
-    GetProjectPath = CurrentProject.Path & "\"
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Dim parentFolder As String
+    parentFolder = fso.GetParentFolderName(CurrentProject.Path) ' Sube a /back
+    parentFolder = fso.GetParentFolderName(parentFolder) ' Sube a / (raíz del proyecto)
+    GetProjectPath = parentFolder & "\"
+    Set fso = Nothing
 End Function
 
 Public Sub PrepareTestDatabase(ByVal templatePath As String, ByVal activeTestPath As String)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
 
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
@@ -42,7 +49,8 @@ Public Sub PrepareTestDatabase(ByVal templatePath As String, ByVal activeTestPat
 
     Exit Sub
 
-ErrorHandler:
+errorHandler:
     ' Propagar el error para que el test que lo llamó falle con una descripción clara
     Err.Raise Err.Number, "modTestUtils.PrepareTestDatabase", Err.Description
 End Sub
+

@@ -1,5 +1,7 @@
+﻿Attribute VB_Name = "TestDocumentService"
 Option Compare Database
 Option Explicit
+
 
 Public Function TestDocumentServiceRunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
@@ -31,7 +33,7 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
     
     ' Assert
     AssertEquals expectedPath, resultPath, "La ruta devuelta no es la esperada."
-    AssertTrue mockDocService.GenerarDocumento_WasCalled, "El método GenerarDocumento no fue llamado."
+    modAssert.AssertTrue mockDocService.GenerarDocumento_WasCalled, "El método GenerarDocumento no fue llamado."
     AssertEquals 123, mockDocService.GenerarDocumento_LastSolicitudId, "El ID de solicitud no es el esperado."
     
     TestGenerarDocumentoSuccess.Pass
@@ -44,5 +46,7 @@ Cleanup:
     Set docService = Nothing
     Set mockDocService = Nothing
 End Function
+
+
 
 

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' Clase: CNotificationRepository
@@ -43,7 +44,7 @@ End Sub
 
 ' Implementación de INotificationRepository_EnqueueEmail
 Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpoHTML As String, ByVal usuario As String, ByVal adminEmail As String, Optional ByVal adjuntoPath As String = "") As Boolean
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Validar inicialización
     If Not m_isInitialized Then
@@ -107,7 +108,7 @@ Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As Str
     INotificationRepository_EnqueueEmail = True
     Exit Function
     
-ErrorHandler:
+errorHandler:
     ' Limpiar recursos en caso de error
     If Not rs Is Nothing Then
         If rs.Updatable Then rs.CancelUpdate
@@ -140,3 +141,4 @@ Private Sub Class_Terminate()
     Set m_configService = Nothing
     Set m_ErrorHandler = Nothing
 End Sub
+

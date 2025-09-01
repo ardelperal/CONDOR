@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' Clase de tipo de datos para tbMapeoCampos
@@ -62,4 +63,6 @@ End Property
 Public Property Let NombreCampoWord(ByVal value As String)
     m_nombreCampoWord = value
 End Property
+
+
 

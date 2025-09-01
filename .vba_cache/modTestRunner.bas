@@ -2,6 +2,7 @@ Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' ¡¡¡ REQUISITO DE COMPILACIÓN CRÍTICO !!!
 ' Este módulo utiliza el descubrimiento automático de pruebas a través del objeto
@@ -20,29 +21,29 @@ Private m_SuiteNames As Scripting.Dictionary
 Public Function RunAllTests() As String
     On Error GoTo ErrorHandler
     
-    ' Obtener instancia del manejador de errores
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ' 1. Crear una configuración específica para esta ejecución de pruebas
+    Dim testConfig As New CMockConfig
+    testConfig.SetSetting "LOG_FILE_PATH", CurrentProject.Path & "\condor_test_run.log"
     
-    ' Inicializar colección de suites
+    ' 2. Crear el ErrorHandler para el PROPIO RUNNER, inyectándole la config de prueba
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
+    
+    ' El resto del flujo continúa...
     Set m_SuiteNames = New Scripting.Dictionary
     m_SuiteNames.CompareMode = TextCompare
     
-    ' Descubrir y registrar automáticamente todas las suites disponibles
     DiscoverAndRegisterSuites
     
-    ' Ejecutar todas las pruebas y devolver resultado como string
     Dim reporter As ITestReporter
     Dim reporterImpl As New CTestReporter
     Set reporter = reporterImpl
     
     Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites
+    Set allResults = ExecuteAllSuites ' ExecuteAllSuites usará la testConfig para sus propios error handlers
     
-    ' Inicializar el reportero con los resultados
     reporter.Initialize allResults
     
-    ' Generar reporte en formato string
     Dim reportString As String
     reportString = reporter.GenerateReport()
     
@@ -50,9 +51,9 @@ Public Function RunAllTests() As String
     Exit Function
     
 ErrorHandler:
-    ' Usar el manejador de errores creado al inicio
-    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests", True ' Mark as critical
-    
+    If Not errorHandler Is Nothing Then
+        errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests", True
+    End If
     RunAllTests = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS: " & Err.Description & vbCrLf & "RESULT: FAILED"
 End Function
 
@@ -66,35 +67,36 @@ End Function
 Public Function ExecuteAllTestsForCLI() As String
     On Error GoTo ErrorHandler
     
-    ' Obtener instancia del manejador de errores
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ' 1. Crear una configuración específica para esta ejecución de pruebas
+    Dim testConfig As New CMockConfig
+    testConfig.SetSetting "LOG_FILE_PATH", CurrentProject.Path & "\condor_test_run.log"
     
-    ' Inicializar colección de suites
+    ' 2. Crear el ErrorHandler para el PROPIO RUNNER, inyectándole la config de prueba
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
+
+    ' El resto del flujo continúa...
     Set m_SuiteNames = New Scripting.Dictionary
     m_SuiteNames.CompareMode = TextCompare
-    
-    ' Descubrir y registrar automáticamente todas las suites disponibles
+
     DiscoverAndRegisterSuites
-    
-    ' Ejecutar todas las pruebas y devolver resultado como string
+
     Dim reporter As ITestReporter
     Dim reporterImpl As New CTestReporter
     Set reporter = reporterImpl
-    
+
     Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites
-    
-    ' Inicializar el reportero con los resultados
+    Set allResults = ExecuteAllSuites ' ExecuteAllSuites usará la testConfig para sus propios error handlers
+
     reporter.Initialize allResults
-    
-    ' Generar reporte en formato string
+
     Dim reportString As String
     reportString = reporter.GenerateReport()
-    
+
     ' Verificar si todas las pruebas pasaron
     Dim allPassed As Boolean
-    allPassed = True ' Asumir éxito hasta que se demuestre lo contrario
+    allPassed = True
+
     Dim suiteResult As CTestSuiteResult
     Dim key As Variant
     For Each key In allResults.Keys()
@@ -103,24 +105,23 @@ Public Function ExecuteAllTestsForCLI() As String
             allPassed = False
             Exit For
         End If
-    Next key
-    
+    Next
+
     ' Añadir línea de resultado final
     If allPassed Then
         reportString = reportString & vbCrLf & "RESULT: SUCCESS"
     Else
         reportString = reportString & vbCrLf & "RESULT: FAILURE"
     End If
-    
+
     ExecuteAllTestsForCLI = reportString
     Exit Function
-    
+
 ErrorHandler:
-    ' Usar el manejador de errores para logging
     If Not errorHandler Is Nothing Then
         errorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllTestsForCLI", True
     End If
-    
+
     ExecuteAllTestsForCLI = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS CLI: " & Err.Description & vbCrLf & "RESULT: FAILURE"
 End Function
 
@@ -136,7 +137,7 @@ End Function
 
 ' Función principal que orquesta todo el proceso: registrar, ejecutar y reportar
 Public Sub RunTestFramework()
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Obtener instancia del manejador de errores
     Dim errorHandler As IErrorHandlerService
@@ -164,7 +165,7 @@ Public Sub RunTestFramework()
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunTestFramework", True
 End Sub
 
@@ -178,7 +179,7 @@ End Sub
 ' Patrón de función: [NombreModulo]RunAll (ej: TestCConfigRunAll, IntegrationTestCMapeoRepositoryRunAll)
 ' Requiere: Referencia a "Microsoft Visual Basic for Applications Extensibility 5.3"
 Private Sub DiscoverAndRegisterSuites()
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Intentar descubrimiento automático primero
     Dim vbProject As Object
@@ -193,7 +194,7 @@ Private Sub DiscoverAndRegisterSuites()
             componentName = vbComponent.Name
             
             ' Verificar si el nombre comienza con "Test" o "TI"
-            If Left(componentName, 4) = "Test" Or Left(componentName, 2) = "TI" Then
+            If LCase(Left(componentName, 4)) = "test" Or LCase(Left(componentName, 2)) = "ti" Then
                 ' Construir el nombre de la función de ejecución siguiendo el patrón [NombreModulo]RunAll
                 Dim suiteFunction As String
                 suiteFunction = componentName & "RunAll"
@@ -206,7 +207,7 @@ Private Sub DiscoverAndRegisterSuites()
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     ' El fallo del descubrimiento automático es ahora inaceptable - registrar error crítico
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
@@ -275,6 +276,8 @@ End Function
 Public Sub EjecutarTodasLasPruebas()
     Call RunTestFramework
 End Sub
+
+
 
 
 

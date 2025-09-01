@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IAppManager
 
@@ -23,7 +24,7 @@ Implements IAppManager
 Private m_AuthService As IAuthService
 Private m_Config As IConfig
 Private m_ErrorHandler As IErrorHandlerService
-Private m_IsInitialized As Boolean
+Private m_isInitialized As Boolean
 Private m_CurrentUserRole As UserRole
 
 ' Definir constante de compilacion condicional para modo desarrollo
@@ -36,7 +37,7 @@ Private Sub IAppManager_Initialize(ByVal authService As IAuthService, ByVal conf
     Set m_AuthService = authService
     Set m_Config = config
     Set m_ErrorHandler = errorHandler
-    m_IsInitialized = False
+    m_isInitialized = False
     m_CurrentUserRole = RolDesconocido
 End Sub
 
@@ -44,7 +45,7 @@ End Sub
 ' METODO: StartApplication (IAppManager)
 ' =====================================================
 Private Function IAppManager_StartApplication(Optional ByVal userEmail As String = "") As Boolean
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' 1. Obtener el email del usuario actual
     Dim finalUserEmail As String
@@ -87,11 +88,11 @@ Private Function IAppManager_StartApplication(Optional ByVal userEmail As String
             Exit Function
     End Select
     
-    m_IsInitialized = True
+    m_isInitialized = True
     IAppManager_StartApplication = True
     Exit Function
     
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "CAppManager.StartApplication", "CRITICAL_STARTUP_ERROR"
     IAppManager_StartApplication = False
 End Function
@@ -107,7 +108,7 @@ End Function
 ' METODO: IsApplicationInitialized (IAppManager)
 ' =====================================================
 Private Function IAppManager_IsApplicationInitialized() As Boolean
-    IAppManager_IsApplicationInitialized = m_IsInitialized
+    IAppManager_IsApplicationInitialized = m_isInitialized
 End Function
 
 ' =====================================================
@@ -145,14 +146,15 @@ End Function
 ' PROPOSITO: Obtener el email del usuario actual con capacidad de suplantación en desarrollo
 ' =====================================================
 Private Function GetCurrentUserEmail() As String
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Usar el usuario actual de Windows
     GetCurrentUserEmail = Environ("USERNAME") & "@" & m_Config.GetValue("DEFAULT_DOMAIN")
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "CAppManager.GetCurrentUserEmail"
     GetCurrentUserEmail = "unknown@domain.com"
 End Function
+

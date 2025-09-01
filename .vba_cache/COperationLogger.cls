@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' Clase: COperationLogger
 ' Descripción: Servicio para el registro de operaciones del sistema.
 ' Arquitectura: Capa de Lógica de Negocio - Implementación de IOperationLogger
@@ -24,13 +25,13 @@ Private m_ErrorHandler As IErrorHandlerService
 
 ' Método de inicialización para inyectar dependencias
 Public Sub Initialize(config As IConfig, repository As IOperationRepository, errorHandler As IErrorHandlerService)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Set m_configService = config
     Set m_OperationRepository = repository
     Set m_ErrorHandler = errorHandler
     Exit Sub
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.Initialize"
 End Sub
 
@@ -38,33 +39,33 @@ End Sub
 
 ' Implementación del contrato IOperationLogger
 Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Delegar la operación de guardado al repositorio
     m_OperationRepository.SaveLog operationType, entityId, details
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogOperation", _
                                   "TipoOperacion: " & operationType & ", Entidad: " & entityId
 End Sub
 
 Private Sub IOperationLogger_LogSolicitudCreation(ByVal SolicitudID As Long, ByVal userId As String)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Registrar la creación de solicitud
     m_OperationRepository.SaveLog "SOLICITUD_CREADA", CStr(SolicitudID), "Usuario: " & userId
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogSolicitudCreation", _
                                   "SolicitudId: " & SolicitudID & ", Usuario: " & userId
 End Sub
 
 Private Sub IOperationLogger_LogStateChange(ByVal SolicitudID As Long, ByVal oldState As String, ByVal newState As String, ByVal userId As String)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Registrar el cambio de estado
     Dim details As String
@@ -73,13 +74,13 @@ Private Sub IOperationLogger_LogStateChange(ByVal SolicitudID As Long, ByVal old
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogStateChange", _
                                   "SolicitudId: " & SolicitudID & ", Estados: " & oldState & " -> " & newState
 End Sub
 
 Private Sub IOperationLogger_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Registrar el error del sistema
     Dim details As String
@@ -88,7 +89,7 @@ Private Sub IOperationLogger_LogError(ByVal errNumber As Long, ByVal errDescript
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "COperationLogger.IOperationLogger_LogError", _
                                   "Número: " & errNumber & ", Módulo: " & moduleName
 End Sub
@@ -112,6 +113,9 @@ End Sub
 Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
     IOperationLogger_LogError errNumber, errDescription, moduleName, isCritical
 End Sub
+
+
+
 
 
 

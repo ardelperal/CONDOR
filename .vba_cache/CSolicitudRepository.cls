@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' CLASE: CSolicitudRepository
@@ -23,7 +24,7 @@ Implements ISolicitudRepository
 
 ' Dependencias inyectadas
 Private m_configService As IConfig
-Private m_errorHandler As IErrorHandlerService
+Private m_ErrorHandler As IErrorHandlerService
 Private m_isInitialized As Boolean
 
 ' ============================================================================
@@ -43,7 +44,7 @@ Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErr
     End If
     
     Set m_configService = configService
-    Set m_errorHandler = errorHandler
+    Set m_ErrorHandler = errorHandler
     m_isInitialized = True
 End Sub
 
@@ -67,9 +68,9 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim qdfIdentity As DAO.QueryDef
-    Dim rs As DAO.recordset
+    Dim rs As DAO.Recordset
     
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Conectar al Backend usando la ruta de configuración
     Dim backendPath As String
@@ -86,15 +87,15 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
         Set qdf = db.CreateQueryDef("", INSERT_SOLICITUD)
         
         ' Asignar parámetros directamente desde el objeto solicitud
-        qdf.parameters("idExpediente") = solicitud.idExpediente
-        qdf.parameters("tipoSolicitud") = solicitud.tipoSolicitud
-        qdf.parameters("subTipoSolicitud") = solicitud.subTipoSolicitud
-        qdf.parameters("codigoSolicitud") = solicitud.codigoSolicitud
-        qdf.parameters("idEstadoInterno") = solicitud.idEstadoInterno
-        qdf.parameters("fechaCreacion") = solicitud.fechaCreacion
-        qdf.parameters("usuarioCreacion") = solicitud.usuarioCreacion
-        qdf.parameters("fechaModificacion") = solicitud.fechaModificacion
-        qdf.parameters("usuarioModificacion") = solicitud.usuarioModificacion
+        qdf.Parameters("idExpediente") = solicitud.idExpediente
+        qdf.Parameters("tipoSolicitud") = solicitud.tipoSolicitud
+        qdf.Parameters("subTipoSolicitud") = solicitud.subTipoSolicitud
+        qdf.Parameters("codigoSolicitud") = solicitud.codigoSolicitud
+        qdf.Parameters("idEstadoInterno") = solicitud.idEstadoInterno
+        qdf.Parameters("fechaCreacion") = solicitud.fechaCreacion
+        qdf.Parameters("usuarioCreacion") = solicitud.usuarioCreacion
+        qdf.Parameters("fechaModificacion") = solicitud.fechaModificacion
+        qdf.Parameters("usuarioModificacion") = solicitud.usuarioModificacion
         
         qdf.Execute dbFailOnError
         
@@ -108,16 +109,16 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
         Set qdf = db.CreateQueryDef("", UPDATE_SOLICITUD)
         
         ' Asignar parámetros directamente desde el objeto solicitud
-        qdf.parameters("idExpediente") = solicitud.idExpediente
-        qdf.parameters("tipoSolicitud") = solicitud.tipoSolicitud
-        qdf.parameters("subTipoSolicitud") = solicitud.subTipoSolicitud
-        qdf.parameters("codigoSolicitud") = solicitud.codigoSolicitud
-        qdf.parameters("idEstadoInterno") = solicitud.idEstadoInterno
-        qdf.parameters("fechaCreacion") = solicitud.fechaCreacion
-        qdf.parameters("usuarioCreacion") = solicitud.usuarioCreacion
-        qdf.parameters("fechaModificacion") = solicitud.fechaModificacion
-        qdf.parameters("usuarioModificacion") = solicitud.usuarioModificacion
-        qdf.parameters("idSolicitud") = solicitud.idSolicitud
+        qdf.Parameters("idExpediente") = solicitud.idExpediente
+        qdf.Parameters("tipoSolicitud") = solicitud.tipoSolicitud
+        qdf.Parameters("subTipoSolicitud") = solicitud.subTipoSolicitud
+        qdf.Parameters("codigoSolicitud") = solicitud.codigoSolicitud
+        qdf.Parameters("idEstadoInterno") = solicitud.idEstadoInterno
+        qdf.Parameters("fechaCreacion") = solicitud.fechaCreacion
+        qdf.Parameters("usuarioCreacion") = solicitud.usuarioCreacion
+        qdf.Parameters("fechaModificacion") = solicitud.fechaModificacion
+        qdf.Parameters("usuarioModificacion") = solicitud.usuarioModificacion
+        qdf.Parameters("idSolicitud") = solicitud.idSolicitud
         
         qdf.Execute dbFailOnError
     End If
@@ -126,10 +127,10 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
     ISolicitudRepository_SaveSolicitud = solicitud.idSolicitud
     Exit Function
     
-ErrorHandler:
+errorHandler:
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
-    m_errorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.SaveSolicitud"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.SaveSolicitud"
     ISolicitudRepository_SaveSolicitud = 0
 End Function
 
@@ -140,14 +141,14 @@ End Function
 ' Carga los datos específicos según el tipo de solicitud
 Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DAO.Database)
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.recordset
+    Dim rs As DAO.Recordset
     
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Select Case UCase(solicitud.tipoSolicitud)
         Case "PC"
             Set qdf = db.CreateQueryDef("", GET_DATOS_PC_BY_SOLICITUD)
-            qdf.parameters(0) = solicitud.idSolicitud
+            qdf.Parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
@@ -171,7 +172,7 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DA
             
         Case "CD_CA"
             Set qdf = db.CreateQueryDef("", GET_DATOS_CD_CA_BY_SOLICITUD)
-            qdf.parameters(0) = solicitud.idSolicitud
+            qdf.Parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
@@ -193,7 +194,7 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DA
             
         Case "CD_CA_SUB"
             Set qdf = db.CreateQueryDef("", GET_DATOS_CD_CA_SUB_BY_SOLICITUD)
-            qdf.parameters(0) = solicitud.idSolicitud
+            qdf.Parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
@@ -219,10 +220,10 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DA
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     If Not rs Is Nothing Then rs.Close
     ' Log del error pero no propagar para no interrumpir la carga principal
-    m_errorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.CargarDatosEspecificos"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.CargarDatosEspecificos"
 End Sub
 
 ' ============================================================================
@@ -239,7 +240,7 @@ Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
 End Function
 
 ' Implementación de la interfaz para ObtenerSolicitudPorId
-Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
     
     If Not m_isInitialized Then
         Err.Raise 5, "CSolicitudRepository.ObtenerSolicitudPorId", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
@@ -247,10 +248,10 @@ Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal solicitudId As
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
-    Dim rs As DAO.recordset
+    Dim rs As DAO.Recordset
     Dim solicitud As ESolicitud
     
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Conectar al Backend usando la ruta de configuración
     Dim backendPath As String
@@ -265,7 +266,7 @@ Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal solicitudId As
     Set qdf = db.CreateQueryDef("", GET_SOLICITUD_BY_ID)
     
     ' Asignar parámetro directamente
-    qdf.parameters(0) = solicitudId
+    qdf.Parameters(0) = SolicitudID
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
@@ -295,16 +296,18 @@ Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal solicitudId As
     Set ISolicitudRepository_ObtenerSolicitudPorId = solicitud
     Exit Function
     
-ErrorHandler:
+errorHandler:
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
-    m_errorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.ObtenerSolicitudPorId"
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.ObtenerSolicitudPorId"
     Err.Raise Err.Number, "CSolicitudRepository.ObtenerSolicitudPorId", Err.Description
 End Function
 
 ' Método público de conveniencia para ObtenerSolicitudPorId
-Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
-    Set ObtenerSolicitudPorId = ISolicitudRepository_ObtenerSolicitudPorId(solicitudId)
+Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
+    Set ObtenerSolicitudPorId = ISolicitudRepository_ObtenerSolicitudPorId(SolicitudID)
 End Function
+
+
 
 

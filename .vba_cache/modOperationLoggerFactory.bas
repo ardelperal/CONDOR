@@ -1,13 +1,14 @@
-Attribute VB_Name = "modOperationLoggerFactory"
+﻿Attribute VB_Name = "modOperationLoggerFactory"
 Option Compare Database
 Option Explicit
+
 
 
 ' Módulo: modOperationLoggerFactory
 ' Descripción: Factory para la creación de servicios de logging de operaciones.
 
 Public Function CreateOperationLogger() As IOperationLogger
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Crear dependencias internamente
     Dim errorHandler As IErrorHandlerService
@@ -35,9 +36,11 @@ Public Function CreateOperationLogger() As IOperationLogger
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error en modOperationLoggerFactory.CreateOperationLogger: " & Err.Description
     Err.Raise Err.Number, "modOperationLoggerFactory.CreateOperationLogger", Err.Description
 End Function
+
+
 
 

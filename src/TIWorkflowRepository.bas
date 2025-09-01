@@ -1,9 +1,10 @@
-Attribute VB_Name = "TIWorkflowRepository"
+﻿Attribute VB_Name = "TIWorkflowRepository"
+Option Compare Database
+Option Explicit
+
 ' Módulo: TIWorkflowRepository
 ' Propósito: Pruebas de integración para CWorkflowRepository
 
-Option Compare Database
-Option Explicit
 
 Private Const TEST_DB_TEMPLATE_PATH As String = "back\test_db\templates\CONDOR_test_template.accdb"
 Private Const TEST_DB_ACTIVE_PATH As String = "back\test_db\active\CONDOR_workflow_test.accdb"
@@ -44,11 +45,11 @@ Private Sub InsertTestData(ByVal dbPath As String)
     Dim db As DAO.Database
     Set db = DBEngine.OpenDatabase(dbPath, False, False)
 
-    db.Execute "INSERT INTO TbEstados (ID, CodigoEstado) VALUES (1, 'BORRADOR')"
-    db.Execute "INSERT INTO TbEstados (ID, CodigoEstado) VALUES (2, 'EN_REVISION')"
-    db.Execute "INSERT INTO TbEstados (ID, CodigoEstado) VALUES (3, 'APROBADO')"
-    db.Execute "INSERT INTO TbTransiciones (idEstadoOrigen, idEstadoDestino, RolRequerido, TipoSolicitud) VALUES (1, 2, 'CALIDAD', 'PC')"
-    db.Execute "INSERT INTO TbTransiciones (idEstadoOrigen, idEstadoDestino, RolRequerido, TipoSolicitud) VALUES (2, 3, 'ADMIN', 'PC')"
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (1, 'BORRADOR', 'Estado inicial', True, False)"
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (2, 'EN_REVISION', 'Estado en revisión', False, False)"
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (3, 'APROBADO', 'Estado final aprobado', False, True)"
+    db.Execute "INSERT INTO tbTransiciones (idEstadoOrigen, idEstadoDestino, RolRequerido) VALUES (1, 2, 'CALIDAD')"
+    db.Execute "INSERT INTO tbTransiciones (idEstadoOrigen, idEstadoDestino, RolRequerido) VALUES (2, 3, 'ADMIN')"
 
     db.Close
     Set db = Nothing
@@ -115,3 +116,5 @@ TestFail:
 Cleanup:
     Call Teardown
 End Function
+
+

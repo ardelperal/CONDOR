@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IAuthService
 
@@ -28,3 +29,4 @@ End Function
 Private Function IAuthService_AuthenticateUser(ByVal userEmail As String, ByVal password As String) As Boolean
     IAuthService_AuthenticateUser = m_AuthenticateUser_Result
 End Function
+

@@ -1,6 +1,7 @@
-Attribute VB_Name = "modQueries"
+﻿Attribute VB_Name = "modQueries"
 Option Compare Database
 Option Explicit
+
 
 '''
 ' Módulo Central de Consultas SQL - CONDOR
@@ -164,3 +165,5 @@ Public Const GET_ALL_CONFIG As String = _
 Public Const INSERT_OPERATION_LOG As String = _
     "INSERT INTO tbOperacionesLog (FechaHora, Usuario, TipoOperacion, IDEntidadAfectada, Detalles) " & _
     "VALUES ([pFechaHora], [pUsuario], [pTipoOperacion], [pIDEntidadAfectada], [pDetalles]);"
+
+

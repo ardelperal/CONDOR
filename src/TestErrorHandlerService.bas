@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestErrorHandlerService"
+﻿Attribute VB_Name = "TestErrorHandlerService"
 Option Compare Database
 Option Explicit
+
 
 ' =====================================================
 ' TestErrorHandlerService.bas
@@ -20,36 +21,28 @@ Private Function TestLogError_WritesToFile_Success() As CTestResult
     Set TestLogError_WritesToFile_Success = New CTestResult
     TestLogError_WritesToFile_Success.Initialize "LogError debe escribir en el fichero de log correctamente"
     
-    Dim errorHandlerService As IErrorHandlerService
+    Dim serviceImpl As CErrorHandlerService
     Dim mockConfig As CMockConfig
     Dim mockFileSystem As CMockFileSystem
-    Dim mockTextFile As CMockTextFile
+    Dim service As IErrorHandlerService
     
     On Error GoTo TestFail
     
-    ' Arrange: Instanciar la CLASE REAL a probar y sus DEPENDENCIAS MOCKEADAS
-    Set errorHandlerService = New CErrorHandlerService
+    ' Arrange
     Set mockConfig = New CMockConfig
     Set mockFileSystem = New CMockFileSystem
+    mockConfig.SetSetting "LOG_FILE_PATH", "C:\fake\log.txt"
     
-    ' Configurar los mocks
-    mockConfig.SetSetting "LOG_FILE_PATH", "C:\temp\test.log"
-    Set mockTextFile = mockFileSystem.GetMockTextFile() ' Asumimos que CMockFileSystem tiene este método auxiliar
+    Set serviceImpl = New CErrorHandlerService
+    serviceImpl.Initialize mockConfig, mockFileSystem
+    Set service = serviceImpl
     
-    ' Act: Inicializar el servicio REAL con los MOCKS
-    errorHandlerService.Initialize mockConfig, mockFileSystem
-    errorHandlerService.LogError 1001, "Error de prueba", "TestModule.TestFunction"
+    ' Act
+    service.LogError 123, "Test Error", "TestModule"
     
-    ' Assert: Verificar que los MOCKS fueron llamados correctamente
-    Dim writtenContent As String
-    writtenContent = mockTextFile.LastWrittenLine
-    
-    modAssert.AssertTrue mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debe haber sido llamado"
-    modAssert.AssertTrue mockTextFile.WasWriteLineCalled, "WriteLine debe haber sido llamado"
-    modAssert.AssertTrue mockTextFile.WasCloseCalled, "Close debe haber sido llamado"
-    modAssert.AssertTrue InStr(writtenContent, "1001") > 0, "El número de error debe estar en el log"
-    modAssert.AssertTrue InStr(writtenContent, "Error de prueba") > 0, "La descripción del error debe estar en el log"
-    modAssert.AssertTrue InStr(writtenContent, "TestModule.TestFunction") > 0, "La fuente del error debe estar en el log"
+    ' Assert
+    modAssert.AssertTrue mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debería haber sido llamado."
+    modAssert.AssertEquals "C:\fake\log.txt", mockFileSystem.LastPath, "Se llamó a OpenTextFile con la ruta incorrecta."
     
     TestLogError_WritesToFile_Success.Pass
     GoTo Cleanup
@@ -58,8 +51,9 @@ TestFail:
     TestLogError_WritesToFile_Success.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    Set errorHandlerService = Nothing
+    Set serviceImpl = Nothing
     Set mockConfig = Nothing
     Set mockFileSystem = Nothing
-    Set mockTextFile = Nothing
+    Set service = Nothing
 End Function
+

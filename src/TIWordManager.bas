@@ -2,6 +2,7 @@ Attribute VB_Name = "TIWordManager"
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' Módulo: TIWordManager
 ' Descripción: Pruebas de integración para CWordManager, siguiendo el
@@ -18,7 +19,7 @@ End Function
 
 Public Function TIWordManager_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TIWordManager"
+    suiteResult.Initialize "IntegrationTestWordManager"
     
     suiteResult.AddResult Test_CicloCompleto_Success()
     suiteResult.AddResult Test_AbrirFicheroInexistente_DevuelveFalse()
@@ -124,3 +125,5 @@ Cleanup:
     Set wordDoc = Nothing
     Set wordApp = Nothing
 End Sub
+
+

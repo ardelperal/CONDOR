@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestAuthService"
+﻿Attribute VB_Name = "TestAuthService"
 Option Compare Database
 Option Explicit
+
 
 Public Function TestAuthServiceRunAll() As CTestSuiteResult
     Set TestAuthServiceRunAll = New CTestSuiteResult
@@ -50,6 +51,8 @@ TestFail:
     TestGetUserRole_Admin_ReturnsAdmin.Fail "Error: " & Err.Description
     Resume Cleanup
 End Function
+
+
 
 
 

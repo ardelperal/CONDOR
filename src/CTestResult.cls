@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Public Name As String
 Public Passed As Boolean
@@ -29,5 +30,7 @@ Public Sub Fail(Optional ByVal message As String = "Test failed without a specif
     Passed = False
     ErrorMessage = message
 End Sub
+
+
 
 

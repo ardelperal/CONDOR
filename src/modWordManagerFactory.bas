@@ -1,6 +1,7 @@
-Attribute VB_Name = "modWordManagerFactory"
+﻿Attribute VB_Name = "modWordManagerFactory"
 Option Compare Database
 Option Explicit
+
 
 
 ' =====================================================
@@ -11,7 +12,7 @@ Option Explicit
 ' =====================================================
 
 Public Function CreateWordManager() As IWordManager
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Dim wordApp As Object
     Dim configService As IConfig
@@ -34,8 +35,10 @@ Public Function CreateWordManager() As IWordManager
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error en modWordManagerFactory.CreateWordManager: " & Err.Description
     Err.Raise Err.Number, "modWordManagerFactory.CreateWordManager", Err.Description
 End Function
+
+
 

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -11,20 +11,21 @@ Option Compare Database
 Option Explicit
 
 
+
 ' Clase de tipo de datos para tbLogCambios
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Auditoría de cambios realizados en el sistema
 
 ' Campos privados según especificación tbLogCambios
 Private m_idLogCambio As Long
-Private m_fechaHora As Date
-Private m_usuario As String
+Private m_FechaHora As Date
+Private m_Usuario As String
 Private m_tabla As String
 Private m_registro As Long
 Private m_campo As String
 Private m_valorAnterior As String
 Private m_valorNuevo As String
-Private m_tipoOperacion As String
+Private m_TipoOperacion As String
 
 ' Propiedades públicas
 Public Property Get IdLogCambio() As Long
@@ -35,20 +36,20 @@ Public Property Let IdLogCambio(ByVal value As Long)
     m_idLogCambio = value
 End Property
 
-Public Property Get FechaHora() As Date
-    FechaHora = m_fechaHora
+Public Property Get fechaHora() As Date
+    fechaHora = m_FechaHora
 End Property
 
-Public Property Let FechaHora(ByVal value As Date)
-    m_fechaHora = value
+Public Property Let fechaHora(ByVal value As Date)
+    m_FechaHora = value
 End Property
 
-Public Property Get Usuario() As String
-    Usuario = m_usuario
+Public Property Get usuario() As String
+    usuario = m_Usuario
 End Property
 
-Public Property Let Usuario(ByVal value As String)
-    m_usuario = value
+Public Property Let usuario(ByVal value As String)
+    m_Usuario = value
 End Property
 
 Public Property Get Tabla() As String
@@ -91,11 +92,13 @@ Public Property Let ValorNuevo(ByVal value As String)
     m_valorNuevo = value
 End Property
 
-Public Property Get TipoOperacion() As String
-    TipoOperacion = m_tipoOperacion
+Public Property Get tipoOperacion() As String
+    tipoOperacion = m_TipoOperacion
 End Property
 
-Public Property Let TipoOperacion(ByVal value As String)
-    m_tipoOperacion = value
+Public Property Let tipoOperacion(ByVal value As String)
+    m_TipoOperacion = value
 End Property
+
+
 

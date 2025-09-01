@@ -1,5 +1,15 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockConfig"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 Implements IConfig
 
 Private m_Settings As Scripting.Dictionary
@@ -12,6 +22,8 @@ Public Sub Reset(): Set m_Settings = New Scripting.Dictionary: m_Settings.Compar
 Private Function IConfig_GetValue(ByVal key As String) As Variant
     If m_Settings.Exists(key) Then
         IConfig_GetValue = m_Settings(key)
+    Else
+        IConfig_GetValue = "" ' Devolver cadena vacía en lugar de Null o Empty
     End If
 End Function
 
@@ -112,3 +124,4 @@ End Function
 Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
     Call IConfig_SetSetting(key, value)
 End Sub
+

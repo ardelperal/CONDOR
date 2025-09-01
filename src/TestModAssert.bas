@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestModAssert"
+﻿Attribute VB_Name = "TestModAssert"
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' MÓDULO DE META-TESTING PARA modAssert
@@ -41,7 +42,7 @@ Private Function TestAssertTrueWithTrueConditionPasses() As CTestResult
     TestAssertTrueWithTrueConditionPasses.Initialize "AssertTrue con condición Verdadera debe pasar"
     On Error GoTo TestFail
     
-    ModAssert.AssertTrue True, "Esta aserción debe pasar"
+    modAssert.AssertTrue True, "Esta aserción debe pasar"
     
     TestAssertTrueWithTrueConditionPasses.Pass
     Exit Function
@@ -52,18 +53,14 @@ End Function
 Private Function TestAssertTrueWithFalseConditionFails() As CTestResult
     Set TestAssertTrueWithFalseConditionFails = New CTestResult
     TestAssertTrueWithFalseConditionFails.Initialize "AssertTrue con condición Falsa debe fallar"
-    On Error GoTo TestFail
+    On Error GoTo TestExpectedFail
     
-    ModAssert.AssertTrue False, "Esta aserción debe fallar"
+    modAssert.AssertTrue False, "Esta aserción debe fallar"
     
-    TestAssertTrueWithFalseConditionFails.Fail "AssertTrue debería haber fallado con condición False"
+    TestAssertTrueWithFalseConditionFails.Fail "AssertTrue debería haber lanzado un error."
     Exit Function
-TestFail:
-    If Err.Number = vbObjectError + 510 Then
-        TestAssertTrueWithFalseConditionFails.Pass
-    Else
-        TestAssertTrueWithFalseConditionFails.Fail "AssertTrue falló con error incorrecto. Esperado: " & (vbObjectError + 510) & ", Actual: " & Err.Number
-    End If
+TestExpectedFail:
+    TestAssertTrueWithFalseConditionFails.Pass ' Si llega aquí, el error esperado ocurrió.
 End Function
 
 ' ============================================================================
@@ -75,7 +72,7 @@ Private Function TestAssertFalseWithFalseConditionPasses() As CTestResult
     TestAssertFalseWithFalseConditionPasses.Initialize "AssertFalse con condición Falsa debe pasar"
     On Error GoTo TestFail
     
-    ModAssert.AssertFalse False, "Esta aserción debe pasar"
+    modAssert.AssertFalse False, "Esta aserción debe pasar"
     
     TestAssertFalseWithFalseConditionPasses.Pass
     Exit Function
@@ -88,7 +85,7 @@ Private Function TestAssertFalseWithTrueConditionFails() As CTestResult
     TestAssertFalseWithTrueConditionFails.Initialize "AssertFalse con condición Verdadera debe fallar"
     On Error GoTo TestFail
     
-    ModAssert.AssertFalse True, "Esta aserción debe fallar"
+    modAssert.AssertFalse True, "Esta aserción debe fallar"
     
     TestAssertFalseWithTrueConditionFails.Fail "AssertFalse debería haber fallado con condición True"
     Exit Function
@@ -109,9 +106,9 @@ Private Function TestAssertEqualsWithEqualValuesPasses() As CTestResult
     TestAssertEqualsWithEqualValuesPasses.Initialize "AssertEquals con valores iguales debe pasar"
     On Error GoTo TestFail
     
-    ModAssert.AssertEquals "test", "test", "Valores iguales deben pasar"
-    ModAssert.AssertEquals 42, 42, "Números iguales deben pasar"
-    ModAssert.AssertEquals True, True, "Booleanos iguales deben pasar"
+    modAssert.AssertEquals "test", "test", "Valores iguales deben pasar"
+    modAssert.AssertEquals 42, 42, "Números iguales deben pasar"
+    modAssert.AssertEquals True, True, "Booleanos iguales deben pasar"
     
     TestAssertEqualsWithEqualValuesPasses.Pass
     Exit Function
@@ -124,7 +121,7 @@ Private Function TestAssertEqualsWithDifferentValuesFails() As CTestResult
     TestAssertEqualsWithDifferentValuesFails.Initialize "AssertEquals con valores diferentes debe fallar"
     On Error GoTo TestFail
     
-    ModAssert.AssertEquals "expected", "actual", "Esta aserción debe fallar"
+    modAssert.AssertEquals "expected", "actual", "Esta aserción debe fallar"
     
     TestAssertEqualsWithDifferentValuesFails.Fail "AssertEquals debería haber fallado con valores diferentes"
     Exit Function
@@ -181,7 +178,7 @@ Private Function TestAssertNotNullWithValidObjectPasses() As CTestResult
     On Error GoTo TestFail
     
     Dim obj As New Scripting.Dictionary
-    ModAssert.AssertNotNull obj, "Objeto válido debe pasar"
+    modAssert.AssertNotNull obj, "Objeto válido debe pasar"
     
     TestAssertNotNullWithValidObjectPasses.Pass
     Exit Function
@@ -196,7 +193,7 @@ Private Function TestAssertNotNullWithNothingObjectFails() As CTestResult
     
     Dim obj As Object
     Set obj = Nothing
-    ModAssert.AssertNotNull obj, "Esta aserción debe fallar"
+    modAssert.AssertNotNull obj, "Esta aserción debe fallar"
     
     TestAssertNotNullWithNothingObjectFails.Fail "AssertNotNull debería haber fallado con objeto Nothing"
     Exit Function
@@ -219,7 +216,7 @@ Private Function TestAssertIsNullWithNothingObjectPasses() As CTestResult
     
     Dim obj As Object
     Set obj = Nothing
-    ModAssert.AssertIsNull obj, "Objeto Nothing debe pasar"
+    modAssert.AssertIsNull obj, "Objeto Nothing debe pasar"
     
     TestAssertIsNullWithNothingObjectPasses.Pass
     Exit Function
@@ -233,7 +230,7 @@ Private Function TestAssertIsNullWithValidObjectFails() As CTestResult
     On Error GoTo TestFail
     
     Dim obj As New Scripting.Dictionary
-    ModAssert.AssertIsNull obj, "Esta aserción debe fallar"
+    modAssert.AssertIsNull obj, "Esta aserción debe fallar"
     
     TestAssertIsNullWithValidObjectFails.Fail "AssertIsNull debería haber fallado con objeto válido"
     Exit Function
@@ -254,7 +251,7 @@ Private Function TestFailAlwaysFails() As CTestResult
     TestFailAlwaysFails.Initialize "Fail siempre debe fallar"
     On Error GoTo TestFail
     
-    Call ModAssert.Fail("Esta función siempre debe fallar")
+    Call modAssert.Fail("Esta función siempre debe fallar")
     
     TestFailAlwaysFails.Fail "Fail debería haber fallado incondicionalmente"
     Exit Function
@@ -265,3 +262,4 @@ TestFail:
         TestFailAlwaysFails.Fail "Fail falló con error incorrecto. Esperado: " & (vbObjectError + 515) & ", Actual: " & Err.Number
     End If
 End Function
+

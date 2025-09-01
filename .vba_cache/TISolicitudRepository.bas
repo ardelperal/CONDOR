@@ -1,5 +1,7 @@
+﻿Attribute VB_Name = "TISolicitudRepository"
 Option Compare Database
 Option Explicit
+
 
 Private Const TEMPLATE_PATH As String = "back\test_db\templates\CONDOR_test_template.accdb"
 Private Const ACTIVE_PATH As String = "back\test_db\active\CONDOR_solicitud_itest.accdb"
@@ -43,8 +45,8 @@ Private Function TestSaveAndRetrieveSolicitud() As CTestResult
     Set retrievedSolicitud = repo.ObtenerSolicitudPorId(newId)
     
     ' Assert
-    AssertTrue newId > 0, "El ID devuelto debe ser positivo."
-    AssertNotNull retrievedSolicitud, "La solicitud recuperada no debe ser nula."
+    modAssert.AssertTrue newId > 0, "El ID devuelto debe ser positivo."
+    modAssert.AssertNotNull retrievedSolicitud, "La solicitud recuperada no debe ser nula."
     AssertEquals "TEST-SAVE-001", retrievedSolicitud.codigoSolicitud, "El código de solicitud no coincide."
     
     TestSaveAndRetrieveSolicitud.Pass
@@ -55,3 +57,4 @@ TestFail:
     TestSaveAndRetrieveSolicitud.Fail "Error: " & Err.Description
     Resume Cleanup
 End Function
+

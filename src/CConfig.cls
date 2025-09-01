@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 Implements IConfig
 
 Private m_Settings As Scripting.Dictionary
@@ -20,13 +21,13 @@ End Sub
 
 ' Método para cargar la configuración desde la BD. Lanza errores si falla.
 Public Sub LoadConfiguration()
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     ' TODO: Añadir lógica para leer de TbLocalConfig y luego de tbConfiguracion del backend
     ' Por ahora, añadimos valores de prueba para que compile y funcione.
     m_Settings.Add "BACKEND_DB_PATH", "C:\Path\To\Backend.accdb"
     m_Settings.Add "DATABASE_PASSWORD", "dpddpd"
     Exit Sub
-ErrorHandler:
+errorHandler:
     Err.Raise vbObjectError + 1000, "CConfig.LoadConfiguration", "No se pudo cargar la configuración."
 End Sub
 
@@ -34,7 +35,7 @@ Private Function IConfig_GetValue(ByVal key As String) As Variant
     If m_Settings.Exists(key) Then
         IConfig_GetValue = m_Settings(key)
     Else
-        IConfig_GetValue = Null ' O un valor por defecto
+        IConfig_GetValue = "" ' Devolver cadena vacía en lugar de Null
     End If
 End Function
 
@@ -85,6 +86,8 @@ End Function
 Private Function IConfig_GetLanzaderaPassword() As String
     IConfig_GetLanzaderaPassword = IConfig_GetValue("LANZADERA_PASSWORD")
 End Function
+
+
 
 
 

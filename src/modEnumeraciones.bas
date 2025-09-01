@@ -1,6 +1,7 @@
-Attribute VB_Name = "modEnumeraciones"
+﻿Attribute VB_Name = "modEnumeraciones"
 Option Compare Database
 Option Explicit
+
 
 
 ' Enumeración de roles de usuario para el sistema CONDOR
@@ -11,4 +12,6 @@ Public Enum UserRole
     RolCalidad = 2
     RolTecnico = 3
 End Enum
+
+
 

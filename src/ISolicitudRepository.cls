@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -10,8 +10,10 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+
+Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
 End Function
 
 Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
 End Function
+

@@ -1130,47 +1130,47 @@ Sub ExecuteTests()
     WScript.Echo "=== INICIANDO EJECUCION DE PRUEBAS ==="
     Dim reportString
     
-    ' Ejecutar las pruebas en Access y capturar el resultado
     WScript.Echo "Ejecutando suite de pruebas en Access..."
     On Error Resume Next
     
     ' Suprimir diálogos inesperados de Access durante las pruebas
     objAccess.Application.DisplayAlerts = False
     
-    ' Llamar directamente a ExecuteAllTestsForCLI y capturar el valor de retorno
-    reportString = objAccess.Application.Run("modTestRunner.ExecuteAllTestsForCLI")
+    ' CORRECCIÓN CRÍTICA: La llamada a .Run se hace directamente y se asigna a la variable.
+    ' VBScript manejará la captura del valor de retorno de la función VBA.
+    reportString = objAccess.Run("modTestRunner.ExecuteAllTestsForCLI")
     
     If Err.Number <> 0 Then
         WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas."
         WScript.Echo "  Código de Error: " & Err.Number
         WScript.Echo "  Descripción: " & Err.Description
         WScript.Echo "  Fuente: " & Err.Source
-        WScript.Echo "SUGERENCIA: Abre Access manualmente y ejecuta RunAllTests desde el módulo modTestRunner para ver el error específico"
+        WScript.Echo "SUGERENCIA: Abre Access manualmente y ejecuta RunAllTests desde el módulo modTestRunner."
         objAccess.Quit
         WScript.Quit 1
     End If
     On Error GoTo 0
     
-    ' Verificar si reportString está vacío
+    ' Verificar si el string devuelto es válido
     If IsEmpty(reportString) Or reportString = "" Then
-        WScript.Echo "ERROR: La comunicación con el motor de pruebas de Access falló"
-        WScript.Echo "SUGERENCIA: El motor de pruebas no devolvió ningún resultado"
+        WScript.Echo "ERROR: El motor de pruebas de Access no devolvió ningún resultado."
+        WScript.Echo "SUGERENCIA: Verifique que la función 'ExecuteAllTestsForCLI' en 'modTestRunner' no esté fallando silenciosamente."
         objAccess.Quit
         WScript.Quit 1
     End If
     
-    ' Mostrar el reporte completo directamente en la consola
+    ' Mostrar el reporte completo
     WScript.Echo "--- INICIO DE RESULTADOS DE PRUEBAS ---"
     WScript.Echo reportString
     WScript.Echo "--- FIN DE RESULTADOS DE PRUEBAS ---"
     
     ' Determinar el éxito o fracaso buscando la línea final
-    If InStr(reportString, "RESULT: SUCCESS") > 0 Then
+    If InStr(UCase(reportString), "RESULT: SUCCESS") > 0 Then
         WScript.Echo "RESULTADO FINAL: ✓ Todas las pruebas pasaron."
-        WScript.Quit 0 ' Código de éxito
+        WScript.Quit 0 ' Éxito
     Else
         WScript.Echo "RESULTADO FINAL: ✗ Pruebas fallidas."
-        WScript.Quit 1 ' Código de error para CI/CD
+        WScript.Quit 1 ' Error
     End If
 End Sub
 
@@ -2843,7 +2843,7 @@ Function GetFunctionalityFiles(strFunctionality)
         Case "word"
             ' Sección 6 - Gestión de Word + Dependencias
             arrFiles = Array("IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
-                           "modWordManagerFactory.bas", "TIWordManager.bas", _
+                           "modWordManagerFactory.bas", "IntegrationTestWordManager.bas", _
                            "IFileSystem.cls", "IErrorHandlerService.cls")
         
         Case "error", "errores", "errors"
@@ -2891,7 +2891,7 @@ Function GetFunctionalityFiles(strFunctionality)
                            "TIMapeoRepository.bas", "TIDocumentService.bas", _
                            "TIFileSystem.bas", "TINotificationService.bas", _
                            "TIOperationRepository.bas", "TISolicitudRepository.bas", _
-                           "TIWordManager.bas", "TIWorkflowRepository.bas")
+                           "IntegrationTestWordManager.bas", "TIWorkflowRepository.bas")
         
         Case Else
             ' Para funcionalidades no definidas, usar búsqueda por nombre (comportamiento anterior)

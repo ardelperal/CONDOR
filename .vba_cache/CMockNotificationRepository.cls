@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 Implements INotificationRepository
 
 ' Propiedades públicas para verificación en pruebas
@@ -57,3 +58,4 @@ End Function
 Public Function EnqueueEmail(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpoHTML As String, ByVal usuario As String, ByVal adminEmail As String, Optional ByVal adjuntoPath As String = "") As Boolean
     EnqueueEmail = INotificationRepository_EnqueueEmail(destinatarios, asunto, cuerpoHTML, usuario, adminEmail, adjuntoPath)
 End Function
+

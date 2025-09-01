@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' ============================================================================
@@ -72,7 +73,7 @@ Private Function ISolicitudService_CreateSolicitud(ByVal paraExpediente As EExpe
     
 
     
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Crear nueva solicitud con estado inicial "Borrador"
     Dim nuevaSolicitud As ESolicitud
@@ -105,7 +106,7 @@ Private Function ISolicitudService_CreateSolicitud(ByVal paraExpediente As EExpe
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     m_OperationLogger.LogOperation "CREATE_ERROR", "", "Error: " & Err.Description
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CreateSolicitud"
     Err.Raise Err.Number, "CSolicitudService.CreateSolicitud", Err.Description
@@ -122,19 +123,19 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ESolicitud) 
         Err.Raise 5, "CSolicitudService.SaveSolicitud", "solicitud no puede ser Nothing"
     End If
     
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Actualizar campos de modificación
     solicitud.fechaModificacion = Now()
     solicitud.usuarioModificacion = Environ("USERNAME")
     
     ' Delegar al repositorio para guardar
-    Dim resultado As Long
-    resultado = m_solicitudRepository.SaveSolicitud(solicitud)
-    If resultado > 0 Then
+    Dim Resultado As Long
+    Resultado = m_solicitudRepository.SaveSolicitud(solicitud)
+    If Resultado > 0 Then
         m_OperationLogger.LogOperation "SAVE", CStr(solicitud.idSolicitud), _
             "Solicitud guardada correctamente: ID=" & solicitud.idSolicitud
-        ISolicitudService_SaveSolicitud = resultado
+        ISolicitudService_SaveSolicitud = Resultado
     Else
         m_OperationLogger.LogOperation "SAVE_ERROR", CStr(solicitud.idSolicitud), _
             "Error: No se pudo guardar la solicitud ID=" & solicitud.idSolicitud
@@ -143,7 +144,7 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ESolicitud) 
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     m_OperationLogger.LogOperation "SAVE_ERROR", "", "Error: " & Err.Description
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.SaveSolicitud"
     ISolicitudService_SaveSolicitud = 0
@@ -179,15 +180,18 @@ Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
 End Function
 
 ' Obtiene una solicitud por su ID
-Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
     ' Asumimos que el repositorio tiene un método similar
-    Set ISolicitudService_ObtenerSolicitudPorId = m_solicitudRepository.ObtenerSolicitudPorId(solicitudId)
+    Set ISolicitudService_ObtenerSolicitudPorId = m_solicitudRepository.ObtenerSolicitudPorId(SolicitudID)
 End Function
 
 ' Método público de conveniencia que delega a la implementación de la interfaz
-Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
-    Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(solicitudId)
+Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
+    Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(SolicitudID)
 End Function
+
+
+
 
 
 

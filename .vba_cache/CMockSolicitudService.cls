@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -7,6 +7,9 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Compare Database
+Option Explicit
+
 '*******************************************************************************
 ' CONDOR - Sistema de Gestión de Expedientes
 ' Mock del Servicio de Solicitudes para Testing
@@ -14,7 +17,6 @@ Attribute VB_Exposed = False
 ' Fecha: 2025
 '*******************************************************************************
 
-Option Explicit
 
 Implements ISolicitudService
 
@@ -115,7 +117,7 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ESolicitud) 
     ISolicitudService_SaveSolicitud = m_SaveSolicitudReturnValue
 End Function
 
-Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
     Set ISolicitudService_ObtenerSolicitudPorId = m_ObtenerSolicitudPorId_Result
 End Function
 
@@ -128,6 +130,7 @@ Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud = ISolicitudService_SaveSolicitud(solicitud)
 End Function
 
-Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
-    Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(solicitudId)
+Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
+    Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(SolicitudID)
 End Function
+

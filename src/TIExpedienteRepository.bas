@@ -1,6 +1,7 @@
-Attribute VB_Name = "TIExpedienteRepository"
+﻿Attribute VB_Name = "TIExpedienteRepository"
 Option Compare Database
 Option Explicit
+
 
 Private Const TEMPLATE_PATH As String = "back\test_db\templates\Expedientes_test_template.accdb"
 Private Const ACTIVE_PATH As String = "back\test_db\active\Expedientes_itest.accdb"
@@ -13,6 +14,18 @@ End Function
 
 Private Sub Setup()
     modTestUtils.PrepareTestDatabase modTestUtils.GetProjectPath & TEMPLATE_PATH, modTestUtils.GetProjectPath & ACTIVE_PATH
+    
+    ' Insertar expediente de prueba
+    Dim db As Object
+    Set db = CreateObject("DAO.DBEngine.0").OpenDatabase(modTestUtils.GetProjectPath & ACTIVE_PATH)
+    
+    Dim sql As String
+    sql = "INSERT INTO Expedientes (idExpediente, Nemotecnico, Titulo, ContratistaPrincipal) " & _
+          "VALUES (1, 'EXP-2024-001', 'Proyecto de Prueba Alfa', 'Contratista Principal S.A.')"
+    
+    db.Execute sql
+    db.Close
+    Set db = Nothing
 End Sub
 
 Private Sub Teardown()
@@ -61,3 +74,4 @@ Cleanup:
     Set repo = Nothing
     Set config = Nothing
 End Function
+

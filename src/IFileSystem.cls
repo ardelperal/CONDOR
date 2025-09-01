@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' =====================================================
 ' INTERFAZ: IFileSystem
 ' DESCRIPCION: Contrato para interactuar con el sistema de ficheros
@@ -63,5 +64,12 @@ End Sub
 ' @param Path: Ruta de la carpeta a eliminar
 Public Sub DeleteFolder(ByVal Path As String)
 End Sub
+
+' Elimina una carpeta de forma recursiva (incluyendo todo su contenido)
+' @param Path: Ruta de la carpeta a eliminar recursivamente
+Public Sub DeleteFolderRecursive(ByVal Path As String)
+End Sub
+
+
 
 

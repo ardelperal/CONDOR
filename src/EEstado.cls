@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' Clase de tipo de datos para tbEstados
@@ -71,4 +72,6 @@ End Property
 Public Property Let Orden(ByVal value As Integer)
     m_orden = value
 End Property
+
+
 

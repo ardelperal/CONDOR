@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -11,20 +11,21 @@ Option Compare Database
 Option Explicit
 
 
+
 ' Clase de tipo de datos para tb_Operaciones_Log
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Registro de operaciones clave del sistema para auditoría y trazabilidad
 
 ' Campos privados según especificación tb_Operaciones_Log
 Private m_idOperacion As Long
-Private m_fechaHora As Date
-Private m_usuario As String
-Private m_tipoOperacion As String
+Private m_FechaHora As Date
+Private m_Usuario As String
+Private m_TipoOperacion As String
 Private m_entidad As String
 Private m_idEntidad As Long
 Private m_descripcion As String
 Private m_resultado As String
-Private m_detalles As String
+Private m_Detalles As String
 
 ' Propiedades públicas
 Public Property Get IdOperacion() As Long
@@ -35,28 +36,28 @@ Public Property Let IdOperacion(ByVal value As Long)
     m_idOperacion = value
 End Property
 
-Public Property Get FechaHora() As Date
-    FechaHora = m_fechaHora
+Public Property Get fechaHora() As Date
+    fechaHora = m_FechaHora
 End Property
 
-Public Property Let FechaHora(ByVal value As Date)
-    m_fechaHora = value
+Public Property Let fechaHora(ByVal value As Date)
+    m_FechaHora = value
 End Property
 
-Public Property Get Usuario() As String
-    Usuario = m_usuario
+Public Property Get usuario() As String
+    usuario = m_Usuario
 End Property
 
-Public Property Let Usuario(ByVal value As String)
-    m_usuario = value
+Public Property Let usuario(ByVal value As String)
+    m_Usuario = value
 End Property
 
-Public Property Get TipoOperacion() As String
-    TipoOperacion = m_tipoOperacion
+Public Property Get tipoOperacion() As String
+    tipoOperacion = m_TipoOperacion
 End Property
 
-Public Property Let TipoOperacion(ByVal value As String)
-    m_tipoOperacion = value
+Public Property Let tipoOperacion(ByVal value As String)
+    m_TipoOperacion = value
 End Property
 
 Public Property Get Entidad() As String
@@ -91,11 +92,13 @@ Public Property Let Resultado(ByVal value As String)
     m_resultado = value
 End Property
 
-Public Property Get Detalles() As String
-    Detalles = m_detalles
+Public Property Get detalles() As String
+    detalles = m_Detalles
 End Property
 
-Public Property Let Detalles(ByVal value As String)
-    m_detalles = value
+Public Property Let detalles(ByVal value As String)
+    m_Detalles = value
 End Property
+
+
 

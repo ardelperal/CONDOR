@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestCConfig"
+﻿Attribute VB_Name = "TestCConfig"
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' MÓDULO DE PRUEBAS UNITARIAS PARA CConfig
@@ -275,3 +276,4 @@ Cleanup:
     Set mockConfig = Nothing
     Set TestGetDatabasePasswordSuccess = testResult
 End Function
+

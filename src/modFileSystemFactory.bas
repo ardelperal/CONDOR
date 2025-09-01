@@ -1,6 +1,7 @@
-Attribute VB_Name = "modFileSystemFactory"
+﻿Attribute VB_Name = "modFileSystemFactory"
 Option Compare Database
 Option Explicit
+
 
 ' Módulo: modFileSystemFactory
 ' Descripción: Factory para crear instancias de IFileSystem
@@ -9,15 +10,17 @@ Option Explicit
 ' Crea una instancia de IFileSystem
 ' @return IFileSystem: Instancia lista para usar
 Public Function CreateFileSystem() As IFileSystem
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Dim fileSystemInstance As New CFileSystem
     Set CreateFileSystem = fileSystemInstance
     
     Exit Function
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error en modFileSystemFactory.CreateFileSystem: " & Err.Number & " - " & Err.Description
     Set CreateFileSystem = Nothing
 End Function
+
+
 

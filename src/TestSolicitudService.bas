@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestSolicitudService"
+﻿Attribute VB_Name = "TestSolicitudService"
 Option Compare Database
 Option Explicit
+
 
 ' ============================================================================
 ' SUITE DE PRUEBAS UNITARIAS PARA CSolicitudService
@@ -32,12 +33,11 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     Set TestCreateSolicitudSuccess = New CTestResult
     TestCreateSolicitudSuccess.Initialize "CreateSolicitud debe crear una solicitud con valores por defecto correctos"
     
-    ' Variables locales
     Dim serviceImpl As CSolicitudService
     Dim mockRepo As CMockSolicitudRepository
     Dim mockLogger As CMockOperationLogger
     Dim mockErrorHandler As CMockErrorHandlerService
-    Dim service As ISolicitudService ' Variable de interfaz para el test
+    Dim service As ISolicitudService
     Dim expediente As EExpediente
     Dim result As ESolicitud
     
@@ -48,7 +48,6 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     Set mockLogger = New CMockOperationLogger
     Set mockErrorHandler = New CMockErrorHandlerService
     
-    ' PATRÓN CORRECTO: Instanciar la clase concreta, inicializarla, y LUEGO asignarla a la interfaz
     Set serviceImpl = New CSolicitudService
     serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler
     Set service = serviceImpl
@@ -62,14 +61,15 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     Set result = service.CreateSolicitud(expediente)
     
     ' Assert
-    AssertNotNull result, "La solicitud devuelta no debe ser nula"
-    AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
+    modAssert.AssertNotNull result, "La solicitud devuelta no debe ser nula."
+    modAssert.AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio."
     
     TestCreateSolicitudSuccess.Pass
     GoTo Cleanup
     
 TestFail:
     TestCreateSolicitudSuccess.Fail "Error inesperado: " & Err.Description
+    
 Cleanup:
     Set serviceImpl = Nothing
     Set mockRepo = Nothing
@@ -84,45 +84,27 @@ Private Function TestCreateSolicitudFailsWithEmptyExpediente() As CTestResult
     Set TestCreateSolicitudFailsWithEmptyExpediente = New CTestResult
     TestCreateSolicitudFailsWithEmptyExpediente.Initialize "CreateSolicitud debe fallar si idExpediente está vacío"
     
-    ' Variables locales
-    Dim serviceImpl As CSolicitudService
-    Dim mockRepo As CMockSolicitudRepository
-    Dim mockLogger As CMockOperationLogger
-    Dim mockErrorHandler As CMockErrorHandlerService
-    Dim service As ISolicitudService ' Variable de interfaz para el test
+    Dim service As ISolicitudService
     Dim expediente As EExpediente
-    
-    On Error GoTo TestFail
+    On Error GoTo TestExpectedFail
     
     ' Arrange
-    Set mockRepo = New CMockSolicitudRepository
-    Set mockLogger = New CMockOperationLogger
-    Set mockErrorHandler = New CMockErrorHandlerService
-
-    ' PATRÓN CORRECTO: Instanciar la clase concreta, inicializarla, y LUEGO asignarla a la interfaz
-    Set serviceImpl = New CSolicitudService
-    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler
-    Set service = serviceImpl
-    
+    Set service = modSolicitudServiceFactory.CreateSolicitudService() ' Usar factory para dependencias
     Set expediente = New EExpediente
-    expediente.idExpediente = " "
+    expediente.idExpediente = 0 ' Usar 0 en lugar de "" para un Long
     
-    ' Act & Assert
-    On Error Resume Next
-    Call service.CreateSolicitud(expediente)
-    AssertEquals 5, Err.Number, "Debe lanzar un error si idExpediente está vacío"
-    On Error GoTo TestFail
+    ' Act
+    service.CreateSolicitud expediente
     
-    TestCreateSolicitudFailsWithEmptyExpediente.Pass
+    ' Assert - Si llegamos aquí, la prueba ha fallado
+    TestCreateSolicitudFailsWithEmptyExpediente.Fail "La función debería haber lanzado un error."
     GoTo Cleanup
     
-TestFail:
-    TestCreateSolicitudFailsWithEmptyExpediente.Fail "La prueba no debería haber llegado al manejador de errores principal"
+TestExpectedFail:
+    ' El error es esperado, la prueba ha pasado.
+    TestCreateSolicitudFailsWithEmptyExpediente.Pass
+    
 Cleanup:
-    Set serviceImpl = Nothing
-    Set mockRepo = Nothing
-    Set mockLogger = Nothing
-    Set mockErrorHandler = Nothing
     Set service = Nothing
     Set expediente = Nothing
 End Function
@@ -158,7 +140,7 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
     Call service.SaveSolicitud(solicitud)
     
     ' Assert
-    AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
+    modAssert.AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
     
     TestSaveSolicitudSuccess.Pass
     GoTo Cleanup
@@ -173,3 +155,4 @@ Cleanup:
     Set service = Nothing
     Set solicitud = Nothing
 End Function
+

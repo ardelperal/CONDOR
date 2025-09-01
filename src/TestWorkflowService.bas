@@ -1,5 +1,7 @@
+﻿Attribute VB_Name = "TestWorkflowService"
 Option Compare Database
 Option Explicit
+
 
 Public Function TestWorkflowServiceRunAll() As CTestSuiteResult
     Set TestWorkflowServiceRunAll = New CTestSuiteResult
@@ -35,7 +37,7 @@ Private Function TestValidateTransition_ValidCase() As CTestResult
     result = service.ValidateTransition(1, "A", "B", "PC", "ADMIN")
     
     ' Assert
-    AssertTrue result, "La transición debería ser válida."
+    modAssert.AssertTrue result, "La transición debería ser válida."
     
     TestValidateTransition_ValidCase.Pass
 Cleanup:
@@ -44,4 +46,6 @@ TestFail:
     TestValidateTransition_ValidCase.Fail "Error: " & Err.Description
     Resume Cleanup
 End Function
+
+
 

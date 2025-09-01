@@ -1,11 +1,13 @@
-Attribute VB_Name = "TIDocumentService"
+﻿Attribute VB_Name = "TIDocumentService"
+Option Compare Database
+Option Explicit
+
 ' =====================================================
 ' Módulo: IntegrationTestDocumentService
 ' Descripción: Pruebas de integración para CDocumentService
 ' Versión: 3.0 (Refactorización completa)
 ' =====================================================
 
-Option Explicit
 
 ' --- Constantes para el entorno de prueba ---
 Private Const TEST_ENV_PATH As String = "back\test_db\active\doc_service_test\"
@@ -94,20 +96,8 @@ TestFail:
     TestGenerarDocumentoSuccess.Fail "Error en tiempo de ejecución: " & Err.Description & " en línea " & Erl
 
 Cleanup:
-    On Error Resume Next ' Ignorar errores en la limpieza
-
-    ' Cerrar Word si se quedó abierto
-    If Not wordManager Is Nothing Then wordManager.CerrarDocumento
-
-    ' Eliminar directorio de prueba y todo su contenido
-    If fileSystem Is Nothing Then Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    Dim fullTestEnvPath As String
-    fullTestEnvPath = modTestUtils.GetProjectPath() & TEST_ENV_PATH
-
-    If fileSystem.FolderExists(fullTestEnvPath) Then
-        fileSystem.DeleteFolder fullTestEnvPath
-    End If
-
+    Call Teardown
+    
     ' Liberar todos los objetos
     Set config = Nothing
     Set solicitudService = Nothing
@@ -119,6 +109,20 @@ Cleanup:
     Set fileSystem = Nothing
     Set expedienteRepo = Nothing
 End Function
+
+' =====================================================
+' TEARDOWN - LIMPIEZA ROBUSTA DEL ENTORNO DE PRUEBA
+' =====================================================
+Private Sub Teardown()
+    On Error Resume Next ' Blindaje contra cualquier error en la limpieza
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    
+    ' Usar el nuevo método de borrado recursivo
+    fs.DeleteFolderRecursive modTestUtils.GetProjectPath() & TEST_ENV_PATH
+    
+    Set fs = Nothing
+End Sub
 
 ' =====================================================
 ' MÉTODOS AUXILIARES PRIVADOS
@@ -163,3 +167,6 @@ Private Sub InsertTestData()
     db.Close
     Set db = Nothing
 End Sub
+
+
+

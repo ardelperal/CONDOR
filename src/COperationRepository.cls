@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' Clase: COperationRepository
@@ -24,17 +25,17 @@ Private m_ErrorHandler As IErrorHandlerService
 
 ' Método de inicialización para inyectar dependencias
 Public Sub Initialize(config As IConfig, errorHandler As IErrorHandlerService)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     Set m_configService = config
     Set m_ErrorHandler = errorHandler
     Exit Sub
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "COperationRepository.Initialize"
 End Sub
 
 ' Implementación del contrato IOperationRepository
 Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
@@ -50,11 +51,11 @@ Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal en
     
     ' Usar la consulta centralizada con parámetros con nombre
     Set qdf = db.CreateQueryDef("", INSERT_OPERATION_LOG)
-    qdf.parameters("pFechaHora") = Now
-    qdf.parameters("pUsuario") = Environ("USERNAME") ' O el usuario autenticado de la aplicación
-    qdf.parameters("pTipoOperacion") = operationType
-    qdf.parameters("pIDEntidadAfectada") = entityId
-    qdf.parameters("pDetalles") = details
+    qdf.Parameters("pFechaHora") = Now
+    qdf.Parameters("pUsuario") = Environ("USERNAME") ' O el usuario autenticado de la aplicación
+    qdf.Parameters("pTipoOperacion") = operationType
+    qdf.Parameters("pIDEntidadAfectada") = entityId
+    qdf.Parameters("pDetalles") = details
     
     ' Ejecutar la consulta parametrizada
     qdf.Execute
@@ -65,7 +66,7 @@ Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal en
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "COperationRepository.IOperationRepository_SaveLog", _
                                   "TipoOperacion: " & operationType & ", Entidad: " & entityId
     If Not qdf Is Nothing Then Set qdf = Nothing
@@ -79,5 +80,8 @@ End Sub
 Public Sub SaveLog(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
     IOperationRepository_SaveLog operationType, entityId, details
 End Sub
+
+
+
 
 

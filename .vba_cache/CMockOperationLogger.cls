@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' Clase: CMockOperationLogger
@@ -31,8 +32,8 @@ Public Sub Initialize(Optional ByVal errorHandler As IErrorHandlerService = Noth
 End Sub
 
 Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
-    Dim ErrorHandler As IErrorHandlerService
-    On Error GoTo ErrorHandler
+    Dim errorHandler As IErrorHandlerService
+    On Error GoTo errorHandler
     
     ' Registrar que el método fue llamado
     LogOperationCalled = True
@@ -47,13 +48,13 @@ Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal e
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     ' En un mock, los errores internos no suelen ser críticos, pero se podrían registrar para depuración del mock
     Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogOperation: " & Err.Description
 End Sub
 
 Private Sub IOperationLogger_LogSolicitudCreation(ByVal SolicitudID As Long, ByVal userId As String)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Registrar que el método fue llamado
     LogOperationCalled = True
@@ -68,12 +69,12 @@ Private Sub IOperationLogger_LogSolicitudCreation(ByVal SolicitudID As Long, ByV
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogSolicitudCreation: " & Err.Description
 End Sub
 
 Private Sub IOperationLogger_LogStateChange(ByVal SolicitudID As Long, ByVal oldState As String, ByVal newState As String, ByVal userId As String)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Registrar que el método fue llamado
     LogOperationCalled = True
@@ -88,12 +89,12 @@ Private Sub IOperationLogger_LogStateChange(ByVal SolicitudID As Long, ByVal old
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogStateChange: " & Err.Description
 End Sub
 
 Private Sub IOperationLogger_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
-    On Error GoTo ErrorHandler
+    On Error GoTo errorHandler
     
     ' Registrar que el método fue llamado
     LogOperationCalled = True
@@ -108,7 +109,7 @@ Private Sub IOperationLogger_LogError(ByVal errNumber As Long, ByVal errDescript
     
     Exit Sub
     
-ErrorHandler:
+errorHandler:
     Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogError: " & Err.Description
 End Sub
 
@@ -140,5 +141,7 @@ End Sub
 Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
     IOperationLogger_LogError errNumber, errDescription, moduleName, isCritical
 End Sub
+
+
 
 

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -10,14 +10,17 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' Interfaz: IDocumentService
 ' Versión: 3.0 - Alinear con la arquitectura de servicios colaborativos
 ' ============================================================================
-Public Function GenerarDocumento(ByVal solicitudId As Long) As String
+Public Function GenerarDocumento(ByVal SolicitudID As Long) As String
 End Function
 
 Public Function LeerDocumento(ByVal rutaDocumento As String) As ESolicitud
 End Function
+
+
 
 

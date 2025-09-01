@@ -1,6 +1,7 @@
-Attribute VB_Name = "TIMapeoRepository"
+﻿Attribute VB_Name = "TIMapeoRepository"
 Option Compare Database
 Option Explicit
+
 
 Private Const CONDOR_TEMPLATE_PATH As String = "back\test_db\templates\CONDOR_test_template.accdb"
 Private Const CONDOR_ACTIVE_PATH As String = "back\test_db\active\CONDOR_mapeo_integration_test.accdb"
@@ -46,7 +47,7 @@ Private Function TestGetMapeoPorTipoSuccess() As CTestResult
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     Set repository = modRepositoryFactory.CreateMapeoRepository()
     Set mapeoResult = repository.GetMapeoPorTipo("PC")
-    AssertNotNull mapeoResult, "El objeto EMapeo no debe ser nulo."
+    modAssert.AssertNotNull mapeoResult, "El objeto EMapeo no debe ser nulo."
     AssertEquals "PC", mapeoResult.NombrePlantilla, "El nombre de la plantilla no es el esperado."
     TestGetMapeoPorTipoSuccess.Pass
     GoTo Cleanup
@@ -78,3 +79,4 @@ Cleanup:
     Set repository = Nothing: Set config = Nothing: Set errorHandler = Nothing: Set mapeoResult = Nothing
     Call Teardown
 End Function
+
