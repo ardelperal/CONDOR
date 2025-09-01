@@ -5,7 +5,7 @@ Option Explicit
 Public Function TestAuthServiceRunAll() As CTestSuiteResult
     Set TestAuthServiceRunAll = New CTestSuiteResult
     TestAuthServiceRunAll.Initialize "TestAuthService"
-    TestAuthServiceRunAll.AddTestResult TestGetUserRole_Admin_ReturnsAdmin()
+    TestAuthServiceRunAll.AddResult TestGetUserRole_Admin_ReturnsAdmin()
 End Function
 
 Private Function TestGetUserRole_Admin_ReturnsAdmin() As CTestResult

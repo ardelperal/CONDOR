@@ -45,6 +45,11 @@ Public Sub Initialize(config As IConfig)
     ' para compatibilidad con el patrón de inyección de dependencias
 End Sub
 
+' Implementación de la interfaz IErrorHandlerService - Initialize
+Private Sub IErrorHandlerService_Initialize(ByVal config As IConfig, ByVal fileSystem As IFileSystem)
+    ' Mock no necesita configuración real, pero debe implementar la interfaz
+End Sub
+
 ' Implementación mock de LogError
 Private Sub IErrorHandlerService_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
     m_lastErrorNumber = errNumber

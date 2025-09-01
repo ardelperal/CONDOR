@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -10,30 +10,24 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-' Clase: CTestResult
-' Proposito: Almacena el resultado de un unico test.
+Public Name As String
+Public Passed As Boolean
+Public ErrorMessage As String
 
-Public testName As String
-Public Success As Boolean
-Public errorMessage As String
-
-' Método de inicialización
 Public Sub Initialize(ByVal testName As String)
-    Me.testName = testName
-    Me.Success = False
-    Me.errorMessage = ""
+    Name = testName
+    Passed = False
+    ErrorMessage = ""
 End Sub
 
-' Método para marcar la prueba como fallida
-Public Sub Fail(ByVal errorMessage As String)
-    Me.Success = False
-    Me.errorMessage = errorMessage
-End Sub
-
-' Método para marcar la prueba como exitosa
 Public Sub Pass()
-    Me.Success = True
-    Me.errorMessage = ""
+    Passed = True
+    ErrorMessage = ""
+End Sub
+
+Public Sub Fail(Optional ByVal message As String = "Test failed without a specific message.")
+    Passed = False
+    ErrorMessage = message
 End Sub
 
 

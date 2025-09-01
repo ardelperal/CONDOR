@@ -112,4 +112,3 @@ End Function
 Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
     Call IConfig_SetSetting(key, value)
 End Sub
-

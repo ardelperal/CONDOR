@@ -67,7 +67,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "  FileSystem: Empaqueta Sistema de Archivos + dependencias (Error, Modelos)"
     WScript.Echo "  Error: Empaqueta Manejo de Errores + dependencias (Modelos)"
     WScript.Echo "  Word: Empaqueta Microsoft Word + dependencias (Error, Modelos)"
-    WScript.Echo "  TestFramework: Empaqueta Framework de Pruebas + dependencias (10 archivos: CTestResult, CTestSuiteResult, CTestReporter, modTestRunner, modTestUtils, ModAssert, TestModAssert, IFileSystem, IConfig, IErrorHandlerService)"
+    WScript.Echo "  TestFramework: Empaqueta Framework de Pruebas + dependencias (11 archivos: ITestReporter, CTestResult, CTestSuiteResult, CTestReporter, modTestRunner, modTestUtils, ModAssert, TestModAssert, IFileSystem, IConfig, IErrorHandlerService)"
     WScript.Echo "  App: Empaqueta Gestión de Aplicación + dependencias (Config, Error, Modelos)"
     WScript.Echo "  Models: Empaqueta Modelos de Datos (entidades base)"
     WScript.Echo "  Utils: Empaqueta Utilidades y Enumeraciones + dependencias (Error, Modelos)"
@@ -1048,8 +1048,8 @@ Sub ShowHelp()
     WScript.Echo "📝 Word          - Microsoft Word + dependencias (Error, Modelos)"
     WScript.Echo "                   Incluye archivos de Word y sus dependencias"
     WScript.Echo ""
-    WScript.Echo "🧪 TestFramework - Framework de Pruebas + dependencias (10 archivos)"
-    WScript.Echo "                   Incluye CTestResult, CTestSuiteResult, CTestReporter, modTestRunner,"
+    WScript.Echo "🧪 TestFramework - Framework de Pruebas + dependencias (11 archivos)"
+WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteResult, CTestReporter, modTestRunner,"
     WScript.Echo "                   modTestUtils, ModAssert, TestModAssert, IFileSystem, IConfig, IErrorHandlerService"
     WScript.Echo ""
     WScript.Echo "🖥️ Aplicacion    - Gestión de Aplicación + dependencias (Config, Error, Modelos)"
@@ -2722,7 +2722,7 @@ Sub ShowBundleHelp()
     WScript.Echo "            ModWordManagerFactory, TestWordManager + dependencias"
     WScript.Echo ""
     WScript.Echo "🧪 TestFramework - Framework de Pruebas"
-    WScript.Echo "   Incluye: CTestResult, CTestSuiteResult, CTestReporter, modTestRunner,"
+WScript.Echo "   Incluye: ITestReporter, CTestResult, CTestSuiteResult, CTestReporter, modTestRunner,"
     WScript.Echo "            modTestUtils, ModAssert, TestModAssert + interfaces base"
     WScript.Echo ""
     WScript.Echo "🚀 App - Gestión de Aplicación"
@@ -2777,7 +2777,8 @@ Function GetFunctionalityFiles(strFunctionality)
                            "EMapeo.cls", "modDocumentServiceFactory.bas", "TestDocumentService.bas", _
                            "TIDocumentService.bas", _
                            "ISolicitudService.cls", "CSolicitudService.cls", "modSolicitudServiceFactory.bas", _
-                           "IOperationLogger.cls", "IConfig.cls", "IErrorHandlerService.cls", "IFileSystem.cls")
+                           "IOperationLogger.cls", "IConfig.cls", "IErrorHandlerService.cls", "IFileSystem.cls", _
+                           "modWordManagerFactory.bas", "modRepositoryFactory.bas", "modErrorHandlerFactory.bas")
         
         Case "expediente", "expedientes"
             ' Sección 3.3 - Gestión de Expedientes + Dependencias (Actualizado tras refactorización)
@@ -2831,7 +2832,7 @@ Function GetFunctionalityFiles(strFunctionality)
         Case "config", "configuracion"
             ' Sección 4 - Configuración + Dependencias (Simplificado tras Misión de Emergencia)
             arrFiles = Array("IConfig.cls", "CConfig.cls", "CMockConfig.cls", "modConfigFactory.bas", _
-                           "TestConfig.bas")
+                           "TestCConfig.bas")
         
         Case "filesystem", "archivos"
             ' Sección 5 - Sistema de Archivos + Dependencias
@@ -2842,19 +2843,19 @@ Function GetFunctionalityFiles(strFunctionality)
         Case "word"
             ' Sección 6 - Gestión de Word + Dependencias
             arrFiles = Array("IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
-                           "modWordManagerFactory.bas", "TestWordManager.bas", "TIWordManager.bas", _
+                           "modWordManagerFactory.bas", "TIWordManager.bas", _
                            "IFileSystem.cls", "IErrorHandlerService.cls")
         
         Case "error", "errores", "errors"
             ' Sección 7 - Gestión de Errores + Dependencias
             arrFiles = Array("IErrorHandlerService.cls", "CErrorHandlerService.cls", "CMockErrorHandlerService.cls", _
                            "modErrorHandlerFactory.bas", "modErrorHandler.bas", "TestErrorHandlerService.bas", _
-                           "IConfig.cls")
+                           "IConfig.cls", "IFileSystem.cls")
         
         Case "testframework", "testing", "framework"
-            ' Sección 8 - Framework de Testing + Dependencias (Actualizado con refactorización)
-            arrFiles = Array("CTestResult.cls", "CTestSuiteResult.cls", "CTestReporter.cls", _
-                           "modTestRunner.bas", "modTestUtils.bas", "ModAssert.bas", _
+            ' Sección 8 - Framework de Testing + Dependencias (Actualizado con ITestReporter)
+            arrFiles = Array("ITestReporter.cls", "CTestResult.cls", "CTestSuiteResult.cls", "CTestReporter.cls", _
+                           "modTestRunner.bas", "modTestUtils.bas", "modAssert.bas", _
                            "TestModAssert.bas", "IFileSystem.cls", "IConfig.cls", _
                            "IErrorHandlerService.cls")
         
@@ -2872,13 +2873,18 @@ Function GetFunctionalityFiles(strFunctionality)
         
         Case "utils", "utilidades", "enumeraciones"
             ' Sección 11 - Utilidades y Enumeraciones
-            arrFiles = Array("modDatabase.bas", "modRepositoryFactory.bas", "modUtils.bas", _
-                           "modEnumeraciones.bas", "modQueries.bas")
+            arrFiles = Array("modRepositoryFactory.bas", "modEnumeraciones.bas", "modQueries.bas", _
+                           "ModAppManagerFactory.bas", "modAuthFactory.bas", "modConfigFactory.bas", _
+                           "modDocumentServiceFactory.bas", "modErrorHandlerFactory.bas", _
+                           "modExpedienteServiceFactory.bas", "modFileSystemFactory.bas", _
+                           "modNotificationServiceFactory.bas", "modOperationLoggerFactory.bas", _
+                           "modSolicitudServiceFactory.bas", "modWordManagerFactory.bas", _
+                           "modWorkflowServiceFactory.bas")
         
         Case "tests", "pruebas", "testing"
             ' Sección 12 - Archivos de Pruebas
-            arrFiles = Array("TestAppManager.bas", "TestAuthService.bas", "TestConfig.bas", _
-                           "TestCExpedienteService.bas", "TestWordManager.bas", "TestDocumentService.bas", _
+            arrFiles = Array("TestAppManager.bas", "TestAuthService.bas", "TestCConfig.bas", _
+                           "TestCExpedienteService.bas", "TestDocumentService.bas", _
                            "TestErrorHandlerService.bas", "TestModAssert.bas", "TestOperationLogger.bas", _
                            "TestSolicitudService.bas", "TestWorkflowService.bas", _
                            "TIAuthRepository.bas", "TIExpedienteRepository.bas", _

@@ -4,7 +4,7 @@ Option Explicit
 Public Function TestDocumentServiceRunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
     suite.Initialize "DocumentService"
-    suite.AddTestResult TestGenerarDocumentoSuccess()
+    suite.AddResult TestGenerarDocumentoSuccess()
     Set TestDocumentServiceRunAll = suite
 End Function
 

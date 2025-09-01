@@ -18,10 +18,10 @@ Public Function TIAuthRepositoryRunAll() As CTestSuiteResult
     suiteResult.Initialize "TIAuthRepository"
     
     ' Ejecutar todas las pruebas de integración
-    suiteResult.AddTestResult TestGetUserAuthDataAdmin()
-    suiteResult.AddTestResult TestGetUserAuthDataCalidad()
-    suiteResult.AddTestResult TestGetUserAuthDataTecnico()
-    suiteResult.AddTestResult TestGetUserAuthDataUserNotExists()
+    Call suiteResult.AddResult(TestGetUserAuthDataAdmin())
+    Call suiteResult.AddResult(TestGetUserAuthDataCalidad())
+    Call suiteResult.AddResult(TestGetUserAuthDataTecnico())
+    Call suiteResult.AddResult(TestGetUserAuthDataUserNotExists())
     
     Set TIAuthRepositoryRunAll = suiteResult
 End Function

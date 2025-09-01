@@ -8,7 +8,7 @@ Private Const ACTIVE_PATH As String = "back\test_db\active\Expedientes_itest.acc
 Public Function TIExpedienteRepositoryRunAll() As CTestSuiteResult
     Set TIExpedienteRepositoryRunAll = New CTestSuiteResult
     TIExpedienteRepositoryRunAll.Initialize "TIExpedienteRepository"
-    TIExpedienteRepositoryRunAll.AddTestResult TestObtenerExpedientePorId_IntegrationSuccess()
+    TIExpedienteRepositoryRunAll.AddResult TestObtenerExpedientePorId_IntegrationSuccess()
 End Function
 
 Private Sub Setup()

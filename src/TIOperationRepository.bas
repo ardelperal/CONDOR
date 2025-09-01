@@ -20,7 +20,7 @@ Public Function TIOperationRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     Call suiteResult.Initialize("TIOperationRepository")
     
-    Call suiteResult.AddTestResult(TestSaveLogIntegrationSuccess())
+    Call suiteResult.AddResult(TestSaveLogIntegrationSuccess())
     
     Set TIOperationRepositoryRunAll = suiteResult
 End Function

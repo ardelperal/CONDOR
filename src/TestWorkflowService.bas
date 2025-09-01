@@ -4,7 +4,7 @@ Option Explicit
 Public Function TestWorkflowServiceRunAll() As CTestSuiteResult
     Set TestWorkflowServiceRunAll = New CTestSuiteResult
     TestWorkflowServiceRunAll.Initialize "TestWorkflowService"
-    TestWorkflowServiceRunAll.AddTestResult TestValidateTransition_ValidCase()
+    TestWorkflowServiceRunAll.AddResult TestValidateTransition_ValidCase()
 End Function
 
 Private Function TestValidateTransition_ValidCase() As CTestResult

@@ -27,11 +27,11 @@ Public Function TINotificationServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     Call suiteResult.Initialize("TINotificationService")
     
-    Call suiteResult.AddTestResult(TestSendNotificationSuccessCallsRepositoryCorrectly())
-    Call suiteResult.AddTestResult(TestInitializeWithValidDependencies())
-    Call suiteResult.AddTestResult(TestSendNotificationWithoutInitialize())
-    Call suiteResult.AddTestResult(TestSendNotificationWithInvalidParameters())
-    Call suiteResult.AddTestResult(TestSendNotificationConfigValuesUsed())
+    Call suiteResult.AddResult(TestSendNotificationSuccessCallsRepositoryCorrectly())
+    Call suiteResult.AddResult(TestInitializeWithValidDependencies())
+    Call suiteResult.AddResult(TestSendNotificationWithoutInitialize())
+    Call suiteResult.AddResult(TestSendNotificationWithInvalidParameters())
+    Call suiteResult.AddResult(TestSendNotificationConfigValuesUsed())
     
     Set TINotificationServiceRunAll = suiteResult
 End Function

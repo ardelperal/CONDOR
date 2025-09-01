@@ -15,9 +15,9 @@ Public Function TestSolicitudServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     Call suiteResult.Initialize("TestSolicitudService - Pruebas Unitarias CSolicitudService")
     
-    Call suiteResult.AddTestResult(TestCreateSolicitudSuccess())
-    Call suiteResult.AddTestResult(TestCreateSolicitudFailsWithEmptyExpediente())
-    Call suiteResult.AddTestResult(TestSaveSolicitudSuccess())
+    Call suiteResult.AddResult(TestCreateSolicitudSuccess())
+    Call suiteResult.AddResult(TestCreateSolicitudFailsWithEmptyExpediente())
+    Call suiteResult.AddResult(TestSaveSolicitudSuccess())
     
     Set TestSolicitudServiceRunAll = suiteResult
 End Function

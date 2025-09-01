@@ -5,7 +5,7 @@ Option Explicit
 Public Function TestAppManagerRunAll() As CTestSuiteResult
     Set TestAppManagerRunAll = New CTestSuiteResult
     TestAppManagerRunAll.Initialize "TestAppManager"
-    TestAppManagerRunAll.AddTestResult TestStartApplication_AdminUser_Success()
+    TestAppManagerRunAll.AddResult TestStartApplication_AdminUser_Success()
 End Function
 
 Private Function TestStartApplication_AdminUser_Success() As CTestResult

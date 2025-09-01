@@ -16,8 +16,8 @@ Public Function TIWorkflowRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TIWorkflowRepository"
 
-    suiteResult.AddTestResult TestGetNextStatesIntegration()
-    suiteResult.AddTestResult TestIsValidTransitionIntegration()
+    suiteResult.AddResult TestGetNextStatesIntegration()
+    suiteResult.AddResult TestIsValidTransitionIntegration()
 
     Set TIWorkflowRepositoryRunAll = suiteResult
 End Function

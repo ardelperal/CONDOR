@@ -149,7 +149,7 @@ graph TD
 - CAuthRepository ➜ IConfig (inyectado)
 - modAuthFactory ➜ modConfigFactory, modErrorHandlerFactory, modRepositoryFactory
 
-🔧 **Mock Inteligente (Patrón Estándar v2.0):**
+🔧 **Mock Inteligente (Patrón Estándar):**
 - CMockAuthService.ConfigureAuthenticateUser(resultado As Boolean)
 - CMockAuthService.ConfigureGetUserRole(rol As UserRole)
 - CMockAuthRepository.ConfigureGetUserAuthData(authData As EAuthData)
@@ -167,12 +167,12 @@ graph TD
 ### 3.2. Gestión de Documentos (Document)
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                GESTIÓN DE DOCUMENTOS                       │
+│                 GESTIÓN DE DOCUMENTOS                      │
 ├─────────────────────────────────────────────────────────────┤
-│ 📄 IDocumentService.cls      ← Interface (v3.0)            │
+│ 📄 IDocumentService.cls      ← Interface                   │
 │    ├─ GenerarDocumento(solicitudId As Long) As String      │
 │    └─ LeerDocumento(rutaDocumento As String) As ESolicitud │
-│ 🔧 CDocumentService.cls      ← Implementación (v3.0)       │
+│ 🔧 CDocumentService.cls      ← Implementación              │
 │    ├─ Initialize(wordMgr, errHandler, solicitudSrv, mapeoRepo) │
 │    └─ Colaboración entre servicios simplificada           │
 │ 🧪 CMockDocumentService.cls  ← Mock Service (Estandarizado) │
@@ -181,12 +181,12 @@ graph TD
 │    ├─ Reset() ← Método de limpieza                         │
 │    └─ Propiedades de verificación (*_WasCalled, *_Last*)  │
 │ 🏭 modDocumentServiceFactory.bas ← Factory (Simplificado)  │
-│ ✅ TestDocumentService.bas   ← Tests unitarios (v2.0)      │
+│ ✅ TestDocumentService.bas   ← Tests unitarios             │
 │    └─ TestGenerarDocumentoSuccess() ← Test principal       │
 │ 🔬 TIDocumentService.bas     ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
-#### 🏗️ Diagrama de Dependencias Document (Arquitectura Simplificada v3.0)
+#### 🏗️ Diagrama de Dependencias Document (Arquitectura Simplificada)
 ```mermaid
 graph TD
     subgraph "Capa de Pruebas"
@@ -215,7 +215,7 @@ graph TD
     end
 ```
 
-🔗 **Dependencias (Arquitectura Simplificada v3.0):**
+🔗 **Dependencias (Arquitectura Simplificada):**
 - CDocumentService ➜ IWordManager (inyectado)
 - CDocumentService ➜ IErrorHandlerService (inyectado)
 - CDocumentService ➜ ISolicitudService (inyectado)
@@ -229,7 +229,7 @@ graph TD
 - CMockDocumentService.GenerarDocumento_WasCalled ← Verificación de llamada
 - CMockDocumentService.GenerarDocumento_LastSolicitudId ← Captura de parámetros
 
-🧪 **Patrones de Testing (Refactorizados v2.0):**
+🧪 **Patrones de Testing (Refactorizados):**
 - **Simplificación Extrema**: Reducción de 8 tests a 1 test principal (TestGenerarDocumentoSuccess)
 - **Mock Estandarizado**: CMockDocumentService sigue patrón de oro con Reset(), Configure*() y propiedades *_WasCalled
 - **Verificación Directa**: Tests verifican llamadas a métodos y captura de parámetros sin complejidad innecesaria
@@ -254,7 +254,7 @@ graph TD
 │ 🔧 CExpedienteService.cls    ← Implementación (Delega 100%)│
 │ 🔧 CExpedienteRepository.cls ← Implementación (Lógica DB)   │
 │ 🧪 CMockExpedienteService.cls ← Mock Pasivo (Configurable)  │
-│ 🧪 CMockExpedienteRepository.cls← Mock Inteligente v2.0 (Spy)│
+│ 🧪 CMockExpedienteRepository.cls← Mock Inteligente (Spy)    │
 │ 🏭 modExpedienteServiceFactory.bas ← Factoría Estándar      │
 │ 🏭 modRepositoryFactory.bas  ← Factoría Testeable (Params Op)│
 │ ✅ TestCExpedienteService.bas← Test Unitario (Verifica deleg.)│
@@ -336,7 +336,7 @@ graph TD
 - TIExpedienteRepository ➜ modRepositoryFactory (con inyección de IConfig)
 - modExpedienteServiceFactory ➜ modRepositoryFactory, modOperationLoggerFactory, modErrorHandlerFactory
 
-🔧 **Mock Inteligente v2.0 con Propiedades Espía:**
+🔧 **Mock Inteligente con Propiedades Espía:**
 - CMockExpedienteRepository.ConfigureObtenerExpedientePorId(result As EExpediente)
 - CMockExpedienteRepository.ConfigureObtenerExpedientePorNemotecnico(result As EExpediente)
 - CMockExpedienteRepository.ConfigureObtenerExpedientesActivosParaSelector(result As Scripting.Dictionary)
@@ -349,7 +349,7 @@ graph TD
 
 🧪 **Patrones de Testing Implementados ✅:**
 - **Arquitectura Limpia**: Interfaces simplificadas, implementaciones delegadas ✅
-- **Mock Inteligente v2.0**: Patrón Configure/Reset + propiedades espía para verificación de comportamiento ✅
+- **Mock Inteligente**: Patrón Configure/Reset + propiedades espía para verificación de comportamiento ✅
 - **Mocks Estándar**: Patrón Configure/Reset consistente en todos los mocks ✅
 - **Tests Unitarios Focalizados**: Un test por funcionalidad principal ✅
 - **Tests de Integración Mínimos**: Un test de integración con BD real ✅
@@ -361,7 +361,7 @@ graph TD
 - **Repositorio Completamente Funcional**: CExpedienteRepository implementa conexión real a BD, consultas SQL parametrizadas, mapeo completo de datos y manejo robusto de errores ✅
 - **Mapeo de Datos Completo**: Función MapRecordsetToExpediente maneja todos los campos de EExpediente con validación de valores nulos ✅
 - **Tests de Integración Fortalecidos**: TIExpedienteRepository incluye aserciones sobre Titulo y ContratistaPrincipal además de campos básicos ✅
-- **Test Unitario "Estándar de Oro"**: TestCExpedienteService verifica delegación correcta usando propiedades espía del Mock Inteligente v2.0 (verificación de *_WasCalled y *_LastId) ✅
+- **Test Unitario "Estándar de Oro"**: TestCExpedienteService verifica delegación correcta usando propiedades espía del Mock Inteligente (verificación de *_WasCalled y *_LastId) ✅
 ```
 
 ### 3.4. Gestión de Solicitudes (Solicitud)
@@ -378,11 +378,11 @@ graph TD
 │ 🏭 modSolicitudServiceFactory.bas ← Factory                │
 │ ✅ TestSolicitudService.bas  ← Tests unitarios             │
 │ 🔬 TISolicitudRepository.bas ← Tests integración           │
-│ 📊 ESolicitud.cls            ← Entidad Principal           │
-│ 📊 EUsuario.cls              ← Entidad Usuario             │
-│ 📊 EDatosPc.cls              ← Entidad Datos PC            │
-│ 📊 EDatosCdCa.cls            ← Entidad Datos CDCA          │
-│ 📊 EDatosCdCaSub.cls         ← Entidad Datos CDCASUB       │
+│ 📦 ESolicitud.cls            ← Entidad Principal           │
+│ 📦 EUsuario.cls              ← Entidad Usuario             │
+│ 📦 EDatosPc.cls              ← Entidad Datos PC            │
+│ 📦 EDatosCdCa.cls            ← Entidad Datos CDCA          │
+│ 📦 EDatosCdCaSub.cls         ← Entidad Datos CDCASUB       │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Solicitud
@@ -616,7 +616,7 @@ classDiagram
 ### 3.5. Gestión de Flujos de Trabajo (Workflow) - ARQUITECTURA SIMPLIFICADA
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│              GESTIÓN DE FLUJOS DE TRABAJO (v2.0)          │
+│              GESTIÓN DE FLUJOS DE TRABAJO                  │
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IWorkflowService.cls      ← Interface Simplificada      │
 │    ├─ ValidateTransition() ← Método esencial              │
@@ -701,7 +701,7 @@ graph TD
 - **Autoaprovisionamiento**: Copia automática de template de BD
 - **Manejo de Errores**: Bloques TestFail/Cleanup consistentes
 
-📋 **Lista de Archivos Workflow (v2.0):**
+📋 **Lista de Archivos Workflow:**
 - IWorkflowService.cls (2 métodos)
 - IWorkflowRepository.cls (2 métodos)
 - CWorkflowService.cls (implementación simplificada)
@@ -716,7 +716,7 @@ graph TD
 ### 3.6. Gestión de Mapeos (Mapeo)
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                  GESTIÓN DE MAPEOS                         │
+│                 GESTIÓN DE MAPEOS                          │
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IMapeoRepository.cls      ← Interface                   │
 │ 🔧 CMapeoRepository.cls      ← Implementación              │
@@ -1020,7 +1020,6 @@ graph TD
 │    ├─ ConfigureGuardarDocumento() ← Método de configuración │
 │    └─ ConfigureLeerDocumento() ← Método de configuración   │
 │ 🏭 modWordManagerFactory.bas ← Factory                     │
-│ ✅ TestCWordManager.bas      ← Tests unitarios             │
 │ 🔬 TIWordManager.bas         ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
@@ -1053,26 +1052,36 @@ graph TD
 - CMockWordManager.ConfigureLeerDocumento(contenido)
 
 🧪 **Patrones de Testing:**
-- **Aislamiento**: TestCWordManager usa mocks para todas las dependencias
+- **Integración Real**: TIWordManager prueba con documentos Word reales usando auto-aprovisionamiento
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
-- **Integración Real**: TIWordManager prueba con documentos Word reales
+- **Auto-aprovisionamiento**: Configuración automática del entorno de prueba
 ```
 
-## 7. Gestión de Errores
+## 7. Gestión de Errores ✅ REFACTORIZADO
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                  GESTIÓN DE ERRORES                        │
+│                  GESTIÓN DE ERRORES ✅ REFACTORIZADO       │
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IErrorHandlerService.cls  ← Interface                   │
+│    ├─ Initialize(config, fileSystem) ← Inicialización      │
+│    ├─ LogError(errorNumber, description, source)           │
+│    ├─ LogInfo(message, source) ← Registro de información   │
+│    └─ LogWarning(message, source) ← Registro de advertencias │
 │ 🔧 CErrorHandlerService.cls  ← Implementación              │
+│    ├─ Initialize() ← Inyección de IConfig e IFileSystem    │
+│    └─ Dependencia circular eliminada con Config           │
 │ 🧪 CMockErrorHandlerService.cls ← Mock para testing        │
-│    ├─ ConfigureHandleError() ← Método de configuración     │
-│    └─ ConfigureLogError() ← Método de configuración        │
-│ 🏭 modErrorHandlerFactory.bas ← Factory                    │
+│    ├─ IErrorHandlerService_Initialize() ← Implementa interfaz │
+│    ├─ IErrorHandlerService_LogError() ← Mock de LogError   │
+│    ├─ IErrorHandlerService_LogInfo() ← Mock de LogInfo     │
+│    └─ IErrorHandlerService_LogWarning() ← Mock de LogWarning │
+│ 🏭 modErrorHandlerFactory.bas ← Factory (Sin ciclos)       │
+│    └─ Resuelve dependencias con modConfigFactory y modFileSystemFactory │
 │ 📋 modErrorHandler.bas       ← Módulo de utilidades        │
 │ ✅ TestErrorHandlerService.bas ← Tests unitarios           │
+│    └─ Prueba clase REAL con mocks inyectados              │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias ErrorHandler
@@ -1089,23 +1098,29 @@ graph TD
     L[modFileSystemFactory.bas] --> G
 ```
 
-🔗 **Dependencias:**
-- CErrorHandlerService ➜ IConfig (inyectado)
-- CErrorHandlerService ➜ IFileSystem (inyectado)
+🔗 **Dependencias (Dependencia Circular Eliminada):**
+- CErrorHandlerService ➜ IConfig (inyectado vía Initialize)
+- CErrorHandlerService ➜ IFileSystem (inyectado vía Initialize)
 - modErrorHandlerFactory ➜ modConfigFactory, modFileSystemFactory
 - modErrorHandler ➜ IErrorHandlerService (global)
+- **ELIMINADO**: Dependencia circular entre CConfig y CErrorHandlerService
 
-🔧 **Mock Inteligente:**
-- CMockErrorHandlerService.ConfigureHandleError(boolean)
-- CMockErrorHandlerService.ConfigureLogError(boolean)
-- CMockErrorHandlerService.ConfigureGetLastError(string)
+🔧 **Mock Inteligente (Implementa Interfaz Completa):**
+- CMockErrorHandlerService implementa IErrorHandlerService completamente
+- IErrorHandlerService_Initialize(config, fileSystem) ← Implementa interfaz
+- IErrorHandlerService_LogError(errorNumber, description, source)
+- IErrorHandlerService_LogInfo(message, source)
+- IErrorHandlerService_LogWarning(message, source)
+- **ELIMINADOS**: Métodos Configure* obsoletos
 
-🧪 **Patrones de Testing:**
-- **Aislamiento**: TestErrorHandlerService usa mocks para todas las dependencias
+🧪 **Patrones de Testing (Clase Real con Mocks):**
+- **Clase Real**: TestErrorHandlerService prueba CErrorHandlerService (no mock)
+- **Dependencias Mockeadas**: CMockConfig, CMockFileSystem, CMockTextFile
+- **Inyección de Dependencias**: errorHandlerService.Initialize(mockConfig, mockFileSystem)
+- **Verificación de Mocks**: Verifica que los mocks fueron llamados correctamente
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
-- **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
-- **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
-- **Servicio Global**: modErrorHandler proporciona acceso global al servicio
+- **Sin Variables Globales**: Declaración local en cada función
+- **Manejo de Errores**: Bloques TestFail/Cleanup consistentes
 ```
 
 ## 8. Framework de Testing
@@ -1114,9 +1129,27 @@ graph TD
 │                 FRAMEWORK DE TESTING                       │
 ├─────────────────────────────────────────────────────────────┤
 │ 🔧 CTestResult.cls           ← Resultado individual        │
+│    ├─ Name, Passed, ErrorMessage ← PROPIEDADES PÚBLICAS SINCRONIZADAS │
+│    └─ Initialize(), Pass(), Fail() ← MÉTODOS ESTÁNDAR      │
 │ 🔧 CTestSuiteResult.cls      ← Resultado de suite          │
-│ 🔧 CTestReporter.cls         ← Generador de informes       │
+│    ├─ AddResult()            ← MÉTODO CRÍTICO RESTAURADO   │
+│    ├─ Initialize()           ← Inicialización robusta      │
+│    ├─ AllTestsPassed         ← PROPIEDAD AÑADIDA (Misión Emergencia Final) │
+│    └─ Scripting.Dictionary   ← Almacenamiento de resultados │
+│ 📄 ITestReporter.cls         ← Interface de reportes ✅ FINALIZADA │
+│    ├─ Initialize()           ← Contrato de inicialización definido │
+│    └─ GenerateReport()       ← Contrato de generación definido │
+│ 🔧 CTestReporter.cls         ← Generador de informes ✅ COMPLETADO │
+│    ├─ Implements ITestReporter ← IMPLEMENTACIÓN INTERFAZ CORRECTA │
+│    ├─ Initialize()           ← MÉTODO PÚBLICO FUNCIONAL │
+│    ├─ ITestReporter_Initialize() ← CONTRATO INTERFAZ IMPLEMENTADO │
+│    ├─ ITestReporter_GenerateReport() ← CONTRATO INTERFAZ IMPLEMENTADO │
+│    ├─ COMPILACIÓN EXITOSA    ← ERRORES DE INTERFAZ RESUELTOS │
+│    ├─ TotalPassed()          ← NOMENCLATURA ESTÁNDAR │
+│    └─ GenerateReport()       ← FORMATEO COMPLETO IMPLEMENTADO │
 │ 📋 modTestRunner.bas         ← Motor con descubrimiento 100% automático │
+│    ├─ ExecuteAllTestsForCLI() ← CORREGIDO: Bucle verificación con AllTestsPassed │
+│    └─ ExecuteAllSuites()     ← CORREGIDO: Llamada AddResult (Misión Emergencia Final) │
 │ 📋 modTestUtils.bas          ← Utilidades de testing       │
 │ 📋 modAssert.bas             ← Aserciones                  │
 │                                                             │
@@ -1125,15 +1158,23 @@ graph TD
 │ ✅ TestAuthService.bas       ← Tests unitarios             │
 │ ✅ TestCConfig.bas           ← Tests unitarios             │
 │ ✅ TestCExpedienteService.bas ← Tests unitarios             │
-│ ✅ TestCWordManager.bas      ← Tests unitarios             │
 │ ✅ TestDocumentService.bas   ← Tests unitarios             │
 │ ✅ TestErrorHandlerService.bas ← Tests unitarios           │
-│ ✅ TestOperationLogger.bas   ← Tests unitarios             │
-│ ✅ TestSolicitudService.bas  ← Tests unitarios             │
-│ ✅ TestWorkflowService.bas   ← Tests unitarios             │
+│ ✅ TestModAssert.bas         ← Tests unitarios (CORREGIDO) │
+│ ✅ TestOperationLogger.bas   ← Tests unitarios (CORREGIDO) │
+│ ✅ TestSolicitudService.bas  ← Tests unitarios (CORREGIDO) │
+│ ✅ TestWorkflowService.bas   ← Tests unitarios (CORREGIDO) │
+│                                                             │
+│ ✅ TESTS DE INTEGRACIÓN REFACTORIZADOS:                    │
+│ ✅ TISolicitudRepository.bas ← Tests integración (CORREGIDO) │
+│ ✅ TIMapeoRepository.bas     ← Tests integración (CORREGIDO) │
+│ ✅ TIWorkflowRepository.bas  ← Tests integración (CORREGIDO) │
+│ ✅ TINotificationService.bas ← Tests integración (CORREGIDO) │
+│ ✅ TIFileSystem.bas          ← Tests integración (CORREGIDO) │
 └─────────────────────────────────────────────────────────────┘
 
 🔗 **Dependencias:**
+- CTestReporter ➜ ITestReporter (implementa interfaz)
 - CTestReporter ➜ IFileSystem
 - modTestUtils ➜ IFileSystem
 - modTestUtils ➜ IConfig
@@ -1185,7 +1226,7 @@ Todos los mocks han sido refactorizados para seguir convenciones consistentes:
 - CAppManager ➜ IConfig
 - CAppManager ➜ IErrorHandlerService
 
-🔧 **Mock Simplificado (v2.0):**
+🔧 **Mock Simplificado:**
 - CMockAppManager.ConfigureStartApplication(value As Boolean)
 - CMockAppManager.ConfigureGetCurrentUserRole(value As UserRole)
 - CMockAppManager.StartApplication_WasCalled As Boolean
@@ -1248,7 +1289,7 @@ encapsulación correcta con variables privadas (m_*) y propiedades públicas
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 🏭 **modRepositoryFactory.bas - Características Técnicas (Refactorizado v2.0)**
+### 🏭 **modRepositoryFactory.bas - Características Técnicas (Refactorizado)**
 - **Inyección de Dependencias Opcionales**: Patrón de "parámetros opcionales" permite inyectar dependencias para testing o crear nuevas instancias
 - **Testeabilidad Mejorada**: `CreateExpedienteRepository(Optional config As IConfig = Nothing, Optional errorHandler As IErrorHandlerService = Nothing)`
 - **Modo Desarrollo**: Flag `DEV_MODE` permite testing con mocks sin modificar código de producción
@@ -1264,8 +1305,9 @@ graph TD
     AS --> EH[IErrorHandlerService]
     
     DS[CDocumentService] --> WM[IWordManager]
-    DS --> FS[IFileSystem]
-    DS --> EH
+    DS --> SS[ISolicitudService]
+    DS --> MR[IMapeoRepository]
+    DS --> EH[IErrorHandlerService]
     
     SS[CSolicitudService] --> SR[ISolicitudRepository]
     SS --> OL[IOperationLogger]
@@ -1283,17 +1325,14 @@ graph TD
     SR --> C
     WR --> C
     NR --> C
-    MR[CMapeoRepository] --> C
+    MR --> C
     OR[COperationRepository] --> C
     
     %% Servicios de infraestructura
     OL --> OR
     OL --> EH
     
-    WM --> FS
     WM --> EH
-    
-    FS --> EH
     
     EH --> C
     

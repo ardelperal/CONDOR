@@ -14,6 +14,12 @@ Option Explicit
 ' Descripción: Define el contrato para servicios de manejo de errores del sistema CONDOR
 ' Arquitectura: Capa de Servicios - Interface
 
+' Inicializa el servicio con sus dependencias
+' @param config: Configuración del sistema
+' @param fileSystem: Sistema de archivos
+Public Sub Initialize(ByVal config As IConfig, ByVal fileSystem As IFileSystem)
+End Sub
+
 ' Registra un error en el sistema de logging
 ' @param errNumber: Número del error
 ' @param errDescription: Descripción del error

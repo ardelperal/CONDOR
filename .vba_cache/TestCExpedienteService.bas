@@ -18,7 +18,7 @@ Public Function TestCExpedienteService_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TestCExpedienteService"
 
-    suiteResult.AddTestResult Test_ObtenerExpedientePorId_DelegatesCorrectly()
+    suiteResult.AddResult Test_ObtenerExpedientePorId_DelegatesCorrectly()
     
     Set TestCExpedienteService_RunAll = suiteResult
 End Function

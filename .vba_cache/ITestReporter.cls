@@ -10,16 +10,8 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
-' Interfaz: ITestReporter
-' Propósito: Define el contrato para clases que generan reportes de pruebas
-' Arquitectura: Patrón Strategy para diferentes tipos de reportes
-
-' Inicializa el reportero con los resultados de las pruebas
-Public Sub Initialize(ByVal results As Scripting.Dictionary)
+Public Sub Initialize(ByVal suiteResults As Scripting.Dictionary)
 End Sub
 
-' Genera y devuelve el reporte como string
 Public Function GenerateReport() As String
 End Function
-

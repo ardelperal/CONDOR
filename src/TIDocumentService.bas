@@ -24,7 +24,7 @@ Public Function TIDocumentServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TIDocumentService"
 
-    suiteResult.AddTestResult TestGenerarDocumentoSuccess()
+    Call suiteResult.AddResult(TestGenerarDocumentoSuccess())
 
     Set TIDocumentServiceRunAll = suiteResult
 End Function
@@ -133,23 +133,22 @@ Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudS
     ' 1. Crear configuración de prueba
     Set config = modConfigFactory.CreateConfigService()
     config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH
-    config.SetSetting "DB_PASSWORD", ""
+    config.SetSetting "DB_PASSWORD", "" ' La BD de prueba no tiene contraseña
     config.SetSetting "PLANTILLA_PATH", modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH
     config.SetSetting "GENERATED_DOCS_PATH", modTestUtils.GetProjectPath() & TEST_GENERATED_PATH
 
+    ' 2. Crear servicios y repositorios usando sus factorías correspondientes
+    '    CORRECCIÓN: Se llama a las factorías de SERVICIOS, no de repositorios.
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-
-    ' 2. Repositorios y Servicios usando factory
-    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository()
-    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService()
-    Set expedienteRepo = modRepositoryFactory.CreateExpedienteRepository()
-
-    ' 3. Servicios de Infraestructura
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
-    Set wordManager = modWordManagerFactory.CreateWordManager()
+    Set wordManager = modWordManagerFactory.CreateWordManager(errorHandler)
+    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService()
+    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository() ' Mapeo es un caso especial, se accede vía repo.
 
-    ' 4. Servicio Principal a Probar usando factory
+    ' 3. Finalmente, crear el servicio principal a probar usando su propia factoría.
+    '    La factoría se encargará de crear y conectar todas las piezas.
     Set documentService = modDocumentServiceFactory.CreateDocumentService()
+
 End Sub
 
 Private Sub InsertTestData()

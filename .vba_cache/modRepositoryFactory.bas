@@ -4,45 +4,104 @@ Option Explicit
 
 ' =====================================================
 ' FACTORY: modRepositoryFactory
-' DESCRIPCIÓN: Crea instancias de repositorios.
-' PATRÓN ARQUITECTÓNICO: Factory con inyección de dependencias opcional para testing.
+' DESCRIPCIÓN: Crea instancias de TODOS los repositorios del sistema.
+' PATRÓN ARQUITECTÓNICO: Factory Testeable con Parámetros Opcionales.
+' ESTÁNDAR: Oro - Versión Completa
 ' =====================================================
 
 ' Flag para alternar entre implementaciones reales y mocks
 Public Const DEV_MODE As Boolean = True
 
-Public Function CreateExpedienteRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IExpedienteRepository
+' --- Métodos de Creación de Repositorios ---
+
+Public Function CreateAuthRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IAuthRepository
     On Error GoTo ErrorHandler
-    
-    Dim repoImpl As New CExpedienteRepository
-    
-    ' CORRECCIÓN ARQUITECTÓNICA: Usar dependencias inyectadas si existen (para tests),
-    ' o crearlas si no (para la aplicación).
-    
-    Dim effectiveConfig As IConfig
-    If config Is Nothing Then
-        Set effectiveConfig = modConfigFactory.CreateConfigService()
-    Else
-        Set effectiveConfig = config
-    End If
-    
-    Dim effectiveErrorHandler As IErrorHandlerService
-    If errorHandler Is Nothing Then
-        Set effectiveErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Else
-        Set effectiveErrorHandler = errorHandler
-    End If
-    
-    repoImpl.Initialize effectiveConfig, effectiveErrorHandler
-    
-    Set CreateExpedienteRepository = repoImpl
-    
+    Dim repoImpl As New CAuthRepository
+    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    Set CreateAuthRepository = repoImpl
     Exit Function
 ErrorHandler:
-    ' Implementar manejo de errores robusto
-    Debug.Print "Error en modRepositoryFactory.CreateExpedienteRepository: " & Err.Description
-    Set CreateExpedienteRepository = Nothing
+    HandleFactoryError "CreateAuthRepository"
 End Function
 
-' Añadir aquí el resto de funciones Create... para otros repositorios (ISolicitudRepository, etc.)
-' siguiendo el mismo patrón de parámetros opcionales.
+Public Function CreateExpedienteRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IExpedienteRepository
+    On Error GoTo ErrorHandler
+    Dim repoImpl As New CExpedienteRepository
+    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    Set CreateExpedienteRepository = repoImpl
+    Exit Function
+ErrorHandler:
+    HandleFactoryError "CreateExpedienteRepository"
+End Function
+
+Public Function CreateMapeoRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IMapeoRepository
+    On Error GoTo ErrorHandler
+    Dim repoImpl As New CMapeoRepository
+    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    Set CreateMapeoRepository = repoImpl
+    Exit Function
+ErrorHandler:
+    HandleFactoryError "CreateMapeoRepository"
+End Function
+
+Public Function CreateNotificationRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As INotificationRepository
+    On Error GoTo ErrorHandler
+    Dim repoImpl As New CNotificationRepository
+    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    Set CreateNotificationRepository = repoImpl
+    Exit Function
+ErrorHandler:
+    HandleFactoryError "CreateNotificationRepository"
+End Function
+
+Public Function CreateOperationRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IOperationRepository
+    On Error GoTo ErrorHandler
+    Dim repoImpl As New COperationRepository
+    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    Set CreateOperationRepository = repoImpl
+    Exit Function
+ErrorHandler:
+    HandleFactoryError "CreateOperationRepository"
+End Function
+
+Public Function CreateSolicitudRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As ISolicitudRepository
+    On Error GoTo ErrorHandler
+    Dim repoImpl As New CSolicitudRepository
+    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    Set CreateSolicitudRepository = repoImpl
+    Exit Function
+ErrorHandler:
+    HandleFactoryError "CreateSolicitudRepository"
+End Function
+
+Public Function CreateWorkflowRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IWorkflowRepository
+    On Error GoTo ErrorHandler
+    Dim repoImpl As New CWorkflowRepository
+    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    Set CreateWorkflowRepository = repoImpl
+    Exit Function
+ErrorHandler:
+    HandleFactoryError "CreateWorkflowRepository"
+End Function
+
+' --- Funciones Auxiliares Privadas ---
+
+Private Function GetEffectiveConfig(Optional ByVal config As IConfig = Nothing) As IConfig
+    If config Is Nothing Then
+        Set GetEffectiveConfig = modConfigFactory.CreateConfigService()
+    Else
+        Set GetEffectiveConfig = config
+    End If
+End Function
+
+Private Function GetEffectiveErrorHandler(Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IErrorHandlerService
+    If errorHandler Is Nothing Then
+        Set GetEffectiveErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Else
+        Set GetEffectiveErrorHandler = errorHandler
+    End If
+End Function
+
+Private Sub HandleFactoryError(ByVal functionName As String)
+    Debug.Print "Error crítico en modRepositoryFactory." & functionName & ": " & Err.Description
+End Sub

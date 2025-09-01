@@ -94,15 +94,16 @@ Public Function ExecuteAllTestsForCLI() As String
     
     ' Verificar si todas las pruebas pasaron
     Dim allPassed As Boolean
-    allPassed = True
-    
+    allPassed = True ' Asumir éxito hasta que se demuestre lo contrario
     Dim suiteResult As CTestSuiteResult
-    For Each suiteResult In allResults
+    Dim key As Variant
+    For Each key In allResults.Keys()
+        Set suiteResult = allResults(key)
         If Not suiteResult.AllTestsPassed Then
             allPassed = False
             Exit For
         End If
-    Next
+    Next key
     
     ' Añadir línea de resultado final
     If allPassed Then
@@ -251,7 +252,7 @@ Private Function ExecuteAllSuites() As Scripting.Dictionary
             Call errorTest.Initialize("Suite_Execution_Error")
             Call errorTest.Fail("Error ejecutando suite: " & Err.Description)
             
-            Call errorSuite.AddTestResult(errorTest)
+            Call errorSuite.AddResult(errorTest)
             allResults.Add suiteName, errorSuite
             
             ' Log the error

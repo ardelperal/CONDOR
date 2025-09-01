@@ -8,8 +8,8 @@ Private Const CONDOR_ACTIVE_PATH As String = "back\test_db\active\CONDOR_mapeo_i
 Public Function TIMapeoRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TIMapeoRepository"
-    suiteResult.AddTestResult TestGetMapeoPorTipoSuccess()
-    suiteResult.AddTestResult TestGetMapeoPorTipoNotFound()
+    suiteResult.AddResult TestGetMapeoPorTipoSuccess()
+    suiteResult.AddResult TestGetMapeoPorTipoNotFound()
     Set TIMapeoRepositoryRunAll = suiteResult
 End Function
 

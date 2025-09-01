@@ -15,19 +15,19 @@ Public Function TestModAssertRunAll() As CTestSuiteResult
     Call suiteResult.Initialize("TestModAssert")
     
     ' Ejecutar todas las pruebas de meta-testing
-    Call suiteResult.AddTestResult(TestAssertTrueWithTrueConditionPasses())
-    Call suiteResult.AddTestResult(TestAssertTrueWithFalseConditionFails())
-    Call suiteResult.AddTestResult(TestAssertFalseWithFalseConditionPasses())
-    Call suiteResult.AddTestResult(TestAssertFalseWithTrueConditionFails())
-    Call suiteResult.AddTestResult(TestAssertEqualsWithEqualValuesPasses())
-    Call suiteResult.AddTestResult(TestAssertEqualsWithDifferentValuesFails())
-    Call suiteResult.AddTestResult(TestAssertNotEqualsWithDifferentValuesPasses())
-    Call suiteResult.AddTestResult(TestAssertNotEqualsWithEqualValuesFails())
-    Call suiteResult.AddTestResult(TestAssertNotNullWithValidObjectPasses())
-    Call suiteResult.AddTestResult(TestAssertNotNullWithNothingObjectFails())
-    Call suiteResult.AddTestResult(TestAssertIsNullWithNothingObjectPasses())
-    Call suiteResult.AddTestResult(TestAssertIsNullWithValidObjectFails())
-    Call suiteResult.AddTestResult(TestFailAlwaysFails())
+    Call suiteResult.AddResult(TestAssertTrueWithTrueConditionPasses())
+    Call suiteResult.AddResult(TestAssertTrueWithFalseConditionFails())
+    Call suiteResult.AddResult(TestAssertFalseWithFalseConditionPasses())
+    Call suiteResult.AddResult(TestAssertFalseWithTrueConditionFails())
+    Call suiteResult.AddResult(TestAssertEqualsWithEqualValuesPasses())
+    Call suiteResult.AddResult(TestAssertEqualsWithDifferentValuesFails())
+    Call suiteResult.AddResult(TestAssertNotEqualsWithDifferentValuesPasses())
+    Call suiteResult.AddResult(TestAssertNotEqualsWithEqualValuesFails())
+    Call suiteResult.AddResult(TestAssertNotNullWithValidObjectPasses())
+    Call suiteResult.AddResult(TestAssertNotNullWithNothingObjectFails())
+    Call suiteResult.AddResult(TestAssertIsNullWithNothingObjectPasses())
+    Call suiteResult.AddResult(TestAssertIsNullWithValidObjectFails())
+    Call suiteResult.AddResult(TestFailAlwaysFails())
     
     Set TestModAssertRunAll = suiteResult
 End Function

@@ -17,12 +17,12 @@ Public Function TIFileSystemRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TIFileSystem"
     
-    suiteResult.AddTestResult TestFileExistsIntegration()
-    suiteResult.AddTestResult TestFolderExistsIntegration()
-    suiteResult.AddTestResult TestCopyFileIntegration()
-    suiteResult.AddTestResult TestDeleteFileIntegration()
-    suiteResult.AddTestResult TestCreateFolderIntegration()
-    suiteResult.AddTestResult TestDeleteFolderIntegration()
+    suiteResult.AddResult TestFileExistsIntegration()
+    suiteResult.AddResult TestFolderExistsIntegration()
+    suiteResult.AddResult TestCopyFileIntegration()
+    suiteResult.AddResult TestDeleteFileIntegration()
+    suiteResult.AddResult TestCreateFolderIntegration()
+    suiteResult.AddResult TestDeleteFolderIntegration()
     
     Set TIFileSystemRunAll = suiteResult
 End Function

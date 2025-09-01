@@ -3,172 +3,124 @@ Option Compare Database
 Option Explicit
 
 ' ============================================================================
-' Módulo: IntegrationTestWordManager
-' Descripción: Pruebas de integración para CWordManager
+' Módulo: TIWordManager
+' Descripción: Pruebas de integración para CWordManager, siguiendo el
+'              patrón de auto-aprovisionamiento (Lección 36).
 ' ============================================================================
 
-' Variables eliminadas - ahora se declaran localmente en cada función
+Private Const TEST_FOLDER_NAME As String = "condor_word_tests"
+Private Const TEMPLATE_DOC_NAME As String = "template_test.docx"
+Private Const MODIFIED_DOC_NAME As String = "modified_test.docx"
 
-' ============================================================================
-' CONFIGURACIÓN DE PRUEBAS
-' ============================================================================
+Private Function GetTestFolderPath() As String
+    GetTestFolderPath = Environ("TEMP") & "\" & TEST_FOLDER_NAME & "\"
+End Function
 
-Public Function TIWordManagerRunAll() As CTestSuiteResult
+Public Function TIWordManager_RunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TIWordManager"
     
-    suiteResult.AddTestResult IntegrationTestWordManagerCicloCompletoSuccess()
-    suiteResult.AddTestResult IntegrationTestWordManagerAbrirFicheroInexistenteDevuelveFalse()
+    suiteResult.AddResult Test_CicloCompleto_Success()
+    suiteResult.AddResult Test_AbrirFicheroInexistente_DevuelveFalse()
     
-    Set TIWordManagerRunAll = suiteResult
+    Set TIWordManager_RunAll = suiteResult
 End Function
 
-' ============================================================================
-' PRUEBAS DE INTEGRACIÓN
-' ============================================================================
-
-Private Function IntegrationTestWordManagerCicloCompletoSuccess() As CTestResult
+Private Function Test_CicloCompleto_Success() As CTestResult
     Dim testResult As New CTestResult
-    testResult.Initialize "Ciclo completo de WordManager (Abrir, Reemplazar, Guardar, Cerrar) debe tener éxito"
+    testResult.Initialize "Ciclo completo (Abrir, Reemplazar, Guardar, Leer) debe tener éxito"
     
-    On Error GoTo TestError
-    
-    ' Arrange
-    Dim wordManager As IWordManager
-    Dim errorHandler As IErrorHandlerService
-    Dim archivoOriginal As String
-    Dim archivoGuardado As String
-    Dim contenidoFinal As String
-    Dim tempFolder As String
     Dim fs As IFileSystem
+    Dim wordManager As IWordManager
+    On Error GoTo TestFail
     
-    ' Setup local
-    tempFolder = modTestUtils.GetProjectPath() & "back\test_env\word_tests\"
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    If Not fs.FolderExists(tempFolder) Then
-        fs.CreateFolder tempFolder
-    End If
-    
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService
+    Call SetupTestEnvironment
+    Set fs = modFileSystemFactory.CreateFileSystem
     Set wordManager = modWordManagerFactory.CreateWordManager()
     
-    archivoOriginal = tempFolder & "documento_original.docx"
-    CrearDocumentoPrueba archivoOriginal, "Hola [NOMBRE], este es un documento de prueba."
+    Dim templatePath As String: templatePath = GetTestFolderPath & TEMPLATE_DOC_NAME
     
-    archivoGuardado = tempFolder & "documento_modificado.docx"
+    modAssert.AssertTrue wordManager.AbrirDocumento(templatePath), "Debería abrir el documento"
+    modAssert.AssertTrue wordManager.ReemplazarTexto("[NOMBRE]", "CONDOR"), "Debería reemplazar el texto"
     
-    ' Act & Assert
-    modAssert.AssertTrue wordManager.AbrirDocumento(archivoOriginal), "Debería abrir el documento correctamente"
-    modAssert.AssertTrue wordManager.ReemplazarTexto("[NOMBRE]", "CONDOR"), "Debería reemplazar el texto correctamente"
-    modAssert.AssertTrue wordManager.GuardarDocumento(archivoGuardado), "Debería guardar el documento correctamente"
+    Dim modifiedPath As String: modifiedPath = GetTestFolderPath & MODIFIED_DOC_NAME
+    modAssert.AssertTrue wordManager.GuardarDocumento(modifiedPath), "Debería guardar el documento"
     wordManager.CerrarDocumento
     
-    contenidoFinal = wordManager.LeerContenidoDocumento(archivoGuardado)
-    modAssert.AssertTrue InStr(contenidoFinal, "CONDOR") > 0, "El contenido debería incluir 'CONDOR'"
-    modAssert.AssertTrue InStr(contenidoFinal, "[ NOMBRE]") = 0, "El contenido no debería incluir '[NOMBRE]'"
+    modAssert.AssertTrue fs.FileExists(modifiedPath), "El archivo modificado debe existir"
+    Dim finalContent As String: finalContent = wordManager.LeerContenidoDocumento(modifiedPath)
+    
+    modAssert.AssertTrue InStr(1, finalContent, "CONDOR", vbTextCompare) > 0, "El contenido debe incluir 'CONDOR'"
+    modAssert.AssertTrue InStr(1, finalContent, "[NOMBRE]", vbTextCompare) = 0, "El contenido no debe incluir '[NOMBRE]'"
     
     testResult.Pass
-    GoTo Cleanup
-    
-TestError:
-    testResult.Fail "Error inesperado: " & Err.Number & " - " & Err.Description
-    On Error Resume Next
-    wordManager.CerrarDocumento
-    On Error GoTo 0
-    
-Cleanup:
-    ' Cleanup local
-    On Error Resume Next
-    If fs.FileExists(archivoOriginal) Then fs.DeleteFile archivoOriginal
-    If fs.FileExists(archivoGuardado) Then fs.DeleteFile archivoGuardado
-    If fs.FolderExists(tempFolder) Then fs.DeleteFolder tempFolder
+Finally:
+    Call TeardownTestEnvironment
     Set fs = Nothing
-    On Error GoTo 0
-    Set IntegrationTestWordManagerCicloCompletoSuccess = testResult
+    Set wordManager = Nothing
+    Set Test_CicloCompleto_Success = testResult
+    Exit Function
+TestFail:
+    testResult.Fail "Error inesperado: " & Err.Number & " - " & Err.Description
+    Resume Finally
 End Function
 
-Private Function IntegrationTestWordManagerAbrirFicheroInexistenteDevuelveFalse() As CTestResult
+Private Function Test_AbrirFicheroInexistente_DevuelveFalse() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "AbrirDocumento con un fichero inexistente debe devolver False"
     
-    On Error GoTo TestError
-    
-    ' Arrange
     Dim wordManager As IWordManager
-    Dim errorHandler As IErrorHandlerService
-    Dim rutaInvalida As String
-    Dim resultado As Boolean
-    Dim tempFolder As String
-    Dim fs As IFileSystem
+    On Error GoTo TestFail
     
-    ' Setup local
-    tempFolder = modTestUtils.GetProjectPath() & "back\test_env\word_tests\"
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    If Not fs.FolderExists(tempFolder) Then
-        fs.CreateFolder tempFolder
-    End If
-    
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService
+    Call SetupTestEnvironment
     Set wordManager = modWordManagerFactory.CreateWordManager()
     
-    rutaInvalida = tempFolder & "archivo_que_no_existe.docx"
+    Dim result As Boolean: result = wordManager.AbrirDocumento(GetTestFolderPath & "non_existent_file.docx")
     
-    ' Act
-    resultado = wordManager.AbrirDocumento(rutaInvalida)
-    
-    ' Assert
-    modAssert.AssertFalse resultado, "Debería devolver False al intentar abrir un archivo inexistente"
-    
+    modAssert.AssertFalse result, "Debería devolver False"
     testResult.Pass
-    GoTo Cleanup
-    
-TestError:
+Finally:
+    Call TeardownTestEnvironment
+    Set wordManager = Nothing
+    Set Test_AbrirFicheroInexistente_DevuelveFalse = testResult
+    Exit Function
+TestFail:
     testResult.Fail "Error inesperado: " & Err.Number & " - " & Err.Description
-    
-Cleanup:
-    ' Cleanup local
-    On Error Resume Next
-    If fs.FolderExists(tempFolder) Then fs.DeleteFolder tempFolder
-    Set fs = Nothing
-    On Error GoTo 0
-    Set IntegrationTestWordManagerAbrirFicheroInexistenteDevuelveFalse = testResult
+    Resume Finally
 End Function
 
-' ============================================================================
-' MÉTODOS DE SETUP Y TEARDOWN CENTRALIZADOS
-' ============================================================================
+Private Sub SetupTestEnvironment()
+    On Error Resume Next
+    Call TeardownTestEnvironment
+    On Error GoTo 0
+    
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem
+    fs.CreateFolder GetTestFolderPath
+    
+    CreateDummyWordDocument GetTestFolderPath & TEMPLATE_DOC_NAME, "Hola [NOMBRE], bienvenido."
+End Sub
 
+Private Sub TeardownTestEnvironment()
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem
+    If fs.FolderExists(GetTestFolderPath) Then fs.DeleteFolder GetTestFolderPath
+End Sub
 
-
-' ============================================================================
-' MÉTODOS AUXILIARES
-' ============================================================================
-
-Private Sub CrearDocumentoPrueba(ByVal rutaArchivo As String, ByVal contenido As String)
-    On Error GoTo TestError
-    Dim wordApp As Object
-    Dim wordDoc As Object
+Private Sub CreateDummyWordDocument(ByVal filePath As String, ByVal content As String)
+    Dim wordApp As Object, wordDoc As Object
+    On Error GoTo Cleanup
+    
     Set wordApp = CreateObject("Word.Application")
     wordApp.Visible = False
-    wordApp.DisplayAlerts = False
     Set wordDoc = wordApp.Documents.Add
-    wordDoc.content.Text = contenido
-    wordDoc.SaveAs2 rutaArchivo, 16 ' wdFormatXMLDocument
-    wordDoc.Close False
-    wordApp.Quit
+    wordDoc.content.Text = content
+    wordDoc.SaveAs2 filePath
+    
+Cleanup:
+    On Error Resume Next
+    If Not wordDoc Is Nothing Then wordDoc.Close False
+    If Not wordApp Is Nothing Then wordApp.Quit
     Set wordDoc = Nothing
     Set wordApp = Nothing
-    Exit Sub
-TestError:
-    On Error Resume Next
-    If Not wordDoc Is Nothing Then
-        wordDoc.Close False
-        Set wordDoc = Nothing
-    End If
-    If Not wordApp Is Nothing Then
-        wordApp.Quit
-        Set wordApp = Nothing
-    End If
-    On Error GoTo 0
-    Err.Raise Err.Number, "CrearDocumentoPrueba", "Error creando documento: " & Err.Description
 End Sub

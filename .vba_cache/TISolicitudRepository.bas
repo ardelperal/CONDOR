@@ -7,7 +7,7 @@ Private Const ACTIVE_PATH As String = "back\test_db\active\CONDOR_solicitud_ites
 Public Function TISolicitudRepositoryRunAll() As CTestSuiteResult
     Set TISolicitudRepositoryRunAll = New CTestSuiteResult
     TISolicitudRepositoryRunAll.Initialize "TISolicitudRepository"
-    TISolicitudRepositoryRunAll.AddTestResult TestSaveAndRetrieveSolicitud()
+    TISolicitudRepositoryRunAll.AddResult TestSaveAndRetrieveSolicitud()
 End Function
 
 Private Sub Setup()

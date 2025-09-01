@@ -15,13 +15,13 @@ Public Function TestCConfigRunAll() As CTestSuiteResult
     suiteResult.Initialize "TestCConfig"
     
     ' Ejecutar todas las pruebas unitarias
-    suiteResult.AddTestResult TestGetValueDatapathSuccess()
-    suiteResult.AddTestResult TestGetValueDatabasepasswordSuccess()
-    suiteResult.AddTestResult TestGetDataPathSuccess()
-    suiteResult.AddTestResult TestGetDatabasePasswordSuccess()
-    suiteResult.AddTestResult TestHasKeyExistingKeyReturnsTrue()
-    suiteResult.AddTestResult TestHasKeyNonExistingKeyReturnsFalse()
-    suiteResult.AddTestResult TestGetValueNonExistingKeyReturnsEmpty()
+    suiteResult.AddResult TestGetValueDatapathSuccess()
+    suiteResult.AddResult TestGetValueDatabasepasswordSuccess()
+    suiteResult.AddResult TestGetDataPathSuccess()
+    suiteResult.AddResult TestGetDatabasePasswordSuccess()
+    suiteResult.AddResult TestHasKeyExistingKeyReturnsTrue()
+    suiteResult.AddResult TestHasKeyNonExistingKeyReturnsFalse()
+    suiteResult.AddResult TestGetValueNonExistingKeyReturnsEmpty()
     
     Set TestCConfigRunAll = suiteResult
 End Function
