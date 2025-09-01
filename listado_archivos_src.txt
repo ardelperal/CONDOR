@@ -1,7 +1,7 @@
 LISTADO DE ARCHIVOS EN EL DIRECTORIO SRC
 =============================================
 
-Total de archivos: 113
+Total de archivos: 108
 
 CLASES DE ENTIDADES (.cls):
 EAdjuntos.cls

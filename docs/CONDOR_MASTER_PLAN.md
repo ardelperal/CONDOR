@@ -294,7 +294,7 @@ graph TD
 ```mermaid
 graph TD
     subgraph "Capa de Pruebas"
-        A[TestExpedienteService.bas] --> B[CMockExpedienteRepository]
+        A[TestCExpedienteService.bas] --> B[CMockExpedienteRepository]
         A --> C[CMockOperationLogger]
         A --> D[CMockErrorHandlerService]
         E[TIExpedienteRepository.bas] --> M[modRepositoryFactory.bas]
@@ -1124,7 +1124,7 @@ graph TD
 │ ✅ TestAppManager.bas        ← Tests unitarios             │
 │ ✅ TestAuthService.bas       ← Tests unitarios             │
 │ ✅ TestCConfig.bas           ← Tests unitarios             │
-│ ✅ TestExpedienteService.bas ← Tests unitarios             │
+│ ✅ TestCExpedienteService.bas ← Tests unitarios             │
 │ ✅ TestCWordManager.bas      ← Tests unitarios             │
 │ ✅ TestDocumentService.bas   ← Tests unitarios             │
 │ ✅ TestErrorHandlerService.bas ← Tests unitarios           │

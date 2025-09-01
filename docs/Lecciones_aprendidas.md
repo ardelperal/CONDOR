@@ -300,17 +300,18 @@ Caso Crítico - CTestReporter (2024): La clase CTestReporter violaba el Principi
 
 **Caso Crítico - Refactorización del Framework de Pruebas (2025):** Se refactorizaron los 12 módulos de pruebas de integración para implementar este patrón, eliminando por completo los errores de entorno y garantizando que los fallos de las pruebas ahora solo pueden deberse a regresiones reales en el código de la aplicación.
 
-## Lección 37: Estandarización de Factorías para una Arquitectura Predecible
+## Lección 37: Estandarización de Factorías para una Arquitectura Predecible y Testeable
 
-**Observación:** Se detectaron errores de compilación recurrentes y una gran inconsistencia en cómo se creaban los servicios y repositorios. No existía un patrón único, lo que dificultaba el mantenimiento y la inyección de dependencias.
+**Observación:** Se detectó que un patrón de factorías demasiado rígido (con cero argumentos obligatorios) impedía realizar pruebas de integración fiables, ya que no permitía la inyección de dependencias configuradas (como un `IConfig` apuntando a una base de datos de prueba).
 
-**Regla Inquebrantable:** La creación de objetos en CONDOR se rige por un patrón de factorías unificado y consistente:
+**Regla Inquebrantable:** La creación de objetos en CONDOR se rige por un patrón de **Factoría Testeable con Parámetros Opcionales**.
 
-**Todas las Factorías (`mod...Factory.bas`):** Sus métodos públicos `Create...()` deben tener **CERO ARGUMENTOS**. Son el punto de entrada simple para el resto de la aplicación. Su única responsabilidad es orquestar la creación de todas las dependencias necesarias, llamando internamente a otras factorías según sea necesario.
+1. **Para el Código de Aplicación (Producción):** Las factorías se invocan **sin argumentos** para máxima simplicidad y bajo acoplamiento. Ejemplo: `Set repo = modRepositoryFactory.CreateExpedienteRepository()`.
+2. **Para el Código de Pruebas:** Las factorías **aceptan dependencias como parámetros opcionales**. Esto permite a los tests inyectar mocks o servicios pre-configurados. Ejemplo: `Set repo = modRepositoryFactory.CreateExpedienteRepository(miConfigDePrueba)`.
 
-**Principio Fundamental:** Las dependencias se crean internamente por cada factoría, no se reciben como parámetros. Ejemplo: `modErrorHandlerFactory.CreateErrorHandlerService()` crea sus propias dependencias (`IConfig`, `IFileSystem`) sin recibirlas como argumentos.
+**Principio Fundamental:** Este patrón dual mantiene la simplicidad del "cero argumentos" para el consumo general de la aplicación, mientras proporciona el "gancho" de inyección de dependencias que es indispensable para un testing robusto y aislado.
 
-**Acción Correctiva:** Todas las factorías, incluyendo `modRepositoryFactory`, deben seguir este patrón unificado. La lógica para determinar si usar implementaciones reales o mocks debe residir dentro de cada factoría, consultando el flag `DEV_MODE` internamente. Este patrón elimina dependencias circulares y garantiza que la construcción de objetos sea consistente, predecible y completamente desacoplada.
+**Acción Correctiva:** Todas las factorías deben ser implementadas siguiendo este patrón. El método `Create...` debe declarar sus dependencias como `Optional`. Dentro del método, se debe verificar si el parámetro opcional fue provisto. Si lo fue (caso de testing), se utiliza. Si es `Nothing` (caso de producción), la factoría crea la dependencia por sí misma llamando a otra factoría. `modRepositoryFactory.CreateExpedienteRepository` es el ejemplo canónico de esta implementación.
 
 Lección 38: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)
 Observación: Se ha detectado que el CONDOR_MASTER_PLAN.md, aunque preciso en un momento dado, puede quedar rápidamente obsoleto si los cambios en el código (nuevas dependencias, eliminación de métodos, adición de propiedades a clases de datos) no se reflejan en él. Un plan desactualizado es peor que no tener ningún plan, ya que genera confusión y decisiones basadas en información incorrecta.
