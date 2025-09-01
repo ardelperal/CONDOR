@@ -21,10 +21,11 @@ Implements IErrorHandlerService
 Private m_configService As IConfig
 Private m_FileSystem As IFileSystem
 
-Public Sub Initialize(config As IConfig, fileSystem As IFileSystem)
+Public Sub Initialize(ByVal fileSystem As IFileSystem)
     On Error GoTo ErrorHandler
-    Set m_configService = config
     Set m_FileSystem = fileSystem
+    ' Config se obtiene aquí para romper la dependencia circular en la factoría
+    Set m_configService = modConfigFactory.CreateConfigService()
     
     Exit Sub
 ErrorHandler:

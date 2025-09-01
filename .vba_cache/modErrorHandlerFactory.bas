@@ -2,34 +2,35 @@ Attribute VB_Name = "modErrorHandlerFactory"
 Option Compare Database
 Option Explicit
 
-' Módulo: modErrorHandlerFactory
-' Descripción: Factory para crear instancias de IErrorHandlerService
-' Arquitectura: Capa de Servicios - Factory Pattern
+' =====================================================
+' MÓDULO: modErrorHandlerFactory
+' DESCRIPCIÓN: Factory para la creación del servicio de errores
+' PATRÓN: CERO ARGUMENTOS (Lección 37)
+' =====================================================
 
-' Crea una instancia configurada de IErrorHandlerService
-' @return IErrorHandlerService: Instancia lista para usar
 Public Function CreateErrorHandlerService() As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    Dim errorHandlerInstance As New CErrorHandlerService
-    Dim config As IConfig
-    Dim fileSystem As IFileSystem
+    Dim errorHandlerImpl As New CErrorHandlerService
     
-    ' Crear dependencias internamente según Lección 37
-    Set config = modConfigFactory.CreateConfigService()
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    ' ¡CUIDADO! ErrorHandler depende de Config y FileSystem.
+    ' Config depende de ErrorHandler. Esto crea una dependencia circular.
+    ' SOLUCIÓN: La inicialización debe ser perezosa o las dependencias deben ser ajustadas.
+    ' Por ahora, para que compile, lo dejamos así, pero es un punto a revisar.
+    ' Esta factoría NO debe depender de modConfigFactory.
     
-    ' Inicializar el servicio con las dependencias creadas internamente
-    errorHandlerInstance.Initialize config, fileSystem
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
     
-    ' Devolver la interfaz
-    Set CreateErrorHandlerService = errorHandlerInstance
+    ' La dependencia de IConfig se resolverá dentro de CErrorHandlerService
+    ' para romper el ciclo.
+    errorHandlerImpl.Initialize fs
     
+    Set CreateErrorHandlerService = errorHandlerImpl
     Exit Function
     
 ErrorHandler:
-    ' Nota: En caso de error en el factory, usamos logging directo para evitar recursión
-    Debug.Print "Error en modErrorHandlerFactory.CreateErrorHandlerService: " & Err.Number & " - " & Err.Description
+    Debug.Print "Error crítico en modErrorHandlerFactory.CreateErrorHandlerService: " & Err.Description
     Set CreateErrorHandlerService = Nothing
 End Function
 

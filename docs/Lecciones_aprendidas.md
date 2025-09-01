@@ -356,3 +356,23 @@ Ignora el prompt anterior. A continuación, presento la versión que incorpora e
 1. Verificar que "Microsoft Scripting Runtime" esté habilitada en Herramientas > Referencias antes de ejecutar pruebas
 2. Documentar este requisito en el README.md del proyecto
 3. Incluir esta verificación en el proceso de configuración inicial del entorno de desarrollo
+
+Lección 17: Principio de Colaboración entre Servicios (Servicio Habla con Servicio)
+
+**Observación:** Se ha detectado una violación arquitectónica donde un servicio (`CDocumentService`) dependía directamente del repositorio de otra funcionalidad (`ISolicitudRepository`) para obtener datos. Esto viola el Principio de Responsabilidad Única (SRP) a un nivel superior y crea un acoplamiento indebido.
+
+**Regla Inquebrantable:** Un servicio nunca debe depender directamente del repositorio de otra funcionalidad. La comunicación y obtención de datos entre diferentes dominios de negocio debe realizarse **exclusivamente a través de sus interfaces de servicio (`I*Service`)**. La factoría del servicio que llama es responsable de crear y suministrar las instancias de los otros servicios que necesita.
+
+**Ejemplo Práctico - Refactorización del `CDocumentService`:**
+
+**ANTES (Acoplamiento Incorrecto):**
+- `CDocumentService` dependía de `ISolicitudRepository`.
+- `CDocumentService` era responsable de llamar a `m_solicitudRepo.ObtenerPorId` y de mapear el resultado.
+- La factoría (`modDocumentServiceFactory`) inyectaba un `ISolicitudRepository`.
+
+**DESPUÉS (Arquitectura Correcta y Desacoplada):**
+- `CDocumentService` ahora depende de `ISolicitudService`.
+- `CDocumentService` simplemente llama a `m_solicitudService.ObtenerSolicitudPorId` y recibe un objeto `ESolicitud` ya construido. La responsabilidad de obtener y mapear los datos queda encapsulada dentro del dominio de `Solicitud`.
+- La factoría (`modDocumentServiceFactory`) llama a `modSolicitudServiceFactory` para obtener una instancia de `ISolicitudService` y la inyecta en `CDocumentService`.
+
+Este patrón asegura que cada servicio sea la única puerta de entrada a su dominio de negocio, ocultando sus detalles de implementación (como sus repositorios) del resto de la aplicación.

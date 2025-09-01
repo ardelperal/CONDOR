@@ -96,4 +96,13 @@ Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
     Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
 End Function
 
+Private Function IMapeoRepository_ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
+    ' Placeholder para compilación
+    Set IMapeoRepository_ObtenerMapeosPorCategoria = New Scripting.Dictionary
+End Function
+
+Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
+    Set ObtenerMapeosPorCategoria = IMapeoRepository_ObtenerMapeosPorCategoria(categoria)
+End Function
+
 

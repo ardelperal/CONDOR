@@ -10,15 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-' =====================================================
-' INTERFAZ: ISolicitudRepository
-' DESCRIPCIÓN: Define el contrato para el repositorio de solicitudes.
-'              Proporciona métodos para obtener y guardar solicitudes.
-' AUTOR: CONDOR-Architect
-' FECHA: 2025-08-28
-' =====================================================
-
-Public Function GetSolicitudById(ByVal idSolicitud As Long) As ESolicitud
+Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
 End Function
 
 Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long

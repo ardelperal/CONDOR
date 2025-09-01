@@ -46,7 +46,7 @@ Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpe
 End Function
 
 ' Obtiene expedientes para selector
-Public Function GetExpedientesParaSelector() As DAO.Recordset
+Public Function GetExpedientesParaSelector() As Scripting.Dictionary
     Set GetExpedientesParaSelector = IExpedienteService_GetExpedientesParaSelector()
 End Function
 
@@ -126,12 +126,12 @@ End Function
 
 
 ' Implementa IExpedienteService.GetExpedientesParaSelector
-Private Function IExpedienteService_GetExpedientesParaSelector() As DAO.Recordset
+Private Function IExpedienteService_GetExpedientesParaSelector() As Scripting.Dictionary
     Dim ErrorHandler As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta
-    Dim rs As DAO.recordset
+    Dim expedientes As Scripting.Dictionary
     
     ' Log de la operación
     If Not m_OperationLogger Is Nothing Then
@@ -139,10 +139,10 @@ Private Function IExpedienteService_GetExpedientesParaSelector() As DAO.Recordse
     End If
     
     ' Usar el repositorio para obtener expedientes activos
-    Set rs = m_ExpedienteRepository.ObtenerExpedientesActivosParaSelector()
+    Set expedientes = m_ExpedienteRepository.ObtenerExpedientesActivosParaSelector()
     
-    ' Devolver el recordset
-    Set IExpedienteService_GetExpedientesParaSelector = rs
+    ' Devolver el diccionario
+    Set IExpedienteService_GetExpedientesParaSelector = expedientes
     
     Exit Function
     

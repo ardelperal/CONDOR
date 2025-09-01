@@ -178,6 +178,17 @@ Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud = ISolicitudService_SaveSolicitud(solicitud)
 End Function
 
+' Obtiene una solicitud por su ID
+Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+    ' Asumimos que el repositorio tiene un método similar
+    Set ISolicitudService_ObtenerSolicitudPorId = m_solicitudRepository.ObtenerSolicitudPorId(solicitudId)
+End Function
+
+' Método público de conveniencia que delega a la implementación de la interfaz
+Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+    Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(solicitudId)
+End Function
+
 
 
 

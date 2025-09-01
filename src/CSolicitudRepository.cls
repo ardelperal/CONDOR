@@ -51,69 +51,7 @@ End Sub
 ' IMPLEMENTACIÓN DE ISolicitudRepository
 ' ============================================================================
 
-' Obtiene una solicitud por su ID desde el Backend
-Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long) As ESolicitud
-    
-    If Not m_isInitialized Then
-        Err.Raise 5, "CSolicitudRepository.GetSolicitudById", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
-    End If
-    
-    Dim db As DAO.Database
-    Dim qdf As DAO.QueryDef
-    Dim rs As DAO.recordset
-    Dim solicitud As ESolicitud
-    
-    On Error GoTo ErrorHandler
-    
-    ' Conectar al Backend usando la ruta de configuración
-    Dim backendPath As String
-    backendPath = m_configService.GetDataPath()
-    
-    Dim backendPassword As String
-    backendPassword = m_configService.GetDatabasePassword()
-    
-    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
-    
-    ' Crear consulta parametrizada usando modQueries
-    Set qdf = db.CreateQueryDef("", GET_SOLICITUD_BY_ID)
-    
-    ' Asignar parámetro directamente
-    qdf.parameters(0) = idSolicitud
-    
-    Set rs = qdf.OpenRecordset(dbOpenSnapshot)
-    
-    If Not rs.EOF Then
-        Set solicitud = New ESolicitud
-        With solicitud
-            .idSolicitud = rs("idSolicitud")
-            .idExpediente = rs("idExpediente")
-            .tipoSolicitud = rs("tipoSolicitud") & ""
-            .subTipoSolicitud = rs("subTipoSolicitud") & ""
-            .codigoSolicitud = rs("codigoSolicitud") & ""
-            .idEstadoInterno = rs("idEstadoInterno")
-            .fechaCreacion = rs("fechaCreacion")
-            .usuarioCreacion = rs("usuarioCreacion") & ""
-            .fechaModificacion = rs("fechaModificacion")
-            .usuarioModificacion = rs("usuarioModificacion") & ""
-        End With
-        
-        ' Cargar datos específicos según el tipo de solicitud
-        Call CargarDatosEspecificos(solicitud, db)
-    Else
-        Set solicitud = Nothing
-    End If
-    
-    rs.Close
-    db.Close
-    Set ISolicitudRepository_GetSolicitudById = solicitud
-    Exit Function
-    
-ErrorHandler:
-    If Not rs Is Nothing Then rs.Close
-    If Not db Is Nothing Then db.Close
-    m_errorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.GetSolicitudById"
-    Err.Raise Err.Number, "CSolicitudRepository.GetSolicitudById", Err.Description
-End Function
+
 
 ' Guarda una solicitud en el Backend (INSERT o UPDATE)
 Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitud) As Long
@@ -293,14 +231,80 @@ End Sub
 ' Estos métodos exponen públicamente la funcionalidad de la interfaz
 ' para facilitar las pruebas y el uso directo de la clase concreta
 
-' Método público de conveniencia para GetSolicitudById
-Public Function GetSolicitudById(ByVal idSolicitud As Long) As ESolicitud
-    Set GetSolicitudById = ISolicitudRepository_GetSolicitudById(idSolicitud)
-End Function
+
 
 ' Método público de conveniencia para SaveSolicitud
 Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud = ISolicitudRepository_SaveSolicitud(solicitud)
+End Function
+
+' Implementación de la interfaz para ObtenerSolicitudPorId
+Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+    
+    If Not m_isInitialized Then
+        Err.Raise 5, "CSolicitudRepository.ObtenerSolicitudPorId", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
+    End If
+    
+    Dim db As DAO.Database
+    Dim qdf As DAO.QueryDef
+    Dim rs As DAO.recordset
+    Dim solicitud As ESolicitud
+    
+    On Error GoTo ErrorHandler
+    
+    ' Conectar al Backend usando la ruta de configuración
+    Dim backendPath As String
+    backendPath = m_configService.GetDataPath()
+    
+    Dim backendPassword As String
+    backendPassword = m_configService.GetDatabasePassword()
+    
+    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
+    
+    ' Crear consulta parametrizada usando modQueries
+    Set qdf = db.CreateQueryDef("", GET_SOLICITUD_BY_ID)
+    
+    ' Asignar parámetro directamente
+    qdf.parameters(0) = solicitudId
+    
+    Set rs = qdf.OpenRecordset(dbOpenSnapshot)
+    
+    If Not rs.EOF Then
+        Set solicitud = New ESolicitud
+        With solicitud
+            .idSolicitud = rs("idSolicitud")
+            .idExpediente = rs("idExpediente")
+            .tipoSolicitud = rs("tipoSolicitud") & ""
+            .subTipoSolicitud = rs("subTipoSolicitud") & ""
+            .codigoSolicitud = rs("codigoSolicitud") & ""
+            .idEstadoInterno = rs("idEstadoInterno")
+            .fechaCreacion = rs("fechaCreacion")
+            .usuarioCreacion = rs("usuarioCreacion") & ""
+            .fechaModificacion = rs("fechaModificacion")
+            .usuarioModificacion = rs("usuarioModificacion") & ""
+        End With
+        
+        ' Cargar datos específicos según el tipo de solicitud
+        Call CargarDatosEspecificos(solicitud, db)
+    Else
+        Set solicitud = Nothing
+    End If
+    
+    rs.Close
+    db.Close
+    Set ISolicitudRepository_ObtenerSolicitudPorId = solicitud
+    Exit Function
+    
+ErrorHandler:
+    If Not rs Is Nothing Then rs.Close
+    If Not db Is Nothing Then db.Close
+    m_errorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.ObtenerSolicitudPorId"
+    Err.Raise Err.Number, "CSolicitudRepository.ObtenerSolicitudPorId", Err.Description
+End Function
+
+' Método público de conveniencia para ObtenerSolicitudPorId
+Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+    Set ObtenerSolicitudPorId = ISolicitudRepository_ObtenerSolicitudPorId(solicitudId)
 End Function
 
 

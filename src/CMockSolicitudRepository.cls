@@ -12,11 +12,10 @@ Option Explicit
 Implements ISolicitudRepository
 
 ' --- Variables de estado para configurar el comportamiento del mock ---
-Private m_GetSolicitudById_Result As ESolicitud
 Private m_SaveSolicitud_Result As Long
+Private m_ObtenerSolicitudPorId_Result As ESolicitud
 
 ' --- Propiedades de seguimiento para las aserciones ---
-Public GetSolicitudById_CallCount As Long
 Public SaveSolicitud_CallCount As Long
 Public LastSavedSolicitud As ESolicitud
 
@@ -31,28 +30,23 @@ Public Property Get SaveSolicitudCalled() As Boolean
 End Property
 
 ' --- Métodos públicos para configurar el mock desde los tests ---
-Public Sub ConfigureGetSolicitudById(ByVal returnValue As ESolicitud)
-    Set m_GetSolicitudById_Result = returnValue
-End Sub
-
 Public Sub ConfigureSaveSolicitud(ByVal returnValue As Long)
     m_SaveSolicitud_Result = returnValue
 End Sub
 
+Public Sub ConfigureObtenerSolicitudPorId(ByVal solicitud As ESolicitud)
+    Set m_ObtenerSolicitudPorId_Result = solicitud
+End Sub
+
 ' --- Resetea el estado del mock para aislar los tests ---
 Public Sub Reset()
-    Set m_GetSolicitudById_Result = Nothing
     m_SaveSolicitud_Result = 0
-    GetSolicitudById_CallCount = 0
+    Set m_ObtenerSolicitudPorId_Result = Nothing
     SaveSolicitud_CallCount = 0
     Set LastSavedSolicitud = Nothing
 End Sub
 
-' --- Implementación de la Interfaz ---
-Private Function ISolicitudRepository_GetSolicitudById(ByVal idSolicitud As Long) As ESolicitud
-    GetSolicitudById_CallCount = GetSolicitudById_CallCount + 1
-    Set ISolicitudRepository_GetSolicitudById = m_GetSolicitudById_Result
-End Function
+
 
 Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud_CallCount = SaveSolicitud_CallCount + 1
@@ -64,12 +58,19 @@ End Function
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA
 ' ============================================================================
 
-' Método público de conveniencia para GetSolicitudById
-Public Function GetSolicitudById(ByVal idSolicitud As Long) As ESolicitud
-    Set GetSolicitudById = ISolicitudRepository_GetSolicitudById(idSolicitud)
-End Function
+
 
 ' Método público de conveniencia para SaveSolicitud
 Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud = ISolicitudRepository_SaveSolicitud(solicitud)
+End Function
+
+' --- Implementación de la interfaz para ObtenerSolicitudPorId ---
+Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+    Set ISolicitudRepository_ObtenerSolicitudPorId = m_ObtenerSolicitudPorId_Result
+End Function
+
+' Método público de conveniencia para ObtenerSolicitudPorId
+Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+    Set ObtenerSolicitudPorId = ISolicitudRepository_ObtenerSolicitudPorId(solicitudId)
 End Function

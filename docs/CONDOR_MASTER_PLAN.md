@@ -75,6 +75,8 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 
 **Testing contra la Interfaz**: En los módulos de prueba (Test_*), las variables de servicio siempre se declaran del tipo de la interfaz.
 
+**Patrón de Factorías de Cero Argumentos**: Todas las factorías (`mod*Factory.bas`) implementan métodos `Create*()` sin argumentos que resuelven sus dependencias internamente. Ejemplo: `modConfigFactory.CreateConfigService()` y `modErrorHandlerFactory.CreateErrorHandlerService()`. Este patrón elimina dependencias circulares y simplifica la creación de objetos.
+
 - **Manejo de Errores Centralizado**: Todo procedimiento susceptible de fallar debe implementar un bloque `On Error GoTo` que obligatoriamente registre el error a través del servicio central `modErrorHandler`. Los errores silenciosos están prohibidos.
 
 - **Auditoría de Operaciones**: Toda operación que represente una acción de negocio significativa (creación, cambio de estado, etc.) debe ser registrada a través del servicio `IOperationLogger`. La trazabilidad de las acciones es un requisito fundamental.
@@ -105,19 +107,35 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 #### 🏗️ Diagrama de Dependencias Auth
 ```mermaid
 graph TD
-    A[TestAuthService.bas] --> B[CMockAuthService]
-    A --> C[CMockAuthRepository] 
-    A --> D[CMockErrorHandlerService]
-    A --> E[CMockConfig]
-    F[TIAuthRepository.bas] --> G[CAuthRepository]
-    F --> H[IConfig]
-    I[CAuthService] --> J[IAuthRepository]
-    I --> K[IErrorHandlerService]
-    L[modAuthFactory.bas] --> I
-    M[modRepositoryFactory.bas] --> G
-    M --> H
-    M --> K
-    N[EAuthData.cls] --> O[EUsuario.cls]
+    subgraph "Capa de Pruebas"
+        A[TestAuthService.bas] --> B[CMockAuthService]
+        A --> C[CMockAuthRepository] 
+        A --> D[CMockErrorHandlerService]
+        A --> E[CMockConfig]
+        F[TIAuthRepository.bas] --> G[CAuthRepository]
+        F --> H[IConfig]
+    end
+    
+    subgraph "Capa de Lógica de Negocio"
+        I[CAuthService] --> J[IAuthRepository]
+        I --> K[IErrorHandlerService]
+    end
+    
+    subgraph "Capa de Factorías"
+        L[modAuthFactory.bas] --> I
+        L --> M[modRepositoryFactory.bas]
+        L --> N[modErrorHandlerFactory.bas]
+        M --> G
+        N --> O[CErrorHandlerService]
+    end
+    
+    subgraph "Capa de Datos"
+        G --> H
+    end
+    
+    subgraph "Entidades"
+        P[EAuthData.cls] --> Q[EUsuario.cls]
+    end
 ```
 
 🔗 **Dependencias:**
@@ -127,9 +145,9 @@ graph TD
 - modAuthFactory ➜ modConfigFactory, modErrorHandlerFactory, modRepositoryFactory
 
 🔧 **Mock Inteligente:**
-- CMockAuthService.ConfigureAuthenticateUser(resultado)
-- CMockAuthService.ConfigureGetUserRole(rol)
-- CMockAuthRepository.ConfigureGetUserByEmail(usuario)
+- CMockAuthService.ConfigureAuthenticateUser(resultado As Boolean)
+- CMockAuthService.ConfigureGetUserRole(rol As String)
+- CMockAuthRepository.ConfigureGetUserByEmail(usuario As EUsuario)
 
 🧪 **Patrones de Testing:**
 - **Aislamiento**: Uso de CMock* en lugar de clases reales
@@ -143,56 +161,73 @@ graph TD
 ┌─────────────────────────────────────────────────────────────┐
 │                GESTIÓN DE DOCUMENTOS                       │
 ├─────────────────────────────────────────────────────────────┤
-│ 📄 IDocumentService.cls      ← Interface                   │
-│ 🔧 CDocumentService.cls      ← Implementación              │
-│ 🧪 CMockDocumentService.cls  ← Mock Service para testing   │
-│    ├─ ConfigureGenerarDocumento() ← Método de configuración │
-│    └─ ConfigureLeerDocumento() ← Método de configuración   │
-│ 🏭 modDocumentServiceFactory.bas ← Factory                 │
-│ ✅ TestDocumentService.bas   ← Tests unitarios             │
+│ 📄 IDocumentService.cls      ← Interface (v3.0)            │
+│    ├─ GenerarDocumento(solicitudId As Long) As String      │
+│    └─ LeerDocumento(rutaDocumento As String) As ESolicitud │
+│ 🔧 CDocumentService.cls      ← Implementación (v3.0)       │
+│    ├─ Initialize(wordMgr, errHandler, solicitudSrv, mapeoRepo) │
+│    └─ Colaboración entre servicios simplificada           │
+│ 🧪 CMockDocumentService.cls  ← Mock Service (Estandarizado) │
+│    ├─ ConfigureGenerarDocumento(rutaEsperada As String)    │
+│    ├─ ConfigureLeerDocumento(solicitudEsperada As ESolicitud) │
+│    ├─ Reset() ← Método de limpieza                         │
+│    └─ Propiedades de verificación (*_WasCalled, *_Last*)  │
+│ 🏭 modDocumentServiceFactory.bas ← Factory (Simplificado)  │
+│ ✅ TestDocumentService.bas   ← Tests unitarios (v2.0)      │
+│    └─ TestGenerarDocumentoSuccess() ← Test principal       │
 │ 🔬 TIDocumentService.bas     ← Tests integración           │
 └─────────────────────────────────────────────────────────────┘
 
-#### 🏗️ Diagrama de Dependencias Document
+#### 🏗️ Diagrama de Dependencias Document (Arquitectura Simplificada v3.0)
 ```mermaid
 graph TD
-    A[TestDocumentService.bas] --> B[CMockDocumentService]
-    A --> C[CMockWordManager]
-    A --> D[CMockSolicitudRepository]
-    A --> E[CMockMapeoRepository]
-    A --> F[CMockOperationLogger]
-    A --> G[CMockErrorHandlerService]
-    A --> H[CMockConfig]
-    I[TIDocumentService.bas] --> J[CDocumentService]
-    I --> K[CWordManager]
-    I --> L[CFileSystem]
-    J --> M[IWordManager]
-    J --> N[IFileSystem]
-    J --> O[IErrorHandlerService]
-    J --> P[ISolicitudRepository]
-    J --> Q[IMapeoRepository]
-    J --> R[IOperationLogger]
-    S[modDocumentServiceFactory.bas] --> J
-    T[modRepositoryFactory.bas] --> P
-    T --> Q
-    U[modWordManagerFactory.bas] --> M
-    V[modOperationLoggerFactory.bas] --> R
+    subgraph "Capa de Pruebas"
+        A[TestDocumentService.bas] --> B[CMockDocumentService]
+        A --> C["AssertEquals, AssertTrue"]
+        I[TIDocumentService.bas] --> J[CDocumentService]
+    end
+    
+    subgraph "Capa de Lógica de Negocio"
+        J --> N[IWordManager]
+        J --> O[IErrorHandlerService]
+        J --> P[ISolicitudService]
+        J --> Q[IMapeoRepository]
+    end
+    
+    subgraph "Capa de Factorías"
+        S[modDocumentServiceFactory.bas] --> J
+        S --> T[modWordManagerFactory.bas]
+        S --> U[modErrorHandlerFactory.bas]
+        S --> V[modSolicitudServiceFactory.bas]
+        S --> W[modRepositoryFactory.bas]
+        T --> X[CWordManager]
+        U --> Y[CErrorHandlerService]
+        V --> Z[CSolicitudService]
+        W --> AA[CMapeoRepository]
+    end
 ```
 
-🔗 **Dependencias:**
+🔗 **Dependencias (Arquitectura Simplificada v3.0):**
 - CDocumentService ➜ IWordManager (inyectado)
-- CDocumentService ➜ IFileSystem (inyectado)
 - CDocumentService ➜ IErrorHandlerService (inyectado)
-- CDocumentService ➜ ISolicitudRepository (inyectado)
+- CDocumentService ➜ ISolicitudService (inyectado)
 - CDocumentService ➜ IMapeoRepository (inyectado)
-- modDocumentServiceFactory ➜ modWordManagerFactory, modFileSystemFactory, modErrorHandlerFactory
+- modDocumentServiceFactory ➜ modWordManagerFactory, modErrorHandlerFactory, modSolicitudServiceFactory, modRepositoryFactory
 
-🔧 **Mock Inteligente:**
-- CMockDocumentService.ConfigureGenerarDocumento(resultado)
-- CMockDocumentService.ConfigureLeerDocumento(contenido)
-- CMockWordManager.ConfigureAbrirDocumento(exito)
-- CMockWordManager.ConfigureReemplazarMarcadores(exito)
-- CMockFileSystem.ConfigureFileExists(existe)
+🔧 **Mock Inteligente (Patrón Estandarizado):**
+- CMockDocumentService.ConfigureGenerarDocumento(rutaEsperada As String)
+- CMockDocumentService.ConfigureLeerDocumento(solicitudEsperada As ESolicitud)
+- CMockDocumentService.Reset() ← Limpieza de estado
+- CMockDocumentService.GenerarDocumento_WasCalled ← Verificación de llamada
+- CMockDocumentService.GenerarDocumento_LastSolicitudId ← Captura de parámetros
+
+🧪 **Patrones de Testing (Refactorizados v2.0):**
+- **Simplificación Extrema**: Reducción de 8 tests a 1 test principal (TestGenerarDocumentoSuccess)
+- **Mock Estandarizado**: CMockDocumentService sigue patrón de oro con Reset(), Configure*() y propiedades *_WasCalled
+- **Verificación Directa**: Tests verifican llamadas a métodos y captura de parámetros sin complejidad innecesaria
+- **Eliminación de Dependencias**: No se requieren mocks de FileSystem, Config, OperationLogger, ni repositorios
+- **Arquitectura Limpia**: DocumentService colabora únicamente con 4 servicios inyectados (WordManager, ErrorHandler, SolicitudService, MapeoRepository)
+- **Patrón Factory Simplificado**: modDocumentServiceFactory orquesta únicamente las 4 dependencias necesarias
 
 🧪 **Patrones de Testing:**
 - **Integración Real**: TIDocumentService usa dependencias reales con BD de prueba
@@ -223,21 +258,39 @@ graph TD
 #### 🏗️ Diagrama de Dependencias Expediente
 ```mermaid
 graph TD
-    A[TestCExpedienteService.bas] --> B[CMockExpedienteService]
-    A --> C[CMockExpedienteRepository]
-    A --> D[CMockOperationLogger]
-    A --> E[CMockErrorHandlerService]
-    A --> F[CMockConfig]
-    G[TIExpedienteRepository.bas] --> H[CExpedienteRepository]
-    G --> I[IConfig]
-    J[CExpedienteService] --> K[IExpedienteRepository]
-    J --> L[IOperationLogger]
-    J --> M[IErrorHandlerService]
-    N[modExpedienteServiceFactory.bas] --> J
-    O[modRepositoryFactory.bas] --> H
-    O --> I
-    O --> M
-    P[EExpediente.cls] --> Q["Propiedades: NumeroExpediente, Nemotecnico, Estado"]
+    subgraph "Capa de Pruebas"
+        A[TestCExpedienteService.bas] --> B[CMockExpedienteService]
+        A --> C[CMockExpedienteRepository]
+        A --> D[CMockOperationLogger]
+        A --> E[CMockErrorHandlerService]
+        A --> F[CMockConfig]
+        G[TIExpedienteRepository.bas] --> H[CExpedienteRepository]
+        G --> I[IConfig]
+    end
+    
+    subgraph "Capa de Lógica de Negocio"
+        J[CExpedienteService] --> K[IExpedienteRepository]
+        J --> L[IOperationLogger]
+        J --> M[IErrorHandlerService]
+    end
+    
+    subgraph "Capa de Factorías"
+        N[modExpedienteServiceFactory.bas] --> J
+        N --> O[modRepositoryFactory.bas]
+        N --> P[modOperationLoggerFactory.bas]
+        N --> Q[modErrorHandlerFactory.bas]
+        O --> H
+        P --> R[COperationLogger]
+        Q --> S[CErrorHandlerService]
+    end
+    
+    subgraph "Capa de Datos"
+        H --> I
+    end
+    
+    subgraph "Entidades"
+        T[EExpediente.cls] --> U["Propiedades: NumeroExpediente, Nemotecnico, Estado"]
+    end
 ```
 
 🔗 **Dependencias:**
@@ -257,7 +310,7 @@ graph TD
 - **Autoaprovisionamiento**: Copia automática de template de BD de expedientes
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
-- **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
+- **Limpieza de Recursos**: Liberación explícita de todos los objetos en el bloque Cleanup.
 ```
 
 ### 3.4. Gestión de Solicitudes (Solicitud)
@@ -284,21 +337,41 @@ graph TD
 #### 🏗️ Diagrama de Dependencias Solicitud
 ```mermaid
 graph TD
-    A[TestSolicitudService.bas] --> B[CMockSolicitudService]
-    A --> C[CMockSolicitudRepository]
-    A --> D[CMockOperationLogger]
-    A --> E[CMockErrorHandlerService]
-    A --> F[CMockConfig]
-    G[CSolicitudService] --> H[ISolicitudRepository]
-    G --> I[IOperationLogger]
-    G --> J[IErrorHandlerService]
-    K[modSolicitudServiceFactory.bas] --> G
-    L[modRepositoryFactory.bas] --> M[CSolicitudRepository]
-    L --> N[IConfig]
-    L --> J
-    O[ESolicitud.cls] --> P["Propiedades: idSolicitud, tipoSolicitud, codigoSolicitud"]
-    Q[EUsuario.cls] --> R["Propiedades: ID, Email, NombreCompleto, Rol"]
-    S[EDatosPc.cls] --> T["Propiedades: CodigoPc, Descripcion, Ubicacion"]
+    subgraph "Capa de Pruebas"
+        A[TestSolicitudService.bas] --> B[CMockSolicitudService]
+        A --> C[CMockSolicitudRepository]
+        A --> D[CMockOperationLogger]
+        A --> E[CMockErrorHandlerService]
+        A --> F[CMockConfig]
+        G[TISolicitudRepository.bas] --> H[CSolicitudRepository]
+        G --> I[IConfig]
+    end
+    
+    subgraph "Capa de Lógica de Negocio"
+        J[CSolicitudService] --> K[ISolicitudRepository]
+        J --> L[IOperationLogger]
+        J --> M[IErrorHandlerService]
+    end
+    
+    subgraph "Capa de Factorías"
+        N[modSolicitudServiceFactory.bas] --> J
+        N --> O[modRepositoryFactory.bas]
+        N --> P[modOperationLoggerFactory.bas]
+        N --> Q[modErrorHandlerFactory.bas]
+        O --> H
+        P --> R[COperationLogger]
+        Q --> S[CErrorHandlerService]
+    end
+    
+    subgraph "Capa de Datos"
+        H --> I
+    end
+    
+    subgraph "Entidades"
+        T[ESolicitud.cls] --> U["Propiedades: idSolicitud, tipoSolicitud, codigoSolicitud"]
+        V[EUsuario.cls] --> W["Propiedades: ID, Email, NombreCompleto, Rol"]
+        X[EDatosPc.cls] --> Y["Propiedades: CodigoPc, Descripcion, Ubicacion"]
+    end
 ```
 
 🔗 **Dependencias:**
@@ -310,15 +383,20 @@ graph TD
 🔧 **Mock Inteligente:**
 - CMockSolicitudRepository.ConfigureObtenerSolicitudPorNumero(solicitud As ESolicitud)
 - CMockSolicitudRepository.ConfigureObtenerSolicitudesPorUsuario(solicitudes As Scripting.Dictionary)
-- CMockSolicitudService.ConfigureCrearSolicitud(solicitud As ESolicitud)
-- CMockSolicitudService.ConfigureActualizarEstadoSolicitud(boolean)
+- CMockSolicitudRepository.ConfigureObtenerSolicitudPorId(solicitud As ESolicitud)
+- CMockSolicitudService.ConfigureCreateSolicitud(solicitud As ESolicitud)
+- CMockSolicitudService.ConfigureSaveSolicitud(boolean)
+- CMockSolicitudService.ConfigureObtenerSolicitudPorId(solicitud As ESolicitud)
 
 🧪 **Patrones de Testing:**
-- **Aislamiento Total**: Uso exclusivo de mocks para dependencias externas
+- **Tests Unitarios**: Uso exclusivo de mocks para dependencias externas
+- **Tests de Integración**: Operan con objetos reales y base de datos de prueba
+- **Autoaprovisionamiento**: Sistema automático de preparación de BD de prueba
 - **Estructura AAA**: Arrange/Act/Assert claramente definida
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques TestFail/ErrorHandler consistentes
 - **Reset de Mocks**: Llamada a .Reset() después de instanciación
+- **Setup/Teardown**: Gestión automática de recursos en tests de integración
 
 #### 🏗️ Diagrama UML de Entidades
 ```mermaid
@@ -507,20 +585,35 @@ classDiagram
 #### 🏗️ Diagrama de Dependencias Workflow
 ```mermaid
 graph TD
-    A[TestWorkflowService.bas] --> B[CMockWorkflowService]
-    A --> C[CMockWorkflowRepository]
-    A --> D[CMockOperationLogger]
-    A --> E[CMockErrorHandlerService]
-    A --> F[CMockConfig]
-    G[TIWorkflowRepository.bas] --> H[CWorkflowRepository]
-    G --> I[IConfig]
-    J[CWorkflowService] --> K[IWorkflowRepository]
-    J --> L[IOperationLogger]
-    J --> M[IErrorHandlerService]
-    N[modWorkflowServiceFactory.bas] --> J
-    O[modRepositoryFactory.bas] --> H
-    O --> I
-    O --> M
+    subgraph "Capa de Pruebas"
+        A[TestWorkflowService.bas] --> B[CMockWorkflowService]
+        A --> C[CMockWorkflowRepository]
+        A --> D[CMockOperationLogger]
+        A --> E[CMockErrorHandlerService]
+        A --> F[CMockConfig]
+        G[TIWorkflowRepository.bas] --> H[CWorkflowRepository]
+        G --> I[IConfig]
+    end
+    
+    subgraph "Capa de Lógica de Negocio"
+        J[CWorkflowService] --> K[IWorkflowRepository]
+        J --> L[IOperationLogger]
+        J --> M[IErrorHandlerService]
+    end
+    
+    subgraph "Capa de Factorías"
+        N[modWorkflowServiceFactory.bas] --> J
+        N --> O[modRepositoryFactory.bas]
+        N --> P[modOperationLoggerFactory.bas]
+        N --> Q[modErrorHandlerFactory.bas]
+        O --> H
+        P --> R[COperationLogger]
+        Q --> S[CErrorHandlerService]
+    end
+    
+    subgraph "Capa de Datos"
+        H --> I
+    end
 ```
 
 🔗 **Dependencias:**
@@ -533,12 +626,12 @@ graph TD
 - CMockWorkflowService.ConfigureHasTransitionPermission(resultado)
 - CMockWorkflowService.ConfigureEjecutarTransicion(boolean)
 - CMockWorkflowRepository.ConfigureIsValidTransition(resultado)
-- CMockWorkflowRepository.ConfigureGetAvailableStates(coleccionEstados)
-- CMockWorkflowRepository.ConfigureGetNextStates(coleccionEstados)
+- CMockWorkflowRepository.ConfigureGetAvailableStates(estados As Scripting.Dictionary)
+- CMockWorkflowRepository.ConfigureGetNextStates(estados As Scripting.Dictionary)
 - CMockWorkflowRepository.ConfigureGetInitialState(estadoInicial)
 - CMockWorkflowRepository.ConfigureIsStateFinal(esFinal)
 - CMockWorkflowRepository.ConfigureRecordStateChange(exito)
-- CMockWorkflowRepository.ConfigureGetStateHistory(coleccionHistorial)
+- CMockWorkflowRepository.ConfigureGetStateHistory(historial As Scripting.Dictionary)
 - CMockWorkflowRepository.ConfigureHasTransitionPermission(tienePermiso)
 - CMockWorkflowRepository.ConfigureRequiresApproval(requiereAprobacion)
 - CMockWorkflowRepository.ConfigureGetTransitionRequiredRole(rolRequerido)
@@ -613,21 +706,35 @@ graph TD
 #### 🏗️ Diagrama de Dependencias Notification
 ```mermaid
 graph TD
-    A[TINotificationRepository.bas] --> B[CNotificationRepository]
-    A --> C[IConfig]
-    D[CNotificationService] --> E[INotificationRepository]
-    D --> F[IOperationLogger]
-    D --> G[IErrorHandlerService]
-    H[modNotificationServiceFactory.bas] --> D
-    H --> B
-    I[modRepositoryFactory.bas] --> B
-    I --> C
-    J[modOperationLoggerFactory.bas] --> F
-    K[modErrorHandlerFactory.bas] --> G
-    L[TestNotificationService.bas] --> M[CMockNotificationRepository]
-    L --> N[CMockOperationLogger]
-    L --> O[CMockErrorHandlerService]
-    L --> P[CMockConfig]
+    subgraph "Capa de Pruebas"
+        A[TestNotificationService.bas] --> B[CMockNotificationService]
+        A --> C[CMockNotificationRepository]
+        A --> D[CMockOperationLogger]
+        A --> E[CMockErrorHandlerService]
+        A --> F[CMockConfig]
+        G[TINotificationRepository.bas] --> H[CNotificationRepository]
+        G --> I[IConfig]
+    end
+    
+    subgraph "Capa de Lógica de Negocio"
+        J[CNotificationService] --> K[INotificationRepository]
+        J --> L[IOperationLogger]
+        J --> M[IErrorHandlerService]
+    end
+    
+    subgraph "Capa de Factorías"
+        N[modNotificationServiceFactory.bas] --> J
+        N --> O[modRepositoryFactory.bas]
+        N --> P[modOperationLoggerFactory.bas]
+        N --> Q[modErrorHandlerFactory.bas]
+        O --> H
+        P --> R[COperationLogger]
+        Q --> S[CErrorHandlerService]
+    end
+    
+    subgraph "Capa de Datos"
+        H --> I
+    end
 ```
 
 🔗 **Dependencias:**
@@ -673,19 +780,31 @@ graph TD
 #### 🏗️ Diagrama de Dependencias Operation
 ```mermaid
 graph TD
-    A[TestOperationLogger.bas] --> B[CMockOperationLogger]
-    A --> C[CMockOperationRepository]
-    A --> D[CMockErrorHandlerService]
-    A --> E[CMockConfig]
-    F[TIOperationRepository.bas] --> G[COperationRepository]
-    F --> H[IConfig]
-    I[COperationLogger] --> J[IOperationRepository]
-    I --> K[IErrorHandlerService]
-    L[modOperationLoggerFactory.bas] --> I
-    L --> G
-    M[modRepositoryFactory.bas] --> G
-    M --> H
-    N[modErrorHandlerFactory.bas] --> K
+    subgraph "Capa de Pruebas"
+        A[TestOperationLogger.bas] --> B[CMockOperationLogger]
+        A --> C[CMockOperationRepository]
+        A --> D[CMockErrorHandlerService]
+        A --> E[CMockConfig]
+        F[TIOperationRepository.bas] --> G[COperationRepository]
+        F --> H[IConfig]
+    end
+    
+    subgraph "Capa de Lógica de Negocio"
+        I[COperationLogger] --> J[IOperationRepository]
+        I --> K[IErrorHandlerService]
+    end
+    
+    subgraph "Capa de Factorías"
+        L[modOperationLoggerFactory.bas] --> I
+        L --> M[modRepositoryFactory.bas]
+        L --> N[modErrorHandlerFactory.bas]
+        M --> G
+        N --> O[CErrorHandlerService]
+    end
+    
+    subgraph "Capa de Datos"
+        G --> H
+    end
 ```
 
 🔗 **Dependencias:**
@@ -936,11 +1055,14 @@ Todos los mocks han sido refactorizados para seguir convenciones consistentes:
 - ✅ Métodos Configure* reemplazan propiedades *_ReturnValue públicas
 - ✅ Variables privadas m_* para almacenar valores de configuración
 - ✅ Encapsulación mejorada con métodos de configuración explícitos
-- ✅ Patrón uniforme: CMockExpedienteRepository.ConfigureObtenerExpedientePorId
-- ✅ Patrón uniforme: CMockWorkflowService.ConfigureHasTransitionPermission
-- ✅ Patrón uniforme: CMockDocumentService.ConfigureGenerarDocumento
-- ✅ Patrón uniforme: CMockDocumentService.ConfigureLeerDocumento
+- ✅ **Objetos de Dominio**: Configure* acepta objetos de entidad (E*) en lugar de DAO.Recordset
+- ✅ Patrón uniforme: CMockExpedienteRepository.ConfigureObtenerExpedientePorId(expediente As EExpediente)
+- ✅ Patrón uniforme: CMockSolicitudRepository.ConfigureObtenerSolicitudPorNumero(solicitud As ESolicitud)
+- ✅ Patrón uniforme: CMockWorkflowService.ConfigureHasTransitionPermission(resultado As Boolean)
+- ✅ Patrón uniforme: CMockDocumentService.ConfigureGenerarDocumento(resultado As Boolean)
+- ✅ **Scripting.Dictionary**: Para métodos que devuelven colecciones de entidades
 - ✅ Eliminación completa de métodos Set*ReturnValue obsoletos
+- ✅ Eliminación completa de dependencias DAO.Recordset en mocks
 ```
 
 ## 9. Gestión de Aplicación
@@ -964,9 +1086,9 @@ Todos los mocks han sido refactorizados para seguir convenciones consistentes:
 - CAppManager ➜ IErrorHandlerService
 
 🔧 **Mock Inteligente:**
-- CMockAppManager.ConfigureGetCurrentUser(usuario)
-- CMockAppManager.ConfigureGetUserRole(rol)
-- CMockAppManager.ConfigureIsUserAuthenticated(resultado)
+- CMockAppManager.ConfigureGetCurrentUser(usuario As EUsuario)
+- CMockAppManager.ConfigureGetUserRole(rol As String)
+- CMockAppManager.ConfigureIsUserAuthenticated(resultado As Boolean)
 ```
 
 ## 10. Modelos de Datos

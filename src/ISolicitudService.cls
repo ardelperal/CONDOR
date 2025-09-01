@@ -31,6 +31,12 @@ End Function
 Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
 End Function
 
+' Obtiene una solicitud por su ID
+' @param solicitudId: ID de la solicitud a obtener
+' @return: Objeto ESolicitud encontrado
+Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+End Function
+
 
 
 

@@ -2662,7 +2662,7 @@ Sub ShowBundleHelp()
     WScript.Echo ""
     WScript.Echo "📄 Document - Gestión de Documentos"
     WScript.Echo "   Incluye: IDocumentService, CDocumentService, CMockDocumentService,"
-    WScript.Echo "            IWordManager, CWordManager, CMockWordManager + dependencias"
+    WScript.Echo "            IWordManager, CWordManager, CMockWordManager, ISolicitudService + dependencias"
     WScript.Echo ""
     WScript.Echo "📁 Expediente - Gestión de Expedientes"
     WScript.Echo "   Incluye: IExpedienteService, CExpedienteService, CMockExpedienteService,"
@@ -2751,8 +2751,8 @@ Function GetFunctionalityFiles(strFunctionality)
                            "IMapeoRepository.cls", "CMapeoRepository.cls", "CMockMapeoRepository.cls", _
                            "EMapeo.cls", "modDocumentServiceFactory.bas", "TestDocumentService.bas", _
                            "TIDocumentService.bas", _
-                           "ISolicitudRepository.cls", "IOperationLogger.cls", "IConfig.cls", _
-                           "IErrorHandlerService.cls", "IFileSystem.cls")
+                           "ISolicitudService.cls", "CSolicitudService.cls", "modSolicitudServiceFactory.bas", _
+                           "IOperationLogger.cls", "IConfig.cls", "IErrorHandlerService.cls", "IFileSystem.cls")
         
         Case "expediente", "expedientes"
             ' Sección 3.3 - Gestión de Expedientes + Dependencias

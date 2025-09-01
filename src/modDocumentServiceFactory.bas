@@ -1,50 +1,33 @@
-Attribute VB_Name = "modDocumentServiceFactory"
 Option Compare Database
 Option Explicit
-
-
-' =====================================================
-' MÓDULO: modDocumentServiceFactory
-' DESCRIPCIÓN: Factory para la creación del servicio de documentos
-' AUTOR: Sistema CONDOR
-' FECHA: 2025-08-22
-' =====================================================
 
 Public Function CreateDocumentService() As IDocumentService
     On Error GoTo ErrorHandler
     
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    Dim serviceImpl As New CDocumentService
     
-    Dim configService As IConfig
-    Set configService = modConfigFactory.CreateConfigService()
+    ' Crear TODAS las dependencias llamando a sus factorías
+    Dim wordMgr As IWordManager
+    Set wordMgr = modWordManagerFactory.CreateWordManager()
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(configService, fileSystem)
+    Dim errHandler As IErrorHandlerService
+    Set errHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
-    Dim wordManager As IWordManager
-    Set wordManager = modWordManagerFactory.CreateWordManager()
+    Dim solicitudSrv As ISolicitudService
+    Set solicitudSrv = modSolicitudServiceFactory.CreateSolicitudService()
     
-    Dim mapeoRepository As IMapeoRepository
-    Set mapeoRepository = modRepositoryFactory.CreateMapeoRepository()
+    Dim mapeoRepo As IMapeoRepository
+    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository()
     
-    Dim solicitudRepository As ISolicitudRepository
-    Set solicitudRepository = modRepositoryFactory.CreateSolicitudRepository()
+    ' Inyectar dependencias en el orden correcto
+    serviceImpl.Initialize wordMgr, errHandler, solicitudSrv, mapeoRepo
     
-    Dim operationLogger As IOperationLogger
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
-    
-    Dim documentServiceInstance As New CDocumentService
-    
-    documentServiceInstance.Initialize configService, solicitudRepository, operationLogger, wordManager, mapeoRepository, errorHandler
-    
-    Set CreateDocumentService = documentServiceInstance
-    
+    Set CreateDocumentService = serviceImpl
     Exit Function
     
 ErrorHandler:
-    Debug.Print "Error en modDocumentServiceFactory.CreateDocumentService: " & Err.Number & " - " & Err.Description
-    Err.Raise Err.Number, Err.Source, Err.Description
+    Debug.Print "Error crítico en modDocumentServiceFactory: " & Err.Description
+    Set CreateDocumentService = Nothing
 End Function
 
 

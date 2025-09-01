@@ -45,7 +45,7 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
 
     ' Declarar variables locales
     Dim config As IConfig
-    Dim solicitudRepo As ISolicitudRepository
+    Dim solicitudService As ISolicitudService
     Dim mapeoRepo As IMapeoRepository
     Dim wordManager As IWordManager
     Dim operationLogger As IOperationLogger
@@ -72,11 +72,11 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
     InsertTestData
 
     ' 5. Inicializar todas las dependencias en el orden correcto
-    InitializeRealDependencies config, solicitudRepo, mapeoRepo, wordManager, operationLogger, errorHandler, documentService, fileSystem, expedienteRepo
+    InitializeRealDependencies config, solicitudService, mapeoRepo, wordManager, operationLogger, errorHandler, documentService, fileSystem, expedienteRepo
 
     ' Obtener la solicitud de prueba (ID 999) que hemos insertado
     Dim solicitudPrueba As ESolicitud
-    Set solicitudPrueba = solicitudRepo.GetSolicitudById(999)
+    Set solicitudPrueba = solicitudService.ObtenerSolicitudPorId(999)
     modAssert.AssertNotNull solicitudPrueba, "La solicitud de prueba no se pudo cargar desde la BD."
 
     ' ACT: Ejecutar el método principal a probar
@@ -110,7 +110,7 @@ Cleanup:
 
     ' Liberar todos los objetos
     Set config = Nothing
-    Set solicitudRepo = Nothing
+    Set solicitudService = Nothing
     Set mapeoRepo = Nothing
     Set wordManager = Nothing
     Set operationLogger = Nothing
@@ -123,7 +123,7 @@ End Function
 ' =====================================================
 ' MÉTODOS AUXILIARES PRIVADOS
 ' =====================================================
-Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudRepo As ISolicitudRepository, _
+Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudService As ISolicitudService, _
                                        ByRef mapeoRepo As IMapeoRepository, ByRef wordManager As IWordManager, _
                                        ByRef operationLogger As IOperationLogger, ByRef errorHandler As IErrorHandlerService, _
                                        ByRef documentService As IDocumentService, ByRef fileSystem As IFileSystem, _
@@ -139,9 +139,9 @@ Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudR
 
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
 
-    ' 2. Repositorios usando factory
+    ' 2. Repositorios y Servicios usando factory
     Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository()
-    Set solicitudRepo = modRepositoryFactory.CreateSolicitudRepository()
+    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService()
     Set expedienteRepo = modRepositoryFactory.CreateExpedienteRepository()
 
     ' 3. Servicios de Infraestructura

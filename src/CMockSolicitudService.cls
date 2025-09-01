@@ -21,6 +21,7 @@ Implements ISolicitudService
 ' Propiedades para verificar llamadas
 Private m_CreateSolicitud_WasCalled As Boolean
 Private m_SaveSolicitud_WasCalled As Boolean
+Private m_ObtenerSolicitudPorId_Result As ESolicitud
 
 ' Propiedades para capturar parámetros
 Private m_LastExpediente As EExpediente
@@ -78,6 +79,10 @@ Public Sub ConfigureSaveSolicitud(ByVal returnId As Long)
     m_SaveSolicitudReturnValue = returnId
 End Sub
 
+Public Sub ConfigureObtenerSolicitudPorId(ByVal result As ESolicitud)
+    Set m_ObtenerSolicitudPorId_Result = result
+End Sub
+
 ' Método para resetear el estado del mock
 Public Sub Reset()
     m_CreateSolicitud_WasCalled = False
@@ -89,6 +94,7 @@ Public Sub Reset()
     m_SaveSolicitudReturnValue = 0
     m_CreateSolicitudCallCount = 0
     m_SaveSolicitudCallCount = 0
+    Set m_ObtenerSolicitudPorId_Result = Nothing
 End Sub
 
 ' Implementación de ISolicitudService
@@ -109,6 +115,10 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ESolicitud) 
     ISolicitudService_SaveSolicitud = m_SaveSolicitudReturnValue
 End Function
 
+Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+    Set ISolicitudService_ObtenerSolicitudPorId = m_ObtenerSolicitudPorId_Result
+End Function
+
 ' Métodos públicos de conveniencia
 Public Function CreateSolicitud(ByVal paraExpediente As EExpediente) As ESolicitud
     Set CreateSolicitud = ISolicitudService_CreateSolicitud(paraExpediente)
@@ -116,4 +126,8 @@ End Function
 
 Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud = ISolicitudService_SaveSolicitud(solicitud)
+End Function
+
+Public Function ObtenerSolicitudPorId(ByVal solicitudId As Long) As ESolicitud
+    Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(solicitudId)
 End Function

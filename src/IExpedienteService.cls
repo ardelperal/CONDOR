@@ -14,7 +14,7 @@ Option Explicit
 Public Function GetExpedienteById(ByVal idExpediente As Long) As EExpediente
 End Function
 
-Public Function GetExpedientesParaSelector() As DAO.Recordset
+Public Function GetExpedientesParaSelector() As Scripting.Dictionary
 End Function
 
 Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpediente

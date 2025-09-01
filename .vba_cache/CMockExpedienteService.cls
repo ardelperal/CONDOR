@@ -38,7 +38,7 @@ Public LastNemotecnicoRequested As String
 ' Valores de retorno configurables
 Public GetExpedienteByIdReturnValue As EExpediente
 Public GetExpedienteByNemotecnicoReturnValue As EExpediente
-Public GetExpedientesParaSelectorReturnValue As DAO.recordset
+Public GetExpedientesParaSelectorReturnValue As Scripting.Dictionary
 
 ' Contadores
 Public GetExpedienteByIdCallCount As Long
@@ -89,9 +89,9 @@ Public Sub ConfigureGetExpedienteByNemotecnico(ByVal expediente As EExpediente)
     Set GetExpedienteByNemotecnicoReturnValue = expediente
 End Sub
 
-' Configura el Recordset que debe devolver GetExpedientesParaSelector
-Public Sub ConfigureGetExpedientesParaSelector(ByVal rs As DAO.recordset)
-    Set GetExpedientesParaSelectorReturnValue = rs
+' Configura el Dictionary que debe devolver GetExpedientesParaSelector
+Public Sub ConfigureGetExpedientesParaSelector(ByVal expedientes As Scripting.Dictionary)
+    Set GetExpedientesParaSelectorReturnValue = expedientes
 End Sub
 
 ' ============================================================================
@@ -121,7 +121,7 @@ Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico
 End Function
 
 ' Implementación mock de GetExpedientesParaSelector
-Private Function IExpedienteService_GetExpedientesParaSelector() As DAO.recordset
+Private Function IExpedienteService_GetExpedientesParaSelector() As Scripting.Dictionary
     ' Registrar la llamada
     GetExpedientesParaSelectorCalled = True
     GetExpedientesParaSelectorCallCount = GetExpedientesParaSelectorCallCount + 1
@@ -145,6 +145,6 @@ Public Function GetExpedienteByNemotecnico(ByVal Nemotecnico As String) As EExpe
 End Function
 
 ' Método público que delega a la implementación de la interfaz
-Public Function GetExpedientesParaSelector() As DAO.recordset
+Public Function GetExpedientesParaSelector() As Scripting.Dictionary
     Set GetExpedientesParaSelector = IExpedienteService_GetExpedientesParaSelector()
 End Function
