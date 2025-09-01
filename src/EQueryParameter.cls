@@ -27,12 +27,24 @@ Public Property Get ParameterName() As String
     ParameterName = m_name
 End Property
 
+Public Property Let ParameterName(ByVal value As String)
+    m_name = value
+End Property
+
 Public Property Get ParameterValue() As Variant
     If IsObject(m_value) Then
         Set ParameterValue = m_value
     Else
         ParameterValue = m_value
     End If
+End Property
+
+Public Property Let ParameterValue(ByVal value As Variant)
+    m_value = value
+End Property
+
+Public Property Set ParameterValue(ByVal value As Variant)
+    Set m_value = value
 End Property
 
 

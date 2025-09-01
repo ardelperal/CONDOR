@@ -11,6 +11,32 @@ Option Compare Database
 Option Explicit
 Implements IOperationRepository
 
+' Variables públicas para seguimiento del mock
+Public SaveLogCalled As Boolean
+Public CallCount As Long
+Public LastOperationType As String
+Public LastEntityId As String
+Public LastDetails As String
+
+' Constructor
+Private Sub Class_Initialize()
+    Reset
+End Sub
+
 Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
-    ' Mock: No hace nada.
+    ' Registrar la llamada para verificación en tests
+    SaveLogCalled = True
+    CallCount = CallCount + 1
+    LastOperationType = operationType
+    LastEntityId = entityId
+    LastDetails = details
+End Sub
+
+' Resetea el estado del mock para asegurar el aislamiento entre tests
+Public Sub Reset()
+    SaveLogCalled = False
+    CallCount = 0
+    LastOperationType = ""
+    LastEntityId = ""
+    LastDetails = ""
 End Sub

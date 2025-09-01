@@ -92,12 +92,12 @@ Private Function TestGetSolicitudByIdSuccess() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
-    Set repository = modRepositoryFactory.CreateSolicitudRepository(testConfig, errorHandler)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim result As ESolicitud
     Set result = repository.GetSolicitudById(1)
@@ -129,12 +129,12 @@ Private Function TestGetSolicitudByIdNotFound() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
-    Set repository = modRepositoryFactory.CreateSolicitudRepository(testConfig, errorHandler)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim result As ESolicitud
     Set result = repository.GetSolicitudById(999)
@@ -170,12 +170,12 @@ Private Function TestSaveSolicitudNew() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
-    Set repository = modRepositoryFactory.CreateSolicitudRepository(testConfig, errorHandler)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim nuevaSolicitud As New ESolicitud
     nuevaSolicitud.idSolicitud = 0
@@ -221,12 +221,12 @@ Private Function TestSaveSolicitudUpdate() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
-    Set repository = modRepositoryFactory.CreateSolicitudRepository(testConfig, errorHandler)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim solicitud As ESolicitud
     Set solicitud = repository.GetSolicitudById(1)
@@ -274,12 +274,12 @@ Private Function TestExecuteQuery() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
-    Set repository = modRepositoryFactory.CreateSolicitudRepository(testConfig, errorHandler)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim queryName As String
     queryName = "GET_SOLICITUD_BY_ID"
@@ -288,7 +288,6 @@ Private Function TestExecuteQuery() As CTestResult
     Dim param1 As New EQueryParameter
     param1.ParameterName = "idSolicitud"
     param1.ParameterValue = 1
-    param1.DataType = dbLong
     params.Add param1
     
     Set rs = repository.ExecuteQuery(queryName, params)
@@ -325,12 +324,12 @@ Private Function TestCargarDatosEspecificosPC() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
-    Set repository = modRepositoryFactory.CreateSolicitudRepository(testConfig, errorHandler)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim solicitud As ESolicitud
     Set solicitud = repository.GetSolicitudById(2)
@@ -363,12 +362,12 @@ Private Function TestCargarDatosEspecificosCDCA() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
-    Set repository = modRepositoryFactory.CreateSolicitudRepository(testConfig, errorHandler)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim solicitud As ESolicitud
     Set solicitud = repository.GetSolicitudById(3)
@@ -401,12 +400,12 @@ Private Function TestCargarDatosEspecificosCDCASUB() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
-    Set repository = modRepositoryFactory.CreateSolicitudRepository(testConfig, errorHandler)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    testConfig.SetSetting "DB_PASSWORD", ""
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateSolicitudRepository()
     
     Dim solicitud As ESolicitud
     Set solicitud = repository.GetSolicitudById(4)

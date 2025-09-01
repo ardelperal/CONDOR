@@ -54,12 +54,8 @@ Private m_mockTextFile As CMockTextFile
 ' ============================================================================
 
 Private Sub Class_Initialize()
-    WasOpenTextFileCalled = False
-    LastPath = ""
-    LastMode = 0
-    LastCreate = False
-    CallCount = 0
     Set m_mockTextFile = New CMockTextFile
+    Reset
 End Sub
 
 Private Sub Class_Terminate()

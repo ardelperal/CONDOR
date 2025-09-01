@@ -130,15 +130,14 @@ Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudR
                                        ByRef expedienteRepo As IExpedienteRepository)
     ' Crea e inicializa todas las dependencias en el orden correcto
 
-    ' 1. Crear configuración de prueba desde una colección
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    settings.Add modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH, "PLANTILLA_PATH"
-    settings.Add modTestUtils.GetProjectPath() & TEST_GENERATED_PATH, "GENERATED_DOCS_PATH"
-    Set config = modConfigFactory.CreateConfigServiceFromCollection(settings)
+    ' 1. Crear configuración de prueba
+    Set config = modConfigFactory.CreateConfigService()
+    config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH
+    config.SetSetting "DB_PASSWORD", ""
+    config.SetSetting "PLANTILLA_PATH", modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH
+    config.SetSetting "GENERATED_DOCS_PATH", modTestUtils.GetProjectPath() & TEST_GENERATED_PATH
 
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config, fileSystem)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
 
     ' 2. Repositorios usando factory
     Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository()

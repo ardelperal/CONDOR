@@ -48,13 +48,18 @@ Private Function TestValidateTransitionValid() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim mockLogger As New CMockOperationLogger
+    mockLogger.Reset
     Dim mockWorkflowRepo As New CMockWorkflowRepository
+    mockWorkflowRepo.Reset
     
     ' Configurar el mock para que IsValidTransition retorne True
-    Call mockWorkflowRepo.AddRule("PC", "Borrador", "EnProceso", True)
+    Call mockWorkflowRepo.Reset
+    Call mockWorkflowRepo.ConfigureIsValidTransition(True)
     
     ' Inicializar el servicio con los mocks
     Call workflowService.Initialize(mockConfig, mockLogger, mockWorkflowRepo)
@@ -103,7 +108,8 @@ Private Function TestValidateTransitionInvalid() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -158,7 +164,8 @@ Private Function TestValidateTransitionNoPermissions() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -166,7 +173,7 @@ Private Function TestValidateTransitionNoPermissions() As CTestResult
     ' Configurar el mock para que IsValidTransition retorne True (la transición es válida)
     mockWorkflowRepo.AddRule "PC", "Borrador", "Aprobado", True
     ' Configurar el mock para que HasTransitionPermission retorne False
-    mockWorkflowRepo.SetHasTransitionPermissionReturnValue False
+    mockWorkflowRepo.ConfigureHasTransitionPermission False
     
     ' Inicializar el servicio con los mocks
     workflowService.Initialize mockConfig, mockLogger, mockWorkflowRepo
@@ -215,7 +222,8 @@ Private Function TestGetNextStates() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -224,7 +232,7 @@ Private Function TestGetNextStates() As CTestResult
     workflowService.Initialize mockConfig, mockLogger, mockWorkflowRepo
     
     ' Act
-    Dim estados As Collection
+    Dim estados As Scripting.Dictionary
     Set estados = workflowService.GetNextStates("Borrador", "PC", "Administrador")
     
     ' Assert
@@ -257,7 +265,8 @@ Private Function TestGetAvailableStates() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -266,7 +275,7 @@ Private Function TestGetAvailableStates() As CTestResult
     workflowService.Initialize mockConfig, mockLogger, mockWorkflowRepo
     
     ' Act
-    Dim estados As Collection
+    Dim estados As Scripting.Dictionary
     Set estados = workflowService.GetAvailableStates("PC")
     
     ' Assert
@@ -299,7 +308,8 @@ Private Function TestGetInitialState() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -341,7 +351,8 @@ Private Function TestIsStateFinal() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -383,7 +394,8 @@ Private Function TestRecordStateChange() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -420,7 +432,8 @@ Private Function TestGetStateHistory() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -429,7 +442,7 @@ Private Function TestGetStateHistory() As CTestResult
     workflowService.Initialize mockConfig, mockLogger, mockWorkflowRepo
     
     ' Act
-    Dim historial As Collection
+    Dim historial As Scripting.Dictionary
     Set historial = workflowService.GetStateHistory(1)
     
     ' Assert
@@ -462,7 +475,8 @@ Private Function TestHasTransitionPermission() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository
@@ -504,7 +518,8 @@ Private Function TestRequiresApproval() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim workflowService As New CWorkflowService
+    Dim workflowService As IWorkflowService
+    Set workflowService = New CMockWorkflowService
     Dim mockConfig As New CMockConfig
     Dim mockLogger As New CMockOperationLogger
     Dim mockWorkflowRepo As New CMockWorkflowRepository

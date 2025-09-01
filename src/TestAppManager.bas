@@ -2,11 +2,6 @@ Attribute VB_Name = "TestAppManager"
 Option Compare Database
 Option Explicit
 
-Private appManager As IAppManager
-Private mockAuthService As CMockAuthService
-Private mockConfig As CMockConfig
-Private mockErrorHandler As CMockErrorHandlerService
-
 Public Function TestAppManagerRunAll() As CTestSuiteResult
     Dim suite As New CTestSuiteResult
     suite.Initialize "TestAppManager"
@@ -18,34 +13,36 @@ Public Function TestAppManagerRunAll() As CTestSuiteResult
     Set TestAppManagerRunAll = suite
 End Function
 
-Private Sub Setup()
-    Set mockAuthService = New CMockAuthService
-    Set mockConfig = New CMockConfig
-    Set mockErrorHandler = New CMockErrorHandlerService
-    
-    ' Simular configuración inicializada
-    mockConfig.AddSetting "IsInitialized", True
-    
-    Dim appManagerImpl As New CAppManager
-    appManagerImpl.Initialize mockAuthService, mockConfig, mockErrorHandler
-    Set appManager = appManagerImpl
-End Sub
 
-Private Sub Teardown()
-    Set appManager = Nothing
-    Set mockAuthService = Nothing
-    Set mockConfig = Nothing
-    Set mockErrorHandler = Nothing
-End Sub
 
 Private Function TestStartApplicationAdminUserSuccess() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "StartApplication con usuario Admin debe tener éxito y establecer el rol"
     On Error GoTo TestFail
     
+    ' Variables locales
+    Dim appManager As IAppManager
+    Dim mockAuthService As CMockAuthService
+    Dim mockConfig As CMockConfig
+    Dim mockErrorHandler As CMockErrorHandlerService
+    
     ' Arrange
-    Setup
-    mockAuthService.SetMockUserRole RolAdmin
+    Set mockAuthService = New CMockAuthService
+    mockAuthService.Reset
+    Set mockConfig = New CMockConfig
+    mockConfig.Reset
+    Set mockErrorHandler = New CMockErrorHandlerService
+    mockErrorHandler.Reset
+    
+    ' Simular configuración inicializada
+    mockConfig.AddSetting "IsInitialized", True
+    
+    Dim appManagerImpl As IAppManager
+    Set appManagerImpl = New CMockAppManager
+    appManagerImpl.Initialize mockAuthService, mockConfig, mockErrorHandler
+    Set appManager = appManagerImpl
+    
+    mockAuthService.ConfigureGetUserRole RolAdmin
     
     ' Act
     Dim success As Boolean
@@ -61,7 +58,10 @@ Private Function TestStartApplicationAdminUserSuccess() As CTestResult
 TestFail:
     testResult.Fail "Error: " & Err.Description
 Cleanup:
-    Teardown
+    Set appManager = Nothing
+    Set mockAuthService = Nothing
+    Set mockConfig = Nothing
+    Set mockErrorHandler = Nothing
     Set TestStartApplicationAdminUserSuccess = testResult
 End Function
 
@@ -70,9 +70,26 @@ Private Function TestStartApplicationUnknownUserFails() As CTestResult
     testResult.Initialize "StartApplication con usuario desconocido debe fallar"
     On Error GoTo TestFail
     
+    ' Variables locales
+    Dim appManager As IAppManager
+    Dim mockAuthService As CMockAuthService
+    Dim mockConfig As CMockConfig
+    Dim mockErrorHandler As CMockErrorHandlerService
+    
     ' Arrange
-    Setup
-    mockAuthService.SetMockUserRole RolDesconocido
+    Set mockAuthService = New CMockAuthService
+    Set mockConfig = New CMockConfig
+    Set mockErrorHandler = New CMockErrorHandlerService
+    
+    ' Simular configuración inicializada
+    mockConfig.AddSetting "IsInitialized", True
+    
+    Dim appManagerImpl As IAppManager
+    Set appManagerImpl = New CMockAppManager
+    appManagerImpl.Initialize mockAuthService, mockConfig, mockErrorHandler
+    Set appManager = appManagerImpl
+    
+    mockAuthService.ConfigureGetUserRole RolDesconocido
     
     ' Act
     Dim success As Boolean
@@ -85,10 +102,13 @@ Private Function TestStartApplicationUnknownUserFails() As CTestResult
     testResult.Pass
     GoTo Cleanup
     
-TestFail:
+ TestFail:
     testResult.Fail "Error: " & Err.Description
 Cleanup:
-    Teardown
+    Set appManager = Nothing
+    Set mockAuthService = Nothing
+    Set mockConfig = Nothing
+    Set mockErrorHandler = Nothing
     Set TestStartApplicationUnknownUserFails = testResult
 End Function
 
@@ -97,9 +117,26 @@ Private Function TestGetCurrentUserRoleReturnsCorrectRole() As CTestResult
     testResult.Initialize "GetCurrentUserRole debe devolver el rol establecido durante el inicio"
     On Error GoTo TestFail
     
+    ' Variables locales
+    Dim appManager As IAppManager
+    Dim mockAuthService As CMockAuthService
+    Dim mockConfig As CMockConfig
+    Dim mockErrorHandler As CMockErrorHandlerService
+    
     ' Arrange
-    Setup
-    mockAuthService.SetMockUserRole RolCalidad
+    Set mockAuthService = New CMockAuthService
+    Set mockConfig = New CMockConfig
+    Set mockErrorHandler = New CMockErrorHandlerService
+    
+    ' Simular configuración inicializada
+    mockConfig.AddSetting "IsInitialized", True
+    
+    Dim appManagerImpl As IAppManager
+    Set appManagerImpl = New CMockAppManager
+    appManagerImpl.Initialize mockAuthService, mockConfig, mockErrorHandler
+    Set appManager = appManagerImpl
+    
+    mockAuthService.ConfigureGetUserRole RolCalidad
     appManager.StartApplication "calidad@test.com"
     
     ' Act
@@ -115,7 +152,10 @@ Private Function TestGetCurrentUserRoleReturnsCorrectRole() As CTestResult
 TestFail:
     testResult.Fail "Error: " & Err.Description
 Cleanup:
-    Teardown
+    Set appManager = Nothing
+    Set mockAuthService = Nothing
+    Set mockConfig = Nothing
+    Set mockErrorHandler = Nothing
     Set TestGetCurrentUserRoleReturnsCorrectRole = testResult
 End Function
 

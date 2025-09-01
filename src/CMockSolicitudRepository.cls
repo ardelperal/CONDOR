@@ -20,6 +20,16 @@ Public GetSolicitudById_CallCount As Long
 Public SaveSolicitud_CallCount As Long
 Public LastSavedSolicitud As ESolicitud
 
+' Constructor
+Private Sub Class_Initialize()
+    Reset
+End Sub
+
+' --- Propiedades de conveniencia para verificación booleana ---
+Public Property Get SaveSolicitudCalled() As Boolean
+    SaveSolicitudCalled = (SaveSolicitud_CallCount > 0)
+End Property
+
 ' --- Métodos públicos para configurar el mock desde los tests ---
 Public Sub ConfigureGetSolicitudById(ByVal returnValue As ESolicitud)
     Set m_GetSolicitudById_Result = returnValue

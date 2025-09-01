@@ -21,6 +21,8 @@ Public Function TestModAssertRunAll() As CTestSuiteResult
     Call suiteResult.AddTestResult(TestAssertFalseWithTrueConditionFails())
     Call suiteResult.AddTestResult(TestAssertEqualsWithEqualValuesPasses())
     Call suiteResult.AddTestResult(TestAssertEqualsWithDifferentValuesFails())
+    Call suiteResult.AddTestResult(TestAssertNotEqualsWithDifferentValuesPasses())
+    Call suiteResult.AddTestResult(TestAssertNotEqualsWithEqualValuesFails())
     Call suiteResult.AddTestResult(TestAssertNotNullWithValidObjectPasses())
     Call suiteResult.AddTestResult(TestAssertNotNullWithNothingObjectFails())
     Call suiteResult.AddTestResult(TestAssertIsNullWithNothingObjectPasses())
@@ -135,6 +137,41 @@ TestFail:
 End Function
 
 ' ============================================================================
+' PRUEBAS PARA AssertNotEquals
+' ============================================================================
+
+Private Function TestAssertNotEqualsWithDifferentValuesPasses() As CTestResult
+    Set TestAssertNotEqualsWithDifferentValuesPasses = New CTestResult
+    TestAssertNotEqualsWithDifferentValuesPasses.Initialize "AssertNotEquals con valores diferentes debe pasar"
+    On Error GoTo TestFail
+    
+    modAssert.AssertNotEquals "test1", "test2", "Valores diferentes deben pasar"
+    modAssert.AssertNotEquals 42, 43, "Números diferentes deben pasar"
+    
+    TestAssertNotEqualsWithDifferentValuesPasses.Pass
+    Exit Function
+TestFail:
+    TestAssertNotEqualsWithDifferentValuesPasses.Fail "AssertNotEquals falló inesperadamente con valores diferentes: " & Err.Description
+End Function
+
+Private Function TestAssertNotEqualsWithEqualValuesFails() As CTestResult
+    Set TestAssertNotEqualsWithEqualValuesFails = New CTestResult
+    TestAssertNotEqualsWithEqualValuesFails.Initialize "AssertNotEquals con valores iguales debe fallar"
+    On Error GoTo TestFail
+    
+    modAssert.AssertNotEquals "test", "test", "Esta aserción debe fallar"
+    
+    TestAssertNotEqualsWithEqualValuesFails.Fail "AssertNotEquals debería haber fallado con valores iguales"
+    Exit Function
+TestFail:
+    If Err.Number = vbObjectError + 516 Then
+        TestAssertNotEqualsWithEqualValuesFails.Pass
+    Else
+        TestAssertNotEqualsWithEqualValuesFails.Fail "AssertNotEquals falló con un código de error incorrecto."
+    End If
+End Function
+
+' ============================================================================
 ' PRUEBAS PARA AssertNotNull
 ' ============================================================================
 
@@ -143,7 +180,7 @@ Private Function TestAssertNotNullWithValidObjectPasses() As CTestResult
     TestAssertNotNullWithValidObjectPasses.Initialize "AssertNotNull con un objeto válido debe pasar"
     On Error GoTo TestFail
     
-    Dim obj As New Collection
+    Dim obj As New Scripting.Dictionary
     ModAssert.AssertNotNull obj, "Objeto válido debe pasar"
     
     TestAssertNotNullWithValidObjectPasses.Pass
@@ -195,7 +232,7 @@ Private Function TestAssertIsNullWithValidObjectFails() As CTestResult
     TestAssertIsNullWithValidObjectFails.Initialize "AssertIsNull con un objeto válido debe fallar"
     On Error GoTo TestFail
     
-    Dim obj As New Collection
+    Dim obj As New Scripting.Dictionary
     ModAssert.AssertIsNull obj, "Esta aserción debe fallar"
     
     TestAssertIsNullWithValidObjectFails.Fail "AssertIsNull debería haber fallado con objeto válido"

@@ -15,6 +15,7 @@ Private Const ERR_ASSERT_EQUALS As Long = vbObjectError + 512
 Private Const ERR_ASSERT_NOT_NULL As Long = vbObjectError + 513
 Private Const ERR_ASSERT_IS_NULL As Long = vbObjectError + 514
 Private Const ERR_ASSERT_FAIL As Long = vbObjectError + 515
+Private Const ERR_ASSERT_NOT_EQUALS As Long = vbObjectError + 516
 
 ' ============================================================================
 ' FUNCIONES DE ASERCIÓN
@@ -53,6 +54,18 @@ Public Sub AssertEquals(expected As Variant, actual As Variant, Optional message
             errorMsg = errorMsg & ". " & message
         End If
         Err.Raise ERR_ASSERT_EQUALS, "ModAssert.AssertEquals", errorMsg
+    End If
+End Sub
+
+' Verifica que dos valores NO sean iguales
+Public Sub AssertNotEquals(ByVal value1 As Variant, ByVal value2 As Variant, Optional message As String = "")
+    If value1 = value2 Then
+        Dim errorMsg As String
+        errorMsg = "AssertNotEquals failed. Ambos valores eran: '" & CStr(value1) & "'"
+        If message <> "" Then
+            errorMsg = errorMsg & ". " & message
+        End If
+        Err.Raise ERR_ASSERT_NOT_EQUALS, "ModAssert.AssertNotEquals", errorMsg
     End If
 End Sub
 

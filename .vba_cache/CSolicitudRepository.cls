@@ -213,8 +213,8 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DA
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
-                Dim datosPC As E_Datos_PC
-                Set datosPC = New E_Datos_PC
+                Dim datosPC As EDatosPc
+                Set datosPC = New EDatosPc
                 ' Cargar propiedades de datosPC desde el recordset
                 With datosPC
                     .idDatosPC = rs("idDatosPC")
@@ -237,8 +237,8 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DA
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
-                Dim datosCDCA As E_Datos_CD_CA
-                Set datosCDCA = New E_Datos_CD_CA
+                Dim datosCDCA As EDatosCdCa
+                Set datosCDCA = New EDatosCdCa
                 ' Cargar propiedades de datosCDCA desde el recordset
                 With datosCDCA
                     .idDatosCDCA = rs("idDatosCDCA")
@@ -259,8 +259,8 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DA
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
             If Not rs.EOF Then
-                Dim datosCDCASUB As E_Datos_CD_CA_SUB
-                Set datosCDCASUB = New E_Datos_CD_CA_SUB
+                Dim datosCDCASUB As EDatosCdCaSub
+                Set datosCDCASUB = New EDatosCdCaSub
                 ' Cargar propiedades de datosCDCASUB desde el recordset
                 With datosCDCASUB
                     .idDatosCDCASUB = rs("idDatosCDCASUB")

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -16,7 +16,7 @@ Option Explicit
 ' Arquitectura: Patrón Strategy para diferentes tipos de reportes
 
 ' Inicializa el reportero con los resultados de las pruebas
-Public Sub Initialize(ByVal results As Collection)
+Public Sub Initialize(ByVal results As Scripting.Dictionary)
 End Sub
 
 ' Genera y devuelve el reporte como string

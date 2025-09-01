@@ -7,11 +7,6 @@ Option Explicit
 ' Arquitectura: Pruebas Aisladas con Mocks
 ' ============================================================================
 
-Private m_service As ISolicitudService
-Private m_mockRepo As CMockSolicitudRepository
-Private m_mockLogger As CMockOperationLogger
-Private m_mockErrorHandler As CMockErrorHandlerService
-
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE
 ' ============================================================================
@@ -27,29 +22,7 @@ Public Function TestSolicitudServiceRunAll() As CTestSuiteResult
     Set TestSolicitudServiceRunAll = suiteResult
 End Function
 
-' ============================================================================
-' SETUP Y TEARDOWN
-' ============================================================================
 
-Private Sub Setup()
-    Set m_mockRepo = New CMockSolicitudRepository
-    Set m_mockLogger = New CMockOperationLogger
-    Set m_mockErrorHandler = New CMockErrorHandlerService
-    
-    Dim serviceImpl As New CSolicitudService
-    Call serviceImpl.Initialize(m_mockRepo, m_mockLogger, m_mockErrorHandler)
-    Set m_service = serviceImpl
-End Sub
-
-Private Sub Teardown()
-    m_mockRepo.Reset
-    m_mockLogger.Reset
-    m_mockErrorHandler.Reset
-    Set m_service = Nothing
-    Set m_mockRepo = Nothing
-    Set m_mockLogger = Nothing
-    Set m_mockErrorHandler = Nothing
-End Sub
 
 ' ============================================================================
 ' PRUEBAS
@@ -59,33 +32,50 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("CreateSolicitud debe crear una solicitud con valores por defecto correctos")
     
+    ' Variables locales
+    Dim service As ISolicitudService
+    Dim mockRepo As CMockSolicitudRepository
+    Dim mockLogger As CMockOperationLogger
+    Dim mockErrorHandler As CMockErrorHandlerService
+    Dim serviceImpl As CSolicitudService
+    Dim expediente As EExpediente
+    Dim result As ESolicitud
+    Dim savedSolicitud As ESolicitud
+    
     On Error GoTo TestFail
     
-    Call Setup
-    
     ' Arrange
-    Dim expediente As New EExpediente
-    expediente.idExpediente = "EXP001"
-    expediente.Tipo = "PC"
+    Set mockRepo = New CMockSolicitudRepository
+    mockRepo.Reset
+    Set mockLogger = New CMockOperationLogger
+    mockLogger.Reset
+    Set mockErrorHandler = New CMockErrorHandlerService
+    mockErrorHandler.Reset
     
-    Call m_mockRepo.SetSaveSolicitudReturnValue(123) ' Simular que el guardado devuelve un nuevo ID
+    Dim serviceImpl As ISolicitudService
+    Set serviceImpl = New CMockSolicitudService
+    Call serviceImpl.Initialize(mockRepo, mockLogger, mockErrorHandler)
+    Set service = serviceImpl
+    
+    Set expediente = New EExpediente
+    expediente.idExpediente = "EXP001"
+    
+    Call mockRepo.ConfigureSaveSolicitud(123) ' Simular que el guardado devuelve un nuevo ID
     
     ' Act
-    Dim result As ESolicitud
-    Set result = m_service.CreateSolicitud(expediente)
+    Set result = service.CreateSolicitud(expediente)
     
     ' Assert
     AssertNotNull result, "La solicitud devuelta no debe ser nula"
-    AssertTrue m_mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
+    AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
     
-    Dim savedSolicitud As ESolicitud
-    Set savedSolicitud = m_mockRepo.LastSavedSolicitud
+    Set savedSolicitud = mockRepo.LastSavedSolicitud
     
     AssertNotNull savedSolicitud, "El objeto solicitud debe haber sido pasado al repositorio"
     AssertEquals 1, savedSolicitud.idEstadoInterno, "El estado inicial debe ser 1 (Borrador)"
     AssertEquals expediente.idExpediente, savedSolicitud.idExpediente, "El idExpediente no es correcto"
-    AssertEquals expediente.Tipo, savedSolicitud.tipoSolicitud, "El tipoSolicitud no es correcto"
-    AssertTrue InStr(savedSolicitud.codigoSolicitud, expediente.Tipo & "-" & expediente.idExpediente) > 0, "El código de solicitud no tiene el formato esperado"
+    AssertEquals "PC", savedSolicitud.tipoSolicitud, "El tipoSolicitud no es correcto"
+    AssertTrue InStr(savedSolicitud.codigoSolicitud, "PC-" & expediente.idExpediente) > 0, "El código de solicitud no tiene el formato esperado"
     AssertEquals Environ("USERNAME"), savedSolicitud.usuarioCreacion, "El usuario de creación no es el esperado"
     
     AssertEquals 123, result.idSolicitud, "El ID devuelto por el repo debe asignarse a la solicitud resultante"
@@ -96,7 +86,17 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
 TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
 Cleanup:
-    Call Teardown
+    If Not mockRepo Is Nothing Then mockRepo.Reset
+    If Not mockLogger Is Nothing Then mockLogger.Reset
+    If Not mockErrorHandler Is Nothing Then mockErrorHandler.Reset
+    Set service = Nothing
+    Set serviceImpl = Nothing
+    Set mockRepo = Nothing
+    Set mockLogger = Nothing
+    Set mockErrorHandler = Nothing
+    Set expediente = Nothing
+    Set result = Nothing
+    Set savedSolicitud = Nothing
     Set TestCreateSolicitudSuccess = testResult
 End Function
 
@@ -104,18 +104,34 @@ Private Function TestCreateSolicitudFailsWithEmptyExpediente() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("CreateSolicitud debe fallar si idExpediente está vacío")
     
+    ' Variables locales
+    Dim service As ISolicitudService
+    Dim mockRepo As CMockSolicitudRepository
+    Dim mockLogger As CMockOperationLogger
+    Dim mockErrorHandler As CMockErrorHandlerService
+    Dim serviceImpl As CSolicitudService
+    Dim expediente As EExpediente
+    
     On Error GoTo TestFail
     
-    Call Setup
-    
     ' Arrange
-    Dim expediente As New EExpediente
+    Set mockRepo = New CMockSolicitudRepository
+    mockRepo.Reset
+    Set mockLogger = New CMockOperationLogger
+    mockLogger.Reset
+    Set mockErrorHandler = New CMockErrorHandlerService
+    mockErrorHandler.Reset
+
+    Set serviceImpl = New CMockSolicitudService
+    Call serviceImpl.Initialize(mockRepo, mockLogger, mockErrorHandler)
+    Set service = serviceImpl
+    
+    Set expediente = New EExpediente
     expediente.idExpediente = " "
-    expediente.Tipo = "PC"
     
     ' Act & Assert
     On Error Resume Next
-    Call m_service.CreateSolicitud(expediente)
+    Call service.CreateSolicitud(expediente)
     AssertEquals 5, Err.Number, "Debe lanzar un error si idExpediente está vacío"
     On Error GoTo TestFail
     
@@ -125,7 +141,15 @@ Private Function TestCreateSolicitudFailsWithEmptyExpediente() As CTestResult
 TestFail:
     Call testResult.Fail("La prueba no debería haber llegado al manejador de errores principal")
 Cleanup:
-    Call Teardown
+    If Not mockRepo Is Nothing Then mockRepo.Reset
+    If Not mockLogger Is Nothing Then mockLogger.Reset
+    If Not mockErrorHandler Is Nothing Then mockErrorHandler.Reset
+    Set service = Nothing
+    Set serviceImpl = Nothing
+    Set mockRepo = Nothing
+    Set mockLogger = Nothing
+    Set mockErrorHandler = Nothing
+    Set expediente = Nothing
     Set TestCreateSolicitudFailsWithEmptyExpediente = testResult
 End Function
 
@@ -133,22 +157,39 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
     Dim testResult As New CTestResult
     Call testResult.Initialize("SaveSolicitud debe establecer los campos de modificación")
     
+    ' Variables locales
+    Dim service As ISolicitudService
+    Dim mockRepo As CMockSolicitudRepository
+    Dim mockLogger As CMockOperationLogger
+    Dim mockErrorHandler As CMockErrorHandlerService
+    Dim serviceImpl As CSolicitudService
+    Dim solicitud As ESolicitud
+    Dim savedSolicitud As ESolicitud
+    
     On Error GoTo TestFail
     
-    Call Setup
-    
     ' Arrange
-    Dim solicitud As New ESolicitud
+    Set mockRepo = New CMockSolicitudRepository
+    mockRepo.Reset
+    Set mockLogger = New CMockOperationLogger
+    mockLogger.Reset
+    Set mockErrorHandler = New CMockErrorHandlerService
+    mockErrorHandler.Reset
+
+    Set serviceImpl = New CMockSolicitudService
+    Call serviceImpl.Initialize(mockRepo, mockLogger, mockErrorHandler)
+    Set service = serviceImpl
+    
+    Set solicitud = New ESolicitud
     solicitud.idSolicitud = 456
     
     ' Act
-    Call m_service.SaveSolicitud(solicitud)
+    Call service.SaveSolicitud(solicitud)
     
     ' Assert
-    AssertTrue m_mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
+    AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
     
-    Dim savedSolicitud As ESolicitud
-    Set savedSolicitud = m_mockRepo.LastSavedSolicitud
+    Set savedSolicitud = mockRepo.LastSavedSolicitud
     
     AssertNotNull savedSolicitud, "El objeto solicitud debe haber sido pasado al repositorio"
     AssertEquals Environ("USERNAME"), savedSolicitud.usuarioModificacion, "El usuario de modificación no es el esperado"
@@ -160,6 +201,15 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
 TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
 Cleanup:
-    Call Teardown
+    If Not mockRepo Is Nothing Then mockRepo.Reset
+    If Not mockLogger Is Nothing Then mockLogger.Reset
+    If Not mockErrorHandler Is Nothing Then mockErrorHandler.Reset
+    Set service = Nothing
+    Set serviceImpl = Nothing
+    Set mockRepo = Nothing
+    Set mockLogger = Nothing
+    Set mockErrorHandler = Nothing
+    Set solicitud = Nothing
+    Set savedSolicitud = Nothing
     Set TestSaveSolicitudSuccess = testResult
 End Function

@@ -59,12 +59,12 @@ Private m_LastEstadoCodigo As String
 '==============================================================================
 
 Private m_ValidateTransitionReturnValue As Boolean
-Private m_GetAvailableStatesReturnValue As Collection
-Private m_GetNextStatesReturnValue As Collection
+Private m_GetAvailableStatesReturnValue As Scripting.Dictionary
+Private m_GetNextStatesReturnValue As Scripting.Dictionary
 Private m_GetInitialStateReturnValue As String
 Private m_IsStateFinalReturnValue As Boolean
 Private m_RecordStateChangeReturnValue As Boolean
-Private m_GetStateHistoryReturnValue As Collection
+Private m_GetStateHistoryReturnValue As Scripting.Dictionary
 Private m_HasTransitionPermissionReturnValue As Boolean
 Private m_RequiresApprovalReturnValue As Boolean
 
@@ -87,16 +87,7 @@ Private m_RequiresApprovalCallCount As Long
 '==============================================================================
 
 Private Sub Class_Initialize()
-    ' Inicializar valores por defecto
-    m_ValidateTransitionReturnValue = True
-    Set m_GetAvailableStatesReturnValue = New Collection
-    Set m_GetNextStatesReturnValue = New Collection
-    m_GetInitialStateReturnValue = "BORRADOR"
-    m_IsStateFinalReturnValue = False
-    m_RecordStateChangeReturnValue = True
-    Set m_GetStateHistoryReturnValue = New Collection
-    m_HasTransitionPermissionReturnValue = True
-    m_RequiresApprovalReturnValue = False
+    Reset
 End Sub
 
 Private Sub Class_Terminate()
@@ -237,39 +228,39 @@ End Property
 ' MÉTODOS PARA CONFIGURAR VALORES DE RETORNO
 '==============================================================================
 
-Public Sub SetValidateTransitionReturnValue(ByVal value As Boolean)
+Public Sub ConfigureValidateTransition(ByVal value As Boolean)
     m_ValidateTransitionReturnValue = value
 End Sub
 
-Public Sub SetGetAvailableStatesReturnValue(ByVal value As Collection)
+Public Sub ConfigureGetAvailableStates(ByVal value As Scripting.Dictionary)
     Set m_GetAvailableStatesReturnValue = value
 End Sub
 
-Public Sub SetGetNextStatesReturnValue(ByVal value As Collection)
+Public Sub ConfigureGetNextStates(ByVal value As Scripting.Dictionary)
     Set m_GetNextStatesReturnValue = value
 End Sub
 
-Public Sub SetGetInitialStateReturnValue(ByVal value As String)
+Public Sub ConfigureGetInitialState(ByVal value As String)
     m_GetInitialStateReturnValue = value
 End Sub
 
-Public Sub SetIsStateFinalReturnValue(ByVal value As Boolean)
+Public Sub ConfigureIsStateFinal(ByVal value As Boolean)
     m_IsStateFinalReturnValue = value
 End Sub
 
-Public Sub SetRecordStateChangeReturnValue(ByVal value As Boolean)
+Public Sub ConfigureRecordStateChange(ByVal value As Boolean)
     m_RecordStateChangeReturnValue = value
 End Sub
 
-Public Sub SetGetStateHistoryReturnValue(ByVal value As Collection)
+Public Sub ConfigureGetStateHistory(ByVal value As Scripting.Dictionary)
     Set m_GetStateHistoryReturnValue = value
 End Sub
 
-Public Sub SetHasTransitionPermissionReturnValue(ByVal value As Boolean)
+Public Sub ConfigureHasTransitionPermission(ByVal value As Boolean)
     m_HasTransitionPermissionReturnValue = value
 End Sub
 
-Public Sub SetRequiresApprovalReturnValue(ByVal value As Boolean)
+Public Sub ConfigureRequiresApproval(ByVal value As Boolean)
     m_RequiresApprovalReturnValue = value
 End Sub
 
@@ -315,12 +306,15 @@ Public Sub Reset()
     
     ' Reiniciar valores de retorno a valores por defecto
     m_ValidateTransitionReturnValue = True
-    Set m_GetAvailableStatesReturnValue = New Collection
-    Set m_GetNextStatesReturnValue = New Collection
+    Set m_GetAvailableStatesReturnValue = New Scripting.Dictionary
+    m_GetAvailableStatesReturnValue.CompareMode = TextCompare
+    Set m_GetNextStatesReturnValue = New Scripting.Dictionary
+    m_GetNextStatesReturnValue.CompareMode = TextCompare
     m_GetInitialStateReturnValue = "BORRADOR"
     m_IsStateFinalReturnValue = False
     m_RecordStateChangeReturnValue = True
-    Set m_GetStateHistoryReturnValue = New Collection
+    Set m_GetStateHistoryReturnValue = New Scripting.Dictionary
+    m_GetStateHistoryReturnValue.CompareMode = TextCompare
     m_HasTransitionPermissionReturnValue = True
     m_RequiresApprovalReturnValue = False
 End Sub
@@ -343,7 +337,7 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
     IWorkflowService_ValidateTransition = m_ValidateTransitionReturnValue
 End Function
 
-Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As String) As Collection
+Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As String) As Scripting.Dictionary
     m_GetAvailableStates_WasCalled = True
     m_GetAvailableStatesCallCount = m_GetAvailableStatesCallCount + 1
     
@@ -353,7 +347,7 @@ Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As Stri
     Set IWorkflowService_GetAvailableStates = m_GetAvailableStatesReturnValue
 End Function
 
-Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Collection
+Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
     m_GetNextStates_WasCalled = True
     m_GetNextStatesCallCount = m_GetNextStatesCallCount + 1
     
@@ -400,7 +394,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, B
     IWorkflowService_RecordStateChange = m_RecordStateChangeReturnValue
 End Function
 
-Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As Collection
+Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As Scripting.Dictionary
     m_GetStateHistory_WasCalled = True
     m_GetStateHistoryCallCount = m_GetStateHistoryCallCount + 1
     

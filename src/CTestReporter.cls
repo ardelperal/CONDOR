@@ -17,33 +17,37 @@ Option Explicit
 
 Implements ITestReporter
 
-Private m_suiteResults As Collection
+Private m_suiteResults As Scripting.Dictionary
 
 ' El constructor recibe la colección de resultados del runner
-Public Sub Initialize(ByVal results As Collection)
+Public Sub Initialize(ByVal results As Scripting.Dictionary)
     Set m_suiteResults = results
 End Sub
 
 ' --- Propiedades Calculadas Globales ---
 Public Property Get TotalSuites() As Long
-    TotalSuites = m_suiteResults.count
+    TotalSuites = m_suiteResults.Count
 End Property
 
 Public Property Get TotalTests() As Long
     Dim total As Long
     Dim result As CTestSuiteResult
-    For Each result In m_suiteResults
+    Dim key As Variant
+    For Each key In m_suiteResults.Keys()
+        Set result = m_suiteResults(key)
         total = total + result.TotalTests
-    Next result
+    Next key
     TotalTests = total
 End Property
 
 Public Property Get TotalPassed() As Long
     Dim total As Long
     Dim result As CTestSuiteResult
-    For Each result In m_suiteResults
+    Dim key As Variant
+    For Each key In m_suiteResults.Keys()
+        Set result = m_suiteResults(key)
         total = total + result.TestsPassed
-    Next result
+    Next key
     TotalPassed = total
 End Property
 
@@ -61,9 +65,11 @@ Public Function GenerateReport() As String
     report = report & "Fecha: " & Format(Now, "dd/mm/yyyy hh:nn:ss") & vbCrLf
     report = report & String(80, "=") & vbCrLf & vbCrLf
 
-    For Each suiteResult In m_suiteResults
+    Dim key As Variant
+    For Each key In m_suiteResults.Keys()
+        Set suiteResult = m_suiteResults(key)
         report = report & suiteResult.GetFormattedResult() & vbCrLf
-    Next suiteResult
+    Next key
 
     report = report & String(80, "-") & vbCrLf
     report = report & "RESUMEN GLOBAL:" & vbCrLf
@@ -89,7 +95,7 @@ End Function
 '******************************************************************************
 
 ' Implementación de ITestReporter.Initialize
-Private Sub ITestReporter_Initialize(ByVal results As Collection)
+Private Sub ITestReporter_Initialize(ByVal results As Scripting.Dictionary)
     Call Initialize(results)
 End Sub
 

@@ -45,7 +45,6 @@ Public GetLanzaderaPassword_CallCount As Long
 
 ' Constructor de la clase
 Private Sub Class_Initialize()
-    Set m_mockSettings = New Collection
     Reset
 End Sub
 

@@ -12,21 +12,39 @@ Option Explicit
 
 Implements IAuthService
 
-' Variable privada para almacenar el rol configurado
-Private m_MockUserRole As UserRole
+' Miembros privados para el mock de GetUserRole
+Private m_getUserRoleReturnValue As UserRole
+Private m_getUserRoleWasCalled As Boolean
+Private m_lastUserEmailForRole As String
+
+' Constructor
+Private Sub Class_Initialize()
+    Reset
+End Sub
 
 ' Implementación de la interfaz IAuthService
 Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository, errorHandler As IErrorHandlerService)
-    m_MockUserRole = RolDesconocido ' Valor por defecto
+    ' Mock no necesita inicialización real
 End Sub
 
-' Método público para configurar el rol que debe devolver el mock
-Public Sub SetMockUserRole(ByVal role As UserRole)
-    m_MockUserRole = role
+' Configuración del valor de retorno para GetUserRole
+Public Sub ConfigureGetUserRole(ByVal returnValue As UserRole)
+    m_getUserRoleReturnValue = returnValue
 End Sub
+
+' Propiedades "espía" para GetUserRole
+Public Property Get GetUserRole_WasCalled() As Boolean
+    GetUserRole_WasCalled = m_getUserRoleWasCalled
+End Property
+
+Public Property Get LastUserEmailForRole() As String
+    LastUserEmailForRole = m_lastUserEmailForRole
+End Property
 
 Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
-    IAuthService_GetUserRole = m_MockUserRole
+    m_getUserRoleWasCalled = True
+    m_lastUserEmailForRole = userEmail
+    IAuthService_GetUserRole = m_getUserRoleReturnValue
 End Function
 
 ' Método público de conveniencia que delega a la implementación de interfaz
@@ -36,5 +54,7 @@ End Function
 
 ' Método para resetear el estado del mock
 Public Sub Reset()
-    m_MockUserRole = RolDesconocido
+    m_getUserRoleReturnValue = RolDesconocido
+    m_getUserRoleWasCalled = False
+    m_lastUserEmailForRole = ""
 End Sub

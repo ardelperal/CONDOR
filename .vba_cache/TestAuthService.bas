@@ -36,9 +36,13 @@ Private Function TestGetUserRoleUsuarioAdministradorDevuelveRolAdministrador() A
     
     ' Arrange - Configurar mocks y datos de prueba
     Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim mockLogger As New CMockOperationLogger
+    mockLogger.Reset
     Dim mockAuthRepository As New CMockAuthRepository
+    mockAuthRepository.Reset
     Dim mockErrorHandler As New CMockErrorHandlerService
+    mockErrorHandler.Reset
     
     ' Configurar EAuthData para usuario administrador
     Dim authData As New EAuthData
@@ -48,7 +52,10 @@ Private Function TestGetUserRoleUsuarioAdministradorDevuelveRolAdministrador() A
     Call mockAuthRepository.ConfigureMockData(authData)
     
     ' Crear servicio con dependencias mock
-    Dim authService As New CAuthService
+    Dim authService As IAuthService
+    Set authService = New CMockAuthService
+    authService.Reset
+    authService.Reset
     Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
     
     ' Act - Ejecutar el método bajo prueba
@@ -65,6 +72,12 @@ TestFail:
     Call testResult.Fail("Error inesperado: " & Err.Description)
     
 Cleanup:
+    Set mockConfig = Nothing
+    Set mockLogger = Nothing
+    Set mockAuthRepository = Nothing
+    Set mockErrorHandler = Nothing
+    Set authService = Nothing
+    Set authData = Nothing
     Set TestGetUserRoleUsuarioAdministradorDevuelveRolAdministrador = testResult
 End Function
 
@@ -77,9 +90,13 @@ Private Function TestGetUserRoleUsuarioCalidadDevuelveRolCalidad() As CTestResul
     
     ' Arrange
     Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim mockLogger As New CMockOperationLogger
+    mockLogger.Reset
     Dim mockAuthRepository As New CMockAuthRepository
+    mockAuthRepository.Reset
     Dim mockErrorHandler As New CMockErrorHandlerService
+    mockErrorHandler.Reset
     
     ' Configurar EAuthData para usuario de calidad
     Dim authData As New EAuthData
@@ -89,8 +106,10 @@ Private Function TestGetUserRoleUsuarioCalidadDevuelveRolCalidad() As CTestResul
     mockAuthRepository.ConfigureMockData authData
     
     ' Crear servicio con dependencias mock
-    Dim authService As New CAuthService
-    authService.Initialize mockConfig, mockLogger, mockAuthRepository, mockErrorHandler
+    Dim authService As IAuthService
+    Set authService = New CMockAuthService
+    authService.Reset
+    Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
     
     ' Act
     Dim userRole As UserRole
@@ -106,6 +125,12 @@ TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
+    Set mockConfig = Nothing
+    Set mockLogger = Nothing
+    Set mockAuthRepository = Nothing
+    Set mockErrorHandler = Nothing
+    Set authService = Nothing
+    Set authData = Nothing
     Set TestGetUserRoleUsuarioCalidadDevuelveRolCalidad = testResult
 End Function
 
@@ -118,9 +143,13 @@ Private Function TestGetUserRoleUsuarioTecnicoDevuelveRolTecnico() As CTestResul
     
     ' Arrange
     Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim mockLogger As New CMockOperationLogger
+    mockLogger.Reset
     Dim mockAuthRepository As New CMockAuthRepository
+    mockAuthRepository.Reset
     Dim mockErrorHandler As New CMockErrorHandlerService
+    mockErrorHandler.Reset
     
     ' Configurar EAuthData para usuario técnico
     Dim authData As New EAuthData
@@ -130,8 +159,10 @@ Private Function TestGetUserRoleUsuarioTecnicoDevuelveRolTecnico() As CTestResul
     mockAuthRepository.ConfigureMockData authData
     
     ' Crear servicio con dependencias mock
-    Dim authService As New CAuthService
-    authService.Initialize mockConfig, mockLogger, mockAuthRepository, mockErrorHandler
+    Dim authService As IAuthService
+    Set authService = New CMockAuthService
+    authService.Reset
+    Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
     
     ' Act
     Dim userRole As UserRole
@@ -147,6 +178,12 @@ TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
+    Set mockConfig = Nothing
+    Set mockLogger = Nothing
+    Set mockAuthRepository = Nothing
+    Set mockErrorHandler = Nothing
+    Set authService = Nothing
+    Set authData = Nothing
     Set TestGetUserRoleUsuarioTecnicoDevuelveRolTecnico = testResult
 End Function
 
@@ -159,9 +196,13 @@ Private Function TestGetUserRoleUsuarioDesconocidoDevuelveRolDesconocido() As CT
     
     ' Arrange
     Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim mockLogger As New CMockOperationLogger
+    mockLogger.Reset
     Dim mockAuthRepository As New CMockAuthRepository
+    mockAuthRepository.Reset
     Dim mockErrorHandler As New CMockErrorHandlerService
+    mockErrorHandler.Reset
     
     ' Configurar EAuthData para usuario no encontrado
     Dim authData As New EAuthData
@@ -170,8 +211,10 @@ Private Function TestGetUserRoleUsuarioDesconocidoDevuelveRolDesconocido() As CT
     mockAuthRepository.ConfigureMockData authData
     
     ' Crear servicio con dependencias mock
-    Dim authService As New CAuthService
-    authService.Initialize mockConfig, mockLogger, mockAuthRepository, mockErrorHandler
+    Dim authService As IAuthService
+    Set authService = New CMockAuthService
+    authService.Reset
+    Call authService.Initialize(mockConfig, mockLogger, mockAuthRepository, mockErrorHandler)
     
     ' Act
     Dim userRole As UserRole
@@ -187,6 +230,12 @@ TestFail:
     testResult.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
+    Set mockConfig = Nothing
+    Set mockLogger = Nothing
+    Set mockAuthRepository = Nothing
+    Set mockErrorHandler = Nothing
+    Set authService = Nothing
+    Set authData = Nothing
     Set TestGetUserRoleUsuarioDesconocidoDevuelveRolDesconocido = testResult
 End Function
 

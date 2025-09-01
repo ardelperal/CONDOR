@@ -34,6 +34,11 @@ Private m_logErrorCallCount As Long
 Private m_logInfoCallCount As Long
 Private m_logWarningCallCount As Long
 
+' Constructor
+Private Sub Class_Initialize()
+    Reset
+End Sub
+
 ' Método Initialize (no forma parte de la interfaz pero es útil para el mock)
 Public Sub Initialize(config As IConfig)
     ' Mock no necesita configuración real, pero mantiene la firma

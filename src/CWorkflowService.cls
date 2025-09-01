@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -107,14 +107,14 @@ End Function
 ' IMPLEMENTACIÓN DE MÉTODOS DE OBTENCIÓN DE ESTADOS
 '******************************************************************************
 
-Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As String) As Collection
+Private Function IWorkflowService_GetAvailableStates(ByVal tipoSolicitud As String) As Scripting.Dictionary
     ' Delegar al repositorio
     Set IWorkflowService_GetAvailableStates = m_WorkflowRepository.GetAvailableStates(tipoSolicitud)
 End Function
 
 Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, _
                                                ByVal tipoSolicitud As String, _
-                                               ByVal usuarioRol As String) As Collection
+                                               ByVal usuarioRol As String) As Scripting.Dictionary
     ' Delegar al repositorio
     Set IWorkflowService_GetNextStates = m_WorkflowRepository.GetNextStates(estadoActual, tipoSolicitud, usuarioRol)
 End Function
@@ -164,7 +164,7 @@ Private Function IWorkflowService_RecordStateChange(ByVal SolicitudID As Long, _
     IWorkflowService_RecordStateChange = resultado
 End Function
 
-Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As Collection
+Private Function IWorkflowService_GetStateHistory(ByVal SolicitudID As Long) As Scripting.Dictionary
     ' Delegar al repositorio
     Set IWorkflowService_GetStateHistory = m_WorkflowRepository.GetStateHistory(SolicitudID)
 End Function
@@ -222,7 +222,7 @@ Public Function ValidateTransition(ByVal SolicitudID As Long, ByVal estadoOrigen
 End Function
 
 ' Método público de conveniencia que delega a la implementación de la interfaz
-Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Collection
+Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
     Set GetNextStates = IWorkflowService_GetNextStates(estadoActual, tipoSolicitud, usuarioRol)
 End Function
 

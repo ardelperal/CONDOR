@@ -18,12 +18,12 @@ Option Explicit
 ' FECHA: 2025-08-28
 ' =====================================================
 
-Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.Recordset
+Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As EExpediente
 End Function
 
-Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.Recordset
+Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
 End Function
 
-Public Function ObtenerExpedientesActivosParaSelector() As DAO.Recordset
+Public Function ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
 End Function
 

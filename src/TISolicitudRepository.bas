@@ -288,7 +288,6 @@ Private Function TestExecuteQuery() As CTestResult
     Dim param1 As New EQueryParameter
     param1.ParameterName = "idSolicitud"
     param1.ParameterValue = 1
-    param1.DataType = dbLong
     params.Add param1
     
     Set rs = repository.ExecuteQuery(queryName, params)

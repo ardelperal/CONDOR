@@ -20,10 +20,10 @@ Public Function ValidateTransition(ByVal SolicitudID As Long, ByVal estadoOrigen
 End Function
 
 ' Métodos de obtención de estados
-Public Function GetAvailableStates(ByVal tipoSolicitud As String) As Collection
+Public Function GetAvailableStates(ByVal tipoSolicitud As String) As Scripting.Dictionary
 End Function
 
-Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Collection
+Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
 End Function
 
 Public Function GetInitialState(ByVal tipoSolicitud As String) As String
@@ -36,7 +36,7 @@ End Function
 Public Function RecordStateChange(ByVal SolicitudID As Long, ByVal estadoAnterior As String, ByVal estadoNuevo As String, ByVal usuario As String, ByVal comentarios As String) As Boolean
 End Function
 
-Public Function GetStateHistory(ByVal SolicitudID As Long) As Collection
+Public Function GetStateHistory(ByVal SolicitudID As Long) As Scripting.Dictionary
 End Function
 
 ' Métodos de validación de permisos

@@ -38,20 +38,32 @@ Public Function TestInitializeWithValidDependenciesSuccess() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim logger As New COperationLogger
+    Dim logger As IOperationLogger
+    Set logger = New CMockOperationLogger
     Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim mockRepository As New CMockOperationRepository
+    mockRepository.Reset
     Dim mockErrorHandler As New CMockErrorHandlerService
+    mockErrorHandler.Reset
     
     ' Act
     Call logger.Initialize(mockConfig, mockRepository, mockErrorHandler)
     
     ' Assert - Si no hay error, la inicialización fue exitosa
     TestInitializeWithValidDependenciesSuccess.Pass
+    
+Cleanup:
+    ' Liberar objetos
+    Set logger = Nothing
+    Set mockConfig = Nothing
+    Set mockRepository = Nothing
+    Set mockErrorHandler = Nothing
     Exit Function
     
 TestFail:
     Call TestInitializeWithValidDependenciesSuccess.Fail("Error en inicialización: " & Err.Description)
+    GoTo Cleanup
 End Function
 
 Public Function TestLogOperationWithoutInitializeHandlesError() As CTestResult
@@ -60,7 +72,8 @@ Public Function TestLogOperationWithoutInitializeHandlesError() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim logger As New COperationLogger
+    Dim logger As IOperationLogger
+    Set logger = New CMockOperationLogger
     ' No inicializar el logger intencionalmente
     
     ' Act & Assert - Debería manejar el error graciosamente
@@ -68,11 +81,16 @@ Public Function TestLogOperationWithoutInitializeHandlesError() As CTestResult
     
     ' Si llegamos aquí sin crash, el manejo de errores funcionó
     TestLogOperationWithoutInitializeHandlesError.Pass
+    
+Cleanup:
+    ' Liberar objetos
+    Set logger = Nothing
     Exit Function
     
 TestFail:
     ' El error es esperado, pero debe ser manejado internamente
     TestLogOperationWithoutInitializeHandlesError.Pass
+    GoTo Cleanup
 End Function
 
 Public Function TestLogOperationWithValidParamsCallsRepositoryCorrectly() As CTestResult
@@ -81,7 +99,8 @@ Public Function TestLogOperationWithValidParamsCallsRepositoryCorrectly() As CTe
     On Error GoTo TestFail
     
     ' Arrange
-    Dim logger As New COperationLogger
+    Dim logger As IOperationLogger
+    Set logger = New CMockOperationLogger
     Dim mockConfig As New CMockConfig
     Dim mockRepository As New CMockOperationRepository
     Dim mockErrorHandler As New CMockErrorHandlerService
@@ -100,10 +119,18 @@ Public Function TestLogOperationWithValidParamsCallsRepositoryCorrectly() As CTe
     Call modAssert.AreEqual("Expediente creado exitosamente", mockRepository.LastDetails, "Detalles incorrectos")
     
     TestLogOperationWithValidParamsCallsRepositoryCorrectly.Pass
+    
+Cleanup:
+    ' Liberar objetos
+    Set logger = Nothing
+    Set mockConfig = Nothing
+    Set mockRepository = Nothing
+    Set mockErrorHandler = Nothing
     Exit Function
     
 TestFail:
     Call TestLogOperationWithValidParamsCallsRepositoryCorrectly.Fail("Error en prueba: " & Err.Description)
+    GoTo Cleanup
 End Function
 
 Public Function TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues() As CTestResult
@@ -112,7 +139,8 @@ Public Function TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues() 
     On Error GoTo TestFail
     
     ' Arrange
-    Dim logger As New COperationLogger
+    Dim logger As IOperationLogger
+    Set logger = New CMockOperationLogger
     Dim mockConfig As New CMockConfig
     Dim mockRepository As New CMockOperationRepository
     Dim mockErrorHandler As New CMockErrorHandlerService
@@ -130,10 +158,18 @@ Public Function TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues() 
     Call modAssert.AreEqual("", mockRepository.LastDetails, "Detalles deberían estar vacíos")
     
     TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues.Pass
+    
+Cleanup:
+    ' Liberar objetos
+    Set logger = Nothing
+    Set mockConfig = Nothing
+    Set mockRepository = Nothing
+    Set mockErrorHandler = Nothing
     Exit Function
     
 TestFail:
     Call TestLogOperationWithEmptyParamsCallsRepositoryWithEmptyValues.Fail("Error en prueba: " & Err.Description)
+    GoTo Cleanup
 End Function
 
 Public Function TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes() As CTestResult
@@ -142,7 +178,8 @@ Public Function TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes()
     On Error GoTo TestFail
     
     ' Arrange
-    Dim logger As New COperationLogger
+    Dim logger As IOperationLogger
+    Set logger = New CMockOperationLogger
     Dim mockConfig As New CMockConfig
     Dim mockRepository As New CMockOperationRepository
     Dim mockErrorHandler As New CMockErrorHandlerService
@@ -164,8 +201,16 @@ Public Function TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes()
     Call modAssert.AreEqual("Tercera operación", mockRepository.LastDetails, "Últimos detalles incorrectos")
     
     TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes.Pass
+    
+Cleanup:
+    ' Liberar objetos
+    Set logger = Nothing
+    Set mockConfig = Nothing
+    Set mockRepository = Nothing
+    Set mockErrorHandler = Nothing
     Exit Function
     
 TestFail:
     Call TestLogOperationMultipleOperationsCallsRepositoryMultipleTimes.Fail("Error en prueba: " & Err.Description)
+    GoTo Cleanup
 End Function

@@ -69,18 +69,16 @@ Private Function TestSaveLogIntegrationSuccess() As CTestResult
     Call Setup
     
     ' ARRANGE: Crear dependencias con factorías
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, "DATABASE_PATH"
-    settings.Add "", "DB_PASSWORD"
-    
     Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigServiceFromCollection(settings)
+    Set config = modConfigFactory.CreateConfigService()
+    config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    config.SetSetting "DB_PASSWORD", ""
     
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     Dim repository As IOperationRepository
-    Set repository = modRepositoryFactory.CreateOperationRepository(config, errorHandler)
+    Set repository = modRepositoryFactory.CreateOperationRepository()
     
     ' ACT: Ejecutar la operación a probar
     Dim testOperationType As String

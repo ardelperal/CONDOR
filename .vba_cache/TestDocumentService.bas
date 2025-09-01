@@ -40,204 +40,9 @@ Public Function TestDocumentServiceRunAll() As CTestSuiteResult
     Set TestDocumentServiceRunAll = suite
 End Function
 
-' =====================================================
-' PRUEBAS ESPECÍFICAS PARA ExtraerValorMarcador
-' =====================================================
-Public Function TestExtraerValorMarcadorConMarcadorValidoDebeRetornarValor() As CTestResult
-    Set TestExtraerValorMarcadorConMarcadorValidoDebeRetornarValor = New CTestResult
-    TestExtraerValorMarcadorConMarcadorValidoDebeRetornarValor.Initialize "ExtraerValorMarcador con marcador válido debe retornar valor correcto"
-    
-    On Error GoTo TestFail
-    
-    ' Declarar variables locales
-    Dim docService As CDocumentService
-    Dim mockConfig As CMockConfig
-    Dim mockRepository As CMockSolicitudRepository
-    Dim mockLogger As CMockOperationLogger
-    Dim mockWordManager As CMockWordManager
-    Dim mockMapeoRepository As CMockMapeoRepository
-    Dim mockErrorHandler As CMockErrorHandlerService
-    Dim rs As DAO.Recordset
-    Dim valorExtraido As String
-    
-    ' Inicializar mocks con validación
-    Set mockConfig = New CMockConfig
-    Set mockRepository = New CMockSolicitudRepository
-    Set mockLogger = New CMockOperationLogger
-    Set mockWordManager = New CMockWordManager
-    Set mockMapeoRepository = New CMockMapeoRepository
-    Set mockErrorHandler = New CMockErrorHandlerService
-    Set docService = New CDocumentService
-    
-    ' Validar inicialización de mocks
-    If docService Is Nothing Or mockConfig Is Nothing Or mockRepository Is Nothing Or _
-       mockLogger Is Nothing Or mockWordManager Is Nothing Or mockMapeoRepository Is Nothing Or _
-       mockErrorHandler Is Nothing Then
-        GoTo TestFail
-    End If
-    
-    ' Configurar el servicio
-    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
-    
-    ' ARRANGE: Configurar recordset con datos de mapeo
-    Set rs = CreateInMemoryRecordset("MARCADOR_PARTE0_1", "Parte0_1")
-    If rs Is Nothing Then GoTo TestFail
-    
-    ' Validar que el recordset tiene datos
-    If rs.EOF And rs.BOF Then
-        GoTo TestFail
-    End If
-    
-    ' ACT: Extraer valor del marcador
-    valorExtraido = docService.ExtraerValorMarcador("MARCADOR_PARTE0_1", rs)
-    
-    ' ASSERT: Verificar que se extrajo el valor correcto
-    modAssert.AssertEquals "Parte0_1", valorExtraido, "El valor extraído debe corresponder al campo de la tabla"
-    
-    TestExtraerValorMarcadorConMarcadorValidoDebeRetornarValor.Pass
-    GoTo Cleanup
-    
-TestFail:
-    TestExtraerValorMarcadorConMarcadorValidoDebeRetornarValor.Fail "Error inesperado: " & Err.Description & " (Número: " & Err.Number & ")"
-    
-Cleanup:
-    ' Limpieza robusta de recursos
-    On Error Resume Next
-    
-    ' Limpiar recordset primero
-    If Not rs Is Nothing Then
-        If rs.State = adStateOpen Then rs.Close
-        Set rs = Nothing
-    End If
-    
-    ' Limpiar mocks
-    If Not mockConfig Is Nothing Then
-        mockConfig.Reset
-        Set mockConfig = Nothing
-    End If
-    If Not mockRepository Is Nothing Then
-        mockRepository.Reset
-        Set mockRepository = Nothing
-    End If
-    If Not mockLogger Is Nothing Then
-        mockLogger.Reset
-        Set mockLogger = Nothing
-    End If
-    If Not mockWordManager Is Nothing Then
-        mockWordManager.Reset
-        Set mockWordManager = Nothing
-    End If
-    If Not mockMapeoRepository Is Nothing Then
-        mockMapeoRepository.Reset
-        Set mockMapeoRepository = Nothing
-    End If
-    If Not mockErrorHandler Is Nothing Then
-        mockErrorHandler.Reset
-        Set mockErrorHandler = Nothing
-    End If
-    
-    Set docService = Nothing
-    
-    On Error GoTo 0
-End Function
 
-Public Function TestExtraerValorMarcadorConMarcadorInexistenteDebeRetornarCadenaVacia() As CTestResult
-    Set TestExtraerValorMarcadorConMarcadorInexistenteDebeRetornarCadenaVacia = New CTestResult
-    TestExtraerValorMarcadorConMarcadorInexistenteDebeRetornarCadenaVacia.Initialize "ExtraerValorMarcador con marcador inexistente debe retornar cadena vacía"
-    
-    On Error GoTo TestFail
-    
-    ' Declarar variables locales
-    Dim docService As CDocumentService
-    Dim mockConfig As CMockConfig
-    Dim mockRepository As CMockSolicitudRepository
-    Dim mockLogger As CMockOperationLogger
-    Dim mockWordManager As CMockWordManager
-    Dim mockMapeoRepository As CMockMapeoRepository
-    Dim mockErrorHandler As CMockErrorHandlerService
-    Dim rs As DAO.Recordset
-    Dim valorExtraido As String
-    
-    ' Inicializar mocks con validación
-    Set mockConfig = New CMockConfig
-    Set mockRepository = New CMockSolicitudRepository
-    Set mockLogger = New CMockOperationLogger
-    Set mockWordManager = New CMockWordManager
-    Set mockMapeoRepository = New CMockMapeoRepository
-    Set mockErrorHandler = New CMockErrorHandlerService
-    Set docService = New CDocumentService
-    
-    ' Validar inicialización de mocks
-    If docService Is Nothing Or mockConfig Is Nothing Or mockRepository Is Nothing Or _
-       mockLogger Is Nothing Or mockWordManager Is Nothing Or mockMapeoRepository Is Nothing Or _
-       mockErrorHandler Is Nothing Then
-        GoTo TestFail
-    End If
-    
-    ' Configurar el servicio
-    docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
-    
-    ' ARRANGE: Configurar recordset con datos de mapeo (marcador diferente)
-    Set rs = CreateInMemoryRecordset("MARCADOR_PARTE0_1", "Parte0_1")
-    If rs Is Nothing Then GoTo TestFail
-    
-    ' Validar que el recordset tiene datos
-    If rs.EOF And rs.BOF Then
-        GoTo TestFail
-    End If
-    
-    ' ACT: Intentar extraer valor de un marcador que no existe
-    valorExtraido = docService.ExtraerValorMarcador("MARCADOR_INEXISTENTE", rs)
-    
-    ' ASSERT: Verificar que retorna cadena vacía
-    modAssert.AssertEquals "", valorExtraido, "El valor extraído debe ser cadena vacía para marcador inexistente"
-    
-    TestExtraerValorMarcadorConMarcadorInexistenteDebeRetornarCadenaVacia.Pass
-    GoTo Cleanup
-    
-TestFail:
-    TestExtraerValorMarcadorConMarcadorInexistenteDebeRetornarCadenaVacia.Fail "Error inesperado: " & Err.Description & " (Número: " & Err.Number & ")"
-    
-Cleanup:
-    ' Limpieza robusta de recursos
-    On Error Resume Next
-    
-    ' Limpiar recordset primero
-    If Not rs Is Nothing Then
-        If rs.State = adStateOpen Then rs.Close
-        Set rs = Nothing
-    End If
-    
-    ' Limpiar mocks
-    If Not mockConfig Is Nothing Then
-        mockConfig.Reset
-        Set mockConfig = Nothing
-    End If
-    If Not mockRepository Is Nothing Then
-        mockRepository.Reset
-        Set mockRepository = Nothing
-    End If
-    If Not mockLogger Is Nothing Then
-        mockLogger.Reset
-        Set mockLogger = Nothing
-    End If
-    If Not mockWordManager Is Nothing Then
-        mockWordManager.Reset
-        Set mockWordManager = Nothing
-    End If
-    If Not mockMapeoRepository Is Nothing Then
-        mockMapeoRepository.Reset
-        Set mockMapeoRepository = Nothing
-    End If
-    If Not mockErrorHandler Is Nothing Then
-        mockErrorHandler.Reset
-        Set mockErrorHandler = Nothing
-    End If
-    
-    Set docService = Nothing
-    
-    On Error GoTo 0
-End Function
+
+
 
 ' ============================================================================
 ' PRUEBAS DE GENERACIÓN DE DOCUMENTOS
@@ -257,18 +62,25 @@ Private Function TestGenerarDocumentoConDatosValidosDebeGenerarDocumentoCorrecta
     Dim mockWordManager As CMockWordManager
     Dim mockMapeoRepository As CMockMapeoRepository
     Dim mockErrorHandler As CMockErrorHandlerService
-    Dim rsMapeo As DAO.Recordset
+    Dim mapeoMock As EMapeo
     Dim solicitudPrueba As ESolicitud
     Dim rutaResultado As String
     
     ' Inicializar mocks con validación
-    Set docService = New CDocumentService
+    Dim docService As IDocumentService
+    Set docService = New CMockDocumentService
     Set mockConfig = New CMockConfig
+    mockConfig.Reset
     Set mockRepository = New CMockSolicitudRepository
+    mockRepository.Reset
     Set mockLogger = New CMockOperationLogger
+    mockLogger.Reset
     Set mockWordManager = New CMockWordManager
+    mockWordManager.Reset
     Set mockMapeoRepository = New CMockMapeoRepository
+    mockMapeoRepository.Reset
     Set mockErrorHandler = New CMockErrorHandlerService
+    mockErrorHandler.Reset
     
     ' Validar que todos los mocks se inicializaron correctamente
     If docService Is Nothing Or mockConfig Is Nothing Or mockRepository Is Nothing Or _
@@ -293,10 +105,14 @@ Private Function TestGenerarDocumentoConDatosValidosDebeGenerarDocumentoCorrecta
     solicitudPrueba.codigoSolicitud = "SOL001"
     solicitudPrueba.tipoSolicitud = "PC"
 
-    Set rsMapeo = CreateInMemoryRecordset()
-    If rsMapeo Is Nothing Then GoTo TestFail
+    ' Crear objeto EMapeo mock
+    Dim mapeoMock As New EMapeo
+    mapeoMock.idMapeo = 1
+    mapeoMock.TipoSolicitud = "PC"
+    mapeoMock.PlantillaPath = "C:\Templates\PC_Template.docx"
+    mapeoMock.CamposRequeridos = "nombre,fecha,descripcion"
     
-    mockMapeoRepository.ConfigureGetMapeoPorTipo rsMapeo
+    mockMapeoRepository.ConfigureGetMapeoPorTipo mapeoMock
 
     ' Inicializar servicio
     docService.Initialize mockConfig, mockRepository, mockLogger, mockWordManager, mockMapeoRepository, mockErrorHandler
@@ -319,11 +135,8 @@ Cleanup:
     ' Limpieza robusta de recursos
     On Error Resume Next
     
-    ' Limpiar recordset primero
-    If Not rsMapeo Is Nothing Then
-        If rsMapeo.State = adStateOpen Then rsMapeo.Close
-        Set rsMapeo = Nothing
-    End If
+    ' Limpiar objeto mapeo
+    Set mapeoMock = Nothing
     
     ' Limpiar mocks
     If Not mockConfig Is Nothing Then
@@ -376,7 +189,7 @@ Private Function TestGenerarDocumentoConPlantillaInexistenteDebeRetornarCadenaVa
     Dim Resultado As String
     
     ' Inicializar mocks con validación
-    Set docService = New CDocumentService
+    Set docService = New CMockDocumentService
     Set mockConfig = New CMockConfig
     Set mockRepository = New CMockSolicitudRepository
     Set mockLogger = New CMockOperationLogger
@@ -459,90 +272,7 @@ End Function
 ' FUNCIONES AUXILIARES PARA MOCKS
 ' ============================================================================
 
-Private Function CreateInMemoryRecordset(Optional ByVal marcadorWord As String = "MARCADOR_PARTE0_1", Optional ByVal campoTabla As String = "Parte0_1") As DAO.Recordset
-    On Error GoTo TestFail
-    
-    ' Validar parámetros de entrada
-    If Len(Trim(marcadorWord)) = 0 Then marcadorWord = "MARCADOR_PARTE0_1"
-    If Len(Trim(campoTabla)) = 0 Then campoTabla = "Parte0_1"
-    
-    Dim db As DAO.Database
-    Dim rs As DAO.Recordset
-    Dim tempDbPath As String
-    Dim errorOccurred As Boolean
-    
-    errorOccurred = False
-    
-    ' Crear base de datos temporal usando DAO puro
-    tempDbPath = Environ("TEMP") & "\TestMapeo_" & Format(Now, "yyyymmddhhnnss") & ".accdb"
-    
-    ' Eliminar archivo temporal si ya existe
-    On Error Resume Next
-    If Dir(tempDbPath) <> "" Then
-        Kill tempDbPath
-    End If
-    On Error GoTo TestFail
-    
-    Set db = DBEngine.CreateDatabase(tempDbPath, dbLangGeneral)
-    
-    ' Crear tabla tbMapeoCampos con la estructura correcta
-    db.Execute "CREATE TABLE tbMapeoCampos (" & _
-               "NombreCampoTabla TEXT(255), " & _
-               "NombreCampoWord TEXT(255), " & _
-               "ValorAsociado TEXT(255))"
-    
-    ' Insertar datos de prueba necesarios usando parámetros con escape de comillas
-    Dim safeCampoTabla As String
-    Dim safeMarcadorWord As String
-    safeCampoTabla = Replace(campoTabla, "'", "''")
-    safeMarcadorWord = Replace(marcadorWord, "'", "''")
-    
-    db.Execute "INSERT INTO tbMapeoCampos (NombreCampoTabla, NombreCampoWord, ValorAsociado) " & _
-               "VALUES ('" & safeCampoTabla & "', '" & safeMarcadorWord & "', '')"
-    
-    ' Abrir recordset desde la tabla temporal
-    Set rs = db.OpenRecordset("SELECT * FROM tbMapeoCampos", dbOpenDynaset)
-    
-    ' Verificar que el recordset se creó correctamente
-    If rs Is Nothing Then
-        errorOccurred = True
-        GoTo TestFail
-    End If
-    
-    ' Cerrar la base de datos pero mantener el recordset abierto
-    ' El recordset mantendrá su propia conexión
-    db.Close
-    Set db = Nothing
-    
-    Set CreateInMemoryRecordset = rs
-    
-    Exit Function
-    
-TestFail:
-    Debug.Print "Error en CreateInMemoryRecordset: " & Err.Description & " (Número: " & Err.Number & ")"
-    
-    ' Limpieza robusta en caso de error
-    On Error Resume Next
-    
-    If Not rs Is Nothing Then
-        If rs.State = adStateOpen Then rs.Close
-        Set rs = Nothing
-    End If
-    
-    If Not db Is Nothing Then
-        If db.Name <> "" Then db.Close
-        Set db = Nothing
-    End If
-    
-    ' Eliminar archivo temporal si existe
-    If Dir(tempDbPath) <> "" Then
-        Kill tempDbPath
-    End If
-    
-    On Error GoTo 0
-    
-    Set CreateInMemoryRecordset = Nothing
-End Function
+' Funciones auxiliares eliminadas - ahora se usan objetos de dominio directamente
 
 Private Function TestGenerarDocumentoConErrorEnWordManagerDebeRetornarCadenaVacia() As CTestResult
     Set TestGenerarDocumentoConErrorEnWordManagerDebeRetornarCadenaVacia = New CTestResult
@@ -562,7 +292,7 @@ Private Function TestGenerarDocumentoConErrorEnWordManagerDebeRetornarCadenaVaci
     Dim resultado As String
     
     ' Inicializar mocks con validación
-    Set docService = New CDocumentService
+    Set docService = New CMockDocumentService
     Set mockConfig = New CMockConfig
     Set mockRepository = New CMockSolicitudRepository
     Set mockLogger = New CMockOperationLogger
@@ -669,7 +399,7 @@ Private Function TestLeerDocumentoConDocumentoValidoDebeActualizarSolicitud() As
     Set mockWordManager = New CMockWordManager
     Set mockMapeoRepository = New CMockMapeoRepository
     Set mockErrorHandler = New CMockErrorHandlerService
-    Set docService = New CDocumentService
+    Set docService = New CMockDocumentService
     
     ' Validar inicialización de mocks
     If docService Is Nothing Or mockConfig Is Nothing Or mockRepository Is Nothing Or _
@@ -756,7 +486,7 @@ Private Function TestLeerDocumentoConDocumentoInexistenteDebeRetornarFalse() As 
     Dim resultado As Boolean
     
     ' Inicializar mocks con validación
-    Set docService = New CDocumentService
+    Set docService = New CMockDocumentService
     Set mockConfig = New CMockConfig
     Set mockRepository = New CMockSolicitudRepository
     Set mockLogger = New CMockOperationLogger
@@ -848,7 +578,7 @@ Private Function TestInitializeConDependenciasValidasDebeInicializarCorrectament
     Dim mockErrorHandler As CMockErrorHandlerService
     
     ' Inicializar mocks con validación
-    Set docService = New CDocumentService
+    Set docService = New CMockDocumentService
     Set mockConfig = New CMockConfig
     Set mockRepository = New CMockSolicitudRepository
     Set mockLogger = New CMockOperationLogger

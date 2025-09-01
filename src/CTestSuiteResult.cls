@@ -20,14 +20,15 @@ Option Explicit
 
 ' Propiedades privadas
 Private m_suiteName As String
-Private m_testResults As Collection
+Private m_testResults As Scripting.Dictionary
 
 ' ============================================================================
 ' INICIALIZACIÓN
 ' ============================================================================
 
 Private Sub Class_Initialize()
-    Set m_testResults = New Collection
+    Set m_testResults = New Scripting.Dictionary
+    m_testResults.CompareMode = TextCompare
 End Sub
 
 Private Sub Class_Terminate()
@@ -49,18 +50,20 @@ End Property
 
 ' Propiedades calculadas en tiempo real
 Public Property Get TotalTests() As Long
-    TotalTests = m_testResults.count
+    TotalTests = m_testResults.Count
 End Property
 
 Public Property Get TestsPassed() As Long
     Dim passedCount As Long
     Dim testResult As CTestResult
+    Dim key As Variant
     
-    For Each testResult In m_testResults
+    For Each key In m_testResults.Keys()
+        Set testResult = m_testResults(key)
         If testResult.Success Then
             passedCount = passedCount + 1
         End If
-    Next testResult
+    Next key
     
     TestsPassed = passedCount
 End Property
@@ -76,7 +79,8 @@ End Property
 ' Método de inicialización pública
 Public Sub Initialize(ByVal suiteName As String)
     m_suiteName = suiteName
-    Set m_testResults = New Collection
+    Set m_testResults = New Scripting.Dictionary
+    m_testResults.CompareMode = TextCompare
 End Sub
 
 ' Método para añadir un resultado de prueba
@@ -85,7 +89,7 @@ Public Sub AddTestResult(ByVal result As CTestResult)
         Err.Raise 91, "CTestSuiteResult.AddTestResult", "El resultado de prueba no puede ser Nothing"
     End If
     
-    m_testResults.Add result
+    m_testResults.Add result.TestName, result
 End Sub
 
 ' Método alias para compatibilidad con modTestRunner
@@ -124,13 +128,13 @@ End Function
 ' MÉTODOS DE ACCESO A RESULTADOS INDIVIDUALES
 ' ============================================================================
 
-' Método para obtener un resultado específico por índice
-Public Function GetTestResult(ByVal index As Long) As CTestResult
-    If index < 1 Or index > m_testResults.count Then
-        Err.Raise 9, "CTestSuiteResult.GetTestResult", "Índice fuera de rango"
+' Método para obtener un resultado específico por clave
+Public Function GetTestResult(ByVal testName As String) As CTestResult
+    If Not m_testResults.Exists(testName) Then
+        Err.Raise 9, "CTestSuiteResult.GetTestResult", "Test no encontrado: " & testName
     End If
     
-    Set GetTestResult = m_testResults(index)
+    Set GetTestResult = m_testResults(testName)
 End Function
 
 ' Método para verificar si la suite completa pasó

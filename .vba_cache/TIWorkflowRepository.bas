@@ -66,10 +66,10 @@ Private Function TestGetNextStatesIntegration() As CTestResult
     Call Setup
     
     ' Crear dependencias localmente
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH, "DATABASE_PATH"
-    Set config = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
+    Set config = modConfigFactory.CreateConfigService()
+    config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     Set repository = modRepositoryFactory.CreateWorkflowRepository()
 
     Dim nextStates As Collection
@@ -99,10 +99,10 @@ Private Function TestIsValidTransitionIntegration() As CTestResult
     Call Setup
     
     ' Crear dependencias localmente
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH, "DATABASE_PATH"
-    Set config = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
+    Set config = modConfigFactory.CreateConfigService()
+    config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     Set repository = modRepositoryFactory.CreateWorkflowRepository()
 
     modAssert.AssertTrue repository.IsValidTransition(TEST_TIPO_SOLICITUD, ESTADO_BORRADOR, ESTADO_REVISION), "BORRADOR -> EN_REVISION debe ser una transición válida."

@@ -47,23 +47,21 @@ Private Function IAppManager_StartApplication(Optional ByVal userEmail As String
     On Error GoTo ErrorHandler
     
     ' 1. Obtener el email del usuario actual
-    Dim UserEmail As String
+    Dim finalUserEmail As String
     If userEmail <> "" Then
-        ' Usar email de prueba si se proporciona (modo test)
-        UserEmail = userEmail
+        finalUserEmail = userEmail ' Usar el email proporcionado para testing
     Else
-        ' Usar lógica normal de producción/desarrollo
-        UserEmail = GetCurrentUserEmail()
+        finalUserEmail = GetCurrentUserEmail() ' Usar la lógica normal de producción
     End If
 
-    If UserEmail = "" Then
+    If finalUserEmail = "" Then
         m_ErrorHandler.LogError vbObjectError + 514, "No se pudo obtener el email del usuario para la autenticación.", "CAppManager.StartApplication", "CRITICAL_STARTUP_FAILURE"
         IAppManager_StartApplication = False
         Exit Function
     End If
 
     ' 2. Determinar el rol del usuario y guardarlo
-    m_CurrentUserRole = m_AuthService.GetUserRole(UserEmail)
+    m_CurrentUserRole = m_AuthService.GetUserRole(finalUserEmail)
 
     ' 3. Verificar que la configuración se haya cargado correctamente
     If Not m_Config.GetValue("IsInitialized") Then
@@ -84,7 +82,7 @@ Private Function IAppManager_StartApplication(Optional ByVal userEmail As String
             Debug.Print "Usuario autenticado como Técnico."
             ' TODO: Implementar inicialización específica para Técnico
         Case RolDesconocido
-            m_ErrorHandler.LogError vbObjectError + 515, "El usuario '" & UserEmail & "' no tiene un rol definido en el sistema.", "CAppManager.StartApplication", "CRITICAL_AUTH_FAILURE"
+            m_ErrorHandler.LogError vbObjectError + 515, "El usuario '" & finalUserEmail & "' no tiene un rol definido en el sistema.", "CAppManager.StartApplication", "CRITICAL_AUTH_FAILURE"
             IAppManager_StartApplication = False
             Exit Function
     End Select

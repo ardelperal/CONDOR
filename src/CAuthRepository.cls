@@ -69,7 +69,6 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     Set qdf = db.CreateQueryDef("", GET_AUTH_DATA_BY_EMAIL)
     
     ' Crear y asignar parámetros
-    ' Crear y asignar parámetros
     Set prm = New EQueryParameter
     prm.ParameterName = "pEmail"
     prm.ParameterValue = userEmail

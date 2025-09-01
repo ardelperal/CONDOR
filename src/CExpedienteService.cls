@@ -72,7 +72,7 @@ Private Function IExpedienteService_GetExpedienteById(ByVal idExpediente As Long
     
     ' Verificar si se encontró el expediente
     If Not rs Is Nothing And Not rs.EOF Then
-        ' Mapear los datos del recordset a la estructura E_Expediente
+        ' Mapear los datos del recordset a la estructura EExpediente
         expediente.idExpediente = rs("idExpediente")
         expediente.NumeroExpediente = rs("NumeroExpediente") & ""
         expediente.Titulo = rs("Titulo") & ""
@@ -178,7 +178,7 @@ Private Function IExpedienteService_GetExpedienteByNemotecnico(ByVal Nemotecnico
     
     ' Verificar si se encontró el expediente
     If Not rs Is Nothing And Not rs.EOF Then
-        ' Mapear los datos del recordset a la estructura E_Expediente
+        ' Mapear los datos del recordset a la estructura EExpediente
         expediente.idExpediente = rs("idExpediente")
         expediente.NumeroExpediente = rs("NumeroExpediente") & ""
         expediente.Titulo = rs("Titulo") & ""

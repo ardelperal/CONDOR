@@ -7,8 +7,7 @@ Option Explicit
 ' Descripción: Pruebas de integración para CWordManager
 ' ============================================================================
 
-Private m_TempFolder As String
-Private m_TempFiles As Collection
+' Variables eliminadas - ahora se declaran localmente en cada función
 
 ' ============================================================================
 ' CONFIGURACIÓN DE PRUEBAS
@@ -34,24 +33,29 @@ Private Function IntegrationTestWordManagerCicloCompletoSuccess() As CTestResult
     
     On Error GoTo TestError
     
-    Setup
-    
     ' Arrange
     Dim wordManager As IWordManager
     Dim errorHandler As IErrorHandlerService
     Dim archivoOriginal As String
     Dim archivoGuardado As String
     Dim contenidoFinal As String
+    Dim tempFolder As String
+    Dim fs As IFileSystem
+    
+    ' Setup local
+    tempFolder = modTestUtils.GetProjectPath() & "back\test_env\word_tests\"
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    If Not fs.FolderExists(tempFolder) Then
+        fs.CreateFolder tempFolder
+    End If
     
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService
     Set wordManager = modWordManagerFactory.CreateWordManager()
     
-    archivoOriginal = m_TempFolder & "documento_original.docx"
+    archivoOriginal = tempFolder & "documento_original.docx"
     CrearDocumentoPrueba archivoOriginal, "Hola [NOMBRE], este es un documento de prueba."
-    m_TempFiles.Add archivoOriginal
     
-    archivoGuardado = m_TempFolder & "documento_modificado.docx"
-    m_TempFiles.Add archivoGuardado
+    archivoGuardado = tempFolder & "documento_modificado.docx"
     
     ' Act & Assert
     modAssert.AssertTrue wordManager.AbrirDocumento(archivoOriginal), "Debería abrir el documento correctamente"
@@ -73,7 +77,13 @@ TestError:
     On Error GoTo 0
     
 Cleanup:
-    Teardown
+    ' Cleanup local
+    On Error Resume Next
+    If fs.FileExists(archivoOriginal) Then fs.DeleteFile archivoOriginal
+    If fs.FileExists(archivoGuardado) Then fs.DeleteFile archivoGuardado
+    If fs.FolderExists(tempFolder) Then fs.DeleteFolder tempFolder
+    Set fs = Nothing
+    On Error GoTo 0
     Set IntegrationTestWordManagerCicloCompletoSuccess = testResult
 End Function
 
@@ -83,18 +93,25 @@ Private Function IntegrationTestWordManagerAbrirFicheroInexistenteDevuelveFalse(
     
     On Error GoTo TestError
     
-    Setup
-    
     ' Arrange
     Dim wordManager As IWordManager
     Dim errorHandler As IErrorHandlerService
     Dim rutaInvalida As String
     Dim resultado As Boolean
+    Dim tempFolder As String
+    Dim fs As IFileSystem
+    
+    ' Setup local
+    tempFolder = modTestUtils.GetProjectPath() & "back\test_env\word_tests\"
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    If Not fs.FolderExists(tempFolder) Then
+        fs.CreateFolder tempFolder
+    End If
     
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService
     Set wordManager = modWordManagerFactory.CreateWordManager()
     
-    rutaInvalida = m_TempFolder & "archivo_que_no_existe.docx"
+    rutaInvalida = tempFolder & "archivo_que_no_existe.docx"
     
     ' Act
     resultado = wordManager.AbrirDocumento(rutaInvalida)
@@ -109,7 +126,11 @@ TestError:
     testResult.Fail "Error inesperado: " & Err.Number & " - " & Err.Description
     
 Cleanup:
-    Teardown
+    ' Cleanup local
+    On Error Resume Next
+    If fs.FolderExists(tempFolder) Then fs.DeleteFolder tempFolder
+    Set fs = Nothing
+    On Error GoTo 0
     Set IntegrationTestWordManagerAbrirFicheroInexistenteDevuelveFalse = testResult
 End Function
 
@@ -117,20 +138,7 @@ End Function
 ' MÉTODOS DE SETUP Y TEARDOWN CENTRALIZADOS
 ' ============================================================================
 
-Private Sub Setup()
-    On Error GoTo TestError
-    Set m_TempFiles = New Collection
-    m_TempFolder = modTestUtils.GetProjectPath() & "back\test_env\word_tests\"
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    If Not fs.FolderExists(m_TempFolder) Then
-        fs.CreateFolder m_TempFolder
-    End If
-    Set fs = Nothing
-    Exit Sub
-TestError:
-    Err.Raise Err.Number, "Setup", "Error en inicialización: " & Err.Description
-End Sub
+
 
 ' ============================================================================
 ' MÉTODOS AUXILIARES
@@ -163,25 +171,4 @@ TestError:
     End If
     On Error GoTo 0
     Err.Raise Err.Number, "CrearDocumentoPrueba", "Error creando documento: " & Err.Description
-End Sub
-
-Private Sub Teardown()
-    On Error Resume Next
-    Dim i As Integer
-    Dim archivo As String
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    If Not m_TempFiles Is Nothing Then
-        For i = 1 To m_TempFiles.Count
-            archivo = m_TempFiles(i)
-            If fs.FileExists(archivo) Then
-                fs.DeleteFile archivo
-            End If
-        Next i
-    End If
-    If fs.FolderExists(m_TempFolder) Then
-        fs.DeleteFolder m_TempFolder
-    End If
-    Set fs = Nothing
-    On Error GoTo 0
 End Sub

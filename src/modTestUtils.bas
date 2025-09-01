@@ -27,8 +27,12 @@ Public Sub PrepareTestDatabase(ByVal templatePath As String, ByVal activeTestPat
     End If
 
     ' Crear el directorio de destino si no existe
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
     Dim destinationFolder As String
-    destinationFolder = fs.GetParentFolderName(activeTestPath)
+    destinationFolder = fso.GetParentFolderName(activeTestPath)
+    Set fso = Nothing
+    
     If Not fs.FolderExists(destinationFolder) Then
         fs.CreateFolder destinationFolder
     End If

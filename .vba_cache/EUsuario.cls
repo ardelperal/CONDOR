@@ -11,7 +11,7 @@ Option Compare Database
 Option Explicit
 
 '******************************************************************************
-' CLASE: E_Usuario
+' CLASE: EUsuario
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de usuarios del sistema
 ' AUTOR: Sistema CONDOR
 ' FECHA: 2024

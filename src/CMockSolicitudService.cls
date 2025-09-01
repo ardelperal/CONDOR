@@ -35,6 +35,11 @@ Private m_SaveSolicitudReturnValue As Long
 Private m_CreateSolicitudCallCount As Long
 Private m_SaveSolicitudCallCount As Long
 
+' Constructor
+Private Sub Class_Initialize()
+    Reset
+End Sub
+
 ' Propiedades públicas para verificación en tests
 Public Property Get CreateSolicitud_WasCalled() As Boolean
     CreateSolicitud_WasCalled = m_CreateSolicitud_WasCalled
@@ -65,11 +70,11 @@ Public Property Get SaveSolicitudCallCount() As Long
 End Property
 
 ' Métodos para configurar valores de retorno
-Public Sub SetCreateSolicitudReturnValue(ByRef solicitud As ESolicitud)
+Public Sub ConfigureCreateSolicitud(ByRef solicitud As ESolicitud)
     Set m_CreateSolicitudReturnValue = solicitud
 End Sub
 
-Public Sub SetSaveSolicitudReturnValue(ByVal returnId As Long)
+Public Sub ConfigureSaveSolicitud(ByVal returnId As Long)
     m_SaveSolicitudReturnValue = returnId
 End Sub
 

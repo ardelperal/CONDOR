@@ -32,13 +32,14 @@ End Sub
 ' ============================================================================
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientePorId
-Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
+Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente As Long) As EExpediente
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
+    Dim expediente As EExpediente
     
     ' Logging removido - responsabilidad de la capa de servicio
     
@@ -54,11 +55,35 @@ Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
     
-    ' Limpiar recursos de consulta (mantener recordset abierto)
-    Set qdf = Nothing
+    ' Mapear recordset a objeto de dominio
+    If Not rs.EOF Then
+        Set expediente = New EExpediente
+        expediente.idExpediente = rs!ID
+        expediente.Nemotecnico = rs!Nemotecnico & ""
+        expediente.Titulo = rs!Titulo & ""
+        expediente.ResponsableCalidad = rs!ResponsableCalidad & ""
+        expediente.ResponsableTecnico = rs!ResponsableTecnico & ""
+        expediente.Pecal = rs!Pecal & ""
+        expediente.NumeroExpediente = rs!NumeroExpediente & ""
+        expediente.EstadoExpediente = rs!EstadoExpediente & ""
+        expediente.EmailResponsable = rs!EmailResponsable & ""
+        expediente.JefeProyecto = rs!JefeProyecto & ""
+        expediente.ContratistaPrincipal = rs!ContratistaPrincipal & ""
+        If Not IsNull(rs!FechaInicio) Then expediente.FechaInicio = rs!FechaInicio
+        If Not IsNull(rs!FechaFinPrevista) Then expediente.FechaFinPrevista = rs!FechaFinPrevista
+        If Not IsNull(rs!FechaFinContrato) Then expediente.FechaFinContrato = rs!FechaFinContrato
+        If Not IsNull(rs!FechaFinGarantia) Then expediente.FechaFinGarantia = rs!FechaFinGarantia
+    End If
     
-    ' Devolver el recordset
-    Set IExpedienteRepository_ObtenerExpedientePorId = rs
+    ' Limpiar recursos
+    rs.Close
+    Set rs = Nothing
+    Set qdf = Nothing
+    db.Close
+    Set db = Nothing
+    
+    ' Devolver el objeto mapeado
+    Set IExpedienteRepository_ObtenerExpedientePorId = expediente
     
     Exit Function
     
@@ -66,7 +91,7 @@ ErrorHandler:
     ' Limpiar recursos en caso de error
     If Not rs Is Nothing Then rs.Close
     If Not qdf Is Nothing Then Set qdf = Nothing
-    If Not db Is Nothing Then Set db = Nothing
+    If Not db Is Nothing Then db.Close: Set db = Nothing
     
     ' Log del error
     If Not m_ErrorHandler Is Nothing Then
@@ -78,13 +103,14 @@ ErrorHandler:
 End Function
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientePorNemotecnico
-Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
+Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
+    Dim expediente As EExpediente
     
     ' Logging removido - responsabilidad de la capa de servicio
     
@@ -100,11 +126,35 @@ Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nem
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
     
-    ' Limpiar recursos de consulta (mantener recordset abierto)
-    Set qdf = Nothing
+    ' Mapear recordset a objeto de dominio
+    If Not rs.EOF Then
+        Set expediente = New EExpediente
+        expediente.idExpediente = rs!ID
+        expediente.Nemotecnico = rs!Nemotecnico & ""
+        expediente.Titulo = rs!Titulo & ""
+        expediente.ResponsableCalidad = rs!ResponsableCalidad & ""
+        expediente.ResponsableTecnico = rs!ResponsableTecnico & ""
+        expediente.Pecal = rs!Pecal & ""
+        expediente.NumeroExpediente = rs!NumeroExpediente & ""
+        expediente.EstadoExpediente = rs!EstadoExpediente & ""
+        expediente.EmailResponsable = rs!EmailResponsable & ""
+        expediente.JefeProyecto = rs!JefeProyecto & ""
+        expediente.ContratistaPrincipal = rs!ContratistaPrincipal & ""
+        If Not IsNull(rs!FechaInicio) Then expediente.FechaInicio = rs!FechaInicio
+        If Not IsNull(rs!FechaFinPrevista) Then expediente.FechaFinPrevista = rs!FechaFinPrevista
+        If Not IsNull(rs!FechaFinContrato) Then expediente.FechaFinContrato = rs!FechaFinContrato
+        If Not IsNull(rs!FechaFinGarantia) Then expediente.FechaFinGarantia = rs!FechaFinGarantia
+    End If
     
-    ' Devolver el recordset
-    Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = rs
+    ' Limpiar recursos
+    rs.Close
+    Set rs = Nothing
+    Set qdf = Nothing
+    db.Close
+    Set db = Nothing
+    
+    ' Devolver el objeto mapeado
+    Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = expediente
     
     Exit Function
     
@@ -112,7 +162,7 @@ ErrorHandler:
     ' Limpiar recursos en caso de error
     If Not rs Is Nothing Then rs.Close
     If Not qdf Is Nothing Then Set qdf = Nothing
-    If Not db Is Nothing Then Set db = Nothing
+    If Not db Is Nothing Then db.Close: Set db = Nothing
     
     ' Log del error
     If Not m_ErrorHandler Is Nothing Then
@@ -124,15 +174,21 @@ ErrorHandler:
 End Function
 
 ' Implementación de IExpedienteRepository.ObtenerExpedientesActivosParaSelector
-Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As DAO.recordset
+Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
+    Dim expedientes As Scripting.Dictionary
+    Dim expediente As EExpediente
     
     ' Logging removido - responsabilidad de la capa de servicio
+    
+    ' Inicializar diccionario
+    Set expedientes = New Scripting.Dictionary
+    expedientes.CompareMode = TextCompare ' Opcional pero recomendado
     
     ' Obtener conexión al Backend usando configuración
     Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, ";PWD=" & m_Config.GetDatabasePassword())
@@ -145,26 +201,54 @@ Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() A
     ' Ejecutar consulta
     Set rs = qdf.OpenRecordset()
     
-    ' Limpiar recursos de consulta (mantener recordset abierto)
-    Set qdf = Nothing
+    ' Mapear cada registro a un objeto EExpediente
+    Do While Not rs.EOF
+        Set expediente = New EExpediente
+        expediente.idExpediente = rs!ID
+        expediente.Nemotecnico = rs!Nemotecnico & ""
+        expediente.Titulo = rs!Titulo & ""
+        expediente.ResponsableCalidad = rs!ResponsableCalidad & ""
+        expediente.ResponsableTecnico = rs!ResponsableTecnico & ""
+        expediente.Pecal = rs!Pecal & ""
+        expediente.NumeroExpediente = rs!NumeroExpediente & ""
+        expediente.EstadoExpediente = rs!EstadoExpediente & ""
+        expediente.EmailResponsable = rs!EmailResponsable & ""
+        expediente.JefeProyecto = rs!JefeProyecto & ""
+        expediente.ContratistaPrincipal = rs!ContratistaPrincipal & ""
+        If Not IsNull(rs!FechaInicio) Then expediente.FechaInicio = rs!FechaInicio
+        If Not IsNull(rs!FechaFinPrevista) Then expediente.FechaFinPrevista = rs!FechaFinPrevista
+        If Not IsNull(rs!FechaFinContrato) Then expediente.FechaFinContrato = rs!FechaFinContrato
+        If Not IsNull(rs!FechaFinGarantia) Then expediente.FechaFinGarantia = rs!FechaFinGarantia
+        
+        expedientes.Add Key:=expediente.idExpediente, Item:=expediente ' Usar ID como clave
+        rs.MoveNext
+    Loop
     
-    ' Devolver el recordset
-    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = rs
+    ' Limpiar recursos
+    rs.Close
+    Set rs = Nothing
+    Set qdf = Nothing
+    db.Close
+    Set db = Nothing
+    
+    ' Devolver la colección
+    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = expedientes
     
     Exit Function
     
 ErrorHandler:
     ' Limpiar recursos en caso de error
     If Not rs Is Nothing Then rs.Close
-    If Not db Is Nothing Then Set db = Nothing
+    If Not qdf Is Nothing Then Set qdf = Nothing
+    If Not db Is Nothing Then db.Close: Set db = Nothing
     
     ' Log del error
     If Not m_ErrorHandler Is Nothing Then
         m_ErrorHandler.LogError Err.Number, Err.Description, "CExpedienteRepository.ObtenerExpedientesActivosParaSelector"
     End If
     
-    ' Devolver Nothing en caso de error
-    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = Nothing
+    ' Devolver colección vacía en caso de error
+    Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = New Collection
 End Function
 
 ' ============================================================================
@@ -174,17 +258,17 @@ End Function
 ' para facilitar las pruebas y el uso directo de la clase concreta
 
 ' Método público de conveniencia para ObtenerExpedientePorId
-Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As DAO.recordset
+Public Function ObtenerExpedientePorId(ByVal idExpediente As Long) As EExpediente
     Set ObtenerExpedientePorId = IExpedienteRepository_ObtenerExpedientePorId(idExpediente)
 End Function
 
 ' Método público de conveniencia para ObtenerExpedientePorNemotecnico
-Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As DAO.recordset
+Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
     Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico)
 End Function
 
 ' Método público de conveniencia para ObtenerExpedientesActivosParaSelector
-Public Function ObtenerExpedientesActivosParaSelector() As DAO.recordset
+Public Function ObtenerExpedientesActivosParaSelector() As Collection
     Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector()
 End Function
 

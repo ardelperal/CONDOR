@@ -133,12 +133,14 @@ End Function
 ' @param tipoSolicitud: Tipo de solicitud (PC, CDCA, CDCASUB)
 ' @return Collection: Collection con los códigos de estados disponibles
 '''
-Private Function IWorkflowRepository_GetAvailableStates(ByVal tipoSolicitud As String) As Collection
+Private Function IWorkflowRepository_GetAvailableStates(ByVal tipoSolicitud As String) As Scripting.Dictionary
     On Error GoTo ErrorHandler
     
-    Dim db As DAO.Database   Dim qdf As DAO.QueryDef
+    Dim db As DAO.Database   
+    Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim colEstados As New Collection
+    Dim colEstados As New Scripting.Dictionary
+    colEstados.CompareMode = TextCompare ' Opcional pero recomendado
     
     ' Obtener ruta del backend desde configuración
     Dim backendPath As String
@@ -161,9 +163,9 @@ Private Function IWorkflowRepository_GetAvailableStates(ByVal tipoSolicitud As S
     ' Ejecutar consulta y obtener recordset
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
-    ' Recorrer el recordset y poblar la colección
+    ' Recorrer el recordset y poblar el diccionario
     Do While Not rs.EOF
-        colEstados.Add rs.Fields("CodigoEstado").value
+        colEstados.Add Key:=rs.Fields("CodigoEstado").value, Item:=rs.Fields("CodigoEstado").value
         rs.MoveNext
     Loop
     
@@ -204,13 +206,14 @@ End Function
 ' @param usuarioRol: Rol del usuario actual
 ' @return Collection: Collection con los códigos de estados siguientes válidos
 '''
-Private Function IWorkflowRepository_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Collection
+Private Function IWorkflowRepository_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim colEstados As New Collection
+    Dim colEstados As New Scripting.Dictionary
+    colEstados.CompareMode = TextCompare ' Opcional pero recomendado
     
     ' Obtener ruta del backend desde configuración
     Dim backendPath As String
@@ -239,9 +242,9 @@ Private Function IWorkflowRepository_GetNextStates(ByVal estadoActual As String,
     ' Ejecutar consulta y obtener recordset
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
-    ' Recorrer el recordset y poblar la colección
+    ' Recorrer el recordset y poblar el diccionario
     Do While Not rs.EOF
-        colEstados.Add rs.Fields("CodigoEstado").value
+        colEstados.Add Key:=rs.Fields("CodigoEstado").value, Item:=rs.Fields("CodigoEstado").value
         rs.MoveNext
     Loop
     
@@ -455,14 +458,16 @@ End Function
 ' @param SolicitudID: ID de la solicitud
 ' @return Collection: Collection con el historial de cambios
 '''
-Private Function IWorkflowRepository_GetStateHistory(ByVal SolicitudID As Long) As Collection
+Private Function IWorkflowRepository_GetStateHistory(ByVal SolicitudID As Long) As Scripting.Dictionary
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.recordset
-    Dim colHistorial As New Collection
+    Dim colHistorial As New Scripting.Dictionary
+    colHistorial.CompareMode = TextCompare ' Opcional pero recomendado
     Dim historyItem As String
+    Dim itemKey As String
     
     ' Obtener ruta del backend desde configuración
     Dim backendPath As String
@@ -484,7 +489,7 @@ Private Function IWorkflowRepository_GetStateHistory(ByVal SolicitudID As Long) 
     ' Ejecutar consulta y obtener recordset
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
-    ' Recorrer el recordset y poblar la colección
+    ' Recorrer el recordset y poblar el diccionario
     Do While Not rs.EOF
         ' Crear un string con la información del historial
         historyItem = rs.Fields("EstadoAnterior").value & "|" & _
@@ -492,7 +497,9 @@ Private Function IWorkflowRepository_GetStateHistory(ByVal SolicitudID As Long) 
                      rs.Fields("Usuario").value & "|" & _
                      rs.Fields("FechaCambio").value & "|" & _
                      Nz(rs.Fields("Comentarios").value, "")
-        colHistorial.Add historyItem
+        ' Usar timestamp como clave única
+        itemKey = Format(rs.Fields("FechaCambio").value, "yyyymmddhhnnss") & "_" & rs.AbsolutePosition
+        colHistorial.Add Key:=itemKey, Item:=historyItem
         rs.MoveNext
     Loop
     

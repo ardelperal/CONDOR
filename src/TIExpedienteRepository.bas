@@ -11,10 +11,7 @@ Option Explicit
 Private Const EXPEDIENTES_TEMPLATE_PATH As String = "back\test_db\templates\Expedientes_test_template.accdb"
 Private Const EXPEDIENTES_ACTIVE_PATH As String = "back\test_db\active\Expedientes_integration_test.accdb"
 
-' Variables globales para las dependencias reales
-Private m_Config As IConfig
-Private m_ErrorHandler As IErrorHandlerService
-Private m_Repository As IExpedienteRepository
+' Variables eliminadas - ahora se declaran localmente en cada función
 
 ' Función principal que ejecuta todas las pruebas de integración del CExpedienteRepository
 Public Function TIExpedienteRepositoryRunAll() As CTestSuiteResult
@@ -38,7 +35,6 @@ End Function
 Private Sub Setup()
     On Error GoTo ErrorHandler
     modTestUtils.PrepareTestDatabase modTestUtils.GetProjectPath() & EXPEDIENTES_TEMPLATE_PATH, modTestUtils.GetProjectPath() & EXPEDIENTES_ACTIVE_PATH
-    InitializeRealDependencies
     Exit Sub
 ErrorHandler:
     Err.Raise Err.Number, "IntegrationTestCExpedienteRepository.Setup", "Error en Setup: " & Err.Description
@@ -46,9 +42,6 @@ End Sub
 
 Private Sub Teardown()
     On Error Resume Next
-    Set m_Repository = Nothing
-    Set m_ErrorHandler = Nothing
-    Set m_Config = Nothing
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
     Dim testDbPath As String
@@ -59,20 +52,6 @@ Private Sub Teardown()
     Set fs = Nothing
 End Sub
 
-Private Sub InitializeRealDependencies()
-    On Error GoTo ErrorHandler
-    
-    Set m_Config = modConfigFactory.CreateConfigService()
-    m_Config.SetSetting "EXPEDIENTES_DB_PATH", modTestUtils.GetProjectPath() & EXPEDIENTES_ACTIVE_PATH
-    
-    Set m_ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Set m_Repository = modRepositoryFactory.CreateExpedienteRepository()
-    
-    Exit Sub
-ErrorHandler:
-    Err.Raise Err.Number, "IntegrationTestCExpedienteRepository.InitializeRealDependencies", "Error inicializando dependencias: " & Err.Description
-End Sub
-
 ' ============================================================================ 
 ' PRUEBAS DE INTEGRACIÓN
 ' ============================================================================ 
@@ -81,11 +60,18 @@ Private Function IntegrationTestObtenerExpedientePorIdSuccess() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "ObtenerExpedientePorId debe devolver un expediente existente"
     Dim rs As DAO.Recordset
+    Dim config As IConfig
+    Dim errorHandler As IErrorHandlerService
+    Dim repository As IExpedienteRepository
     On Error GoTo ErrorHandler
     
-    Setup
+    ' Inicializar dependencias localmente
+    Set config = modConfigFactory.CreateConfigService()
+    config.SetSetting "EXPEDIENTES_DB_PATH", modTestUtils.GetProjectPath() & EXPEDIENTES_ACTIVE_PATH
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateExpedienteRepository()
     
-    Set rs = m_Repository.ObtenerExpedientePorId(1)
+    Set rs = repository.ObtenerExpedientePorId(1)
     
     modAssert.AssertNotNull rs, "ObtenerExpedientePorId debe devolver un recordset válido"
     modAssert.AssertFalse rs.EOF, "El recordset no debe estar vacío para expediente existente"
@@ -98,7 +84,10 @@ ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
 Cleanup:
     If Not rs Is Nothing Then rs.Close
-    Teardown
+    Set rs = Nothing
+    Set config = Nothing
+    Set errorHandler = Nothing
+    Set repository = Nothing
     Set IntegrationTestObtenerExpedientePorIdSuccess = testResult
 End Function
 
@@ -106,11 +95,18 @@ Private Function IntegrationTestObtenerExpedientePorIdNotFound() As CTestResult
     Dim testResult As New CTestResult
     testResult.Initialize "ObtenerExpedientePorId debe manejar expedientes no encontrados"
     Dim rs As DAO.Recordset
+    Dim config As IConfig
+    Dim errorHandler As IErrorHandlerService
+    Dim repository As IExpedienteRepository
     On Error GoTo ErrorHandler
     
-    Setup
+    ' Inicializar dependencias localmente
+    Set config = modConfigFactory.CreateConfigService()
+    config.SetSetting "EXPEDIENTES_DB_PATH", modTestUtils.GetProjectPath() & EXPEDIENTES_ACTIVE_PATH
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateExpedienteRepository()
     
-    Set rs = m_Repository.ObtenerExpedientePorId(99999)
+    Set rs = repository.ObtenerExpedientePorId(99999)
     
     modAssert.AssertNotNull rs, "El recordset debe ser válido aunque esté vacío"
     modAssert.AssertTrue rs.EOF, "El recordset debe estar vacío para expediente no encontrado"
@@ -122,7 +118,10 @@ ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
 Cleanup:
     If Not rs Is Nothing Then rs.Close
-    Teardown
+    Set rs = Nothing
+    Set config = Nothing
+    Set errorHandler = Nothing
+    Set repository = Nothing
     Set IntegrationTestObtenerExpedientePorIdNotFound = testResult
 End Function
 
@@ -130,11 +129,18 @@ Private Function IntegrationTestObtenerExpedientePorNemotecnicoSuccess() As CTes
     Dim testResult As New CTestResult
     testResult.Initialize "ObtenerExpedientePorNemotecnico debe devolver un expediente existente"
     Dim rs As DAO.Recordset
+    Dim config As IConfig
+    Dim errorHandler As IErrorHandlerService
+    Dim repository As IExpedienteRepository
     On Error GoTo ErrorHandler
     
-    Setup
+    ' Inicializar dependencias localmente
+    Set config = modConfigFactory.CreateConfigService()
+    config.SetSetting "EXPEDIENTES_DB_PATH", modTestUtils.GetProjectPath() & EXPEDIENTES_ACTIVE_PATH
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateExpedienteRepository()
     
-    Set rs = m_Repository.ObtenerExpedientePorNemotecnico("EXP-2024-001")
+    Set rs = repository.ObtenerExpedientePorNemotecnico("EXP-2024-001")
     
     modAssert.AssertNotNull rs, "ObtenerExpedientePorNemotecnico debe devolver un recordset válido"
     modAssert.AssertFalse rs.EOF, "El recordset no debe estar vacío para nemotécnico existente"
@@ -146,7 +152,10 @@ ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
 Cleanup:
     If Not rs Is Nothing Then rs.Close
-    Teardown
+    Set rs = Nothing
+    Set config = Nothing
+    Set errorHandler = Nothing
+    Set repository = Nothing
     Set IntegrationTestObtenerExpedientePorNemotecnicoSuccess = testResult
 End Function
 
@@ -154,11 +163,18 @@ Private Function IntegrationTestObtenerExpedientePorNemotecnicoNotFound() As CTe
     Dim testResult As New CTestResult
     testResult.Initialize "ObtenerExpedientePorNemotecnico debe manejar nemotécnicos no encontrados"
     Dim rs As DAO.Recordset
+    Dim config As IConfig
+    Dim errorHandler As IErrorHandlerService
+    Dim repository As IExpedienteRepository
     On Error GoTo ErrorHandler
     
-    Setup
+    ' Inicializar dependencias localmente
+    Set config = modConfigFactory.CreateConfigService()
+    config.SetSetting "EXPEDIENTES_DB_PATH", modTestUtils.GetProjectPath() & EXPEDIENTES_ACTIVE_PATH
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateExpedienteRepository()
     
-    Set rs = m_Repository.ObtenerExpedientePorNemotecnico("INEXISTENTE-999")
+    Set rs = repository.ObtenerExpedientePorNemotecnico("INEXISTENTE-999")
     
     modAssert.AssertNotNull rs, "El recordset debe ser válido aunque esté vacío"
     modAssert.AssertTrue rs.EOF, "El recordset debe estar vacío para nemotécnico no encontrado"
@@ -170,7 +186,10 @@ ErrorHandler:
     testResult.Fail "Error inesperado: " & Err.Description
 Cleanup:
     If Not rs Is Nothing Then rs.Close
-    Teardown
+    Set rs = Nothing
+    Set config = Nothing
+    Set errorHandler = Nothing
+    Set repository = Nothing
     Set IntegrationTestObtenerExpedientePorNemotecnicoNotFound = testResult
 End Function
 

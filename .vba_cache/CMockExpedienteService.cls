@@ -80,17 +80,17 @@ Public Sub Reset()
 End Sub
 
 ' Configura el Expediente que debe devolver GetExpedienteById
-Public Sub SetGetExpedienteByIdReturnValue(ByVal expediente As EExpediente)
+Public Sub ConfigureGetExpedienteById(ByVal expediente As EExpediente)
     Set GetExpedienteByIdReturnValue = expediente
 End Sub
 
 ' Configura el Expediente que debe devolver GetExpedienteByNemotecnico
-Public Sub SetGetExpedienteByNemotecnicoReturnValue(ByVal expediente As EExpediente)
+Public Sub ConfigureGetExpedienteByNemotecnico(ByVal expediente As EExpediente)
     Set GetExpedienteByNemotecnicoReturnValue = expediente
 End Sub
 
 ' Configura el Recordset que debe devolver GetExpedientesParaSelector
-Public Sub SetGetExpedientesParaSelectorReturnValue(ByVal rs As DAO.recordset)
+Public Sub ConfigureGetExpedientesParaSelector(ByVal rs As DAO.recordset)
     Set GetExpedientesParaSelectorReturnValue = rs
 End Sub
 

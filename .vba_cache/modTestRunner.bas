@@ -14,7 +14,7 @@ Option Explicit
 
 
 ' Colección privada para registrar nombres de funciones de suite
-Private m_SuiteNames As Collection
+Private m_SuiteNames As Scripting.Dictionary
 
 ' Función para compatibilidad con CLI (debe estar fuera del bloque condicional)
 Public Function RunAllTests() As String
@@ -25,7 +25,8 @@ Public Function RunAllTests() As String
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Inicializar colección de suites
-    Set m_SuiteNames = New Collection
+    Set m_SuiteNames = New Scripting.Dictionary
+    m_SuiteNames.CompareMode = TextCompare
     
     ' Descubrir y registrar automáticamente todas las suites disponibles
     DiscoverAndRegisterSuites
@@ -35,7 +36,7 @@ Public Function RunAllTests() As String
     Dim reporterImpl As New CTestReporter
     Set reporter = reporterImpl
     
-    Dim allResults As Collection
+    Dim allResults As Scripting.Dictionary
     Set allResults = ExecuteAllSuites
     
     ' Inicializar el reportero con los resultados
@@ -70,7 +71,8 @@ Public Function ExecuteAllTestsForCLI() As String
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Inicializar colección de suites
-    Set m_SuiteNames = New Collection
+    Set m_SuiteNames = New Scripting.Dictionary
+    m_SuiteNames.CompareMode = TextCompare
     
     ' Descubrir y registrar automáticamente todas las suites disponibles
     DiscoverAndRegisterSuites
@@ -80,7 +82,7 @@ Public Function ExecuteAllTestsForCLI() As String
     Dim reporterImpl As New CTestReporter
     Set reporter = reporterImpl
     
-    Dim allResults As Collection
+    Dim allResults As Scripting.Dictionary
     Set allResults = ExecuteAllSuites
     
     ' Inicializar el reportero con los resultados
@@ -140,13 +142,14 @@ Public Sub RunTestFramework()
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Inicializar colección de suites
-    Set m_SuiteNames = New Collection
+    Set m_SuiteNames = New Scripting.Dictionary
+    m_SuiteNames.CompareMode = TextCompare
     
     ' Descubrir y registrar automáticamente todas las suites disponibles
     DiscoverAndRegisterSuites
     
     ' 1. EJECUTAR
-    Dim allResults As Collection
+    Dim allResults As Scripting.Dictionary
     Set allResults = ExecuteAllSuites
     
     ' 2. GENERAR REPORTE (Responsabilidad de CTestReporter)
@@ -195,7 +198,7 @@ Private Sub DiscoverAndRegisterSuites()
                 suiteFunction = componentName & "RunAll"
                 
                 ' Añadir a la colección de suites
-                m_SuiteNames.Add suiteFunction
+                m_SuiteNames.Add suiteFunction, suiteFunction
             End If
         End If
     Next vbComponent
@@ -220,13 +223,17 @@ End Sub
 '******************************************************************************
 
 ' Función que ejecuta todas las suites registradas y devuelve resultados
-Private Function ExecuteAllSuites() As Collection
-    Dim allResults As New Collection
+Private Function ExecuteAllSuites() As Scripting.Dictionary
+    Dim allResults As New Scripting.Dictionary
+    allResults.CompareMode = TextCompare
     Dim i As Integer
     
-    For i = 1 To m_SuiteNames.count
+    Dim suiteKeys As Variant
+    suiteKeys = m_SuiteNames.Keys()
+    
+    For i = 0 To UBound(suiteKeys)
         Dim suiteName As String
-        suiteName = m_SuiteNames(i)
+        suiteName = suiteKeys(i)
         
         ' Ejecutar la suite usando Application.Run
         On Error Resume Next
@@ -234,7 +241,7 @@ Private Function ExecuteAllSuites() As Collection
         Set suiteResult = Application.Run(suiteName)
         
         If Err.Number = 0 And Not suiteResult Is Nothing Then
-            allResults.Add suiteResult
+            allResults.Add suiteName, suiteResult
         Else
             ' Crear un resultado de error para suites que fallan
             Dim errorSuite As New CTestSuiteResult
@@ -245,7 +252,7 @@ Private Function ExecuteAllSuites() As Collection
             Call errorTest.Fail("Error ejecutando suite: " & Err.Description)
             
             Call errorSuite.AddTestResult(errorTest)
-            allResults.Add errorSuite
+            allResults.Add suiteName, errorSuite
             
             ' Log the error
             Dim localErrorHandler As IErrorHandlerService

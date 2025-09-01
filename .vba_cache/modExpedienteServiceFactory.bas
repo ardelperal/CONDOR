@@ -21,13 +21,13 @@ Public Function CreateExpedienteService() As IExpedienteService
     Dim config As IConfig
     
     ' Crear errorHandler y config primero para poder usarlos en caso de errores
-    Set config = modConfig.CreateConfigService()
+    Set config = modConfigFactory.CreateConfigService()
     Dim fileSystem As IFileSystem
     Set fileSystem = modFileSystemFactory.CreateFileSystem()
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Crear las demás dependencias
-    Set repo = modRepositoryFactory.CreateExpedienteRepository(config, errorHandler)
+    Set repo = modRepositoryFactory.CreateExpedienteRepository()
     Set logger = modOperationLoggerFactory.CreateOperationLogger()
     
     ' 2. Crear e inicializar el servicio

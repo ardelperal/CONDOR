@@ -67,12 +67,11 @@ Private Function TestGetUserAuthDataAdmin() As CTestResult
     
     Setup
     
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
-    settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fs)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "LANZADERA_DB_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    testConfig.SetSetting "LANZADERA_DB_PASSWORD", "dpddpd"
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     Set repository = modRepositoryFactory.CreateAuthRepository()
     
     Dim authData As EAuthData
@@ -105,12 +104,11 @@ Private Function TestGetUserAuthDataCalidad() As CTestResult
     
     Setup
 
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
-    settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fs)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "LANZADERA_DB_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    testConfig.SetSetting "LANZADERA_DB_PASSWORD", "dpddpd"
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     Set repository = modRepositoryFactory.CreateAuthRepository()
     
     Dim authData As EAuthData
@@ -144,12 +142,11 @@ Private Function TestGetUserAuthDataTecnico() As CTestResult
     
     Setup
 
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
-    settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fs)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "LANZADERA_DB_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    testConfig.SetSetting "LANZADERA_DB_PASSWORD", "dpddpd"
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     Set repository = modRepositoryFactory.CreateAuthRepository()
     
     Dim authData As EAuthData
@@ -184,12 +181,11 @@ Private Function TestGetUserAuthDataUserNotExists() As CTestResult
     
     Setup
 
-    Dim settings As New Collection
-    settings.Add modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH, "LANZADERA_DB_PATH"
-    settings.Add "dpddpd", "LANZADERA_DB_PASSWORD"
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    Set testConfig = modConfigFactory.CreateConfigServiceFromCollection(settings)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig, fs)
+    Set testConfig = modConfigFactory.CreateConfigService()
+    testConfig.SetSetting "LANZADERA_DB_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    testConfig.SetSetting "LANZADERA_DB_PASSWORD", "dpddpd"
+    
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     Set repository = modRepositoryFactory.CreateAuthRepository()
     
     Dim authData As EAuthData

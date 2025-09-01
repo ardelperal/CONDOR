@@ -21,7 +21,7 @@ Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErr
     Set m_ErrorHandler = errorHandler
 End Sub
 
-Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
+Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
     On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
@@ -30,6 +30,7 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     Dim rs As DAO.Recordset
     Dim params As Collection
     Dim prm As EQueryParameter
+    Dim mapeo As EMapeo
     
     Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
@@ -51,11 +52,25 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     ' Ejecutar consulta parametrizada
     Set rs = qdf.OpenRecordset()
     
-    ' Limpiar recursos de consulta (mantener recordset abierto)
-    Set qdf = Nothing
+    ' Mapear recordset a objeto de dominio
+    If Not rs.EOF Then
+        Set mapeo = New EMapeo
+        mapeo.IdMapeo = rs!IdMapeo
+        mapeo.NombrePlantilla = rs!NombrePlantilla & ""
+        mapeo.NombreCampoTabla = rs!NombreCampoTabla & ""
+        mapeo.ValorAsociado = rs!ValorAsociado & ""
+        mapeo.NombreCampoWord = rs!NombreCampoWord & ""
+    End If
     
-    ' Devolver el recordset
-    Set IMapeoRepository_GetMapeoPorTipo = rs
+    ' Limpiar recursos
+    rs.Close
+    Set rs = Nothing
+    Set qdf = Nothing
+    db.Close
+    Set db = Nothing
+    
+    ' Devolver el objeto mapeado
+    Set IMapeoRepository_GetMapeoPorTipo = mapeo
     
     Exit Function
 ErrorHandler:
@@ -77,7 +92,7 @@ End Function
 ' para facilitar las pruebas y el uso directo de la clase concreta
 
 ' Método público de conveniencia para GetMapeoPorTipo
-Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As DAO.Recordset
+Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
     Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
 End Function
 

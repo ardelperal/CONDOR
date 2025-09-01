@@ -22,8 +22,7 @@ Public LogOperationCalled As Boolean
 Private m_ErrorHandler As IErrorHandlerService
 
 Private Sub Class_Initialize()
-    Set LoggedOperations = New Collection
-    LogOperationCalled = False
+    Reset
 End Sub
 
 ' Método público para inicializar el mock desde el factory

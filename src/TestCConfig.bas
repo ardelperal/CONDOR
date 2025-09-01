@@ -38,15 +38,15 @@ Private Function TestGetValueDatapathSuccess() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig
+    Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim config As IConfig
-    Dim settings As New Collection
     
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
-    settings.Add "testpassword", "DATABASE_PASSWORD"
+    mockConfig.Reset
+    mockConfig.ConfigureGetValue "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
+    mockConfig.ConfigureGetValue "testpassword", "DATABASE_PASSWORD"
     
-    configImpl.LoadFromCollection settings
-    Set config = configImpl
+    Set config = mockConfig
     
     ' Act
     Dim dataPath As String
@@ -63,6 +63,7 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
+    Set mockConfig = Nothing
     Set TestGetValueDatapathSuccess = testResult
 End Function
 
@@ -74,15 +75,15 @@ Private Function TestGetValueDatabasepasswordSuccess() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig
+    Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim config As IConfig
-    Dim settings As New Collection
     
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
-    settings.Add "testpassword", "DATABASE_PASSWORD"
+    mockConfig.Reset
+    mockConfig.ConfigureGetValue "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
+    mockConfig.ConfigureGetValue "testpassword", "DATABASE_PASSWORD"
     
-    configImpl.LoadFromCollection settings
-    Set config = configImpl
+    Set config = mockConfig
     
     ' Act
     Dim password As String
@@ -99,6 +100,7 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
+    Set mockConfig = Nothing
     Set TestGetValueDatabasepasswordSuccess = testResult
 End Function
 
@@ -110,14 +112,14 @@ Private Function TestHasKeyExistingKeyReturnsTrue() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig
+    Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim config As IConfig
-    Dim settings As New Collection
     
-    settings.Add "some_value", "EXISTING_KEY"
+    mockConfig.Reset
+    mockConfig.ConfigureHasKey True, "EXISTING_KEY"
     
-    configImpl.LoadFromCollection settings
-    Set config = configImpl
+    Set config = mockConfig
     
     ' Act & Assert
     modAssert.AssertTrue config.HasKey("EXISTING_KEY"), "HasKey debe devolver True para EXISTING_KEY"
@@ -130,6 +132,7 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
+    Set mockConfig = Nothing
     Set TestHasKeyExistingKeyReturnsTrue = testResult
 End Function
 
@@ -141,14 +144,15 @@ Private Function TestHasKeyNonExistingKeyReturnsFalse() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig
+    Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim config As IConfig
-    Dim settings As New Collection
     
-    settings.Add "some_value", "EXISTING_KEY"
+    mockConfig.Reset
+    mockConfig.ConfigureHasKey False, "NON_EXISTING_KEY"
+    mockConfig.ConfigureHasKey False, ""
 
-    configImpl.LoadFromCollection settings
-    Set config = configImpl
+    Set config = mockConfig
     
     ' Act & Assert
     modAssert.AssertFalse config.HasKey("NON_EXISTING_KEY"), "HasKey debe devolver False para clave inexistente"
@@ -162,6 +166,7 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
+    Set mockConfig = Nothing
     Set TestHasKeyNonExistingKeyReturnsFalse = testResult
 End Function
 
@@ -173,14 +178,14 @@ Private Function TestGetValueNonExistingKeyReturnsEmpty() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig
+    Dim mockConfig As New CMockConfig
+    mockConfig.Reset
     Dim config As IConfig
-    Dim settings As New Collection
     
-    settings.Add "some_value", "EXISTING_KEY"
-
-    configImpl.LoadFromCollection settings
-    Set config = configImpl
+    mockConfig.Reset
+    mockConfig.ConfigureGetValue "", "NON_EXISTING_KEY"
+    
+    Set config = mockConfig
     
     ' Act & Assert
     Dim configValue As String
@@ -198,6 +203,7 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
+    Set mockConfig = Nothing
     Set TestGetValueNonExistingKeyReturnsEmpty = testResult
 End Function
 
@@ -209,14 +215,13 @@ Private Function TestGetDataPathSuccess() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig
+    Dim mockConfig As New CMockConfig
     Dim config As IConfig
-    Dim settings As New Collection
     
-    settings.Add "C:\Test\CONDOR_Backend.accdb", "BACKEND_DB_PATH"
+    mockConfig.Reset
+    mockConfig.ConfigureGetDataPath "C:\Test\CONDOR_Backend.accdb"
     
-    configImpl.LoadFromCollection settings
-    Set config = configImpl
+    Set config = mockConfig
     
     ' Act
     Dim dataPath As String
@@ -233,6 +238,7 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
+    Set mockConfig = Nothing
     Set TestGetDataPathSuccess = testResult
 End Function
 
@@ -244,14 +250,13 @@ Private Function TestGetDatabasePasswordSuccess() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Dim configImpl As New CConfig
+    Dim mockConfig As New CMockConfig
     Dim config As IConfig
-    Dim settings As New Collection
     
-    settings.Add "testpassword123", "DATABASE_PASSWORD"
+    mockConfig.Reset
+    mockConfig.ConfigureGetDatabasePassword "testpassword123"
     
-    configImpl.LoadFromCollection settings
-    Set config = configImpl
+    Set config = mockConfig
     
     ' Act
     Dim password As String
@@ -268,5 +273,6 @@ TestFail:
     
 Cleanup:
     Set config = Nothing
+    Set mockConfig = Nothing
     Set TestGetDatabasePasswordSuccess = testResult
 End Function

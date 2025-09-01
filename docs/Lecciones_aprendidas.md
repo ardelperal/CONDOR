@@ -221,6 +221,7 @@ Funciones de Aserción Estándar Implementadas:
 - AssertTrue(condition As Boolean, message As String) - Error: vbObjectError + 510
 - AssertFalse(condition As Boolean, message As String) - Error: vbObjectError + 511
 - AssertEquals(expected As Variant, actual As Variant, message As String) - Error: vbObjectError + 512
+- AssertNotEquals(value1 As Variant, value2 As Variant, message As String) - Error: vbObjectError + 516
 - AssertNotNull(obj As Object, message As String) - Error: vbObjectError + 513
 - AssertIsNull(obj As Object, message As String) - Error: vbObjectError + 514
 - Fail(message As String) - Error: vbObjectError + 515
@@ -338,3 +339,20 @@ Ignora el prompt anterior. A continuación, presento la versión que incorpora e
 **Regla Inquebrantable:** Cualquier módulo que introduzca una dependencia a una librería de Microsoft Office/VBA que no esté activada por defecto (como "Microsoft Visual Basic for Applications Extensibility 5.3") debe documentar este requisito de forma explícita y prominente en la cabecera del propio fichero. El objetivo es que un nuevo desarrollador pueda configurar el entorno y compilar el proyecto sin errores ni sorpresas.
 
 **Acción Correctiva:** Auditar los módulos en busca de dependencias implícitas y añadir bloques de comentarios de "REQUISITO DE COMPILACIÓN" en la cabecera de cualquier fichero que las utilice.
+
+## Lección 41: Microsoft Scripting Runtime es Requisito Obligatorio del Framework de Testing
+
+**Observación:** La refactorización del framework de testing de `Collection` a `Scripting.Dictionary` introduce una dependencia obligatoria a la librería "Microsoft Scripting Runtime" que debe estar habilitada en el entorno de desarrollo.
+
+**Regla Inquebrantable:** El proyecto CONDOR requiere que la referencia "Microsoft Scripting Runtime" esté activada en el entorno de VBA para que el framework de testing funcione correctamente. Esta dependencia es crítica para la ejecución de pruebas unitarias y debe ser verificada antes de cualquier operación de testing.
+
+**Justificación Técnica:** El uso de `Scripting.Dictionary` en lugar de `Collection` proporciona:
+- Acceso por clave con método `.Exists()` para validaciones robustas
+- Mejor rendimiento en búsquedas y accesos
+- Compatibilidad con `CompareMode = TextCompare` para claves insensibles a mayúsculas/minúsculas
+- Métodos `.Keys()` e `.Items()` para iteraciones más eficientes
+
+**Acción Correctiva:** 
+1. Verificar que "Microsoft Scripting Runtime" esté habilitada en Herramientas > Referencias antes de ejecutar pruebas
+2. Documentar este requisito en el README.md del proyecto
+3. Incluir esta verificación en el proceso de configuración inicial del entorno de desarrollo

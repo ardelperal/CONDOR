@@ -34,7 +34,7 @@ End Function
 ' Obtiene todos los estados disponibles para un tipo de solicitud
 ' @param tipoSolicitud: Tipo de solicitud
 ' @return: Collection con los códigos de estados disponibles
-Public Function GetAvailableStates(ByVal tipoSolicitud As String) As Collection
+Public Function GetAvailableStates(ByVal tipoSolicitud As String) As Scripting.Dictionary
 End Function
 
 ' Obtiene los estados siguientes válidos desde un estado actual
@@ -42,7 +42,7 @@ End Function
 ' @param tipoSolicitud: Tipo de solicitud
 ' @param usuarioRol: Rol del usuario que solicita la transición
 ' @return: Collection con los códigos de estados siguientes válidos
-Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Collection
+Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
 End Function
 
 ' Obtiene el estado inicial para un tipo de solicitud
@@ -71,7 +71,7 @@ End Function
 ' Obtiene el historial de cambios de estado de una solicitud
 ' @param SolicitudID: ID de la solicitud
 ' @return: Collection con el historial de cambios
-Public Function GetStateHistory(ByVal SolicitudID As Long) As Collection
+Public Function GetStateHistory(ByVal SolicitudID As Long) As Scripting.Dictionary
 End Function
 
 ' Verifica si un usuario tiene permisos para realizar una transición

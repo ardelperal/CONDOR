@@ -6,8 +6,6 @@ Option Explicit
 ' Módulo: modOperationLoggerFactory
 ' Descripción: Factory para la creación de servicios de logging de operaciones.
 
-Private g_MockLogger As IOperationLogger ' Para inyectar un mock en tests
-
 Public Function CreateOperationLogger() As IOperationLogger
     On Error GoTo ErrorHandler
     
@@ -16,9 +14,9 @@ Public Function CreateOperationLogger() As IOperationLogger
     Dim configService As IConfig
     Dim fileSystem As IFileSystem
     
-    Set configService = modConfig.CreateConfigService()
+    Set configService = modConfigFactory.CreateConfigService()
     Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(configService, fileSystem)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Crear instancia real del logger
     Dim loggerInstance As COperationLogger
@@ -41,25 +39,5 @@ ErrorHandler:
     Debug.Print "Error en modOperationLoggerFactory.CreateOperationLogger: " & Err.Description
     Err.Raise Err.Number, "modOperationLoggerFactory.CreateOperationLogger", Err.Description
 End Function
-
-' Método para configurar el mock logger en tests
-Public Sub SetMockLogger(ByVal mockLogger As IOperationLogger)
-    On Error GoTo ErrorHandler
-    Set g_MockLogger = mockLogger
-    Exit Sub
-ErrorHandler:
-    Debug.Print "Error en modOperationLoggerFactory.SetMockLogger: " & Err.Number & " - " & Err.Description
-    Err.Raise Err.Number, Err.Source, Err.Description
-End Sub
-
-' Método para resetear el mock logger
-Public Sub ResetMockLogger()
-    On Error GoTo ErrorHandler
-    Set g_MockLogger = Nothing
-    Exit Sub
-ErrorHandler:
-    Debug.Print "Error en modOperationLoggerFactory.ResetMockLogger: " & Err.Number & " - " & Err.Description
-    Err.Raise Err.Number, Err.Source, Err.Description
-End Sub
 
 

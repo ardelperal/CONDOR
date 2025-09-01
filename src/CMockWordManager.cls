@@ -24,6 +24,11 @@ Public ReemplazarTexto_CallCount As Long
 Public LeerDocumento_CallCount As Long
 Public LeerDocumento_FilePath_Param As String
 
+' Constructor
+Private Sub Class_Initialize()
+    Reset
+End Sub
+
 ' --- Métodos públicos para configurar el mock ---
 Public Sub ConfigureAbrirDocumento(ByVal returnValue As Boolean)
     m_AbrirDocumento_ReturnValue = returnValue

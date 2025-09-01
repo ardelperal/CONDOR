@@ -12,9 +12,9 @@ Option Explicit
 
 Implements IDocumentService
 
-' Propiedades para configurar el comportamiento del mock
-Public GenerarDocumento_ReturnValue As String
-Public LeerDocumento_ReturnValue As Boolean
+' Variables privadas para configurar el comportamiento del mock
+Private m_GenerarDocumento_ReturnValue As String
+Private m_LeerDocumento_ReturnValue As Boolean
 
 ' Propiedades para verificar si los métodos fueron llamados
 Public GenerarDocumento_WasCalled As Boolean
@@ -25,22 +25,24 @@ Private GenerarDocumento_LastSolicitud As ESolicitud
 Private LeerDocumento_LastRutaDocumento As String
 Private LeerDocumento_LastIdSolicitud As Long
 
-' Implementación de la interfaz IDocumentService
-Private Sub IDocumentService_Initialize(ByVal configService As IConfig, ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal wordManager As IWordManager, ByVal mapeoRepository As IMapeoRepository, ByVal errorHandler As IErrorHandlerService)
-    ' No se necesita inicialización real para el mock
+' Constructor
+Private Sub Class_Initialize()
+    Reset
 End Sub
+
+' Implementación de la interfaz IDocumentService
 
 Private Function IDocumentService_GenerarDocumento(ByVal solicitud As ESolicitud) As String
     GenerarDocumento_WasCalled = True
     Set GenerarDocumento_LastSolicitud = solicitud
-    IDocumentService_GenerarDocumento = GenerarDocumento_ReturnValue
+    IDocumentService_GenerarDocumento = m_GenerarDocumento_ReturnValue
 End Function
 
 Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud As Long) As Boolean
     LeerDocumento_WasCalled = True
     LeerDocumento_LastRutaDocumento = rutaDocumento
     LeerDocumento_LastIdSolicitud = idSolicitud
-    IDocumentService_LeerDocumento = LeerDocumento_ReturnValue
+    IDocumentService_LeerDocumento = m_LeerDocumento_ReturnValue
 End Function
 
 ' Métodos públicos de conveniencia
@@ -52,10 +54,19 @@ Public Function LeerDocumento(ByVal rutaDocumento As String, ByVal idSolicitud A
     LeerDocumento = IDocumentService_LeerDocumento(rutaDocumento, idSolicitud)
 End Function
 
+' Métodos públicos para configurar el mock
+Public Sub ConfigureGenerarDocumento(ByVal returnValue As String)
+    m_GenerarDocumento_ReturnValue = returnValue
+End Sub
+
+Public Sub ConfigureLeerDocumento(ByVal returnValue As Boolean)
+    m_LeerDocumento_ReturnValue = returnValue
+End Sub
+
 ' Método para resetear el estado del mock
 Public Sub Reset()
-    GenerarDocumento_ReturnValue = ""
-    LeerDocumento_ReturnValue = False
+    m_GenerarDocumento_ReturnValue = ""
+    m_LeerDocumento_ReturnValue = False
     GenerarDocumento_WasCalled = False
     LeerDocumento_WasCalled = False
     Set GenerarDocumento_LastSolicitud = Nothing
