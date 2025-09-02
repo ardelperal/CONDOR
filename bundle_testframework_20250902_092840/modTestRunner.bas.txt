@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modTestRunner"
+Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
 
@@ -14,47 +14,72 @@ Option Explicit
 ' ============================================================================
 
 
-' Colección privada para registrar nombres de funciones de suite
-Private m_SuiteNames As Scripting.Dictionary
+' NOTA: Variable de estado global eliminada para hacer el motor sin estado
+' Private m_SuiteNames As Scripting.Dictionary <- ELIMINADA
 
 ' Función para compatibilidad con CLI (debe estar fuera del bloque condicional)
 Public Function RunAllTests() As String
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
-    ' Obtener instancia del manejador de errores
+    ' 1. Crear una configuración específica para esta ejecución de pruebas
+    Dim testConfig As New CMockConfig
+    testConfig.SetSetting "LOG_FILE_PATH", CurrentProject.Path & "\condor_test_run.log"
+    
+    ' 2. Crear el ErrorHandler para el PROPIO RUNNER, inyectándole la config de prueba
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
     
-    ' Inicializar colección de suites
-    Set m_SuiteNames = New Scripting.Dictionary
-    m_SuiteNames.CompareMode = TextCompare
+    ' El flujo sin estado:
+    Dim suiteNames As Scripting.Dictionary
+    Set suiteNames = DiscoverAndRegisterSuites() ' 1. Descubrir
     
-    ' Descubrir y registrar automáticamente todas las suites disponibles
-    DiscoverAndRegisterSuites
-    
-    ' Ejecutar todas las pruebas y devolver resultado como string
     Dim reporter As ITestReporter
     Dim reporterImpl As New CTestReporter
     Set reporter = reporterImpl
     
     Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites
+    Set allResults = ExecuteAllSuites(suiteNames) ' 2. Ejecutar pasando las suites
     
-    ' Inicializar el reportero con los resultados
     reporter.Initialize allResults
     
-    ' Generar reporte en formato string
     Dim reportString As String
     reportString = reporter.GenerateReport()
     
     RunAllTests = reportString
     Exit Function
     
-errorHandler:
-    ' Usar el manejador de errores creado al inicio
-    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests", True ' Mark as critical
-    
+ErrorHandler:
+    If Not errorHandler Is Nothing Then
+        errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests", True
+    End If
     RunAllTests = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS: " & Err.Description & vbCrLf & "RESULT: FAILED"
+End Function
+
+' Función para registrar suites manualmente (sin dependencia de VBE)
+' Usada por ExecuteAllTestsForCLI para evitar problemas con referencias externas
+Private Function RegisterSuitesManually() As Scripting.Dictionary
+    On Error Resume Next
+    
+    Dim suites As New Scripting.Dictionary
+    suites.CompareMode = TextCompare
+    
+    ' Registrar todas las suites de prueba conocidas manualmente
+    ' Esto evita la dependencia de Application.VBE que puede fallar desde CLI
+    
+    ' Suites de prueba unitaria
+    suites.Add "TestModAssert.RunAll", "TestModAssert.RunAll"
+    suites.Add "TestSolicitudService.RunAll", "TestSolicitudService.RunAll"
+    
+    ' Suites de prueba de integración
+    suites.Add "TIDocumentService.RunAll", "TIDocumentService.RunAll"
+    suites.Add "TIExpedienteRepository.RunAll", "TIExpedienteRepository.RunAll"
+    suites.Add "TIMapeoRepository.RunAll", "TIMapeoRepository.RunAll"
+    suites.Add "TINotificationService.RunAll", "TINotificationService.RunAll"
+    suites.Add "TIOperationRepository.RunAll", "TIOperationRepository.RunAll"
+    suites.Add "TISolicitudRepository.RunAll", "TISolicitudRepository.RunAll"
+    
+    Set RegisterSuitesManually = suites
+    On Error GoTo 0
 End Function
 
 
@@ -67,29 +92,35 @@ End Function
 Public Function ExecuteAllTestsForCLI() As String
     On Error GoTo ErrorHandler
     
-    ' Obtener instancia del manejador de errores
+    ' 0. Configurar Access en modo completamente silencioso
+    On Error Resume Next
+    Application.Echo False
+    DoCmd.Echo False
+    DoCmd.SetWarnings False
+    Err.Clear
+    On Error GoTo ErrorHandler
+    
+    ' 1. Crear una configuración específica para esta ejecución de pruebas
+    Dim testConfig As New CMockConfig
+    testConfig.SetSetting "LOG_FILE_PATH", CurrentProject.Path & "\condor_test_run.log"
+    
+    ' 2. Crear el ErrorHandler para el PROPIO RUNNER, inyectándole la config de prueba
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
 
-    ' Inicializar colección de suites
-    Set m_SuiteNames = New Scripting.Dictionary
-    m_SuiteNames.CompareMode = TextCompare
+    ' El flujo sin estado:
+    Dim suiteNames As Scripting.Dictionary
+    Set suiteNames = RegisterSuitesManually() ' 1. Registrar suites manualmente
 
-    ' Descubrir y registrar automáticamente todas las suites disponibles
-    DiscoverAndRegisterSuites
-
-    ' Ejecutar todas las pruebas y devolver resultado como string
     Dim reporter As ITestReporter
     Dim reporterImpl As New CTestReporter
     Set reporter = reporterImpl
 
     Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites
+    Set allResults = ExecuteAllSuites(suiteNames) ' 2. Ejecutar pasando las suites
 
-    ' Inicializar el reportero con los resultados
     reporter.Initialize allResults
 
-    ' Generar reporte en formato string
     Dim reportString As String
     reportString = reporter.GenerateReport()
 
@@ -118,7 +149,6 @@ Public Function ExecuteAllTestsForCLI() As String
     Exit Function
 
 ErrorHandler:
-    ' Usar el manejador de errores para logging
     If Not errorHandler Is Nothing Then
         errorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllTestsForCLI", True
     End If
@@ -144,16 +174,13 @@ Public Sub RunTestFramework()
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
-    ' Inicializar colección de suites
-    Set m_SuiteNames = New Scripting.Dictionary
-    m_SuiteNames.CompareMode = TextCompare
-    
-    ' Descubrir y registrar automáticamente todas las suites disponibles
-    DiscoverAndRegisterSuites
+    ' El flujo sin estado:
+    Dim suiteNames As Scripting.Dictionary
+    Set suiteNames = DiscoverAndRegisterSuites() ' 1. Descubrir
     
     ' 1. EJECUTAR
     Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites
+    Set allResults = ExecuteAllSuites(suiteNames) ' 2. Ejecutar pasando las suites
     
     ' 2. GENERAR REPORTE (Responsabilidad de CTestReporter)
     Dim reporter As New CTestReporter
@@ -175,48 +202,38 @@ End Sub
 ' GESTIÓN DE DESCUBRIMIENTO AUTOMÁTICO DE SUITES
 '******************************************************************************
 
-' Función que descubre automáticamente todas las suites de prueba basándose en convenciones de nomenclatura
-' Convención: Los módulos de prueba deben comenzar con "Test" o "IntegrationTest"
-' Patrón de función: [NombreModulo]RunAll (ej: TestCConfigRunAll, IntegrationTestCMapeoRepositoryRunAll)
-' Requiere: Referencia a "Microsoft Visual Basic for Applications Extensibility 5.3"
-Private Sub DiscoverAndRegisterSuites()
-    On Error GoTo errorHandler
+Private Function DiscoverAndRegisterSuites() As Scripting.Dictionary
+    On Error GoTo ErrorHandler
     
-    ' Intentar descubrimiento automático primero
+    Dim suites As New Scripting.Dictionary
+    suites.CompareMode = TextCompare
+    
     Dim vbProject As Object
     Set vbProject = Application.VBE.ActiveVBProject
     
-    ' Iterar sobre todos los componentes del proyecto
     Dim vbComponent As Object
     For Each vbComponent In vbProject.VBComponents
-        ' Verificar si es un módulo estándar (Type = 1) y cumple con la convención de nomenclatura
-        If vbComponent.Type = 1 Then ' vbext_ct_StdModule = 1
+        If vbComponent.Type = 1 Then
             Dim componentName As String
             componentName = vbComponent.Name
             
-            ' Verificar si el nombre comienza con "Test" o "TI"
-            If Left(componentName, 4) = "Test" Or Left(componentName, 2) = "TI" Then
-                ' Construir el nombre de la función de ejecución siguiendo el patrón [NombreModulo]RunAll
+            If LCase(Left(componentName, 4)) = "test" Or LCase(Left(componentName, 2)) = "ti" Then
                 Dim suiteFunction As String
                 suiteFunction = componentName & "RunAll"
-                
-                ' Añadir a la colección de suites
-                m_SuiteNames.Add suiteFunction, suiteFunction
+                suites.Add suiteFunction, suiteFunction
             End If
         End If
     Next vbComponent
     
-    Exit Sub
+    Set DiscoverAndRegisterSuites = suites
+    Exit Function
     
-errorHandler:
-    ' El fallo del descubrimiento automático es ahora inaceptable - registrar error crítico
+ErrorHandler:
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.DiscoverAndRegisterSuites - FALLO CRÍTICO EN DESCUBRIMIENTO AUTOMÁTICO", True
-    
-    ' Re-lanzar el error ya que el descubrimiento automático debe funcionar
+    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.DiscoverAndRegisterSuites", True
     Err.Raise Err.Number, "modTestRunner.DiscoverAndRegisterSuites", "FALLO CRÍTICO: " & Err.Description
-End Sub
+End Function
 
 
 
@@ -226,13 +243,13 @@ End Sub
 '******************************************************************************
 
 ' Función que ejecuta todas las suites registradas y devuelve resultados
-Private Function ExecuteAllSuites() As Scripting.Dictionary
+Private Function ExecuteAllSuites(ByVal suiteNames As Scripting.Dictionary) As Scripting.Dictionary
     Dim allResults As New Scripting.Dictionary
     allResults.CompareMode = TextCompare
     Dim i As Integer
     
     Dim suiteKeys As Variant
-    suiteKeys = m_SuiteNames.Keys()
+    suiteKeys = suiteNames.Keys()
     
     For i = 0 To UBound(suiteKeys)
         Dim suiteName As String

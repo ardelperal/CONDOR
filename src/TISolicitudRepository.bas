@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TISolicitudRepository"
+Attribute VB_Name = "TISolicitudRepository"
 Option Compare Database
 Option Explicit
 
@@ -47,7 +47,7 @@ Private Function TestSaveAndRetrieveSolicitud() As CTestResult
     ' Assert
     modAssert.AssertTrue newId > 0, "El ID devuelto debe ser positivo."
     modAssert.AssertNotNull retrievedSolicitud, "La solicitud recuperada no debe ser nula."
-    AssertEquals "TEST-SAVE-001", retrievedSolicitud.codigoSolicitud, "El código de solicitud no coincide."
+    modAssert.AssertEquals "TEST-SAVE-001", retrievedSolicitud.codigoSolicitud, "El código de solicitud no coincide."
     
     TestSaveAndRetrieveSolicitud.Pass
 Cleanup:

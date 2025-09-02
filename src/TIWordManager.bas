@@ -17,14 +17,14 @@ Private Function GetTestFolderPath() As String
     GetTestFolderPath = Environ("TEMP") & "\" & TEST_FOLDER_NAME & "\"
 End Function
 
-Public Function TIWordManager_RunAll() As CTestSuiteResult
+Public Function TIWordManagerRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "IntegrationTestWordManager"
+    suiteResult.Initialize "TIWordManager"
     
     suiteResult.AddResult Test_CicloCompleto_Success()
     suiteResult.AddResult Test_AbrirFicheroInexistente_DevuelveFalse()
     
-    Set TIWordManager_RunAll = suiteResult
+    Set TIWordManagerRunAll = suiteResult
 End Function
 
 Private Function Test_CicloCompleto_Success() As CTestResult

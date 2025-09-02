@@ -1133,12 +1133,22 @@ Sub ExecuteTests()
     WScript.Echo "Ejecutando suite de pruebas en Access..."
     On Error Resume Next
     
-    ' Suprimir diálogos inesperados de Access durante las pruebas
+    ' Configurar Access en modo completamente silencioso para pruebas
     objAccess.Application.DisplayAlerts = False
+    objAccess.Application.Echo False
+    objAccess.Visible = False
+    objAccess.UserControl = False
+    
+    ' Configuraciones adicionales para suprimir todos los diálogos
+    On Error Resume Next
+    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
+    objAccess.DoCmd.SetWarnings False
+    Err.Clear
+    On Error Resume Next
     
     ' CORRECCIÓN CRÍTICA: La llamada a .Run se hace directamente y se asigna a la variable.
     ' VBScript manejará la captura del valor de retorno de la función VBA.
-    reportString = objAccess.Run("modTestRunner.ExecuteAllTestsForCLI")
+    reportString = objAccess.Run("RunAllTests")
     
     If Err.Number <> 0 Then
         WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas."
@@ -2881,17 +2891,10 @@ Function GetFunctionalityFiles(strFunctionality)
                            "modSolicitudServiceFactory.bas", "modWordManagerFactory.bas", _
                            "modWorkflowServiceFactory.bas")
         
-        Case "tests", "pruebas", "testing"
-            ' Sección 12 - Archivos de Pruebas
-            arrFiles = Array("TestAppManager.bas", "TestAuthService.bas", "TestCConfig.bas", _
-                           "TestCExpedienteService.bas", "TestDocumentService.bas", _
-                           "TestErrorHandlerService.bas", "TestModAssert.bas", "TestOperationLogger.bas", _
-                           "TestSolicitudService.bas", "TestWorkflowService.bas", _
-                           "TIAuthRepository.bas", "TIExpedienteRepository.bas", _
-                           "TIMapeoRepository.bas", "TIDocumentService.bas", _
-                           "TIFileSystem.bas", "TINotificationService.bas", _
-                           "TIOperationRepository.bas", "TISolicitudRepository.bas", _
-                           "IntegrationTestWordManager.bas", "TIWorkflowRepository.bas")
+        Case "tests", "pruebas", "testing", "test"
+            ' Sección 12 - Archivos de Pruebas (Autodescubrimiento)
+            ' Retornar array vacío para activar autodescubrimiento por prefijo T/TI
+            arrFiles = Array()
         
         Case Else
             ' Para funcionalidades no definidas, usar búsqueda por nombre (comportamiento anterior)
@@ -2952,7 +2955,11 @@ Sub BundleFunctionality()
         WScript.Echo "Usando lista predefinida de archivos según CONDOR_MASTER_PLAN.md"
         WScript.Echo "Archivos esperados: " & (UBound(arrFunctionalityFiles) + 1)
     Else
-        WScript.Echo "Usando búsqueda por nombre de funcionalidad"
+        If LCase(strFunctionality) = "tests" Or LCase(strFunctionality) = "test" Or LCase(strFunctionality) = "pruebas" Or LCase(strFunctionality) = "testing" Then
+            WScript.Echo "Usando autodescubrimiento para archivos de pruebas (T* y TI*)"
+        Else
+            WScript.Echo "Usando búsqueda por nombre de funcionalidad"
+        End If
     End If
     WScript.Echo ""
     
@@ -3002,11 +3009,30 @@ Sub BundleFunctionality()
             End If
         Next
     Else
-        ' Usar búsqueda por nombre (comportamiento anterior)
+        ' Usar búsqueda por nombre o autodescubrimiento para Tests
         For Each objFile In objFolder.Files
             If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                ' Verificar si el nombre del archivo contiene la funcionalidad (sin distinguir mayúsculas)
-                If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
+                Dim shouldInclude
+                shouldInclude = False
+                
+                ' Para funcionalidad Tests/test, buscar archivos que empiecen por T o TI
+                If LCase(strFunctionality) = "tests" Or LCase(strFunctionality) = "test" Or LCase(strFunctionality) = "pruebas" Or LCase(strFunctionality) = "testing" Then
+                    Dim baseName
+                    baseName = objFSO.GetBaseName(objFile.Name)
+                    If Left(LCase(baseName), 1) = "t" Then
+                        ' Incluir archivos que empiecen por T o TI
+                        If Left(LCase(baseName), 2) = "ti" Or Left(LCase(baseName), 4) = "test" Then
+                            shouldInclude = True
+                        End If
+                    End If
+                Else
+                    ' Comportamiento anterior para otras funcionalidades
+                    If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
+                        shouldInclude = True
+                    End If
+                End If
+                
+                If shouldInclude Then
                     foundFiles = foundFiles + 1
                     
                     ' Copiar archivo con extensión .txt añadida
