@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -25,8 +25,8 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     IWorkflowRepository_IsValidTransition = True
 End Function
 
-Private Function IWorkflowRepository_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
-    ' Placeholder para compilación
+Private Function IWorkflowRepository_GetNextStates(ByVal idEstadoActual As Long, ByVal usuarioRol As String) As Scripting.Dictionary
+    ' Placeholder para compilación - usar idEstadoActual numérico en consultas SQL
     Set IWorkflowRepository_GetNextStates = New Scripting.Dictionary
 End Function
 

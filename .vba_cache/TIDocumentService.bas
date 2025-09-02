@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TIDocumentService"
+Attribute VB_Name = "TIDocumentService"
 Option Compare Database
 Option Explicit
 
@@ -141,17 +141,17 @@ Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudS
     config.SetSetting "PLANTILLA_PATH", modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH
     config.SetSetting "GENERATED_DOCS_PATH", modTestUtils.GetProjectPath() & TEST_GENERATED_PATH
 
-    ' 2. Crear servicios y repositorios usando sus factorías correspondientes
-    '    CORRECCIÓN: Se llama a las factorías de SERVICIOS, no de repositorios.
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
-    Set wordManager = modWordManagerFactory.CreateWordManager(errorHandler)
-    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService()
-    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository() ' Mapeo es un caso especial, se accede vía repo.
+    ' 2. Crear servicios y repositorios propagando la configuración de prueba
+    '    CORRECCIÓN CRÍTICA: Propagar config a TODAS las factorías para evitar configuraciones vacías
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(config)
+    Set wordManager = modWordManagerFactory.CreateWordManager(config)
+    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService(config)
+    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(config)
 
-    ' 3. Finalmente, crear el servicio principal a probar usando su propia factoría.
-    '    La factoría se encargará de crear y conectar todas las piezas.
-    Set documentService = modDocumentServiceFactory.CreateDocumentService()
+    ' 3. Finalmente, crear el servicio principal a probar propagando la configuración
+    '    La factoría se encargará de crear y conectar todas las piezas con la configuración correcta
+    Set documentService = modDocumentServiceFactory.CreateDocumentService(config)
 
 End Sub
 
@@ -161,8 +161,10 @@ Private Sub InsertTestData()
     Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH)
 
     db.Execute "INSERT INTO tbSolicitudes (idSolicitud, tipoSolicitud, codigoSolicitud, idExpediente) VALUES (999, 'PC', 'TEST-001', 1)"
-    db.Execute "INSERT INTO tbDatosPC (idSolicitud, Parte0_1) VALUES (999, 'DATO_PRUEBA_PARTE0_1')"
-    db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) VALUES ('PC', 'Parte0_1', 'MARCADOR_PARTE0_1')"
+    ' CORRECCIÓN: Usar un campo real de la tabla tbDatosPC
+    db.Execute "INSERT INTO tbDatosPC (idSolicitud, refContratoInspeccionOficial) VALUES (999, 'DATO_PRUEBA_CONTRATO')"
+    ' CORRECCIÓN: Alinear el mapeo con el campo real
+    db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) VALUES ('PC', 'refContratoInspeccionOficial', 'MARCADOR_CONTRATO')"
 
     db.Close
     Set db = Nothing

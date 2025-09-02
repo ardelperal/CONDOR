@@ -11,6 +11,7 @@ Dim strAction
 Dim objFSO
 Dim objArgs
 Dim strDbPassword
+Dim pathArg, i
 
 ' Configuracion
 ' Configuracion inicial - se determinara la base de datos segun la accion
@@ -37,25 +38,20 @@ If objArgs.Count = 0 Then
     WScript.Echo "COMANDOS DISPONIBLES:"
     WScript.Echo "  export     - Exportar modulos VBA a /src (con codificacion ANSI)"
     WScript.Echo "  validate   - Validar sintaxis de modulos VBA sin importar"
+    WScript.Echo "  validate-schema - Valida el esquema de las BDs de prueba contra el Master Plan"
     WScript.Echo "  test       - Ejecutar suite de pruebas unitarias"
-    WScript.Echo "  update     - Sincronizar modulos VBA (automatico o selectivo)"
+    
     WScript.Echo "  rebuild    - Reconstruir proyecto VBA (eliminar todos los modulos y reimportar)"
     WScript.Echo "  bundle <funcionalidad> [ruta_destino] - Empaquetar archivos de codigo por funcionalidad"
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
-    WScript.Echo "  listtables [db_path] - Listar tablas (opcionalmente de base especifica)"
+    WScript.Echo "  listtables [db_path] [--schema] [--output] - Listar tablas de BD. --schema: muestra campos y tipos. --output: exporta a listtables_output.txt"
     WScript.Echo "  relink <db_path> <folder> - Re-vincular tablas a bases locales"
     WScript.Echo "  relink --all - Re-vincular todas las bases en ./back automaticamente"
     WScript.Echo ""
-    WScript.Echo "COMANDO UPDATE - SINCRONIZACION INTELIGENTE:"
-    WScript.Echo "  update                    - Modo automatico: sincroniza solo archivos modificados"
-    WScript.Echo "  update <modulo1,modulo2>  - Modo selectivo: sincroniza modulos especificos"
-    WScript.Echo ""
-    WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
-    WScript.Echo "  1. cscript condor_cli.vbs update    (sincronizacion rapida de cambios)"
-    WScript.Echo "  2. cscript condor_cli.vbs rebuild   (reconstruccion completa si es necesario)"
-    WScript.Echo ""
+
+
     WScript.Echo "PARÁMETROS DE FUNCIONALIDAD PARA 'bundle' (según CONDOR_MASTER_PLAN.md):"
     WScript.Echo "  Auth: Empaqueta Autenticación + dependencias (Config, Error, Modelos)"
     WScript.Echo "  Document: Empaqueta Gestión de Documentos + dependencias (Config, FileSystem, Error, Word, Modelos)"
@@ -78,25 +74,26 @@ If objArgs.Count = 0 Then
     WScript.Echo "  --verbose  - Mostrar informacion detallada durante la operacion"
     WScript.Echo ""
     WScript.Echo "EJEMPLOS:"
-    WScript.Echo "  cscript condor_cli.vbs update"
-    WScript.Echo "  cscript condor_cli.vbs update CAuthService,CExpedienteService"
     WScript.Echo "  cscript condor_cli.vbs validate"
+    WScript.Echo "  cscript condor_cli.vbs validate-schema"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
     WScript.Echo "  cscript condor_cli.vbs rebuild"
     WScript.Echo "  cscript condor_cli.vbs bundle Tests"
+    WScript.Echo "  cscript condor_cli.vbs listtables"
+    WScript.Echo "  cscript condor_cli.vbs listtables ./back/test_db/templates/CONDOR_test_template.accdb --schema"
     WScript.Quit 1
 End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "update" And strAction <> "bundle" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'update' o 'bundle'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint' o 'bundle'"
     WScript.Quit 1
 End If
 
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 
-' El comando bundle no requiere Access
+' Los comandos bundle y validate-schema no requieren Access
 If strAction = "bundle" Then
     ' Verificar si se solicita ayuda específica para bundle
     If objArgs.Count > 1 Then
@@ -107,15 +104,27 @@ If strAction = "bundle" Then
     End If
     Call BundleFunctionality()
     WScript.Quit 0
+ElseIf strAction = "validate-schema" Then
+    Call ValidateSchema()
+    WScript.Quit 0
 End If
 
 ' Determinar qué base de datos usar según la acción
 If strAction = "createtable" Or strAction = "droptable" Then
     strAccessPath = strDataPath
 ElseIf strAction = "listtables" Then
-    ' Para listtables, usar base específica si se proporciona, sino usar por defecto
-    If objArgs.Count > 1 Then
-        strAccessPath = objArgs(1)
+    pathArg = ""
+    ' Buscar un argumento que no sea el flag --schema
+    For i = 1 To objArgs.Count - 1
+        If LCase(objArgs(i)) <> "--schema" Then
+            pathArg = objArgs(i)
+            Exit For
+        End If
+    Next
+    
+    If pathArg <> "" Then
+        ' Resolver ruta relativa a absoluta
+        strAccessPath = ResolveRelativePath(pathArg)
     Else
         strAccessPath = strDataPath
     End If
@@ -137,15 +146,7 @@ WScript.Echo "Accion: " & strAction
 WScript.Echo "Base de datos: " & strAccessPath
 WScript.Echo "Directorio: " & strSourcePath
 
-' Para el comando update, verificar cambios antes de abrir Access
-If strAction = "update" Then
-    If Not CheckForChangesBeforeUpdate() Then
-        WScript.Echo "=== NO HAY CAMBIOS DETECTADOS ==="
-        WScript.Echo "✅ Todos los archivos están sincronizados. No es necesario abrir la base de datos."
-        WScript.Echo "=== SINCRONIZACION COMPLETADA EXITOSAMENTE ==="
-        WScript.Quit 0
-    End If
-End If
+
 
 ' Verificar y cerrar procesos de Access existentes
 Call CloseExistingAccessProcesses()
@@ -206,7 +207,7 @@ WScript.Echo "Base de datos abierta correctamente."
 Call EnsureVBReferences
 
 ' Verificar opciones especiales
-Dim bDryRun, bVerbose, i
+Dim bDryRun, bVerbose
 bDryRun = False
 bVerbose = False
 
@@ -240,8 +241,7 @@ ElseIf strAction = "lint" Then
     Call LintProject()
 ElseIf strAction = "relink" Then
     Call RelinkTables()
-ElseIf strAction = "update" Then
-    Call UpdateProject()
+
 End If
 
 ' Cerrar Access
@@ -483,24 +483,92 @@ End Sub
 
 ' Subrutina para listar tablas
 Sub ListTables()
-    Dim tbl
-    Dim tableCount
+    Dim tbl, fld, idx
+    Dim tableCount, showSchema, outputToFile
+    Dim primaryKeys
+    Dim outputFile, outputPath
     
-    WScript.Echo "=== LISTADO DE TABLAS ==="
-    tableCount = 0
+    ' Verificar flags de argumentos
+    Dim arg
+    showSchema = False
+    outputToFile = False
     
-    For Each tbl In objAccess.CurrentDb.TableDefs
-        ' Filtrar tablas del sistema (que empiezan con MSys)
-        If Left(tbl.Name, 4) <> "MSys" And Left(tbl.Name, 1) <> "~" Then
-            tableCount = tableCount + 1
-            WScript.Echo tableCount & ". " & tbl.Name & " (" & tbl.RecordCount & " registros)"
+    For Each arg In objArgs
+        If LCase(arg) = "--schema" Then
+            showSchema = True
+        ElseIf LCase(arg) = "--output" Then
+            outputToFile = True
         End If
     Next
     
-    If tableCount = 0 Then
-        WScript.Echo "No se encontraron tablas de usuario"
-    Else
-        WScript.Echo "Total de tablas: " & tableCount
+    ' Configurar salida
+    If outputToFile Then
+        outputPath = objFSO.GetAbsolutePathName(".") & "\listtables_output.txt"
+        Set outputFile = objFSO.CreateTextFile(outputPath, True)
+        WScript.Echo "Exportando resultados a: " & outputPath
+    End If
+    
+    WScript.Echo "=== LISTADO DE TABLAS ==="
+    If outputToFile Then outputFile.WriteLine "=== LISTADO DE TABLAS ==="
+    
+    If showSchema Then 
+        WScript.Echo "Modo: Esquema Detallado"
+        If outputToFile Then outputFile.WriteLine "Modo: Esquema Detallado"
+    End If
+    
+    tableCount = 0
+    For Each tbl In objAccess.CurrentDb.TableDefs
+        If Left(tbl.Name, 4) <> "MSys" And Left(tbl.Name, 1) <> "~" Then
+            tableCount = tableCount + 1
+            WScript.Echo ""
+            If outputToFile Then outputFile.WriteLine ""
+            
+            WScript.Echo "------------------------------------------------------------"
+            If outputToFile Then outputFile.WriteLine "------------------------------------------------------------"
+            
+            WScript.Echo tableCount & ". " & tbl.Name & " (" & tbl.RecordCount & " registros)"
+            If outputToFile Then outputFile.WriteLine tableCount & ". " & tbl.Name & " (" & tbl.RecordCount & " registros)"
+            
+            WScript.Echo "------------------------------------------------------------"
+            If outputToFile Then outputFile.WriteLine "------------------------------------------------------------"
+            
+            If showSchema Then
+                Set primaryKeys = CreateObject("Scripting.Dictionary")
+                For Each idx In tbl.Indexes
+                    If idx.Primary Then
+                        For Each fld In idx.Fields
+                            primaryKeys.Add fld.Name, True
+                        Next
+                    End If
+                Next
+    
+                WScript.Echo "Campo" & vbTab & vbTab & "Tipo" & vbTab & vbTab & "PK"
+                If outputToFile Then outputFile.WriteLine "Campo" & vbTab & vbTab & "Tipo" & vbTab & vbTab & "PK"
+                
+                WScript.Echo "------------------------------------------------------------"
+                If outputToFile Then outputFile.WriteLine "------------------------------------------------------------"
+                
+                For Each fld In tbl.Fields
+                    Dim pkMarker
+                    If primaryKeys.Exists(fld.Name) Then pkMarker = "PK" Else pkMarker = ""
+                    WScript.Echo fld.Name & vbTab & vbTab & DaoTypeToString(fld.Type) & vbTab & vbTab & pkMarker
+                    If outputToFile Then outputFile.WriteLine fld.Name & vbTab & vbTab & DaoTypeToString(fld.Type) & vbTab & vbTab & pkMarker
+                Next
+            End If
+        End If
+    Next
+    
+    WScript.Echo ""
+    If outputToFile Then outputFile.WriteLine ""
+    
+    WScript.Echo "Total de tablas: " & tableCount
+    If outputToFile Then outputFile.WriteLine "Total de tablas: " & tableCount
+    
+    ' Cerrar archivo si se está usando
+    If outputToFile Then
+        outputFile.Close
+        Set outputFile = Nothing
+        WScript.Echo "Archivo generado exitosamente: " & outputPath
     End If
 End Sub
 
@@ -945,6 +1013,146 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
     On Error GoTo 0
 End Sub
 
+' Subrutina principal para validar esquemas de base de datos
+Sub ValidateSchema()
+    WScript.Echo "=== INICIANDO VALIDACIÓN DE ESQUEMA DE BASE DE DATOS ==="
+    
+    Dim lanzaderaSchema, condorSchema
+    Dim allOk
+    allOk = True
+    
+    ' Definir esquema esperado para Lanzadera
+    Set lanzaderaSchema = CreateObject("Scripting.Dictionary")
+    lanzaderaSchema.Add "TbUsuariosAplicaciones", Array("CorreoUsuario", "EsAdministrador", "ID")
+    lanzaderaSchema.Add "TbUsuariosAplicacionesPermisos", Array("CorreoUsuario", "IDAplicacion", "IDPermiso")
+    
+    ' Definir esquema esperado para CONDOR
+    Set condorSchema = CreateObject("Scripting.Dictionary")
+    condorSchema.Add "tbSolicitudes", Array("idSolicitud", "idExpediente", "tipoSolicitud", "estadoInterno", "fechaCreacion", "usuarioCreacion", "fechaModificacion", "usuarioModificacion", "observaciones")
+    condorSchema.Add "tbDatosPC", Array("idSolicitud", "numeroExpediente", "fechaExpediente", "tipoExpediente", "descripcionCambio", "justificacionCambio", "impactoCalidad", "impactoSeguridad", "impactoOperacional")
+    condorSchema.Add "tbDatosCDCA", Array("idSolicitud", "numeroExpediente", "fechaExpediente", "tipoExpediente", "descripcionDesviacion", "justificacionDesviacion", "impactoCalidad", "impactoSeguridad", "impactoOperacional")
+    condorSchema.Add "tbDatosCDCASUB", Array("idSolicitud", "numeroExpediente", "fechaExpediente", "tipoExpediente", "descripcionDesviacion", "justificacionDesviacion", "impactoCalidad", "impactoSeguridad", "impactoOperacional", "subsuministrador")
+    condorSchema.Add "tbMapeoCampos", Array("NombrePlantilla", "NombreCampoTabla", "ValorAsociado", "NombreCampoWord")
+    condorSchema.Add "tbLogCambios", Array("idLog", "idSolicitud", "fechaCambio", "usuarioCambio", "campoModificado", "valorAnterior", "valorNuevo")
+    condorSchema.Add "tbLogErrores", Array("idError", "fechaError", "tipoError", "descripcionError", "moduloOrigen", "funcionOrigen", "usuarioAfectado")
+    condorSchema.Add "tbOperacionesLog", Array("idOperacion", "fechaOperacion", "tipoOperacion", "descripcionOperacion", "usuario", "resultado")
+    condorSchema.Add "tbAdjuntos", Array("idAdjunto", "idSolicitud", "nombreArchivo", "rutaArchivo", "tipoArchivo", "fechaSubida", "usuarioSubida")
+    condorSchema.Add "tbEstados", Array("idEstado", "nombreEstado", "descripcionEstado", "esEstadoFinal")
+    condorSchema.Add "tbTransiciones", Array("idTransicion", "estadoOrigen", "estadoDestino", "accionRequerida", "rolRequerido")
+    condorSchema.Add "tbConfiguracion", Array("clave", "valor", "descripcion", "categoria")
+    condorSchema.Add "TbLocalConfig", Array("clave", "valor", "descripcion", "categoria")
+    
+    ' Validar las bases de datos
+    If Not VerifySchema(strSourcePath & "\..\back\test_db\templates\Lanzadera_test_template.accdb", "dpddpd", lanzaderaSchema) Then allOk = False
+    If Not VerifySchema(strSourcePath & "\..\back\test_db\templates\CONDOR_test_template.accdb", "", condorSchema) Then allOk = False
+    
+    If allOk Then
+        WScript.Echo "✓ VALIDACIÓN DE ESQUEMA EXITOSA. Todas las bases de datos son consistentes."
+        WScript.Quit 0
+    Else
+        WScript.Echo "X VALIDACIÓN DE ESQUEMA FALLIDA. Corrija las discrepancias."
+        WScript.Quit 1
+    End If
+End Sub
+
+' Función auxiliar para verificar esquema de una base de datos específica
+Private Function VerifySchema(dbPath, dbPassword, expectedSchema)
+    On Error Resume Next
+    
+    WScript.Echo "Validando base de datos: " & dbPath
+    
+    ' Verificar que existe la base de datos
+    If Not objFSO.FileExists(dbPath) Then
+        WScript.Echo "❌ ERROR: Base de datos no encontrada: " & dbPath
+        VerifySchema = False
+        Exit Function
+    End If
+    
+    ' Crear conexión ADO
+    Dim conn, rs
+    Set conn = CreateObject("ADODB.Connection")
+    
+    ' Construir cadena de conexión
+    Dim connectionString
+    If dbPassword = "" Then
+        connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & dbPath & ";"
+    Else
+        connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & dbPath & ";Jet OLEDB:Database Password=" & dbPassword & ";"
+    End If
+    
+    ' Abrir conexión
+    conn.Open connectionString
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "❌ ERROR: No se pudo conectar a la base de datos: " & Err.Description
+        VerifySchema = False
+        Err.Clear
+        Exit Function
+    End If
+    
+    ' Iterar sobre cada tabla esperada
+    Dim tableName, expectedFields, i
+    Dim tableExists, fieldExists
+    Dim allTablesOk
+    allTablesOk = True
+    
+    For Each tableName In expectedSchema.Keys
+        expectedFields = expectedSchema(tableName)
+        
+        ' Verificar que existe la tabla usando una consulta más simple
+         Set rs = CreateObject("ADODB.Recordset")
+         On Error Resume Next
+         rs.Open "SELECT TOP 1 * FROM [" & tableName & "]", conn
+         tableExists = (Err.Number = 0)
+         If tableExists Then rs.Close
+         Err.Clear
+         On Error GoTo 0
+        
+        If Not tableExists Then
+            WScript.Echo "❌ ERROR: Tabla no encontrada: " & tableName
+            allTablesOk = False
+        Else
+            WScript.Echo "✓ Tabla encontrada: " & tableName
+            
+            ' Verificar cada campo esperado
+            For i = 0 To UBound(expectedFields)
+                Dim fieldName
+                fieldName = expectedFields(i)
+                
+                ' Verificar que existe el campo usando una consulta más simple
+                 Set rs = CreateObject("ADODB.Recordset")
+                 On Error Resume Next
+                 rs.Open "SELECT [" & fieldName & "] FROM [" & tableName & "] WHERE 1=0", conn
+                 fieldExists = (Err.Number = 0)
+                 If fieldExists Then rs.Close
+                 Err.Clear
+                 On Error GoTo 0
+                
+                If Not fieldExists Then
+                    WScript.Echo "❌ ERROR: Campo no encontrado: " & tableName & "." & fieldName
+                    allTablesOk = False
+                Else
+                    WScript.Echo "  ✓ Campo encontrado: " & fieldName
+                End If
+            Next
+        End If
+    Next
+    
+    ' Cerrar conexión
+    conn.Close
+    Set conn = Nothing
+    
+    If allTablesOk Then
+        WScript.Echo "✅ Base de datos validada correctamente: " & objFSO.GetFileName(dbPath)
+        VerifySchema = True
+    Else
+        WScript.Echo "❌ Errores encontrados en: " & objFSO.GetFileName(dbPath)
+        VerifySchema = False
+    End If
+    
+    On Error GoTo 0
+End Function
+
 Sub EnsureVBReferences()
     WScript.Echo "Verificando referencias VBA críticas..."
     On Error Resume Next
@@ -985,9 +1193,6 @@ Sub ShowHelp()
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
-    WScript.Echo "  update                       - Sincronización automática (solo archivos modificados)"
-    WScript.Echo "  update <módulo1,módulo2>     - Sincronización selectiva de módulos específicos"
-    WScript.Echo "                                 Ejemplo: update CAuthService,CExpedienteService"
     WScript.Echo "  rebuild                      - Reconstrucción completa del proyecto VBA"
     WScript.Echo "                                 (Elimina todos los módulos y reimporta)"
     WScript.Echo ""
@@ -1068,14 +1273,11 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
     WScript.Echo "  1. cscript condor_cli.vbs validate     (validar sintaxis antes de importar)"
-    WScript.Echo "  2. cscript condor_cli.vbs update       (sincronización rápida de cambios)"
+    WScript.Echo "  2. cscript condor_cli.vbs rebuild      (reconstrucción completa del proyecto)"
     WScript.Echo "  3. cscript condor_cli.vbs test         (ejecutar pruebas unitarias)"
-    WScript.Echo "  4. cscript condor_cli.vbs rebuild      (reconstrucción completa si es necesario)"
     WScript.Echo ""
     WScript.Echo "EJEMPLOS DE USO:"
     WScript.Echo "  cscript condor_cli.vbs --help"
-    WScript.Echo "  cscript condor_cli.vbs update"
-    WScript.Echo "  cscript condor_cli.vbs update CAuthService,CExpedienteService"
     WScript.Echo "  cscript condor_cli.vbs validate --verbose"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
     WScript.Echo "  cscript condor_cli.vbs bundle Auth"
@@ -1130,47 +1332,57 @@ Sub ExecuteTests()
     WScript.Echo "=== INICIANDO EJECUCION DE PRUEBAS ==="
     Dim reportString
     
-    ' Ejecutar las pruebas en Access y capturar el resultado
     WScript.Echo "Ejecutando suite de pruebas en Access..."
     On Error Resume Next
     
-    ' Suprimir diálogos inesperados de Access durante las pruebas
+    ' Configurar Access en modo completamente silencioso para pruebas
     objAccess.Application.DisplayAlerts = False
+    objAccess.Application.Echo False
+    objAccess.Visible = False
+    objAccess.UserControl = False
     
-    ' Llamar directamente a ExecuteAllTestsForCLI y capturar el valor de retorno
-    reportString = objAccess.Application.Run("modTestRunner.ExecuteAllTestsForCLI")
+    ' Configuraciones adicionales para suprimir todos los diálogos
+    On Error Resume Next
+    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
+    objAccess.DoCmd.SetWarnings False
+    Err.Clear
+    On Error Resume Next
+    
+    ' CORRECCIÓN CRÍTICA: La llamada a .Run se hace directamente y se asigna a la variable.
+    ' VBScript manejará la captura del valor de retorno de la función VBA.
+    reportString = objAccess.Run("ExecuteAllTestsForCLI")
     
     If Err.Number <> 0 Then
         WScript.Echo "ERROR: Fallo crítico al invocar la suite de pruebas."
         WScript.Echo "  Código de Error: " & Err.Number
         WScript.Echo "  Descripción: " & Err.Description
         WScript.Echo "  Fuente: " & Err.Source
-        WScript.Echo "SUGERENCIA: Abre Access manualmente y ejecuta RunAllTests desde el módulo modTestRunner para ver el error específico"
+        WScript.Echo "SUGERENCIA: Abre Access manualmente y ejecuta ExecuteAllTestsForCLI desde el módulo modTestRunner."
         objAccess.Quit
         WScript.Quit 1
     End If
     On Error GoTo 0
     
-    ' Verificar si reportString está vacío
+    ' Verificar si el string devuelto es válido
     If IsEmpty(reportString) Or reportString = "" Then
-        WScript.Echo "ERROR: La comunicación con el motor de pruebas de Access falló"
-        WScript.Echo "SUGERENCIA: El motor de pruebas no devolvió ningún resultado"
+        WScript.Echo "ERROR: El motor de pruebas de Access no devolvió ningún resultado."
+        WScript.Echo "SUGERENCIA: Verifique que la función 'ExecuteAllTestsForCLI' en 'modTestRunner' no esté fallando silenciosamente."
         objAccess.Quit
         WScript.Quit 1
     End If
     
-    ' Mostrar el reporte completo directamente en la consola
+    ' Mostrar el reporte completo
     WScript.Echo "--- INICIO DE RESULTADOS DE PRUEBAS ---"
     WScript.Echo reportString
     WScript.Echo "--- FIN DE RESULTADOS DE PRUEBAS ---"
     
     ' Determinar el éxito o fracaso buscando la línea final
-    If InStr(reportString, "RESULT: SUCCESS") > 0 Then
+    If InStr(UCase(reportString), "RESULT: SUCCESS") > 0 Then
         WScript.Echo "RESULTADO FINAL: ✓ Todas las pruebas pasaron."
-        WScript.Quit 0 ' Código de éxito
+        WScript.Quit 0 ' Éxito
     Else
         WScript.Echo "RESULTADO FINAL: ✗ Pruebas fallidas."
-        WScript.Quit 1 ' Código de error para CI/CD
+        WScript.Quit 1 ' Error
     End If
 End Sub
 
@@ -1931,65 +2143,7 @@ End Sub
 
 ' Subrutina para sincronizar un módulo individual
 ' Parámetro: moduleName - Nombre del módulo a sincronizar (ej. "CAuthService")
-Sub SyncSingleModule(moduleName)
-    WScript.Echo "=== SINCRONIZANDO MODULO: " & moduleName & " ==="
-    
-    On Error Resume Next
-    
-    ' --- Paso 1: Verificar que existe el archivo fuente ---
-    Dim strBasFile, strClsFile, strSourceFile, fileExtension
-    strBasFile = objFSO.BuildPath(strSourcePath, moduleName & ".bas")
-    strClsFile = objFSO.BuildPath(strSourcePath, moduleName & ".cls")
-    
-    If objFSO.FileExists(strBasFile) Then
-        strSourceFile = strBasFile
-        fileExtension = "bas"
-    ElseIf objFSO.FileExists(strClsFile) Then
-        strSourceFile = strClsFile
-        fileExtension = "cls"
-    Else
-        WScript.Echo "  ❌ No se encontró archivo fuente para " & moduleName
-        Exit Sub
-    End If
-    
-    WScript.Echo "  ✓ Archivo fuente encontrado: " & strSourceFile
-    
-    ' --- Paso 2: Validar sintaxis del archivo ---
-    Dim errorDetails, validationResult
-    validationResult = ValidateVBASyntax(strSourceFile, errorDetails)
-    
-    If Not validationResult Then
-        WScript.Echo "  ❌ Error de sintaxis en " & moduleName & ":"
-        WScript.Echo "      " & errorDetails
-        Exit Sub
-    End If
-    
-    WScript.Echo "  ✓ Sintaxis validada correctamente"
-    
-    ' --- Paso 3: Limpiar contenido con conversión UTF-8 -> ANSI ---
-    Dim cleanedContent
-    cleanedContent = CleanVBAFile(strSourceFile, fileExtension)
-    
-    If cleanedContent = "" Then
-        WScript.Echo "  ❌ Error: No se pudo leer o limpiar el archivo " & strSourceFile
-        Exit Sub
-    End If
-    
-    WScript.Echo "  ✓ Contenido limpiado y convertido a ANSI"
-    
-    ' --- Paso 4: Importar usando ImportModuleWithAnsiEncoding ---
-    Call ImportModuleWithAnsiEncoding(strSourceFile, moduleName, fileExtension, Nothing, cleanedContent)
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
-        Err.Clear
-        Exit Sub
-    End If
-    
-    WScript.Echo "  ✅ Módulo " & moduleName & " sincronizado correctamente con conversión de codificación"
-    
-    On Error GoTo 0
-End Sub
+
 
 ' Subrutina optimizada para importar un solo módulo (sin cerrar/abrir BD)
 Sub ImportSingleModuleOptimized(moduleName)
@@ -2059,439 +2213,18 @@ Sub ImportSingleModuleOptimized(moduleName)
 End Sub
 
 ' Subrutina para actualizar proyecto VBA con sincronización selectiva
-Sub UpdateProject()
-    WScript.Echo "=== ACTUALIZACION SELECTIVA DEL PROYECTO VBA ==="
-    
-    ' Configurar Access en modo silencioso para evitar confirmaciones
-    On Error Resume Next
-    ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación
-    objAccess.Application.Echo False
-    objAccess.DisplayAlerts = False
-    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
-    objAccess.VBE.MainWindow.Visible = False
-    ' Configuraciones adicionales para evitar popups
-    objAccess.Application.UserControl = False
-    objAccess.Application.Interactive = False
-    objAccess.VBE.CommandBars.AdaptiveMenus = False
-    Err.Clear
-    On Error GoTo 0
-    
-    ' Verificar si hay argumentos adicionales (lista de módulos)
-    If objArgs.Count > 1 Then
-        ' Modo selectivo: sincronizar módulos específicos
-        WScript.Echo "Modo selectivo: sincronizando módulos especificados..."
-        
-        Dim moduleList, moduleNames, i
-        moduleList = objArgs(1)
-        moduleNames = Split(moduleList, ",")
-        
-        WScript.Echo "Módulos a sincronizar: " & UBound(moduleNames) + 1
-        
-        ' Paso 1: Eliminar todos los módulos especificados
-        WScript.Echo "Eliminando módulos existentes..."
-        For i = 0 To UBound(moduleNames)
-            Dim moduleName
-            moduleName = Trim(moduleNames(i))
-            
-            If moduleName <> "" Then
-                WScript.Echo "  Eliminando componente: " & moduleName
-                Call RemoveVBAComponent(moduleName)
-            End If
-        Next
-        
-        ' Paso 2: Cerrar base de datos guardando cambios
-        WScript.Echo "Cerrando base de datos guardando cambios..."
-        
-        ' Guardar todos los cambios pendientes antes de cerrar
-        On Error Resume Next
-        objAccess.DoCmd.Save
-        objAccess.DoCmd.RunCommand 2040  ' acCmdSaveAll
-        Err.Clear
-        On Error GoTo 0
-        
-        objAccess.DoCmd.Close
-        objAccess.Quit 1  ' Cerrar guardando
-        Set objAccess = Nothing
-        WScript.Echo "  ✓ Base de datos cerrada y guardada"
-        
-        ' Paso 3: Reabrir base de datos en modo seguro y oculto
-        WScript.Echo "Reabriendo base de datos en modo seguro..."
-        Set objAccess = CreateObject("Access.Application")
-        objAccess.Visible = False
-        objAccess.UserControl = False
-        
-        ' Determinar contraseña para la base de datos
-        Dim strDbPassword
-        strDbPassword = GetDatabasePassword(strAccessPath)
-        
-        ' Abrir base de datos
-        If strDbPassword = "" Then
-            objAccess.OpenCurrentDatabase strAccessPath
-        Else
-            objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
-        End If
-        
-        ' Configurar modo silencioso y seguro
-        On Error Resume Next
-        ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación
-        objAccess.Application.Echo False
-        objAccess.DisplayAlerts = False
-        objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
-        objAccess.VBE.MainWindow.Visible = False
-        objAccess.Application.Interactive = False
-        objAccess.VBE.CommandBars.AdaptiveMenus = False
-        Err.Clear
-        On Error GoTo 0
-        WScript.Echo "  ✓ Base de datos reabierta en modo seguro"
-        
-        ' Paso 4: Importar todos los módulos validando sintaxis
-        WScript.Echo "Importando módulos con validación de sintaxis..."
-        
-        For i = 0 To UBound(moduleNames)
-            moduleName = Trim(moduleNames(i))
-            
-            If moduleName <> "" Then
-                WScript.Echo ""
-                WScript.Echo "=== IMPORTANDO MODULO: " & moduleName & " ==="
-                
-                ' Verificar que el fichero fuente existe
-                Dim strBasFile, strClsFile, strSourceFile, fileExtension
-                strBasFile = objFSO.BuildPath(strSourcePath, moduleName & ".bas")
-                strClsFile = objFSO.BuildPath(strSourcePath, moduleName & ".cls")
-                
-                If objFSO.FileExists(strBasFile) Then
-                    strSourceFile = strBasFile
-                    fileExtension = "bas"
-                ElseIf objFSO.FileExists(strClsFile) Then
-                    strSourceFile = strClsFile
-                    fileExtension = "cls"
-                Else
-                    WScript.Echo "  ❌ Error: No se encontró el archivo fuente para " & moduleName
-                    WScript.Echo "      Buscado: " & strBasFile
-                    WScript.Echo "      Buscado: " & strClsFile
-                    Exit Sub
-                End If
-                
-                WScript.Echo "  ✓ Archivo fuente encontrado: " & strSourceFile
-                
-                ' Validar sintaxis del archivo
-                Dim errorDetails, validationResult
-                validationResult = ValidateVBASyntax(strSourceFile, errorDetails)
-                
-                If validationResult <> True Then
-                    WScript.Echo "  ❌ Error de sintaxis en " & moduleName & ": " & errorDetails
-                    Exit Sub
-                End If
-                
-                WScript.Echo "  ✓ Sintaxis válida"
-                
-                ' Limpiar el contenido del fichero
-                Dim cleanedContent
-                cleanedContent = CleanVBAFile(strSourceFile, fileExtension)
-                
-                If cleanedContent = "" Then
-                    WScript.Echo "  ❌ Error: No se pudo leer o limpiar el contenido del archivo"
-                    Exit Sub
-                End If
-                
-                WScript.Echo "  ✓ Contenido limpiado"
-                
-                ' Importar el módulo
-                WScript.Echo "Importando modulo: " & moduleName
-                Call ImportModuleWithAnsiEncoding(strSourceFile, moduleName, fileExtension, Nothing, cleanedContent)
-                
-                If Err.Number <> 0 Then
-                    WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
-                    Err.Clear
-                    Exit Sub
-                End If
-                
-                ' Guardar el módulo individualmente
-                On Error Resume Next
-                objAccess.DoCmd.Save , moduleName
-                If Err.Number <> 0 Then
-                    WScript.Echo "  ⚠️ Advertencia al guardar " & moduleName & ": " & Err.Description
-                    Err.Clear
-                Else
-                    WScript.Echo "  ✓ Módulo guardado: " & moduleName
-                End If
-                On Error GoTo 0
-                
-                If fileExtension = "cls" Then
-                    WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
-                Else
-                    WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
-                End If
-            End If
-        Next
-        
-        ' Paso 5: Verificar integridad de nombres de módulos
-        WScript.Echo "Verificando integridad de nombres de módulos..."
-        Call VerifyModuleNames()
-        
-        ' Paso 6: Cerrar Access sin confirmaciones
-        WScript.Echo "Cerrando Access sin confirmaciones..."
-        
-        ' Configurar para cerrar sin confirmaciones
-        On Error Resume Next
-        ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación
-        objAccess.Application.Echo False
-        objAccess.DisplayAlerts = False
-        objAccess.Application.Interactive = False
-        
-        ' Guardar todo antes de cerrar
-        objAccess.DoCmd.Save
-        objAccess.DoCmd.RunCommand 2040  ' acCmdSaveAll
-        
-        ' Cerrar sin confirmaciones
-        objAccess.DoCmd.Close
-        objAccess.Quit 1  ' acQuitSaveAll
-        Set objAccess = Nothing
-        
-        Err.Clear
-        On Error GoTo 0
-        
-        WScript.Echo "  ✓ Access cerrado sin confirmaciones"
-        
-    Else
-        ' Modo automático: sincronizar solo archivos modificados
-        WScript.Echo "Modo automático: sincronizando archivos modificados..."
-        
-        ' Paso 1: Usar carpeta persistente .vba_cache
-        Dim strCachePath
-        strCachePath = objFSO.BuildPath(objFSO.GetParentFolderName(strSourcePath), ".vba_cache")
-        
-        ' Crear carpeta de caché si no existe
-        If Not objFSO.FolderExists(strCachePath) Then
-            objFSO.CreateFolder strCachePath
-            WScript.Echo "Carpeta de cache creada: " & strCachePath
-        Else
-            WScript.Echo "Usando carpeta de cache existente: " & strCachePath
-        End If
-        
-        ' Paso 2: Comparar archivos de /src con los de .vba_cache
-        WScript.Echo "Comparando archivos para detectar cambios..."
-        Call CompareAndSyncModulesWithCache(strCachePath)
-        
-        ' Paso 3: Copiar archivos modificados a la caché
-        WScript.Echo "Actualizando cache con archivos modificados..."
-        Call CopyModifiedFilesToCache(strCachePath)
-        
-    End If
-    
-    WScript.Echo ""
-    WScript.Echo "=== ACTUALIZACION COMPLETADA EXITOSAMENTE ==="
-End Sub
+
 
 ' Subrutina para exportar módulos VBA actuales a carpeta cache
-Sub ExportModulesToCache(cachePath)
-    On Error Resume Next
-    
-    Dim vbProject, vbComponent
-    Set vbProject = objAccess.VBE.ActiveVBProject
-    
-    For Each vbComponent In vbProject.VBComponents
-        If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' Solo módulos estándar y de clase
-            Dim fileExtension, fileName
-            
-            If vbComponent.Type = 1 Then
-                fileExtension = "bas"
-            Else
-                fileExtension = "cls"
-            End If
-            
-            fileName = objFSO.BuildPath(cachePath, vbComponent.Name & "." & fileExtension)
-            
-            ' Exportar usando la función existente
-            Call ExportModuleWithAnsiEncoding(fileName, vbComponent.Name, fileExtension)
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "  ⚠️ Advertencia al exportar " & vbComponent.Name & ": " & Err.Description
-                Err.Clear
-            End If
-        End If
-    Next
-    
-    On Error GoTo 0
-End Sub
 
-' Subrutina para comparar y sincronizar módulos con caché persistente
-Sub CompareAndSyncModulesWithCache(cachePath)
-    On Error Resume Next
-    
-    Dim objSrcFolder, objCacheFolder, objFile
-    Dim srcFile, cacheFile, moduleName
-    Dim syncCount, modifiedModules()
-    Dim moduleCount
-    
-    syncCount = 0
-    moduleCount = 0
-    ReDim modifiedModules(100) ' Array para almacenar módulos modificados
-    
-    ' Verificar archivos nuevos o modificados en /src
-    If objFSO.FolderExists(strSourcePath) Then
-        Set objSrcFolder = objFSO.GetFolder(strSourcePath)
-        
-        For Each objFile In objSrcFolder.Files
-            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                srcFile = objFile.Path
-                moduleName = objFSO.GetBaseName(objFile.Name)
-                cacheFile = objFSO.BuildPath(cachePath, objFile.Name)
-                
-                ' Verificar si el archivo es nuevo o ha sido modificado
-                If Not objFSO.FileExists(cacheFile) Then
-                    WScript.Echo "  📄 Archivo nuevo detectado: " & moduleName
-                    Call SyncSingleModule(moduleName)
-                    modifiedModules(moduleCount) = objFile.Name
-                    moduleCount = moduleCount + 1
-                    syncCount = syncCount + 1
-                ElseIf CompareFileContents(srcFile, cacheFile) = False Then
-                    WScript.Echo "  📝 Archivo modificado detectado: " & moduleName
-                    Call SyncSingleModule(moduleName)
-                    modifiedModules(moduleCount) = objFile.Name
-                    moduleCount = moduleCount + 1
-                    syncCount = syncCount + 1
-                End If
-            End If
-        Next
-    End If
-    
-    ' Verificar archivos eliminados (existen en cache pero no en /src)
-    If objFSO.FolderExists(cachePath) Then
-        Set objCacheFolder = objFSO.GetFolder(cachePath)
-        
-        For Each objFile In objCacheFolder.Files
-            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                cacheFile = objFile.Path
-                moduleName = objFSO.GetBaseName(objFile.Name)
-                srcFile = objFSO.BuildPath(strSourcePath, objFile.Name)
-                
-                ' Si el archivo no existe en /src, eliminar el componente VBA y el archivo de caché
-                If Not objFSO.FileExists(srcFile) Then
-                    WScript.Echo "  🗑️ Archivo eliminado detectado: " & moduleName
-                    Call RemoveVBAComponent(moduleName)
-                    ' Eliminar también de la caché
-                    objFSO.DeleteFile cacheFile, True
-                    WScript.Echo "    ✓ Eliminado de la cache: " & moduleName
-                    syncCount = syncCount + 1
-                End If
-            End If
-        Next
-    End If
-    
-    If syncCount = 0 Then
-        WScript.Echo "  ✅ No se detectaron cambios. Proyecto actualizado."
-    Else
-        WScript.Echo "  ✅ " & syncCount & " módulos sincronizados."
-    End If
-    
-    ' Guardar la lista de módulos modificados para uso posterior
-    ReDim Preserve modifiedModules(moduleCount - 1)
-    
-    On Error GoTo 0
-End Sub
 
-' Subrutina para comparar y sincronizar módulos modificados (versión anterior)
-Sub CompareAndSyncModules(cachePath)
-    On Error Resume Next
-    
-    Dim objSrcFolder, objCacheFolder, objFile
-    Dim srcFile, cacheFile, moduleName
-    Dim syncCount
-    
-    syncCount = 0
-    
-    ' Verificar archivos nuevos o modificados en /src
-    If objFSO.FolderExists(strSourcePath) Then
-        Set objSrcFolder = objFSO.GetFolder(strSourcePath)
-        
-        For Each objFile In objSrcFolder.Files
-            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                srcFile = objFile.Path
-                moduleName = objFSO.GetBaseName(objFile.Name)
-                cacheFile = objFSO.BuildPath(cachePath, objFile.Name)
-                
-                ' Verificar si el archivo es nuevo o ha sido modificado
-                If Not objFSO.FileExists(cacheFile) Then
-                    WScript.Echo "  📄 Archivo nuevo detectado: " & moduleName
-                    Call SyncSingleModule(moduleName)
-                    syncCount = syncCount + 1
-                ElseIf CompareFileContents(srcFile, cacheFile) = False Then
-                    WScript.Echo "  📝 Archivo modificado detectado: " & moduleName
-                    Call SyncSingleModule(moduleName)
-                    syncCount = syncCount + 1
-                End If
-            End If
-        Next
-    End If
-    
-    ' Verificar archivos eliminados (existen en cache pero no en /src)
-    If objFSO.FolderExists(cachePath) Then
-        Set objCacheFolder = objFSO.GetFolder(cachePath)
-        
-        For Each objFile In objCacheFolder.Files
-            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                cacheFile = objFile.Path
-                moduleName = objFSO.GetBaseName(objFile.Name)
-                srcFile = objFSO.BuildPath(strSourcePath, objFile.Name)
-                
-                ' Si el archivo no existe en /src, eliminar el componente VBA
-                If Not objFSO.FileExists(srcFile) Then
-                    WScript.Echo "  🗑️ Archivo eliminado detectado: " & moduleName
-                    Call RemoveVBAComponent(moduleName)
-                    syncCount = syncCount + 1
-                End If
-            End If
-        Next
-    End If
-    
-    If syncCount = 0 Then
-        WScript.Echo "  ✅ No se detectaron cambios. Proyecto actualizado."
-    Else
-        WScript.Echo "  ✅ " & syncCount & " módulos sincronizados."
-    End If
-    
-    On Error GoTo 0
-End Sub
 
-' Función para comparar contenido de dos archivos
-Function CompareFileContents(file1, file2)
-    On Error Resume Next
-    
-    Dim content1, content2
-    content1 = ReadFileWithAnsiEncoding(file1)
-    content2 = ReadFileWithAnsiEncoding(file2)
-    
-    CompareFileContents = (content1 = content2)
-    
-    On Error GoTo 0
-End Function
 
-' Subrutina para eliminar un componente VBA
-Sub RemoveVBAComponent(moduleName)
-    On Error Resume Next
-    
-    Dim vbProject, vbComponent
-    Set vbProject = objAccess.VBE.ActiveVBProject
-    
-    For Each vbComponent In vbProject.VBComponents
-        If vbComponent.Name = moduleName Then
-            If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' Solo módulos estándar y de clase
-                WScript.Echo "    Eliminando componente: " & moduleName
-                vbProject.VBComponents.Remove vbComponent
-                
-                If Err.Number <> 0 Then
-                    WScript.Echo "    ❌ Error eliminando " & moduleName & ": " & Err.Description
-                    Err.Clear
-                Else
-                    WScript.Echo "    ✓ Componente eliminado: " & moduleName
-                End If
-            End If
-            Exit For
-        End If
-    Next
-    
-End Sub
+
+
+
+
+
 
 ' Función para copiar todos los archivos de src a la caché
 Sub CopyAllFilesToCache()
@@ -2547,123 +2280,10 @@ Sub CopyAllFilesToCache()
 End Sub
 
 ' Función para verificar cambios antes de abrir la base de datos
-Function CheckForChangesBeforeUpdate()
-    On Error Resume Next
-    
-    Dim objSrcFolder, objCacheFolder, objFile
-    Dim srcFile, cacheFile, moduleName
-    Dim hasChanges
-    
-    hasChanges = False
-    
-    ' Definir rutas
-    Dim strCachePath
-    strCachePath = objFSO.BuildPath(objFSO.GetParentFolderName(strSourcePath), ".vba_cache")
-    
-    WScript.Echo "=== VERIFICANDO CAMBIOS ==="
-    WScript.Echo "Comparando archivos de /src con caché..."
-    
-    ' Si no existe la caché, hay cambios
-    If Not objFSO.FolderExists(strCachePath) Then
-        WScript.Echo "📁 Caché no existe - se requiere sincronización"
-        CheckForChangesBeforeUpdate = True
-        Exit Function
-    End If
-    
-    ' Verificar archivos nuevos o modificados en /src
-    If objFSO.FolderExists(strSourcePath) Then
-        Set objSrcFolder = objFSO.GetFolder(strSourcePath)
-        
-        For Each objFile In objSrcFolder.Files
-            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                srcFile = objFile.Path
-                moduleName = objFSO.GetBaseName(objFile.Name)
-                cacheFile = objFSO.BuildPath(strCachePath, objFile.Name)
-                
-                ' Verificar si el archivo es nuevo o ha sido modificado
-                If Not objFSO.FileExists(cacheFile) Then
-                    WScript.Echo "📄 Archivo nuevo: " & moduleName
-                    hasChanges = True
-                ElseIf CompareFileContents(srcFile, cacheFile) = False Then
-                    WScript.Echo "📝 Archivo modificado: " & moduleName
-                    hasChanges = True
-                End If
-            End If
-        Next
-    End If
-    
-    ' Verificar archivos eliminados (existen en cache pero no en /src)
-    If objFSO.FolderExists(strCachePath) Then
-        Set objCacheFolder = objFSO.GetFolder(strCachePath)
-        
-        For Each objFile In objCacheFolder.Files
-            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                cacheFile = objFile.Path
-                moduleName = objFSO.GetBaseName(objFile.Name)
-                srcFile = objFSO.BuildPath(strSourcePath, objFile.Name)
-                
-                ' Si el archivo no existe en /src, hay cambios
-                If Not objFSO.FileExists(srcFile) Then
-                    WScript.Echo "🗑️ Archivo eliminado: " & moduleName
-                    hasChanges = True
-                End If
-            End If
-        Next
-    End If
-    
-    CheckForChangesBeforeUpdate = hasChanges
-    
-    On Error GoTo 0
-End Function
+
 
 ' Subrutina para copiar solo archivos modificados a la caché
-Sub CopyModifiedFilesToCache(cachePath)
-    On Error Resume Next
-    
-    Dim objSrcFolder, objFile
-    Dim srcFile, cacheFile
-    Dim copiedCount
-    
-    copiedCount = 0
-    
-    ' Definir la ruta de origen
-    Dim strSrcPath
-    strSrcPath = objFSO.BuildPath(objFSO.GetParentFolderName(cachePath), "src")
-    
-    ' Verificar que existe la carpeta src
-    If Not objFSO.FolderExists(strSrcPath) Then
-        WScript.Echo "Error: No se encontró la carpeta src en: " & strSrcPath
-        Exit Sub
-    End If
-    
-    ' Crear carpeta de caché si no existe
-    If Not objFSO.FolderExists(cachePath) Then
-        objFSO.CreateFolder cachePath
-    End If
-    
-    Set objSrcFolder = objFSO.GetFolder(strSrcPath)
-    
-    ' Recorrer archivos .bas y .cls en /src
-    For Each objFile In objSrcFolder.Files
-        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-            srcFile = objFile.Path
-            cacheFile = objFSO.BuildPath(cachePath, objFile.Name)
-            
-            ' Copiar si el archivo no existe en caché o es diferente
-            If Not objFSO.FileExists(cacheFile) Then
-                objFSO.CopyFile srcFile, cacheFile, True
-                copiedCount = copiedCount + 1
-            ElseIf CompareFileContents(srcFile, cacheFile) = False Then
-                objFSO.CopyFile srcFile, cacheFile, True
-                copiedCount = copiedCount + 1
-            End If
-        End If
-    Next
-    
-    WScript.Echo "✓ Archivos modificados copiados a cache: " & copiedCount & " archivos"
-    
-    On Error GoTo 0
-End Sub
+
 
 ' Subrutina para mostrar ayuda específica del comando bundle
 Sub ShowBundleHelp()
@@ -2843,7 +2463,7 @@ Function GetFunctionalityFiles(strFunctionality)
         Case "word"
             ' Sección 6 - Gestión de Word + Dependencias
             arrFiles = Array("IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
-                           "modWordManagerFactory.bas", "TIWordManager.bas", _
+                           "modWordManagerFactory.bas", "IntegrationTestWordManager.bas", _
                            "IFileSystem.cls", "IErrorHandlerService.cls")
         
         Case "error", "errores", "errors"
@@ -2881,17 +2501,10 @@ Function GetFunctionalityFiles(strFunctionality)
                            "modSolicitudServiceFactory.bas", "modWordManagerFactory.bas", _
                            "modWorkflowServiceFactory.bas")
         
-        Case "tests", "pruebas", "testing"
-            ' Sección 12 - Archivos de Pruebas
-            arrFiles = Array("TestAppManager.bas", "TestAuthService.bas", "TestCConfig.bas", _
-                           "TestCExpedienteService.bas", "TestDocumentService.bas", _
-                           "TestErrorHandlerService.bas", "TestModAssert.bas", "TestOperationLogger.bas", _
-                           "TestSolicitudService.bas", "TestWorkflowService.bas", _
-                           "TIAuthRepository.bas", "TIExpedienteRepository.bas", _
-                           "TIMapeoRepository.bas", "TIDocumentService.bas", _
-                           "TIFileSystem.bas", "TINotificationService.bas", _
-                           "TIOperationRepository.bas", "TISolicitudRepository.bas", _
-                           "TIWordManager.bas", "TIWorkflowRepository.bas")
+        Case "tests", "pruebas", "testing", "test"
+            ' Sección 12 - Archivos de Pruebas (Autodescubrimiento)
+            ' Retornar array vacío para activar autodescubrimiento por prefijo T/TI
+            arrFiles = Array()
         
         Case Else
             ' Para funcionalidades no definidas, usar búsqueda por nombre (comportamiento anterior)
@@ -2952,7 +2565,11 @@ Sub BundleFunctionality()
         WScript.Echo "Usando lista predefinida de archivos según CONDOR_MASTER_PLAN.md"
         WScript.Echo "Archivos esperados: " & (UBound(arrFunctionalityFiles) + 1)
     Else
-        WScript.Echo "Usando búsqueda por nombre de funcionalidad"
+        If LCase(strFunctionality) = "tests" Or LCase(strFunctionality) = "test" Or LCase(strFunctionality) = "pruebas" Or LCase(strFunctionality) = "testing" Then
+            WScript.Echo "Usando autodescubrimiento para archivos de pruebas (T* y TI*)"
+        Else
+            WScript.Echo "Usando búsqueda por nombre de funcionalidad"
+        End If
     End If
     WScript.Echo ""
     
@@ -3002,11 +2619,30 @@ Sub BundleFunctionality()
             End If
         Next
     Else
-        ' Usar búsqueda por nombre (comportamiento anterior)
+        ' Usar búsqueda por nombre o autodescubrimiento para Tests
         For Each objFile In objFolder.Files
             If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                ' Verificar si el nombre del archivo contiene la funcionalidad (sin distinguir mayúsculas)
-                If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
+                Dim shouldInclude
+                shouldInclude = False
+                
+                ' Para funcionalidad Tests/test, buscar archivos que empiecen por T o TI
+                If LCase(strFunctionality) = "tests" Or LCase(strFunctionality) = "test" Or LCase(strFunctionality) = "pruebas" Or LCase(strFunctionality) = "testing" Then
+                    Dim baseName
+                    baseName = objFSO.GetBaseName(objFile.Name)
+                    If Left(LCase(baseName), 1) = "t" Then
+                        ' Incluir archivos que empiecen por T o TI
+                        If Left(LCase(baseName), 2) = "ti" Or Left(LCase(baseName), 4) = "test" Then
+                            shouldInclude = True
+                        End If
+                    End If
+                Else
+                    ' Comportamiento anterior para otras funcionalidades
+                    If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
+                        shouldInclude = True
+                    End If
+                End If
+                
+                If shouldInclude Then
                     foundFiles = foundFiles + 1
                     
                     ' Copiar archivo con extensión .txt añadida
@@ -3045,3 +2681,51 @@ Sub BundleFunctionality()
     
     On Error GoTo 0
 End Sub
+
+' Función auxiliar para convertir rutas relativas a absolutas
+Private Function ResolveRelativePath(relativePath)
+    Dim objFSO
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    
+    ' Verificar si la ruta ya es absoluta (contiene : en la segunda posición)
+    If Len(relativePath) >= 2 And Mid(relativePath, 2, 1) = ":" Then
+        ResolveRelativePath = relativePath
+        Exit Function
+    End If
+    
+    ' Obtener el directorio actual del script
+    Dim currentDir
+    currentDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
+    
+    ' Si la ruta empieza con .\, quitarlo
+    If Left(relativePath, 2) = ".\" Then
+        relativePath = Mid(relativePath, 3)
+    End If
+    
+    ' Si la ruta empieza con \, quitarlo
+    If Left(relativePath, 1) = "\" Then
+        relativePath = Mid(relativePath, 2)
+    End If
+    
+    ' Combinar la ruta actual con la ruta relativa
+    ResolveRelativePath = objFSO.BuildPath(currentDir, relativePath)
+End Function
+
+' Función auxiliar para convertir tipos de datos DAO a texto legible
+Private Function DaoTypeToString(dataType)
+    Select Case dataType
+        Case 1: DaoTypeToString = "Boolean"
+        Case 2: DaoTypeToString = "Byte"
+        Case 3: DaoTypeToString = "Integer"
+        Case 4: DaoTypeToString = "Long"
+        Case 5: DaoTypeToString = "Currency"
+        Case 6: DaoTypeToString = "Single"
+        Case 7: DaoTypeToString = "Double"
+        Case 8: DaoTypeToString = "DateTime"
+        Case 10: DaoTypeToString = "Text"
+        Case 11: DaoTypeToString = "OLE Object"
+        Case 12: DaoTypeToString = "Memo"
+        Case 20: DaoTypeToString = "BigInt"
+        Case Else: DaoTypeToString = "Desconocido (" & dataType & ")"
+    End Select
+End Function

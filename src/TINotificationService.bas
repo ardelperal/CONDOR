@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TINotificationService"
+Attribute VB_Name = "TINotificationService"
 Option Compare Database
 Option Explicit
 
@@ -44,8 +44,13 @@ Private Function TestSendNotificationSuccessCallsRepositoryCorrectly() As CTestR
     
     Call Setup
     
+    Dim config As IConfig
+    Dim mockConfigImpl As New CMockConfig
+    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
+    Set config = mockConfigImpl
+    
     Dim notificationService As INotificationService
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService()
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(config)
     
     Dim success As Boolean
     success = notificationService.SendNotification("dest@empresa.com", "Asunto Test", "<html>Cuerpo Test</html>")
@@ -69,8 +74,13 @@ Private Function TestInitializeWithValidDependencies() As CTestResult
     
     Call Setup
     
+    Dim config As IConfig
+    Dim mockConfigImpl As New CMockConfig
+    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
+    Set config = mockConfigImpl
+    
     Dim notificationService As INotificationService
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService()
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(config)
     
     Call modAssert.AssertNotNull(notificationService, "El servicio debe crearse correctamente")
     
@@ -117,8 +127,13 @@ Private Function TestSendNotificationWithInvalidParameters() As CTestResult
     
     Call Setup
     
+    Dim config As IConfig
+    Dim mockConfigImpl As New CMockConfig
+    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
+    Set config = mockConfigImpl
+    
     Dim notificationService As INotificationService
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService()
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(config)
     
     Call modAssert.AssertFalse(notificationService.SendNotification("", "Asunto", "<html>Cuerpo</html>"), "Debe fallar con destinatarios vacío")
     Call modAssert.AssertFalse(notificationService.SendNotification("test@empresa.com", "", "<html>Cuerpo</html>"), "Debe fallar con asunto vacío")
@@ -141,8 +156,13 @@ Private Function TestSendNotificationConfigValuesUsed() As CTestResult
     
     Call Setup
     
+    Dim config As IConfig
+    Dim mockConfigImpl As New CMockConfig
+    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
+    Set config = mockConfigImpl
+    
     Dim notificationService As INotificationService
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService()
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(config)
     
     Dim success As Boolean
     success = notificationService.SendNotification("dest@empresa.com", "Asunto Config Test", "<html>Test Config</html>")

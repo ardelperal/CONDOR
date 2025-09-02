@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -87,15 +87,12 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
         Set qdf = db.CreateQueryDef("", INSERT_SOLICITUD)
         
         ' Asignar parámetros directamente desde el objeto solicitud
-        qdf.Parameters("idExpediente") = solicitud.idExpediente
-        qdf.Parameters("tipoSolicitud") = solicitud.tipoSolicitud
-        qdf.Parameters("subTipoSolicitud") = solicitud.subTipoSolicitud
-        qdf.Parameters("codigoSolicitud") = solicitud.codigoSolicitud
-        qdf.Parameters("idEstadoInterno") = solicitud.idEstadoInterno
-        qdf.Parameters("fechaCreacion") = solicitud.fechaCreacion
-        qdf.Parameters("usuarioCreacion") = solicitud.usuarioCreacion
-        qdf.Parameters("fechaModificacion") = solicitud.fechaModificacion
-        qdf.Parameters("usuarioModificacion") = solicitud.usuarioModificacion
+        qdf.Parameters("pIdExpediente") = solicitud.idExpediente
+        qdf.Parameters("pTipoSolicitud") = solicitud.tipoSolicitud
+        qdf.Parameters("pSubTipoSolicitud") = solicitud.subTipoSolicitud
+        qdf.Parameters("pCodigoSolicitud") = solicitud.codigoSolicitud
+        qdf.Parameters("pIdEstadoInterno") = solicitud.idEstadoInterno
+        qdf.Parameters("pUsuarioCreacion") = solicitud.usuarioCreacion
         
         qdf.Execute dbFailOnError
         
@@ -109,16 +106,13 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
         Set qdf = db.CreateQueryDef("", UPDATE_SOLICITUD)
         
         ' Asignar parámetros directamente desde el objeto solicitud
-        qdf.Parameters("idExpediente") = solicitud.idExpediente
-        qdf.Parameters("tipoSolicitud") = solicitud.tipoSolicitud
-        qdf.Parameters("subTipoSolicitud") = solicitud.subTipoSolicitud
-        qdf.Parameters("codigoSolicitud") = solicitud.codigoSolicitud
-        qdf.Parameters("idEstadoInterno") = solicitud.idEstadoInterno
-        qdf.Parameters("fechaCreacion") = solicitud.fechaCreacion
-        qdf.Parameters("usuarioCreacion") = solicitud.usuarioCreacion
-        qdf.Parameters("fechaModificacion") = solicitud.fechaModificacion
-        qdf.Parameters("usuarioModificacion") = solicitud.usuarioModificacion
-        qdf.Parameters("idSolicitud") = solicitud.idSolicitud
+        qdf.Parameters("pIdExpediente") = solicitud.idExpediente
+        qdf.Parameters("pTipoSolicitud") = solicitud.tipoSolicitud
+        qdf.Parameters("pSubTipoSolicitud") = solicitud.subTipoSolicitud
+        qdf.Parameters("pCodigoSolicitud") = solicitud.codigoSolicitud
+        qdf.Parameters("pIdEstadoInterno") = solicitud.idEstadoInterno
+        qdf.Parameters("pUsuarioModificacion") = solicitud.usuarioModificacion
+        qdf.Parameters("pIdSolicitud") = solicitud.idSolicitud
         
         qdf.Execute dbFailOnError
     End If
@@ -171,7 +165,7 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DA
             rs.Close
             
         Case "CD_CA"
-            Set qdf = db.CreateQueryDef("", GET_DATOS_CD_CA_BY_SOLICITUD)
+            Set qdf = db.CreateQueryDef("", GET_DATOS_CDCA_BY_SOLICITUD)
             qdf.Parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
@@ -193,7 +187,7 @@ Private Sub CargarDatosEspecificos(ByRef solicitud As ESolicitud, ByRef db As DA
             rs.Close
             
         Case "CD_CA_SUB"
-            Set qdf = db.CreateQueryDef("", GET_DATOS_CD_CA_SUB_BY_SOLICITUD)
+            Set qdf = db.CreateQueryDef("", GET_DATOS_CDCASUB_BY_SOLICITUD)
             qdf.Parameters(0) = solicitud.idSolicitud
             Set rs = qdf.OpenRecordset(dbOpenSnapshot)
             
@@ -239,39 +233,27 @@ Public Function SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud = ISolicitudRepository_SaveSolicitud(solicitud)
 End Function
 
-' Implementación de la interfaz para ObtenerSolicitudPorId
 Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
-    
-    If Not m_isInitialized Then
-        Err.Raise 5, "CSolicitudRepository.ObtenerSolicitudPorId", "El repositorio no ha sido inicializado. Llame a Initialize() primero."
-    End If
-    
+    Dim solicitud As ESolicitud ' Declaración al principio
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.Recordset
-    Dim solicitud As ESolicitud
     
     On Error GoTo errorHandler
     
-    ' Conectar al Backend usando la ruta de configuración
-    Dim backendPath As String
-    backendPath = m_configService.GetDataPath()
+    ' Conexión a la BD
+    Set db = DBEngine.OpenDatabase(m_configService.GetDataPath(), False, False, ";PWD=" & m_configService.GetDatabasePassword())
     
-    Dim backendPassword As String
-    backendPassword = m_configService.GetDatabasePassword()
-    
-    Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
-    
-    ' Crear consulta parametrizada usando modQueries
+    ' Preparar la consulta parametrizada
     Set qdf = db.CreateQueryDef("", GET_SOLICITUD_BY_ID)
-    
-    ' Asignar parámetro directamente
-    qdf.Parameters(0) = SolicitudID
+    qdf.Parameters("pIdSolicitud") = SolicitudID
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     If Not rs.EOF Then
+        ' CORRECCIÓN CRÍTICA: Instanciar el objeto ANTES de usarlo
         Set solicitud = New ESolicitud
+        
         With solicitud
             .idSolicitud = rs("idSolicitud")
             .idExpediente = rs("idExpediente")
@@ -285,22 +267,30 @@ Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal SolicitudID As
             .usuarioModificacion = rs("usuarioModificacion") & ""
         End With
         
-        ' Cargar datos específicos según el tipo de solicitud
+        ' Cargar datos específicos después de que el objeto principal está poblado
         Call CargarDatosEspecificos(solicitud, db)
     Else
-        Set solicitud = Nothing
+        Set solicitud = Nothing ' Explícitamente Nothing si no se encuentra
     End If
     
-    rs.Close
-    db.Close
+    ' Asignar el valor de retorno ANTES de cerrar los recursos
     Set ISolicitudRepository_ObtenerSolicitudPorId = solicitud
+    
+Cleanup:
+    ' Limpieza de recursos garantizada
+    On Error Resume Next
+    If Not rs Is Nothing Then rs.Close
+    If Not db Is Nothing Then db.Close
+    Set rs = Nothing
+    Set qdf = Nothing
+    Set db = Nothing
     Exit Function
     
 errorHandler:
-    If Not rs Is Nothing Then rs.Close
-    If Not db Is Nothing Then db.Close
+    ' Loguear el error y devolver Nothing
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudRepository.ObtenerSolicitudPorId"
-    Err.Raise Err.Number, "CSolicitudRepository.ObtenerSolicitudPorId", Err.Description
+    Set ISolicitudRepository_ObtenerSolicitudPorId = Nothing
+    Resume Cleanup
 End Function
 
 ' Método público de conveniencia para ObtenerSolicitudPorId

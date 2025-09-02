@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TIMapeoRepository"
+Attribute VB_Name = "TIMapeoRepository"
 Option Compare Database
 Option Explicit
 
@@ -41,11 +41,16 @@ Private Function TestGetMapeoPorTipoSuccess() As CTestResult
     Dim repository As IMapeoRepository, config As IConfig, errorHandler As IErrorHandlerService, mapeoResult As EMapeo
     On Error GoTo TestFail
     Call Setup
+
+    ' ARRANGE: Crear y poblar COMPLETAMENTE la configuración de prueba
     Set config = modConfigFactory.CreateConfigService()
     config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
     config.SetSetting "DB_PASSWORD", ""
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Set repository = modRepositoryFactory.CreateMapeoRepository()
+    config.SetSetting "LOG_FILE_PATH", modTestUtils.GetProjectPath() & "back\test_db\active\test_run.log"
+
+    ' Crear el resto de las dependencias usando la configuración ya poblada
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
+    Set repository = modRepositoryFactory.CreateMapeoRepository(config, errorHandler)
     Set mapeoResult = repository.GetMapeoPorTipo("PC")
     modAssert.AssertNotNull mapeoResult, "El objeto EMapeo no debe ser nulo."
     AssertEquals "PC", mapeoResult.NombrePlantilla, "El nombre de la plantilla no es el esperado."
@@ -64,11 +69,16 @@ Private Function TestGetMapeoPorTipoNotFound() As CTestResult
     Dim repository As IMapeoRepository, config As IConfig, errorHandler As IErrorHandlerService, mapeoResult As EMapeo
     On Error GoTo TestFail
     Call Setup
+
+    ' ARRANGE: Crear y poblar COMPLETAMENTE la configuración de prueba
     Set config = modConfigFactory.CreateConfigService()
     config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
     config.SetSetting "DB_PASSWORD", ""
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Set repository = modRepositoryFactory.CreateMapeoRepository()
+    config.SetSetting "LOG_FILE_PATH", modTestUtils.GetProjectPath() & "back\test_db\active\test_run.log"
+
+    ' Crear el resto de las dependencias usando la configuración ya poblada
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
+    Set repository = modRepositoryFactory.CreateMapeoRepository(config, errorHandler)
     Set mapeoResult = repository.GetMapeoPorTipo("TIPO_INEXISTENTE")
     AssertIsNull mapeoResult, "El objeto EMapeo devuelto debería ser Nothing."
     TestGetMapeoPorTipoNotFound.Pass

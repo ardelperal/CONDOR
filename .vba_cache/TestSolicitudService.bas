@@ -135,12 +135,14 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
     
     Set solicitud = New ESolicitud
     solicitud.idSolicitud = 456
+    solicitud.idEstadoInterno = 1 ' Estado Borrador
     
     ' Act
     Call service.SaveSolicitud(solicitud)
     
     ' Assert
     modAssert.AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
+    modAssert.AssertEquals "test.user@condor.com", mockRepo.Update_LastUsuarioModificacion, "El campo usuarioModificacion debe ser establecido correctamente"
     
     TestSaveSolicitudSuccess.Pass
     GoTo Cleanup

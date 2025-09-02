@@ -17,10 +17,10 @@ Private Sub Setup()
     
     ' Insertar expediente de prueba
     Dim db As Object
-    Set db = CreateObject("DAO.DBEngine.0").OpenDatabase(modTestUtils.GetProjectPath & ACTIVE_PATH)
+    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath & ACTIVE_PATH)
     
     Dim sql As String
-    sql = "INSERT INTO Expedientes (idExpediente, Nemotecnico, Titulo, ContratistaPrincipal) " & _
+    sql = "INSERT INTO TbExpedientes (idExpediente, Nemotecnico, Titulo, ContratistaPrincipal) " & _
           "VALUES (1, 'EXP-2024-001', 'Proyecto de Prueba Alfa', 'Contratista Principal S.A.')"
     
     db.Execute sql

@@ -10,6 +10,10 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+' REQUISITO DE COMPILACIÓN:
+' Este módulo utiliza Scripting.Dictionary y requiere la referencia a
+' la librería "Microsoft Scripting Runtime" para compilar correctamente.
+
 Implements IConfig
 
 Private m_Settings As Scripting.Dictionary

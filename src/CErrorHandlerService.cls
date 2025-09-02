@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -43,11 +43,7 @@ Private Sub IErrorHandlerService_LogError(ByVal errNumber As Long, ByVal errDesc
     logMessage = Now() & " | " & logPrefix & " | " & "Err: " & errNumber & " | " & errDescription & " | Source: " & moduleName
     
     If Len(m_logFilePath) > 0 Then
-        Dim file As Object
-        Set file = m_fileSystem.OpenTextFile(m_logFilePath, 8, True) ' 8=ForAppending, True=Create
-        file.WriteLine logMessage
-        file.Close
-        Set file = Nothing
+        m_fileSystem.WriteLineToFile m_logFilePath, logMessage
     Else
         Debug.Print "LogFilePath no configurado. Error no guardado: " & logMessage
     End If

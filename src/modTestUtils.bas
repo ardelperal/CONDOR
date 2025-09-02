@@ -17,6 +17,48 @@ Public Function GetProjectPath() As String
     Set fso = Nothing
 End Function
 
+Public Sub VerifyAllTestTemplates()
+    On Error GoTo errorHandler
+    
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    
+    Dim projectPath As String
+    projectPath = GetProjectPath()
+    
+    ' Lista de todas las plantillas requeridas por los tests de integración
+    Dim templates As Variant
+    templates = Array( _
+        "back\test_db\templates\CONDOR_test_template.accdb", _
+        "back\test_db\templates\Expedientes_test_template.accdb", _
+        "back\test_db\templates\Lanzadera_test_template.accdb", _
+        "back\test_db\templates\correos_test_template.accdb" _
+    )
+    
+    Dim i As Integer
+    Dim missingTemplates As String
+    missingTemplates = ""
+    
+    For i = 0 To UBound(templates)
+        Dim templatePath As String
+        templatePath = projectPath & templates(i)
+        
+        If Not fs.FileExists(templatePath) Then
+            If missingTemplates <> "" Then missingTemplates = missingTemplates & vbCrLf
+            missingTemplates = missingTemplates & "- " & templatePath
+        End If
+    Next i
+    
+    If missingTemplates <> "" Then
+        Err.Raise 53, "VerifyAllTestTemplates", "Las siguientes plantillas de base de datos no se encontraron:" & vbCrLf & missingTemplates & vbCrLf & vbCrLf & "Los tests de integración no pueden ejecutarse sin estas plantillas."
+    End If
+    
+    Exit Sub
+    
+errorHandler:
+    Err.Raise Err.Number, "modTestUtils.VerifyAllTestTemplates", Err.Description
+End Sub
+
 Public Sub PrepareTestDatabase(ByVal templatePath As String, ByVal activeTestPath As String)
     On Error GoTo errorHandler
 

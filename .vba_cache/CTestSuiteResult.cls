@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -10,6 +10,9 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+' REQUISITO DE COMPILACIÓN:
+' Este módulo utiliza Scripting.Dictionary y requiere la referencia a
+' la librería "Microsoft Scripting Runtime" para compilar correctamente.
 
 ' ============================================================================
 ' Clase: CTestSuiteResult

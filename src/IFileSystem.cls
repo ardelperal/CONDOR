@@ -23,6 +23,8 @@ Option Explicit
 ' Contrato para operaciones de sistema de ficheros
 ' Permite abstraer la interacción con archivos para facilitar las pruebas unitarias
 
+' [DEPRECATED] - Este método crea un acoplamiento fuerte con el objeto TextStream.
+' Usar preferiblemente métodos de más alto nivel como WriteLineToFile.
 ' Abre un archivo de texto para lectura/escritura
 ' @param Path: Ruta del archivo
 ' @param Mode: Modo de apertura (1=ForReading, 2=ForWriting, 8=ForAppending)
@@ -68,6 +70,12 @@ End Sub
 ' Elimina una carpeta de forma recursiva (incluyendo todo su contenido)
 ' @param Path: Ruta de la carpeta a eliminar recursivamente
 Public Sub DeleteFolderRecursive(ByVal Path As String)
+End Sub
+
+' Escribe una línea completa en un fichero, manejando la apertura y el cierre internamente.
+' @param filePath: Ruta completa al archivo.
+' @param line: El texto que se va a escribir en el archivo.
+Public Sub WriteLineToFile(ByVal filePath As String, ByVal line As String)
 End Sub
 
 

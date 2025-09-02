@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TestCExpedienteService"
+Attribute VB_Name = "TestCExpedienteService"
 Option Compare Database
 Option Explicit
 
@@ -16,13 +16,13 @@ Option Explicit
 '                    FUNCIÓN PRINCIPAL DE LA SUITE DE PRUEBAS
 '===============================================================================
 
-Public Function TestCExpedienteService_RunAll() As CTestSuiteResult
+Public Function TestCExpedienteServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TestCExpedienteService"
 
     suiteResult.AddResult Test_ObtenerExpedientePorId_DelegatesCorrectly()
     
-    Set TestCExpedienteService_RunAll = suiteResult
+    Set TestCExpedienteServiceRunAll = suiteResult
 End Function
 
 '===============================================================================

@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modOperationLoggerFactory"
+Attribute VB_Name = "modOperationLoggerFactory"
 Option Compare Database
 Option Explicit
 
@@ -7,17 +7,23 @@ Option Explicit
 ' Módulo: modOperationLoggerFactory
 ' Descripción: Factory para la creación de servicios de logging de operaciones.
 
-Public Function CreateOperationLogger() As IOperationLogger
+Public Function CreateOperationLogger(Optional ByVal config As IConfig = Nothing) As IOperationLogger
     On Error GoTo errorHandler
     
-    ' Crear dependencias internamente
+    ' Determinar configuración final
+    Dim finalConfig As IConfig
+    If config Is Nothing Then
+        Set finalConfig = modConfigFactory.CreateConfigService()
+    Else
+        Set finalConfig = config
+    End If
+    
+    ' Crear dependencias propagando la configuración
     Dim errorHandler As IErrorHandlerService
-    Dim configService As IConfig
     Dim fileSystem As IFileSystem
     
-    Set configService = modConfigFactory.CreateConfigService()
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set fileSystem = modFileSystemFactory.CreateFileSystem(finalConfig)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(finalConfig)
     
     ' Crear instancia real del logger
     Dim loggerInstance As COperationLogger
@@ -27,10 +33,10 @@ Public Function CreateOperationLogger() As IOperationLogger
     Set repositoryInstance = New COperationRepository
     
     ' Inicializar el repositorio con la configuración y errorHandler
-    repositoryInstance.Initialize configService, errorHandler
+    repositoryInstance.Initialize finalConfig, errorHandler
     
     ' Inyectar las dependencias en el logger
-    loggerInstance.Initialize configService, repositoryInstance, errorHandler
+    loggerInstance.Initialize finalConfig, repositoryInstance, errorHandler
     
     Set CreateOperationLogger = loggerInstance
     

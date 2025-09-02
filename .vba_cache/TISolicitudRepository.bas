@@ -34,11 +34,20 @@ Private Function TestSaveAndRetrieveSolicitud() As CTestResult
     ' Arrange
     Set config = modConfigFactory.CreateConfigService()
     config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath & ACTIVE_PATH
-    Set repo = modRepositoryFactory.CreateSolicitudRepository()
+    config.SetSetting "LOG_FILE_PATH", modTestUtils.GetProjectPath() & "back\test_db\active\test_run.log"
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
+    
+    Set repo = modRepositoryFactory.CreateSolicitudRepository(config, errorHandler)
     
     Dim nuevaSolicitud As New ESolicitud
     nuevaSolicitud.idExpediente = 999
+    nuevaSolicitud.tipoSolicitud = "TIPO_TEST"
+    nuevaSolicitud.subTipoSolicitud = "SUBTIPO_TEST"
     nuevaSolicitud.codigoSolicitud = "TEST-SAVE-001"
+    nuevaSolicitud.idEstadoInterno = 1 ' Estado Borrador
+    nuevaSolicitud.usuarioCreacion = "integration_test_user"
     
     ' Act: Guardar y recuperar
     newId = repo.SaveSolicitud(nuevaSolicitud)
@@ -48,6 +57,8 @@ Private Function TestSaveAndRetrieveSolicitud() As CTestResult
     modAssert.AssertTrue newId > 0, "El ID devuelto debe ser positivo."
     modAssert.AssertNotNull retrievedSolicitud, "La solicitud recuperada no debe ser nula."
     modAssert.AssertEquals "TEST-SAVE-001", retrievedSolicitud.codigoSolicitud, "El código de solicitud no coincide."
+    modAssert.AssertEquals 1, retrievedSolicitud.idEstadoInterno, "El estado interno debe ser 1 (Borrador)."
+    modAssert.AssertEquals "integration_test_user", retrievedSolicitud.usuarioCreacion, "El usuario de creación no coincide."
     
     TestSaveAndRetrieveSolicitud.Pass
 Cleanup:

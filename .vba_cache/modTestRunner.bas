@@ -41,7 +41,7 @@ Public Function RunAllTests() As String
     Set reporter = reporterImpl
     
     Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites()
+    Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
     
     reporter.Initialize allResults
     
@@ -73,15 +73,28 @@ Private Sub RegisterSuitesManually()
     ' Esto evita la dependencia de Application.VBE que puede fallar desde CLI
     
     ' Suites de prueba unitaria
-    m_SuiteNames.Add "TestModAssert.RunAll", "TestModAssert.RunAll"
-    m_SuiteNames.Add "TestSolicitudService.RunAll", "TestSolicitudService.RunAll"
+    m_SuiteNames.Add "TestModAssertRunAll", "TestModAssertRunAll"
+    m_SuiteNames.Add "TestSolicitudServiceRunAll", "TestSolicitudServiceRunAll"
+    m_SuiteNames.Add "TestAppManagerRunAll", "TestAppManagerRunAll"
+    m_SuiteNames.Add "TestAuthServiceRunAll", "TestAuthServiceRunAll"
+    m_SuiteNames.Add "TestCConfigRunAll", "TestCConfigRunAll"
+    m_SuiteNames.Add "TestCExpedienteServiceRunAll", "TestCExpedienteServiceRunAll"
+    m_SuiteNames.Add "TestDocumentServiceRunAll", "TestDocumentServiceRunAll"
+    m_SuiteNames.Add "TestErrorHandlerServiceRunAll", "TestErrorHandlerServiceRunAll"
+    m_SuiteNames.Add "TestOperationLoggerRunAll", "TestOperationLoggerRunAll"
+    m_SuiteNames.Add "TestWorkflowServiceRunAll", "TestWorkflowServiceRunAll"
     
     ' Suites de prueba de integración
-    m_SuiteNames.Add "TIExpedienteRepository.RunAll", "TIExpedienteRepository.RunAll"
-    m_SuiteNames.Add "TIMapeoRepository.RunAll", "TIMapeoRepository.RunAll"
-    m_SuiteNames.Add "TINotificationService.RunAll", "TINotificationService.RunAll"
-    m_SuiteNames.Add "TIOperationRepository.RunAll", "TIOperationRepository.RunAll"
-    m_SuiteNames.Add "TISolicitudRepository.RunAll", "TISolicitudRepository.RunAll"
+    m_SuiteNames.Add "TIAuthRepositoryRunAll", "TIAuthRepositoryRunAll"
+    m_SuiteNames.Add "TIDocumentServiceRunAll", "TIDocumentServiceRunAll"
+    m_SuiteNames.Add "TIExpedienteRepositoryRunAll", "TIExpedienteRepositoryRunAll"
+    m_SuiteNames.Add "TIFileSystemRunAll", "TIFileSystemRunAll"
+    m_SuiteNames.Add "TIMapeoRepositoryRunAll", "TIMapeoRepositoryRunAll"
+    m_SuiteNames.Add "TINotificationServiceRunAll", "TINotificationServiceRunAll"
+    m_SuiteNames.Add "TIOperationRepositoryRunAll", "TIOperationRepositoryRunAll"
+    m_SuiteNames.Add "TISolicitudRepositoryRunAll", "TISolicitudRepositoryRunAll"
+    m_SuiteNames.Add "TIWordManagerRunAll", "TIWordManagerRunAll"
+    m_SuiteNames.Add "TIWorkflowRepositoryRunAll", "TIWorkflowRepositoryRunAll"
     
     On Error GoTo 0
 End Sub
@@ -124,7 +137,7 @@ Public Function ExecuteAllTestsForCLI() As String
     Set reporter = reporterImpl
 
     Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites()
+    Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
 
     reporter.Initialize allResults
 
@@ -174,41 +187,39 @@ End Function
 '******************************************************************************
 
 ' Función principal que orquesta todo el proceso: registrar, ejecutar y reportar
-Public Sub RunTestFramework()
+Public Function RunTestFramework() As String
     On Error GoTo errorHandler
     
-    ' Obtener instancia del manejador de errores
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
-    ' Inicializar el diccionario de suites
     Set m_SuiteNames = New Scripting.Dictionary
     m_SuiteNames.CompareMode = TextCompare
     
-    ' 1. REGISTRAR (Responsabilidad del Runner)
+    ' 1. REGISTRAR
     Call DiscoverAndRegisterSuites
     
     ' 2. EJECUTAR
     Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites()
+    Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
     
-    ' 3. GENERAR REPORTE (Responsabilidad de CTestReporter)
+    ' 3. GENERAR REPORTE
     Dim reporter As New CTestReporter
     reporter.Initialize allResults
     Dim reportString As String
     reportString = reporter.GenerateReport()
     
-    ' 4. PRESENTAR (Responsabilidad del Runner/UI)
-    MsgBox reportString, vbInformation, "Resultado de Pruebas"
+    ' 4. DEVOLVER (en lugar de presentar)
+    RunTestFramework = reportString
     
-    Exit Sub
+    Exit Function
     
 errorHandler:
     If Not errorHandler Is Nothing Then
         errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunTestFramework", True
     End If
-    MsgBox "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS: " & Err.Description, vbCritical, "Error del Framework"
-End Sub
+    RunTestFramework = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS: " & Err.Description
+End Function
 
 '******************************************************************************
 ' MOTOR DE DESCUBRIMIENTO
@@ -232,7 +243,7 @@ Private Sub DiscoverAndRegisterSuites()
             ' Verificar si el módulo tiene una función RunAll
             If HasRunAllFunction(moduleName) Then
                 Dim suiteKey As String
-                suiteKey = moduleName & ".RunAll"
+                suiteKey = moduleName & "RunAll"
                 
                 ' Añadir al diccionario si no existe ya
                 If Not m_SuiteNames.Exists(suiteKey) Then
@@ -256,7 +267,7 @@ Private Function HasRunAllFunction(ByVal moduleName As String) As Boolean
     ' Intentar ejecutar la función RunAll del módulo
     ' Si existe, no habrá error; si no existe, habrá error
     Dim testCall As String
-    testCall = moduleName & ".RunAll"
+    testCall = moduleName & "RunAll"
     
     ' Verificar si la función existe sin ejecutarla
     ' Esto es una aproximación - en un entorno real podrías usar reflexión VBA
@@ -272,17 +283,39 @@ End Function
 '******************************************************************************
 
 ' Función que ejecuta todas las suites registradas y devuelve resultados
-Private Function ExecuteAllSuites() As Scripting.Dictionary
+Private Function ExecuteAllSuites(ByVal suiteNames As Scripting.Dictionary, ByVal runnerErrorHandler As IErrorHandlerService) As Scripting.Dictionary
     Dim allResults As New Scripting.Dictionary
     allResults.CompareMode = TextCompare
     
-    ' Crear el ErrorHandler UNA SOLA VEZ, fuera del bucle
-    Dim localErrorHandler As IErrorHandlerService
-    Set localErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ' Verificar plantillas de bases de datos antes de ejecutar tests de integración
+    On Error Resume Next
+    modTestUtils.VerifyAllTestTemplates
+    If Err.Number <> 0 Then
+        ' Crear un resultado de error para la verificación de plantillas
+        Dim templateErrorSuite As New CTestSuiteResult
+        templateErrorSuite.Initialize "Template_Verification"
+        
+        Dim templateErrorTest As New CTestResult
+        templateErrorTest.Initialize "Verify_All_Test_Templates"
+        templateErrorTest.Fail "Error en verificación de plantillas: " & Err.Description
+        
+        templateErrorSuite.AddResult templateErrorTest
+        allResults.Add "Template_Verification", templateErrorSuite
+        
+        ' Loguear el error
+        If Not runnerErrorHandler Is Nothing Then
+            runnerErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllSuites.VerifyTemplates", True
+        End If
+        
+        ' Retornar solo el error de plantillas, no ejecutar más tests
+        Set ExecuteAllSuites = allResults
+        Exit Function
+    End If
+    On Error GoTo 0
     
     Dim i As Integer
     Dim suiteKeys As Variant
-    suiteKeys = m_SuiteNames.Keys()
+    suiteKeys = suiteNames.Keys()
     
     For i = 0 To UBound(suiteKeys)
         Dim suiteName As String
@@ -308,8 +341,8 @@ Private Function ExecuteAllSuites() As Scripting.Dictionary
             allResults.Add suiteName, errorSuite
             
             ' Loguear el error usando el errorHandler PRE-EXISTENTE
-            If Not localErrorHandler Is Nothing Then
-                localErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllSuites", True
+            If Not runnerErrorHandler Is Nothing Then
+                runnerErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllSuites", True
             End If
         End If
         

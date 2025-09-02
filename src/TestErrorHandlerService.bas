@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TestErrorHandlerService"
+Attribute VB_Name = "TestErrorHandlerService"
 Option Compare Database
 Option Explicit
 
@@ -41,8 +41,9 @@ Private Function TestLogError_WritesToFile_Success() As CTestResult
     service.LogError 123, "Test Error", "TestModule"
     
     ' Assert
-    modAssert.AssertTrue mockFileSystem.WasOpenTextFileCalled, "OpenTextFile debería haber sido llamado."
-    modAssert.AssertEquals "C:\fake\log.txt", mockFileSystem.LastPath, "Se llamó a OpenTextFile con la ruta incorrecta."
+    modAssert.AssertTrue mockFileSystem.WriteLineToFile_WasCalled, "WriteLineToFile debería haber sido llamado."
+    modAssert.AssertEquals "C:\fake\log.txt", mockFileSystem.WriteLineToFile_LastPath, "Se llamó a WriteLineToFile con la ruta incorrecta."
+    modAssert.AssertTrue InStr(mockFileSystem.WriteLineToFile_LastLine, "Test Error") > 0, "El mensaje de error no se escribió correctamente en la línea."
     
     TestLogError_WritesToFile_Success.Pass
     GoTo Cleanup

@@ -90,6 +90,7 @@ TIWorkflowRepository.bas
 TestAppManager.bas
 TestAuthService.bas
 TestCConfig.bas
+TestCExpedienteRepository.bas
 TestCExpedienteService.bas
 TestDocumentService.bas
 TestErrorHandlerService.bas

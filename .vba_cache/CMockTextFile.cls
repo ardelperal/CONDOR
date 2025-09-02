@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -70,7 +70,7 @@ Public Sub WriteLine(ByVal line As String)
 End Sub
 
 ' Simula el cierre del archivo
-Public Sub CloseFile()
+Public Sub Close()
     WasCloseCalled = True
     CloseCallCount = CloseCallCount + 1
 End Sub

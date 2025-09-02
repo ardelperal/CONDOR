@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -28,7 +28,10 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
 End Function
 
 Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
-    Set IWorkflowService_GetNextStates = m_Repo.GetNextStates(estadoActual, tipoSolicitud, usuarioRol)
+    ' Convertir estadoActual String a Long para el repositorio
+    Dim idEstado As Long
+    idEstado = CLng(estadoActual)
+    Set IWorkflowService_GetNextStates = m_Repo.GetNextStates(idEstado, usuarioRol)
 End Function
 
 

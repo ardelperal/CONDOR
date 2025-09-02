@@ -26,17 +26,24 @@ Implements IFileSystem
 ' para facilitar las pruebas unitarias con mocks
 
 Private fso As Object ' Scripting.FileSystemObject
+Private m_config As IConfig
 
 ' ============================================================================
 ' CONSTRUCTOR Y DESTRUCTOR
 ' ============================================================================
 
-Private Sub Class_Initialize()
-    Set fso = CreateObject("Scripting.FileSystemObject")
-End Sub
-
 Private Sub Class_Terminate()
     Set fso = Nothing
+    Set m_config = Nothing
+End Sub
+
+' ============================================================================
+' INICIALIZACIÓN CON INYECCIÓN DE DEPENDENCIAS
+' ============================================================================
+
+Public Sub Initialize(ByVal config As IConfig)
+    Set m_config = config
+    Set fso = CreateObject("Scripting.FileSystemObject")
 End Sub
 
 ' ============================================================================
@@ -80,7 +87,22 @@ End Sub
 
 ' Implementa la eliminación recursiva de carpetas
 Private Sub IFileSystem_DeleteFolderRecursive(ByVal Path As String)
-    Me.DeleteFolderRecursive Path
+    On Error Resume Next
+    If fso.FolderExists(Path) Then
+        fso.DeleteFolder Path, True ' El True fuerza el borrado recursivo
+    End If
+    On Error GoTo 0
+End Sub
+
+' Implementa la escritura de líneas a archivo
+Private Sub IFileSystem_WriteLineToFile(ByVal filePath As String, ByVal line As String)
+    ' Encapsula la lógica de abrir, escribir y cerrar.
+    Dim file As Object
+    ' 8 = ForAppending, True = Create if not exists
+    Set file = fso.OpenTextFile(filePath, 8, True)
+    file.WriteLine line
+    file.Close
+    Set file = Nothing
 End Sub
 
 ' ============================================================================
@@ -116,13 +138,12 @@ Public Sub DeleteFolder(ByVal Path As String)
 End Sub
 
 Public Sub DeleteFolderRecursive(ByVal Path As String)
-    On Error Resume Next
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    If fso.FolderExists(Path) Then
-        fso.DeleteFolder Path, True ' El True fuerza el borrado de contenidos
-    End If
-    Set fso = Nothing
+    ' Delega la llamada a la implementación privada y segura de la interfaz
+    Call IFileSystem_DeleteFolderRecursive(Path)
+End Sub
+
+Public Sub WriteLineToFile(ByVal filePath As String, ByVal line As String)
+    Call IFileSystem_WriteLineToFile(filePath, line)
 End Sub
 
 

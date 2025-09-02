@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -66,8 +66,15 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     
     Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
-    ' Crear QueryDef con consulta desde modQueries
-    Set qdf = db.CreateQueryDef("", GET_AUTH_DATA_BY_EMAIL)
+    ' --- INICIO CÓDIGO QueryDef ---
+    ' Eliminar la QueryDef temporal si existiera de una ejecución anterior fallida
+    On Error Resume Next
+    db.QueryDefs.Delete "tempAuthQuery"
+    On Error GoTo errorHandler
+    
+    ' Crear QueryDef con la consulta desde modQueries, dándole un nombre único
+    Set qdf = db.CreateQueryDef("tempAuthQuery", GET_AUTH_DATA_BY_EMAIL)
+    ' --- FIN CÓDIGO QueryDef ---
     
     ' Crear y asignar parámetros
     Set prm = New EQueryParameter

@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modSolicitudServiceFactory"
+Attribute VB_Name = "modSolicitudServiceFactory"
 Option Compare Database
 Option Explicit
 
@@ -19,28 +19,33 @@ Option Explicit
 ' DESCRIPCIÓN: Crea una instancia del servicio de solicitudes con todas sus dependencias
 ' RETORNA: ISolicitudService - Instancia del servicio completamente inicializada
 '******************************************************************************
-Public Function CreateSolicitudService() As ISolicitudService
+Public Function CreateSolicitudService(Optional ByVal config As IConfig = Nothing) As ISolicitudService
     On Error GoTo errorHandler
     
-    ' 1. Crear dependencias de nivel más bajo primero, llamando a sus factorías SIN argumentos.
-    Dim configService As IConfig
-    Set configService = modConfigFactory.CreateConfigService()
+    ' 1. Determinar configuración final
+    Dim finalConfig As IConfig
+    If config Is Nothing Then
+        Set finalConfig = modConfigFactory.CreateConfigService()
+    Else
+        Set finalConfig = config
+    End If
     
+    ' 2. Crear dependencias propagando la configuración
     Dim errorHandlerService As IErrorHandlerService
-    Set errorHandlerService = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set errorHandlerService = modErrorHandlerFactory.CreateErrorHandlerService(finalConfig)
     
     Dim operationLoggerService As IOperationLogger
-    Set operationLoggerService = modOperationLoggerFactory.CreateOperationLogger()
+    Set operationLoggerService = modOperationLoggerFactory.CreateOperationLogger(finalConfig)
     
-    ' 2. Crear el repositorio
+    ' 3. Crear el repositorio
     Dim solicitudRepo As ISolicitudRepository
-    Set solicitudRepo = modRepositoryFactory.CreateSolicitudRepository()
+    Set solicitudRepo = modRepositoryFactory.CreateSolicitudRepository(finalConfig)
     
-    ' 3. Crear e inicializar la instancia del servicio
+    ' 4. Crear e inicializar la instancia del servicio
     Dim serviceInstance As New CSolicitudService
     serviceInstance.Initialize solicitudRepo, operationLoggerService, errorHandlerService
     
-    ' 4. Devolver la instancia como el tipo de la interfaz
+    ' 5. Devolver la instancia como el tipo de la interfaz
     Set CreateSolicitudService = serviceInstance
     
     Exit Function

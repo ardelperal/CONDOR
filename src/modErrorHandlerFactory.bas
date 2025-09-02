@@ -20,7 +20,7 @@ Public Function CreateErrorHandlerService(Optional ByVal configService As IConfi
     End If
     
     Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
+    Set fs = modFileSystemFactory.CreateFileSystem(config)
     
     Dim errorHandlerImpl As New CErrorHandlerService
     errorHandlerImpl.Initialize config, fs

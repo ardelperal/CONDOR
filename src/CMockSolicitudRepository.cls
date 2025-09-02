@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -19,6 +19,7 @@ Private m_ObtenerSolicitudPorId_Result As ESolicitud
 ' --- Propiedades de seguimiento para las aserciones ---
 Public SaveSolicitud_CallCount As Long
 Public LastSavedSolicitud As ESolicitud
+Public Update_LastUsuarioModificacion As String
 
 ' Constructor
 Private Sub Class_Initialize()
@@ -45,6 +46,7 @@ Public Sub Reset()
     Set m_ObtenerSolicitudPorId_Result = Nothing
     SaveSolicitud_CallCount = 0
     Set LastSavedSolicitud = Nothing
+    Update_LastUsuarioModificacion = ""
 End Sub
 
 
@@ -52,6 +54,7 @@ End Sub
 Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     SaveSolicitud_CallCount = SaveSolicitud_CallCount + 1
     Set LastSavedSolicitud = solicitud
+    Update_LastUsuarioModificacion = solicitud.usuarioModificacion
     ISolicitudRepository_SaveSolicitud = m_SaveSolicitud_Result
 End Function
 

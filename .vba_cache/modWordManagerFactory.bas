@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modWordManagerFactory"
+Attribute VB_Name = "modWordManagerFactory"
 Option Compare Database
 Option Explicit
 
@@ -11,18 +11,24 @@ Option Explicit
 ' FECHA: 2025-01-15
 ' =====================================================
 
-Public Function CreateWordManager() As IWordManager
+Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As IWordManager
     On Error GoTo errorHandler
     
+    ' Determinar configuración final
+    Dim finalConfig As IConfig
+    If config Is Nothing Then
+        Set finalConfig = modConfigFactory.CreateConfigService()
+    Else
+        Set finalConfig = config
+    End If
+    
     Dim wordApp As Object
-    Dim configService As IConfig
     Dim errorHandler As IErrorHandlerService
     Dim fileSystem As IFileSystem
     
-    ' Crear dependencias internamente
-    Set configService = modConfigFactory.CreateConfigService()
-    Set fileSystem = modFileSystemFactory.CreateFileSystem
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService
+    ' Crear dependencias propagando la configuración
+    Set fileSystem = modFileSystemFactory.CreateFileSystem(finalConfig)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(finalConfig)
     
     ' Crear instancia de Word y luego inicializar
     Set wordApp = CreateObject("Word.Application")

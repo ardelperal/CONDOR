@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TIOperationRepository"
+Attribute VB_Name = "TIOperationRepository"
 Option Compare Database
 Option Explicit
 
@@ -94,13 +94,13 @@ Private Function TestSaveLogIntegrationSuccess() As CTestResult
     ' ASSERT: Verificar que el registro se guardó correctamente
     Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH, False, False)
     
-    Set rs = db.OpenRecordset("SELECT COUNT(*) AS RecordCount FROM Tb_Operaciones_Log")
+    Set rs = db.OpenRecordset("SELECT COUNT(*) AS RecordCount FROM tbOperacionesLog")
     modAssert.AssertEquals 1, rs!recordCount, "Debe haber exactamente 1 registro en Tb_Operaciones_Log"
     rs.Close
     
-    Set rs = db.OpenRecordset("SELECT * FROM Tb_Operaciones_Log")
+    Set rs = db.OpenRecordset("SELECT * FROM tbOperacionesLog")
     modAssert.AssertEquals testOperationType, rs!tipoOperacion, "TipoOperacion debe coincidir"
-    modAssert.AssertEquals testEntityId, rs!idEntidadAfectada, "IDEntidadAfectada debe coincidir"
+    modAssert.AssertEquals testEntityId, rs!idEntidad, "IDEntidad debe coincidir"
     modAssert.AssertEquals testDetails, rs!detalles, "Detalles debe coincidir"
     modAssert.AssertTrue Not IsNull(rs!fechaHora), "FechaHora no debe ser nulo"
     modAssert.AssertTrue Not IsNull(rs!usuario), "Usuario no debe ser nulo"
