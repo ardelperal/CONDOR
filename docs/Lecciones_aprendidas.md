@@ -196,11 +196,20 @@ Observación: Los errores de "método no encontrado" en el motor de pruebas ocur
 Regla Inquebrantable: Las clases de resultados del framework de pruebas deben tener métodos Initialize para poder ser configuradas de forma consistente y robusta. Esto incluye CTestResult.Initialize(testName), CTestSuiteResult.Initialize(suiteName), y métodos auxiliares como Fail() y Pass() para CTestResult. Estos métodos son críticos para el manejo de errores en el TestRunner.
 Acción Correctiva: Implementar métodos Initialize en todas las clases de resultados del framework de pruebas, asegurando que puedan ser instanciadas y configuradas de forma fiable incluso en situaciones de error. Esto garantiza que el sistema de pruebas pueda reportar fallos de ejecución de suites completas sin generar errores adicionales de compilación.
 
-Lección 22: Los Mocks Deben Ser Clases Completas y Reutilizables
-Observación: Los errores de "tipo no definido" en las pruebas ocurren cuando se intenta usar mocks que no están completamente implementados. Un mock incompleto rompe el principio de aislamiento de las pruebas unitarias y hace que las pruebas dependan de implementaciones reales, violando la Lección 10.
-Regla Inquebrantable: Cada mock (CMock...) debe ser una clase completa que implemente su interfaz correspondiente, permita la configuración de sus valores de retorno (mediante métodos como .SetSetting) y registre las llamadas (..._WasCalled, ..._CallCount) para facilitar las aserciones en las pruebas. Los mocks deben ser reutilizables entre diferentes pruebas y suites.
-NOTA CRÍTICA: Nuestros mocks inteligentes (como CMockConfig) se configuran usando métodos de preparación (ej. .SetSetting), no asignando valores a propiedades ..._ReturnValue. El patrón correcto es mockConfig.SetSetting "CLAVE", valor en lugar de mockConfig.Propiedad_ReturnValue = valor.
-Acción Correctiva: Implementar clases mock completas para todas las interfaces del sistema, incluyendo variables privadas para almacenar configuraciones, métodos públicos para configurar valores de retorno, propiedades de seguimiento de llamadas, métodos Reset para limpiar el estado entre pruebas, y la implementación completa de todos los métodos de la interfaz correspondiente.
+## Lección 22: Los Mocks Deben ser "Mocks Inteligentes v2.0" (Configurables y Verificables)
+
+**Observación:** Los tests unitarios no solo deben verificar el resultado de una operación, sino también que la unidad bajo prueba interactúa correctamente con sus dependencias. Un mock que solo devuelve valores ("Mock Pasivo") es insuficiente para este propósito.
+
+**Regla Inquebrantable:** Todos los mocks del sistema (`CMock*`) deben seguir el patrón "Mock Inteligente v2.0", que les da un doble propósito:
+
+1.  **Configuración del Comportamiento (Arrange):** El mock debe permitir que una prueba configure fácilmente los valores que devolverán sus métodos. Esto se logra a través de métodos públicos con el prefijo `Configure...`.
+    *   **Ejemplo:** `mockRepo.ConfigureObtenerExpedientePorId(miExpedienteDePrueba)`
+
+2.  **Verificación de la Interacción (Assert):** El mock debe actuar como un "espía", registrando internamente si sus métodos fueron llamados y con qué parámetros. Esto se logra exponiendo propiedades públicas de solo lectura.
+    *   **Ejemplo de Verificación de Llamada:** `modAssert.AssertTrue mockRepo.ObtenerExpedientePorId_WasCalled`
+    *   **Ejemplo de Verificación de Parámetro:** `modAssert.AssertEquals 123, mockRepo.ObtenerExpedientePorId_LastId`
+
+**Acción Correctiva:** Toda nueva clase mock debe implementar esta estructura dual. Debe tener métodos `Configure...()` para establecer los valores de retorno de cada método de la interfaz y propiedades `..._WasCalled` y `..._Last[ParamName]` para cada método que necesite ser verificado. Todas las clases mock también deben implementar un método `Reset()` para limpiar tanto los valores configurados como el estado de las propiedades espía entre pruebas. `CMockExpedienteRepository.cls` es el "Estándar de Oro" para este patrón.
 
 Lección 23: Las Auditorías de Calidad de Pruebas Verifican el Aislamiento
 Observación: Con el tiempo, las pruebas unitarias pueden degradarse y comenzar a depender de clases reales en lugar de mocks, convirtiéndose en "falsos unitarios" que pueden ocultar errores o fallar por razones equivocadas. Esta degradación compromete la fiabilidad de la red de seguridad de pruebas.
