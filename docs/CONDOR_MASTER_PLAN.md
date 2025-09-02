@@ -298,16 +298,13 @@ graph TD
     subgraph "Capa de Datos"
         F --> G
     end
-```
-- **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
-- **Limpieza de Recursos**: Liberación explícita de todos los objetos en el bloque Cleanup
-- **Sincronización de Interfaces**: Métodos de implementación alineados con interfaces
-- **Inyección de Dependencias Opcionales**: Factoría permite inyección para testing
-- **Repositorio Completamente Funcional**: CExpedienteRepository implementa conexión real a BD, consultas SQL parametrizadas, mapeo completo de datos y manejo robusto de errores
-- **Mapeo de Datos Completo**: Función MapRecordsetToExpediente maneja todos los campos de EExpediente con validación de valores nulos
-- **Tests de Integración Fortalecidos**: TIExpedienteRepository incluye aserciones sobre Titulo y ContratistaPrincipal además de campos básicos
-- **Test Unitario "Estándar de Oro"**: TestCExpedienteService verifica delegación correcta usando propiedades espía del Mock Inteligente (verificación de *_WasCalled y *_LastId)
-- **Corrección Arquitectónica**: Uso de `DBEngine.OpenDatabase()` estándar en lugar de `CreateObject("DAO.DBEngine.0")` en TIExpedienteRepository.bas
+🧪 **Patrones de Testing Implementados ✅:**
+- **Arquitectura de Pruebas Clara**: Los repositorios se prueban con Tests de Integración (`TIExpedienteRepository.bas`). Los servicios se prueban con Tests Unitarios (`TestCExpedienteService.bas`) usando mocks de repositorio. ✅
+- **Mock Inteligente**: Patrón Configure/Reset + propiedades espía para verificación de comportamiento ✅
+- **Autoaprovisionamiento**: Copia automática de template de BD de expedientes ✅
+- **Inyección de Dependencias Opcionales**: Factoría permite inyección para testing ✅
+- **Repositorio Funcional**: Implementación completa con SQL parametrizado y mapeo robusto ✅
+- **Test Unitario "Estándar de Oro"**: TestCExpedienteService verifica la delegación usando mocks inteligentes ✅
 ```
 
 ### 3.4. Gestión de Solicitudes (Solicitud)
