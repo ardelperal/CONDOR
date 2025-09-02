@@ -1292,7 +1292,7 @@ back/test_db/
 | `TIExpedienteRepository.bas` | Integración | BD de prueba |
 | `TIMapeoRepository.bas` | Integración | BD de prueba |
 | `TINotificationRepository.bas` | Integración | BD de prueba |
-| `IntegrationTestWordManager.bas` | Integración | BD de prueba |
+| `TIWordManager.bas` | Integración | BD de prueba |
 
 #### 🎯 **Beneficios del Sistema**
 
