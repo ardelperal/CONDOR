@@ -298,6 +298,8 @@ graph TD
     subgraph "Capa de Datos"
         F --> G
     end
+```
+
 🧪 **Patrones de Testing Implementados ✅:**
 - **Arquitectura de Pruebas Clara**: Los repositorios se prueban con Tests de Integración (`TIExpedienteRepository.bas`). Los servicios se prueban con Tests Unitarios (`TestCExpedienteService.bas`) usando mocks de repositorio. ✅
 - **Mock Inteligente**: Patrón Configure/Reset + propiedades espía para verificación de comportamiento ✅
