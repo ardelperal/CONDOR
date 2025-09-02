@@ -313,265 +313,41 @@ graph TD
 ### 3.4. Gestión de Solicitudes (Solicitud)
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│        GESTIÓN DE SOLICITUDES                              │
+│        GESTIÓN DE SOLICITUDES (Esquema Normalizado)        │
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 ISolicitudService.cls     ← Interface                   │
 │ 📄 ISolicitudRepository.cls  ← Interface                   │
 │ 🔧 CSolicitudService.cls     ← Implementación              │
-│ 🔧 CSolicitudRepository.cls  ← Implementación ✅ │
+│ 🔧 CSolicitudRepository.cls  ← Implementación (Lógica DB)   │
 │ 🧪 CMockSolicitudService.cls ← Mock Service para testing   │
 │ 🧪 CMockSolicitudRepository.cls ← Mock Repository para testing │
-│    └─ Update_LastUsuarioModificacion ← Propiedad de espionaje │
-│ 🏭 modSolicitudServiceFactory.bas ← Factory                │
+│ 🏭 modSolicitudServiceFactory.bas ← Factoría                │
 │ ✅ TestSolicitudService.bas  ← Tests unitarios             │
 │ 🔬 TISolicitudRepository.bas ← Tests integración           │
-│ 📦 ESolicitud.cls            ← Entidad Principal           │
-│    ├─ idEstadoInterno (Long) ← Estado normalizado          │
-│    ├─ fechaModificacion (Date) ← Campo de auditoría        │
-│    └─ usuarioModificacion (String) ← Campo de auditoría    │
-│ 📦 EUsuario.cls              ← Entidad Usuario             │
-│ 📦 EDatosPc.cls              ← Entidad Datos PC            │
-│ 📦 EDatosCdCa.cls            ← Entidad Datos CDCA          │
-│ 📦 EDatosCdCaSub.cls         ← Entidad Datos CDCASUB       │
+│ 📊 ESolicitud.cls            ← Entidad Principal (Normalizada) │
+│ 📊 EUsuario.cls              ← Entidad Usuario             │
+│ 📊 EDatosPc.cls              ← Entidad Datos PC            │
+│ 📊 EDatosCdCa.cls            ← Entidad Datos CDCA          │
+│ 📊 EDatosCdCaSub.cls         ← Entidad Datos CDCASUB       │
 └─────────────────────────────────────────────────────────────┘
 
-#### 🏗️ Diagrama de Dependencias Solicitud
+#### 🏗️ Diagrama de Dependencias Solicitud (Normalizado)
 ```mermaid
 graph TD
-    subgraph "Capa de Pruebas"
-        A[TestSolicitudService.bas] --> B[CMockSolicitudService]
-        A --> C[CMockSolicitudRepository]
-        A --> D[CMockOperationLogger]
-        A --> E[CMockErrorHandlerService]
-        A --> F[CMockConfig]
-        G[TISolicitudRepository.bas] --> H[CSolicitudRepository]
-        G --> I[IConfig]
-    end
-    
     subgraph "Capa de Lógica de Negocio"
-        J[CSolicitudService] --> K[ISolicitudRepository]
-        J --> L[IOperationLogger]
-        J --> M[IErrorHandlerService]
-    end
-    
-    subgraph "Capa de Factorías"
-        N[modSolicitudServiceFactory.bas] --> J
-        N --> O[modRepositoryFactory.bas]
-        N --> P[modOperationLoggerFactory.bas]
-        N --> Q[modErrorHandlerFactory.bas]
-        O --> H
-        P --> R[COperationLogger]
-        Q --> S[CErrorHandlerService]
+        CSolicitudService --> ISolicitudRepository
+        CSolicitudService --> IOperationLogger
+        CSolicitudService --> IErrorHandlerService
     end
     
     subgraph "Capa de Datos"
-        H --> I
+        CSolicitudRepository --> IConfig
     end
     
-    subgraph "Entidades"
-        T[ESolicitud.cls] --> U["Propiedades: idSolicitud, tipoSolicitud, codigoSolicitud, idEstadoInterno, fechaModificacion, usuarioModificacion"]
-        V[EUsuario.cls] --> W["Propiedades: ID, Email, NombreCompleto, Rol"]
-        X[EDatosPc.cls] --> Y["Propiedades: CodigoPc, Descripcion, Ubicacion"]
+    subgraph "Capa de Factorías"
+        modSolicitudServiceFactory --> CSolicitudService
+        modSolicitudServiceFactory --> modRepositoryFactory
     end
-```
-
-🔗 **Dependencias:**
-- CSolicitudService ➜ ISolicitudRepository (inyectado)
-- CSolicitudService ➜ IErrorHandlerService (inyectado)
-- CSolicitudRepository ➜ IConfig (inyectado)
-- modSolicitudServiceFactory ➜ modRepositoryFactory, modErrorHandlerFactory
-
-🔧 **Mock Inteligente:**
-- CMockSolicitudRepository.ConfigureObtenerSolicitudPorNumero(solicitud As ESolicitud)
-- CMockSolicitudRepository.ConfigureObtenerSolicitudesPorUsuario(solicitudes As Scripting.Dictionary)
-- CMockSolicitudRepository.ConfigureObtenerSolicitudPorId(solicitud As ESolicitud)
-- CMockSolicitudRepository.Update_LastUsuarioModificacion ← Propiedad de espionaje para auditoría
-- CMockSolicitudService.ConfigureCreateSolicitud(solicitud As ESolicitud)
-- CMockSolicitudService.ConfigureSaveSolicitud(boolean)
-- CMockSolicitudService.ConfigureObtenerSolicitudPorId(solicitud As ESolicitud)
-
-🧪 **Patrones de Testing:**
-- **Tests Unitarios**: Uso exclusivo de mocks para dependencias externas
-- **Tests de Integración**: Operan con objetos reales y base de datos de prueba
-- **Autoaprovisionamiento**: Sistema automático de preparación de BD de prueba
-- **Estructura AAA**: Arrange/Act/Assert clara
-- **Sin Variables Globales**: Variables de módulo, declaración local
-- **Manejo de Errores**: Bloques TestFail/ErrorHandler consistentes
-- **Reset de Mocks**: Llamada a .Reset() después de instanciación
-- **Setup/Teardown**: Gestión automática de recursos en tests de integración
-- **Aserciones Estandarizadas**: Todas las llamadas a funciones de aserción usan prefijo `modAssert.`
-- **TestSolicitudService**: Implementa correctamente `TestCreateSolicitudSuccess` y `TestSaveSolicitudSuccess`
-- **Mocks Inteligentes**: Configuración y verificación de comportamiento esperado
-- **Constantes Correctas**: CSolicitudRepository.cls con constantes alineadas
-  - `GET_DATOS_CD_CA_BY_SOLICITUD` → `GET_DATOS_CDCA_BY_SOLICITUD`
-  - `GET_DATOS_CD_CA_SUB_BY_SOLICITUD` → `GET_DATOS_CDCASUB_BY_SOLICITUD`
-- **Compilación Exitosa**: Todos los componentes de solicitudes compilan sin errores
-- **Build Exitoso**: Rebuild completado correctamente
-- **Sincronización Completa**: Todas las referencias SQL alineadas con modQueries.bas
-- **Componente Funcional**: Operativo
-
-#### 🏗️ Diagrama UML de Entidades
-```mermaid
-classDiagram
-    class ESolicitud {
-        -Long m_idSolicitud
-        -Long m_idExpediente
-        -String m_tipoSolicitud
-        -String m_subTipoSolicitud
-        -String m_codigoSolicitud
-        -Long m_idEstadoInterno
-        -Date m_fechaCreacion
-        -String m_usuarioCreacion
-        -Date m_fechaPaseTecnico
-        -Date m_fechaCompletadoTecnico
-        -Date m_fechaModificacion
-        -String m_usuarioModificacion
-        +String observaciones
-        -EDatosPc m_datosPC
-        -EDatosCdCa m_datosCDCA
-        -EDatosCdCaSub m_datosCDCASUB
-        +Property Get/Let idSolicitud() Long
-        +Property Get/Let idExpediente() Long
-        +Property Get/Let tipoSolicitud() String
-        +Property Get/Let subTipoSolicitud() String
-        +Property Get/Let codigoSolicitud() String
-        +Property Get/Let idEstadoInterno() Long
-        +Property Get/Let fechaCreacion() Date
-        +Property Get/Let usuarioCreacion() String
-        +Property Get/Let fechaPaseTecnico() Date
-        +Property Get/Let fechaCompletadoTecnico() Date
-        +Property Get/Let fechaModificacion() Date
-        +Property Get/Let usuarioModificacion() String
-        +Property Get/Set datosPC() EDatosPc
-        +Property Get/Set datosCDCA() EDatosCdCa
-        +Property Get/Set datosCDCASUB() EDatosCdCaSub
-        +Property Get Datos() Object
-    }
-    
-    class EUsuario {
-        -Long m_ID
-        -String m_Email
-        -String m_NombreCompleto
-        -UserRole m_Rol
-        -Boolean m_EsAdministrador
-        -Boolean m_EsUsuarioCalidad
-        -Boolean m_EsUsuarioTecnico
-        -String m_VersionInstalada
-        -Date m_UltimoAcceso
-        -Date m_FechaRegistro
-        -String m_Permisos
-        +Property Get/Let ID() Long
-        +Property Get/Let Email() String
-        +Property Get/Let NombreCompleto() String
-        +Property Get/Let Rol() UserRole
-        +Property Get/Let EsAdministrador() Boolean
-        +Property Get/Let EsUsuarioCalidad() Boolean
-        +Property Get/Let EsUsuarioTecnico() Boolean
-        +Property Get/Let VersionInstalada() String
-        +Property Get/Let UltimoAcceso() Date
-        +Property Get/Let FechaRegistro() Date
-        +Property Get/Let Permisos() String
-        +Function TienePermisosAdmin() Boolean
-        +Function PuedeConsultarSolicitudes() Boolean
-    }
-    
-    class EDatosPc {
-        -Long m_idDatosPC
-        -Long m_idSolicitud
-        -String m_refContratoInspeccionOficial
-        -String m_refSuministrador
-        -String m_suministradorNombreDir
-        -String m_objetoContrato
-        -String m_descripcionMaterialAfectado
-        -String m_numPlanoEspecificacion
-        -String m_descripcionPropuestaCambio
-        -String m_descripcionPropuestaCambioCont
-        -Boolean m_motivoCorregirDeficiencias
-        -Boolean m_motivoMejorarCapacidad
-        -Boolean m_motivoAumentarNacionalizacion
-        -Boolean m_motivoMejorarSeguridad
-        -String m_racRef
-        -String m_racCodigo
-        -String m_observacionesRAC
-        -Date m_fechaFirmaRAC
-        -String m_obsAprobacionAutoridadDiseno
-        -String m_firmaAutoridadDisenoNombreCargo
-        -Date m_fechaFirmaAutoridadDiseno
-        -String m_decisionFinal
-        -String m_obsDecisionFinal
-        -String m_cargoFirmanteFinal
-        -Date m_fechaFirmaDecisionFinal
-        +Property Get/Let [todas las propiedades]
-    }
-    
-    class EDatosCdCa {
-        -Long m_idDatosCDCA
-        -Long m_idSolicitud
-        -String m_refSuministrador
-        -String m_suministradorNombreDir
-        -String m_objetoContrato
-        -String m_descripcionMaterialAfectado
-        -String m_numPlanoEspecificacion
-        -String m_descripcionPropuestaCambio
-        -String m_racRef
-        -String m_racCodigo
-        -String m_observacionesRAC
-        -Date m_fechaFirmaRAC
-        -String m_decisionFinal
-        -String m_observacionesFinales
-        -Date m_fechaFirmaDecisionFinal
-        -String m_cargoFirmanteFinal
-        +Property Get/Let [todas las propiedades]
-    }
-    
-    class EDatosCdCaSub {
-        -Long m_idDatosCDCASUB
-        -Long m_idSolicitud
-        -String m_refSuministrador
-        -String m_refSubSuministrador
-        -String m_subSuministradorNombreDir
-        -String m_objetoContrato
-        -String m_descripcionMaterialAfectado
-        -String m_numPlanoEspecificacion
-        -String m_descripcionPropuestaCambio
-        -Boolean m_afectaFuncion
-        -Boolean m_afectaForma
-        -Boolean m_afectaApariencia
-        -Boolean m_afectaOtros
-        -Boolean m_requiereModificacionContrato
-        -String m_efectoFechaEntrega
-        -String m_identificacionAutoridadDiseno
-        -Boolean m_esSubSuministradorAD
-        -String m_nombreRepSubSuministrador
-        -String m_racRef
-        -String m_racCodigo
-        -String m_observacionesRAC
-        -Date m_fechaFirmaRAC
-        -String m_decisionSuministradorPrincipal
-        -String m_obsSuministradorPrincipal
-        -Date m_fechaFirmaSuministradorPrincipal
-        -String m_firmaSuministradorPrincipalNombreCargo
-        -String m_obsRACDelegador
-        -Date m_fechaFirmaRACDelegador
-        +Property Get/Let [todas las propiedades]
-    }
-    
-    ESolicitud ||--o{ EDatosPc : "contiene según tipo"
-    ESolicitud ||--o{ EDatosCdCa : "contiene según tipo"
-    ESolicitud ||--o{ EDatosCdCaSub : "contiene según tipo"
-```
-
-🔗 **Dependencias:**
-- CSolicitudService ➜ ISolicitudRepository (inyectado)
-- CSolicitudService ➜ IOperationLogger (inyectado)
-- CSolicitudService ➜ IErrorHandlerService (inyectado)
-- modSolicitudServiceFactory ➜ modConfig (para IConfig)
-- modSolicitudServiceFactory ➜ modFileSystemFactory (para IFileSystem)
-- modSolicitudServiceFactory ➜ modErrorHandlerFactory (para IErrorHandlerService)
-- modSolicitudServiceFactory ➜ modRepositoryFactory (para ISolicitudRepository)
-- modSolicitudServiceFactory ➜ modOperationLoggerFactory (para IOperationLogger)
-- ESolicitud ➜ EDatosPc, EDatosCdCa, EDatosCdCaSub (composición)
-- EUsuario ➜ UserRole (enumeración estandarizada)
 ```
 
 ### 3.5. Gestión de Flujos de Trabajo (Workflow)
@@ -2303,18 +2079,21 @@ cscript condor_cli.vbs help
 | detalles | Memo | |
 
 **11. tbSolicitudes**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idSolicitud | Long | PK |
-| idExpediente | Long | |
-| tipoSolicitud | Text | |
-| subTipoSolicitud | Text | |
-| codigoSolicitud | Text | |
-| estadoInterno | Text | |
-| fechaCreacion | DateTime | |
-| usuarioCreacion | Text | |
-| fechaPaseTecnico | DateTime | |
-| fechaCompletadoTecnico | DateTime | |
+| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
+|-------|------|----------|------|-------|-------------|
+| idSolicitud | AutoNumber | - | No | PK | Identificador único de la solicitud |
+| idExpediente | Long | - | No | FK | Referencia al expediente asociado |
+| tipoSolicitud | Text | 20 | No | - | Tipo de solicitud: "PC", "CD/CA", "CD/CA-SUB" |
+| subTipoSolicitud | Text | 20 | Sí | - | Subtipo: "Desviación" o "Concesión" |
+| codigoSolicitud | Text | 50 | No | - | Código único autogenerado |
+| idEstadoInterno | Long | - | No | FK | REFACTORIZADO: Referencia a tbEstados |
+| fechaCreacion | DateTime | - | No | - | Timestamp de creación del registro |
+| usuarioCreacion | Text | 100 | No | - | Email del usuario que creó la solicitud |
+| fechaPaseTecnico | DateTime | - | Sí | - | Fecha de envío a revisión técnica |
+| fechaCompletadoTecnico | DateTime | - | Sí | - | Fecha de finalización técnica |
+| fechaModificacion | DateTime | - | Sí | - | AÑADIDO: Timestamp de la última modificación |
+| usuarioModificacion | Text | 100 | Sí | - | AÑADIDO: Email del último usuario que modificó |
+| observaciones | Memo | - | Sí | - | Observaciones generales de la solicitud |
 
 **12. tbTransiciones**
 | Campo | Tipo | PK |

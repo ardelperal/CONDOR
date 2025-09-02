@@ -2422,13 +2422,21 @@ Function GetFunctionalityFiles(strFunctionality)
 
         
         Case "solicitud", "solicitudes"
-            ' Sección 3.4 - Gestión de Solicitudes + Dependencias
-            arrFiles = Array("ISolicitudService.cls", "CSolicitudService.cls", "CMockSolicitudService.cls", _
-                           "ISolicitudRepository.cls", "CSolicitudRepository.cls", "CMockSolicitudRepository.cls", _
-                           "ESolicitud.cls", "EDatosPc.cls", "EDatosCdCa.cls", "EDatosCdCaSub.cls", _
-                           "modSolicitudServiceFactory.bas", "TestSolicitudService.bas", _
-                           "TISolicitudRepository.bas", _
-                           "IOperationLogger.cls", "IErrorHandlerService.cls", "IConfig.cls")
+            arrFiles = Array( _
+                "ISolicitudService.cls", _
+                "CSolicitudService.cls", _
+                "CMockSolicitudService.cls", _
+                "ISolicitudRepository.cls", _
+                "CSolicitudRepository.cls", _
+                "CMockSolicitudRepository.cls", _
+                "ESolicitud.cls", _
+                "EDatosPc.cls", _
+                "EDatosCdCa.cls", _
+                "EDatosCdCaSub.cls", _
+                "modSolicitudServiceFactory.bas", _
+                "TestSolicitudService.bas", _
+                "TISolicitudRepository.bas" _
+            )
         
         Case "workflow", "flujo"
             ' Sección 3.5 - Gestión de Workflow (v2.0 Simplificada) + Dependencias
