@@ -313,25 +313,30 @@ graph TD
 ### 3.4. Gestión de Solicitudes (Solicitud)
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│        GESTIÓN DE SOLICITUDES (Esquema Normalizado)        │
+│     GESTIÓN DE SOLICITUDES (Completamente Estabilizada)    │
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 ISolicitudService.cls     ← Interface                   │
-│ 📄 ISolicitudRepository.cls  ← Interface                   │
+│ 📄 ISolicitudRepository.cls  ← Interface (SaveSolicitud)   │
 │ 🔧 CSolicitudService.cls     ← Implementación              │
-│ 🔧 CSolicitudRepository.cls  ← Implementación (Lógica DB)   │
+│ 🔧 CSolicitudRepository.cls  ← Implementación (Corregida)   │
+│    ├─ ISolicitudRepository_SaveSolicitud() As Long ✅      │
+│    ├─ ISolicitudRepository_ObtenerSolicitudPorId() ✅      │
+│    └─ Contrato de interfaz cumplido correctamente          │
 │ 🧪 CMockSolicitudService.cls ← Mock Service para testing   │
 │ 🧪 CMockSolicitudRepository.cls ← Mock Repository para testing │
 │ 🏭 modSolicitudServiceFactory.bas ← Factoría                │
 │ ✅ TestSolicitudService.bas  ← Tests unitarios             │
 │ 🔬 TISolicitudRepository.bas ← Tests integración           │
 │ 📊 ESolicitud.cls            ← Entidad Principal (Normalizada) │
+│    └─ idEstadoInterno As Long (Campo normalizado)          │
 │ 📊 EUsuario.cls              ← Entidad Usuario             │
 │ 📊 EDatosPc.cls              ← Entidad Datos PC            │
 │ 📊 EDatosCdCa.cls            ← Entidad Datos CDCA          │
 │ 📊 EDatosCdCaSub.cls         ← Entidad Datos CDCASUB       │
+│ ❌ CMockTextFile.cls         ← ELIMINADO (obsoleto)        │
 └─────────────────────────────────────────────────────────────┘
 
-#### 🏗️ Diagrama de Dependencias Solicitud (Normalizado)
+#### 🏗️ Diagrama de Dependencias Solicitud (Estabilizado)
 ```mermaid
 graph TD
     subgraph "Capa de Lógica de Negocio"
@@ -342,6 +347,7 @@ graph TD
     
     subgraph "Capa de Datos"
         CSolicitudRepository --> IConfig
+        CSolicitudRepository --> IErrorHandlerService
     end
     
     subgraph "Capa de Factorías"
@@ -349,6 +355,21 @@ graph TD
         modSolicitudServiceFactory --> modRepositoryFactory
     end
 ```
+
+🔗 **Estado de Implementación:**
+- **Interfaz ISolicitudRepository**: Contrato definido correctamente
+- **Implementación CSolicitudRepository**: 
+  - ✅ SaveSolicitud(solicitud As ESolicitud) As Long - Corregida
+  - ✅ ObtenerSolicitudPorId(id As Long) As ESolicitud - Funcional
+  - ✅ Manejo de errores robusto con IErrorHandlerService
+  - ✅ Conexión a BD con IConfig
+  - ✅ Mapeo completo de campos normalizados
+- **Normalización de Datos**: Campo idEstadoInterno como Long (FK)
+- **Compilación**: ✅ Sin errores de contrato de interfaz
+- **Reconstrucción**: ✅ 116 archivos sincronizados exitosamente
+- **Limpieza de Código**: ✅ CMockTextFile.cls eliminado (obsoleto)
+- **Sincronización**: ✅ listado_archivos_src.txt actualizado
+- **Estado Final**: ✅ Proyecto completamente estabilizado y funcional
 
 ### 3.5. Gestión de Flujos de Trabajo (Workflow)
 ```text
@@ -920,7 +941,7 @@ graph TD
 │ TestAppManager.bas           ← Tests unitarios             │
 │ TestAuthService.bas          ← Tests unitarios             │
 │ TestCConfig.bas              ← Tests unitarios             │
-│ TestCExpedienteService.bas   ← Tests unitarios             │
+│ ✅ TestCExpedienteService.bas   ← Tests unitarios             │
 │ TestDocumentService.bas      ← Tests unitarios             │
 │ TestErrorHandlerService.bas  ← Tests unitarios             │
 │ TestModAssert.bas            ← Tests unitarios             │

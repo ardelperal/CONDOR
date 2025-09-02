@@ -51,8 +51,10 @@ ErrorHandler:
     Resume Cleanup
 End Function
 
-Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As ESolicitud) As Boolean
+Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitud) As Long
     Dim db As DAO.Database, rs As DAO.Recordset
+    Dim newId As Long
+    newId = 0
     On Error GoTo ErrorHandler
     
     Set db = GetDatabaseConnection()
@@ -60,7 +62,6 @@ Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As ESolic
     If solicitud.idSolicitud = 0 Then ' Es un nuevo registro (INSERT)
         Set rs = db.OpenRecordset("tbSolicitudes", dbOpenDynaset, dbAppendOnly)
         rs.AddNew
-        ' El idSolicitud es autonumérico y se asignará al hacer .Update
     Else ' Es una actualización (UPDATE)
         Set rs = db.OpenRecordset("SELECT * FROM tbSolicitudes WHERE idSolicitud=" & solicitud.idSolicitud, dbOpenDynaset)
         If rs.EOF Then
@@ -74,7 +75,7 @@ Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As ESolic
     rs!tipoSolicitud = solicitud.tipoSolicitud
     rs!subTipoSolicitud = solicitud.subTipoSolicitud
     rs!codigoSolicitud = solicitud.codigoSolicitud
-    rs!idEstadoInterno = solicitud.idEstadoInterno ' Usando campo normalizado Long
+    rs!idEstadoInterno = solicitud.idEstadoInterno
     rs!fechaCreacion = solicitud.fechaCreacion
     rs!usuarioCreacion = solicitud.usuarioCreacion
     rs!fechaPaseTecnico = solicitud.fechaPaseTecnico
@@ -85,13 +86,16 @@ Private Function ISolicitudRepository_GuardarSolicitud(ByVal solicitud As ESolic
     
     rs.Update
     
-    ' Si era un nuevo registro, obtener el nuevo ID asignado
+    ' Obtener el ID para devolverlo
     If solicitud.idSolicitud = 0 Then
         rs.Bookmark = rs.LastModified
-        solicitud.idSolicitud = rs!idSolicitud
+        newId = rs!idSolicitud
+        solicitud.idSolicitud = newId ' Actualizar el objeto original con el nuevo ID
+    Else
+        newId = solicitud.idSolicitud
     End If
     
-    ISolicitudRepository_GuardarSolicitud = True
+    ISolicitudRepository_SaveSolicitud = newId
 
 Cleanup:
     On Error Resume Next
@@ -100,8 +104,8 @@ Cleanup:
     Set rs = Nothing: Set db = Nothing
     Exit Function
 ErrorHandler:
-    ISolicitudRepository_GuardarSolicitud = False
-    m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".GuardarSolicitud: " & Err.Description
+    ISolicitudRepository_SaveSolicitud = 0 ' Devolver 0 en caso de error
+    m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".SaveSolicitud: " & Err.Description
     Resume Cleanup
 End Function
 

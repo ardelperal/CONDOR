@@ -24,7 +24,6 @@ CMockOperationLogger.cls
 CMockOperationRepository.cls
 CMockSolicitudRepository.cls
 CMockSolicitudService.cls
-CMockTextFile.cls
 CMockWordManager.cls
 CMockWorkflowRepository.cls
 CMockWorkflowService.cls
@@ -90,7 +89,6 @@ TIWorkflowRepository.bas
 TestAppManager.bas
 TestAuthService.bas
 TestCConfig.bas
-TestCExpedienteRepository.bas
 TestCExpedienteService.bas
 TestDocumentService.bas
 TestErrorHandlerService.bas
