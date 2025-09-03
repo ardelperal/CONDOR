@@ -2092,9 +2092,8 @@ Sub RebuildProject()
     WScript.Echo "Verificando integridad de nombres de modulos..."
     Call VerifyModuleNames()
     
-    ' PASO 4.5: Copiar todos los archivos de src a la caché
-    WScript.Echo "Paso 5: Copiando todos los archivos de /src a la cache..."
-    Call CopyAllFilesToCache()
+    ' PASO 4.5: Verificación final completada
+    WScript.Echo "Paso 5: Verificación final completada"
     
     WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
     WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
@@ -2226,58 +2225,7 @@ End Sub
 
 
 
-' Función para copiar todos los archivos de src a la caché
-Sub CopyAllFilesToCache()
-    On Error Resume Next
-    
-    ' Definir ruta de la caché
-    Dim strCachePath
-    strCachePath = objFSO.BuildPath(objFSO.GetParentFolderName(strSourcePath), ".vba_cache")
-    
-    ' Crear directorio de caché si no existe
-    If Not objFSO.FolderExists(strCachePath) Then
-        objFSO.CreateFolder strCachePath
-        If Err.Number <> 0 Then
-            WScript.Echo "Error creando directorio de cache: " & Err.Description
-            Err.Clear
-            Exit Sub
-        End If
-    End If
-    
-    ' Copiar todos los archivos .bas y .cls de src a cache
-    Dim objFolder, objFile
-    Dim copiedCount
-    copiedCount = 0
-    
-    If Not objFSO.FolderExists(strSourcePath) Then
-        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
-        Exit Sub
-    End If
-    
-    Set objFolder = objFSO.GetFolder(strSourcePath)
-    
-    For Each objFile In objFolder.Files
-        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-            Dim destPath
-            destPath = objFSO.BuildPath(strCachePath, objFile.Name)
-            
-            ' Copiar archivo
-            objFSO.CopyFile objFile.Path, destPath, True
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "  ❌ Error copiando " & objFile.Name & ": " & Err.Description
-                Err.Clear
-            Else
-                WScript.Echo "  ✓ Copiado: " & objFile.Name
-                copiedCount = copiedCount + 1
-            End If
-        End If
-    Next
-    
-    WScript.Echo "✓ Cache actualizada: " & copiedCount & " archivos copiados"
-    
-    On Error GoTo 0
-End Sub
+
 
 ' Función para verificar cambios antes de abrir la base de datos
 
