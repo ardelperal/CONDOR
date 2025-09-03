@@ -655,7 +655,9 @@ graph TD
 │    └─ GetLanzaderaPassword() As String                     │
 │ 🔧 CConfig.cls                                             │
 │    ├─ Scripting.Dictionary para almacenamiento interno     │
-│    ├─ LoadConfiguration()                                  │
+│    ├─ LoadConfiguration() - Arquitectura de dos niveles    │
+│    │   ├─ Lee TbLocalConfig del frontend (entorno)         │
+│    │   └─ Carga tbConfiguracion del backend               │
 │    ├─ Implementa todos los métodos de IConfig              │
 │    ├─ Métodos públicos de conveniencia (GetValue, HasKey)  │
 │    ├─ Métodos específicos públicos (GetDataPath, etc.)     │
@@ -691,6 +693,10 @@ graph TD
 - **Interface**: GetValue(), SetSetting(), HasKey() y métodos específicos de configuración
 - **Métodos Específicos**: GetDataPath(), GetDatabasePassword(), GetAttachmentsPath(), etc.
 - **Implementación**: CConfig sin dependencias externas
+- **LoadConfiguration**: Implementación robusta con arquitectura de dos niveles
+  - Lee TbLocalConfig del frontend para determinar el entorno
+  - Conecta al backend y carga tbConfiguracion completa
+  - Manejo robusto de errores con cleanup de recursos
 - **Métodos Públicos**: Conjunto completo de métodos de conveniencia expuestos públicamente
 - **Sincronización**: Todos los métodos públicos de CConfig están en IConfig
 - **Mock**: CMockConfig con Dictionary interno y métodos públicos de conveniencia
