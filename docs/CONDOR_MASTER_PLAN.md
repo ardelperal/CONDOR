@@ -90,7 +90,8 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IAuthService.cls          ← Interface                   │
 │    ├─ GetUserRole(userEmail) ← Obtiene rol de usuario      │
-│    └─ AuthenticateUser(email, password) ← Autentica usuario │
+│    ├─ AuthenticateUser(email, password) ← Autentica usuario │
+│    └─ GetCurrentUserEmail() ← Obtiene email del usuario actual │
 │ 📄 IAuthRepository.cls       ← Interface                   │
 │ 🔧 CAuthService.cls          ← Implementación              │
 │    ├─ GetUserRole() ← Con auditoría                        │
@@ -99,6 +100,7 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │ 🧪 CMockAuthService.cls      ← Mock Service para testing   │
 │    ├─ ConfigureAuthenticateUser(Boolean) ← Configuración   │
 │    ├─ ConfigureGetUserRole(UserRole) ← Configuración       │
+│    ├─ ConfigureGetCurrentUserEmail(String) ← Configuración │
 │    └─ Reset() ← Método de limpieza                         │
 │ 🧪 CMockAuthRepository.cls   ← Mock Repository para testing │
 │    └─ ConfigureGetUserAuthData(EAuthData) ← Configuración  │

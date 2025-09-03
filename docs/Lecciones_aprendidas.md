@@ -63,6 +63,7 @@ Observación: El uso de CurrentDb en módulos que acceden a datos rompe la arqui
 Regla Inquebrantable: La base de datos de datos (_datos.accdb) debe ser accedida exclusivamente a través de conexiones DAO, utilizando la ruta y la contraseña almacenadas en el servicio de configuración (ModConfig). El uso de CurrentDb solo es válido para operaciones en la base de datos del frontend (código VBA, formularios, etc.).
 
 Ejemplo de Violación (CAuthRepository antes de refactorización):
+
 ```vba
 Private m_Database As DAO.Database
 
@@ -72,6 +73,7 @@ End Sub
 ```
 
 Ejemplo Correcto (CSolicitudRepository):
+
 ```vba
 Private m_configService As IConfig
 Private m_operationLogger As IOperationLogger
@@ -85,10 +87,10 @@ Private Function GetData() As DAO.Recordset
     ' ✅ CORRECTO: Conexión explícita al Backend
     Dim backendPath As String
     backendPath = m_configService.GetDataPath()
-    
+  
     Dim backendPassword As String
     backendPassword = m_configService.GetDatabasePassword()
-    
+  
     Set db = DBEngine.OpenDatabase(backendPath, False, False, ";PWD=" & backendPassword)
 End Function
 ```
@@ -130,6 +132,7 @@ Regla Inquebrantable: Cada repositorio debe gestionar una única entidad de nego
 Acción Correctiva: Cuando un servicio no puede cumplir su contrato de interfaz con las dependencias actuales, se debe crear el repositorio específico para la entidad que necesita y refactorizar el servicio para usar la dependencia correcta. Nunca se debe "reutilizar" un repositorio de una entidad diferente para acceder a datos de otra entidad.
 
 Caso Crítico - CExpedienteService (2024): Se detectó un fallo de diseño arquitectónico crítico donde CExpedienteService estaba dependiendo de ISolicitudRepository en lugar de IExpedienteRepository. Este error causaba fallos de compilación al intentar llamar métodos como ObtenerExpedientePorNemotecnico que no existen en ISolicitudRepository. La corrección requirió:
+
 - Verificar que CExpedienteService dependa exclusivamente de IExpedienteRepository
 - Confirmar que modExpedienteServiceFactory inyecte la dependencia correcta
 - Validar que los tests usen CMockExpedienteRepository
@@ -137,10 +140,11 @@ Caso Crítico - CExpedienteService (2024): Se detectó un fallo de diseño arqui
 Ejemplo Práctico - Refactorización del AuthService:
 Antes: CAuthService dependía incorrectamente de ISolicitudRepository para consultar datos de usuarios y permisos, violando el principio de responsabilidad única.
 Después: Se creó IAuthRepository con CAuthRepository para gestionar exclusivamente las consultas de autenticación (TbUsuariosAplicaciones, TbUsuariosAplicacionesPermisos). CAuthService ahora depende de IAuthRepository, separando claramente las responsabilidades:
+
 - ISolicitudRepository: Gestiona E_Solicitud y datos relacionados
 - IAuthRepository: Gestiona consultas de usuarios y permisos de aplicación
 - IExpedienteRepository: Gestiona E_Expediente y datos relacionados
-Esta separación mejora la mantenibilidad, testabilidad y cumple el principio de responsabilidad única. NUNCA un servicio debe depender de un repositorio de otra entidad de negocio.
+  Esta separación mejora la mantenibilidad, testabilidad y cumple el principio de responsabilidad única. NUNCA un servicio debe depender de un repositorio de otra entidad de negocio.
 
 Lección 18: La Prevención de Inyección de SQL con Consultas Parametrizadas es Obligatoria
 Observación: Se han detectado repositorios que construyen consultas SQL mediante la concatenación de strings, lo cual introduce una vulnerabilidad de seguridad crítica de Inyección de SQL.
@@ -167,6 +171,7 @@ Regla Inquebrantable: Para pruebas automatizadas en Access, siempre configurar D
 Acción Correctiva: Configurar Access en modo silencioso (objAccess.Application.DisplayAlerts = False, objAccess.Application.Echo False, objAccess.AutomationSecurity = 1), reemplazar False por dbFailOnError en todas las llamadas a DBEngine.OpenDatabase para evitar diálogos de confirmación, y refactorizar funciones críticas como App_Start para aceptar parámetros opcionales que permitan inyección de datos de prueba sin requerir autenticación interactiva.
 
 Ejemplo de Implementación Correcta:
+
 ```vba
 ' En condor_cli.vbs - Configuración para modo desatendido
 objAccess.Application.DisplayAlerts = False
@@ -202,12 +207,13 @@ Acción Correctiva: Implementar métodos Initialize en todas las clases de resul
 
 **Regla Inquebrantable:** Todos los mocks del sistema (`CMock*`) deben seguir el patrón "Mock Inteligente v2.0", que les da un doble propósito:
 
-1.  **Configuración del Comportamiento (Arrange):** El mock debe permitir que una prueba configure fácilmente los valores que devolverán sus métodos. Esto se logra a través de métodos públicos con el prefijo `Configure...`.
-    *   **Ejemplo:** `mockRepo.ConfigureObtenerExpedientePorId(miExpedienteDePrueba)`
+1. **Configuración del Comportamiento (Arrange):** El mock debe permitir que una prueba configure fácilmente los valores que devolverán sus métodos. Esto se logra a través de métodos públicos con el prefijo `Configure...`.
 
-2.  **Verificación de la Interacción (Assert):** El mock debe actuar como un "espía", registrando internamente si sus métodos fueron llamados y con qué parámetros. Esto se logra exponiendo propiedades públicas de solo lectura.
-    *   **Ejemplo de Verificación de Llamada:** `modAssert.AssertTrue mockRepo.ObtenerExpedientePorId_WasCalled`
-    *   **Ejemplo de Verificación de Parámetro:** `modAssert.AssertEquals 123, mockRepo.ObtenerExpedientePorId_LastId`
+   * **Ejemplo:** `mockRepo.ConfigureObtenerExpedientePorId(miExpedienteDePrueba)`
+2. **Verificación de la Interacción (Assert):** El mock debe actuar como un "espía", registrando internamente si sus métodos fueron llamados y con qué parámetros. Esto se logra exponiendo propiedades públicas de solo lectura.
+
+   * **Ejemplo de Verificación de Llamada:** `modAssert.AssertTrue mockRepo.ObtenerExpedientePorId_WasCalled`
+   * **Ejemplo de Verificación de Parámetro:** `modAssert.AssertEquals 123, mockRepo.ObtenerExpedientePorId_LastId`
 
 **Acción Correctiva:** Toda nueva clase mock debe implementar esta estructura dual. Debe tener métodos `Configure...()` para establecer los valores de retorno de cada método de la interfaz y propiedades `..._WasCalled` y `..._Last[ParamName]` para cada método que necesite ser verificado. Todas las clases mock también deben implementar un método `Reset()` para limpiar tanto los valores configurados como el estado de las propiedades espía entre pruebas. `CMockExpedienteRepository.cls` es el "Estándar de Oro" para este patrón.
 
@@ -227,6 +233,7 @@ Regla Inquebrantable: El módulo modAssert.bas debe proporcionar un conjunto com
 Acción Correctiva: Implementar sistemáticamente todas las funciones de aserción necesarias en modAssert.bas, incluyendo pares simétricos (AssertNotNull/AssertIsNull, AssertEquals/AssertNotEquals, etc.), con documentación completa de parámetros y códigos de error. Mantener una lista de verificación de aserciones implementadas para garantizar la completitud del framework.
 
 Funciones de Aserción Estándar Implementadas:
+
 - AssertTrue(condition As Boolean, message As String) - Error: vbObjectError + 510
 - AssertFalse(condition As Boolean, message As String) - Error: vbObjectError + 511
 - AssertEquals(expected As Variant, actual As Variant, message As String) - Error: vbObjectError + 512
@@ -278,6 +285,7 @@ Regla Inquebrantable: La base de datos debe tratarse como un artefacto más del 
 Acción Correctiva: Implementar herramientas CLI que permitan ejecutar scripts SQL de forma automatizada y transaccional. Crear un repositorio de scripts SQL organizados por versiones o funcionalidades. Establecer un flujo de trabajo donde los cambios de base de datos se propongan, revisen y apliquen a través de scripts, no mediante modificaciones manuales. Esto garantiza la reproducibilidad, trazabilidad y consistencia de los cambios de base de datos entre todos los entornos del proyecto.
 
 ## Lección 33: Identificar y Replicar el "Estándar de Oro"
+
 Observación: A lo largo del desarrollo, han surgido implementaciones que no solo son correctas, sino que representan la expresión ideal de nuestra arquitectura. Estos módulos, como CSolicitudService y su suite de pruebas, se convierten en el "Estándar de Oro".
 
 Regla Inquebrantable: Cuando se identifica un módulo o patrón como "Estándar de Oro", debe ser utilizado como la plantilla de referencia obligatoria para el desarrollo de todas las funcionalidades futuras de naturaleza similar. Ignorar estos patrones y reinventar la rueda introduce inconsistencias y reduce la calidad general del proyecto.
@@ -301,11 +309,12 @@ Caso Crítico - CTestReporter (2024): La clase CTestReporter violaba el Principi
 **Regla Inquebrantable:** Toda suite de pruebas de integración (`IntegrationTest*.bas`) debe ser completamente autónoma y responsable de crear y destruir su propio entorno de prueba en tiempo de ejecución. No se debe asumir la preexistencia de ningún archivo. Cada ejecución debe partir de un estado limpio, controlado y reproducible, copiado desde plantillas maestras versionadas.
 
 **Acción Correctiva:** Todos los módulos de prueba de integración deben implementar el patrón `Setup`/`Teardown`.
-1.  El procedimiento `Setup` debe utilizar las utilidades centralizadas en `modTestUtils.bas` (como `PrepareTestDatabase`) para:
-    * Crear los directorios de prueba necesarios usando rutas relativas.
-    * Copiar las bases de datos desde una plantilla maestra (`..._template.accdb`) a una copia de trabajo activa (`..._integration_test.accdb`).
-2.  El procedimiento `Teardown` debe utilizar el servicio `IFileSystem` para eliminar completamente todos los recursos creados durante el `Setup` (la base de datos activa y los directorios), sin dejar rastro.
-3.  Todas las rutas a los archivos deben definirse como constantes relativas, usando `modTestUtils.GetProjectPath()` para construir la ruta absoluta en tiempo de ejecución.
+
+1. El procedimiento `Setup` debe utilizar las utilidades centralizadas en `modTestUtils.bas` (como `PrepareTestDatabase`) para:
+   * Crear los directorios de prueba necesarios usando rutas relativas.
+   * Copiar las bases de datos desde una plantilla maestra (`..._template.accdb`) a una copia de trabajo activa (`..._integration_test.accdb`).
+2. El procedimiento `Teardown` debe utilizar el servicio `IFileSystem` para eliminar completamente todos los recursos creados durante el `Setup` (la base de datos activa y los directorios), sin dejar rastro.
+3. Todas las rutas a los archivos deben definirse como constantes relativas, usando `modTestUtils.GetProjectPath()` para construir la ruta absoluta en tiempo de ejecución.
 
 **Caso Crítico - Refactorización del Framework de Pruebas (2025):** Se refactorizaron los 12 módulos de pruebas de integración para implementar este patrón, eliminando por completo los errores de entorno y garantizando que los fallos de las pruebas ahora solo pueden deberse a regresiones reales en el código de la aplicación.
 
@@ -342,6 +351,21 @@ Sincronizar condor_cli.vbs: Actualizar la lista de archivos en la subrutina GetF
 No se documentarán los cambios incrementales, solo el estado final del proyecto tras la ejecución del prompt.
 Ignora el prompt anterior. A continuación, presento la versión que incorpora esta nueva directiva.
 
+
+### **Lección Aprendida 38: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)**
+
+**Observación:** Se ha detectado que el `CONDOR_MASTER_PLAN.md` y otros artefactos clave (`condor_cli.vbs`) pueden quedar rápidamente obsoletos si los cambios en el código no se reflejan en ellos. Un plan desactualizado es peor que no tener ningún plan, ya que genera decisiones basadas en información incorrecta.
+
+**Regla Inquebrantable:** El `CONDOR_MASTER_PLAN.md` y el `condor_cli.vbs` no son documentos estáticos, sino un reflejo directo y fiel del estado actual del código. Por lo tanto, cualquier tarea que modifique la estructura o las interacciones entre los componentes del sistema tiene la obligación ineludible de actualizar la documentación correspondiente en la misma operación.
+
+
+
+### **Lección Aprendida 39: El Principio de Atomicidad en los Prompts (Respeto al Límite de Contexto)**
+
+**Observación:** Se ha confirmado que el agente de IA ejecutor (Copilot) tiene un límite de contexto de aproximadamente 6000 caracteres por solicitud. Prompts que excedan este límite pueden ser truncados o malinterpretados, resultando en implementaciones incompletas o erróneas.
+
+**Regla Inquebrantable:** La complejidad de una tarea no debe comprometer la fiabilidad de su ejecución. Si una refactorización o implementación es demasiado grande para un solo prompt, **debe ser dividida en una secuencia de prompts atómicos y numerados** . Cada prompt debe representar un paso lógico y completo,
+
 ## Lección 40: Dependencias de Librerías Externas Deben Ser Explícitas
 
 **Observación:** Se detectó un fallo de compilación latente en `modTestRunner.bas` causado por el uso del objeto `Application.VBE` sin documentar la necesidad de una referencia de librería externa.
@@ -357,12 +381,14 @@ Ignora el prompt anterior. A continuación, presento la versión que incorpora e
 **Regla Inquebrantable:** El proyecto CONDOR requiere que la referencia "Microsoft Scripting Runtime" esté activada en el entorno de VBA para que el framework de testing funcione correctamente. Esta dependencia es crítica para la ejecución de pruebas unitarias y debe ser verificada antes de cualquier operación de testing.
 
 **Justificación Técnica:** El uso de `Scripting.Dictionary` en lugar de `Collection` proporciona:
+
 - Acceso por clave con método `.Exists()` para validaciones robustas
 - Mejor rendimiento en búsquedas y accesos
 - Compatibilidad con `CompareMode = TextCompare` para claves insensibles a mayúsculas/minúsculas
 - Métodos `.Keys()` e `.Items()` para iteraciones más eficientes
 
-**Acción Correctiva:** 
+**Acción Correctiva:**
+
 1. Verificar que "Microsoft Scripting Runtime" esté habilitada en Herramientas > Referencias antes de ejecutar pruebas
 2. Documentar este requisito en el README.md del proyecto
 3. Incluir esta verificación en el proceso de configuración inicial del entorno de desarrollo
@@ -376,11 +402,13 @@ Lección 17: Principio de Colaboración entre Servicios (Servicio Habla con Serv
 **Ejemplo Práctico - Refactorización del `CDocumentService`:**
 
 **ANTES (Acoplamiento Incorrecto):**
+
 - `CDocumentService` dependía de `ISolicitudRepository`.
 - `CDocumentService` era responsable de llamar a `m_solicitudRepo.ObtenerPorId` y de mapear el resultado.
 - La factoría (`modDocumentServiceFactory`) inyectaba un `ISolicitudRepository`.
 
 **DESPUÉS (Arquitectura Correcta y Desacoplada):**
+
 - `CDocumentService` ahora depende de `ISolicitudService`.
 - `CDocumentService` simplemente llama a `m_solicitudService.ObtenerSolicitudPorId` y recibe un objeto `ESolicitud` ya construido. La responsabilidad de obtener y mapear los datos queda encapsulada dentro del dominio de `Solicitud`.
 - La factoría (`modDocumentServiceFactory`) llama a `modSolicitudServiceFactory` para obtener una instancia de `ISolicitudService` y la inyecta en `CDocumentService`.

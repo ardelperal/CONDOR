@@ -48,3 +48,9 @@
 02/09/2025 20:14:21 | ERROR | Err: 3001 | Argumento no válido. | Source: CMapeoRepository.GetMapeoPorTipo
 02/09/2025 20:14:21 | ERROR | Err: 3001 | Argumento no válido. | Source: CSolicitudRepository.SaveSolicitud
 02/09/2025 20:14:21 | ERROR | Err: 3001 | Argumento no válido. | Source: CSolicitudRepository.ObtenerSolicitudPorId
+03/09/2025 9:45:50 | ERROR | Err: 3001 | Argumento no válido. | Source: CMapeoRepository.GetMapeoPorTipo
+03/09/2025 9:45:50 | ERROR | Err: 3001 | Argumento no válido. | Source: CMapeoRepository.GetMapeoPorTipo
+03/09/2025 9:45:50 | ERROR | Err: 3001 | Error en CSolicitudRepository.GetDatabaseConnection: Argumento no válido. | Source: 
+03/09/2025 9:45:50 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+03/09/2025 9:45:50 | ERROR | Err: 3001 | Error en CSolicitudRepository.GetDatabaseConnection: Argumento no válido. | Source: 
+03/09/2025 9:45:50 | ERROR | Err: 91 | Error en CSolicitudRepository.ObtenerSolicitudPorId: Variable de objeto o bloque With no establecido | Source: 
