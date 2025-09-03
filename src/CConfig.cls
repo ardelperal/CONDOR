@@ -92,6 +92,58 @@ Private Function IConfig_GetLanzaderaPassword() As String
     IConfig_GetLanzaderaPassword = IConfig_GetValue("LANZADERA_PASSWORD")
 End Function
 
+'==============================================================================
+' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
+'==============================================================================
+
+Public Function GetValue(ByVal key As String) As Variant
+    GetValue = IConfig_GetValue(key)
+End Function
+
+Public Function HasKey(ByVal key As String) As Boolean
+    HasKey = IConfig_HasKey(key)
+End Function
+
+Public Function GetDataPath() As String
+    GetDataPath = IConfig_GetDataPath()
+End Function
+
+Public Function GetDatabasePassword() As String
+    GetDatabasePassword = IConfig_GetDatabasePassword()
+End Function
+
+Public Function GetAttachmentsPath() As String
+    GetAttachmentsPath = IConfig_GetAttachmentsPath()
+End Function
+
+Public Function GetCorreosDBPath() As String
+    GetCorreosDBPath = IConfig_GetCorreosDBPath()
+End Function
+
+Public Function GetUsuarioActual() As String
+    GetUsuarioActual = IConfig_GetUsuarioActual()
+End Function
+
+Public Function GetCorreoAdministrador() As String
+    GetCorreoAdministrador = IConfig_GetCorreoAdministrador()
+End Function
+
+Public Function GetIDAplicacionCondor() As String
+    GetIDAplicacionCondor = IConfig_GetIDAplicacionCondor()
+End Function
+
+Public Function GetLanzaderaDataPath() As String
+    GetLanzaderaDataPath = IConfig_GetLanzaderaDataPath()
+End Function
+
+Public Function GetLanzaderaPassword() As String
+    GetLanzaderaPassword = IConfig_GetLanzaderaPassword()
+End Function
+
+Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
+    Call IConfig_SetSetting(key, value)
+End Sub
+
 
 
 

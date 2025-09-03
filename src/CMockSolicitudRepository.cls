@@ -15,6 +15,7 @@ Implements ISolicitudRepository
 ' --- Variables de estado para configurar el comportamiento del mock ---
 Private m_SaveSolicitud_Result As Long
 Private m_ObtenerSolicitudPorId_Result As ESolicitud
+Private m_SaveSolicitud_LastSolicitud As ESolicitud
 
 ' --- Propiedades de seguimiento para las aserciones ---
 Public SaveSolicitud_CallCount As Long
@@ -29,6 +30,11 @@ End Sub
 ' --- Propiedades de conveniencia para verificación booleana ---
 Public Property Get SaveSolicitudCalled() As Boolean
     SaveSolicitudCalled = (SaveSolicitud_CallCount > 0)
+End Property
+
+' --- Propiedad espía para inspeccionar datos pasados al mock ---
+Public Property Get SaveSolicitud_LastSolicitud() As ESolicitud
+    Set SaveSolicitud_LastSolicitud = m_SaveSolicitud_LastSolicitud
 End Property
 
 ' --- Métodos públicos para configurar el mock desde los tests ---
@@ -47,11 +53,13 @@ Public Sub Reset()
     SaveSolicitud_CallCount = 0
     Set LastSavedSolicitud = Nothing
     Update_LastUsuarioModificacion = ""
+    Set m_SaveSolicitud_LastSolicitud = Nothing
 End Sub
 
 
 
 Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitud) As Long
+    Set m_SaveSolicitud_LastSolicitud = solicitud
     SaveSolicitud_CallCount = SaveSolicitud_CallCount + 1
     Set LastSavedSolicitud = solicitud
     Update_LastUsuarioModificacion = solicitud.usuarioModificacion

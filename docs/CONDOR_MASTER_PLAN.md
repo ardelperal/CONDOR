@@ -325,7 +325,8 @@ graph TD
 │    ├─ ISolicitudRepository_ObtenerSolicitudPorId() ✅      │
 │    └─ Contrato de interfaz cumplido correctamente          │
 │ 🧪 CMockSolicitudService.cls ← Mock Service para testing   │
-│ 🧪 CMockSolicitudRepository.cls ← Mock Repository para testing │
+│ 🧪 CMockSolicitudRepository.cls ← Mock Inteligente v2.0 con espía │
+│    └─ SaveSolicitud_LastSolicitud ← Propiedad espía para tests │
 │ 🏭 modSolicitudServiceFactory.bas ← Factoría                │
 │ ✅ TestSolicitudService.bas  ← Tests unitarios             │
 │ 🔬 TISolicitudRepository.bas ← Tests integración           │
@@ -656,6 +657,8 @@ graph TD
 │    ├─ Scripting.Dictionary para almacenamiento interno     │
 │    ├─ LoadConfiguration()                                  │
 │    ├─ Implementa todos los métodos de IConfig              │
+│    ├─ Métodos públicos de conveniencia (GetValue, HasKey)  │
+│    ├─ Métodos específicos públicos (GetDataPath, etc.)     │
 │    └─ Sin dependencias externas                            │
 │ 🧪 CMockConfig.cls                                         │
 │    ├─ Scripting.Dictionary para configuración simulada     │
@@ -688,6 +691,7 @@ graph TD
 - **Interface**: GetValue(), SetSetting(), HasKey() y métodos específicos de configuración
 - **Métodos Específicos**: GetDataPath(), GetDatabasePassword(), GetAttachmentsPath(), etc.
 - **Implementación**: CConfig sin dependencias externas
+- **Métodos Públicos**: Conjunto completo de métodos de conveniencia expuestos públicamente
 - **Sincronización**: Todos los métodos públicos de CConfig están en IConfig
 - **Mock**: CMockConfig con Dictionary interno y métodos públicos de conveniencia
 - **Factory**: Detección automática de entorno de pruebas
