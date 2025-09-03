@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -119,6 +119,16 @@ End Function
 
 Public Function AuthenticateUser(ByVal userEmail As String, ByVal password As String) As Boolean
     AuthenticateUser = IAuthService_AuthenticateUser(userEmail, password)
+End Function
+
+' Implementación del nuevo método de la interfaz
+Private Function IAuthService_GetCurrentUserEmail() As String
+    IAuthService_GetCurrentUserEmail = configSvc.GetUsuarioActual()
+End Function
+
+' Método público de conveniencia
+Public Function GetCurrentUserEmail() As String
+    GetCurrentUserEmail = IAuthService_GetCurrentUserEmail()
 End Function
 
 

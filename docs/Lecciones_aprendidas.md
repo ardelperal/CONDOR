@@ -414,3 +414,11 @@ Lección 17: Principio de Colaboración entre Servicios (Servicio Habla con Serv
 - La factoría (`modDocumentServiceFactory`) llama a `modSolicitudServiceFactory` para obtener una instancia de `ISolicitudService` y la inyecta en `CDocumentService`.
 
 Este patrón asegura que cada servicio sea la única puerta de entrada a su dominio de negocio, ocultando sus detalles de implementación (como sus repositorios) del resto de la aplicación.
+
+
+
+### **Lección Aprendida 42: El Análisis de Impacto de Interfaces es Obligatorio (Regla de Propagación Total)**
+
+**Observación:** Se ha demostrado que modificar un contrato de interfaz (ej. añadir un método) y no actualizar **todas y cada una** de las clases que lo implementan (`C*` y `CMock*`) conduce inevitablemente a errores de compilación. Es un fallo predecible y, por tanto, evitable.
+
+**Regla Inquebrantable:** Antes de finalizar un prompt que altere una interfaz, el Arquitecto debe realizar una búsqueda exhaustiva en toda la base de código para identificar cada clase que contenga la sentencia `Implements IInterfazModificada`. El prompt o secuencia de prompts resultante **debe** incluir las instrucciones para actualizar **todas** las clases afectadas y mantener el proyecto en un estado compilable.
