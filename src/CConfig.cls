@@ -21,19 +21,76 @@ End Sub
 
 ' Método para cargar la configuración desde la BD. Lanza errores si falla.
 Public Sub LoadConfiguration()
-    On Error GoTo errorHandler
-    ' TODO: Lógica de lectura de BD
-    m_Settings.Add "DATA_PATH", "C:\Path\To\Backend.accdb"
-    m_Settings.Add "DATABASE_PASSWORD", "dpddpd"
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim rsConfig As DAO.Recordset
+    Dim backendPath As String
+    Dim backendPassword As String
+    
+    On Error GoTo ErrorHandler
+    
+    ' 1. Leer TbLocalConfig del Frontend para determinar el entorno
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset("SELECT valor FROM TbLocalConfig WHERE clave = 'ENTORNO'")
+    If rs.EOF Then
+        Err.Raise vbObjectError + 1001, "CConfig.LoadConfiguration", "No se encontró la clave 'ENTORNO' en TbLocalConfig."
+    End If
+    Dim entorno As String
+    entorno = rs.Fields("valor").value
+    rs.Close
+    
+    ' 2. Determinar la ruta del Backend según el entorno
+    ' Esta lógica asume que las rutas base están definidas en la tabla de configuración del backend
+    ' Por ahora, para que funcione, deducimos la ruta base de la ruta del frontend.
+    Dim basePath As String
+    basePath = Left(db.Name, InStrRev(db.Name, "\")) & "..\.."
+    
+    If entorno = "LOCAL" Then
+        backendPath = basePath & "\back\CONDOR_datos.accdb"
+        backendPassword = "dpddpd" ' Contraseña estándar para entornos locales
+    Else ' Asumimos "OFICINA" o cualquier otro valor
+        ' Aquí iría la lógica para obtener la ruta de red, por ahora usamos la local
+        backendPath = basePath & "\back\CONDOR_datos.accdb"
+        backendPassword = "dpddpd"
+    End If
+
+    ' Guardar la ruta del backend en la configuración para que otros servicios la usen
+    m_Settings.Add "DATA_PATH", backendPath
+    m_Settings.Add "DATABASE_PASSWORD", backendPassword
+    
+    ' 3. Conectar al Backend y leer tbConfiguracion
+    Set db = DBEngine.OpenDatabase(backendPath, False, True, ";PWD=" & backendPassword)
+    Set rsConfig = db.OpenRecordset("SELECT clave, valor FROM tbConfiguracion")
+    
+    Do While Not rsConfig.EOF
+        If Not m_Settings.Exists(rsConfig!clave) Then
+            m_Settings.Add rsConfig!clave, rsConfig!valor
+        Else
+            m_Settings(rsConfig!clave) = rsConfig!valor
+        End If
+        rsConfig.MoveNext
+    Loop
+    
+    rsConfig.Close
+    db.Close
+    
     Exit Sub
-errorHandler:
-    Err.Raise vbObjectError + 1000, "CConfig.LoadConfiguration", "No se pudo cargar la configuración."
+    
+ErrorHandler:
+    If Not rs Is Nothing Then If rs.State = dbIsOpen Then rs.Close
+    If Not rsConfig Is Nothing Then If rsConfig.State = dbIsOpen Then rs.Close
+    If Not db Is Nothing Then If db.Updatable Then db.Close
+    Set rs = Nothing
+    Set rsConfig = Nothing
+    Set db = Nothing
+    ' Propagar el error hacia arriba para que sea manejado por el ErrorHandler global
+    Err.Raise Err.Number, "CConfig.LoadConfiguration", Err.Description
 End Sub
 
 ' Método público para testabilidad que permite cargar configuración desde un diccionario.
 Public Sub LoadFromDictionary(ByVal settings As Scripting.Dictionary)
     Set m_Settings = settings
-    m_Settings.CompareMode = TextCompare
+    
 End Sub
 
 Private Function IConfig_GetValue(ByVal key As String) As Variant

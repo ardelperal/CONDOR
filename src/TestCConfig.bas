@@ -32,6 +32,7 @@ Private Function TestGetDataPath_ReturnsCorrectValue() As CTestResult
     ' Arrange
     Set config = New CConfig
     Set testSettings = New Scripting.Dictionary
+    testSettings.CompareMode = TextCompare
     testSettings.Add "DATA_PATH", "C:\Ruta\De\Prueba.accdb"
     config.LoadFromDictionary testSettings
 
@@ -63,6 +64,7 @@ Private Function TestGetDatabasePassword_ReturnsCorrectValue() As CTestResult
     ' Arrange
     Set config = New CConfig
     Set testSettings = New Scripting.Dictionary
+    testSettings.CompareMode = TextCompare
     testSettings.Add "DATABASE_PASSWORD", "pass123"
     config.LoadFromDictionary testSettings
 
@@ -94,6 +96,7 @@ Private Function TestHasKey_ReturnsTrueForExistingKey() As CTestResult
     ' Arrange
     Set config = New CConfig
     Set testSettings = New Scripting.Dictionary
+    testSettings.CompareMode = TextCompare
     testSettings.Add "EXISTING_KEY", "value"
     config.LoadFromDictionary testSettings
 

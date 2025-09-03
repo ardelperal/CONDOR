@@ -95,7 +95,6 @@ Private Function ISolicitudService_CreateSolicitud(ByVal paraExpediente As EExpe
         .idEstadoInterno = 1 ' ID del estado Borrador en tbEstados
         .fechaCreacion = Now()
         .usuarioCreacion = m_authService.GetCurrentUserEmail() ' Usuario actual del sistema
-        .fechaModificacion = Null
         .usuarioModificacion = ""
     End With
     
