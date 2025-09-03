@@ -31,12 +31,12 @@ Public Sub LoadConfiguration()
     
     ' 1. Leer TbLocalConfig del Frontend para determinar el entorno
     Set db = CurrentDb
-    Set rs = db.OpenRecordset("SELECT valor FROM TbLocalConfig WHERE clave = 'ENTORNO'")
+    Set rs = db.OpenRecordset("SELECT [Entorno] FROM [TbLocalConfig]")
     If rs.EOF Then
-        Err.Raise vbObjectError + 1001, "CConfig.LoadConfiguration", "No se encontró la clave 'ENTORNO' en TbLocalConfig."
+        Err.Raise vbObjectError + 1001, "CConfig.LoadConfiguration", "No se encontró ningún registro en TbLocalConfig."
     End If
     Dim entorno As String
-    entorno = rs.Fields("valor").value
+    entorno = rs.Fields("Entorno").value
     rs.Close
     
     ' 2. Determinar la ruta del Backend según el entorno
@@ -77,9 +77,9 @@ Public Sub LoadConfiguration()
     Exit Sub
     
 ErrorHandler:
-    If Not rs Is Nothing Then If rs.State = dbIsOpen Then rs.Close
-    If Not rsConfig Is Nothing Then If rsConfig.State = dbIsOpen Then rs.Close
-    If Not db Is Nothing Then If db.Updatable Then db.Close
+    If Not rs Is Nothing Then rs.Close
+    If Not rsConfig Is Nothing Then rsConfig.Close
+    If Not db Is Nothing Then db.Close
     Set rs = Nothing
     Set rsConfig = Nothing
     Set db = Nothing

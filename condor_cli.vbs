@@ -1040,7 +1040,7 @@ Sub ValidateSchema()
     condorSchema.Add "tbEstados", Array("idEstado", "nombreEstado", "descripcionEstado", "esEstadoFinal")
     condorSchema.Add "tbTransiciones", Array("idTransicion", "estadoOrigen", "estadoDestino", "accionRequerida", "rolRequerido")
     condorSchema.Add "tbConfiguracion", Array("clave", "valor", "descripcion", "categoria")
-    condorSchema.Add "TbLocalConfig", Array("clave", "valor", "descripcion", "categoria")
+    condorSchema.Add "TbLocalConfig", Array("Entorno")
     
     ' Validar las bases de datos
     If Not VerifySchema(strSourcePath & "\..\back\test_db\templates\Lanzadera_test_template.accdb", "dpddpd", lanzaderaSchema) Then allOk = False
