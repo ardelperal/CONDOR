@@ -351,14 +351,11 @@ Sincronizar condor_cli.vbs: Actualizar la lista de archivos en la subrutina GetF
 No se documentarán los cambios incrementales, solo el estado final del proyecto tras la ejecución del prompt.
 Ignora el prompt anterior. A continuación, presento la versión que incorpora esta nueva directiva.
 
-
 ### **Lección Aprendida 38: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)**
 
 **Observación:** Se ha detectado que el `CONDOR_MASTER_PLAN.md` y otros artefactos clave (`condor_cli.vbs`) pueden quedar rápidamente obsoletos si los cambios en el código no se reflejan en ellos. Un plan desactualizado es peor que no tener ningún plan, ya que genera decisiones basadas en información incorrecta.
 
 **Regla Inquebrantable:** El `CONDOR_MASTER_PLAN.md` y el `condor_cli.vbs` no son documentos estáticos, sino un reflejo directo y fiel del estado actual del código. Por lo tanto, cualquier tarea que modifique la estructura o las interacciones entre los componentes del sistema tiene la obligación ineludible de actualizar la documentación correspondiente en la misma operación.
-
-
 
 ### **Lección Aprendida 39: El Principio de Atomicidad en los Prompts (Respeto al Límite de Contexto)**
 
@@ -415,10 +412,18 @@ Lección 17: Principio de Colaboración entre Servicios (Servicio Habla con Serv
 
 Este patrón asegura que cada servicio sea la única puerta de entrada a su dominio de negocio, ocultando sus detalles de implementación (como sus repositorios) del resto de la aplicación.
 
-
-
 ### **Lección Aprendida 42: El Análisis de Impacto de Interfaces es Obligatorio (Regla de Propagación Total)**
 
 **Observación:** Se ha demostrado que modificar un contrato de interfaz (ej. añadir un método) y no actualizar **todas y cada una** de las clases que lo implementan (`C*` y `CMock*`) conduce inevitablemente a errores de compilación. Es un fallo predecible y, por tanto, evitable.
 
 **Regla Inquebrantable:** Antes de finalizar un prompt que altere una interfaz, el Arquitecto debe realizar una búsqueda exhaustiva en toda la base de código para identificar cada clase que contenga la sentencia `Implements IInterfazModificada`. El prompt o secuencia de prompts resultante **debe** incluir las instrucciones para actualizar **todas** las clases afectadas y mantener el proyecto en un estado compilable.
+
+
+
+### **Lección Aprendida 43: La Gestión de Transacciones DAO pertenece al Workspace**
+
+**Observación:** Se ha detectado una implementación incorrecta de transacciones, llamando a los métodos `.BeginTrans` y `.Rollback` sobre un objeto `DAO.Database`.
+
+**Regla Inquebrantable:** En la librería DAO, los métodos de gestión de transacciones (`BeginTrans`, `CommitTrans`, `Rollback`)  **no son métodos del objeto `Database`** . Son métodos del objeto `Workspace`. Para las operaciones estándar, se debe utilizar el workspace por defecto del motor de base de datos: **`DBEngine.BeginTrans`** y  **`DBEngine.Rollback`** .
+
+**Acción Correctiva:** Todo código que gestione transacciones DAO debe invocar estos métodos directamente desde el objeto global `DBEngine`.

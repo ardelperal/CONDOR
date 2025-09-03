@@ -20,14 +20,66 @@ Private Const DB_TEMPLATE_FILE As String = "back\test_db\templates\CONDOR_test_t
 ' --- Variables eliminadas - ahora se declaran localmente en cada función ---
 
 ' =====================================================
+' SUITE SETUP - PREPARACIÓN INICIAL DE LA SUITE
+' =====================================================
+Private Sub SuiteSetup()
+    On Error GoTo ErrorHandler
+    Dim fs As IFileSystem
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
+
+    ' 1. Crear estructura de directorios
+    fs.CreateFolder projectPath & TEST_ENV_PATH
+    fs.CreateFolder projectPath & TEST_TEMPLATES_PATH
+    fs.CreateFolder projectPath & TEST_GENERATED_PATH
+
+    ' 2. Aprovisionar BD de prueba
+    modTestUtils.PrepareTestDatabase projectPath & DB_TEMPLATE_FILE, projectPath & TEST_DB_ACTIVE_PATH
+
+    ' 3. Aprovisionar plantilla Word
+    fs.CopyFile projectPath & SOURCE_TEMPLATE_FILE, projectPath & TEST_TEMPLATES_PATH & "PC.docx"
+
+    ' 4. Insertar datos maestros en la BD de prueba
+    Dim db As DAO.Database
+    Set db = DBEngine.OpenDatabase(projectPath & TEST_DB_ACTIVE_PATH)
+    db.Execute "INSERT INTO tbSolicitudes (idSolicitud, tipoSolicitud, codigoSolicitud, idExpediente) VALUES (999, 'PC', 'TEST-001', 1)", dbFailOnError
+    db.Execute "INSERT INTO tbDatosPC (idSolicitud, refContratoInspeccionOficial) VALUES (999, 'DATO_PRUEBA_CONTRATO')", dbFailOnError
+    db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) VALUES ('PC', 'refContratoInspeccionOficial', 'MARCADOR_CONTRATO')", dbFailOnError
+    db.Close
+
+    Set db = Nothing
+    Set fs = Nothing
+    Exit Sub
+ErrorHandler:
+    Err.Raise Err.Number, "TIDocumentService.SuiteSetup", Err.Description
+End Sub
+
+' =====================================================
 ' FUNCIÓN PRINCIPAL DEL FRAMEWORK ESTÁNDAR
 ' =====================================================
 Public Function TIDocumentServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TIDocumentService"
+    suiteResult.Initialize "TIDocumentService (Optimizada)"
+    
+    On Error GoTo CleanupSuite
 
-    Call suiteResult.AddResult(TestGenerarDocumentoSuccess())
-
+    ' 1. Configurar el entorno UNA SOLA VEZ para toda la suite
+    Call SuiteSetup
+    
+    ' 2. Ejecutar todas las pruebas individuales
+    suiteResult.AddResult TestGenerarDocumentoSuccess()
+    
+CleanupSuite:
+    ' 3. Limpiar el entorno UNA SOLA VEZ al final, incluso si hay errores
+    Call SuiteTeardown
+    
+    If Err.Number <> 0 Then
+        Dim errorTest As New CTestResult
+        errorTest.Initialize "Suite_Execution_Failed"
+        errorTest.Fail "La suite falló de forma catastrófica: " & Err.Description
+        suiteResult.AddResult errorTest
+    End If
+    
     Set TIDocumentServiceRunAll = suiteResult
 End Function
 
@@ -43,9 +95,7 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
     Set TestGenerarDocumentoSuccess = New CTestResult
     TestGenerarDocumentoSuccess.Initialize "GenerarDocumento debe crear un archivo Word con datos reales"
 
-    On Error GoTo TestFail
-
-    ' Declarar variables locales
+    ' --- Declarar TODAS las variables de objeto aquí ---
     Dim config As IConfig
     Dim solicitudService As ISolicitudService
     Dim mapeoRepo As IMapeoRepository
@@ -54,33 +104,18 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
     Dim errorHandler As IErrorHandlerService
     Dim documentService As IDocumentService
     Dim fileSystem As IFileSystem
-    Dim expedienteRepo As IExpedienteRepository
-
-    ' ARRANGE: Preparar el entorno de prueba
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-
-    ' 1. Crear estructura de directorios de prueba
-    fileSystem.CreateFolder modTestUtils.GetProjectPath() & TEST_ENV_PATH
-    fileSystem.CreateFolder modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH
-    fileSystem.CreateFolder modTestUtils.GetProjectPath() & TEST_GENERATED_PATH
-
-    ' 2. Aprovisionar BD de prueba
-    modTestUtils.PrepareTestDatabase modTestUtils.GetProjectPath() & DB_TEMPLATE_FILE, modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH
-
-    ' 3. Aprovisionar plantilla de Word de prueba
-    fileSystem.CopyFile modTestUtils.GetProjectPath() & SOURCE_TEMPLATE_FILE, modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH & "PC.docx"
-
-    ' 4. Insertar datos necesarios en la BD de prueba
-    InsertTestData
-
-    ' 5. Inicializar todas las dependencias en el orden correcto
-    InitializeRealDependencies config, solicitudService, mapeoRepo, wordManager, operationLogger, errorHandler, documentService, fileSystem, expedienteRepo
-
-    ' Obtener la solicitud de prueba (ID 999) que hemos insertado
     Dim solicitudPrueba As ESolicitud
+
+    On Error GoTo TestFail
+
+    ' ARRANGE: El entorno ya está creado por SuiteSetup. Solo inicializamos las dependencias.
+    InitializeRealDependencies config, solicitudService, mapeoRepo, wordManager, operationLogger, errorHandler, documentService, fileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem() ' Necesitamos una instancia para el Assert
+
+    ' Obtener la solicitud de prueba (ID 999) que insertó SuiteSetup
     Set solicitudPrueba = solicitudService.ObtenerSolicitudPorId(999)
     modAssert.AssertNotNull solicitudPrueba, "La solicitud de prueba no se pudo cargar desde la BD."
-
+    
     ' ACT: Ejecutar el método principal a probar
     Dim rutaGenerada As String
     rutaGenerada = documentService.GenerarDocumento(solicitudPrueba)
@@ -88,7 +123,7 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
     ' ASSERT: Verificar los resultados
     modAssert.AssertNotEquals "", rutaGenerada, "La ruta del documento generado no debe estar vacía."
     modAssert.AssertTrue fileSystem.FileExists(rutaGenerada), "El archivo generado debe existir en el disco."
-
+    
     TestGenerarDocumentoSuccess.Pass
     GoTo Cleanup
 
@@ -96,9 +131,15 @@ TestFail:
     TestGenerarDocumentoSuccess.Fail "Error en tiempo de ejecución: " & Err.Description & " en línea " & Erl
 
 Cleanup:
-    Call Teardown
+    ' --- LIMPIEZA CRÍTICA DE RECURSOS ---
+    On Error Resume Next
     
-    ' Liberar todos los objetos
+    ' 1. CERRAR WORD PARA EVITAR PROCESOS ZOMBIE
+    If Not wordManager Is Nothing Then
+        wordManager.Close
+    End If
+    
+    ' 2. Liberar todas las variables de objeto
     Set config = Nothing
     Set solicitudService = Nothing
     Set mapeoRepo = Nothing
@@ -107,20 +148,17 @@ Cleanup:
     Set errorHandler = Nothing
     Set documentService = Nothing
     Set fileSystem = Nothing
-    Set expedienteRepo = Nothing
+    Set solicitudPrueba = Nothing
 End Function
 
 ' =====================================================
-' TEARDOWN - LIMPIEZA ROBUSTA DEL ENTORNO DE PRUEBA
+' SUITE TEARDOWN - LIMPIEZA FINAL DE LA SUITE
 ' =====================================================
-Private Sub Teardown()
-    On Error Resume Next ' Blindaje contra cualquier error en la limpieza
+Private Sub SuiteTeardown()
+    On Error Resume Next ' Blindaje
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
-    
-    ' Usar el nuevo método de borrado recursivo
     fs.DeleteFolderRecursive modTestUtils.GetProjectPath() & TEST_ENV_PATH
-    
     Set fs = Nothing
 End Sub
 
@@ -130,44 +168,18 @@ End Sub
 Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudService As ISolicitudService, _
                                        ByRef mapeoRepo As IMapeoRepository, ByRef wordManager As IWordManager, _
                                        ByRef operationLogger As IOperationLogger, ByRef errorHandler As IErrorHandlerService, _
-                                       ByRef documentService As IDocumentService, ByRef fileSystem As IFileSystem, _
-                                       ByRef expedienteRepo As IExpedienteRepository)
-    ' Crea e inicializa todas las dependencias en el orden correcto
-
-    ' 1. Crear configuración de prueba
-    Set config = modConfigFactory.CreateConfigService()
-    config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH
-    config.SetSetting "DB_PASSWORD", "" ' La BD de prueba no tiene contraseña
-    config.SetSetting "PLANTILLA_PATH", modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH
-    config.SetSetting "GENERATED_DOCS_PATH", modTestUtils.GetProjectPath() & TEST_GENERATED_PATH
-
-    ' 2. Crear servicios y repositorios propagando la configuración de prueba
-    '    CORRECCIÓN CRÍTICA: Propagar config a TODAS las factorías para evitar configuraciones vacías
+                                       ByRef documentService As IDocumentService, ByRef fileSystem As IFileSystem)
+    
+    ' Utilizar el singleton de configuración para coherencia
+    Set config = modTestContext.GetTestConfig()
+    
+    ' Propagar la configuración de prueba a todas las factorías
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(config)
     Set wordManager = modWordManagerFactory.CreateWordManager(config)
     Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService(config)
     Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(config)
-
-    ' 3. Finalmente, crear el servicio principal a probar propagando la configuración
-    '    La factoría se encargará de crear y conectar todas las piezas con la configuración correcta
     Set documentService = modDocumentServiceFactory.CreateDocumentService(config)
-
-End Sub
-
-Private Sub InsertTestData()
-    ' Inserta el mínimo de datos necesarios en la BD de prueba activa
-    Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH)
-
-    db.Execute "INSERT INTO tbSolicitudes (idSolicitud, tipoSolicitud, codigoSolicitud, idExpediente) VALUES (999, 'PC', 'TEST-001', 1)"
-    ' CORRECCIÓN: Usar un campo real de la tabla tbDatosPC
-    db.Execute "INSERT INTO tbDatosPC (idSolicitud, refContratoInspeccionOficial) VALUES (999, 'DATO_PRUEBA_CONTRATO')"
-    ' CORRECCIÓN: Alinear el mapeo con el campo real
-    db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) VALUES ('PC', 'refContratoInspeccionOficial', 'MARCADOR_CONTRATO')"
-
-    db.Close
-    Set db = Nothing
 End Sub
 
 

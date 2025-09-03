@@ -6,76 +6,99 @@ Option Explicit
 Private Const LANZADERA_TEMPLATE_PATH As String = "back\test_db\templates\Lanzadera_test_template.accdb"
 Private Const LANZADERA_ACTIVE_PATH As String = "back\test_db\active\Lanzadera_integration_test.accdb"
 
-Private m_Config As IConfig
-Private m_Repo As IAuthRepository
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE LA SUITE (PATRÓN OPTIMIZADO)
+' ============================================================================
+
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE LA SUITE (PATRÓN OPTIMIZADO CON CONFIG LOCAL)
+' ============================================================================
 
 Public Function TIAuthRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TIAuthRepository"
+    suiteResult.Initialize "TIAuthRepository - Pruebas de Integración (Config Local)"
     
+    On Error GoTo CleanupSuite
+    
+    Call SuiteSetup
     suiteResult.AddResult TestGetUserAuthData_AdminUser_ReturnsCorrectData()
+    
+CleanupSuite:
+    Call SuiteTeardown
+    If Err.Number <> 0 Then
+        Dim errorTest As New CTestResult
+        errorTest.Initialize "Suite_Execution_Failed"
+        errorTest.Fail "La suite falló de forma catastrófica: " & Err.Description
+        suiteResult.AddResult errorTest
+    End If
     
     Set TIAuthRepositoryRunAll = suiteResult
 End Function
 
-Private Sub Setup()
-    On Error GoTo TestFail
-    
-    ' 1. Preparar la BD de prueba de LANZADERA
-    Dim testDbPath As String: testDbPath = modTestUtils.GetProjectPath & LANZADERA_ACTIVE_PATH
-    modTestUtils.PrepareTestDatabase modTestUtils.GetProjectPath & LANZADERA_TEMPLATE_PATH, testDbPath
-    
-    ' 2. Crear y configurar el MOCK de configuración
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "LOG_FILE_PATH", modTestUtils.GetProjectPath & "condor_test_run.log"
-    mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", testDbPath
-    mockConfigImpl.SetSetting "LANZADERA_PASSWORD", "dpddpd"
-    Set m_Config = mockConfigImpl
-    
-    ' 3. Instanciar el Repositorio real inyectando la configuración de prueba
-    Set m_Repo = modRepositoryFactory.CreateAuthRepository(m_Config)
-    Exit Sub
-    
-TestFail:
-    Err.Raise Err.Number, "TIAuthRepository.Setup", Err.Description
+' ============================================================================
+' PROCEDIMIENTOS HELPER DE LA SUITE
+' ============================================================================
+
+Private Sub SuiteSetup()
+    Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
+    Dim templatePath As String: templatePath = projectPath & LANZADERA_TEMPLATE_PATH
+    Dim activePath As String: activePath = projectPath & LANZADERA_ACTIVE_PATH
+    Call modTestUtils.SuiteSetup(templatePath, activePath)
 End Sub
 
-Private Sub Teardown()
-    On Error Resume Next
-    Set m_Repo = Nothing
-    Set m_Config = Nothing
-    
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    fs.DeleteFile modTestUtils.GetProjectPath & LANZADERA_ACTIVE_PATH, True
-    Set fs = Nothing
+Private Sub SuiteTeardown()
+    Dim activePath As String: activePath = modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    Call modTestUtils.SuiteTeardown(activePath)
 End Sub
+
+' ============================================================================
+' TEST INDIVIDUAL (CON TRANSACCIONES Y AUTO-PROVISIÓN DE DATOS)
+' ============================================================================
 
 Private Function TestGetUserAuthData_AdminUser_ReturnsCorrectData() As CTestResult
     Set TestGetUserAuthData_AdminUser_ReturnsCorrectData = New CTestResult
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Initialize "GetUserAuthData para Admin debe devolver datos correctos"
     
+    Dim localConfig As IConfig
+    Dim repo As IAuthRepository
     Dim authData As EAuthData
+    Dim db As DAO.Database
+    
     On Error GoTo TestFail
-    Call Setup
+
+    ' Arrange: 1. Crear una CONFIGURACIÓN LOCAL específica para este test
+    Dim mockConfigImpl As New CMockConfig
+    mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    mockConfigImpl.SetSetting "LANZADERA_PASSWORD", "dpddpd"
+    Set localConfig = mockConfigImpl
+
+    ' Arrange: 2. Inyectar la configuración local en la factoría del repositorio
+    Set repo = modRepositoryFactory.CreateAuthRepository(localConfig)
     
-    ' Act
-    ' La base de datos de prueba contiene un usuario admin@example.com
-    Set authData = m_Repo.GetUserAuthData("admin@example.com")
+    ' Arrange: 3. Conectar a la BD activa y aprovisionar datos
+    Set db = DBEngine.OpenDatabase(localConfig.GetLanzaderaDataPath(), False, False, ";PWD=dpddpd")
+    DBEngine.BeginTrans
+    db.Execute "INSERT INTO TbUsuariosAplicaciones (CorreoUsuario, EsAdministrador) VALUES ('admin@example.com', 'Sí')", dbFailOnError
     
-    ' Assert
+    ' Act: Ejecutar el método bajo prueba
+    Set authData = repo.GetUserAuthData("admin@example.com")
+    
+    ' Assert: Verificar los resultados
     modAssert.AssertNotNull authData, "El objeto AuthData no debe ser nulo."
-    modAssert.AssertTrue authData.UserExists, "El usuario admin debería existir en la BD de prueba."
-    modAssert.AssertTrue authData.IsGlobalAdmin, "El usuario admin debería ser administrador global."
+    modAssert.AssertTrue authData.UserExists, "UserExists debe ser True."
+    modAssert.AssertTrue authData.IsGlobalAdmin, "IsGlobalAdmin debe ser True."
     
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Pass
     GoTo Cleanup
-    
+
 TestFail:
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Fail "Error inesperado: " & Err.Description
     
 Cleanup:
-    Call Teardown
-    Set authData = Nothing
+    ' Limpieza: Revertir la transacción para eliminar los datos de prueba y cerrar la conexión
+    On Error Resume Next
+    DBEngine.Rollback
+    If Not db Is Nothing Then db.Close
+    Set authData = Nothing: Set repo = Nothing: Set localConfig = Nothing: Set db = Nothing
 End Function
 
