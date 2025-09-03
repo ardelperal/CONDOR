@@ -25,7 +25,7 @@ Public Function CreateSolicitudService(Optional ByVal config As IConfig = Nothin
     ' 1. Determinar configuración final
     Dim finalConfig As IConfig
     If config Is Nothing Then
-        Set finalConfig = modConfigFactory.CreateConfigService()
+        Set finalConfig = modTestContext.GetTestConfig()
     Else
         Set finalConfig = config
     End If

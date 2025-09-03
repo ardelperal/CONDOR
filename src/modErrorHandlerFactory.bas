@@ -14,7 +14,7 @@ Public Function CreateErrorHandlerService(Optional ByVal configService As IConfi
     
     Dim config As IConfig
     If configService Is Nothing Then
-        Set config = modConfigFactory.CreateConfigService()
+        Set config = modTestContext.GetTestConfig()
     Else
         Set config = configService
     End If

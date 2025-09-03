@@ -997,6 +997,42 @@ graph TD
 │    - TIExpedienteRepository.bas: DBEngine.OpenDatabase()   │
 └─────────────────────────────────────────────────────────────┘
 
+### 8.1 Gestor de Configuración Singleton para Pruebas (`modTestContext`)
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│              GESTOR SINGLETON DE CONFIGURACIÓN             │
+├─────────────────────────────────────────────────────────────┤
+│ 📋 modTestContext.bas        ← Gestor de contexto global   │
+│    ├─ g_TestConfig           ← Variable singleton privada  │
+│    └─ GetTestConfig()        ← Función pública singleton   │
+│                                                             │
+│ 🚀 OPTIMIZACIÓN DE RENDIMIENTO:                           │
+│    • Elimina lecturas redundantes de base de datos         │
+│    • Una sola carga de configuración para toda la suite    │
+│    • Configuración estándar predefinida para pruebas       │
+│    • Rutas relativas al proyecto para máxima portabilidad  │
+│                                                             │
+│ 🔧 INTEGRACIÓN CON FACTORÍAS:                             │
+│    • modSolicitudServiceFactory.bas ← Usa GetTestConfig()  │
+│    • modErrorHandlerFactory.bas     ← Usa GetTestConfig()  │
+│    • modOperationLoggerFactory.bas   ← Usa GetTestConfig()  │
+│    • modAuthFactory.bas              ← Usa GetTestConfig()  │
+│    • modRepositoryFactory.bas        ← Usa GetTestConfig()  │
+│                                                             │
+│ ⚙️ CONFIGURACIÓN ESTÁNDAR DE PRUEBAS:                     │
+│    • DATA_PATH: back\test_db\active\CONDOR_integration_test.accdb │
+│    • DATABASE_PASSWORD: "" (sin contraseña)               │
+│    • LOG_FILE_PATH: condor_test_run.log                    │
+│    • USUARIO_ACTUAL: test.user@condor.com                  │
+│                                                             │
+│ 💡 PATRÓN SINGLETON:                                       │
+│    • Primera llamada: Crea y configura la instancia        │
+│    • Llamadas posteriores: Devuelve la misma instancia     │
+│    • Gestión de errores: Fallo crítico si no se inicializa │
+└─────────────────────────────────────────────────────────────┘
+```
+
 🔗 **Dependencias:**
 - CTestReporter ➜ ITestReporter (implementa interfaz)
 - CTestReporter ➜ IFileSystem

@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modAuthFactory"
+Attribute VB_Name = "modAuthFactory"
 Option Compare Database
 Option Explicit
 
@@ -7,7 +7,7 @@ Public Function CreateAuthService() As IAuthService
     On Error GoTo errorHandler
     
     Dim configSvc As IConfig
-    Set configSvc = modConfigFactory.CreateConfigService()
+    Set configSvc = modTestContext.GetTestConfig()
     
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()

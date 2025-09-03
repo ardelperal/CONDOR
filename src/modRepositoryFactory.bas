@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modRepositoryFactory"
+Attribute VB_Name = "modRepositoryFactory"
 Option Compare Database
 Option Explicit
 
@@ -89,7 +89,7 @@ End Function
 
 Private Function GetEffectiveConfig(Optional ByVal config As IConfig = Nothing) As IConfig
     If config Is Nothing Then
-        Set GetEffectiveConfig = modConfigFactory.CreateConfigService()
+        Set GetEffectiveConfig = modTestContext.GetTestConfig()
     Else
         Set GetEffectiveConfig = config
     End If

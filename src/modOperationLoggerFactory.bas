@@ -13,7 +13,7 @@ Public Function CreateOperationLogger(Optional ByVal config As IConfig = Nothing
     ' Determinar configuración final
     Dim finalConfig As IConfig
     If config Is Nothing Then
-        Set finalConfig = modConfigFactory.CreateConfigService()
+        Set finalConfig = modTestContext.GetTestConfig()
     Else
         Set finalConfig = config
     End If
