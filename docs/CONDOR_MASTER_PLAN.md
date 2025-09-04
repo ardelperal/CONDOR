@@ -464,7 +464,7 @@ graph TD
 │ 🧪 CMockMapeoRepository.cls  ← Mock para testing           │
 │    ├─ ConfigureGetMapeoPorTipo() ← Método de configuración │
 │    └─ ConfigureObtenerMapeosPorCategoria() ← Método de configuración │
-│ 🔬 TIMapeoRepository.bas     ← Tests integración           │
+│ 🔬 TIMapeoRepository.bas     ← Tests integración (Estándar de Oro) │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Mapeo
@@ -487,8 +487,10 @@ graph TD
 - CMockMapeoRepository.ConfigureObtenerMapeosPorCategoria(mapeos As Scripting.Dictionary)
 - CMockMapeoRepository.ConfigureObtenerTodosLosMapeos(mapeos As Scripting.Dictionary)
 
-🧪 **Patrones de Testing:**
+🧪 **Patrones de Testing (Estándar de Oro):**
+- **Suite Optimizado**: Setup/Teardown una sola vez por suite completa
 - **Integración Directa**: TIMapeoRepository prueba directamente contra BD
+- **Autoaprovisionamiento**: BD de prueba creada automáticamente
 - **Sin Variables Globales**: Variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
@@ -1344,7 +1346,7 @@ back/test_db/
 | `TIWorkflowRepository.bas` | Integración | BD de prueba | Individual |
 | `TIOperationRepository.bas` | Integración | BD de prueba | Individual |
 | `TIExpedienteRepository.bas` | Integración | BD de prueba | Suite Optimizado |
-| `TIMapeoRepository.bas` | Integración | BD de prueba | Individual |
+| `TIMapeoRepository.bas` | Integración | BD de prueba | **Suite Optimizado** |
 | `TINotificationService.bas` | Integración | BD de prueba | Individual |
 | `TIWordManager.bas` | Integración | Plantillas + Directorios | **Suite Optimizado** |
 
