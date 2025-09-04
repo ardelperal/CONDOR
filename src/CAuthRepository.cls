@@ -66,6 +66,10 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     
     Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
+    ' Obtener el ID de la aplicación desde la configuración
+    Dim idApp As String
+    idApp = m_configService.GetIDAplicacionCondor()
+    
     ' --- INICIO CÓDIGO QueryDef ---
     ' Eliminar la QueryDef temporal si existiera de una ejecución anterior fallida
     On Error Resume Next
@@ -80,6 +84,12 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     Set prm = New EQueryParameter
     prm.ParameterName = "pEmail"
     prm.ParameterValue = userEmail
+    qdf.Parameters(prm.ParameterName) = prm.ParameterValue
+    
+    ' Crear y asignar el segundo parámetro para el ID de la aplicación
+    Set prm = New EQueryParameter
+    prm.ParameterName = "pIdAplicacion"
+    prm.ParameterValue = idApp
     qdf.Parameters(prm.ParameterName) = prm.ParameterValue
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)

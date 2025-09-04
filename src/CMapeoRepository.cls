@@ -36,7 +36,7 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
     
     ' Crear QueryDef con consulta desde modQueries
-    Set qdf = db.CreateQueryDef("", GET_MAPEO_POR_TIPO)
+    Set qdf = db.CreateQueryDef("", "SELECT * FROM tbMapeoCampos WHERE NombrePlantilla = [pNombrePlantilla]")
     
     ' Crear colección de parámetros usando el tipoSolicitud
     Set params = New Collection

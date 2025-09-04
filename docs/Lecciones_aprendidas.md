@@ -422,7 +422,7 @@ Este patrón asegura que cada servicio sea la única puerta de entrada a su domi
 
 **Observación:** Se ha detectado una implementación incorrecta de transacciones, llamando a los métodos `.BeginTrans` y `.Rollback` sobre un objeto `DAO.Database`.
 
-**Regla Inquebrantable:** En la librería DAO, los métodos de gestión de transacciones (`BeginTrans`, `CommitTrans`, `Rollback`)  **no son métodos del objeto `Database`** . Son métodos del objeto `Workspace`. Para las operaciones estándar, se debe utilizar el workspace por defecto del motor de base de datos: **`DBEngine.BeginTrans`** y  **`DBEngine.Rollback`** .
+**Regla Inquebrantable:** En la librería DAO, los métodos de gestión de triwordansacciones (`BeginTrans`, `CommitTrans`, `Rollback`)  **no son métodos del objeto `Database`** . Son métodos del objeto `Workspace`. Para las operaciones estándar, se debe utilizar el workspace por defecto del motor de base de datos: **`DBEngine.BeginTrans`** y  **`DBEngine.Rollback`** .
 
 **Acción Correctiva:** Todo código que gestione transacciones DAO debe invocar estos métodos directamente desde el objeto global `DBEngine`.
 

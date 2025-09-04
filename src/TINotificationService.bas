@@ -2,180 +2,226 @@ Attribute VB_Name = "TINotificationService"
 Option Compare Database
 Option Explicit
 
-
 ' Constantes para rutas de bases de datos
 Private Const CORREOS_TEMPLATE_PATH As String = "back\test_db\templates\correos_test_template.accdb"
 Private Const CORREOS_ACTIVE_PATH As String = "back\test_db\active\correos_integration_test.accdb"
 
-' Suite de pruebas de integración para CNotificationService
-
-Private Sub Setup()
-    Call modTestUtils.PrepareTestDatabase(modTestUtils.GetProjectPath() & CORREOS_TEMPLATE_PATH, modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH)
-End Sub
-
-Private Sub Teardown()
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    Dim fullTestPath As String
-    fullTestPath = modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
-    If fs.FileExists(fullTestPath) Then
-        fs.DeleteFile fullTestPath
-    End If
-    Set fs = Nothing
-End Sub
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO)
+' ============================================================================
 
 Public Function TINotificationServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    Call suiteResult.Initialize("TINotificationService")
+    suiteResult.Initialize "TINotificationService (Estándar de Oro)"
     
-    Call suiteResult.AddResult(TestSendNotificationSuccessCallsRepositoryCorrectly())
-    Call suiteResult.AddResult(TestInitializeWithValidDependencies())
-    Call suiteResult.AddResult(TestSendNotificationWithoutInitialize())
-    Call suiteResult.AddResult(TestSendNotificationWithInvalidParameters())
-    Call suiteResult.AddResult(TestSendNotificationConfigValuesUsed())
+    On Error GoTo CleanupSuite
+    
+    Call SuiteSetup
+    suiteResult.AddResult TestSendNotificationSuccessCallsRepositoryCorrectly()
+    suiteResult.AddResult TestInitializeWithValidDependencies()
+    suiteResult.AddResult TestSendNotificationWithoutInitialize()
+    suiteResult.AddResult TestSendNotificationWithInvalidParameters()
+    suiteResult.AddResult TestSendNotificationConfigValuesUsed()
+    
+CleanupSuite:
+    Call SuiteTeardown
+    If Err.Number <> 0 Then
+        Dim errorTest As New CTestResult
+        errorTest.Initialize "Suite_Execution_Failed"
+        errorTest.Fail "La suite falló de forma catastrófica: " & Err.Description
+        suiteResult.AddResult errorTest
+    End If
     
     Set TINotificationServiceRunAll = suiteResult
 End Function
 
+' ============================================================================
+' PROCEDIMIENTOS HELPER DE LA SUITE
+' ============================================================================
+
+Private Sub SuiteSetup()
+    Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
+    Dim templatePath As String: templatePath = projectPath & CORREOS_TEMPLATE_PATH
+    Dim activePath As String: activePath = projectPath & CORREOS_ACTIVE_PATH
+    Call modTestUtils.SuiteSetup(templatePath, activePath)
+End Sub
+
+Private Sub SuiteTeardown()
+    Dim activePath As String: activePath = modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
+    Call modTestUtils.SuiteTeardown(activePath)
+End Sub
+
+' ============================================================================
+' TESTS INDIVIDUALES (SE AÑADIRÁN EN LOS SIGUIENTES PROMPTS)
+' ============================================================================
+
 Private Function TestSendNotificationSuccessCallsRepositoryCorrectly() As CTestResult
-    Dim result As New CTestResult
-    result.Initialize "SendNotification con éxito debe llamar al repositorio correctamente"
-    On Error GoTo TestError
+    Set TestSendNotificationSuccessCallsRepositoryCorrectly = New CTestResult
+    TestSendNotificationSuccessCallsRepositoryCorrectly.Initialize "SendNotification con éxito debe llamar al repositorio correctamente"
     
-    Call Setup
+    Dim localConfig As IConfig
+    Dim notificationService As INotificationService
+    Dim db As DAO.Database
     
-    Dim config As IConfig
+    On Error GoTo TestFail
+    
+    ' Arrange: 1. Crear configuración local apuntando a la BD de prueba activa
     Dim mockConfigImpl As New CMockConfig
     mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
-    Set config = mockConfigImpl
+    Set localConfig = mockConfigImpl
     
-    Dim notificationService As INotificationService
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService(config)
-    
+    ' Arrange: 2. Crear el servicio real, que internamente creará y usará el repositorio real
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
+    Set db = DBEngine.OpenDatabase(localConfig.GetCorreosDBPath(), False, False, ";PWD=dpddpd")
+
+    ' Act
+    DBEngine.BeginTrans
     Dim success As Boolean
     success = notificationService.SendNotification("dest@empresa.com", "Asunto Test", "<html>Cuerpo Test</html>")
     
-    Call modAssert.AssertTrue(success, "SendNotification debe retornar True en caso de éxito")
-    
-    result.Pass
+    ' Assert
+    modAssert.AssertTrue success, "SendNotification debe retornar True en caso de éxito."
+    ' Aquí podríamos añadir una aserción que verifique directamente en la BD que el correo se ha encolado.
+
+    TestSendNotificationSuccessCallsRepositoryCorrectly.Pass
     GoTo Cleanup
+
+TestFail:
+    TestSendNotificationSuccessCallsRepositoryCorrectly.Fail "Error inesperado: " & Err.Description
     
-TestError:
-    result.Fail "Error en TestSendNotificationSuccessCallsRepositoryCorrectly: " & Err.Description
 Cleanup:
-    Call Teardown
-    Set TestSendNotificationSuccessCallsRepositoryCorrectly = result
+    On Error Resume Next
+    DBEngine.Rollback
+    If Not db Is Nothing Then db.Close
+    Set notificationService = Nothing
+    Set localConfig = Nothing
+    Set db = Nothing
 End Function
 
 Private Function TestInitializeWithValidDependencies() As CTestResult
-    Dim result As New CTestResult
-    result.Initialize "Initialize con dependencias válidas debe tener éxito"
-    On Error GoTo TestError
+    Set TestInitializeWithValidDependencies = New CTestResult
+    TestInitializeWithValidDependencies.Initialize "Initialize con dependencias válidas debe tener éxito"
     
-    Call Setup
+    Dim localConfig As IConfig
+    Dim notificationService As INotificationService
+    On Error GoTo TestFail
     
-    Dim config As IConfig
+    ' Arrange: Crear configuración local apuntando a la BD de prueba activa
     Dim mockConfigImpl As New CMockConfig
     mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
-    Set config = mockConfigImpl
+    Set localConfig = mockConfigImpl
     
-    Dim notificationService As INotificationService
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService(config)
+    ' Act: Intentar crear el servicio usando la factoría
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
     
-    Call modAssert.AssertNotNull(notificationService, "El servicio debe crearse correctamente")
+    ' Assert
+    modAssert.AssertNotNull notificationService, "El servicio no debería ser nulo si las dependencias son válidas."
     
-    result.Pass
+    TestInitializeWithValidDependencies.Pass
     GoTo Cleanup
 
-TestError:
-    result.Fail "Error en TestInitializeWithValidDependencies: " & Err.Description
+TestFail:
+    TestInitializeWithValidDependencies.Fail "Error inesperado: " & Err.Description
 Cleanup:
-    Call Teardown
-    Set TestInitializeWithValidDependencies = result
+    Set notificationService = Nothing
+    Set localConfig = Nothing
 End Function
 
 Private Function TestSendNotificationWithoutInitialize() As CTestResult
-    Dim result As New CTestResult
-    result.Initialize "SendNotification sin inicializar debe fallar"
-    On Error GoTo TestError
-    
-    Call Setup
+    Set TestSendNotificationWithoutInitialize = New CTestResult
+    TestSendNotificationWithoutInitialize.Initialize "SendNotification sin inicializar debe fallar devolviendo False"
     
     Dim notificationService As INotificationService
+    On Error GoTo TestFail ' Si se produce un error de ejecución, el test falla.
+    
+    ' Arrange: Crear la instancia de la clase concreta pero SIN llamar a Initialize
     Dim notificationServiceImpl As New CNotificationService
     Set notificationService = notificationServiceImpl
     
+    ' Act: Intentar usar el servicio no inicializado
     Dim success As Boolean
     success = notificationService.SendNotification("test@empresa.com", "Asunto", "<html>Cuerpo</html>")
     
-    Call modAssert.AssertFalse(success, "SendNotification debe fallar sin inicializar")
+    ' Assert: El servicio debe fallar grácilmente devolviendo False, no con un error.
+    modAssert.AssertFalse success, "SendNotification debe devolver False si el servicio no está inicializado."
     
-    result.Pass
+    TestSendNotificationWithoutInitialize.Pass
     GoTo Cleanup
 
-TestError:
-    result.Fail "Error en TestSendNotificationWithoutInitialize: " & Err.Description
+TestFail:
+    TestSendNotificationWithoutInitialize.Fail "Error inesperado: " & Err.Description
 Cleanup:
-    Call Teardown
-    Set TestSendNotificationWithoutInitialize = result
+    Set notificationService = Nothing
 End Function
 
 Private Function TestSendNotificationWithInvalidParameters() As CTestResult
-    Dim result As New CTestResult
-    result.Initialize "SendNotification con parámetros inválidos debe fallar"
-    On Error GoTo TestError
+    Set TestSendNotificationWithInvalidParameters = New CTestResult
+    TestSendNotificationWithInvalidParameters.Initialize "SendNotification con parámetros inválidos debe devolver False"
     
-    Call Setup
+    Dim localConfig As IConfig
+    Dim notificationService As INotificationService
+    On Error GoTo TestFail
     
-    Dim config As IConfig
+    ' Arrange
     Dim mockConfigImpl As New CMockConfig
     mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
-    Set config = mockConfigImpl
+    Set localConfig = mockConfigImpl
     
-    Dim notificationService As INotificationService
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService(config)
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
     
-    Call modAssert.AssertFalse(notificationService.SendNotification("", "Asunto", "<html>Cuerpo</html>"), "Debe fallar con destinatarios vacío")
-    Call modAssert.AssertFalse(notificationService.SendNotification("test@empresa.com", "", "<html>Cuerpo</html>"), "Debe fallar con asunto vacío")
-    Call modAssert.AssertFalse(notificationService.SendNotification("test@empresa.com", "Asunto", ""), "Debe fallar con cuerpo vacío")
+    ' Act & Assert
+    modAssert.AssertFalse notificationService.SendNotification("", "Asunto", "Cuerpo"), "Debe devolver False con destinatario vacío."
+    modAssert.AssertFalse notificationService.SendNotification("test@test.com", "", "Cuerpo"), "Debe devolver False con asunto vacío."
+    modAssert.AssertFalse notificationService.SendNotification("test@test.com", "Asunto", ""), "Debe devolver False con cuerpo vacío."
     
-    result.Pass
+    TestSendNotificationWithInvalidParameters.Pass
     GoTo Cleanup
 
-TestError:
-    result.Fail "Error en TestSendNotificationWithInvalidParameters: " & Err.Description
+TestFail:
+    TestSendNotificationWithInvalidParameters.Fail "Error inesperado: " & Err.Description
 Cleanup:
-    Call Teardown
-    Set TestSendNotificationWithInvalidParameters = result
+    Set notificationService = Nothing
+    Set localConfig = Nothing
 End Function
 
 Private Function TestSendNotificationConfigValuesUsed() As CTestResult
-    Dim result As New CTestResult
-    result.Initialize "SendNotification debe usar los valores de configuración correctamente"
-    On Error GoTo TestError
+    Set TestSendNotificationConfigValuesUsed = New CTestResult
+    TestSendNotificationConfigValuesUsed.Initialize "SendNotification debe usar los valores de configuración correctamente"
     
-    Call Setup
+    Dim localConfig As IConfig
+    Dim notificationService As INotificationService
+    Dim db As DAO.Database
     
-    Dim config As IConfig
+    On Error GoTo TestFail
+    
+    ' Arrange
     Dim mockConfigImpl As New CMockConfig
     mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
-    Set config = mockConfigImpl
+    Set localConfig = mockConfigImpl
     
-    Dim notificationService As INotificationService
-    Set notificationService = modNotificationServiceFactory.CreateNotificationService(config)
-    
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
+    Set db = DBEngine.OpenDatabase(localConfig.GetCorreosDBPath(), False, False, ";PWD=dpddpd")
+
+    ' Act
+    DBEngine.BeginTrans
     Dim success As Boolean
     success = notificationService.SendNotification("dest@empresa.com", "Asunto Config Test", "<html>Test Config</html>")
     
-    Call modAssert.AssertTrue(success, "SendNotification debe funcionar correctamente con config personalizado")
+    ' Assert
+    modAssert.AssertTrue success, "SendNotification debe funcionar correctamente con config personalizado."
     
-    result.Pass
+    TestSendNotificationConfigValuesUsed.Pass
     GoTo Cleanup
 
-TestError:
-    result.Fail "Error en TestSendNotificationConfigValuesUsed: " & Err.Description
+TestFail:
+    TestSendNotificationConfigValuesUsed.Fail "Error inesperado: " & Err.Description
+    
 Cleanup:
-    Call Teardown
-    Set TestSendNotificationConfigValuesUsed = result
+    On Error Resume Next
+    DBEngine.Rollback
+    If Not db Is Nothing Then db.Close
+    Set notificationService = Nothing
+    Set localConfig = Nothing
+    Set db = Nothing
 End Function
 

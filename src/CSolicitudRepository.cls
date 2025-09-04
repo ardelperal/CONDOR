@@ -82,7 +82,7 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
     rs!fechaCompletadoTecnico = solicitud.fechaCompletadoTecnico
     rs!fechaModificacion = solicitud.fechaModificacion
     rs!usuarioModificacion = solicitud.usuarioModificacion
-    rs!observaciones = solicitud.observaciones
+
     
     rs.Update
     
@@ -135,7 +135,7 @@ Private Function MapRecordsetToSolicitud(ByVal rs As DAO.Recordset) As ESolicitu
     s.fechaCompletadoTecnico = rs!fechaCompletadoTecnico
     s.fechaModificacion = rs!fechaModificacion
     s.usuarioModificacion = Nz(rs!usuarioModificacion, "")
-    s.observaciones = Nz(rs!observaciones, "")
+    
     Set MapRecordsetToSolicitud = s
 End Function
 
