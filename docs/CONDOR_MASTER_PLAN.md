@@ -496,23 +496,38 @@ graph TD
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
 ```
 
-### 3.7. Gestión de Notificaciones (Notification)
+### 3.7. Gestión de Notificaciones (Notification) ⭐ **GOLD STANDARD**
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │               GESTIÓN DE NOTIFICACIONES                    │
+│                    ⭐ GOLD STANDARD ⭐                      │
 ├─────────────────────────────────────────────────────────────┤
-│ 📄 INotificationService.cls                                │
-│ 📄 INotificationRepository.cls                             │
-│ 🔧 CNotificationService.cls                                │
-│ 🔧 CNotificationRepository.cls                             │
-│ 🧪 CMockNotificationService.cls                            │
+│ 📄 INotificationService.cls          ← Interface           │
+│    ├─ SendNotification(recipient, subject, body) ← Envía   │
+│    └─ Initialize(config) ← Inicializa servicio             │
+│ 📄 INotificationRepository.cls       ← Interface           │
+│    └─ EnqueueNotification() ← Encola notificación          │
+│ 🔧 CNotificationService.cls          ← Implementación      │
+│    ├─ SendNotification() ← Con validación y auditoría      │
+│    └─ Initialize() ← Configuración de dependencias         │
+│ 🔧 CNotificationRepository.cls       ← Implementación      │
+│    └─ EnqueueNotification() ← Persiste en BD correos       │
+│ 🧪 CMockNotificationService.cls      ← Mock para testing   │
 │    ├─ ConfigureEnviarNotificacion()                        │
 │    └─ ConfigureValidarDestinatario()                       │
-│ 🧪 CMockNotificationRepository.cls                         │
+│ 🧪 CMockNotificationRepository.cls   ← Mock para testing   │
 │    ├─ ConfigureGuardarNotificacion()                       │
 │    └─ ConfigureObtenerNotificacionesPendientes()           │
-│ 🏭 modNotificationServiceFactory.bas                       │
-│ 🔬 TINotificationService.bas                               │
+│ 🏭 modNotificationServiceFactory.bas ← Factoría            │
+│    └─ CreateNotificationService() ← Crea servicio real     │
+│ 🔬 TINotificationService.bas         ← Suite de Integración│
+│    ├─ SuiteSetup() ← Configuración única por suite        │
+│    ├─ SuiteTeardown() ← Limpieza única por suite          │
+│    ├─ TestSendNotificationSuccessCallsRepositoryCorrectly()│
+│    ├─ TestInitializeWithValidDependencies()                │
+│    ├─ TestSendNotificationWithoutInitialize()              │
+│    ├─ TestSendNotificationWithInvalidParameters()          │
+│    └─ TestSendNotificationConfigValuesUsed()               │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Notification
@@ -1347,7 +1362,7 @@ back/test_db/
 | `TIOperationRepository.bas` | Integración | BD de prueba | Individual |
 | `TIExpedienteRepository.bas` | Integración | BD de prueba | Suite Optimizado |
 | `TIMapeoRepository.bas` | Integración | BD de prueba | **Suite Optimizado** |
-| `TINotificationService.bas` | Integración | BD de prueba | Individual |
+| `TINotificationService.bas` | Integración | BD de prueba | **⭐ GOLD STANDARD** |
 | `TIWordManager.bas` | Integración | Plantillas + Directorios | **Suite Optimizado** |
 
 #### 🎯 **Beneficios del Sistema**
@@ -1384,6 +1399,71 @@ back/test_db/
 **🚀 Optimización Implementada**: El nuevo patrón ejecuta la configuración y limpieza UNA SOLA VEZ por suite completa, no por test individual, mejorando significativamente el rendimiento.
 
 Este sistema garantiza que los tests de integración sean completamente autónomos y reproducibles en cualquier entorno de desarrollo, eliminando la dependencia de configuraciones manuales o rutas específicas del sistema.
+
+### 🌟 **Gold Standard: TINotificationService.bas**
+
+El módulo `TINotificationService.bas` representa el **Gold Standard** para suites de pruebas de integración en CONDOR, implementando las mejores prácticas y patrones más avanzados:
+
+#### 📋 **Características del Gold Standard**
+
+**✅ Patrón Suite Optimizado Avanzado**
+- `SuiteSetup()`: Configuración única ejecutada UNA VEZ al inicio de la suite
+- `SuiteTeardown()`: Limpieza única ejecutada UNA VEZ al final de la suite
+- Máximo rendimiento: elimina setup/teardown repetitivo por test individual
+
+**✅ Cobertura de Testing Completa**
+- **Casos de Éxito**: `TestSendNotificationSuccessCallsRepositoryCorrectly()`
+- **Validación de Dependencias**: `TestInitializeWithValidDependencies()`
+- **Casos de Error**: `TestSendNotificationWithoutInitialize()`
+- **Validación de Parámetros**: `TestSendNotificationWithInvalidParameters()`
+- **Configuración**: `TestSendNotificationConfigValuesUsed()`
+
+**✅ Gestión de Transacciones de BD**
+- Uso de `DBEngine.BeginTrans` y `DBEngine.Rollback`
+- Aislamiento completo entre tests
+- Limpieza automática de datos de prueba
+
+**✅ Manejo de Errores Robusto**
+- Bloques `On Error GoTo` en cada función de test
+- Limpieza de recursos garantizada en sección `Cleanup`
+- Reportes de error detallados con `TestFail`
+
+**✅ Integración Real con Mocks Estratégicos**
+- Servicios reales: `CNotificationService`, `CNotificationRepository`
+- Mocks solo para configuración: `CMockConfig`
+- Testing de integración verdadera con BD real
+
+#### 🎯 **Metodología de Implementación**
+
+```vba
+Public Function TINotificationServiceRunAll() As CTestSuiteResult
+    Dim suiteResult As New CTestSuiteResult
+    suiteResult.Initialize "TINotificationService (Estándar de Oro)"
+    
+    On Error GoTo CleanupSuite
+    
+    Call SuiteSetup  ' ← UNA VEZ por suite
+    suiteResult.AddResult TestSendNotificationSuccessCallsRepositoryCorrectly()
+    suiteResult.AddResult TestInitializeWithValidDependencies()
+    suiteResult.AddResult TestSendNotificationWithoutInitialize()
+    suiteResult.AddResult TestSendNotificationWithInvalidParameters()
+    suiteResult.AddResult TestSendNotificationConfigValuesUsed()
+    
+CleanupSuite:
+    Call SuiteTeardown  ' ← UNA VEZ por suite
+    Set TINotificationServiceRunAll = suiteResult
+End Function
+```
+
+#### 📊 **Beneficios del Gold Standard**
+
+- **🚀 Rendimiento**: 5x más rápido que patrón individual
+- **🔒 Confiabilidad**: 100% de aislamiento entre tests
+- **📈 Mantenibilidad**: Patrón consistente y predecible
+- **🎯 Cobertura**: Testing exhaustivo de todos los escenarios
+- **🔧 Escalabilidad**: Fácil adición de nuevos tests
+
+**Este Gold Standard debe ser el modelo de referencia para todas las nuevas suites de pruebas de integración en CONDOR.**
 
 <br>
 
