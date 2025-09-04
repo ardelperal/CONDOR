@@ -434,3 +434,8 @@ Este patrón asegura que cada servicio sea la única puerta de entrada a su domi
 **Regla Inquebrantable:** Está terminantemente prohibido utilizar palabras reservadas de VBA como nombres para procedimientos (`Sub`, `Function`), variables o propiedades. Esto causa errores de compilación ambiguos y difíciles de diagnosticar. Se deben elegir nombres de método alternativos y descriptivos que no entren en conflicto con el lenguaje.
 
 **Acción Correctiva:** Para la gestión del ciclo de vida y la liberación de recursos de un objeto, se adoptará el nombre de método **`Dispose`** como estándar del proyecto, siguiendo un patrón común en otros lenguajes de programación. Cualquier otro nombre de método que entre en conflicto con una palabra reservada debe ser refactorizado inmediatamente.
+
+### ** Lección Aprendida 43: Blindaje de Conexiones a Base de Datos
+** Observación: Las llamadas a DBEngine.OpenDatabase pueden fallar con errores de DAO poco descriptivos si la ruta al fichero .accdb es incorrecta o el fichero no existe.
+
+Regla Inquebrantable: Antes de cualquier llamada a DBEngine.OpenDatabase, el código debe verificar explícitamente que el fichero de base de datos existe en la ruta especificada. Esta verificación se realizará utilizando el servicio IFileSystem.FileExists. Si el fichero no existe, se debe lanzar un error descriptivo y controlado que indique la ruta que ha fallado, en lugar de permitir que el motor DAO falle de forma críptica.

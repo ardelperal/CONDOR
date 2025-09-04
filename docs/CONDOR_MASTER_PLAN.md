@@ -317,6 +317,7 @@ graph TD
 - **Inyección de Dependencias Opcionales**: Factoría permite inyección para testing ✅
 - **Repositorio Funcional**: Implementación completa con SQL parametrizado y mapeo robusto ✅
 - **Test Unitario "Estándar de Oro"**: TestCExpedienteService verifica la delegación usando mocks inteligentes ✅
+- **Verificación Explícita de Entorno**: Todos los tests de integración verifican la existencia de su BD de prueba antes de usarla, generando errores descriptivos. ✅
 ```
 
 ### 3.4. Gestión de Solicitudes (Solicitud)

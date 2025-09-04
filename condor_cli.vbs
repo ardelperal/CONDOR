@@ -1023,8 +1023,8 @@ Sub ValidateSchema()
     
     ' Definir esquema esperado para Lanzadera
     Set lanzaderaSchema = CreateObject("Scripting.Dictionary")
-    lanzaderaSchema.Add "TbUsuariosAplicaciones", Array("CorreoUsuario", "EsAdministrador", "ID")
-    lanzaderaSchema.Add "TbUsuariosAplicacionesPermisos", Array("CorreoUsuario", "IDAplicacion", "IDPermiso")
+    lanzaderaSchema.Add "TbUsuariosAplicaciones", Array("CorreoUsuario", "Password", "UsuarioRed", "Nombre", "Matricula", "FechaAlta")
+    lanzaderaSchema.Add "TbUsuariosAplicacionesPermisos", Array("CorreoUsuario", "IDAplicacion", "EsUsuarioAdministrador", "EsUsuarioCalidad", "EsUsuarioEconomia", "EsUsuarioSecretaria")
     
     ' Definir esquema esperado para CONDOR
     Set condorSchema = CreateObject("Scripting.Dictionary")
@@ -1193,8 +1193,9 @@ Sub ShowHelp()
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
-    WScript.Echo "  rebuild                      - Reconstrucción completa del proyecto VBA"
-    WScript.Echo "                                 (Elimina todos los módulos y reimporta)"
+    WScript.Echo "  rebuild                      - Método principal de sincronización del proyecto"
+    WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
+    WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
     WScript.Echo ""
     WScript.Echo "✅ VALIDACIÓN Y PRUEBAS:"
     WScript.Echo "  validate [--verbose]         - Validar sintaxis VBA sin importar a Access"
@@ -2412,12 +2413,13 @@ Function GetFunctionalityFiles(strFunctionality)
 
         
         Case "solicitud", "solicitudes"
-            ' Sección 3.4 - Gestión de Solicitudes + Dependencias
+            ' Sección 3.4 - Gestión de Solicitudes + Dependencias (Actualizado tras refactorización)
             arrFiles = Array("ISolicitudService.cls", "CSolicitudService.cls", "CMockSolicitudService.cls", _
                            "ISolicitudRepository.cls", "CSolicitudRepository.cls", "CMockSolicitudRepository.cls", _
                            "ESolicitud.cls", "EDatosPc.cls", "EDatosCdCa.cls", "EDatosCdCaSub.cls", _
                            "modSolicitudServiceFactory.bas", "TestSolicitudService.bas", _
                            "TISolicitudRepository.bas", _
+                           "IAuthService.cls", "modAuthFactory.bas", _
                            "IOperationLogger.cls", "IErrorHandlerService.cls", "IConfig.cls")
         
         Case "workflow", "flujo"
