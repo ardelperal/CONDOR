@@ -418,8 +418,6 @@ Este patrón asegura que cada servicio sea la única puerta de entrada a su domi
 
 **Regla Inquebrantable:** Antes de finalizar un prompt que altere una interfaz, el Arquitecto debe realizar una búsqueda exhaustiva en toda la base de código para identificar cada clase que contenga la sentencia `Implements IInterfazModificada`. El prompt o secuencia de prompts resultante **debe** incluir las instrucciones para actualizar **todas** las clases afectadas y mantener el proyecto en un estado compilable.
 
-
-
 ### **Lección Aprendida 43: La Gestión de Transacciones DAO pertenece al Workspace**
 
 **Observación:** Se ha detectado una implementación incorrecta de transacciones, llamando a los métodos `.BeginTrans` y `.Rollback` sobre un objeto `DAO.Database`.
@@ -427,3 +425,12 @@ Este patrón asegura que cada servicio sea la única puerta de entrada a su domi
 **Regla Inquebrantable:** En la librería DAO, los métodos de gestión de transacciones (`BeginTrans`, `CommitTrans`, `Rollback`)  **no son métodos del objeto `Database`** . Son métodos del objeto `Workspace`. Para las operaciones estándar, se debe utilizar el workspace por defecto del motor de base de datos: **`DBEngine.BeginTrans`** y  **`DBEngine.Rollback`** .
 
 **Acción Correctiva:** Todo código que gestione transacciones DAO debe invocar estos métodos directamente desde el objeto global `DBEngine`.
+
+
+### **Lección Aprendida 44: Evitar Palabras Reservadas de VBA en Nombres de Métodos y Variables**
+
+**Observación:** Se ha detectado un error de compilación crítico al nombrar un método `Close` en una clase, ya que `Close` es una palabra reservada del lenguaje VBA utilizada para cerrar objetos como Recordsets o ficheros.
+
+**Regla Inquebrantable:** Está terminantemente prohibido utilizar palabras reservadas de VBA como nombres para procedimientos (`Sub`, `Function`), variables o propiedades. Esto causa errores de compilación ambiguos y difíciles de diagnosticar. Se deben elegir nombres de método alternativos y descriptivos que no entren en conflicto con el lenguaje.
+
+**Acción Correctiva:** Para la gestión del ciclo de vida y la liberación de recursos de un objeto, se adoptará el nombre de método **`Dispose`** como estándar del proyecto, siguiendo un patrón común en otros lenguajes de programación. Cualquier otro nombre de método que entre en conflicto con una palabra reservada debe ser refactorizado inmediatamente.

@@ -83,4 +83,7 @@ Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVa
     ReemplazarTexto_CallCount = ReemplazarTexto_CallCount + 1
     IWordManager_ReemplazarTexto = m_ReemplazarTexto_ReturnValue
 End Function
-
+Private Sub IWordManager_Dispose()
+    ' En un mock, este método puede estar vacío o registrar que fue llamado.
+    ' Por ahora, lo dejamos vacío para resolver la compilación.
+End Sub

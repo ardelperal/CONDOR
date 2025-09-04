@@ -136,7 +136,7 @@ Cleanup:
     
     ' 1. CERRAR WORD PARA EVITAR PROCESOS ZOMBIE
     If Not wordManager Is Nothing Then
-        wordManager.Close
+        wordManager.Dispose
     End If
     
     ' 2. Liberar todas las variables de objeto

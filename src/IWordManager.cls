@@ -55,7 +55,8 @@ End Sub
 ' Retorna: El contenido de texto del documento o cadena vacía si falla
 Public Function LeerContenidoDocumento(ByVal rutaDocumento As String) As String
 End Function
-
+Public Sub Dispose()
+End Sub
 
 
 

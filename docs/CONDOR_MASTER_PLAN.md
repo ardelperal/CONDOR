@@ -837,15 +837,15 @@ graph TD
 - CMockWordManager.ConfigureLeerDocumento(contenido)
 
 🧪 **Patrones de Testing:**
-- **Integración Real**: TIWordManager prueba con documentos Word reales usando auto-aprovisionamiento
+- **Suite Optimizado**: TIWordManager implementa patrón Suite con SuiteSetup/SuiteTeardown
+- **Integración Real**: Pruebas con documentos Word reales usando auto-aprovisionamiento
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
-- **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
+- **Tests Implementados**: 
+  - `Test_CicloCompleto_Success()` - Ciclo completo de operaciones Word
+  - `Test_AbrirFicheroInexistente_DevuelveFalse()` - Manejo de errores
+- **Auto-aprovisionamiento**: Configuración automática del entorno de prueba con plantillas
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
-- **Auto-aprovisionamiento**: Configuración automática del entorno de prueba
-- **Corrección Arquitectónica**: Uso correcto de `wordManager.LeerContenidoDocumento()` en lugar de `fs.LeerArchivoTexto()`
-- **Corrección de API de Testing**: Uso correcto de `testResult.Pass()` y `testResult.Fail()` en lugar de `SetPassed/SetFailed`
-- **Normalización de Métodos**: Uso de métodos en inglés (`FolderExists`, `CreateFolder`, `FileExists`, `DeleteFolder`) alineados con el contrato `IFileSystem`
-- **Corrección de Lógica de Limpieza**: Uso correcto de `fs.DeleteFolderRecursive()` en lugar de `fs.DeleteFolder()` en `CleanupTestEnvironment` para eliminación robusta de carpetas con contenido
+- **Robustez**: Protección condicional en `m_ErrorHandler.LogError` calls
 ```
 
 ## 7. Gestión de Errores
@@ -1346,7 +1346,7 @@ back/test_db/
 | `TIExpedienteRepository.bas` | Integración | BD de prueba | Suite Optimizado |
 | `TIMapeoRepository.bas` | Integración | BD de prueba | Individual |
 | `TINotificationService.bas` | Integración | BD de prueba | Individual |
-| `TIWordManager.bas` | Integración | BD de prueba | Individual |
+| `TIWordManager.bas` | Integración | Plantillas + Directorios | **Suite Optimizado** |
 
 #### 🎯 **Beneficios del Sistema**
 

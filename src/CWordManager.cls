@@ -60,7 +60,9 @@ Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As B
     
     ' Verificar que la aplicación Word esté disponible
     If m_WordApp Is Nothing Then
-        m_ErrorHandler.LogError -1, "Aplicación Word no inicializada", "CWordManager.IWordManager_AbrirDocumento"
+        If Not m_ErrorHandler Is Nothing Then
+            m_ErrorHandler.LogError -1, "Aplicación Word no inicializada", "CWordManager.IWordManager_AbrirDocumento"
+        End If
         IWordManager_AbrirDocumento = False
         Exit Function
     End If
@@ -73,7 +75,9 @@ Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As B
     
 errorHandler:
     ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-    m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_AbrirDocumento"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_AbrirDocumento"
+    End If
     
     ' Limpiar recursos en caso de error
     If Not m_WordDoc Is Nothing Then
@@ -99,7 +103,9 @@ Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVa
     
     If m_WordDoc Is Nothing Then
         ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-        m_ErrorHandler.LogError -1, "No hay documento abierto", "CWordManager.IWordManager_ReemplazarTexto"
+        If Not m_ErrorHandler Is Nothing Then
+            m_ErrorHandler.LogError -1, "No hay documento abierto", "CWordManager.IWordManager_ReemplazarTexto"
+        End If
         IWordManager_ReemplazarTexto = False
         Exit Function
     End If
@@ -116,7 +122,9 @@ Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVa
     
 errorHandler:
     ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-    m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_ReemplazarTexto"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_ReemplazarTexto"
+    End If
     IWordManager_ReemplazarTexto = False
 End Function
 
@@ -125,7 +133,9 @@ Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As B
     
     If m_WordDoc Is Nothing Then
         ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-        m_ErrorHandler.LogError -1, "No hay documento abierto", "CWordManager.IWordManager_GuardarDocumento"
+        If Not m_ErrorHandler Is Nothing Then
+            m_ErrorHandler.LogError -1, "No hay documento abierto", "CWordManager.IWordManager_GuardarDocumento"
+        End If
         IWordManager_GuardarDocumento = False
         Exit Function
     End If
@@ -138,7 +148,9 @@ Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As B
     
 errorHandler:
     ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-    m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_GuardarDocumento"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_GuardarDocumento"
+    End If
     IWordManager_GuardarDocumento = False
 End Function
 
@@ -154,7 +166,9 @@ Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As Stri
     
     ' Verificar que la aplicación Word esté disponible
     If m_WordApp Is Nothing Then
-        m_ErrorHandler.LogError -1, "Aplicación Word no inicializada", "CWordManager.IWordManager_LeerContenidoDocumento"
+        If Not m_ErrorHandler Is Nothing Then
+            m_ErrorHandler.LogError -1, "Aplicación Word no inicializada", "CWordManager.IWordManager_LeerContenidoDocumento"
+        End If
         IWordManager_LeerContenidoDocumento = ""
         Exit Function
     End If
@@ -174,7 +188,9 @@ Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As Stri
     
 errorHandler:
     ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-    m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_LeerContenidoDocumento"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_LeerContenidoDocumento"
+    End If
     
     ' Limpiar recursos en caso de error
     If Not tempWordDoc Is Nothing Then
@@ -230,5 +246,7 @@ Private Sub LimpiarRecursos()
     End If
 End Sub
 
-
+Private Sub IWordManager_Dispose()
+    Call IWordManager_Dispose
+End Sub
 
