@@ -98,6 +98,10 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │    ├─ AuthenticateUser() ← Autentica usuario               │
 │    └─ GetCurrentUserEmail() ← Obtiene email del usuario actual │
 │ 🔧 CAuthRepository.cls       ← Implementación              │
+│    └─ Opera dentro de transacciones gestionadas externamente │
+│       (por un Servicio o un Test), no gestiona sus propias │
+│       transacciones, cumpliendo con el Principio de        │
+│       Responsabilidad Única.                               │
 │ 🧪 CMockAuthService.cls      ← Mock Service para testing   │
 │    ├─ ConfigureAuthenticateUser(Boolean) ← Configuración   │
 │    ├─ ConfigureGetUserRole(UserRole) ← Configuración       │

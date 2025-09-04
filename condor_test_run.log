@@ -54,3 +54,13 @@
 04/09/2025 10:19:42 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
 04/09/2025 10:22:05 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
 04/09/2025 10:22:05 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+04/09/2025 13:38:44 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+04/09/2025 13:38:44 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+04/09/2025 13:52:48 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+04/09/2025 13:52:48 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+04/09/2025 14:05:11 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+04/09/2025 14:05:11 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+04/09/2025 14:10:14 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+04/09/2025 14:10:14 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+04/09/2025 14:11:24 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+04/09/2025 14:11:24 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 

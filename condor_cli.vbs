@@ -86,14 +86,14 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "export-plan" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle' o 'export-plan'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint' o 'bundle'"
     WScript.Quit 1
 End If
 
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 
-' Los comandos bundle, validate-schema y export-plan no requieren Access
+' Los comandos bundle y validate-schema no requieren Access
 If strAction = "bundle" Then
     ' Verificar si se solicita ayuda específica para bundle
     If objArgs.Count > 1 Then
@@ -106,9 +106,6 @@ If strAction = "bundle" Then
     WScript.Quit 0
 ElseIf strAction = "validate-schema" Then
     Call ValidateSchema()
-    WScript.Quit 0
-ElseIf strAction = "export-plan" Then
-    Call ExportPlanToExcel()
     WScript.Quit 0
 End If
 
@@ -1043,7 +1040,7 @@ Sub ValidateSchema()
     condorSchema.Add "tbEstados", Array("idEstado", "nombreEstado", "descripcionEstado", "esEstadoFinal")
     condorSchema.Add "tbTransiciones", Array("idTransicion", "estadoOrigen", "estadoDestino", "accionRequerida", "rolRequerido")
     condorSchema.Add "tbConfiguracion", Array("clave", "valor", "descripcion", "categoria")
-    condorSchema.Add "TbLocalConfig", Array("Entorno")
+    condorSchema.Add "TbLocalConfig", Array("clave", "valor", "descripcion", "categoria")
     
     ' Validar las bases de datos
     If Not VerifySchema(strSourcePath & "\..\back\test_db\templates\Lanzadera_test_template.accdb", "dpddpd", lanzaderaSchema) Then allOk = False
@@ -1194,7 +1191,6 @@ Sub ShowHelp()
     WScript.Echo "  export [--verbose]           - Exportar módulos VBA desde Access a /src"
     WScript.Echo "                                 Codificación: ANSI para compatibilidad"
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
-    WScript.Echo "  export-plan                  - Exportar el PLAN_DE_ACCION.md a un fichero Excel (.xlsx)"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
     WScript.Echo "  rebuild                      - Reconstrucción completa del proyecto VBA"
@@ -1284,7 +1280,6 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo "  cscript condor_cli.vbs --help"
     WScript.Echo "  cscript condor_cli.vbs validate --verbose"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
-    WScript.Echo "  cscript condor_cli.vbs export-plan"
     WScript.Echo "  cscript condor_cli.vbs bundle Auth"
     WScript.Echo "  cscript condor_cli.vbs bundle Document C:\\\\temp"
     WScript.Echo "  cscript condor_cli.vbs createtable MiTabla ""CREATE TABLE MiTabla (ID LONG)"""
@@ -2097,8 +2092,9 @@ Sub RebuildProject()
     WScript.Echo "Verificando integridad de nombres de modulos..."
     Call VerifyModuleNames()
     
-    ' PASO 4.5: Verificación final completada
-    WScript.Echo "Paso 5: Verificación final completada"
+    ' PASO 4.5: Copiar todos los archivos de src a la caché
+    WScript.Echo "Paso 5: Copiando todos los archivos de /src a la cache..."
+    Call CopyAllFilesToCache()
     
     WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
     WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
@@ -2230,7 +2226,58 @@ End Sub
 
 
 
-
+' Función para copiar todos los archivos de src a la caché
+Sub CopyAllFilesToCache()
+    On Error Resume Next
+    
+    ' Definir ruta de la caché
+    Dim strCachePath
+    strCachePath = objFSO.BuildPath(objFSO.GetParentFolderName(strSourcePath), ".vba_cache")
+    
+    ' Crear directorio de caché si no existe
+    If Not objFSO.FolderExists(strCachePath) Then
+        objFSO.CreateFolder strCachePath
+        If Err.Number <> 0 Then
+            WScript.Echo "Error creando directorio de cache: " & Err.Description
+            Err.Clear
+            Exit Sub
+        End If
+    End If
+    
+    ' Copiar todos los archivos .bas y .cls de src a cache
+    Dim objFolder, objFile
+    Dim copiedCount
+    copiedCount = 0
+    
+    If Not objFSO.FolderExists(strSourcePath) Then
+        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
+        Exit Sub
+    End If
+    
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            Dim destPath
+            destPath = objFSO.BuildPath(strCachePath, objFile.Name)
+            
+            ' Copiar archivo
+            objFSO.CopyFile objFile.Path, destPath, True
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "  ❌ Error copiando " & objFile.Name & ": " & Err.Description
+                Err.Clear
+            Else
+                WScript.Echo "  ✓ Copiado: " & objFile.Name
+                copiedCount = copiedCount + 1
+            End If
+        End If
+    Next
+    
+    WScript.Echo "✓ Cache actualizada: " & copiedCount & " archivos copiados"
+    
+    On Error GoTo 0
+End Sub
 
 ' Función para verificar cambios antes de abrir la base de datos
 
@@ -2354,42 +2401,24 @@ Function GetFunctionalityFiles(strFunctionality)
                            "modWordManagerFactory.bas", "modRepositoryFactory.bas", "modErrorHandlerFactory.bas")
         
         Case "expediente", "expedientes"
-            arrFiles = Array( _
-                "IExpedienteService.cls", _
-                "IExpedienteRepository.cls", _
-                "CExpedienteService.cls", _
-                "CExpedienteRepository.cls", _
-                "CMockExpedienteService.cls", _
-                "CMockExpedienteRepository.cls", _
-                "EExpediente.cls", _
-                "modExpedienteServiceFactory.bas", _
-                "TestCExpedienteService.bas", _
-                "TIExpedienteRepository.bas", _
-                "modRepositoryFactory.bas", _
-                "IConfig.cls", _
-                "IOperationLogger.cls", _
-                "IErrorHandlerService.cls" _
-            )
+            ' Sección 3.3 - Gestión de Expedientes + Dependencias (Actualizado tras refactorización)
+            arrFiles = Array("IExpedienteService.cls", "CExpedienteService.cls", "CMockExpedienteService.cls", _
+                           "IExpedienteRepository.cls", "CExpedienteRepository.cls", "CMockExpedienteRepository.cls", _
+                           "EExpediente.cls", "modExpedienteServiceFactory.bas", "TestCExpedienteService.bas", _
+                           "TIExpedienteRepository.bas", "modRepositoryFactory.bas", _
+                           "IConfig.cls", "IOperationLogger.cls", "IErrorHandlerService.cls")
         
         
 
         
         Case "solicitud", "solicitudes"
-            arrFiles = Array( _
-                "ISolicitudService.cls", _
-                "CSolicitudService.cls", _
-                "CMockSolicitudService.cls", _
-                "ISolicitudRepository.cls", _
-                "CSolicitudRepository.cls", _
-                "CMockSolicitudRepository.cls", _
-                "ESolicitud.cls", _
-                "EDatosPc.cls", _
-                "EDatosCdCa.cls", _
-                "EDatosCdCaSub.cls", _
-                "modSolicitudServiceFactory.bas", _
-                "TestSolicitudService.bas", _
-                "TISolicitudRepository.bas" _
-            )
+            ' Sección 3.4 - Gestión de Solicitudes + Dependencias
+            arrFiles = Array("ISolicitudService.cls", "CSolicitudService.cls", "CMockSolicitudService.cls", _
+                           "ISolicitudRepository.cls", "CSolicitudRepository.cls", "CMockSolicitudRepository.cls", _
+                           "ESolicitud.cls", "EDatosPc.cls", "EDatosCdCa.cls", "EDatosCdCaSub.cls", _
+                           "modSolicitudServiceFactory.bas", "TestSolicitudService.bas", _
+                           "TISolicitudRepository.bas", _
+                           "IOperationLogger.cls", "IErrorHandlerService.cls", "IConfig.cls")
         
         Case "workflow", "flujo"
             ' Sección 3.5 - Gestión de Workflow (v2.0 Simplificada) + Dependencias
@@ -2700,109 +2729,3 @@ Private Function DaoTypeToString(dataType)
         Case Else: DaoTypeToString = "Desconocido (" & dataType & ")"
     End Select
 End Function
-
-' ===================================================================
-' SUBRUTINA: ExportPlanToExcel
-' Descripción: Lee el PLAN_DE_ACCION.md, lo parsea y crea un .xlsx
-' ===================================================================
-Sub ExportPlanToExcel()
-    Dim strMdPath, strXlsxPath, objExcel, objWorkbook, objSheet
-    Dim fso, file, line, rowNum, i, arrParts, cell
-
-    strMdPath = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\docs\PLAN_DE_ACCION.md"
-    strXlsxPath = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\PLAN_DE_ACCION.xlsx"
-
-    WScript.Echo "=== EXPORTANDO PLAN DE ACCION A EXCEL ==="
-
-    If Not objFSO.FileExists(strMdPath) Then
-        WScript.Echo "ERROR: No se encontró el fichero " & strMdPath
-        WScript.Quit 1
-    End If
-
-    On Error Resume Next
-    Set objExcel = CreateObject("Excel.Application")
-    If Err.Number <> 0 Then
-        WScript.Echo "ERROR: Microsoft Excel no parece estar instalado."
-        WScript.Quit 1
-    End If
-    On Error GoTo 0
-
-    objExcel.Visible = False
-    Set objWorkbook = objExcel.Workbooks.Add()
-    Set objSheet = objWorkbook.Sheets(1)
-    objSheet.Name = "Plan de Acción"
-
-    WScript.Echo "Procesando " & strMdPath & "..."
-
-    ' Usar ADODB.Stream para leer el archivo con codificación UTF-8
-    Dim objStream, strContent, arrLines
-    Set objStream = CreateObject("ADODB.Stream")
-    objStream.Type = 2 ' adTypeText
-    objStream.Charset = "UTF-8"
-    objStream.Open
-    objStream.LoadFromFile strMdPath
-    strContent = objStream.ReadText
-    objStream.Close
-    Set objStream = Nothing
-
-    ' Dividir el contenido en líneas
-    arrLines = Split(strContent, vbCrLf)
-    If UBound(arrLines) = 0 Then
-        arrLines = Split(strContent, vbLf) ' Intentar con LF solo
-    End If
-
-    rowNum = 1
-    For Each line In arrLines
-        line = Trim(line)
-        ' Solo procesamos las líneas que parecen ser de una tabla Markdown
-        If Left(line, 1) = "|" And Right(line, 1) = "|" Then
-            ' Ignoramos la línea separadora de la tabla (ej. |:---|:---|)
-            If InStr(line, "---") = 0 Then
-                arrParts = Split(Mid(line, 2, Len(line) - 2), "|")
-                For i = 0 To UBound(arrParts)
-                    Set cell = objSheet.Cells(rowNum, i + 1)
-                    Dim cellValue
-                    cellValue = Trim(arrParts(i))
-                    
-                    ' Detectar si es una fecha en formato dd/mm/yyyy
-                    If rowNum > 1 And (i = 3 Or i = 4) And cellValue <> "" Then ' Columnas de fechas (4ta y 5ta)
-                        If IsDate(cellValue) Then
-                            cell.Value = CDate(cellValue)
-                            cell.NumberFormat = "dd/mm/yyyy"
-                        Else
-                            cell.Value = cellValue
-                        End If
-                    Else
-                        cell.Value = cellValue
-                    End If
-                    
-                    ' Estilo para la cabecera
-                    If rowNum = 1 Then
-                        cell.Font.Bold = True
-                        cell.Interior.ColorIndex = 15 ' Gris claro
-                    End If
-                Next
-                rowNum = rowNum + 1
-            End If
-        End If
-    Next
-
-    ' Auto-ajustar columnas para una mejor visualización
-    objSheet.Columns.AutoFit
-
-    WScript.Echo "Guardando fichero en " & strXlsxPath & "..."
-    ' Eliminar el fichero si ya existe para evitar el diálogo de confirmación
-    If objFSO.FileExists(strXlsxPath) Then
-        objFSO.DeleteFile strXlsxPath
-    End If
-
-    objWorkbook.SaveAs strXlsxPath
-    objWorkbook.Close
-    objExcel.Quit
-
-    Set objSheet = Nothing
-    Set objWorkbook = Nothing
-    Set objExcel = Nothing
-
-    WScript.Echo "Exportacion completada exitosamente."
-End Sub

@@ -72,36 +72,73 @@ End Sub
 ' ============================================================================
 
 Private Function TestGetUserAuthData_AdminUser_ReturnsCorrectData() As CTestResult
+    ' Arrange
     Set TestGetUserAuthData_AdminUser_ReturnsCorrectData = New CTestResult
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Initialize "GetUserAuthData para Admin debe devolver datos correctos"
     
-    Dim localConfig As IConfig, repo As IAuthRepository, authData As EAuthData
+    Dim db As DAO.Database
+    Dim repo As IAuthRepository
+    Dim authData As EAuthData
+    Dim localConfig As IConfig
+    Dim activePath As String
+    
     On Error GoTo TestFail
-
-    ' Arrange: 1. Crear una CONFIGURACIÓN LOCAL específica para este test
+    
+    activePath = modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    Set db = DBEngine.OpenDatabase(activePath, False, False, ";PWD=dpddpd")
+    
+    ' --- INICIO DE TRANSACCIÓN ---
+    DBEngine.BeginTrans
+    
+    ' Insertar datos de prueba
+    db.Execute "DELETE FROM TbUsuariosAplicaciones WHERE CorreoUsuario = 'admin@example.com'", dbFailOnError
+    db.Execute "DELETE FROM TbUsuariosAplicaciones WHERE Id = 1", dbFailOnError
+    db.Execute "DELETE FROM TbUsuariosAplicacionesPermisos WHERE CorreoUsuario = 'admin@example.com'", dbFailOnError
+    db.Execute "INSERT INTO TbUsuariosAplicaciones (Id, CorreoUsuario, EsAdministrador) VALUES (1, 'admin@example.com', 'Sí')", dbFailOnError
+    db.Execute "INSERT INTO TbUsuariosAplicacionesPermisos (CorreoUsuario, IDAplicacion, IDPermiso) VALUES ('admin@example.com', 231, 1)", dbFailOnError
+    
+    ' Crear configuración local
     Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", activePath
     mockConfigImpl.SetSetting "LANZADERA_PASSWORD", "dpddpd"
     mockConfigImpl.SetSetting "ID_APLICACION_CONDOR", "231"
     Set localConfig = mockConfigImpl
-
-    ' Arrange: 2. Inyectar la configuración local en la factoría del repositorio
+    
     Set repo = modRepositoryFactory.CreateAuthRepository(localConfig)
     
-    ' Act: Ejecutar el método bajo prueba (los datos ya existen gracias a SuiteSetup)
+    ' Act
     Set authData = repo.GetUserAuthData("admin@example.com")
     
-    ' Assert: Verificar los resultados
+    ' Assert
     modAssert.AssertNotNull authData, "El objeto AuthData no debe ser nulo."
     modAssert.AssertTrue authData.UserExists, "UserExists debe ser True."
     modAssert.AssertTrue authData.IsGlobalAdmin, "IsGlobalAdmin debe ser True."
     
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Pass
-    GoTo Cleanup
+
+Cleanup:
+    If Not db Is Nothing Then db.Close
+    Set db = Nothing
+    Set repo = Nothing
+    Set localConfig = Nothing
+    Set authData = Nothing
+    
+    ' --- REVERSIÓN DE TRANSACCIÓN ---
+    ' Esto se ejecuta siempre, haya habido éxito o fallo, para limpiar la BD.
+    DBEngine.Rollback
+    Exit Function
 
 TestFail:
-    TestGetUserAuthData_AdminUser_ReturnsCorrectData.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set authData = Nothing: Set repo = Nothing: Set localConfig = Nothing
+    TestGetUserAuthData_AdminUser_ReturnsCorrectData.Fail "Error: " & Err.Description
+    Resume Cleanup
+End Function
+
+
+
+Private Function GetTestConfig() As IConfig
+    Dim mockConfigImpl As New CMockConfig
+    mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    mockConfigImpl.SetSetting "LANZADERA_PASSWORD", "dpddpd"
+    mockConfigImpl.SetSetting "ID_APLICACION_CONDOR", "231"
+    Set GetTestConfig = mockConfigImpl
 End Function
