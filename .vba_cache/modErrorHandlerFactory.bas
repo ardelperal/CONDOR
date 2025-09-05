@@ -9,18 +9,14 @@ Option Explicit
 ' PATRÓN: CERO ARGUMENTOS (Lección 37)
 ' =====================================================
 
-Public Function CreateErrorHandlerService(Optional ByVal configService As IConfig = Nothing) As IErrorHandlerService
+Public Function CreateErrorHandlerService() As IErrorHandlerService
     On Error GoTo ErrorHandler
     
     Dim config As IConfig
-    If configService Is Nothing Then
-        Set config = modTestContext.GetTestConfig()
-    Else
-        Set config = configService
-    End If
+    Set config = modTestContext.GetTestConfig()
     
     Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem(config)
+    Set fs = modFileSystemFactory.CreateFileSystem()
     
     Dim errorHandlerImpl As New CErrorHandlerService
     errorHandlerImpl.Initialize config, fs

@@ -46,10 +46,26 @@ Private Sub SuiteSetup()
     
     Dim db As DAO.Database
     Set db = DBEngine.OpenDatabase(activePath)
-    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (1, 'Borrador');", dbFailOnError
-    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (2, 'Aprobado');", dbFailOnError
-    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (3, 'Rechazado');", dbFailOnError
-    db.Execute "INSERT INTO tbTransiciones (idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (1, 2, 'Admin');", dbFailOnError
+    
+    ' Insertar los 7 nuevos estados del flujo refactorizado
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (1, 'Registrado', 'Estado inicial', TRUE, FALSE);", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (2, 'Desarrollo', 'En desarrollo', FALSE, FALSE);", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (3, 'Modificación', 'Requiere modificaciones', FALSE, FALSE);", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (4, 'Validación', 'En validación', FALSE, FALSE);", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (5, 'Revisión', 'En revisión', FALSE, FALSE);", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (6, 'Formalización', 'En formalización', FALSE, FALSE);", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES (7, 'Aprobada', 'Estado final aprobado', FALSE, TRUE);", dbFailOnError
+    
+    ' Insertar las transiciones del nuevo flujo
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (1, 1, 2, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (2, 2, 3, 'Ingenieria');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (3, 3, 4, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (4, 3, 5, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (5, 4, 5, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (6, 4, 5, 'Ingenieria');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (7, 5, 6, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (8, 6, 7, 'Calidad');", dbFailOnError
+    
     db.Close
     Set db = Nothing
     Exit Sub
@@ -70,20 +86,17 @@ Private Function TestIsValidTransition_TrueForValidPath() As CTestResult
     Set TestIsValidTransition_TrueForValidPath = New CTestResult
     TestIsValidTransition_TrueForValidPath.Initialize "IsValidTransition debe devolver True para una transición válida"
     
-    Dim localConfig As IConfig, repo As IWorkflowRepository, db As DAO.Database
+    Dim repo As IWorkflowRepository, db As DAO.Database
     Dim fs As IFileSystem
     Dim dbPath As String
     On Error GoTo TestFail
 
-    ' Arrange
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "DATA_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE
-    Set localConfig = mockConfigImpl
-    Set repo = modRepositoryFactory.CreateWorkflowRepository(localConfig)
+    ' Arrange: El repositorio obtiene la configuración del contexto centralizado
+    Set repo = modRepositoryFactory.CreateWorkflowRepository()
     
     ' Arrange: Conectar a la base de datos activa de forma segura
     Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = localConfig.GetDataPath()
+    dbPath = modTestUtils.GetProjectPath() & TEST_DB_ACTIVE
     
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 103, "Test.Arrange", "La BD de prueba de Workflow no existe en la ruta esperada: " & dbPath
@@ -94,10 +107,10 @@ Private Function TestIsValidTransition_TrueForValidPath() As CTestResult
     ' Act
     DBEngine.BeginTrans
     Dim isValid As Boolean
-    isValid = repo.IsValidTransition(1, 2, "Admin")
+    isValid = repo.IsValidTransition("", "Registrado", "Desarrollo")
     
     ' Assert
-    modAssert.AssertTrue isValid, "La transición 1 -> 2 para Admin debería ser válida."
+    modAssert.AssertTrue isValid, "La transición Registrado -> Desarrollo debería ser válida."
 
     TestIsValidTransition_TrueForValidPath.Pass
     GoTo Cleanup
@@ -107,27 +120,24 @@ Cleanup:
     On Error Resume Next
     DBEngine.Rollback
     If Not db Is Nothing Then db.Close
-    Set repo = Nothing: Set localConfig = Nothing: Set db = Nothing: Set fs = Nothing: Set fs = Nothing
+    Set repo = Nothing: Set db = Nothing: Set fs = Nothing
 End Function
 
 Private Function TestIsValidTransition_FalseForInvalidPath() As CTestResult
     Set TestIsValidTransition_FalseForInvalidPath = New CTestResult
     TestIsValidTransition_FalseForInvalidPath.Initialize "IsValidTransition debe devolver False para una transición inválida"
     
-    Dim localConfig As IConfig, repo As IWorkflowRepository, db As DAO.Database
+    Dim repo As IWorkflowRepository, db As DAO.Database
     Dim fs As IFileSystem
     Dim dbPath As String
     On Error GoTo TestFail
 
-    ' Arrange
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "DATA_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE
-    Set localConfig = mockConfigImpl
-    Set repo = modRepositoryFactory.CreateWorkflowRepository(localConfig)
+    ' Arrange: El repositorio obtiene la configuración del contexto centralizado
+    Set repo = modRepositoryFactory.CreateWorkflowRepository()
     
     ' Arrange: Conectar a la base de datos activa de forma segura
     Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = localConfig.GetDataPath()
+    dbPath = modTestUtils.GetProjectPath() & TEST_DB_ACTIVE
     
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 103, "Test.Arrange", "La BD de prueba de Workflow no existe en la ruta esperada: " & dbPath
@@ -138,10 +148,10 @@ Private Function TestIsValidTransition_FalseForInvalidPath() As CTestResult
     ' Act
     DBEngine.BeginTrans
     Dim isValid As Boolean
-    isValid = repo.IsValidTransition(1, 3, "Admin")
+    isValid = repo.IsValidTransition("", "Registrado", "Aprobada")
     
     ' Assert
-    modAssert.AssertFalse isValid, "La transición 1 -> 3 (inválida) no debería ser válida."
+    modAssert.AssertFalse isValid, "La transición Registrado -> Aprobada (inválida) no debería ser válida."
     
     TestIsValidTransition_FalseForInvalidPath.Pass
     GoTo Cleanup
@@ -151,27 +161,24 @@ Cleanup:
     On Error Resume Next
     DBEngine.Rollback
     If Not db Is Nothing Then db.Close
-    Set repo = Nothing: Set localConfig = Nothing: Set db = Nothing
+    Set repo = Nothing: Set db = Nothing
 End Function
 
 Private Function TestGetNextStates_ReturnsCorrectStates() As CTestResult
     Set TestGetNextStates_ReturnsCorrectStates = New CTestResult
     TestGetNextStates_ReturnsCorrectStates.Initialize "GetNextStates debe devolver los estados siguientes correctos"
     
-    Dim localConfig As IConfig, repo As IWorkflowRepository, db As DAO.Database, nextStates As Scripting.Dictionary
+    Dim repo As IWorkflowRepository, db As DAO.Database, nextStates As Scripting.Dictionary
     Dim fs As IFileSystem
     Dim dbPath As String
     On Error GoTo TestFail
 
-    ' Arrange
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "DATA_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE
-    Set localConfig = mockConfigImpl
-    Set repo = modRepositoryFactory.CreateWorkflowRepository(localConfig)
+    ' Arrange: El repositorio obtiene la configuración del contexto centralizado
+    Set repo = modRepositoryFactory.CreateWorkflowRepository()
     
     ' Arrange: Conectar a la base de datos activa de forma segura
     Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = localConfig.GetDataPath()
+    dbPath = modTestUtils.GetProjectPath() & TEST_DB_ACTIVE
     
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 103, "Test.Arrange", "La BD de prueba de Workflow no existe en la ruta esperada: " & dbPath
@@ -181,11 +188,11 @@ Private Function TestGetNextStates_ReturnsCorrectStates() As CTestResult
     
     ' Act
     DBEngine.BeginTrans
-    Set nextStates = repo.GetNextStates(1, "Admin")
+    Set nextStates = repo.GetNextStates(1, "Calidad")
     
     ' Assert
     modAssert.AssertEquals 1, nextStates.Count, "Debe haber exactamente un estado siguiente."
-    modAssert.AssertTrue nextStates.Exists(2), "El estado siguiente debe ser ID 2 (Aprobado)."
+    modAssert.AssertTrue nextStates.Exists(2), "El estado siguiente debe ser ID 2 (Desarrollo)."
     
     TestGetNextStates_ReturnsCorrectStates.Pass
     GoTo Cleanup
@@ -195,5 +202,5 @@ Cleanup:
     On Error Resume Next
     DBEngine.Rollback
     If Not db Is Nothing Then db.Close
-    Set nextStates = Nothing: Set repo = Nothing: Set localConfig = Nothing: Set db = Nothing: Set fs = Nothing
+    Set nextStates = Nothing: Set repo = Nothing: Set db = Nothing: Set fs = Nothing
 End Function

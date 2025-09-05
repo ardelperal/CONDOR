@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modNotificationServiceFactory"
+Attribute VB_Name = "modNotificationServiceFactory"
 Option Compare Database
 Option Explicit
 
@@ -15,9 +15,8 @@ Option Explicit
 Public Function CreateNotificationService() As INotificationService
     On Error GoTo errorHandler
     
-    ' Crear las dependencias necesarias usando sus respectivas factorías
     Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService()
+    Set config = modTestContext.GetTestConfig()
     
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
@@ -27,7 +26,7 @@ Public Function CreateNotificationService() As INotificationService
     
     ' Crear el repositorio usando el factory
     Dim notificationRepository As INotificationRepository
-    Set notificationRepository = modRepositoryFactory.CreateNotificationRepository(config, errorHandler)
+    Set notificationRepository = modRepositoryFactory.CreateNotificationRepository()
     
     ' Crear una instancia de la clase concreta
     Dim notificationServiceInstance As New CNotificationService

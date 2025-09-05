@@ -318,20 +318,19 @@ Caso Crítico - CTestReporter (2024): La clase CTestReporter violaba el Principi
 
 **Caso Crítico - Refactorización del Framework de Pruebas (2025):** Se refactorizaron los 12 módulos de pruebas de integración para implementar este patrón, eliminando por completo los errores de entorno y garantizando que los fallos de las pruebas ahora solo pueden deberse a regresiones reales en el código de la aplicación.
 
-## Lección 37: Estandarización de Factorías para una Arquitectura Predecible y Testeable
+## Lección 37: El Patrón Singleton de Configuración es la Única Fuente de Verdad
 
-**Observación:** Se detectó que un patrón de factorías demasiado rígido (con cero argumentos obligatorios) impedía realizar pruebas de integración fiables, ya que no permitía la inyección de dependencias configuradas (como un `IConfig` apuntando a una base de datos de prueba).
+**Observación:** Un patrón de factorías con parámetros opcionales para la inyección de configuración demostró ser frágil y propenso a errores, creando un estado caótico donde los tests podían intentar usar configuraciones locales que entraban en conflicto con un contexto global.
 
-**Regla Inquebrantable:** La creación de objetos en CONDOR se rige por un patrón de **Factoría Testeable con Parámetros Opcionales**.
+**Regla Inquebrantable:** Se prohíbe la inyección manual de configuración en las factorías. La creación de objetos en CONDOR se rige por un estricto patrón de **Fuente de Verdad Única**:
 
-1. **Para el Código de Aplicación (Producción):** Las factorías se invocan **sin argumentos** para máxima simplicidad y bajo acoplamiento. Ejemplo: `Set repo = modRepositoryFactory.CreateExpedienteRepository()`.
-2. **Para el Código de Pruebas:** Las factorías **aceptan dependencias como parámetros opcionales**. Esto permite a los tests inyectar mocks o servicios pre-configurados. Ejemplo: `Set repo = modRepositoryFactory.CreateExpedienteRepository(miConfigDePrueba)`.
+1. **Contexto Centralizado:** El módulo `modTestContext` es el único responsable de crear y gestionar una instancia Singleton de `IConfig` para todo el ciclo de vida de una ejecución de pruebas.
+2. **Factorías Disciplinadas:** Todas las factorías (`mod*Factory.bas`) **no deben aceptar parámetros de configuración**. Deben obtener su configuración llamando exclusivamente a `modTestContext.GetTestConfig()`.
+3. **Tests Simplificados:** Los tests de integración **no deben crear ni gestionar** instancias de `IConfig`. Deben confiar en que las factorías les proporcionarán objetos correctamente configurados a través del contexto global.
 
-**Principio Fundamental:** Este patrón dual mantiene la simplicidad del "cero argumentos" para el consumo general de la aplicación, mientras proporciona el "gancho" de inyección de dependencias que es indispensable para un testing robusto y aislado.
+**Principio Fundamental:** Este patrón elimina toda ambigüedad. Garantiza que cada componente del sistema, durante una prueba, utilice exactamente la misma configuración, eliminando una clase entera de errores de entorno y asegurando la reproducibilidad de las pruebas.
 
-**Acción Correctiva:** Todas las factorías deben ser implementadas siguiendo este patrón. El método `Create...` debe declarar sus dependencias como `Optional`. Dentro del método, se debe verificar si el parámetro opcional fue provisto. Si lo fue (caso de testing), se utiliza. Si es `Nothing` (caso de producción), la factoría crea la dependencia por sí misma llamando a otra factoría. `modRepositoryFactory.CreateExpedienteRepository` es el ejemplo canónico de esta implementación.
-
-Lección 38: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)
+## Lección 38: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)
 Observación: Se ha detectado que el CONDOR_MASTER_PLAN.md, aunque preciso en un momento dado, puede quedar rápidamente obsoleto si los cambios en el código (nuevas dependencias, eliminación de métodos, adición de propiedades a clases de datos) no se reflejan en él. Un plan desactualizado es peor que no tener ningún plan, ya que genera confusión y decisiones basadas en información incorrecta.
 
 Regla Inquebrantable: El CONDOR_MASTER_PLAN.md no es un documento estático, sino un reflejo directo y fiel del estado actual del código. Por lo tanto, cualquier tarea que modifique la estructura o las interacciones entre los componentes del sistema tiene la obligación ineludible de actualizar la documentación correspondiente en la misma operación.
@@ -351,19 +350,19 @@ Sincronizar condor_cli.vbs: Actualizar la lista de archivos en la subrutina GetF
 No se documentarán los cambios incrementales, solo el estado final del proyecto tras la ejecución del prompt.
 Ignora el prompt anterior. A continuación, presento la versión que incorpora esta nueva directiva.
 
-### **Lección Aprendida 38: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)**
+### **Lección Aprendida 39: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)**
 
 **Observación:** Se ha detectado que el `CONDOR_MASTER_PLAN.md` y otros artefactos clave (`condor_cli.vbs`) pueden quedar rápidamente obsoletos si los cambios en el código no se reflejan en ellos. Un plan desactualizado es peor que no tener ningún plan, ya que genera decisiones basadas en información incorrecta.
 
 **Regla Inquebrantable:** El `CONDOR_MASTER_PLAN.md` y el `condor_cli.vbs` no son documentos estáticos, sino un reflejo directo y fiel del estado actual del código. Por lo tanto, cualquier tarea que modifique la estructura o las interacciones entre los componentes del sistema tiene la obligación ineludible de actualizar la documentación correspondiente en la misma operación.
 
-### **Lección Aprendida 39: El Principio de Atomicidad en los Prompts (Respeto al Límite de Contexto)**
+### **Lección Aprendida 40: El Principio de Atomicidad en los Prompts (Respeto al Límite de Contexto)**
 
 **Observación:** Se ha confirmado que el agente de IA ejecutor (Copilot) tiene un límite de contexto de aproximadamente 6000 caracteres por solicitud. Prompts que excedan este límite pueden ser truncados o malinterpretados, resultando en implementaciones incompletas o erróneas.
 
 **Regla Inquebrantable:** La complejidad de una tarea no debe comprometer la fiabilidad de su ejecución. Si una refactorización o implementación es demasiado grande para un solo prompt, **debe ser dividida en una secuencia de prompts atómicos y numerados** . Cada prompt debe representar un paso lógico y completo,
 
-## Lección 40: Dependencias de Librerías Externas Deben Ser Explícitas
+## Lección 41: Dependencias de Librerías Externas Deben Ser Explícitas
 
 **Observación:** Se detectó un fallo de compilación latente en `modTestRunner.bas` causado por el uso del objeto `Application.VBE` sin documentar la necesidad de una referencia de librería externa.
 
@@ -371,7 +370,7 @@ Ignora el prompt anterior. A continuación, presento la versión que incorpora e
 
 **Acción Correctiva:** Auditar los módulos en busca de dependencias implícitas y añadir bloques de comentarios de "REQUISITO DE COMPILACIÓN" en la cabecera de cualquier fichero que las utilice.
 
-## Lección 41: Microsoft Scripting Runtime es Requisito Obligatorio del Framework de Testing
+## Lección 42: Microsoft Scripting Runtime es Requisito Obligatorio del Framework de Testing
 
 **Observación:** La refactorización del framework de testing de `Collection` a `Scripting.Dictionary` introduce una dependencia obligatoria a la librería "Microsoft Scripting Runtime" que debe estar habilitada en el entorno de desarrollo.
 
@@ -390,7 +389,7 @@ Ignora el prompt anterior. A continuación, presento la versión que incorpora e
 2. Documentar este requisito en el README.md del proyecto
 3. Incluir esta verificación en el proceso de configuración inicial del entorno de desarrollo
 
-Lección 17: Principio de Colaboración entre Servicios (Servicio Habla con Servicio)
+## Lección 43: Principio de Colaboración entre Servicios (Servicio Habla con Servicio)
 
 **Observación:** Se ha detectado una violación arquitectónica donde un servicio (`CDocumentService`) dependía directamente del repositorio de otra funcionalidad (`ISolicitudRepository`) para obtener datos. Esto viola el Principio de Responsabilidad Única (SRP) a un nivel superior y crea un acoplamiento indebido.
 
@@ -412,13 +411,13 @@ Lección 17: Principio de Colaboración entre Servicios (Servicio Habla con Serv
 
 Este patrón asegura que cada servicio sea la única puerta de entrada a su dominio de negocio, ocultando sus detalles de implementación (como sus repositorios) del resto de la aplicación.
 
-### **Lección Aprendida 42: El Análisis de Impacto de Interfaces es Obligatorio (Regla de Propagación Total)**
+## Lección 44: El Análisis de Impacto de Interfaces es Obligatorio (Regla de Propagación Total)
 
 **Observación:** Se ha demostrado que modificar un contrato de interfaz (ej. añadir un método) y no actualizar **todas y cada una** de las clases que lo implementan (`C*` y `CMock*`) conduce inevitablemente a errores de compilación. Es un fallo predecible y, por tanto, evitable.
 
 **Regla Inquebrantable:** Antes de finalizar un prompt que altere una interfaz, el Arquitecto debe realizar una búsqueda exhaustiva en toda la base de código para identificar cada clase que contenga la sentencia `Implements IInterfazModificada`. El prompt o secuencia de prompts resultante **debe** incluir las instrucciones para actualizar **todas** las clases afectadas y mantener el proyecto en un estado compilable.
 
-### **Lección Aprendida 43: La Gestión de Transacciones DAO pertenece al Workspace**
+## Lección 45: La Gestión de Transacciones DAO pertenece al Workspace
 
 **Observación:** Se ha detectado una implementación incorrecta de transacciones, llamando a los métodos `.BeginTrans` y `.Rollback` sobre un objeto `DAO.Database`.
 
@@ -427,7 +426,7 @@ Este patrón asegura que cada servicio sea la única puerta de entrada a su domi
 **Acción Correctiva:** Todo código que gestione transacciones DAO debe invocar estos métodos directamente desde el objeto global `DBEngine`.
 
 
-### **Lección Aprendida 44: Evitar Palabras Reservadas de VBA en Nombres de Métodos y Variables**
+## Lección 46: Evitar Palabras Reservadas de VBA en Nombres de Métodos y Variables
 
 **Observación:** Se ha detectado un error de compilación crítico al nombrar un método `Close` en una clase, ya que `Close` es una palabra reservada del lenguaje VBA utilizada para cerrar objetos como Recordsets o ficheros.
 
@@ -435,7 +434,7 @@ Este patrón asegura que cada servicio sea la única puerta de entrada a su domi
 
 **Acción Correctiva:** Para la gestión del ciclo de vida y la liberación de recursos de un objeto, se adoptará el nombre de método **`Dispose`** como estándar del proyecto, siguiendo un patrón común en otros lenguajes de programación. Cualquier otro nombre de método que entre en conflicto con una palabra reservada debe ser refactorizado inmediatamente.
 
-### ** Lección Aprendida 43: Blindaje de Conexiones a Base de Datos
+## Lección Aprendida 47: Blindaje de Conexiones a Base de Datos
 ** Observación: Las llamadas a DBEngine.OpenDatabase pueden fallar con errores de DAO poco descriptivos si la ruta al fichero .accdb es incorrecta o el fichero no existe.
 
 Regla Inquebrantable: Antes de cualquier llamada a DBEngine.OpenDatabase, el código debe verificar explícitamente que el fichero de base de datos existe en la ruta especificada. Esta verificación se realizará utilizando el servicio IFileSystem.FileExists. Si el fichero no existe, se debe lanzar un error descriptivo y controlado que indique la ruta que ha fallado, en lugar de permitir que el motor DAO falle de forma críptica.

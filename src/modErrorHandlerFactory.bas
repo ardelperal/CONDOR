@@ -9,21 +9,23 @@ Option Explicit
 ' PATRÓN: CERO ARGUMENTOS (Lección 37)
 ' =====================================================
 
-Public Function CreateErrorHandlerService(Optional ByVal configService As IConfig = Nothing) As IErrorHandlerService
+Public Function CreateErrorHandlerService(Optional ByVal config As IConfig = Nothing) As IErrorHandlerService
     On Error GoTo ErrorHandler
     
-    Dim config As IConfig
-    If configService Is Nothing Then
-        Set config = modTestContext.GetTestConfig()
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
     Else
-        Set config = configService
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
     End If
     
     Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem(config)
+    Set fs = modFileSystemFactory.CreateFileSystem(effectiveConfig)
     
     Dim errorHandlerImpl As New CErrorHandlerService
-    errorHandlerImpl.Initialize config, fs
+    errorHandlerImpl.Initialize effectiveConfig, fs
     
     Set CreateErrorHandlerService = errorHandlerImpl
     Exit Function

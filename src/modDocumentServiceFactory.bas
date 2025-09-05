@@ -6,28 +6,29 @@ Option Explicit
 Public Function CreateDocumentService(Optional ByVal config As IConfig = Nothing) As IDocumentService
     On Error GoTo errorHandler
     
-    ' Determinar configuración final
-    Dim finalConfig As IConfig
+    Dim effectiveConfig As IConfig
     If config Is Nothing Then
-        Set finalConfig = modConfigFactory.CreateConfigService()
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
     Else
-        Set finalConfig = config
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
     End If
     
     Dim serviceImpl As New CDocumentService
     
-    ' Crear TODAS las dependencias propagando la configuración
+    ' Crear TODAS las dependencias
     Dim wordMgr As IWordManager
-    Set wordMgr = modWordManagerFactory.CreateWordManager(finalConfig)
+    Set wordMgr = modWordManagerFactory.CreateWordManager(effectiveConfig)
     
     Dim errHandler As IErrorHandlerService
-    Set errHandler = modErrorHandlerFactory.CreateErrorHandlerService(finalConfig)
+    Set errHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     Dim solicitudSrv As ISolicitudService
-    Set solicitudSrv = modSolicitudServiceFactory.CreateSolicitudService(finalConfig)
+    Set solicitudSrv = modSolicitudServiceFactory.CreateSolicitudService(effectiveConfig)
     
     Dim mapeoRepo As IMapeoRepository
-    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(finalConfig)
+    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(effectiveConfig)
     
     ' Inyectar dependencias en el orden correcto
     serviceImpl.Initialize wordMgr, errHandler, solicitudSrv, mapeoRepo

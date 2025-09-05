@@ -60,7 +60,6 @@ Private Function TestSaveLog_Success() As CTestResult
     Set TestSaveLog_Success = New CTestResult
     TestSaveLog_Success.Initialize "SaveLog debe guardar correctamente un log de operación"
     
-    Dim localConfig As IConfig
     Dim errorHandler As IErrorHandlerService
     Dim repository As IOperationRepository
     Dim db As DAO.Database
@@ -70,18 +69,13 @@ Private Function TestSaveLog_Success() As CTestResult
     
     On Error GoTo TestFail
 
-    ' Arrange: 1. Crear configuración local apuntando a la BD de prueba activa
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "DATA_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    Set localConfig = mockConfigImpl
-    
-    ' Arrange: 2. Crear dependencias inyectando la configuración local
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(localConfig)
-    Set repository = modRepositoryFactory.CreateOperationRepository(localConfig, errorHandler)
+    ' Arrange: Las dependencias obtienen la configuración del contexto centralizado
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateOperationRepository(errorHandler)
     
     ' Arrange: Conectar a la base de datos activa de forma segura
     Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = localConfig.GetDataPath()
+    dbPath = modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
     
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 101, "Test.Arrange", "La BD de prueba de Operaciones no existe en la ruta esperada: " & dbPath
@@ -114,7 +108,6 @@ Cleanup:
     Set db = Nothing
     Set repository = Nothing
     Set errorHandler = Nothing
-    Set localConfig = Nothing
     Set fs = Nothing
 End Function
 

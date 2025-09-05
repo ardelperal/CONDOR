@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -43,5 +43,11 @@ End Function
 
 Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
     Set IWorkflowService_GetNextStates = m_GetNext_Result
+End Function
+
+Private Function IWorkflowService_IsEstadoFinal(ByVal estadoActual As String) As Boolean
+    ' Por defecto, un mock no considera ningún estado como final
+    ' para no interferir con las pruebas, a menos que se configure explícitamente.
+    IWorkflowService_IsEstadoFinal = False
 End Function
 

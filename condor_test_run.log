@@ -115,3 +115,95 @@
 04/09/2025 20:57:38 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
 04/09/2025 21:00:17 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
 04/09/2025 21:02:30 | ERROR | Err: 91 | Error en CSolicitudRepository.ObtenerSolicitudPorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 10:16:23 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 10:16:23 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 10:16:26 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 10:16:26 | ERROR | Err: 91 | Error en CSolicitudRepository.ObtenerSolicitudPorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 12:07:08 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:07:08 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:22:48 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 12:22:48 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 12:22:52 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:22:52 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:31:06 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 12:31:06 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 12:31:13 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:31:13 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:39:03 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 12:39:03 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 12:39:07 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 12:39:07 | ERROR | Err: 91 | Error en CSolicitudRepository.ObtenerSolicitudPorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 12:39:07 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 12:39:07 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 12:39:14 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:39:14 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:43:15 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 12:43:15 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 12:46:27 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 12:53:51 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 12:53:51 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 12:53:53 | ERROR | Err: 94 | Error en CSolicitudRepository.ObtenerSolicitudPorId: Uso no válido de Null | Source: 
+05/09/2025 12:53:53 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 12:53:54 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 12:53:59 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:53:59 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 12:55:54 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 12:55:54 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 12:59:05 | ERROR | Err: 94 | Error en CSolicitudRepository.ObtenerSolicitudPorId: Uso no válido de Null | Source: 
+05/09/2025 13:00:30 | ERROR | Err: 94 | Error en CSolicitudRepository.ObtenerSolicitudPorId: Uso no válido de Null | Source: 
+05/09/2025 13:13:24 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 13:13:24 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:13:27 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:13:27 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:13:33 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 13:13:33 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 13:20:39 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 13:20:39 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:20:41 | ERROR | Err: 3001 | Error en CExpedienteRepository.GetDatabaseConnection: Argumento no válido. | Source: 
+05/09/2025 13:20:41 | ERROR | Err: 91 | Error en CExpedienteRepository.IExpedienteRepository_ObtenerExpedientePorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:20:41 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:20:42 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:20:47 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 13:20:47 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 13:23:02 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 13:23:02 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:23:05 | ERROR | Err: 3001 | Error en CExpedienteRepository.GetDatabaseConnection: Argumento no válido. | Source: 
+05/09/2025 13:23:05 | ERROR | Err: 91 | Error en CExpedienteRepository.IExpedienteRepository_ObtenerExpedientePorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:23:05 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:23:05 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:23:12 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 13:23:12 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 13:38:45 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 13:38:45 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:38:45 | ERROR | Err: 3001 | Error en CExpedienteRepository.GetDatabaseConnection: Argumento no válido. | Source: 
+05/09/2025 13:38:45 | ERROR | Err: 91 | Error en CExpedienteRepository.IExpedienteRepository_ObtenerExpedientePorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:38:45 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:38:46 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:41:07 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 13:41:07 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:41:09 | ERROR | Err: 3001 | Error en CExpedienteRepository.GetDatabaseConnection: Argumento no válido. | Source: 
+05/09/2025 13:41:09 | ERROR | Err: 91 | Error en CExpedienteRepository.IExpedienteRepository_ObtenerExpedientePorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 13:41:10 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:41:10 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 13:41:14 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 13:41:14 | ERROR | Err: 3075 | Error en CWorkflowRepository.IsValidTransition: Error de sintaxis (falta operador) en la expresión de consulta 'T.idEstadoOrigen = EO.idEstado INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstad'. | Source: CWorkflowRepository
+05/09/2025 14:19:11 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 14:19:11 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 14:19:13 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 14:19:13 | ERROR | Err: 3001 | Error en CExpedienteRepository.GetDatabaseConnection: Argumento no válido. | Source: 
+05/09/2025 14:19:13 | ERROR | Err: 91 | Error en CExpedienteRepository.IExpedienteRepository_ObtenerExpedientePorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 14:19:14 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 14:19:14 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 14:19:22 | ERROR | Err: 3024 | Error en CWorkflowRepository.IsValidTransition: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: CWorkflowRepository
+05/09/2025 14:19:22 | ERROR | Err: 3024 | Error en CWorkflowRepository.IsValidTransition: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: CWorkflowRepository
+05/09/2025 14:19:22 | ERROR | Err: 3024 | Error en CWorkflowRepository.GetNextStates: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: CWorkflowRepository
+05/09/2025 14:29:01 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 14:29:01 | ERROR | Err: 91 | Error en CSolicitudRepository.SaveSolicitud: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 14:29:04 | ERROR | Err: 3024 | Error en CSolicitudRepository.GetDatabaseConnection: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: 
+05/09/2025 14:29:04 | ERROR | Err: 3001 | Error en CExpedienteRepository.GetDatabaseConnection: Argumento no válido. | Source: 
+05/09/2025 14:29:04 | ERROR | Err: 91 | Error en CExpedienteRepository.IExpedienteRepository_ObtenerExpedientePorId: Variable de objeto o bloque With no establecido | Source: 
+05/09/2025 14:29:04 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 14:29:04 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+05/09/2025 14:29:10 | ERROR | Err: 3024 | Error en CWorkflowRepository.IsValidTransition: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: CWorkflowRepository
+05/09/2025 14:29:10 | ERROR | Err: 3024 | Error en CWorkflowRepository.IsValidTransition: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: CWorkflowRepository
+05/09/2025 14:29:11 | ERROR | Err: 3024 | Error en CWorkflowRepository.GetNextStates: No se pudo encontrar el archivo 'C:\Proyectos\CONDOR\back\test_db\active\CONDOR_integration_test.accdb'. | Source: CWorkflowRepository

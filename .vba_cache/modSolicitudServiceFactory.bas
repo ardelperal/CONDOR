@@ -19,35 +19,34 @@ Option Explicit
 ' DESCRIPCIÓN: Crea una instancia del servicio de solicitudes con todas sus dependencias
 ' RETORNA: ISolicitudService - Instancia del servicio completamente inicializada
 '******************************************************************************
-Public Function CreateSolicitudService(Optional ByVal config As IConfig = Nothing) As ISolicitudService
+Public Function CreateSolicitudService() As ISolicitudService
     On Error GoTo errorHandler
     
-    ' 1. Determinar configuración final
-    Dim finalConfig As IConfig
-    If config Is Nothing Then
-        Set finalConfig = modTestContext.GetTestConfig()
-    Else
-        Set finalConfig = config
-    End If
+    Dim config As IConfig
+    Set config = modTestContext.GetTestConfig()
     
-    ' 2. Crear dependencias propagando la configuración
+    ' 2. Crear dependencias
     Dim errorHandlerService As IErrorHandlerService
-    Set errorHandlerService = modErrorHandlerFactory.CreateErrorHandlerService(finalConfig)
+    Set errorHandlerService = modErrorHandlerFactory.CreateErrorHandlerService()
     
     Dim operationLoggerService As IOperationLogger
-    Set operationLoggerService = modOperationLoggerFactory.CreateOperationLogger(finalConfig)
+    Set operationLoggerService = modOperationLoggerFactory.CreateOperationLogger()
     
     ' 3. Crear el repositorio
     Dim solicitudRepo As ISolicitudRepository
-    Set solicitudRepo = modRepositoryFactory.CreateSolicitudRepository(finalConfig)
+    Set solicitudRepo = modRepositoryFactory.CreateSolicitudRepository()
     
     ' 4. Crear el servicio de autenticación
     Dim authService As IAuthService
     Set authService = modAuthFactory.CreateAuthService()
     
-    ' 5. Crear e inicializar la instancia del servicio
+    ' 5. Crear el servicio de workflow
+    Dim workflowService As IWorkflowService
+    Set workflowService = modWorkflowServiceFactory.CreateWorkflowService()
+    
+    ' 6. Crear e inicializar la instancia del servicio
     Dim serviceInstance As New CSolicitudService
-    serviceInstance.Initialize solicitudRepo, operationLoggerService, errorHandlerService, authService
+    serviceInstance.Initialize solicitudRepo, operationLoggerService, errorHandlerService, authService, workflowService
     
     ' 6. Devolver la instancia como el tipo de la interfaz
     Set CreateSolicitudService = serviceInstance

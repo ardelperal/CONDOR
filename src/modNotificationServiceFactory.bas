@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modNotificationServiceFactory"
+Attribute VB_Name = "modNotificationServiceFactory"
 Option Compare Database
 Option Explicit
 
@@ -12,28 +12,33 @@ Option Explicit
 ' =====================================================
 
 ' Función factory para crear y configurar el servicio de notificaciones
-Public Function CreateNotificationService() As INotificationService
+Public Function CreateNotificationService(Optional ByVal config As IConfig = Nothing) As INotificationService
     On Error GoTo errorHandler
     
-    ' Crear las dependencias necesarias usando sus respectivas factorías
-    Dim config As IConfig
-    Set config = modConfigFactory.CreateConfigService()
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
     
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     Dim operationLogger As IOperationLogger
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger()
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(effectiveConfig)
     
     ' Crear el repositorio usando el factory
     Dim notificationRepository As INotificationRepository
-    Set notificationRepository = modRepositoryFactory.CreateNotificationRepository(config, errorHandler)
+    Set notificationRepository = modRepositoryFactory.CreateNotificationRepository(effectiveConfig)
     
     ' Crear una instancia de la clase concreta
     Dim notificationServiceInstance As New CNotificationService
     
     ' Inicializar la instancia concreta con todas las dependencias
-    Call notificationServiceInstance.Initialize(config, operationLogger, notificationRepository, errorHandler)
+    Call notificationServiceInstance.Initialize(effectiveConfig, operationLogger, notificationRepository, errorHandler)
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateNotificationService = notificationServiceInstance

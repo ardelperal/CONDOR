@@ -38,6 +38,7 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     Dim mockLogger As CMockOperationLogger
     Dim mockErrorHandler As CMockErrorHandlerService
     Dim mockAuth As CMockAuthService
+    Dim mockWorkflow As CMockWorkflowService
     Dim service As ISolicitudService
     Dim expediente As EExpediente
     Dim result As ESolicitud
@@ -49,10 +50,11 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     Set mockLogger = New CMockOperationLogger
     Set mockErrorHandler = New CMockErrorHandlerService
     Set mockAuth = New CMockAuthService
+    Set mockWorkflow = New CMockWorkflowService
     mockAuth.ConfigureGetCurrentUserEmail "creator.user@condor.com"
     
     Set serviceImpl = New CSolicitudService
-    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler, mockAuth
+    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler, mockAuth, mockWorkflow
     Set service = serviceImpl
     
     Set expediente = New EExpediente
@@ -80,6 +82,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockErrorHandler = Nothing
     Set mockAuth = Nothing
+    Set mockWorkflow = Nothing
     Set service = Nothing
     Set expediente = Nothing
     Set result = Nothing
@@ -124,6 +127,7 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
     Dim mockLogger As CMockOperationLogger
     Dim mockErrorHandler As CMockErrorHandlerService
     Dim mockAuth As CMockAuthService
+    Dim mockWorkflow As CMockWorkflowService
     Dim service As ISolicitudService ' Variable de interfaz para el test
     Dim solicitud As ESolicitud
     
@@ -134,11 +138,12 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
     Set mockLogger = New CMockOperationLogger
     Set mockErrorHandler = New CMockErrorHandlerService
     Set mockAuth = New CMockAuthService
+    Set mockWorkflow = New CMockWorkflowService
     mockAuth.ConfigureGetCurrentUserEmail "test.user@condor.com"
 
     ' PATRÓN CORRECTO: Instanciar la clase concreta, inicializarla, y LUEGO asignarla a la interfaz
     Set serviceImpl = New CSolicitudService
-    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler, mockAuth
+    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler, mockAuth, mockWorkflow
     Set service = serviceImpl
     
     Set solicitud = New ESolicitud
@@ -163,6 +168,7 @@ Cleanup:
     Set mockLogger = Nothing
     Set mockErrorHandler = Nothing
     Set mockAuth = Nothing
+    Set mockWorkflow = Nothing
     Set service = Nothing
     Set solicitud = Nothing
 End Function

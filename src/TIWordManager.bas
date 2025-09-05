@@ -95,9 +95,15 @@ Private Function Test_CicloCompleto_Success() As CTestResult
     Dim fs As IFileSystem
     On Error GoTo TestFail
     
-    ' ARRANGE
-    Set wordManager = modWordManagerFactory.CreateWordManager()
-    Set fs = modFileSystemFactory.CreateFileSystem()
+    ' ARRANGE - Crear configuración local para tests de integración
+    Dim localConfig As IConfig
+    Set localConfig = New CConfig
+    localConfig.SetValue "DatabasePath", TEST_DB_PATH
+    localConfig.SetValue "DatabasePassword", TEST_DB_PASSWORD
+    localConfig.SetValue "OutputPath", TEST_OUTPUT_PATH
+    
+    Set wordManager = modWordManagerFactory.CreateWordManager(localConfig)
+    Set fs = modFileSystemFactory.CreateFileSystem(localConfig)
     Dim templatePath As String: templatePath = modTestUtils.GetProjectPath() & TEST_FOLDER_PATH & TEMPLATE_DOC_NAME
     Dim modifiedPath As String: modifiedPath = modTestUtils.GetProjectPath() & TEST_FOLDER_PATH & MODIFIED_DOC_NAME
     
@@ -130,8 +136,14 @@ Private Function Test_AbrirFicheroInexistente_DevuelveFalse() As CTestResult
     Dim wordManager As IWordManager
     On Error GoTo TestFail ' Si hay algún error, el test falla
     
-    ' Arrange
-    Set wordManager = modWordManagerFactory.CreateWordManager()
+    ' Arrange - Crear configuración local para tests de integración
+    Dim localConfig As IConfig
+    Set localConfig = New CConfig
+    localConfig.SetValue "DatabasePath", TEST_DB_PATH
+    localConfig.SetValue "DatabasePassword", TEST_DB_PASSWORD
+    localConfig.SetValue "OutputPath", TEST_OUTPUT_PATH
+    
+    Set wordManager = modWordManagerFactory.CreateWordManager(localConfig)
     Dim inexistentePath As String: inexistentePath = modTestUtils.GetProjectPath() & TEST_FOLDER_PATH & "no_existe.docx"
     
     ' Act

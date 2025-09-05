@@ -11,24 +11,17 @@ Option Explicit
 ' FECHA: 2025-01-15
 ' =====================================================
 
-Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As IWordManager
+Public Function CreateWordManager() As IWordManager
     On Error GoTo errorHandler
     
-    ' Determinar configuración final
-    Dim finalConfig As IConfig
-    If config Is Nothing Then
-        Set finalConfig = modConfigFactory.CreateConfigService()
-    Else
-        Set finalConfig = config
-    End If
+    Dim config As IConfig
+    Set config = modTestContext.GetTestConfig()
     
     Dim wordApp As Object
     Dim errorHandler As IErrorHandlerService
-    Dim fileSystem As IFileSystem
     
-    ' Crear dependencias propagando la configuración
-    Set fileSystem = modFileSystemFactory.CreateFileSystem(finalConfig)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(finalConfig)
+    ' Crear dependencias
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Crear instancia de Word y luego inicializar
     Set wordApp = CreateObject("Word.Application")

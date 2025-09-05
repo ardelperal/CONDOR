@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -90,12 +90,11 @@ Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As Str
     rs.AddNew
     rs("Destinatarios") = destinatarios
     rs("Asunto") = asunto
-    rs("CuerpoHTML") = cuerpoHTML
-    rs("CC") = usuario
-    rs("BCC") = adminEmail
-    rs("Adjunto") = adjuntoPath
-    rs("FechaCreacion") = Now()
-    rs("Estado") = "PENDIENTE"
+    rs("Cuerpo") = cuerpoHTML
+    rs("DestinatariosConCopia") = usuario
+    rs("DestinatariosConCopiaOculta") = adminEmail
+    rs("URLAdjunto") = adjuntoPath
+    rs("FechaGrabacion") = Now()
     rs.Update
     
     ' Cerrar recursos

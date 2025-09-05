@@ -77,23 +77,16 @@ Private Function TestGetUserAuthData_AdminUser_ReturnsCorrectData() As CTestResu
     Set TestGetUserAuthData_AdminUser_ReturnsCorrectData = New CTestResult
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Initialize "GetUserAuthData para Admin debe devolver datos correctos"
     
-    Dim localConfig As IConfig, repo As IAuthRepository, authData As EAuthData
+    Dim repo As IAuthRepository, authData As EAuthData
     Dim fs As IFileSystem
     On Error GoTo TestFail
 
-    ' Arrange: 1. Crear una CONFIGURACIÓN LOCAL específica para este test
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
-    mockConfigImpl.SetSetting "LANZADERA_PASSWORD", "dpddpd"
-    mockConfigImpl.SetSetting "ID_APLICACION_CONDOR", "231"
-    Set localConfig = mockConfigImpl
-
-    ' Arrange: 2. Inyectar la configuración local en la factoría del repositorio
-    Set repo = modRepositoryFactory.CreateAuthRepository(localConfig)
+    ' Arrange: El repositorio obtiene la configuración del contexto centralizado
+    Set repo = modRepositoryFactory.CreateAuthRepository()
     
-    ' Arrange: 3. Verificar que la BD existe y conectar
+    ' Arrange: Verificar que la BD existe y conectar
     Set fs = modFileSystemFactory.CreateFileSystem()
-    Dim dbPath As String: dbPath = localConfig.GetLanzaderaDataPath()
+    Dim dbPath As String: dbPath = modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
 
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 100, "Test.Arrange", "La BD de prueba no existe en la ruta esperada: " & dbPath
@@ -115,5 +108,5 @@ TestFail:
     
 Cleanup:
     Set fs = Nothing
-    Set authData = Nothing: Set repo = Nothing: Set localConfig = Nothing
+    Set authData = Nothing: Set repo = Nothing
 End Function

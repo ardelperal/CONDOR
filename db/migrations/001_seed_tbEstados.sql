@@ -1,21 +1,23 @@
--- Limpiar datos existentes para asegurar la idempotencia
-DELETE FROM tbEstados;
+-- Fichero: 001_seed_tbEstados.sql
+-- Descripción: Define la estructura y datos de la tabla de estados con clave primaria explícita.
 
--- Insertar los estados estructurales del workflow
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
-VALUES (1, 'Borrador', 'La solicitud ha sido creada pero no enviada a revisión técnica.', TRUE, FALSE, 10);
+-- Eliminar la tabla si ya existe para asegurar una recreación limpia
+DROP TABLE tbEstados;
 
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
-VALUES (2, 'En Revisión Técnica', 'La solicitud ha sido enviada al equipo técnico para su cumplimentación.', FALSE, FALSE, 20);
+-- Crear la tabla con la clave primaria controlada por nosotros
+CREATE TABLE tbEstados (
+    idEstado LONG NOT NULL PRIMARY KEY,
+    nombreEstado TEXT(255),
+    descripcion MEMO,
+    esEstadoInicial YESNO,
+    esEstadoFinal YESNO,
+    orden LONG
+);
 
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
-VALUES (3, 'Pendiente Aprobación Calidad', 'El equipo técnico ha completado su parte y la solicitud está lista para la gestión de Calidad.', FALSE, FALSE, 30);
-
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
-VALUES (4, 'Cerrado - Aprobado', 'La solicitud ha sido aprobada y el ciclo ha finalizado.', FALSE, TRUE, 100);
-
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
-VALUES (5, 'Cerrado - Rechazado', 'La solicitud ha sido rechazado y el ciclo ha finalizado.', FALSE, TRUE, 110);
-
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
-VALUES (6, 'En Tramitación', 'La solicitud ha sido completada por el equipo técnico y está siendo gestionada por Calidad para su tramitación externa antes de la decisión final.', FALSE, FALSE, 40);
+-- Insertar los estados con IDs explícitos
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (1, 'Borrador', 'La solicitud ha sido creada pero no enviada.', TRUE, FALSE, 10);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (2, 'En Revisión Técnica', 'La solicitud ha sido enviada al equipo técnico para su evaluación.', FALSE, FALSE, 20);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (3, 'Pendiente Aprobación Calidad', 'La solicitud está pendiente de la aprobación final del equipo de Calidad.', FALSE, FALSE, 30);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (6, 'En Tramitación', 'La solicitud ha sido completada por el equipo técnico y está siendo gestionada por Calidad para su tramitación externa.', FALSE, FALSE, 40);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (4, 'Cerrado - Aprobado', 'La solicitud ha sido aprobada y el flujo de trabajo ha finalizado.', FALSE, TRUE, 100);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (5, 'Cerrado - Rechazado', 'La solicitud ha sido rechazada y el flujo de trabajo ha finalizado.', FALSE, TRUE, 110);

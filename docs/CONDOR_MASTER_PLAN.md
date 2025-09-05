@@ -388,7 +388,9 @@ graph TD
   - ✅ Manejo de errores robusto con IErrorHandlerService
   - ✅ Conexión a BD con IConfig
   - ✅ Mapeo completo de campos normalizados
-- **Normalización de Datos**: Campo idEstadoInterno como Long (FK)
+- **Normalización de Datos**: Campo idEstadoInterno como Long (FK a tbEstados)
+  - Estados finales: ID 4 ("Cerrado - Aprobado") e ID 5 ("Cerrado - Rechazado")
+  - Una vez en estado final, las solicitudes no pueden cambiar de estado
 - **Compilación**: ✅ Sin errores de contrato de interfaz
 - **Reconstrucción**: ✅ 116 archivos sincronizados exitosamente
 - **Limpieza de Código**: ✅ CMockTextFile.cls eliminado (obsoleto)
@@ -455,6 +457,11 @@ graph TD
 - **IWorkflowRepository.GetNextStates**: Recibe idEstadoActual As Long (normalizado)
 - **IWorkflowService.GetNextStates**: Mantiene estadoActual As String (compatibilidad)
 - **CWorkflowService**: Convierte String a Long internamente usando CLng()
+
+**Comportamiento con Estados Finales:**
+- Si `idEstadoActual` es 4 ("Cerrado - Aprobado") o 5 ("Cerrado - Rechazado"), `GetNextStates` retorna una colección vacía
+- Los estados finales no tienen transiciones salientes permitidas
+- El método consulta `tbTransiciones` donde estos IDs nunca aparecen como `idEstadoOrigen`
 
 🧪 **Patrones de Testing:**
 
@@ -1323,43 +1330,12 @@ graph TD
 
 ## 14. Patrones Arquitectónicos Identificados
 
-### 🏭 **Factory Pattern**
+### 🏭 **Factory Pattern (con Singleton de Configuración)**
 
-- **Propósito**: Centralizar la creación de objetos y sus dependencias
-- **Implementación**: Cada servicio principal tiene su factory correspondiente
-- **Beneficios**: Desacoplamiento, configuración centralizada, facilita testing
-
-#### 🔧 **modRepositoryFactory.bas - Patrón Factory Centralizado**
-
-```mermaid
-graph TD
-    A[modRepositoryFactory.bas] --> B[CreateAuthRepository]
-    A --> C[CreateSolicitudRepository]
-    A --> D[CreateExpedienteRepository]
-    A --> E[CreateNotificationRepository]
-    A --> F[CreateMapeoRepository]
-    A --> G[CreateWorkflowRepository]
-    A --> H[CreateOperationRepository]
-  
-    B --> I[CAuthRepository.Initialize(config, errorHandler)]
-    C --> J[CSolicitudRepository.Initialize(config, errorHandler)]
-    D --> K[CExpedienteRepository.Initialize(config, errorHandler)]
-    E --> L[CNotificationRepository.Initialize(config, errorHandler)]
-    F --> M[CMapeoRepository.Initialize(config, errorHandler)]
-    G --> N[CWorkflowRepository.Initialize(config, errorHandler)]
-    H --> O[COperationRepository.Initialize(config, errorHandler)]
-  
-    P[DEV_MODE Flag] --> Q{¿Modo Desarrollo?}
-    Q -->|Sí| R[CMock* Repositories]
-    Q -->|No| S[C* Repositories]
-```
-
-**Características Clave:**
-
-- **Inyección de Dependencias Consistente**: Todas las funciones `Create*Repository` inyectan tanto `config` como `errorHandler`
-- **Modo Desarrollo**: Flag `DEV_MODE` permite alternar entre implementaciones reales y mocks
-- **Inicialización Uniforme**: Todas las clases de repositorio siguen el patrón `Initialize(config, errorHandler)`
-- **Gestión Centralizada de Errores**: Cada repositorio recibe su instancia de `IErrorHandlerService`
+* **Propósito**: Centralizar la creación de objetos y resolver sus dependencias de forma predecible y consistente.
+* **Implementación**: Cada servicio y repositorio tiene una factoría (`mod*Factory.bas`).
+* **Regla Inquebrantable**: Todas las funciones `Create...()` en las factorías **no deben aceptar ningún parámetro**. Obtienen todas las dependencias que necesitan de otras factorías o, en el caso de la configuración de pruebas, del Singleton `modTestContext.GetTestConfig()`. Se prohíbe la inyección manual.
+* **Beneficios**: Desacoplamiento máximo, configuración centralizada, eliminación de errores de entorno en las pruebas y una arquitectura 100% predecible.
 
 ### 🗄️ **Repository Pattern**
 
@@ -1799,53 +1775,66 @@ Este patrón representa la evolución natural del sistema de autoaprovisionamien
 
 ## 16. Flujo de Trabajo y Gestión de Estados
 
-El flujo de trabajo de la aplicación se divide en fases gestionadas por los roles Calidad y Técnico. El rol Administrador tiene acceso a todas las funcionalidades.
+El sistema CONDOR implementa un flujo de trabajo de 7 estados que gestiona el ciclo de vida completo de las solicitudes, desde su registro inicial hasta su aprobación final. El flujo está diseñado para garantizar la trazabilidad, control de calidad y participación de múltiples roles especializados.
 
-**Fase 1: Registro (A cargo de Calidad)**
-**Inicio**: Un usuario con rol Calidad inicia el proceso de "Alta de Solicitud".
+### 16.1. Diagrama del Flujo de Trabajo
 
-**Selección de Expediente**: El usuario elige un expediente de una lista precargada desde la base de datos de Expedientes.
+```mermaid
+flowchart TD
+    A["1. Registrado<br/>(Estado Inicial)"] --> B["2. Desarrollo<br/>(Ingeniería)"]
+    B --> C["3. Modificación<br/>(Calidad)"]
+    B --> D["4. Validación<br/>(RAC)"]
+    C --> B
+    D --> E["5. Revisión<br/>(Cliente)"]
+    E --> F["6. Formalización<br/>(RAC)"]
+    E --> C
+    F --> G["7. Aprobada<br/>(Estado Final)"]
+    F --> C
+    
+    style A fill:#e1f5fe
+    style G fill:#c8e6c9
+    style B fill:#fff3e0
+    style C fill:#fce4ec
+    style D fill:#f3e5f5
+    style E fill:#e8f5e8
+    style F fill:#fff8e1
+```
 
-**Selección de Suministrador**: Se selecciona un suministrador asociado al expediente elegido.
+### 16.2. Tabla de Actividades del Flujo de Trabajo
 
-**Selección de Tipo de Solicitud**: Calidad elige si la solicitud es de tipo PC o CD-CA.
+| Paso | Estado | Responsable | Descripción de la Actividad |
+|------|--------|-------------|------------------------------|
+| 1 | Registrado | Calidad | Registro inicial de la solicitud con datos básicos del expediente y suministrador |
+| 2 | Desarrollo | Ingeniería | Análisis técnico y desarrollo de la propuesta de solución |
+| 3 | Modificación | Calidad | Revisión y ajustes de la documentación técnica según observaciones |
+| 4 | Validación | RAC | Validación técnica y normativa de la propuesta desarrollada |
+| 5 | Revisión | Cliente | Revisión por parte del cliente de la propuesta validada |
+| 6 | Formalización | RAC | Formalización final de la documentación y preparación para aprobación |
+| 7 | Aprobada | Sistema | Estado final - Solicitud completamente procesada y aprobada |
+| 8 | Vuelta a Modificación | Calidad | Proceso de retorno desde Revisión o Formalización para ajustes |
+| 9 | Vuelta a Desarrollo | Ingeniería | Proceso de retorno desde Modificación para reelaboración técnica |
+| 10 | Cierre del Proceso | Calidad | Actividades finales de cierre y archivo de la solicitud aprobada |
 
-**Lógica de Sub-contratista**: Si se elige CD-CA, el sistema consulta el campo ContratistaPrincipal del expediente. Si el valor es 'Sí', la solicitud se clasifica como CD-CA; en caso contrario, se clasifica como CD-CA-SUB.
+### 16.3. Roles y Responsabilidades
 
-**Cumplimentación Inicial**: Calidad rellena los campos iniciales de la solicitud.
+- **Calidad**: Gestiona el registro inicial, modificaciones y coordinación general del proceso
+- **Ingeniería**: Responsable del desarrollo técnico y reelaboración cuando sea necesario
+- **RAC (Responsable de Área de Calidad)**: Valida técnicamente y formaliza la documentación
+- **Cliente**: Revisa y aprueba las propuestas desde la perspectiva del usuario final
 
-**Pase a Técnico**: Al guardar, la solicitud entra en la FASE DE REGISTRO. El sistema automáticamente:
+### 16.4. Estados Especiales
 
-Rellena el campo fechaPaseTecnico en la tabla tbSolicitudes.
+- **Estado Inicial**: Registrado (ID: 1) - Punto de entrada único al sistema
+- **Estado Final**: Aprobada (ID: 7) - Estado terminal, no permite transiciones adicionales
+- **Estados de Retorno**: El flujo permite retornos controlados para ajustes y mejoras
 
-Encola una notificación por correo electrónico para el equipo Técnico responsable de ese expediente.
+### 16.5. Validación de Transiciones
 
-**Fase 2: Desarrollo Técnico (A cargo del Técnico)**
-**Recepción**: Un usuario con rol Técnico accede a su "bandeja de entrada", que muestra las solicitudes asociadas a sus expedientes y que están en la fase técnica (es decir, tienen fechaPaseTecnico pero no fechaCompletadoTecnico).
-
-**Cumplimentación Técnica**: El técnico rellena los campos técnicos correspondientes a la solicitud.
-
-**Liberación**: Una vez completada su parte, el técnico pulsa un botón de "Liberar" o "Finalizar". El sistema automáticamente:
-
-Rellena el campo fechaCompletadoTecnico en la tabla tbSolicitudes.
-
-Encola una notificación por correo electrónico para el usuario de Calidad que inició el proceso.
-
-**Fase 3: Gestión Externa y Cierre (A cargo de Calidad)**
-**Recepción**: El usuario de Calidad recibe la notificación y ve en su panel que la solicitud ha vuelto de la fase técnica.
-
-**Generación de Documentos**: Calidad utiliza CONDOR para generar la plantilla Word (.docx) con los datos de la solicitud. Cada versión del documento generado se guarda en un directorio de anexos para mantener la trazabilidad.
-
-**Interacción Externa (Fuera de CONDOR)**: Calidad gestiona la comunicación con los agentes externos (suministradores, etc.) por correo electrónico, enviando y recibiendo las plantillas Word.
-
-**Actualización de Datos (Sincronización)**: A medida que recibe las plantillas de agentes externos, Calidad utiliza una funcionalidad específica en la interfaz de CONDOR (p. ej., un botón "Sincronizar desde Documento"). Al activarla, la aplicación:
-
-1. Abre un selector de archivos para que el usuario elija el documento `.docx`.
-2. Lee el contenido del documento Word, extrae los datos de los campos relevantes (según el mapeo del Anexo B).
-3. Actualiza automáticamente los campos correspondientes en la base de datos de CONDOR.
-   Este proceso evita la entrada manual de datos, reduce errores y asegura la consistencia.
-
-**Cierre**: El proceso continúa hasta que la solicitud es finalmente aprobada o denegada, momento en el cual Calidad actualiza el estado final en el sistema.
+El sistema implementa un motor de workflow que valida automáticamente:
+- Transiciones permitidas según el estado actual
+- Autorización del usuario según su rol
+- Integridad del flujo de trabajo
+- Prevención de transiciones no autorizadas
 
 ## 17. Especificaciones de Integración Clave
 
@@ -2126,15 +2115,25 @@ cscript condor_cli.vbs migrate 001_seed_tbEstados.sql
 
 Actualmente el proyecto incluye los siguientes scripts de migración:
 
-1. **`001_seed_tbEstados.sql`** - Datos iniciales de estados del workflow
+1. **`001_seed_tbEstados.sql`** - Esquema y datos iniciales de estados del workflow
 
-   - Define los 6 estados del sistema: Borrador, En Revisión Técnica, Pendiente Aprobación Calidad, Cerrado - Aprobado, Cerrado - Rechazado, En Tramitación
-   - Incluye campos: idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden
+   - **REFACTORIZADO**: Incluye DDL (DROP TABLE, CREATE TABLE) y DML (INSERT)
+   - Define la tabla tbEstados con clave primaria explícita (idEstado LONG)
+   - Establece los 6 estados del sistema con IDs explícitos:
+     - ID 1: Borrador (Estado inicial)
+     - ID 2: En Revisión Técnica  
+     - ID 3: Pendiente Aprobación Calidad
+     - ID 4: Cerrado - Aprobado (Estado final)
+     - ID 5: Cerrado - Rechazado (Estado final)
+     - ID 6: En Tramitación
+   - Implementa principio de idempotencia con DROP/CREATE TABLE
+   - Consolidado desde scripts separados de esquema y datos
 2. **`002_seed_tbTransiciones.sql`** - Configuración de transiciones de estado
 
    - Define las transiciones permitidas entre estados según roles de usuario
    - Incluye transiciones completas del workflow incluyendo el estado "En Tramitación"
    - Especifica qué roles (Calidad, Técnico) pueden ejecutar cada transición
+   - **IMPORTANTE**: No incluye transiciones desde estados finales (ID 4 y 5) ya que estos representan el cierre definitivo del workflow
 3. **`003_seed_tbMapeoCampos.sql`** - Configuración de mapeo de campos
 
    - Define la correspondencia entre campos de la base de datos y marcadores en plantillas Word
@@ -2157,15 +2156,31 @@ Actualmente el proyecto incluye los siguientes scripts de migración:
 
 ### 23.3. Principio de Idempotencia
 
-Los scripts SQL deben ser **idempotentes**, lo que significa que pueden ejecutarse múltiples veces sin causar errores ni efectos secundarios no deseados. El patrón estándar para lograr esto en CONDOR es utilizar una sentencia `DELETE` para limpiar los datos existentes antes de ejecutar las sentencias `INSERT`.
+Los scripts SQL deben ser **idempotentes**, lo que significa que pueden ejecutarse múltiples veces sin causar errores ni efectos secundarios no deseados. CONDOR implementa dos patrones de idempotencia:
 
-**Ejemplo de Script Idempotente (`001_seed_tbEstados.sql`):**
+- **Patrón DELETE/INSERT**: Para scripts que solo manejan datos (DML)
+- **Patrón DROP/CREATE**: Para scripts consolidados que incluyen esquema y datos (DDL + DML)
+
+El script `001_seed_tbEstados.sql` utiliza el patrón DROP/CREATE para garantizar la recreación completa de la tabla con la estructura correcta y clave primaria explícita.
+
+**Ejemplo de Script Idempotente Consolidado (`001_seed_tbEstados.sql`):**
 
 ```sql
--- Limpiar datos existentes para asegurar la idempotencia
-DELETE FROM tbEstados;
+-- REFACTORIZADO: Script consolidado con DDL y DML
+-- Eliminar tabla existente para asegurar la idempotencia
+DROP TABLE tbEstados;
 
--- Insertar los estados estructurales del workflow
+-- Crear tabla con clave primaria explícita
+CREATE TABLE tbEstados (
+    idEstado LONG PRIMARY KEY,
+    nombreEstado TEXT(100) NOT NULL,
+    descripcion TEXT(255),
+    esEstadoInicial YESNO DEFAULT FALSE,
+    esEstadoFinal YESNO DEFAULT FALSE,
+    orden LONG
+);
+
+-- Insertar los estados estructurales del workflow con IDs explícitos
 INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
 VALUES (1, 'Borrador', 'La solicitud ha sido creada pero no enviada a revisión técnica.', TRUE, FALSE, 10);
 
@@ -2173,11 +2188,16 @@ INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esE
 VALUES (2, 'En Revisión Técnica', 'La solicitud ha sido enviada al equipo técnico para su cumplimentación.', FALSE, FALSE, 20);
 
 INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (3, 'Pendiente Aprobación Calidad', 'La solicitud está pendiente de aprobación por parte del equipo de calidad.', FALSE, FALSE, 30);
+
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (4, 'Cerrado - Aprobado', 'La solicitud ha sido aprobada y cerrada exitosamente.', FALSE, TRUE, 40);
+
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (5, 'Cerrado - Rechazado', 'La solicitud ha sido rechazada y cerrada.', FALSE, TRUE, 50);
+
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
 VALUES (6, 'En Tramitación', 'La solicitud está siendo procesada y tramitada.', FALSE, FALSE, 35);
-
--- ... (continúa con los demás estados)
-
--- ... (continúa con los demás estados)
 ```
 
 ## 21. Anexo A: Estructura Detallada de Bases de Datos
@@ -2509,14 +2529,37 @@ VALUES (6, 'En Tramitación', 'La solicitud está siendo procesada y tramitada.'
 
 **6. tbEstados**
 
-| Campo           | Tipo    | PK |
-| :-------------- | :------ | :- |
-| idEstado        | Long    | PK |
-| nombreEstado    | Text    |    |
-| descripcion     | Text    |    |
-| esEstadoInicial | Boolean |    |
-| esEstadoFinal   | Boolean |    |
-| orden           | Long    |    |
+| Campo           | Tipo    | PK | Descripción                                    |
+| :-------------- | :------ | :- | :--------------------------------------------- |
+| idEstado        | Long    | PK | Clave primaria explícita (no autoincremental) |
+| nombreEstado    | Text    |    | Nombre descriptivo del estado                  |
+| descripcion     | Text    |    | Descripción detallada del estado              |
+| esEstadoInicial | Boolean |    | Indica si es el estado inicial del workflow   |
+| esEstadoFinal   | Boolean |    | Indica si es un estado final del workflow     |
+| orden           | Long    |    | Orden de visualización en la interfaz         |
+
+**Estados Definidos (Nuevo Flujo de 7 Estados):**
+- **ID 1**: Registrado (Estado inicial - esEstadoInicial = TRUE)
+- **ID 2**: Desarrollo (Fase de ingeniería)
+- **ID 3**: Modificación (Revisión y ajustes por Calidad)
+- **ID 4**: Validación (Validación técnica por RAC)
+- **ID 5**: Revisión (Revisión por Cliente)
+- **ID 6**: Formalización (Formalización final por RAC)
+- **ID 7**: Aprobada (**Estado final** - esEstadoFinal = TRUE)
+
+**Estados Especiales del Sistema:**
+- **Estado Inicial**: Solo el estado ID 1 "Registrado" tiene `esEstadoInicial = TRUE`
+- **Estado Final**: Solo el estado ID 7 "Aprobada" tiene `esEstadoFinal = TRUE`
+- **Estados de Transición**: Los estados ID 2-6 permiten múltiples transiciones según el flujo de trabajo
+
+Una vez que una solicitud alcanza el estado final "Aprobada" (ID 7), no puede transicionar a ningún otro estado.
+
+**Refactorización Completada (2025-01-15):**
+- ✅ Migración de clave primaria autoincremental a explícita
+- ✅ Consolidación de scripts de migración en `001_seed_tbEstados.sql`
+- ✅ Integración del estado "En Tramitación" (ID 6)
+- ✅ Verificación de integridad referencial con tbTransiciones
+- ✅ Principio de idempotencia implementado con DROP/CREATE TABLE
 
 **7. tbLogCambios**
 
@@ -2589,15 +2632,30 @@ VALUES (6, 'En Tramitación', 'La solicitud está siendo procesada y tramitada.'
 
 **12. tbTransiciones**
 
-| Campo           | Tipo    | PK |
-| :-------------- | :------ | :- |
-| idTransicion    | Long    | PK |
-| idEstadoOrigen  | Long    |    |
-| idEstadoDestino | Long    |    |
-| rolRequerido    | Text    |    |
-| condiciones     | Memo    |    |
-| accionesPost    | Memo    |    |
-| activa          | Boolean |    |
+| Campo           | Tipo    | PK | Descripción                                           |
+| :-------------- | :------ | :- | :---------------------------------------------------- |
+| idTransicion    | Long    | PK | Clave primaria de la transición                       |
+| idEstadoOrigen  | Long    |    | FK a tbEstados - Estado desde el cual se transiciona |
+| idEstadoDestino | Long    |    | FK a tbEstados - Estado al cual se transiciona       |
+| rolRequerido    | Text    |    | Rol necesario para ejecutar la transición            |
+| condiciones     | Memo    |    | Condiciones adicionales para la transición           |
+| accionesPost    | Memo    |    | Acciones a ejecutar después de la transición         |
+| activa          | Boolean |    | Indica si la transición está activa                  |
+
+**Reglas de Transición (Flujo de 7 Estados):**
+- El estado final (ID 7 "Aprobada") **NO** aparece como `idEstadoOrigen` en ninguna transición
+- Una vez que una solicitud alcanza el estado "Aprobada", no puede cambiar a ningún otro estado
+- Las transiciones permiten flujos de retorno controlados (ej: desde "Revisión" a "Modificación")
+- Cada transición está asociada a un rol específico que tiene autorización para ejecutarla
+- Las transiciones definen el flujo completo desde "Registrado" hasta "Aprobada" con 8 transiciones válidas:
+  1. Registrado → Desarrollo (Calidad)
+  2. Desarrollo → Modificación (Ingeniería)
+  3. Desarrollo → Validación (Ingeniería)
+  4. Modificación → Desarrollo (Calidad)
+  5. Validación → Revisión (RAC)
+  6. Revisión → Formalización (Cliente)
+  7. Revisión → Modificación (Cliente)
+  8. Formalización → Aprobada (RAC)
 
 ## 22. Anexo B: Mapeo de Campos para Generación de Documentos
 

@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 Implements ISolicitudRepository
 
 Private Const MODULE_NAME As String = "CSolicitudRepository"
@@ -16,21 +17,27 @@ Private Const MODULE_NAME As String = "CSolicitudRepository"
 Private m_Config As IConfig
 Private m_ErrorHandler As IErrorHandlerService
 
-Public Sub Initialize(ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal config As IConfig, ByVal ErrorHandler As IErrorHandlerService)
     Set m_Config = config
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
 End Sub
 
 ' --- IMPLEMENTACIÓN DE LA INTERFAZ ---
 
-Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal id As Long) As ESolicitud
+Private Function ISolicitudRepository_ObtenerSolicitudPorId(ByVal ID As Long) As ESolicitud
     Dim db As DAO.Database, qdf As DAO.QueryDef, rs As DAO.Recordset
     Dim solicitud As ESolicitud
     On Error GoTo ErrorHandler
     
     Set db = GetDatabaseConnection()
+    If db Is Nothing Then
+        ' Si la conexión falla, la función de log ya fue llamada. Salir de forma segura.
+        Set ISolicitudRepository_ObtenerSolicitudPorId = Nothing
+        Exit Function
+    End If
+    
     Set qdf = db.CreateQueryDef("", "SELECT * FROM tbSolicitudes WHERE idSolicitud = [pId]")
-    qdf.Parameters("pId").Value = id
+    qdf.Parameters("pId").value = ID
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     If Not rs.EOF Then
@@ -131,13 +138,15 @@ Private Function MapRecordsetToSolicitud(ByVal rs As DAO.Recordset) As ESolicitu
     s.idEstadoInterno = Nz(rs!idEstadoInterno, 0) ' Usando el campo Long normalizado
     s.fechaCreacion = rs!fechaCreacion
     s.usuarioCreacion = Nz(rs!usuarioCreacion, "")
-    s.fechaPaseTecnico = rs!fechaPaseTecnico
-    s.fechaCompletadoTecnico = rs!fechaCompletadoTecnico
-    s.fechaModificacion = rs!fechaModificacion
+    s.fechaPaseTecnico = Nz(rs!fechaPaseTecnico, 0)
+    s.fechaCompletadoTecnico = Nz(rs!fechaCompletadoTecnico, 0)
+    s.fechaModificacion = Nz(rs!fechaModificacion, 0)
     s.usuarioModificacion = Nz(rs!usuarioModificacion, "")
     
     Set MapRecordsetToSolicitud = s
 End Function
+
+
 
 
 

@@ -7,15 +7,7 @@ Option Explicit
 ' DESCRIPCIÓN: Utilidades compartidas para el framework de pruebas.
 '******************************************************************************
 
-Public Function GetProjectPath() As String
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    Dim parentFolder As String
-    parentFolder = fso.GetParentFolderName(CurrentProject.Path) ' Sube a /back
-    parentFolder = fso.GetParentFolderName(parentFolder) ' Sube a / (raíz del proyecto)
-    GetProjectPath = parentFolder & "\"
-    Set fso = Nothing
-End Function
+
 
 Public Sub VerifyAllTestTemplates()
     On Error GoTo errorHandler
@@ -135,4 +127,14 @@ ErrorHandler:
     Set fs = Nothing
     Err.Raise Err.Number, "modTestUtils.SuiteTeardown", "No se pudo limpiar el entorno de la suite de pruebas: " & Err.Description
 End Sub
+
+Public Function GetProjectPath() As String
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Dim parentFolder As String
+    parentFolder = fso.GetParentFolderName(CurrentProject.Path) ' Sube a /back
+    parentFolder = fso.GetParentFolderName(parentFolder) ' Sube a / (raíz del proyecto)
+    GetProjectPath = parentFolder & "\"
+    Set fso = Nothing
+End Function
 

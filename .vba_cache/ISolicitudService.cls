@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -36,6 +36,13 @@ End Function
 ' @param solicitudId: ID de la solicitud a obtener
 ' @return: Objeto ESolicitud encontrado
 Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
+End Function
+
+' Cambia el estado de una solicitud validando la transición
+' @param solicitudId: ID de la solicitud
+' @param nuevoEstadoId: ID del nuevo estado
+' @return: True si el cambio fue exitoso, False en caso contrario
+Public Function CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
 End Function
 
 

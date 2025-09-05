@@ -15,95 +15,164 @@ Public Const DEV_MODE As Boolean = True
 
 ' --- Métodos de Creación de Repositorios ---
 
-Public Function CreateAuthRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IAuthRepository
+Public Function CreateAuthRepository(Optional ByVal config As IConfig = Nothing) As IAuthRepository
     On Error GoTo errorHandler
+    
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    
     Dim repoImpl As New CAuthRepository
-    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    repoImpl.Initialize effectiveConfig, errorHandler
     Set CreateAuthRepository = repoImpl
     Exit Function
 errorHandler:
-    HandleFactoryError "CreateAuthRepository"
+    Debug.Print "Error crítico en modRepositoryFactory.CreateAuthRepository: " & Err.Description
 End Function
 
-Public Function CreateExpedienteRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IExpedienteRepository
+Public Function CreateExpedienteRepository(Optional ByVal config As IConfig = Nothing) As IExpedienteRepository
     On Error GoTo errorHandler
+    
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    
     Dim repoImpl As New CExpedienteRepository
-    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    repoImpl.Initialize effectiveConfig, errorHandler
     Set CreateExpedienteRepository = repoImpl
     Exit Function
 errorHandler:
-    HandleFactoryError "CreateExpedienteRepository"
+    Debug.Print "Error crítico en modRepositoryFactory.CreateExpedienteRepository: " & Err.Description
 End Function
 
-Public Function CreateMapeoRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IMapeoRepository
+Public Function CreateMapeoRepository(Optional ByVal config As IConfig = Nothing) As IMapeoRepository
     On Error GoTo errorHandler
+    
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    
     Dim repoImpl As New CMapeoRepository
-    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    repoImpl.Initialize effectiveConfig, errorHandler
     Set CreateMapeoRepository = repoImpl
     Exit Function
 errorHandler:
-    HandleFactoryError "CreateMapeoRepository"
+    Debug.Print "Error crítico en modRepositoryFactory.CreateMapeoRepository: " & Err.Description
 End Function
 
-Public Function CreateNotificationRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As INotificationRepository
+Public Function CreateNotificationRepository(Optional ByVal config As IConfig = Nothing) As INotificationRepository
     On Error GoTo errorHandler
+    
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    
     Dim repoImpl As New CNotificationRepository
-    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    repoImpl.Initialize effectiveConfig, errorHandler
     Set CreateNotificationRepository = repoImpl
     Exit Function
 errorHandler:
-    HandleFactoryError "CreateNotificationRepository"
+    Debug.Print "Error crítico en modRepositoryFactory.CreateNotificationRepository: " & Err.Description
 End Function
 
-Public Function CreateOperationRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IOperationRepository
+Public Function CreateOperationRepository(Optional ByVal config As IConfig = Nothing) As IOperationRepository
     On Error GoTo errorHandler
+    
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    
     Dim repoImpl As New COperationRepository
-    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    repoImpl.Initialize effectiveConfig, errorHandler
     Set CreateOperationRepository = repoImpl
     Exit Function
 errorHandler:
-    HandleFactoryError "CreateOperationRepository"
+    Debug.Print "Error crítico en modRepositoryFactory.CreateOperationRepository: " & Err.Description
 End Function
 
-Public Function CreateSolicitudRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As ISolicitudRepository
+Public Function CreateSolicitudRepository(Optional ByVal config As IConfig = Nothing) As ISolicitudRepository
     On Error GoTo errorHandler
+    
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    
     Dim repoImpl As New CSolicitudRepository
-    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    repoImpl.Initialize effectiveConfig, errorHandler
     Set CreateSolicitudRepository = repoImpl
     Exit Function
 errorHandler:
-    HandleFactoryError "CreateSolicitudRepository"
+    Debug.Print "Error crítico en modRepositoryFactory.CreateSolicitudRepository: " & Err.Description
 End Function
 
-Public Function CreateWorkflowRepository(Optional ByVal config As IConfig = Nothing, Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IWorkflowRepository
+Public Function CreateWorkflowRepository(Optional ByVal config As IConfig = Nothing) As IWorkflowRepository
     On Error GoTo errorHandler
+    
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    
     Dim repoImpl As New CWorkflowRepository
-    repoImpl.Initialize GetEffectiveConfig(config), GetEffectiveErrorHandler(errorHandler)
+    repoImpl.Initialize effectiveConfig, errorHandler
     Set CreateWorkflowRepository = repoImpl
     Exit Function
 errorHandler:
-    HandleFactoryError "CreateWorkflowRepository"
+    Debug.Print "Error crítico en modRepositoryFactory.CreateWorkflowRepository: " & Err.Description
 End Function
-
-' --- Funciones Auxiliares Privadas ---
-
-Private Function GetEffectiveConfig(Optional ByVal config As IConfig = Nothing) As IConfig
-    If config Is Nothing Then
-        Set GetEffectiveConfig = modTestContext.GetTestConfig()
-    Else
-        Set GetEffectiveConfig = config
-    End If
-End Function
-
-Private Function GetEffectiveErrorHandler(Optional ByVal errorHandler As IErrorHandlerService = Nothing) As IErrorHandlerService
-    If errorHandler Is Nothing Then
-        Set GetEffectiveErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Else
-        Set GetEffectiveErrorHandler = errorHandler
-    End If
-End Function
-
-Private Sub HandleFactoryError(ByVal functionName As String)
-    Debug.Print "Error crítico en modRepositoryFactory." & functionName & ": " & Err.Description
-End Sub
 

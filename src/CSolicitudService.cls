@@ -28,6 +28,7 @@ Private m_solicitudRepository As ISolicitudRepository
 Private m_OperationLogger As IOperationLogger
 Private m_ErrorHandler As IErrorHandlerService
 Private m_authService As IAuthService
+Private m_workflowService As IWorkflowService
 Private m_isInitialized As Boolean
 
 ' ============================================================================
@@ -39,7 +40,8 @@ Private m_isInitialized As Boolean
 ' @param operationLogger: Logger para registrar operaciones
 ' @param errorHandler: Manejador de errores para logging
 ' @param authService: Servicio de autenticación para obtener contexto del usuario
-Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal errorHandler As IErrorHandlerService, ByVal authService As IAuthService)
+' @param workflowService: Servicio de workflow para validar transiciones
+Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal errorHandler As IErrorHandlerService, ByVal authService As IAuthService, ByVal workflowService As IWorkflowService)
     If solicitudRepository Is Nothing Then
         Err.Raise 5, "CSolicitudService.Initialize", "solicitudRepository no puede ser Nothing"
     End If
@@ -56,10 +58,15 @@ Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal o
         Err.Raise 5, "CSolicitudService.Initialize", "authService no puede ser Nothing"
     End If
     
+    If workflowService Is Nothing Then
+        Err.Raise 5, "CSolicitudService.Initialize", "workflowService no puede ser Nothing"
+    End If
+    
     Set m_solicitudRepository = solicitudRepository
     Set m_OperationLogger = operationLogger
     Set m_ErrorHandler = errorHandler
     Set m_authService = authService
+    Set m_workflowService = workflowService
     m_isInitialized = True
 End Sub
 
@@ -194,6 +201,96 @@ End Function
 ' Método público de conveniencia que delega a la implementación de la interfaz
 Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
     Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(SolicitudID)
+End Function
+
+' Cambia el estado de una solicitud validando la transición
+Private Function ISolicitudService_CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
+    
+    If Not m_isInitialized Then
+        Err.Raise 5, "CSolicitudService.CambiarEstadoSolicitud", "El servicio no ha sido inicializado. Llame a Initialize() primero."
+    End If
+    
+    On Error GoTo errorHandler
+    
+    ' Obtener la solicitud actual
+    Dim solicitud As ESolicitud
+    Set solicitud = m_solicitudRepository.ObtenerSolicitudPorId(solicitudId)
+    
+    If solicitud Is Nothing Then
+        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", CStr(solicitudId), "Solicitud no encontrada: ID=" & solicitudId
+        ISolicitudService_CambiarEstadoSolicitud = False
+        Exit Function
+    End If
+    
+    ' Obtener el estado actual y nuevo estado como strings
+    Dim estadoActual As String
+    Dim estadoDestino As String
+    
+    ' Mapear IDs a nombres de estados
+    Select Case solicitud.idEstadoInterno
+        Case 1: estadoActual = "Registrado"
+        Case 2: estadoActual = "Desarrollo"
+        Case 3: estadoActual = "Modificación"
+        Case 4: estadoActual = "Validación"
+        Case 5: estadoActual = "Revisión"
+        Case 6: estadoActual = "Formalización"
+        Case 7: estadoActual = "Aprobada"
+        Case Else: estadoActual = "Desconocido"
+    End Select
+    
+    Select Case nuevoEstadoId
+        Case 1: estadoDestino = "Registrado"
+        Case 2: estadoDestino = "Desarrollo"
+        Case 3: estadoDestino = "Modificación"
+        Case 4: estadoDestino = "Validación"
+        Case 5: estadoDestino = "Revisión"
+        Case 6: estadoDestino = "Formalización"
+        Case 7: estadoDestino = "Aprobada"
+        Case Else: estadoDestino = "Desconocido"
+    End Select
+    
+    ' Obtener el rol del usuario actual (simplificado)
+    Dim usuarioRol As String
+    usuarioRol = "Calidad" ' Por defecto, en una implementación real se obtendría del contexto del usuario
+    
+    ' Validar la transición usando el WorkflowService
+    Dim esTransicionValida As Boolean
+    esTransicionValida = m_workflowService.ValidateTransition(solicitudId, estadoActual, estadoDestino, solicitud.tipoSolicitud, usuarioRol)
+    
+    If Not esTransicionValida Then
+        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", CStr(solicitudId), "Transición no permitida: " & estadoActual & " -> " & estadoDestino & " para rol " & usuarioRol
+        m_ErrorHandler.LogError 5, "Transición de estado no permitida", "CSolicitudService.CambiarEstadoSolicitud"
+        Err.Raise 5, "CSolicitudService.CambiarEstadoSolicitud", "Transición de estado no permitida"
+    End If
+    
+    ' Si la transición es válida, actualizar el estado
+    solicitud.idEstadoInterno = nuevoEstadoId
+    solicitud.fechaModificacion = Now()
+    solicitud.usuarioModificacion = m_authService.GetCurrentUserEmail()
+    
+    ' Guardar la solicitud actualizada
+    Dim resultado As Long
+    resultado = m_solicitudRepository.SaveSolicitud(solicitud)
+    
+    If resultado > 0 Then
+        m_OperationLogger.LogOperation "CHANGE_STATE", CStr(solicitudId), "Estado cambiado exitosamente: " & estadoActual & " -> " & estadoDestino
+        ISolicitudService_CambiarEstadoSolicitud = True
+    Else
+        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", CStr(solicitudId), "Error al guardar solicitud con nuevo estado"
+        ISolicitudService_CambiarEstadoSolicitud = False
+    End If
+    
+    Exit Function
+    
+errorHandler:
+    m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", CStr(solicitudId), "Error: " & Err.Description
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CambiarEstadoSolicitud"
+    ISolicitudService_CambiarEstadoSolicitud = False
+End Function
+
+' Método público de conveniencia que delega a la implementación de la interfaz
+Public Function CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
+    CambiarEstadoSolicitud = ISolicitudService_CambiarEstadoSolicitud(solicitudId, nuevoEstadoId)
 End Function
 
 

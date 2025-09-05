@@ -1,21 +1,30 @@
-﻿Attribute VB_Name = "modExpedienteServiceFactory"
+Attribute VB_Name = "modExpedienteServiceFactory"
 Option Compare Database
 Option Explicit
 
 
-Public Function CreateExpedienteService() As IExpedienteService
+Public Function CreateExpedienteService(Optional ByVal config As IConfig = Nothing) As IExpedienteService
     On Error GoTo errorHandler
+    
+    Dim effectiveConfig As IConfig
+    If config Is Nothing Then
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
+    Else
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
+    End If
     
     Dim serviceImpl As New CExpedienteService
     
     Dim repo As IExpedienteRepository
-    Set repo = modRepositoryFactory.CreateExpedienteRepository()
+    Set repo = modRepositoryFactory.CreateExpedienteRepository(effectiveConfig)
     
     Dim logger As IOperationLogger
-    Set logger = modOperationLoggerFactory.CreateOperationLogger()
+    Set logger = modOperationLoggerFactory.CreateOperationLogger(effectiveConfig)
     
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     ' La dependencia de IConfig ahora es manejada por el repositorio, no por el servicio.
     serviceImpl.Initialize repo, logger, errorHandler

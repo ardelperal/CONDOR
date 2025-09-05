@@ -21,13 +21,9 @@ Private m_SuiteNames As Scripting.Dictionary
 Public Function RunAllTests() As String
     On Error GoTo ErrorHandler
     
-    ' 1. Crear una configuración específica para esta ejecución de pruebas
-    Dim testConfig As New CMockConfig
-    testConfig.SetSetting "LOG_FILE_PATH", CurrentProject.Path & "\condor_test_run.log"
-    
-    ' 2. Crear el ErrorHandler para el PROPIO RUNNER, inyectándole la config de prueba
+    ' Crear el ErrorHandler para el PROPIO RUNNER usando la configuración Singleton
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Inicializar el diccionario de suites
     Set m_SuiteNames = New Scripting.Dictionary
@@ -117,13 +113,9 @@ Public Function ExecuteAllTestsForCLI() As String
     Err.Clear
     On Error GoTo ErrorHandler
     
-    ' 1. Crear una configuración específica para esta ejecución de pruebas
-    Dim testConfig As New CMockConfig
-    testConfig.SetSetting "LOG_FILE_PATH", CurrentProject.Path & "\condor_test_run.log"
-    
-    ' 2. Crear el ErrorHandler para el PROPIO RUNNER, inyectándole la config de prueba
+    ' Crear el ErrorHandler para el PROPIO RUNNER usando la configuración Singleton
     Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(testConfig)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
 
     ' Inicializar el diccionario de suites
     Set m_SuiteNames = New Scripting.Dictionary

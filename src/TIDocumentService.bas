@@ -108,7 +108,6 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
     TestGenerarDocumentoSuccess.Initialize "GenerarDocumento debe crear un archivo Word con datos reales"
 
     ' --- Declarar TODAS las variables de objeto aquí ---
-    Dim config As IConfig
     Dim solicitudService As ISolicitudService
     Dim mapeoRepo As IMapeoRepository
     Dim wordManager As IWordManager
@@ -121,7 +120,7 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
     On Error GoTo TestFail
 
     ' ARRANGE: El entorno ya está creado por SuiteSetup. Solo inicializamos las dependencias.
-    InitializeRealDependencies config, solicitudService, mapeoRepo, wordManager, operationLogger, ErrorHandler, documentService, fileSystem
+    InitializeRealDependencies solicitudService, mapeoRepo, wordManager, operationLogger, ErrorHandler, documentService, fileSystem
     
     ' ARRANGE (continuación)
     Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
@@ -134,6 +133,8 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
 
     Set solicitudPrueba = solicitudService.ObtenerSolicitudPorId(999)
     modAssert.AssertNotNull solicitudPrueba, "La solicitud de prueba no se pudo cargar desde la BD."
+    
+    DBEngine.BeginTrans
     
     ' ACT: Ejecutar el método principal a probar
     Dim rutaGenerada As String
@@ -150,8 +151,10 @@ TestFail:
     TestGenerarDocumentoSuccess.Fail "Error en tiempo de ejecución: " & Err.Description & " en línea " & Erl
 
 Cleanup:
-    ' --- LIMPIEZA CRÍTICA DE RECURSOS ---
     On Error Resume Next
+    DBEngine.Rollback
+    
+    ' --- LIMPIEZA CRÍTICA DE RECURSOS ---
     
     ' 1. CERRAR WORD PARA EVITAR PROCESOS ZOMBIE
     If Not wordManager Is Nothing Then
@@ -159,7 +162,6 @@ Cleanup:
     End If
     
     ' 2. Liberar todas las variables de objeto
-    Set config = Nothing
     Set solicitudService = Nothing
     Set mapeoRepo = Nothing
     Set wordManager = Nothing
@@ -184,21 +186,25 @@ End Sub
 ' =====================================================
 ' MÉTODOS AUXILIARES PRIVADOS
 ' =====================================================
-Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudService As ISolicitudService, _
+Private Sub InitializeRealDependencies(ByRef solicitudService As ISolicitudService, _
                                        ByRef mapeoRepo As IMapeoRepository, ByRef wordManager As IWordManager, _
                                        ByRef operationLogger As IOperationLogger, ByRef ErrorHandler As IErrorHandlerService, _
                                        ByRef documentService As IDocumentService, ByRef fileSystem As IFileSystem)
     
-    ' Utilizar el singleton de configuración para coherencia
-    Set config = modTestContext.GetTestConfig()
+    ' Crear configuración local para tests de integración
+    Dim localConfig As IConfig
+    Set localConfig = New CConfig
+    localConfig.SetValue "DatabasePath", TEST_DB_PATH
+    localConfig.SetValue "DatabasePassword", TEST_DB_PASSWORD
+    localConfig.SetValue "OutputPath", TEST_OUTPUT_PATH
     
-    ' Propagar la configuración de prueba a todas las factorías
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(config)
-    Set wordManager = modWordManagerFactory.CreateWordManager(config)
-    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService(config)
-    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(config)
-    Set documentService = modDocumentServiceFactory.CreateDocumentService(config)
+    ' Inyectar configuración específica en las factorías
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(localConfig)
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(localConfig)
+    Set wordManager = modWordManagerFactory.CreateWordManager(localConfig)
+    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService(localConfig)
+    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(localConfig)
+    Set documentService = modDocumentServiceFactory.CreateDocumentService(localConfig)
 End Sub
 
 

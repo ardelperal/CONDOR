@@ -2,57 +2,46 @@ Attribute VB_Name = "modTestContext"
 Option Compare Database
 Option Explicit
 
-' ============================================================================
+' =================================================================
 ' MÓDULO: modTestContext
-' DESCRIPCIÓN: Gestiona el estado y contexto global para la ejecución de
-'              la suite de pruebas (ej. Singletons, estado compartido).
-' ============================================================================
+' DESCRIPCIÓN: Gestor Singleton para la configuración de pruebas.
+' ARQUITECTURA: ÚNICA FUENTE DE VERDAD para la configuración en TODO el framework de testing.
+' =================================================================
 
-' Variable a nivel de módulo para almacenar nuestra instancia Singleton
+' Variable privada a nivel de módulo que contendrá la única instancia de la configuración.
 Private g_TestConfig As IConfig
 
-' ============================================================================
-' FUNCIÓN: GetTestConfig
-' DESCRIPCIÓN: Devuelve una instancia única (Singleton) de IConfig para toda
-'              la ejecución de la suite de pruebas. La carga solo ocurre una vez.
-' RETORNA: IConfig - La instancia de configuración compartida.
-' ============================================================================
+' FUNCIÓN SINGLETON: Crea la configuración en la primera llamada y la devuelve en las siguientes.
 Public Function GetTestConfig() As IConfig
-    On Error GoTo ErrorHandler
-    
-    ' Si la configuración no ha sido cargada, créala y cárgala una sola vez.
+    ' Si la configuración no ha sido creada, créala y configúrala UNA SOLA VEZ.
     If g_TestConfig Is Nothing Then
+        Dim mockConfigImpl As New CMockConfig
+        Dim projectRoot As String
+        projectRoot = modTestUtils.GetProjectPath()
         
-        ' 1. Crear la instancia real de CConfig
-        Dim configImpl As New CConfig
+        ' Configuración ESTÁNDAR para todas las bases de datos de prueba.
+        mockConfigImpl.SetSetting "DATA_PATH", projectRoot & "back\test_db\active\CONDOR_integration_test.accdb"
+        mockConfigImpl.SetSetting "DATABASE_PASSWORD", "" ' La BD principal de prueba no tiene pwd
+        mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", projectRoot & "back\test_db\active\Lanzadera_integration_test.accdb"
+        mockConfigImpl.SetSetting "LANZADERA_PASSWORD", "dpddpd"
+        mockConfigImpl.SetSetting "EXPEDIENTES_DATA_PATH", projectRoot & "back\test_db\active\Expedientes_integration_test.accdb"
+        mockConfigImpl.SetSetting "EXPEDIENTES_PASSWORD", "dpddpd"
+        mockConfigImpl.SetSetting "CORREOS_DB_PATH", projectRoot & "back\test_db\active\correos_integration_test.accdb"
+        mockConfigImpl.SetSetting "CORREOS_PASSWORD", "dpddpd"
         
-        ' 2. Crear un diccionario en memoria con la configuración estándar para pruebas
-        Dim testSettings As New Scripting.Dictionary
-        testSettings.CompareMode = TextCompare
+        ' Configuración general del entorno de prueba
+        mockConfigImpl.SetSetting "LOG_FILE_PATH", projectRoot & "condor_test_run.log"
+        mockConfigImpl.SetSetting "USUARIO_ACTUAL", "test.user@condor.com"
+        mockConfigImpl.SetSetting "CORREO_ADMINISTRADOR", "admin.test@condor.com"
         
-        ' *** VALORES ESTÁNDAR PARA TODO EL ENTORNO DE PRUEBAS ***
-        ' Usamos rutas relativas al proyecto para máxima portabilidad
-        Dim basePath As String
-        basePath = modTestUtils.GetProjectPath() ' Utilidad que ya tenemos
-        
-        testSettings.Add "DATA_PATH", basePath & "back\test_db\active\CONDOR_integration_test.accdb"
-        testSettings.Add "DATABASE_PASSWORD", "" ' La BD de prueba no tiene contraseña
-        testSettings.Add "LOG_FILE_PATH", basePath & "condor_test_run.log"
-        testSettings.Add "USUARIO_ACTUAL", "test.user@condor.com"
-        
-        ' 3. Cargar la configuración en la instancia desde el diccionario
-        configImpl.LoadFromDictionary testSettings
-        
-        ' 4. Asignar la instancia configurada a nuestra variable global (Singleton)
-        Set g_TestConfig = configImpl
+        Set g_TestConfig = mockConfigImpl
     End If
     
-    ' 5. Devolver siempre la misma instancia
+    ' Devuelve siempre la misma instancia.
     Set GetTestConfig = g_TestConfig
-    
-    Exit Function
-
-ErrorHandler:
-    ' Si la configuración de pruebas falla, es un error fatal.
-    Err.Raise Err.Number, "modTestContext.GetTestConfig", "Fallo crítico al inicializar la configuración de pruebas: " & Err.Description
 End Function
+
+' Procedimiento para forzar la destrucción del Singleton (útil entre ejecuciones de suites)
+Public Sub ResetTestContext()
+    Set g_TestConfig = Nothing
+End Sub
