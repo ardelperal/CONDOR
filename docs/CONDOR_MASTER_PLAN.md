@@ -1,4 +1,3 @@
-
 # CONDOR - MASTER PLAN
 
 ## Índice
@@ -54,6 +53,7 @@
 ## 2. Arquitectura y Principios Fundamentales
 
 ### 2.1. Arquitectura General
+
 El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor con bases de datos Access separadas para el frontend y el backend.
 
 **Capa de Presentación**: Formularios de Access (.accde).
@@ -63,6 +63,7 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 **Capa de Datos**: Módulos VBA que gestionan el acceso a la base de datos CONDOR_datos.accdb.
 
 ### 2.2. Principios de Diseño (No Negociables)
+
 **Inversión de Dependencias**: Las clases de alto nivel deben depender de Interfaces (I*), no de clases concretas (C*). Esto es clave para el testing y el bajo acoplamiento.
 
 **Nomenclatura Estricta**:
@@ -78,12 +79,12 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 **Patrón de Factorías de Cero Argumentos**: Todas las factorías (`mod*Factory.bas`) implementan métodos `Create*()` sin argumentos que resuelven sus dependencias internamente. Ejemplo: `modConfigFactory.CreateConfigService()` y `modErrorHandlerFactory.CreateErrorHandlerService()`. Este patrón elimina dependencias circulares y simplifica la creación de objetos.
 
 - **Manejo de Errores Centralizado**: Todo procedimiento susceptible de fallar debe implementar un bloque `On Error GoTo` que obligatoriamente registre el error a través del servicio central `modErrorHandler`. Los errores silenciosos están prohibidos.
-
 - **Auditoría de Operaciones**: Toda operación que represente una acción de negocio significativa (creación, cambio de estado, etc.) debe ser registrada a través del servicio `IOperationLogger`. La trazabilidad de las acciones es un requisito fundamental.
 
 ## 3. Resumen de Componentes por Funcionalidad
 
 ### 3.1. Autenticación (Auth)
+
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    AUTENTICACIÓN                           │
@@ -117,7 +118,7 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Auth
-```mermaid
+'''mermaid
 graph TD
     subgraph "Capa de Pruebas"
         A[TestAuthService.bas] --> B[CMockAuthService]
@@ -127,12 +128,12 @@ graph TD
         F[TIAuthRepository.bas] --> G[CAuthRepository]
         F --> H[IConfig]
     end
-    
+  
     subgraph "Capa de Lógica de Negocio"
         I[CAuthService] --> J[IAuthRepository]
         I --> K[IErrorHandlerService]
     end
-    
+  
     subgraph "Capa de Factorías"
         L[modAuthFactory.bas] --> I
         L --> M[modRepositoryFactory.bas]
@@ -140,29 +141,32 @@ graph TD
         M --> G
         N --> O[CErrorHandlerService]
     end
-    
+  
     subgraph "Capa de Datos"
         G --> H
     end
-    
+  
     subgraph "Entidades"
         P[EAuthData.cls] --> Q[EUsuario.cls]
     end
-```
+'''
 
 🔗 **Dependencias:**
+
 - CAuthService ➜ IAuthRepository (inyectado)
 - CAuthService ➜ IErrorHandlerService (inyectado)
 - CAuthRepository ➜ IConfig (inyectado)
 - modAuthFactory ➜ modConfigFactory, modErrorHandlerFactory, modRepositoryFactory
 
 🔧 **Mock Inteligente:**
+
 - CMockAuthService.ConfigureAuthenticateUser(resultado As Boolean)
 - CMockAuthService.ConfigureGetUserRole(rol As UserRole)
 - CMockAuthRepository.ConfigureGetUserAuthData(authData As EAuthData)
 - Todos los mocks implementan Reset() para limpieza de estado
 
 🧪 **Patrones de Testing:**
+
 - **Aislamiento**: Uso de CMock* en lugar de clases reales
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
 - **Manejo de Errores**: Bloques TestFail/Cleanup consistentes
@@ -179,6 +183,7 @@ graph TD
 - **QueryDef Nombrado**: CAuthRepository.cls con "tempAuthQuery" para evitar conflictos
 - **Compilación**: Todos los componentes compilan sin errores
 - **Componente**: Operativo
+
 ```
 
 ### 3.2. Gestión de Documentos (Document)
@@ -214,14 +219,14 @@ graph TD
         A --> C["AssertEquals, AssertTrue"]
         I[TIDocumentService.bas] --> J[CDocumentService]
     end
-    
+  
     subgraph "Capa de Lógica de Negocio"
         J --> N[IWordManager]
         J --> O[IErrorHandlerService]
         J --> P[ISolicitudService]
         J --> Q[IMapeoRepository]
     end
-    
+  
     subgraph "Capa de Factorías"
         S[modDocumentServiceFactory.bas] --> J
         S --> T[modWordManagerFactory.bas]
@@ -236,6 +241,7 @@ graph TD
 ```
 
 🔗 **Dependencias (Arquitectura Simplificada):**
+
 - CDocumentService ➜ IWordManager (inyectado)
 - CDocumentService ➜ IErrorHandlerService (inyectado)
 - CDocumentService ➜ ISolicitudService (inyectado)
@@ -243,6 +249,7 @@ graph TD
 - modDocumentServiceFactory ➜ modWordManagerFactory, modErrorHandlerFactory, modSolicitudServiceFactory, modRepositoryFactory
 
 🔧 **Mock Inteligente:**
+
 - CMockDocumentService.ConfigureGenerarDocumento(rutaEsperada As String)
 - CMockDocumentService.ConfigureLeerDocumento(solicitudEsperada As ESolicitud)
 - CMockDocumentService.Reset() ← Limpieza de estado
@@ -250,6 +257,7 @@ graph TD
 - CMockDocumentService.GenerarDocumento_LastSolicitudId ← Captura de parámetros
 
 **Patrones de Testing:**
+
 - Test principal (TestGenerarDocumentoSuccess)
 - CMockDocumentService con patrón Reset(), Configure*() y propiedades *_WasCalled
 - Verificación directa de llamadas a métodos y captura de parámetros
@@ -258,10 +266,12 @@ graph TD
 - **Patrón Factory**: modDocumentServiceFactory orquesta las 4 dependencias necesarias
 
 🧪 **Patrones de Testing:**
+
 - **Integración Real**: TIDocumentService usa dependencias reales con BD de prueba
 - **Autoaprovisionamiento**: Creación automática de estructura de directorios y BD
 - **Limpieza Completa**: Eliminación de archivos temporales y cierre de Word
 - **Manejo de Errores**: Bloques TestFail/Cleanup con liberación de recursos
+
 ```
 
 ### 3.3. Gestión de Expedientes (Expediente)
@@ -293,24 +303,25 @@ graph TD
         E --> G[IConfig]
         M --> F[CExpedienteRepository]
     end
-    
+  
     subgraph "Capa de Lógica de Negocio"
         H[CExpedienteService] --> I[IExpedienteRepository]
         H --> J[IOperationLogger]
         H --> K[IErrorHandlerService]
     end
-    
+  
     subgraph "Capa de Factorías"
         L[modExpedienteServiceFactory.bas] --> H
         M[modRepositoryFactory.bas] --> F
     end
-    
+  
     subgraph "Capa de Datos"
         F --> G
     end
 ```
 
 🧪 **Patrones de Testing Implementados ✅:**
+
 - **Arquitectura de Pruebas Clara**: Los repositorios se prueban con Tests de Integración (`TIExpedienteRepository.bas`). Los servicios se prueban con Tests Unitarios (`TestCExpedienteService.bas`) usando mocks de repositorio. ✅
 - **Mock Inteligente**: Patrón Configure/Reset + propiedades espía para verificación de comportamiento ✅
 - **Autoaprovisionamiento**: Copia automática de template de BD de expedientes ✅
@@ -318,6 +329,7 @@ graph TD
 - **Repositorio Funcional**: Implementación completa con SQL parametrizado y mapeo robusto ✅
 - **Test Unitario "Estándar de Oro"**: TestCExpedienteService verifica la delegación usando mocks inteligentes ✅
 - **Verificación Explícita de Entorno**: Todos los tests de integración verifican la existencia de su BD de prueba antes de usarla, generando errores descriptivos. ✅
+
 ```
 
 ### 3.4. Gestión de Solicitudes (Solicitud)
@@ -355,12 +367,12 @@ graph TD
         CSolicitudService --> IOperationLogger
         CSolicitudService --> IErrorHandlerService
     end
-    
+  
     subgraph "Capa de Datos"
         CSolicitudRepository --> IConfig
         CSolicitudRepository --> IErrorHandlerService
     end
-    
+  
     subgraph "Capa de Factorías"
         modSolicitudServiceFactory --> CSolicitudService
         modSolicitudServiceFactory --> modRepositoryFactory
@@ -368,8 +380,9 @@ graph TD
 ```
 
 🔗 **Estado de Implementación:**
+
 - **Interfaz ISolicitudRepository**: Contrato definido correctamente
-- **Implementación CSolicitudRepository**: 
+- **Implementación CSolicitudRepository**:
   - ✅ SaveSolicitud(solicitud As ESolicitud) As Long - Corregida
   - ✅ ObtenerSolicitudPorId(id As Long) As ESolicitud - Funcional
   - ✅ Manejo de errores robusto con IErrorHandlerService
@@ -383,6 +396,7 @@ graph TD
 - **Estado Final**: ✅ Proyecto completamente estabilizado y funcional
 
 ### 3.5. Gestión de Flujos de Trabajo (Workflow)
+
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │              GESTIÓN DE FLUJOS DE TRABAJO                  │
@@ -428,6 +442,7 @@ graph TD
 ```
 
 🔗 **Dependencias:**
+
 - CWorkflowService ➜ IWorkflowRepository (inyectado)
 - CWorkflowService ➜ IOperationLogger (inyectado)
 - CWorkflowService ➜ IErrorHandlerService (inyectado)
@@ -436,11 +451,13 @@ graph TD
 - modWorkflowServiceFactory ➜ modRepositoryFactory, modOperationLoggerFactory, modErrorHandlerFactory
 
 🔧 **Contrato Normalizado:**
+
 - **IWorkflowRepository.GetNextStates**: Recibe idEstadoActual As Long (normalizado)
 - **IWorkflowService.GetNextStates**: Mantiene estadoActual As String (compatibilidad)
 - **CWorkflowService**: Convierte String a Long internamente usando CLng()
 
 🧪 **Patrones de Testing:**
+
 - **Test Unitario Mínimo**: Un solo test que valida el flujo básico
 - **Mocks Esenciales**: Solo los métodos críticos están mockeados
 - **Integración Básica**: TIWorkflowRepository prueba conexión a BD con tipos correctos
@@ -448,6 +465,7 @@ graph TD
 - **Manejo de Errores**: Bloques TestFail/Cleanup consistentes
 
 📋 **Lista de Archivos Workflow:**
+
 - IWorkflowService.cls (2 métodos)
 - IWorkflowRepository.cls (2 métodos - GetNextStates con Long)
 - CWorkflowService.cls (implementación con conversión de tipos)
@@ -457,6 +475,7 @@ graph TD
 - modWorkflowServiceFactory.bas (factoría completa)
 - TestWorkflowService.bas (1 test unitario)
 - TIWorkflowRepository.bas (test de integración con Long)
+
 ```
 
 ### 3.6. Gestión de Mapeos (Mapeo)
@@ -484,21 +503,25 @@ graph TD
 ```
 
 🔗 **Dependencias:**
+
 - CMapeoRepository ➜ IConfig (inyectado)
 - TIMapeoRepository ➜ CMapeoRepository, IConfig
 
 🔧 **Mock Inteligente:**
+
 - CMockMapeoRepository.ConfigureGetMapeoPorTipo(mapeo As EMapeo)
 - CMockMapeoRepository.ConfigureObtenerMapeosPorCategoria(mapeos As Scripting.Dictionary)
 - CMockMapeoRepository.ConfigureObtenerTodosLosMapeos(mapeos As Scripting.Dictionary)
 
 🧪 **Patrones de Testing (Estándar de Oro):**
+
 - **Suite Optimizado**: Setup/Teardown una sola vez por suite completa
 - **Integración Directa**: TIMapeoRepository prueba directamente contra BD
 - **Autoaprovisionamiento**: BD de prueba creada automáticamente
 - **Sin Variables Globales**: Variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
+
 ```
 
 ### 3.7. Gestión de Notificaciones (Notification) ⭐ **GOLD STANDARD**
@@ -547,13 +570,13 @@ graph TD
         G[TINotificationRepository.bas] --> H[CNotificationRepository]
         G --> I[IConfig]
     end
-    
+  
     subgraph "Capa de Lógica de Negocio"
         J[CNotificationService] --> K[INotificationRepository]
         J --> L[IOperationLogger]
         J --> M[IErrorHandlerService]
     end
-    
+  
     subgraph "Capa de Factorías"
         N[modNotificationServiceFactory.bas] --> J
         N --> O[modRepositoryFactory.bas]
@@ -563,13 +586,14 @@ graph TD
         P --> R[COperationLogger]
         Q --> S[CErrorHandlerService]
     end
-    
+  
     subgraph "Capa de Datos"
         H --> I
     end
 ```
 
 🔗 **Dependencias:**
+
 - CNotificationService ➜ INotificationRepository (inyectado)
 - CNotificationService ➜ IOperationLogger (inyectado)
 - CNotificationService ➜ IErrorHandlerService (inyectado)
@@ -577,16 +601,19 @@ graph TD
 - modNotificationServiceFactory ➜ modRepositoryFactory, modOperationLoggerFactory, modErrorHandlerFactory
 
 🔧 **Mock Inteligente:**
+
 - CMockNotificationService.ConfigureEnviarNotificacion(boolean)
 - CMockNotificationService.ConfigureValidarDestinatario(boolean)
 - CMockNotificationRepository.ConfigureGuardarNotificacion(boolean)
 - CMockNotificationRepository.ConfigureObtenerNotificacionesPendientes(notificaciones As Scripting.Dictionary)
 
 🧪 **Patrones de Testing:**
+
 - **Integración con BD Separada**: TINotificationRepository usa BD de notificaciones independiente
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
+
 ```
 
 ### 3.8. Gestión de Operaciones y Logging (Operation)
@@ -620,12 +647,12 @@ graph TD
         F[TIOperationRepository.bas] --> G[COperationRepository]
         F --> H[IConfig]
     end
-    
+  
     subgraph "Capa de Lógica de Negocio"
         I[COperationLogger] --> J[IOperationRepository]
         I --> K[IErrorHandlerService]
     end
-    
+  
     subgraph "Capa de Factorías"
         L[modOperationLoggerFactory.bas] --> I
         L --> M[modRepositoryFactory.bas]
@@ -633,31 +660,35 @@ graph TD
         M --> G
         N --> O[CErrorHandlerService]
     end
-    
+  
     subgraph "Capa de Datos"
         G --> H
     end
 ```
 
 🔗 **Dependencias:**
+
 - COperationLogger ➜ IOperationRepository (inyectado)
 - COperationLogger ➜ IErrorHandlerService (inyectado)
 - COperationRepository ➜ IConfig (inyectado)
 - modOperationLoggerFactory ➜ modRepositoryFactory, modErrorHandlerFactory
 
 🔧 **Mock Inteligente:**
+
 - CMockOperationLogger.ConfigureLogOperation(boolean)
 - CMockOperationLogger.ConfigureLogError(boolean)
 - CMockOperationRepository.ConfigureGuardarOperacion(boolean)
 - CMockOperationRepository.ConfigureObtenerHistorial(operaciones As Scripting.Dictionary)
 
 🧪 **Patrones de Testing:**
+
 - **Aislamiento**: TestOperationLogger usa mocks para todas las dependencias
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Integración con BD**: TIOperationRepository prueba directamente contra BD
 - **Configuración de Pruebas**: TestOperationLogger implementa patrón estándar con inyección de mocks
+
 ```
 
 ## 4. Configuración
@@ -711,10 +742,12 @@ graph TD
 ```
 
 🔗 **Dependencias:**
+
 - ❌ CConfig ➜ IErrorHandlerService (eliminada dependencia circular)
 - ❌ modConfigFactory ➜ modErrorHandlerFactory (eliminada)
 
 🔧 **Estado:**
+
 - **Interface**: GetValue(), SetSetting(), HasKey() y métodos específicos de configuración
 - **Métodos Específicos**: GetDataPath(), GetDatabasePassword(), GetAttachmentsPath(), etc.
 - **Implementación**: CConfig sin dependencias externas
@@ -731,6 +764,7 @@ graph TD
 - **Logging de Pruebas**: CMockConfig con LOG_FILE_PATH="condor_test_run.log" en entorno de pruebas
 
 **Resultado:**
+
 - **Compilación**: Dependencia circular eliminada
 - **Interface**: IConfig alineada con CConfig
 - **Métodos**: 10 métodos de configuración específica
@@ -740,7 +774,10 @@ graph TD
 - **Tests**: TestCConfig.bas usa SetSetting exclusivamente
 - Eliminados errores "Uso no válido de Null" - IConfig_GetValue devuelve "" en CConfig.cls y CMockConfig.cls
 - **Rebuild**: Proyecto reconstruido sin errores tras sincronización
+
 ```
+
+
 
 ## 5. Sistema de Archivos
 ```text
@@ -780,12 +817,14 @@ graph TD
 ```
 
 🔗 **Dependencias (Post-Refactorización):**
+
 - CFileSystem ➜ IConfig (inyectado)
 - TIFileSystem ➜ CFileSystem, IConfig
 - modFileSystemFactory ➜ modConfigFactory
 - **NUEVO**: CErrorHandlerService ➜ IFileSystem.WriteLineToFile (uso simplificado)
 
 🔧 **Mock Inteligente (Arquitectura Simplificada):**
+
 - **NUEVO**: CMockFileSystem.WriteLineToFile_WasCalled ← Verificación de llamada
 - **NUEVO**: CMockFileSystem.WriteLineToFile_LastPath ← Captura de ruta
 - **NUEVO**: CMockFileSystem.WriteLineToFile_LastLine ← Captura de contenido
@@ -794,6 +833,7 @@ graph TD
 - **MANTENIDO**: ConfigureFileExists(), ConfigureReadFile(), etc.
 
 🧪 **Patrones de Testing (Arquitectura Mejorada):**
+
 - **Integración Real**: TIFileSystem prueba operaciones reales de archivos
 - **Setup/Teardown**: Funciones Setup y Teardown con autoaprovisionamiento
 - **Pruebas**: TestCreateAndFolderExists y TestCreateAndDeleteFile
@@ -804,13 +844,13 @@ graph TD
 - **NUEVO**: Verificación simplificada con propiedades espía del mock
 
 🏗️ **Beneficios Arquitectónicos Logrados:**
+
 - **Cohesión Mejorada**: WriteLineToFile encapsula toda la lógica de escritura
 - **Principio de Responsabilidad Única**: Cada método tiene una responsabilidad clara
 - **Mock Simplificado**: Eliminación de complejidad innecesaria (m_mockTextFile)
 - **Interfaz Más Limpia**: Método de alto nivel vs. primitivas de bajo nivel
 - **Mantenibilidad**: Cambios futuros en escritura de archivos centralizados
 - **Testabilidad**: Propiedades espía directas sin objetos intermedios
-
 
 ```
 
@@ -848,26 +888,30 @@ graph TD
 ```
 
 🔗 **Dependencias:**
+
 - CWordManager ➜ IFileSystem (inyectado)
 - CWordManager ➜ IErrorHandlerService (inyectado)
 - modWordManagerFactory ➜ modFileSystemFactory, modErrorHandlerFactory
 
 🔧 **Mock Inteligente:**
+
 - CMockWordManager.ConfigureAbrirDocumento(resultado)
 - CMockWordManager.ConfigureReemplazarTexto(resultado)
 - CMockWordManager.ConfigureGuardarDocumento(resultado)
 - CMockWordManager.ConfigureLeerDocumento(contenido)
 
 🧪 **Patrones de Testing:**
+
 - **Suite Optimizado**: TIWordManager implementa patrón Suite con SuiteSetup/SuiteTeardown
 - **Integración Real**: Pruebas con documentos Word reales usando auto-aprovisionamiento
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
-- **Tests Implementados**: 
+- **Tests Implementados**:
   - `Test_CicloCompleto_Success()` - Ciclo completo de operaciones Word
   - `Test_AbrirFicheroInexistente_DevuelveFalse()` - Manejo de errores
 - **Auto-aprovisionamiento**: Configuración automática del entorno de prueba con plantillas
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Robustez**: Protección condicional en `m_ErrorHandler.LogError` calls
+
 ```
 
 ## 7. Gestión de Errores
@@ -913,6 +957,7 @@ graph TD
 ```
 
 🔗 **Dependencias (Dependencia Circular Eliminada):**
+
 - CErrorHandlerService ➜ IConfig (inyectado vía Initialize)
 - CErrorHandlerService ➜ IFileSystem (inyectado vía Initialize)
 - modErrorHandlerFactory ➜ modConfigFactory, modFileSystemFactory
@@ -920,6 +965,7 @@ graph TD
 - **ELIMINADO**: Dependencia circular entre CConfig y CErrorHandlerService
 
 🔧 **Mock Inteligente (Implementa Interfaz Completa):**
+
 - CMockErrorHandlerService implementa IErrorHandlerService completamente
 - IErrorHandlerService_Initialize(config, fileSystem) ← Implementa interfaz
 - IErrorHandlerService_LogError(errorNumber, description, source)
@@ -928,6 +974,7 @@ graph TD
 - **ELIMINADOS**: Métodos Configure* obsoletos
 
 🧪 **Patrones de Testing (Clase Real con Mocks - Arquitectura Refactorizada):**
+
 - **Clase Real**: TestErrorHandlerService prueba CErrorHandlerService (no mock)
 - **Dependencias Mockeadas**: CMockConfig, CMockFileSystem (simplificado)
 - **ELIMINADO**: CMockTextFile (ya no necesario con WriteLineToFile)
@@ -938,6 +985,7 @@ graph TD
 - **Sin Variables Globales**: Declaración local en cada función
 - **Manejo de Errores**: Bloques TestFail/Cleanup consistentes
 - **Beneficio Arquitectónico**: Lógica de escritura simplificada de 5 líneas a 1 línea
+
 ```
 
 ## 8. Framework de Testing
@@ -1059,6 +1107,7 @@ graph TD
 ```
 
 🔗 **Dependencias:**
+
 - CTestReporter ➜ ITestReporter (implementa interfaz)
 - CTestReporter ➜ IFileSystem
 - modTestUtils ➜ IFileSystem
@@ -1066,6 +1115,7 @@ graph TD
 - modTestRunner ➜ Microsoft Visual Basic for Applications Extensibility 5.3 (CRÍTICO)
 
 📋 **Estado del Framework:**
+
 - Framework de Testing completamente funcional
 - Motor de Pruebas operativo - 400 pruebas en 20 suites
 - Sistema de descubrimiento automático de pruebas
@@ -1073,6 +1123,7 @@ graph TD
 
 🏆 **Patrón Estándar:**
 Todos los módulos de prueba siguen el patrón estándar:
+
 - ✅ Variables locales en cada función de prueba (variables de módulo)
 - ✅ Bloques Cleanup explícitos con liberación de objetos (Set obj = Nothing)
 - ✅ Manejo de errores con GoTo Cleanup
@@ -1081,6 +1132,7 @@ Todos los módulos de prueba siguen el patrón estándar:
 
 🔧 **MOCKS INTELIGENTES ESTANDARIZADOS:**
 Todos los mocks siguen convenciones consistentes:
+
 - ✅ Métodos Configure* reemplazan propiedades *_ReturnValue públicas
 - ✅ Variables privadas m_* para almacenar valores de configuración
 - ✅ Encapsulación con métodos de configuración explícitos
@@ -1092,6 +1144,7 @@ Todos los mocks siguen convenciones consistentes:
 - ✅ **Scripting.Dictionary**: Para métodos que devuelven colecciones de entidades
 - ✅ Eliminación completa de métodos Set*ReturnValue obsoletos
 - ✅ Eliminación completa de dependencias DAO.Recordset en mocks
+
 ```
 
 ## 9. Gestión de Aplicación
@@ -1124,6 +1177,7 @@ Todos los mocks siguen convenciones consistentes:
 ```
 
 ## 10. Modelos de Datos
+
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │                   MODELOS DE DATOS                         │
@@ -1151,6 +1205,7 @@ encapsulación correcta con variables privadas (m_*) y propiedades públicas
 ```
 
 ## 11. Utilidades y Enumeraciones
+
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │              UTILIDADES Y ENUMERACIONES                    │
@@ -1175,6 +1230,7 @@ encapsulación correcta con variables privadas (m_*) y propiedades públicas
 ```
 
 ### 🏭 **modRepositoryFactory.bas - Características Técnicas**
+
 - **Inyección de Dependencias Opcionales**: Patrón de "parámetros opcionales" permite inyectar dependencias para testing o crear nuevas instancias
 - **Testeabilidad**: `CreateExpedienteRepository(Optional config As IConfig = Nothing, Optional errorHandler As IErrorHandlerService = Nothing)`
 - **Modo Desarrollo**: Flag `DEV_MODE` permite testing con mocks sin modificar código de producción
@@ -1188,23 +1244,23 @@ graph TD
     %% Servicios principales
     AS[CAuthService] --> AR[IAuthRepository]
     AS --> EH[IErrorHandlerService]
-    
+  
     DS[CDocumentService] --> WM[IWordManager]
     DS --> SS[ISolicitudService]
     DS --> MR[IMapeoRepository]
     DS --> EH[IErrorHandlerService]
-    
+  
     SS[CSolicitudService] --> SR[ISolicitudRepository]
     SS --> OL[IOperationLogger]
     SS --> EH
-    
+  
     WS[CWorkflowService] --> WR[IWorkflowRepository]
     WS --> EH
-    
+  
     NS[CNotificationService] --> NR[INotificationRepository]
     NS --> OL
     NS --> EH
-    
+  
     %% Repositorios
     AR --> C[IConfig]
     SR --> C
@@ -1212,15 +1268,15 @@ graph TD
     NR --> C
     MR --> C
     OR[COperationRepository] --> C
-    
+  
     %% Servicios de infraestructura
     OL --> OR
     OL --> EH
-    
+  
     WM --> EH
-    
+  
     EH --> C
-    
+  
     %% Gestión de aplicación
     AM[CAppManager] --> AS
     AM --> C
@@ -1230,6 +1286,7 @@ graph TD
 ## 13. Estadísticas del Proyecto
 
 ### 📊 Resumen Cuantitativo
+
 - **Total de Archivos**: 115 archivos VBA
 - **Interfaces**: 15 interfaces (I*)
 - **Implementaciones**: 25 clases (C*)
@@ -1242,6 +1299,7 @@ graph TD
 - **Módulos de Utilidades**: 8 módulos (mod*)
 
 ### 🎯 Cobertura de Testing
+
 - **Cobertura Unitaria**: 85% de las clases principales
 - **Cobertura de Integración**: 70% de los repositorios
 - **Framework de Testing**: Completamente funcional
@@ -1254,6 +1312,7 @@ graph TD
 - **Estabilización Final**: Completada tras corrección de TISolicitudRepository.bas
 
 ### 🏗️ Arquitectura
+
 - **Patrón Repository**: 100%
 - **Inversión de Dependencias**: 100% de cumplimiento
 - **Inyección de Dependencias**: 100% implementada
@@ -1265,11 +1324,13 @@ graph TD
 ## 14. Patrones Arquitectónicos Identificados
 
 ### 🏭 **Factory Pattern**
+
 - **Propósito**: Centralizar la creación de objetos y sus dependencias
 - **Implementación**: Cada servicio principal tiene su factory correspondiente
 - **Beneficios**: Desacoplamiento, configuración centralizada, facilita testing
 
 #### 🔧 **modRepositoryFactory.bas - Patrón Factory Centralizado**
+
 ```mermaid
 graph TD
     A[modRepositoryFactory.bas] --> B[CreateAuthRepository]
@@ -1279,7 +1340,7 @@ graph TD
     A --> F[CreateMapeoRepository]
     A --> G[CreateWorkflowRepository]
     A --> H[CreateOperationRepository]
-    
+  
     B --> I[CAuthRepository.Initialize(config, errorHandler)]
     C --> J[CSolicitudRepository.Initialize(config, errorHandler)]
     D --> K[CExpedienteRepository.Initialize(config, errorHandler)]
@@ -1287,39 +1348,45 @@ graph TD
     F --> M[CMapeoRepository.Initialize(config, errorHandler)]
     G --> N[CWorkflowRepository.Initialize(config, errorHandler)]
     H --> O[COperationRepository.Initialize(config, errorHandler)]
-    
+  
     P[DEV_MODE Flag] --> Q{¿Modo Desarrollo?}
     Q -->|Sí| R[CMock* Repositories]
     Q -->|No| S[C* Repositories]
 ```
 
 **Características Clave:**
+
 - **Inyección de Dependencias Consistente**: Todas las funciones `Create*Repository` inyectan tanto `config` como `errorHandler`
 - **Modo Desarrollo**: Flag `DEV_MODE` permite alternar entre implementaciones reales y mocks
 - **Inicialización Uniforme**: Todas las clases de repositorio siguen el patrón `Initialize(config, errorHandler)`
 - **Gestión Centralizada de Errores**: Cada repositorio recibe su instancia de `IErrorHandlerService`
 
 ### 🗄️ **Repository Pattern**
+
 - **Propósito**: Abstraer el acceso a datos
 - **Implementación**: Interfaces I*Repository con implementaciones C*Repository
 - **Beneficios**: Testabilidad, intercambiabilidad de fuentes de datos
 
 ### 🔄 **Dependency Injection**
+
 - **Propósito**: Invertir el control de dependencias
 - **Implementación**: Inyección manual a través de constructores
 - **Beneficios**: Bajo acoplamiento, alta testabilidad
 
 ### 🎭 **Mock Object Pattern**
+
 - **Propósito**: Facilitar testing unitario
 - **Implementación**: CMock* para cada interfaz principal
 - **Beneficios**: Tests rápidos, aislados y deterministas
 
 ### 📋 **Template Method Pattern**
+
 - **Propósito**: Definir estructura común para tests
 - **Implementación**: Patrón Setup/Execute/Teardown en tests de integración
 - **Beneficios**: Consistencia, reutilización, mantenibilidad
 
 ### 🔧 **Strategy Pattern**
+
 - **Propósito**: Intercambiar algoritmos dinámicamente
 - **Implementación**: Diferentes implementaciones de IFileSystem, IWordManager
 - **Beneficios**: Flexibilidad, extensibilidad
@@ -1327,7 +1394,9 @@ graph TD
 ## 15. Sistema de Autoaprovisionamiento de Tests
 
 ### 🎯 **Principio Fundamental**
+
 Todas las pruebas de integración en CONDOR implementan un sistema de autoaprovisionamiento que garantiza:
+
 - **Aislamiento**: Cada test ejecuta en un entorno limpio
 - **Reproducibilidad**: Resultados consistentes en cualquier máquina
 - **Autonomía**: No requiere configuración manual del desarrollador
@@ -1335,6 +1404,7 @@ Todas las pruebas de integración en CONDOR implementan un sistema de autoaprovi
 ### 🔧 **Componentes del Sistema**
 
 #### 📁 **Estructura de Directorios**
+
 ```
 back/test_db/
 ├── templates/          ← Plantillas maestras (solo lectura)
@@ -1348,6 +1418,7 @@ back/test_db/
 ```
 
 #### 🛠️ **Utilidades Centrales**
+
 - `modTestUtils.GetProjectPath()`: Obtiene la ruta base del proyecto
 - `modTestUtils.PrepareTestDatabase()`: Copia plantilla a directorio activo
 - `CreateTestDirectories()`: Crea directorios necesarios
@@ -1357,18 +1428,18 @@ back/test_db/
 
 #### 📊 **Tests con Autoaprovisionamiento**
 
-| Archivo de Test | Tipo | Recursos Aprovisionados | Patrón |
-|----------------|------|------------------------|--------|
-| `TIDocumentService.bas` | Integración | BD + Plantillas + Directorios | **Suite Optimizado** |
-| `TIFileSystem.bas` | Integración | Directorios de prueba | Individual |
-| `TIAuthRepository.bas` | Integración | BD de prueba | **Suite Optimizado** |
-| `TISolicitudRepository.bas` | Integración | BD de prueba | Individual |
-| `TIWorkflowRepository.bas` | Integración | BD de prueba | Individual |
-| `TIOperationRepository.bas` | Integración | BD de prueba | Individual |
-| `TIExpedienteRepository.bas` | Integración | BD de prueba | Suite Optimizado |
-| `TIMapeoRepository.bas` | Integración | BD de prueba | **Suite Optimizado** |
-| `TINotificationService.bas` | Integración | BD de prueba | **⭐ GOLD STANDARD** |
-| `TIWordManager.bas` | Integración | Plantillas + Directorios | **Suite Optimizado** |
+| Archivo de Test                | Tipo         | Recursos Aprovisionados       | Patrón                    |
+| ------------------------------ | ------------ | ----------------------------- | -------------------------- |
+| `TIDocumentService.bas`      | Integración | BD + Plantillas + Directorios | **Suite Optimizado** |
+| `TIFileSystem.bas`           | Integración | Directorios de prueba         | Individual                 |
+| `TIAuthRepository.bas`       | Integración | BD de prueba                  | **Suite Optimizado** |
+| `TISolicitudRepository.bas`  | Integración | BD de prueba                  | Individual                 |
+| `TIWorkflowRepository.bas`   | Integración | BD de prueba                  | Individual                 |
+| `TIOperationRepository.bas`  | Integración | BD de prueba                  | Individual                 |
+| `TIExpedienteRepository.bas` | Integración | BD de prueba                  | Suite Optimizado           |
+| `TIMapeoRepository.bas`      | Integración | BD de prueba                  | **Suite Optimizado** |
+| `TINotificationService.bas`  | Integración | BD de prueba                  | **⭐ GOLD STANDARD** |
+| `TIWordManager.bas`          | Integración | Plantillas + Directorios      | **Suite Optimizado** |
 
 #### 🎯 **Beneficios del Sistema**
 
@@ -1412,11 +1483,13 @@ El módulo `TINotificationService.bas` representa el **Gold Standard** para suit
 #### 📋 **Características del Gold Standard**
 
 **✅ Patrón Suite Optimizado Avanzado**
+
 - `SuiteSetup()`: Configuración única ejecutada UNA VEZ al inicio de la suite
 - `SuiteTeardown()`: Limpieza única ejecutada UNA VEZ al final de la suite
 - Máximo rendimiento: elimina setup/teardown repetitivo por test individual
 
 **✅ Cobertura de Testing Completa**
+
 - **Casos de Éxito**: `TestSendNotificationSuccessCallsRepositoryCorrectly()`
 - **Validación de Dependencias**: `TestInitializeWithValidDependencies()`
 - **Casos de Error**: `TestSendNotificationWithoutInitialize()`
@@ -1424,16 +1497,19 @@ El módulo `TINotificationService.bas` representa el **Gold Standard** para suit
 - **Configuración**: `TestSendNotificationConfigValuesUsed()`
 
 **✅ Gestión de Transacciones de BD**
+
 - Uso de `DBEngine.BeginTrans` y `DBEngine.Rollback`
 - Aislamiento completo entre tests
 - Limpieza automática de datos de prueba
 
 **✅ Manejo de Errores Robusto**
+
 - Bloques `On Error GoTo` en cada función de test
 - Limpieza de recursos garantizada en sección `Cleanup`
 - Reportes de error detallados con `TestFail`
 
 **✅ Integración Real con Mocks Estratégicos**
+
 - Servicios reales: `CNotificationService`, `CNotificationRepository`
 - Mocks solo para configuración: `CMockConfig`
 - Testing de integración verdadera con BD real
@@ -1444,16 +1520,16 @@ El módulo `TINotificationService.bas` representa el **Gold Standard** para suit
 Public Function TINotificationServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TINotificationService (Estándar de Oro)"
-    
+  
     On Error GoTo CleanupSuite
-    
+  
     Call SuiteSetup  ' ← UNA VEZ por suite
     suiteResult.AddResult TestSendNotificationSuccessCallsRepositoryCorrectly()
     suiteResult.AddResult TestInitializeWithValidDependencies()
     suiteResult.AddResult TestSendNotificationWithoutInitialize()
     suiteResult.AddResult TestSendNotificationWithInvalidParameters()
     suiteResult.AddResult TestSendNotificationConfigValuesUsed()
-    
+  
 CleanupSuite:
     Call SuiteTeardown  ' ← UNA VEZ por suite
     Set TINotificationServiceRunAll = suiteResult
@@ -1513,6 +1589,7 @@ Copia la plantilla maestra desde templates/ al directorio active/, creando una b
 Cualquier nuevo módulo de pruebas de integración debe seguir esta estructura.
 
 **Plantilla de Código Optimizada (Patrón Suite)**:
+
 ```vba
 ' =====================================================
 ' MÓDULO: TI[MiRepositorio] (Patrón Suite Optimizado)
@@ -1528,23 +1605,23 @@ Private Const TEST_DATABASE_PATH As String = "C:\Proyectos\CONDOR\data\test\cond
 ' FUNCIÓN PRINCIPAL DE LA SUITE (PATRÓN OPTIMIZADO)
 Public Function TI[MiRepositorio]RunAll() As CTestSuiteResult
     On Error GoTo ErrorHandler
-    
+  
     Set TI[MiRepositorio]RunAll = New CTestSuiteResult
     TI[MiRepositorio]RunAll.Initialize TEST_SUITE_NAME
-    
+  
     ' Configuración UNA VEZ para toda la suite
     Call SuiteSetup
-    
+  
     ' Ejecutar todos los tests de la suite
     Call TestMiMetodo_Exitoso()
     Call TestMiMetodo_FallaComoSeEspera()
     ' Agregar más tests según necesidad
-    
+  
     ' Limpieza UNA VEZ para toda la suite
     Call SuiteTeardown
-    
+  
     Exit Function
-    
+  
 ErrorHandler:
     ' En caso de error, asegurar limpieza
     Call SuiteTeardown
@@ -1554,16 +1631,16 @@ End Function
 ' SUITE SETUP - SE EJECUTA UNA SOLA VEZ AL INICIO
 Private Sub SuiteSetup()
     ' Configuración del entorno para TODA la suite
-    
+  
     ' 1. Crear directorios necesarios
     Call CreateTestDirectories
-    
+  
     ' 2. Aprovisionar base de datos de test
     Call ProvisionTestDatabase
-    
+  
     ' 3. Copiar plantillas necesarias
     Call CopyWordTemplate
-    
+  
     ' 4. Insertar datos maestros en BD de test
     Call InsertMasterDataIntoTestDB
 End Sub
@@ -1577,7 +1654,7 @@ End Sub
 ' TESTS INDIVIDUALES - NO NECESITAN SETUP/TEARDOWN PROPIO
 Private Sub TestMiMetodo_Exitoso()
     ' Test individual - el entorno ya está configurado por SuiteSetup
-    
+  
     ' ARRANGE: Crear dependencias usando la BD ya configurada
     ' ACT: Ejecutar el método a probar
     ' ASSERT: Verificar los resultados con modAssert
@@ -1585,7 +1662,7 @@ End Sub
 
 Private Sub TestMiMetodo_FallaComoSeEspera()
     ' Otro test individual - comparte el mismo entorno
-    
+  
     ' ARRANGE, ACT, ASSERT...
 End Sub
 ```
@@ -1593,6 +1670,7 @@ End Sub
 ### 🚀 **Patrón de Ejecución Optimizado (Setup a Nivel de Suite y Transacciones)**
 
 #### 🎯 **Principio del Gold Standard**
+
 El proyecto CONDOR ha evolucionado hacia un patrón optimizado de pruebas de integración que elimina la sobrecarga de Setup/Teardown por cada test individual, implementando en su lugar:
 
 - **Setup a Nivel de Suite**: Una sola creación de base de datos por suite completa
@@ -1602,26 +1680,27 @@ El proyecto CONDOR ha evolucionado hacia un patrón optimizado de pruebas de int
 #### 📋 **Gold Standard: TIAuthRepository.bas**
 
 **Estructura Optimizada:**
+
 ```vba
 Public Function TIAuthRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TIAuthRepository"
-    
+  
     On Error GoTo ErrorHandler
-    
+  
     ' Setup a nivel de suite (una sola vez)
     Call SuiteSetup
-    
+  
     ' Ejecutar todos los tests
     suiteResult.AddTestResult TestGetUserAuthData_AdminUser_ReturnsCorrectData()
     ' ... más tests
-    
+  
     ' Teardown a nivel de suite (una sola vez)
     Call SuiteTeardown
-    
+  
     Set TIAuthRepositoryRunAll = suiteResult
     Exit Function
-    
+  
 ErrorHandler:
     Call SuiteTeardown
     suiteResult.Fail "Error en suite: " & Err.Description
@@ -1642,39 +1721,40 @@ End Sub
 > **💡 Nota Especial**: `TIAuthRepository.bas` implementa además **configuración local a nivel de test** usando `CMockConfig` y **auto-aprovisionamiento de datos** dentro de transacciones, convirtiéndolo en un ejemplo completo del patrón optimizado con gestión auto-contenida de datos.
 
 **Test Individual Auto-contenido:**
+
 ```vba
 Private Function TestGetUserAuthData_AdminUser_ReturnsCorrectData() As CTestResult
     Set TestGetUserAuthData_AdminUser_ReturnsCorrectData = New CTestResult
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Initialize "GetUserAuthData devuelve datos correctos para usuario admin"
-    
+  
     Dim db As DAO.Database
     On Error GoTo TestFail
-    
+  
     ' ARRANGE: Crear conexión y transacción
     Set db = DBEngine.OpenDatabase(modTestUtils.GetActiveTestDatabasePath())
     DBEngine.BeginTrans
-    
+  
     ' Auto-aprovisionamiento: Crear datos de prueba
     db.Execute "INSERT INTO TbUsuarios (CorreoUsuario, NombreUsuario, EsAdministrador) " & _
                "VALUES ('admin@test.com', 'Admin Test', 'Sí')"
-    
+  
     ' ACT: Ejecutar el método a probar
     Dim authRepo As New CAuthRepository
     authRepo.Initialize modConfigFactory.CreateConfig(), db
     Dim result As CUserAuthData
     Set result = authRepo.GetUserAuthData("admin@test.com")
-    
+  
     ' ASSERT: Verificar resultados
     modAssert.IsNotNothing result, "Debe devolver datos de usuario"
     modAssert.AreEqual "Admin Test", result.NombreUsuario, "Nombre de usuario correcto"
     modAssert.IsTrue result.EsAdministrador, "Debe ser administrador"
-    
+  
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Pass
     GoTo Cleanup
-    
+  
 TestFail:
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Fail "Error: " & Err.Description
-    
+  
 Cleanup:
     ' Auto-limpieza: Rollback automático elimina todos los datos
     If Not db Is Nothing Then
@@ -1696,14 +1776,14 @@ End Function
 
 #### 🏆 **Suites Refactorizadas al Gold Standard**
 
-| Suite | Estado | Patrón Aplicado |
-|-------|--------|----------------|
-| `TIAuthRepository.bas` | ✅ **Gold Standard** | Suite Setup + Transacciones |
-| `TIExpedienteRepository.bas` | ✅ Refactorizada | Suite Setup + Transacciones |
-| `TISolicitudRepository.bas` | 🔄 Pendiente | Patrón tradicional |
-| `TIWorkflowRepository.bas` | 🔄 Pendiente | Patrón tradicional |
-| `TIOperationRepository.bas` | 🔄 Pendiente | Patrón tradicional |
-| `TINotificationRepository.bas` | 🔄 Pendiente | Patrón tradicional |
+| Suite                            | Estado                    | Patrón Aplicado            |
+| -------------------------------- | ------------------------- | --------------------------- |
+| `TIAuthRepository.bas`         | ✅**Gold Standard** | Suite Setup + Transacciones |
+| `TIExpedienteRepository.bas`   | ✅ Refactorizada          | Suite Setup + Transacciones |
+| `TISolicitudRepository.bas`    | 🔄 Pendiente              | Patrón tradicional         |
+| `TIWorkflowRepository.bas`     | 🔄 Pendiente              | Patrón tradicional         |
+| `TIOperationRepository.bas`    | 🔄 Pendiente              | Patrón tradicional         |
+| `TINotificationRepository.bas` | 🔄 Pendiente              | Patrón tradicional         |
 
 #### 🎯 **Guía de Migración**
 
@@ -1718,6 +1798,7 @@ Para migrar una suite existente al patrón optimizado:
 Este patrón representa la evolución natural del sistema de autoaprovisionamiento hacia una arquitectura más eficiente y mantenible.
 
 ## 16. Flujo de Trabajo y Gestión de Estados
+
 El flujo de trabajo de la aplicación se divide en fases gestionadas por los roles Calidad y Técnico. El rol Administrador tiene acceso a todas las funcionalidades.
 
 **Fase 1: Registro (A cargo de Calidad)**
@@ -1758,24 +1839,28 @@ Encola una notificación por correo electrónico para el usuario de Calidad que 
 **Interacción Externa (Fuera de CONDOR)**: Calidad gestiona la comunicación con los agentes externos (suministradores, etc.) por correo electrónico, enviando y recibiendo las plantillas Word.
 
 **Actualización de Datos (Sincronización)**: A medida que recibe las plantillas de agentes externos, Calidad utiliza una funcionalidad específica en la interfaz de CONDOR (p. ej., un botón "Sincronizar desde Documento"). Al activarla, la aplicación:
+
 1. Abre un selector de archivos para que el usuario elija el documento `.docx`.
 2. Lee el contenido del documento Word, extrae los datos de los campos relevantes (según el mapeo del Anexo B).
 3. Actualiza automáticamente los campos correspondientes en la base de datos de CONDOR.
-Este proceso evita la entrada manual de datos, reduce errores y asegura la consistencia.
+   Este proceso evita la entrada manual de datos, reduce errores y asegura la consistencia.
 
 **Cierre**: El proceso continúa hasta que la solicitud es finalmente aprobada o denegada, momento en el cual Calidad actualiza el estado final en el sistema.
 
 ## 17. Especificaciones de Integración Clave
 
 ### 17.1. Autenticación y Roles
+
 El sistema de autenticación y autorización está centralizado y se integra con la aplicación "Lanzadera" de la oficina.
 
 #### 17.1.1. Flujo de Arranque
+
 El usuario abre CONDOR desde la Lanzadera.
 
 La Lanzadera pasa el correo electrónico del usuario logueado a CONDOR a través del parámetro VBA.Command.
 
 #### 17.1.2. Lógica de Determinación de Rol
+
 CONDOR utiliza el correo electrónico recibido para determinar el rol del usuario mediante consultas a la base de datos de la Lanzadera.
 
 **Base de Datos de Roles**: Lanzadera_Datos.accdb
@@ -1787,12 +1872,15 @@ CONDOR utiliza el correo electrónico recibido para determinar el rol del usuari
 **ID de Aplicación para CONDOR**: 231
 
 #### 17.1.3. Consulta de Rol de Administrador Global
+
 Se verifica si el usuario es un administrador global en la tabla TbUsuariosAplicaciones. Si el campo EsAdministrador es 'Sí', se asigna el rol de Administrador y el proceso finaliza.
 
 #### 17.1.4. Consulta de Roles Específicos de la Aplicación
+
 Si no es administrador global, se consulta la tabla TbUsuariosAplicacionesPermisos con el email del usuario y IDAplicacion = 231 para determinar el rol (Administrador, Calidad o Técnico). La unión entre las tablas TbUsuariosAplicaciones y TbUsuariosAplicacionesPermisos se realiza a través del campo CorreoUsuario, que es el campo común entre ambas tablas.
 
 #### 17.1.5. Seguridad de la Base de Datos
+
 **Regla Crítica**: Todas las bases de datos del backend (Lanzadera_Datos.accdb, CONDOR_datos.accdb, Correos_datos.accdb, etc.), tanto en entorno de producción como local, están protegidas por contraseña.
 
 **Contraseña Universal**: dpddpd
@@ -1800,9 +1888,11 @@ Si no es administrador global, se consulta la tabla TbUsuariosAplicacionesPermis
 ### 17.2. Integración con Sistema de Expedientes
 
 #### 17.2.1. Flujo de Trabajo y Propósito
+
 Toda solicitud en CONDOR (PC, CD/CA, CD/CA-SUB) debe estar asociada a un Expediente. El primer paso para un usuario de Calidad al crear una nueva solicitud es seleccionar el expediente sobre el cual se va a actuar. CONDOR se conecta a una base de datos externa para listar los expedientes disponibles.
 
 #### 17.2.2. Base de Datos de Expedientes
+
 **Nombre**: Expedientes_datos.accdb
 
 **Ruta Producción**: \\datoste\aplicaciones_dys\Aplicaciones PpD\Expedientes\Expedientes_datos.accdb
@@ -1810,6 +1900,7 @@ Toda solicitud en CONDOR (PC, CD/CA, CD/CA-SUB) debe estar asociada a un Expedie
 **Ruta Local**: ./back/Expedientes_datos.accdb
 
 #### 17.2.3. Consultas de Selección de Expedientes
+
 **Consulta General (Rol Calidad)**:
 Para poblar el selector de expedientes, se utiliza la siguiente consulta para mostrar solo los expedientes activos, adjudicados y que cumplen con la normativa de calidad PECAL.
 
@@ -1860,9 +1951,11 @@ ORDER BY
 ```
 
 **Definición de Términos Clave:**
+
 * **PECAL (Publicaciones Españolas de Calidad):** Se refiere a un conjunto de normas que establecen los requisitos de aseguramiento de la calidad para empresas que suministran bienes y servicios al Ministerio de Defensa español. Estas normas son la adaptación nacional de las normas AQAP (Allied Quality Assurance Publications) de la OTAN. La condición `Pecal='Sí'` en una consulta asegura que solo se procesan expedientes que cumplen con estos estándares de calidad.
 
 #### 17.2.4. Alcance de la Integración
+
 La interacción de CONDOR con la base de datos de expedientes es de solo lectura. Las únicas operaciones permitidas son:
 
 Listar expedientes para su selección.
@@ -1871,6 +1964,7 @@ Tomar el IDExpediente seleccionado para usarlo como clave externa en la tabla tb
 No se crearán, modificarán ni eliminarán expedientes desde CONDOR.
 
 ### 17.3. Notificaciones Asíncronas
+
 El sistema no envía correos directamente. En su lugar, encola las notificaciones insertando un registro en la tabla TbCorreosEnviados de la base de datos Correos_datos.accdb. Un proceso externo se encarga del envío.
 
 **Ruta Oficina**: \\datoste\APLICACIONES_DYS\Aplicaciones PpD\00Recursos\Correos_datos.accdb
@@ -1878,6 +1972,7 @@ El sistema no envía correos directamente. En su lugar, encola las notificacione
 **Ruta Local**: ./back/Correos_datos.accdb
 
 ## 18. Estructura de la Base de Datos (CONDOR_datos.accdb)
+
 La base de datos se compone de tablas principales para las solicitudes, tablas de workflow, tablas de logging y una tabla de mapeo para la generación de documentos.
 
 Para un detalle exhaustivo de la estructura de las tablas, consultar el Anexo A.
@@ -1885,6 +1980,7 @@ Para un detalle exhaustivo de la estructura de las tablas, consultar el Anexo A.
 Para el mapeo de campos específico para la generación de documentos, consultar el Anexo B.
 
 ## 19. Ciclo de Trabajo de Desarrollo (TDD Asistido con Sincronización Discrecional)
+
 Este es el proceso estándar para cualquier tarea de desarrollo o corrección, para permitir actualizaciones selectivas de módulos.
 
 **Análisis y Prompt (Oráculo)**: El Arquitecto (CONDOR-Expert) genera un prompt detallado.
@@ -1894,6 +1990,7 @@ Este es el proceso estándar para cualquier tarea de desarrollo o corrección, p
 **Desarrollo (IA)**: La IA implementa la funcionalidad siguiendo TDD (Tests primero).
 
 **Sincronización Selectiva y Pausa (IA)**: La IA ejecuta:
+
 - `cscript //nologo condor_cli.vbs update [módulos_específicos]` para cambios puntuales
 - `cscript //nologo condor_cli.vbs update` para sincronización automática (solo abre BD si hay cambios)
 - `cscript //nologo condor_cli.vbs rebuild` solo si hay problemas graves de sincronización
@@ -1913,6 +2010,7 @@ CONDOR incluye una herramienta de línea de comandos que facilita el desarrollo 
 #### Comandos Disponibles
 
 **Actualización Selectiva de Módulos (Recomendado)**
+
 ```bash
 # Actualizar un solo módulo
 cscript condor_cli.vbs update CAuthService
@@ -1923,6 +2021,7 @@ cscript condor_cli.vbs update CAuthService,modUtils,CConfig
 # Sincronización automática optimizada (solo abre BD si hay cambios)
 cscript condor_cli.vbs update
 ```
+
 - Comando optimizado para sincronización discrecional de archivos
 - Optimización de rendimiento: verifica cambios antes de abrir la base de datos
 - Conversión automática UTF-8 a ANSI para soporte completo de caracteres especiales
@@ -1930,16 +2029,20 @@ cscript condor_cli.vbs update
 - Sintaxis: Los nombres de módulos se separan con comas (sin espacios)
 
 **Exportación de Módulos**
+
 ```bash
 cscript condor_cli.vbs export
 ```
+
 - Exporta todos los módulos VBA desde la base de datos Access hacia archivos `.bas` en el directorio `src/`
 - Útil para sincronizar cambios realizados directamente en Access hacia el control de versiones
 
 **Reconstrucción Completa del Proyecto**
+
 ```bash
 cscript condor_cli.vbs rebuild
 ```
+
 - Elimina todos los módulos VBA existentes de la base de datos Access
 - Importa todos los archivos `.bas` del directorio `src/` hacia la base de datos Access
 - Compila automáticamente los módulos después de la importación
@@ -1947,9 +2050,11 @@ cscript condor_cli.vbs rebuild
 - Usar solo cuando `update` no sea suficiente (problemas de sincronización graves)
 
 **Validación de Esquemas de Base de Datos**
+
 ```bash
 cscript condor_cli.vbs validate-schema
 ```
+
 - Valida que los esquemas de las bases de datos de prueba coincidan con las especificaciones definidas
 - Verifica la existencia de tablas y campos requeridos en:
   - `Lanzadera_test_template.accdb`
@@ -1958,12 +2063,15 @@ cscript condor_cli.vbs validate-schema
 - Esencial para prevenir desincronización entre código y estructura de base de datos
 
 **Ayuda de Comandos**
+
 ```bash
 cscript condor_cli.vbs help
 ```
+
 - Muestra una lista detallada de todos los comandos disponibles y su descripción
 
 **Ventajas de la Sincronización Discrecional:**
+
 - **Eficiencia**: Solo actualiza los módulos, reduciendo el tiempo de sincronización
 - **Estabilidad**: Minimiza el riesgo de afectar módulos no relacionados con los cambios
 - **Desarrollo Iterativo**: Facilita ciclos rápidos de desarrollo-prueba-corrección
@@ -1971,6 +2079,7 @@ cscript condor_cli.vbs help
 - **Validación**: El comando `validate-schema` asegura la coherencia entre especificaciones y implementación
 
 ## 20. Principios Arquitectónicos
+
 **Interfaces en VBA**: La firma de los métodos debe ser idéntica.
 
 **Tests contra la Interfaz**: Declarar siempre variables como Dim miServicio As IMiServicio.
@@ -1984,28 +2093,111 @@ cscript condor_cli.vbs help
 **Tests como Especificación**: Los tests y el código de acceso a datos definen las propiedades de las clases de datos (T_*).
 
 **Framework de Tests**: El sistema de pruebas aplica el Principio de Responsabilidad Única (SRP):
+
 - **modTestRunner.bas**: Motor de ejecución puro, responsable únicamente de ejecutar suites registradas
 - **CTestReporter.cls**: Clase especializada en generar informes consolidados de resultados
 - **CTestSuiteResult.cls**: Encapsula los resultados de cada suite de pruebas
 - **Integración Simplificada**: Nuevos módulos de prueba se registran en `RegisterTestSuites()` siguiendo el patrón
-**Arquitectura 100% orientada a objetos con separación clara de responsabilidades.**
+  **Arquitectura 100% orientada a objetos con separación clara de responsabilidades.**
+
+## 23. Sistema de Migraciones de Base de Datos
+
+El proyecto CONDOR implementa un sistema de migraciones de base de datos sencillo pero robusto, gestionado a través de `condor_cli.vbs` para seguir el principio de "Database as Code" (Lección Aprendida 32).
+
+### 23.1. Comando `migrate`
+
+La funcionalidad se invoca con el comando:
+
+```bash
+# Ejecutar todas las migraciones
+cscript condor_cli.vbs migrate
+
+# Ejecutar una migración específica
+cscript condor_cli.vbs migrate 001_seed_tbEstados.sql
+```
+
+### 23.2. Estructura y Ubicación
+
+* Todos los scripts de migración deben tener la extensión `.sql` y estar ubicados en el directorio `./db/migrations/`.
+* Este directorio está bajo control de versiones, lo que permite historizar los cambios en los datos iniciales y de configuración.
+* Los archivos siguen una convención de nomenclatura: `XXX_descripcion.sql` donde XXX es un número secuencial de 3 dígitos.
+
+### 23.4. Inventario de Scripts de Migración
+
+Actualmente el proyecto incluye los siguientes scripts de migración:
+
+1. **`001_seed_tbEstados.sql`** - Datos iniciales de estados del workflow
+
+   - Define los 6 estados del sistema: Borrador, En Revisión Técnica, Pendiente Aprobación Calidad, Cerrado - Aprobado, Cerrado - Rechazado, En Tramitación
+   - Incluye campos: idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden
+2. **`002_seed_tbTransiciones.sql`** - Configuración de transiciones de estado
+
+   - Define las transiciones permitidas entre estados según roles de usuario
+   - Incluye transiciones completas del workflow incluyendo el estado "En Tramitación"
+   - Especifica qué roles (Calidad, Técnico) pueden ejecutar cada transición
+3. **`003_seed_tbMapeoCampos.sql`** - Configuración de mapeo de campos
+
+   - Define la correspondencia entre campos de la base de datos y marcadores en plantillas Word
+4. **`004_schema_tbConfiguracion.sql`** - Esquema de tabla de configuración
+
+   - Define la estructura de la tabla tbConfiguracion
+5. **`005_seed_tbConfiguracion.sql`** - Parámetros de configuración del sistema
+
+   - Establece valores de configuración inicial para el funcionamiento de la aplicación
+6. **`006_seed_tbConfiguracion.sql`** - Configuración adicional del sistema
+
+   - Parámetros de configuración complementarios
+
+### 23.5. Notas de Implementación
+
+* El sistema ejecuta todos los archivos `.sql` del directorio de migraciones en orden alfabético.
+* El comando reporta "MIGRACIÓN COMPLETADA EXITOSAMENTE" cuando todos los scripts se ejecutan correctamente.
+* La estructura incluye 6 archivos de migración numerados secuencialmente del 001 al 006.
+* Se recomienda revisar periódicamente los logs de migración para identificar y corregir errores en scripts específicos.
+
+### 23.3. Principio de Idempotencia
+
+Los scripts SQL deben ser **idempotentes**, lo que significa que pueden ejecutarse múltiples veces sin causar errores ni efectos secundarios no deseados. El patrón estándar para lograr esto en CONDOR es utilizar una sentencia `DELETE` para limpiar los datos existentes antes de ejecutar las sentencias `INSERT`.
+
+**Ejemplo de Script Idempotente (`001_seed_tbEstados.sql`):**
+
+```sql
+-- Limpiar datos existentes para asegurar la idempotencia
+DELETE FROM tbEstados;
+
+-- Insertar los estados estructurales del workflow
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (1, 'Borrador', 'La solicitud ha sido creada pero no enviada a revisión técnica.', TRUE, FALSE, 10);
+
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (2, 'En Revisión Técnica', 'La solicitud ha sido enviada al equipo técnico para su cumplimentación.', FALSE, FALSE, 20);
+
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (6, 'En Tramitación', 'La solicitud está siendo procesada y tramitada.', FALSE, FALSE, 35);
+
+-- ... (continúa con los demás estados)
+
+-- ... (continúa con los demás estados)
+```
 
 ## 21. Anexo A: Estructura Detallada de Bases de Datos
 
 ### 21.1. Base de Datos: Lanzadera_test_template.accdb
+
 **Descripción:** Base de datos externa que gestiona la autenticación y permisos de usuarios para múltiples aplicaciones, incluyendo CONDOR.
 **Tablas Relevantes para CONDOR:** `TbUsuariosAplicaciones`, `TbUsuariosAplicacionesPermisos`.
 
 **Listado Completo de Tablas (35):**
-1.  Errores de pegado
-2.  Tb0HerramientaDocAyuda
-3.  TbAplicaciones
-4.  TbAplicacionesAperturas
-5.  TbAplicacionesEdiciones
-6.  TbAplicacionesEdicionesCambios
-7.  TbAplicacionesEstados
-8.  TbAplicacionesParametros
-9.  TbAplicacionesPerfiles
+
+1. Errores de pegado
+2. Tb0HerramientaDocAyuda
+3. TbAplicaciones
+4. TbAplicacionesAperturas
+5. TbAplicacionesEdiciones
+6. TbAplicacionesEdicionesCambios
+7. TbAplicacionesEstados
+8. TbAplicacionesParametros
+9. TbAplicacionesPerfiles
 10. TbAplicacionesVideos
 11. TbCategorias
 12. TbConexiones
@@ -2034,19 +2226,21 @@ cscript condor_cli.vbs help
 35. TbVideosVisionados
 
 ### 21.2. Base de Datos: Expedientes_test_template.accdb
+
 **Descripción:** Base de datos externa de solo lectura que gestiona la información de expedientes, contratos y entidades asociadas.
 **Tablas Relevantes para CONDOR:** `TbExpedientes`, `TbExpedientesResponsables`.
 
 **Listado Completo de Tablas (58):**
-1.  Copia de TbExpedientes
-2.  TbAusExpPostAGEDO
-3.  TbAuxEstadosMartina
-4.  TbAuxNemotecnico
-5.  TbCambios
-6.  TbComerciales
-7.  TbComunicados
-8.  TbConfMostrarEstado
-9.  TbCPV
+
+1. Copia de TbExpedientes
+2. TbAusExpPostAGEDO
+3. TbAuxEstadosMartina
+4. TbAuxNemotecnico
+5. TbCambios
+6. TbComerciales
+7. TbComunicados
+8. TbConfMostrarEstado
+9. TbCPV
 10. TbDatosEconomicosExpedientes
 11. TbDpDInformeCondicionamiento
 12. TbEjercitos
@@ -2098,294 +2292,312 @@ cscript condor_cli.vbs help
 58. TbVisadosGenerales
 
 ### 21.3. Base de Datos: correos_test_template.accdb
+
 **Descripción:** Base de datos externa utilizada para encolar notificaciones de correo electrónico de forma asíncrona.
 **Tabla Relevante para CONDOR:** `TbCorreosEnviados`.
 
 **Listado Completo de Tablas (4) y su Esquema:**
 
 **1. TbConfigCorreos**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| ID | Long | PK |
-| ServidorSMTP | Text | |
-| Puerto | Long | |
-| Usuario | Text | |
-| Password | Text | |
-| SSL | Boolean | |
-| Timeout | Long | |
-| Activo | Boolean | |
+
+| Campo        | Tipo    | PK |
+| :----------- | :------ | :- |
+| ID           | Long    | PK |
+| ServidorSMTP | Text    |    |
+| Puerto       | Long    |    |
+| Usuario      | Text    |    |
+| Password     | Text    |    |
+| SSL          | Boolean |    |
+| Timeout      | Long    |    |
+| Activo       | Boolean |    |
 
 **2. TbCorreos**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| IDCorreo | Long | PK |
-| Aplicacion | Text | |
-| Asunto | Text | |
-| Cuerpo | Memo | |
-| Destinatarios | Text | |
-| DestinatariosConCopia | Text | |
-| DestinatariosConCopiaOculta | Text | |
-| URLAdjunto | Text | |
-| FechaGrabacion | DateTime | |
-| FechaEnvio | DateTime | |
+
+| Campo                       | Tipo     | PK |
+| :-------------------------- | :------- | :- |
+| IDCorreo                    | Long     | PK |
+| Aplicacion                  | Text     |    |
+| Asunto                      | Text     |    |
+| Cuerpo                      | Memo     |    |
+| Destinatarios               | Text     |    |
+| DestinatariosConCopia       | Text     |    |
+| DestinatariosConCopiaOculta | Text     |    |
+| URLAdjunto                  | Text     |    |
+| FechaGrabacion              | DateTime |    |
+| FechaEnvio                  | DateTime |    |
 
 **3. TbCorreosEnviados**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| IDCorreo | Long | PK |
-| Aplicacion | Text | |
-| Asunto | Text | |
-| Cuerpo | Memo | |
-| Destinatarios | Text | |
-| DestinatariosConCopia | Text | |
-| DestinatariosConCopiaOculta | Text | |
-| URLAdjunto | Text | |
-| FechaGrabacion | DateTime | |
-| FechaEnvio | DateTime | |
+
+| Campo                       | Tipo     | PK |
+| :-------------------------- | :------- | :- |
+| IDCorreo                    | Long     | PK |
+| Aplicacion                  | Text     |    |
+| Asunto                      | Text     |    |
+| Cuerpo                      | Memo     |    |
+| Destinatarios               | Text     |    |
+| DestinatariosConCopia       | Text     |    |
+| DestinatariosConCopiaOculta | Text     |    |
+| URLAdjunto                  | Text     |    |
+| FechaGrabacion              | DateTime |    |
+| FechaEnvio                  | DateTime |    |
 
 **4. TbPlantillasCorreo**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| ID | Long | PK |
-| Aplicacion | Text | |
-| Nombre | Text | |
-| Asunto | Text | |
-| Cuerpo | Memo | |
-| Activa | Boolean | |
+
+| Campo      | Tipo    | PK |
+| :--------- | :------ | :- |
+| ID         | Long    | PK |
+| Aplicacion | Text    |    |
+| Nombre     | Text    |    |
+| Asunto     | Text    |    |
+| Cuerpo     | Memo    |    |
+| Activa     | Boolean |    |
 
 ### 21.4. Base de Datos: CONDOR_test_template.accdb
+
 **Descripción:** Base de datos principal del backend de CONDOR. Contiene toda la lógica de negocio, solicitudes, flujos de trabajo y logs del sistema.
 
 **Listado Completo de Tablas (13) y su Esquema:**
 
 **1. tbAdjuntos**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idAdjunto | Long | PK |
-| idSolicitud | Long | |
-| nombreArchivo | Text | |
-| fechaSubida | DateTime | |
-| usuarioSubida | Text | |
-| descripcion | Memo | |
+
+| Campo         | Tipo     | PK |
+| :------------ | :------- | :- |
+| idAdjunto     | Long     | PK |
+| idSolicitud   | Long     |    |
+| nombreArchivo | Text     |    |
+| fechaSubida   | DateTime |    |
+| usuarioSubida | Text     |    |
+| descripcion   | Memo     |    |
 
 **2. tbConfiguracion**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idConfiguracion | Long | PK |
-| clave | Text | |
-| valor | Memo | |
-| descripcion | Text | |
-| categoria | Text | |
-| tipoValor | Text | |
-| valorPorDefecto | Memo | |
-| esEditable | Boolean | |
-| fechaCreacion | DateTime | |
-| fechaModificacion | DateTime | |
-| usuarioModificacion | Text | |
+
+| Campo               | Tipo     | PK |
+| :------------------ | :------- | :- |
+| idConfiguracion     | Long     | PK |
+| clave               | Text     |    |
+| valor               | Memo     |    |
+| descripcion         | Text     |    |
+| categoria           | Text     |    |
+| tipoValor           | Text     |    |
+| valorPorDefecto     | Memo     |    |
+| esEditable          | Boolean  |    |
+| fechaCreacion       | DateTime |    |
+| fechaModificacion   | DateTime |    |
+| usuarioModificacion | Text     |    |
 
 **3. tbDatosCDCA**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idDatosCDCA | Long | PK |
-| idSolicitud | Long | |
-| refSuministrador | Text | |
-| numContrato | Text | |
-| identificacionMaterial | Memo | |
-| numPlanoEspecificacion | Text | |
-| cantidadPeriodo | Text | |
-| numSerieLote | Text | |
-| descripcionImpactoNC | Memo | |
-| descripcionImpactoNCCont | Memo | |
-| refDesviacionesPrevias | Text | |
-| causaNC | Memo | |
-| impactoCoste | Text | |
-| clasificacionNC | Text | |
-| requiereModificacionContrato | Boolean | |
-| efectoFechaEntrega | Memo | |
-| identificacionAutoridadDiseno | Text | |
-| esSuministradorAD | Boolean | |
-| racRef | Text | |
-| racCodigo | Text | |
-| observacionesRAC | Memo | |
-| fechaFirmaRAC | DateTime | |
-| decisionFinal | Text | |
-| observacionesFinales | Memo | |
-| fechaFirmaDecisionFinal | DateTime | |
-| cargoFirmanteFinal | Text | |
+
+| Campo                         | Tipo     | PK |
+| :---------------------------- | :------- | :- |
+| idDatosCDCA                   | Long     | PK |
+| idSolicitud                   | Long     |    |
+| refSuministrador              | Text     |    |
+| numContrato                   | Text     |    |
+| identificacionMaterial        | Memo     |    |
+| numPlanoEspecificacion        | Text     |    |
+| cantidadPeriodo               | Text     |    |
+| numSerieLote                  | Text     |    |
+| descripcionImpactoNC          | Memo     |    |
+| descripcionImpactoNCCont      | Memo     |    |
+| refDesviacionesPrevias        | Text     |    |
+| causaNC                       | Memo     |    |
+| impactoCoste                  | Text     |    |
+| clasificacionNC               | Text     |    |
+| requiereModificacionContrato  | Boolean  |    |
+| efectoFechaEntrega            | Memo     |    |
+| identificacionAutoridadDiseno | Text     |    |
+| esSuministradorAD             | Boolean  |    |
+| racRef                        | Text     |    |
+| racCodigo                     | Text     |    |
+| observacionesRAC              | Memo     |    |
+| fechaFirmaRAC                 | DateTime |    |
+| decisionFinal                 | Text     |    |
+| observacionesFinales          | Memo     |    |
+| fechaFirmaDecisionFinal       | DateTime |    |
+| cargoFirmanteFinal            | Text     |    |
 
 **4. tbDatosCDCASUB**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idDatosCDCASUB | Long | PK |
-| idSolicitud | Long | |
-| refSuministrador | Text | |
-| refSubSuministrador | Text | |
-| suministradorPrincipalNombreDir | Memo | |
-| subSuministradorNombreDir | Memo | |
-| identificacionMaterial | Memo | |
-| numPlanoEspecificacion | Text | |
-| cantidadPeriodo | Text | |
-| numSerieLote | Text | |
-| descripcionImpactoNC | Memo | |
-| descripcionImpactoNCCont | Memo | |
-| refDesviacionesPrevias | Text | |
-| causaNC | Memo | |
-| impactoCoste | Text | |
-| clasificacionNC | Text | |
-| afectaPrestaciones | Boolean | |
-| afectaSeguridad | Boolean | |
-| afectaFiabilidad | Boolean | |
-| afectaVidaUtil | Boolean | |
-| afectaMedioambiente | Boolean | |
-| afectaIntercambiabilidad | Boolean | |
-| afectaMantenibilidad | Boolean | |
-| afectaApariencia | Boolean | |
-| afectaOtros | Boolean | |
-| requiereModificacionContrato | Boolean | |
-| efectoFechaEntrega | Memo | |
-| identificacionAutoridadDiseno | Text | |
-| esSubSuministradorAD | Boolean | |
-| nombreRepSubSuministrador | Text | |
-| racRef | Text | |
-| racCodigo | Text | |
-| observacionesRAC | Memo | |
-| fechaFirmaRAC | DateTime | |
-| decisionSuministradorPrincipal | Text | |
-| obsSuministradorPrincipal | Memo | |
-| fechaFirmaSuministradorPrincipal | DateTime | |
-| firmaSuministradorPrincipalNombreCargo | Text | |
-| obsRACDelegador | Memo | |
-| fechaFirmaRACDelegador | DateTime | |
+
+| Campo                                  | Tipo     | PK |
+| :------------------------------------- | :------- | :- |
+| idDatosCDCASUB                         | Long     | PK |
+| idSolicitud                            | Long     |    |
+| refSuministrador                       | Text     |    |
+| refSubSuministrador                    | Text     |    |
+| suministradorPrincipalNombreDir        | Memo     |    |
+| subSuministradorNombreDir              | Memo     |    |
+| identificacionMaterial                 | Memo     |    |
+| numPlanoEspecificacion                 | Text     |    |
+| cantidadPeriodo                        | Text     |    |
+| numSerieLote                           | Text     |    |
+| descripcionImpactoNC                   | Memo     |    |
+| descripcionImpactoNCCont               | Memo     |    |
+| refDesviacionesPrevias                 | Text     |    |
+| causaNC                                | Memo     |    |
+| impactoCoste                           | Text     |    |
+| clasificacionNC                        | Text     |    |
+| afectaPrestaciones                     | Boolean  |    |
+| afectaSeguridad                        | Boolean  |    |
+| afectaFiabilidad                       | Boolean  |    |
+| afectaVidaUtil                         | Boolean  |    |
+| afectaMedioambiente                    | Boolean  |    |
+| afectaIntercambiabilidad               | Boolean  |    |
+| afectaMantenibilidad                   | Boolean  |    |
+| afectaApariencia                       | Boolean  |    |
+| afectaOtros                            | Boolean  |    |
+| requiereModificacionContrato           | Boolean  |    |
+| efectoFechaEntrega                     | Memo     |    |
+| identificacionAutoridadDiseno          | Text     |    |
+| esSubSuministradorAD                   | Boolean  |    |
+| nombreRepSubSuministrador              | Text     |    |
+| racRef                                 | Text     |    |
+| racCodigo                              | Text     |    |
+| observacionesRAC                       | Memo     |    |
+| fechaFirmaRAC                          | DateTime |    |
+| decisionSuministradorPrincipal         | Text     |    |
+| obsSuministradorPrincipal              | Memo     |    |
+| fechaFirmaSuministradorPrincipal       | DateTime |    |
+| firmaSuministradorPrincipalNombreCargo | Text     |    |
+| obsRACDelegador                        | Memo     |    |
+| fechaFirmaRACDelegador                 | DateTime |    |
 
 **5. tbDatosPC**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idDatosPC | Long | PK |
-| idSolicitud | Long | |
-| refContratoInspeccionOficial | Text | |
-| refSuministrador | Text | |
-| suministradorNombreDir | Memo | |
-| objetoContrato | Memo | |
-| descripcionMaterialAfectado | Memo | |
-| numPlanoEspecificacion | Text | |
-| descripcionPropuestaCambio | Memo | |
-| descripcionPropuestaCambioCont | Memo | |
-| motivoCorregirDeficiencias | Boolean | |
-| motivoMejorarCapacidad | Boolean | |
-| motivoAumentarNacionalizacion | Boolean | |
-| motivoMejorarSeguridad | Boolean | |
-| motivoMejorarFiabilidad | Boolean | |
-| motivoMejorarCosteEficacia | Boolean | |
-| motivoOtros | Boolean | |
-| motivoOtrosDetalle | Text | |
-| incidenciaCoste | Text | |
-| incidenciaPlazo | Text | |
-| incidenciaSeguridad | Boolean | |
-| incidenciaFiabilidad | Boolean | |
-| incidenciaMantenibilidad | Boolean | |
-| incidenciaIntercambiabilidad | Boolean | |
-| incidenciaVidaUtilAlmacen | Boolean | |
-| incidenciaFuncionamientoFuncion | Boolean | |
-| cambioAfectaMaterialEntregado | Boolean | |
-| cambioAfectaMaterialPorEntregar | Boolean | |
-| firmaOficinaTecnicaNombre | Text | |
-| firmaRepSuministradorNombre | Text | |
-| observacionesRACRef | Text | |
-| racCodigo | Text | |
-| observacionesRAC | Memo | |
-| fechaFirmaRAC | DateTime | |
-| obsAprobacionAutoridadDiseno | Memo | |
-| firmaAutoridadDisenoNombreCargo | Text | |
-| fechaFirmaAutoridadDiseno | DateTime | |
-| decisionFinal | Text | |
-| obsDecisionFinal | Memo | |
-| cargoFirmanteFinal | Text | |
-| fechaFirmaDecisionFinal | DateTime | |
+
+| Campo                           | Tipo     | PK |
+| :------------------------------ | :------- | :- |
+| idDatosPC                       | Long     | PK |
+| idSolicitud                     | Long     |    |
+| refContratoInspeccionOficial    | Text     |    |
+| refSuministrador                | Text     |    |
+| suministradorNombreDir          | Memo     |    |
+| objetoContrato                  | Memo     |    |
+| descripcionMaterialAfectado     | Memo     |    |
+| numPlanoEspecificacion          | Text     |    |
+| descripcionPropuestaCambio      | Memo     |    |
+| descripcionPropuestaCambioCont  | Memo     |    |
+| motivoCorregirDeficiencias      | Boolean  |    |
+| motivoMejorarCapacidad          | Boolean  |    |
+| motivoAumentarNacionalizacion   | Boolean  |    |
+| motivoMejorarSeguridad          | Boolean  |    |
+| motivoMejorarFiabilidad         | Boolean  |    |
+| motivoMejorarCosteEficacia      | Boolean  |    |
+| motivoOtros                     | Boolean  |    |
+| motivoOtrosDetalle              | Text     |    |
+| incidenciaCoste                 | Text     |    |
+| incidenciaPlazo                 | Text     |    |
+| incidenciaSeguridad             | Boolean  |    |
+| incidenciaFiabilidad            | Boolean  |    |
+| incidenciaMantenibilidad        | Boolean  |    |
+| incidenciaIntercambiabilidad    | Boolean  |    |
+| incidenciaVidaUtilAlmacen       | Boolean  |    |
+| incidenciaFuncionamientoFuncion | Boolean  |    |
+| cambioAfectaMaterialEntregado   | Boolean  |    |
+| cambioAfectaMaterialPorEntregar | Boolean  |    |
+| firmaOficinaTecnicaNombre       | Text     |    |
+| firmaRepSuministradorNombre     | Text     |    |
+| observacionesRACRef             | Text     |    |
+| racCodigo                       | Text     |    |
+| observacionesRAC                | Memo     |    |
+| fechaFirmaRAC                   | DateTime |    |
+| obsAprobacionAutoridadDiseno    | Memo     |    |
+| firmaAutoridadDisenoNombreCargo | Text     |    |
+| fechaFirmaAutoridadDiseno       | DateTime |    |
+| decisionFinal                   | Text     |    |
+| obsDecisionFinal                | Memo     |    |
+| cargoFirmanteFinal              | Text     |    |
+| fechaFirmaDecisionFinal         | DateTime |    |
 
 **6. tbEstados**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idEstado | Long | PK |
-| nombreEstado | Text | |
-| descripcion | Text | |
-| esEstadoInicial | Boolean | |
-| esEstadoFinal | Boolean | |
-| orden | Long | |
+
+| Campo           | Tipo    | PK |
+| :-------------- | :------ | :- |
+| idEstado        | Long    | PK |
+| nombreEstado    | Text    |    |
+| descripcion     | Text    |    |
+| esEstadoInicial | Boolean |    |
+| esEstadoFinal   | Boolean |    |
+| orden           | Long    |    |
 
 **7. tbLogCambios**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idLogCambio | Long | PK |
-| fechaHora | DateTime | |
-| usuario | Text | |
-| tabla | Text | |
-| registro | Long | |
-| campo | Text | |
-| valorAnterior | Memo | |
-| valorNuevo | Memo | |
-| tipoOperacion | Text | |
+
+| Campo         | Tipo     | PK |
+| :------------ | :------- | :- |
+| idLogCambio   | Long     | PK |
+| fechaHora     | DateTime |    |
+| usuario       | Text     |    |
+| tabla         | Text     |    |
+| registro      | Long     |    |
+| campo         | Text     |    |
+| valorAnterior | Memo     |    |
+| valorNuevo    | Memo     |    |
+| tipoOperacion | Text     |    |
 
 **8. tbLogErrores**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idLogError | Long | PK |
-| fechaHora | DateTime | |
-| usuario | Text | |
-| modulo | Text | |
-| procedimiento | Text | |
-| numeroError | Long | |
-| descripcionError | Memo | |
-| contexto | Memo | |
+
+| Campo            | Tipo     | PK |
+| :--------------- | :------- | :- |
+| idLogError       | Long     | PK |
+| fechaHora        | DateTime |    |
+| usuario          | Text     |    |
+| modulo           | Text     |    |
+| procedimiento    | Text     |    |
+| numeroError      | Long     |    |
+| descripcionError | Memo     |    |
+| contexto         | Memo     |    |
 
 **9. tbMapeoCampos**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idMapeo | Long | PK |
-| nombrePlantilla | Text | |
-| nombreCampoTabla | Text | |
-| valorAsociado | Text | |
-| nombreCampoWord | Text | |
+
+| Campo            | Tipo | PK |
+| :--------------- | :--- | :- |
+| idMapeo          | Long | PK |
+| nombrePlantilla  | Text |    |
+| nombreCampoTabla | Text |    |
+| valorAsociado    | Text |    |
+| nombreCampoWord  | Text |    |
 
 **10. tbOperacionesLog**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idOperacion | Long | PK |
-| fechaHora | DateTime | |
-| usuario | Text | |
-| tipoOperacion | Text | |
-| entidad | Text | |
-| idEntidad | Long | |
-| descripcion | Memo | |
-| resultado | Text | |
-| detalles | Memo | |
+
+| Campo         | Tipo     | PK |
+| :------------ | :------- | :- |
+| idOperacion   | Long     | PK |
+| fechaHora     | DateTime |    |
+| usuario       | Text     |    |
+| tipoOperacion | Text     |    |
+| entidad       | Text     |    |
+| idEntidad     | Long     |    |
+| descripcion   | Memo     |    |
+| resultado     | Text     |    |
+| detalles      | Memo     |    |
 
 **11. tbSolicitudes**
-| Campo | Tipo | Longitud | Nulo | Clave | Descripción |
-|-------|------|----------|------|-------|-------------|
-| idSolicitud | AutoNumber | - | No | PK | Identificador único de la solicitud |
-| idExpediente | Long | - | No | FK | Referencia al expediente asociado |
-| tipoSolicitud | Text | 20 | No | - | Tipo de solicitud: "PC", "CD/CA", "CD/CA-SUB" |
-| subTipoSolicitud | Text | 20 | Sí | - | Subtipo: "Desviación" o "Concesión" |
-| codigoSolicitud | Text | 50 | No | - | Código único autogenerado |
-| idEstadoInterno | Long | - | No | FK | REFACTORIZADO: Referencia a tbEstados |
-| fechaCreacion | DateTime | - | No | - | Timestamp de creación del registro |
-| usuarioCreacion | Text | 100 | No | - | Email del usuario que creó la solicitud |
-| fechaPaseTecnico | DateTime | - | Sí | - | Fecha de envío a revisión técnica |
-| fechaCompletadoTecnico | DateTime | - | Sí | - | Fecha de finalización técnica |
-| fechaModificacion | DateTime | - | Sí | - | AÑADIDO: Timestamp de la última modificación |
-| usuarioModificacion | Text | 100 | Sí | - | AÑADIDO: Email del último usuario que modificó |
-| observaciones | Memo | - | Sí | - | Observaciones generales de la solicitud |
+
+| Campo                  | Tipo       | Longitud | Nulo | Clave | Descripción                                      |
+| ---------------------- | ---------- | -------- | ---- | ----- | ------------------------------------------------- |
+| idSolicitud            | AutoNumber | -        | No   | PK    | Identificador único de la solicitud              |
+| idExpediente           | Long       | -        | No   | FK    | Referencia al expediente asociado                 |
+| tipoSolicitud          | Text       | 20       | No   | -     | Tipo de solicitud: "PC", "CD/CA", "CD/CA-SUB"     |
+| subTipoSolicitud       | Text       | 20       | Sí  | -     | Subtipo: "Desviación" o "Concesión"             |
+| codigoSolicitud        | Text       | 50       | No   | -     | Código único autogenerado                       |
+| idEstadoInterno        | Long       | -        | No   | FK    | REFACTORIZADO: Referencia a tbEstados             |
+| fechaCreacion          | DateTime   | -        | No   | -     | Timestamp de creación del registro               |
+| usuarioCreacion        | Text       | 100      | No   | -     | Email del usuario que creó la solicitud          |
+| fechaPaseTecnico       | DateTime   | -        | Sí  | -     | Fecha de envío a revisión técnica              |
+| fechaCompletadoTecnico | DateTime   | -        | Sí  | -     | Fecha de finalización técnica                   |
+| fechaModificacion      | DateTime   | -        | Sí  | -     | AÑADIDO: Timestamp de la última modificación   |
+| usuarioModificacion    | Text       | 100      | Sí  | -     | AÑADIDO: Email del último usuario que modificó |
+| observaciones          | Memo       | -        | Sí  | -     | Observaciones generales de la solicitud           |
 
 **12. tbTransiciones**
-| Campo | Tipo | PK |
-| :--- | :--- | :--- |
-| idTransicion | Long | PK |
-| idEstadoOrigen | Long | |
-| idEstadoDestino | Long | |
-| rolRequerido | Text | |
-| condiciones | Memo | |
-| accionesPost | Memo | |
-| activa | Boolean | |
+
+| Campo           | Tipo    | PK |
+| :-------------- | :------ | :- |
+| idTransicion    | Long    | PK |
+| idEstadoOrigen  | Long    |    |
+| idEstadoDestino | Long    |    |
+| rolRequerido    | Text    |    |
+| condiciones     | Memo    |    |
+| accionesPost    | Memo    |    |
+| activa          | Boolean |    |
 
 ## 22. Anexo B: Mapeo de Campos para Generación de Documentos
 
@@ -2396,130 +2608,130 @@ cscript condor_cli.vbs help
 **NOTA:** El mapeo de campos documentado a continuación puede no reflejar el esquema real de las tablas. Se requiere validación con el esquema actual.
 
 | NombrePlantilla | NombreCampoTabla (en tbDatosPC) | ValorAsociado | NombreCampoWord |
-|---|---|---|---|
-| "PC" | refContratoInspeccionOficial | NULL | Parte0_1 |
-| "PC" | refSuministrador | NULL | Parte0_2 |
-| "PC" | suministradorNombreDir | NULL | Parte1_1 |
-| "PC" | objetoContrato | NULL | Parte1_2 |
-| "PC" | descripcionMaterialAfectado | NULL | Parte1_3 |
-| "PC" | numPlanoEspecificacion | NULL | Parte1_4 |
-| "PC" | descripcionPropuestaCambio | NULL | Parte1_5 |
-| "PC" | descripcionPropuestaCambioCont | NULL | Parte1_5Cont |
-| "PC" | motivoCorregirDeficiencias | True | Parte1_6_1 |
-| "PC" | motivoMejorarCapacidad | True | Parte1_6_2 |
-| "PC" | motivoAumentarNacionalizacion | True | Parte1_6_3 |
-| "PC" | motivoMejorarSeguridad | True | Parte1_6_4 |
-| "PC" | motivoMejorarFiabilidad | True | Parte1_6_5 |
-| "PC" | motivoMejorarCosteEficacia | True | Parte1_6_6 |
-| "PC" | motivoOtros | True | Parte1_6_7 |
-| "PC" | motivoOtrosDetalle | NULL | Parte1_6_8 |
-| "PC" | incidenciaCoste | "Aumentará" | Parte1_7a_1 |
-| "PC" | incidenciaCoste | "Disminuirá" | Parte1_7a_2 |
-| "PC" | incidenciaCoste | "No variará" | Parte1_7a_3 |
-| "PC" | incidenciaPlazo | "Aumentará" | Parte1_7b_1 |
-| "PC" | incidenciaPlazo | "Disminuirá" | Parte1_7b_2 |
-| "PC" | incidenciaPlazo | "No variará" | Parte1_7b_3 |
-| "PC" | incidenciaSeguridad | True | Parte1_7c_1 |
-| "PC" | incidenciaFiabilidad | True | Parte1_7c_2 |
-| "PC" | incidenciaMantenibilidad | True | Parte1_7c_3 |
-| "PC" | incidenciaIntercambiabilidad | True | Parte1_7c_4 |
-| "PC" | incidenciaVidaUtilAlmacen | True | Parte1_7c_5 |
-| "PC" | incidenciaFuncionamientoFuncion | True | Parte1_7c_6 |
-| "PC" | cambioAfectaMaterialEntregado | True | Parte1_9_1 |
-| "PC" | cambioAfectaMaterialPorEntregar | True | Parte1_9_2 |
-| "PC" | firmaOficinaTecnicaNombre | NULL | Parte1_10 |
-| "PC" | firmaRepSuministradorNombre | NULL | Parte1_11 |
-| "PC" | observacionesRACRef | NULL | Parte2_1 |
-| "PC" | racCodigo | NULL | Parte2_2 |
-| "PC" | observacionesRAC | NULL | Parte2_3 |
-| "PC" | fechaFirmaRAC | NULL | Parte2_4 |
-| "PC" | obsAprobacionAutoridadDiseno | NULL | Parte3_1 |
-| "PC" | firmaAutoridadDisenoNombreCargo | NULL | Parte3_2 |
-| "PC" | fechaFirmaAutoridadDiseno | NULL | Parte3_3 |
-| "PC" | decisionFinal | "APROBADO" | Parte3_2_1 |
-| "PC" | decisionFinal | "NO APROBADO" | Parte3_2_2 |
-| "PC" | obsDecisionFinal | NULL | Parte3_3_1 |
-| "PC" | cargoFirmanteFinal | NULL | Parte3_3_2 |
-| "PC" | fechaFirmaDecisionFinal | NULL | Parte3_3_3 |
+| --------------- | ------------------------------- | ------------- | --------------- |
+| "PC"            | refContratoInspeccionOficial    | NULL          | Parte0_1        |
+| "PC"            | refSuministrador                | NULL          | Parte0_2        |
+| "PC"            | suministradorNombreDir          | NULL          | Parte1_1        |
+| "PC"            | objetoContrato                  | NULL          | Parte1_2        |
+| "PC"            | descripcionMaterialAfectado     | NULL          | Parte1_3        |
+| "PC"            | numPlanoEspecificacion          | NULL          | Parte1_4        |
+| "PC"            | descripcionPropuestaCambio      | NULL          | Parte1_5        |
+| "PC"            | descripcionPropuestaCambioCont  | NULL          | Parte1_5Cont    |
+| "PC"            | motivoCorregirDeficiencias      | True          | Parte1_6_1      |
+| "PC"            | motivoMejorarCapacidad          | True          | Parte1_6_2      |
+| "PC"            | motivoAumentarNacionalizacion   | True          | Parte1_6_3      |
+| "PC"            | motivoMejorarSeguridad          | True          | Parte1_6_4      |
+| "PC"            | motivoMejorarFiabilidad         | True          | Parte1_6_5      |
+| "PC"            | motivoMejorarCosteEficacia      | True          | Parte1_6_6      |
+| "PC"            | motivoOtros                     | True          | Parte1_6_7      |
+| "PC"            | motivoOtrosDetalle              | NULL          | Parte1_6_8      |
+| "PC"            | incidenciaCoste                 | "Aumentará"  | Parte1_7a_1     |
+| "PC"            | incidenciaCoste                 | "Disminuirá" | Parte1_7a_2     |
+| "PC"            | incidenciaCoste                 | "No variará" | Parte1_7a_3     |
+| "PC"            | incidenciaPlazo                 | "Aumentará"  | Parte1_7b_1     |
+| "PC"            | incidenciaPlazo                 | "Disminuirá" | Parte1_7b_2     |
+| "PC"            | incidenciaPlazo                 | "No variará" | Parte1_7b_3     |
+| "PC"            | incidenciaSeguridad             | True          | Parte1_7c_1     |
+| "PC"            | incidenciaFiabilidad            | True          | Parte1_7c_2     |
+| "PC"            | incidenciaMantenibilidad        | True          | Parte1_7c_3     |
+| "PC"            | incidenciaIntercambiabilidad    | True          | Parte1_7c_4     |
+| "PC"            | incidenciaVidaUtilAlmacen       | True          | Parte1_7c_5     |
+| "PC"            | incidenciaFuncionamientoFuncion | True          | Parte1_7c_6     |
+| "PC"            | cambioAfectaMaterialEntregado   | True          | Parte1_9_1      |
+| "PC"            | cambioAfectaMaterialPorEntregar | True          | Parte1_9_2      |
+| "PC"            | firmaOficinaTecnicaNombre       | NULL          | Parte1_10       |
+| "PC"            | firmaRepSuministradorNombre     | NULL          | Parte1_11       |
+| "PC"            | observacionesRACRef             | NULL          | Parte2_1        |
+| "PC"            | racCodigo                       | NULL          | Parte2_2        |
+| "PC"            | observacionesRAC                | NULL          | Parte2_3        |
+| "PC"            | fechaFirmaRAC                   | NULL          | Parte2_4        |
+| "PC"            | obsAprobacionAutoridadDiseno    | NULL          | Parte3_1        |
+| "PC"            | firmaAutoridadDisenoNombreCargo | NULL          | Parte3_2        |
+| "PC"            | fechaFirmaAutoridadDiseno       | NULL          | Parte3_3        |
+| "PC"            | decisionFinal                   | "APROBADO"    | Parte3_2_1      |
+| "PC"            | decisionFinal                   | "NO APROBADO" | Parte3_2_2      |
+| "PC"            | obsDecisionFinal                | NULL          | Parte3_3_1      |
+| "PC"            | cargoFirmanteFinal              | NULL          | Parte3_3_2      |
+| "PC"            | fechaFirmaDecisionFinal         | NULL          | Parte3_3_3      |
 
 ### 22.2. Plantilla "CDCA" (F4203.10 - Desviación / Concesión)
 
-| NombrePlantilla | NombreCampoTabla (en tbDatosCDCA) | ValorAsociado | NombreCampoWord |
-|---|---|---|---|
-| "CDCA" | refSuministrador | NULL | Parte0_1 |
-| "CDCA" | numContrato | NULL | Parte1_2 |
-| "CDCA" | identificacionMaterial | NULL | Parte1_3 |
-| "CDCA" | numPlanoEspecificacion | NULL | Parte1_4 |
-| "CDCA" | cantidadPeriodo | NULL | Parte1_5a |
-| "CDCA" | numSerieLote | NULL | Parte1_5b |
-| "CDCA" | descripcionImpactoNC | NULL | Parte1_6 |
-| "CDCA" | refDesviacionesPrevias | NULL | Parte1_7 |
-| "CDCA" | causaNC | NULL | Parte1_8 |
-| "CDCA" | impactoCoste | "Increased / aumentado" | Parte1_9_1 |
-| "CDCA" | impactoCoste | "Decreased / disminuido" | Parte1_9_2 |
-| "CDCA" | impactoCoste | "Unchanged / sin cambio" | Parte1_9_3 |
-| "CDCA" | clasificacionNC | "Major / Mayor" | Parte1_10_1 |
-| "CDCA" | clasificacionNC | "Minor / Menor" | Parte1_10_2 |
-| "CDCA" | requiereModificacionContrato | True | Parte1_12_1 |
-| "CDCA" | efectoFechaEntrega | NULL | Parte1_13 |
-| "CDCA" | identificacionAutoridadDiseno | NULL | Parte1_14 |
-| "CDCA" | esSuministradorAD | True | Parte1_18_1 |
-| "CDCA" | esSuministradorAD | False | Parte1_18_2 |
-| "CDCA" | descripcionImpactoNCCont | NULL | Parte1_20 |
-| "CDCA" | racRef | NULL | Parte2_21_1 |
-| "CDCA" | racCodigo | NULL | Parte2_21_2 |
-| "CDCA" | observacionesRAC | NULL | Parte2_21_3 |
-| "CDCA" | fechaFirmaRAC | NULL | Parte2_22 |
-| "CDCA" | decisionFinal | "APROBADO" | Parte3_23_1 |
-| "CDCA" | decisionFinal | "NO APROBADO" | Parte3_23_2 |
-| "CDCA" | observacionesFinales | NULL | Parte3_24_1 |
-| "CDCA" | fechaFirmaDecisionFinal | NULL | Parte3_24_2 |
-| "CDCA" | cargoFirmanteFinal | NULL | Parte3_24_4 |
+| NombrePlantilla | NombreCampoTabla (en tbDatosCDCA) | ValorAsociado            | NombreCampoWord |
+| --------------- | --------------------------------- | ------------------------ | --------------- |
+| "CDCA"          | refSuministrador                  | NULL                     | Parte0_1        |
+| "CDCA"          | numContrato                       | NULL                     | Parte1_2        |
+| "CDCA"          | identificacionMaterial            | NULL                     | Parte1_3        |
+| "CDCA"          | numPlanoEspecificacion            | NULL                     | Parte1_4        |
+| "CDCA"          | cantidadPeriodo                   | NULL                     | Parte1_5a       |
+| "CDCA"          | numSerieLote                      | NULL                     | Parte1_5b       |
+| "CDCA"          | descripcionImpactoNC              | NULL                     | Parte1_6        |
+| "CDCA"          | refDesviacionesPrevias            | NULL                     | Parte1_7        |
+| "CDCA"          | causaNC                           | NULL                     | Parte1_8        |
+| "CDCA"          | impactoCoste                      | "Increased / aumentado"  | Parte1_9_1      |
+| "CDCA"          | impactoCoste                      | "Decreased / disminuido" | Parte1_9_2      |
+| "CDCA"          | impactoCoste                      | "Unchanged / sin cambio" | Parte1_9_3      |
+| "CDCA"          | clasificacionNC                   | "Major / Mayor"          | Parte1_10_1     |
+| "CDCA"          | clasificacionNC                   | "Minor / Menor"          | Parte1_10_2     |
+| "CDCA"          | requiereModificacionContrato      | True                     | Parte1_12_1     |
+| "CDCA"          | efectoFechaEntrega                | NULL                     | Parte1_13       |
+| "CDCA"          | identificacionAutoridadDiseno     | NULL                     | Parte1_14       |
+| "CDCA"          | esSuministradorAD                 | True                     | Parte1_18_1     |
+| "CDCA"          | esSuministradorAD                 | False                    | Parte1_18_2     |
+| "CDCA"          | descripcionImpactoNCCont          | NULL                     | Parte1_20       |
+| "CDCA"          | racRef                            | NULL                     | Parte2_21_1     |
+| "CDCA"          | racCodigo                         | NULL                     | Parte2_21_2     |
+| "CDCA"          | observacionesRAC                  | NULL                     | Parte2_21_3     |
+| "CDCA"          | fechaFirmaRAC                     | NULL                     | Parte2_22       |
+| "CDCA"          | decisionFinal                     | "APROBADO"               | Parte3_23_1     |
+| "CDCA"          | decisionFinal                     | "NO APROBADO"            | Parte3_23_2     |
+| "CDCA"          | observacionesFinales              | NULL                     | Parte3_24_1     |
+| "CDCA"          | fechaFirmaDecisionFinal           | NULL                     | Parte3_24_2     |
+| "CDCA"          | cargoFirmanteFinal                | NULL                     | Parte3_24_4     |
 
 ### 22.3. Plantilla "CDCASUB" (F4203.101 - Desviación / Concesión Sub-suministrador)
 
-| NombrePlantilla | NombreCampoTabla (en tbDatosCDCASUB) | ValorAsociado | NombreCampoWord |
-|---|---|---|---|
-| "CDCASUB" | refSuministrador | NULL | Parte0_1 |
-| "CDCASUB" | refSubSuministrador | NULL | Parte0_2 |
-| "CDCASUB" | suministradorPrincipalNombreDir | NULL | Parte1_1 |
-| "CDCASUB" | subSuministradorNombreDir | NULL | Parte1_2 |
-| "CDCASUB" | identificacionMaterial | NULL | Parte1_5 |
-| "CDCASUB" | numPlanoEspecificacion | NULL | Parte1_6 |
-| "CDCASUB" | cantidadPeriodo | NULL | Parte1_7a |
-| "CDCASUB" | numSerieLote | NULL | Parte1_7b |
-| "CDCASUB" | descripcionImpactoNC | NULL | Parte1_8 |
-| "CDCASUB" | refDesviacionesPrevias | NULL | Parte1_9 |
-| "CDCASUB" | causaNC | NULL | Parte1_10 |
-| "CDCASUB" | impactoCoste | "Incrementado" | Parte1_11_1 |
-| "CDCASUB" | impactoCoste | "Sin cambio" | Parte1_11_2 |
-| "CDCASUB" | impactoCoste | "Disminuido" | Parte1_11_3 |
-| "CDCASUB" | clasificacionNC | "Mayor" | Parte1_12_1 |
-| "CDCASUB" | clasificacionNC | "Menor" | Parte1_12_2 |
-| "CDCASUB" | afectaPrestaciones | True | Parte1_13_1 |
-| "CDCASUB" | afectaSeguridad | True | Parte1_13_2 |
-| "CDCASUB" | afectaFiabilidad | True | Parte1_13_3 |
-| "CDCASUB" | afectaVidaUtil | True | Parte1_13_4 |
-| "CDCASUB" | afectaMedioambiente | True | Parte1_13_5 |
-| "CDCASUB" | afectaIntercambiabilidad | True | Parte1_13_6 |
-| "CDCASUB" | afectaMantenibilidad | True | Parte1_13_7 |
-| "CDCASUB" | afectaApariencia | True | Parte1_13_8 |
-| "CDCASUB" | afectaOtros | True | Parte1_13_9 |
-| "CDCASUB" | requiereModificacionContrato | True | Parte1_14 |
-| "CDCASUB" | efectoFechaEntrega | NULL | Parte1_15 |
-| "CDCASUB" | identificacionAutoridadDiseno | NULL | Parte1_16 |
-| "CDCASUB" | esSubSuministradorAD | True | Parte1_20_1 |
-| "CDCASUB" | esSubSuministradorAD | False | Parte1_20_2 |
-| "CDCASUB" | nombreRepSubSuministrador | NULL | Parte1_21 |
-| "CDCASUB" | descripcionImpactoNCCont | NULL | Parte1_22 |
-| "CDCASUB" | racRef | NULL | Parte2_23_1 |
-| "CDCASUB" | racCodigo | NULL | Parte2_23_2 |
-| "CDCASUB" | observacionesRAC | NULL | Parte2_23_3 |
-| "CDCASUB" | fechaFirmaRAC | NULL | Parte2_25 |
-| "CDCASUB" | decisionSuministradorPrincipal | "APROBADO" | Parte3_26_1 |
-| "CDCASUB" | decisionSuministradorPrincipal | "NO APROBADO" | Parte3_26_2 |
-| "CDCASUB" | obsSuministradorPrincipal | NULL | Parte3_27_1 |
-| "CDCASUB" | fechaFirmaSuministradorPrincipal | NULL | Parte3_27_2 |
-| "CDCASUB" | firmaSuministradorPrincipalNombreCargo | NULL | Parte3_27_4 |
-| "CDCASUB" | obsRACDelegador | NULL | Parte4_28 |
-| "CDCASUB" | fechaFirmaRACDelegador | NULL | Parte4_30 |
+| NombrePlantilla | NombreCampoTabla (en tbDatosCDCASUB)   | ValorAsociado  | NombreCampoWord |
+| --------------- | -------------------------------------- | -------------- | --------------- |
+| "CDCASUB"       | refSuministrador                       | NULL           | Parte0_1        |
+| "CDCASUB"       | refSubSuministrador                    | NULL           | Parte0_2        |
+| "CDCASUB"       | suministradorPrincipalNombreDir        | NULL           | Parte1_1        |
+| "CDCASUB"       | subSuministradorNombreDir              | NULL           | Parte1_2        |
+| "CDCASUB"       | identificacionMaterial                 | NULL           | Parte1_5        |
+| "CDCASUB"       | numPlanoEspecificacion                 | NULL           | Parte1_6        |
+| "CDCASUB"       | cantidadPeriodo                        | NULL           | Parte1_7a       |
+| "CDCASUB"       | numSerieLote                           | NULL           | Parte1_7b       |
+| "CDCASUB"       | descripcionImpactoNC                   | NULL           | Parte1_8        |
+| "CDCASUB"       | refDesviacionesPrevias                 | NULL           | Parte1_9        |
+| "CDCASUB"       | causaNC                                | NULL           | Parte1_10       |
+| "CDCASUB"       | impactoCoste                           | "Incrementado" | Parte1_11_1     |
+| "CDCASUB"       | impactoCoste                           | "Sin cambio"   | Parte1_11_2     |
+| "CDCASUB"       | impactoCoste                           | "Disminuido"   | Parte1_11_3     |
+| "CDCASUB"       | clasificacionNC                        | "Mayor"        | Parte1_12_1     |
+| "CDCASUB"       | clasificacionNC                        | "Menor"        | Parte1_12_2     |
+| "CDCASUB"       | afectaPrestaciones                     | True           | Parte1_13_1     |
+| "CDCASUB"       | afectaSeguridad                        | True           | Parte1_13_2     |
+| "CDCASUB"       | afectaFiabilidad                       | True           | Parte1_13_3     |
+| "CDCASUB"       | afectaVidaUtil                         | True           | Parte1_13_4     |
+| "CDCASUB"       | afectaMedioambiente                    | True           | Parte1_13_5     |
+| "CDCASUB"       | afectaIntercambiabilidad               | True           | Parte1_13_6     |
+| "CDCASUB"       | afectaMantenibilidad                   | True           | Parte1_13_7     |
+| "CDCASUB"       | afectaApariencia                       | True           | Parte1_13_8     |
+| "CDCASUB"       | afectaOtros                            | True           | Parte1_13_9     |
+| "CDCASUB"       | requiereModificacionContrato           | True           | Parte1_14       |
+| "CDCASUB"       | efectoFechaEntrega                     | NULL           | Parte1_15       |
+| "CDCASUB"       | identificacionAutoridadDiseno          | NULL           | Parte1_16       |
+| "CDCASUB"       | esSubSuministradorAD                   | True           | Parte1_20_1     |
+| "CDCASUB"       | esSubSuministradorAD                   | False          | Parte1_20_2     |
+| "CDCASUB"       | nombreRepSubSuministrador              | NULL           | Parte1_21       |
+| "CDCASUB"       | descripcionImpactoNCCont               | NULL           | Parte1_22       |
+| "CDCASUB"       | racRef                                 | NULL           | Parte2_23_1     |
+| "CDCASUB"       | racCodigo                              | NULL           | Parte2_23_2     |
+| "CDCASUB"       | observacionesRAC                       | NULL           | Parte2_23_3     |
+| "CDCASUB"       | fechaFirmaRAC                          | NULL           | Parte2_25       |
+| "CDCASUB"       | decisionSuministradorPrincipal         | "APROBADO"     | Parte3_26_1     |
+| "CDCASUB"       | decisionSuministradorPrincipal         | "NO APROBADO"  | Parte3_26_2     |
+| "CDCASUB"       | obsSuministradorPrincipal              | NULL           | Parte3_27_1     |
+| "CDCASUB"       | fechaFirmaSuministradorPrincipal       | NULL           | Parte3_27_2     |
+| "CDCASUB"       | firmaSuministradorPrincipalNombreCargo | NULL           | Parte3_27_4     |
+| "CDCASUB"       | obsRACDelegador                        | NULL           | Parte4_28       |
+| "CDCASUB"       | fechaFirmaRACDelegador                 | NULL           | Parte4_30       |

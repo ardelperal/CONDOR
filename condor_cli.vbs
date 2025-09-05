@@ -47,8 +47,10 @@ If objArgs.Count = 0 Then
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
     WScript.Echo "  listtables [db_path] [--schema] [--output] - Listar tablas de BD. --schema: muestra campos y tipos. --output: exporta a listtables_output.txt"
-    WScript.Echo "  relink <db_path> <folder> - Re-vincular tablas a bases locales"
+    WScript.Echo "  relink [db_path] [folder]    - Re-vincular tablas a bases locales"
+    WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
     WScript.Echo "  relink --all - Re-vincular todas las bases en ./back automaticamente"
+    WScript.Echo "  migrate [file.sql] - Ejecutar scripts de migración SQL en /db/migrations"
     WScript.Echo ""
 
 
@@ -86,8 +88,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint' o 'bundle'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle' o 'migrate'"
     WScript.Quit 1
 End If
 
@@ -110,7 +112,7 @@ ElseIf strAction = "validate-schema" Then
 End If
 
 ' Determinar qué base de datos usar según la acción
-If strAction = "createtable" Or strAction = "droptable" Then
+If strAction = "createtable" Or strAction = "droptable" Or strAction = "migrate" Then
     strAccessPath = strDataPath
 ElseIf strAction = "listtables" Then
     pathArg = ""
@@ -241,6 +243,8 @@ ElseIf strAction = "lint" Then
     Call LintProject()
 ElseIf strAction = "relink" Then
     Call RelinkTables()
+ElseIf strAction = "migrate" Then
+    Call ExecuteMigrations()
 
 End If
 
@@ -1214,6 +1218,7 @@ Sub ShowHelp()
     WScript.Echo "                                 db_path opcional (por defecto: CONDOR_datos.accdb)"
     WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
     WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
+    WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
     WScript.Echo ""
     WScript.Echo "FUNCIONALIDADES DISPONIBLES PARA 'bundle' (con dependencias automáticas):"
     WScript.Echo "(Basadas en CONDOR_MASTER_PLAN.md)"
@@ -2731,3 +2736,147 @@ Private Function DaoTypeToString(dataType)
         Case Else: DaoTypeToString = "Desconocido (" & dataType & ")"
     End Select
 End Function
+
+' ===================================================================
+' SUBRUTINA: ExecuteMigrations
+' Descripción: Ejecuta scripts de migración SQL desde la carpeta /db/migrations
+' ===================================================================
+Sub ExecuteMigrations()
+    Dim strMigrationsPath, objMigrationsFolder, objFile, strTargetFile
+    
+    strMigrationsPath = objFSO.GetParentFolderName(strSourcePath) & "\db\migrations"
+    WScript.Echo "=== INICIANDO MIGRACION DE DATOS SQL ==="
+    WScript.Echo "Directorio de migraciones: " & strMigrationsPath
+    
+    If Not objFSO.FolderExists(strMigrationsPath) Then
+        WScript.Echo "ERROR: El directorio de migraciones no existe: " & strMigrationsPath
+        WScript.Quit 1
+    End If
+    
+    Set objMigrationsFolder = objFSO.GetFolder(strMigrationsPath)
+    
+    ' Modo 1: Migrar un fichero específico
+    If objArgs.Count > 1 Then
+        strTargetFile = objArgs(1)
+        Dim targetPath
+        targetPath = objFSO.BuildPath(strMigrationsPath, strTargetFile)
+        If objFSO.FileExists(targetPath) Then
+            WScript.Echo "Ejecutando migración específica: " & strTargetFile
+            Call ProcessSqlFile(targetPath)
+        Else
+            WScript.Echo "ERROR: El archivo de migración especificado no existe: " & targetPath
+            WScript.Quit 1
+        End If
+    ' Modo 2: Migrar todos los ficheros .sql
+    Else
+        WScript.Echo "Ejecutando todas las migraciones en el directorio (en orden alfabético)..."
+        
+        ' Crear un array para almacenar los nombres de archivos y ordenarlos
+        Dim arrFiles(), intFileCount, i, j, strTemp
+        intFileCount = 0
+        
+        ' Contar archivos SQL
+        For Each objFile In objMigrationsFolder.Files
+            If LCase(objFSO.GetExtensionName(objFile.Name)) = "sql" Then
+                intFileCount = intFileCount + 1
+            End If
+        Next
+        
+        ' Redimensionar array
+        ReDim arrFiles(intFileCount - 1)
+        
+        ' Llenar array con rutas de archivos
+        i = 0
+        For Each objFile In objMigrationsFolder.Files
+            If LCase(objFSO.GetExtensionName(objFile.Name)) = "sql" Then
+                arrFiles(i) = objFile.Path
+                i = i + 1
+            End If
+        Next
+        
+        ' Ordenar array usando bubble sort
+        For i = 0 To UBound(arrFiles) - 1
+            For j = i + 1 To UBound(arrFiles)
+                If UCase(objFSO.GetFileName(arrFiles(i))) > UCase(objFSO.GetFileName(arrFiles(j))) Then
+                    strTemp = arrFiles(i)
+                    arrFiles(i) = arrFiles(j)
+                    arrFiles(j) = strTemp
+                End If
+            Next
+        Next
+        
+        ' Ejecutar archivos en orden
+        For i = 0 To UBound(arrFiles)
+            Call ProcessSqlFile(arrFiles(i))
+        Next
+    End If
+    
+    WScript.Echo "=== MIGRACION COMPLETADA EXITOSAMENTE ==="
+End Sub
+
+' ===================================================================
+' SUBRUTINA: ProcessSqlFile
+' Descripción: Parsea y ejecuta los comandos de un fichero SQL
+' CORREGIDO: Utiliza ADODB.Stream para leer ficheros con codificación UTF-8.
+' ===================================================================
+Sub ProcessSqlFile(filePath)
+    Dim objStream, strContent, arrLines, i, strLine, strSqlBlock, arrCommands, sqlCommand
+    
+    WScript.Echo "------------------------------------------------------------"
+    WScript.Echo "Procesando fichero: " & objFSO.GetFileName(filePath)
+    
+    On Error Resume Next
+    
+    ' Usar ADODB.Stream para leer correctamente UTF-8
+    Set objStream = CreateObject("ADODB.Stream")
+    objStream.Type = 2 ' adTypeText
+    objStream.Charset = "UTF-8"
+    objStream.Open
+    objStream.LoadFromFile filePath
+    strContent = objStream.ReadText
+    objStream.Close
+    Set objStream = Nothing
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  ERROR: No se pudo abrir o leer el fichero con codificación UTF-8: " & Err.Description
+        Err.Clear
+        Exit Sub
+    End If
+    
+    ' Limpiar comentarios y lineas vacias
+    arrLines = Split(strContent, vbCrLf)
+    strSqlBlock = ""
+    For i = 0 To UBound(arrLines)
+        strLine = Trim(arrLines(i))
+        If strLine <> "" And Left(strLine, 2) <> "--" Then
+            strSqlBlock = strSqlBlock & strLine & " "
+        End If
+    Next
+    
+    ' Dividir en comandos por punto y coma
+    arrCommands = Split(strSqlBlock, ";")
+    
+    ' Ejecutar cada comando
+    For Each sqlCommand In arrCommands
+        sqlCommand = Trim(sqlCommand)
+        If sqlCommand <> "" And Len(sqlCommand) > 5 Then
+            WScript.Echo "  Ejecutando SQL..."
+            objAccess.CurrentDb.Execute sqlCommand, 128 ' dbFailOnError
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "    ERROR al ejecutar comando: " & Err.Description
+                WScript.Echo "    SQL: " & sqlCommand
+                Err.Clear
+                WScript.Echo "  Migración fallida para este fichero."
+                WScript.Echo "------------------------------------------------------------"
+                Exit Sub
+            Else
+                WScript.Echo "    Comando ejecutado exitosamente."
+            End If
+        End If
+    Next
+    
+    WScript.Echo "  Fichero procesado exitosamente."
+    WScript.Echo "------------------------------------------------------------"
+    On Error GoTo 0
+End Sub
