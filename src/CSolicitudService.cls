@@ -107,12 +107,12 @@ Private Function ISolicitudService_CreateSolicitud(ByVal paraExpediente As EExpe
     
     ' Delegar al repositorio para guardar
     If m_solicitudRepository.SaveSolicitud(nuevaSolicitud) > 0 Then
-        m_OperationLogger.LogOperation "CREATE", CStr(nuevaSolicitud.idSolicitud), _
+        m_OperationLogger.LogOperation "CREATE", nuevaSolicitud.idSolicitud, _
             "Nueva solicitud creada: ID=" & nuevaSolicitud.idSolicitud & ", Expediente=" & paraExpediente.idExpediente & ", Tipo=PC"
         
         Set ISolicitudService_CreateSolicitud = nuevaSolicitud
     Else
-        m_OperationLogger.LogOperation "CREATE_ERROR", CStr(paraExpediente.idExpediente), _
+        m_OperationLogger.LogOperation "CREATE_ERROR", paraExpediente.idExpediente, _
             "Error: No se pudo crear la solicitud para expediente " & paraExpediente.idExpediente
         Err.Raise 5, "CSolicitudService.CreateSolicitud", "No se pudo crear la solicitud"
     End If
@@ -120,7 +120,7 @@ Private Function ISolicitudService_CreateSolicitud(ByVal paraExpediente As EExpe
     Exit Function
     
 errorHandler:
-    m_OperationLogger.LogOperation "CREATE_ERROR", "", "Error: " & Err.Description
+    m_OperationLogger.LogOperation "CREATE_ERROR", 0, "Error: " & Err.Description
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CreateSolicitud"
     Err.Raise Err.Number, "CSolicitudService.CreateSolicitud", Err.Description
 End Function
@@ -146,11 +146,11 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ESolicitud) 
     Dim Resultado As Long
     Resultado = m_solicitudRepository.SaveSolicitud(solicitud)
     If Resultado > 0 Then
-        m_OperationLogger.LogOperation "SAVE", CStr(solicitud.idSolicitud), _
+        m_OperationLogger.LogOperation "SAVE", solicitud.idSolicitud, _
             "Solicitud guardada correctamente: ID=" & solicitud.idSolicitud
         ISolicitudService_SaveSolicitud = Resultado
     Else
-        m_OperationLogger.LogOperation "SAVE_ERROR", CStr(solicitud.idSolicitud), _
+        m_OperationLogger.LogOperation "SAVE_ERROR", solicitud.idSolicitud, _
             "Error: No se pudo guardar la solicitud ID=" & solicitud.idSolicitud
         ISolicitudService_SaveSolicitud = 0
     End If
@@ -158,7 +158,7 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ESolicitud) 
     Exit Function
     
 errorHandler:
-    m_OperationLogger.LogOperation "SAVE_ERROR", "", "Error: " & Err.Description
+    m_OperationLogger.LogOperation "SAVE_ERROR", 0, "Error: " & Err.Description
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.SaveSolicitud"
     ISolicitudService_SaveSolicitud = 0
 End Function
@@ -217,7 +217,7 @@ Private Function ISolicitudService_CambiarEstadoSolicitud(ByVal solicitudId As L
     Set solicitud = m_solicitudRepository.ObtenerSolicitudPorId(solicitudId)
     
     If solicitud Is Nothing Then
-        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", CStr(solicitudId), "Solicitud no encontrada: ID=" & solicitudId
+        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", solicitudId, "Solicitud no encontrada: ID=" & solicitudId
         ISolicitudService_CambiarEstadoSolicitud = False
         Exit Function
     End If
@@ -258,7 +258,7 @@ Private Function ISolicitudService_CambiarEstadoSolicitud(ByVal solicitudId As L
     esTransicionValida = m_workflowService.ValidateTransition(solicitudId, estadoActual, estadoDestino, solicitud.tipoSolicitud, usuarioRol)
     
     If Not esTransicionValida Then
-        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", CStr(solicitudId), "Transición no permitida: " & estadoActual & " -> " & estadoDestino & " para rol " & usuarioRol
+        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", solicitudId, "Transición no permitida: " & estadoActual & " -> " & estadoDestino & " para rol " & usuarioRol
         m_ErrorHandler.LogError 5, "Transición de estado no permitida", "CSolicitudService.CambiarEstadoSolicitud"
         Err.Raise 5, "CSolicitudService.CambiarEstadoSolicitud", "Transición de estado no permitida"
     End If
@@ -273,17 +273,17 @@ Private Function ISolicitudService_CambiarEstadoSolicitud(ByVal solicitudId As L
     resultado = m_solicitudRepository.SaveSolicitud(solicitud)
     
     If resultado > 0 Then
-        m_OperationLogger.LogOperation "CHANGE_STATE", CStr(solicitudId), "Estado cambiado exitosamente: " & estadoActual & " -> " & estadoDestino
+        m_OperationLogger.LogOperation "CHANGE_STATE", solicitudId, "Estado cambiado exitosamente: " & estadoActual & " -> " & estadoDestino
         ISolicitudService_CambiarEstadoSolicitud = True
     Else
-        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", CStr(solicitudId), "Error al guardar solicitud con nuevo estado"
+        m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", solicitudId, "Error al guardar solicitud con nuevo estado"
         ISolicitudService_CambiarEstadoSolicitud = False
     End If
     
     Exit Function
     
 errorHandler:
-    m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", CStr(solicitudId), "Error: " & Err.Description
+    m_OperationLogger.LogOperation "CHANGE_STATE_ERROR", solicitudId, "Error: " & Err.Description
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CambiarEstadoSolicitud"
     ISolicitudService_CambiarEstadoSolicitud = False
 End Function

@@ -1,0 +1,53 @@
+Attribute VB_Name = "modTestContext"
+Option Compare Database
+Option Explicit
+
+' =================================================================
+' MÓDULO: modTestContext
+' DESCRIPCIÓN: Gestor Singleton para la configuración de pruebas.
+' ARQUITECTURA: ÚNICA FUENTE DE VERDAD para la configuración en TODO el framework de testing.
+' =================================================================
+
+' Variable privada a nivel de módulo que contendrá la única instancia de la configuración.
+Private g_TestConfig As IConfig
+
+' FUNCIÓN SINGLETON: Crea la configuración en la primera llamada y la devuelve en las siguientes.
+Public Function GetTestConfig() As IConfig
+    If g_TestConfig Is Nothing Then
+        Dim mockConfigImpl As New CMockConfig
+        Dim fso As Object
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        
+        Dim testEnvPath As String
+        testEnvPath = modTestUtils.GetProjectPath() & "back\test_env"
+        
+        ' Configuración para las BDs usando JoinPath + GetWorkspacePath (norma *_DATA_PATH al workspace)
+        mockConfigImpl.SetSetting "DOCUMENT_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "Document_integration_test.accdb")
+        mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "Lanzadera_workspace_test.accdb")
+        mockConfigImpl.SetSetting "EXPEDIENTES_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "Expedientes_integration_test.accdb")
+        mockConfigImpl.SetSetting "WORKFLOW_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "Workflow_integration_test.accdb")
+        mockConfigImpl.SetSetting "CORREOS_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "correos_integration_test.accdb")
+        
+        ' Passwords para las BDs de test
+        mockConfigImpl.SetSetting "CONDOR_PASSWORD", "" ' Asumiendo que no hay password para la BD de test
+        mockConfigImpl.SetSetting "LANZADERA_PASSWORD", ""
+        mockConfigImpl.SetSetting "EXPEDIENTES_PASSWORD", ""
+        mockConfigImpl.SetSetting "CORREOS_PASSWORD", ""
+        
+        ' Otras configuraciones que necesiten los tests
+        mockConfigImpl.SetSetting "EMAIL_SENDER", "test@example.com"
+        mockConfigImpl.SetSetting "EMAIL_SMTP_SERVER", "smtp.test.com"
+        mockConfigImpl.SetSetting "EMAIL_SMTP_PORT", "587"
+        mockConfigImpl.SetSetting "EMAIL_SMTP_USERNAME", "testuser"
+        mockConfigImpl.SetSetting "EMAIL_SMTP_PASSWORD", "testpass"
+
+        Set g_TestConfig = mockConfigImpl
+        Set fso = Nothing
+    End If
+    Set GetTestConfig = g_TestConfig
+End Function
+
+' Procedimiento para forzar la destrucción del Singleton (útil entre ejecuciones de suites)
+Public Sub ResetTestContext()
+    Set g_TestConfig = Nothing
+End Sub

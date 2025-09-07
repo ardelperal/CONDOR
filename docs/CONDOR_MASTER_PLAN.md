@@ -109,47 +109,61 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 │    ├─ ConfigureGetCurrentUserEmail(String) ← Configuración │
 │    └─ Reset() ← Método de limpieza                         │
 │ 🧪 CMockAuthRepository.cls   ← Mock Repository para testing │
-│    └─ ConfigureGetUserAuthData(EAuthData) ← Configuración  │
+│    └─ ConfigureGetUserAuthData(AuthData) ← Configuración   │
 │ 🏭 modAuthFactory.bas        ← Factory                     │
 │ ✅ TestAuthService.bas       ← Tests unitarios             │
-│ 🔬 TIAuthRepository.bas      ← Tests integración           │
-│ 📊 EAuthData.cls             ← Entidad de Autenticación    │
+│ 🔬 TIAuthRepository.bas      ← Tests integración ✅ REFACT │
+│    ├─ SuiteSetup usa PrepareTestDatabase + sembrado        │
+│    ├─ TIAuthRepository siembra admin@example.com con       │
+│    │   ID_APLICACION_CONDOR=231 (DELETE/INSERT idempotente)│
+│    ├─ SuiteTeardown usa CleanupTestDatabase                │
+│    └─ Rutas estandarizadas con GetWorkspacePath()          │
+│ 📊 AuthData.cls              ← Entidad de Autenticación    │
 │ 📊 EUsuario.cls              ← Entidad Usuario             │
 └─────────────────────────────────────────────────────────────┘
 
+#### 🔑 Firmas Clave
+```vba
+' modAuthFactory.bas
+Public Function CreateAuthService(Optional ByVal config As IConfig = Nothing) As IAuthService
+
+' modRepositoryFactory.bas  
+Public Function CreateAuthRepository(Optional ByVal config As IConfig = Nothing) As IAuthRepository
+```
+
 #### 🏗️ Diagrama de Dependencias Auth
-'''mermaid
+```mermaid
 graph TD
-    subgraph "Capa de Pruebas"
-        A[TestAuthService.bas] --> B[CMockAuthService]
-        A --> C[CMockAuthRepository] 
-        A --> D[CMockErrorHandlerService]
-        A --> E[CMockConfig]
-        F[TIAuthRepository.bas] --> G[CAuthRepository]
-        F --> H[IConfig]
+    subgraph "Capa de Servicios"
+        CAuthService --> IAuthRepository
+        CAuthService --> IOperationLogger
+        CAuthService --> IErrorHandlerService
     end
-  
-    subgraph "Capa de Lógica de Negocio"
-        I[CAuthService] --> J[IAuthRepository]
-        I --> K[IErrorHandlerService]
+    
+    subgraph "Capa de Repositorios"
+        CAuthRepository --> IConfig
+        CAuthRepository --> IErrorHandlerService
     end
-  
-    subgraph "Capa de Factorías"
-        L[modAuthFactory.bas] --> I
-        L --> M[modRepositoryFactory.bas]
-        L --> N[modErrorHandlerFactory.bas]
-        M --> G
-        N --> O[CErrorHandlerService]
+    
+    subgraph "Factorías"
+        modAuthFactory --> CAuthService
+        modAuthFactory --> modRepositoryFactory
+        modAuthFactory --> modOperationLoggerFactory
+        modAuthFactory --> modErrorHandlerFactory
+        modRepositoryFactory --> CAuthRepository
     end
-  
-    subgraph "Capa de Datos"
-        G --> H
-    end
-  
+    
     subgraph "Entidades"
-        P[EAuthData.cls] --> Q[EUsuario.cls]
+        AuthData
+        EUsuario
     end
-'''
+    
+    subgraph "Testing"
+        TestAuthService --> CMockAuthService
+        TIAuthRepository --> CAuthRepository
+        CMockAuthRepository --> AuthData
+    end
+```
 
 🔗 **Dependencias:**
 
@@ -205,38 +219,50 @@ graph TD
 │ 🏭 modDocumentServiceFactory.bas ← Factory (Simplificado)  │
 │ ✅ TestDocumentService.bas   ← Tests unitarios             │
 │    └─ TestGenerarDocumentoSuccess() ← Test principal       │
-│ 🔬 TIDocumentService.bas     ← Tests integración (OPTIMIZADA) │
-│    ├─ SuiteSetup() ← Configuración UNA VEZ por suite      │
-│    ├─ SuiteTeardown() ← Limpieza UNA VEZ por suite        │
-│    └─ TIDocumentServiceRunAll() ← Patrón suite optimizado │
+│ 🔬 TIDocumentService.bas     ← Tests integración ✅ REFACT │
+│    ├─ SuiteSetup crea "doc_service_test\" con CreateFolder │
+│    ├─ SuiteTeardown usa CleanupTestFolder "doc_service_test\" │
+│    ├─ Rutas relativas al workspace (templates\, generated\) │
+│    └─ Compatible con CreateFolder recursivo                │
 └─────────────────────────────────────────────────────────────┘
 
-#### 🏗️ Diagrama de Dependencias Document (Arquitectura Simplificada)
+#### 🔑 Firmas Clave
+```vba
+' modDocumentServiceFactory.bas
+Public Function CreateDocumentService(Optional ByVal config As IConfig = Nothing) As IDocumentService
+
+' modWordManagerFactory.bas
+Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As IWordManager
+```
+
+#### 🏗️ Diagrama de Dependencias Document
 ```mermaid
 graph TD
-    subgraph "Capa de Pruebas"
-        A[TestDocumentService.bas] --> B[CMockDocumentService]
-        A --> C["AssertEquals, AssertTrue"]
-        I[TIDocumentService.bas] --> J[CDocumentService]
+    subgraph "Capa de Servicios"
+        CDocumentService --> IWordManager
+        CDocumentService --> ISolicitudService
+        CDocumentService --> IMapeoRepository
+        CDocumentService --> IOperationLogger
+        CDocumentService --> IErrorHandlerService
     end
-  
-    subgraph "Capa de Lógica de Negocio"
-        J --> N[IWordManager]
-        J --> O[IErrorHandlerService]
-        J --> P[ISolicitudService]
-        J --> Q[IMapeoRepository]
+    
+    subgraph "Capa de Repositorios"
+        CMapeoRepository --> IConfig
     end
-  
-    subgraph "Capa de Factorías"
-        S[modDocumentServiceFactory.bas] --> J
-        S --> T[modWordManagerFactory.bas]
-        S --> U[modErrorHandlerFactory.bas]
-        S --> V[modSolicitudServiceFactory.bas]
-        S --> W[modRepositoryFactory.bas]
-        T --> X[CWordManager]
-        U --> Y[CErrorHandlerService]
-        V --> Z[CSolicitudService]
-        W --> AA[CMapeoRepository]
+    
+    subgraph "Factorías"
+        modDocumentServiceFactory --> CDocumentService
+        modDocumentServiceFactory --> modWordManagerFactory
+        modDocumentServiceFactory --> modErrorHandlerFactory
+        modDocumentServiceFactory --> modSolicitudServiceFactory
+        modDocumentServiceFactory --> modRepositoryFactory
+        modWordManagerFactory --> CWordManager
+        modRepositoryFactory --> CMapeoRepository
+    end
+    
+    subgraph "Testing"
+        TestDocumentService --> CMockDocumentService
+        TIDocumentService --> CDocumentService
     end
 ```
 
@@ -288,7 +314,11 @@ graph TD
 │ 🏭 modExpedienteServiceFactory.bas ← Factoría Estándar      │
 │ 🏭 modRepositoryFactory.bas  ← Factoría Testeable (Params Op)│
 │ ✅ TestCExpedienteService.bas← Test Unitario (Verifica deleg.)│
-│ 🔬 TIExpedienteRepository.bas← Test Integración (BD real)   │
+│ 🔬 TIExpedienteRepository.bas← Test Integración ✅ REFACT   │
+│    ├─ SuiteSetup usa modTestUtils.PrepareTestDatabase      │
+│    ├─ SuiteTeardown usa modTestUtils.CleanupTestDatabase   │
+│    ├─ Eliminadas constantes obsoletas                      │
+│    └─ Rutas estandarizadas con GetWorkspacePath()          │
 │ 📊 EExpediente.cls           ← Entidad de Datos            │
 └─────────────────────────────────────────────────────────────┘
 
@@ -349,7 +379,11 @@ graph TD
 │    └─ SaveSolicitud_LastSolicitud ← Propiedad espía para tests │
 │ 🏭 modSolicitudServiceFactory.bas ← Factoría                │
 │ ✅ TestSolicitudService.bas  ← Tests unitarios             │
-│ 🔬 TISolicitudRepository.bas ← Tests integración           │
+│ 🔬 TISolicitudRepository.bas ← Tests integración ✅ REFACT │
+│    ├─ SuiteSetup usa modTestUtils.PrepareTestDatabase      │
+│    ├─ SuiteTeardown usa modTestUtils.CleanupTestDatabase   │
+│    ├─ Eliminadas constantes obsoletas                      │
+│    └─ Rutas estandarizadas con GetWorkspacePath()          │
 │ 📊 ESolicitud.cls            ← Entidad Principal (Normalizada) │
 │    └─ idEstadoInterno As Long (Campo normalizado)          │
 │ 📊 EUsuario.cls              ← Entidad Usuario             │
@@ -359,23 +393,53 @@ graph TD
 │ ❌ CMockTextFile.cls         ← ELIMINADO (obsoleto)        │
 └─────────────────────────────────────────────────────────────┘
 
-#### 🏗️ Diagrama de Dependencias Solicitud (Estabilizado)
+#### 🔑 Firmas Clave
+```vba
+' modSolicitudServiceFactory.bas
+Public Function CreateSolicitudService(Optional ByVal config As IConfig = Nothing) As ISolicitudService
+
+' modRepositoryFactory.bas
+Public Function CreateSolicitudRepository(Optional ByVal config As IConfig = Nothing) As ISolicitudRepository
+```
+
+#### 🏗️ Diagrama de Dependencias Solicitud
 ```mermaid
 graph TD
-    subgraph "Capa de Lógica de Negocio"
+    subgraph "Capa de Servicios"
         CSolicitudService --> ISolicitudRepository
         CSolicitudService --> IOperationLogger
         CSolicitudService --> IErrorHandlerService
+        CSolicitudService --> IAuthService
+        CSolicitudService --> IWorkflowService
     end
-  
-    subgraph "Capa de Datos"
+    
+    subgraph "Capa de Repositorios"
         CSolicitudRepository --> IConfig
         CSolicitudRepository --> IErrorHandlerService
     end
-  
-    subgraph "Capa de Factorías"
+    
+    subgraph "Factorías"
         modSolicitudServiceFactory --> CSolicitudService
         modSolicitudServiceFactory --> modRepositoryFactory
+        modSolicitudServiceFactory --> modOperationLoggerFactory
+        modSolicitudServiceFactory --> modErrorHandlerFactory
+        modSolicitudServiceFactory --> modAuthFactory
+        modSolicitudServiceFactory --> modWorkflowServiceFactory
+        modRepositoryFactory --> CSolicitudRepository
+    end
+    
+    subgraph "Entidades"
+        ESolicitud
+        EUsuario
+        EDatosPc
+        EDatosCdCa
+        EDatosCdCaSub
+    end
+    
+    subgraph "Testing"
+        TestSolicitudService --> CMockSolicitudService
+        TISolicitudRepository --> CSolicitudRepository
+        CMockSolicitudRepository --> ESolicitud
     end
 ```
 
@@ -428,18 +492,40 @@ graph TD
 │    └─ CreateWorkflowService() As IWorkflowService          │
 │ ✅ TestWorkflowService.bas   ← Test Unitario Simplificado  │
 │    └─ TestValidateTransition_ValidCase()                  │
-│ 🔬 TIWorkflowRepository.bas  ← Test Integración            │
+│ 🔬 TIWorkflowRepository.bas  ← Test Integración ✅ REFACT  │
+│    ├─ SuiteSetup usa modTestUtils.PrepareTestDatabase      │
+│    ├─ SuiteTeardown usa modTestUtils.CleanupTestDatabase   │
+│    ├─ Eliminadas constantes obsoletas                      │
+│    └─ Rutas estandarizadas con GetWorkspacePath()          │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Workflow
 ```mermaid
 graph TD
-    subgraph "Capa de Lógica de Negocio"
-        CWorkflowService --> CIWorkflowRepository[IWorkflowRepository]
-        CIWorkflowRepository -- define --> CWorkflowRepository_GetNextStates["GetNextStates(idEstadoActual As Long, usuarioRol As String)"]
+    subgraph "Capa de Servicios"
+        CWorkflowService --> IWorkflowService
+        CWorkflowService --> IWorkflowRepository
+        CWorkflowService --> IOperationLogger
+        CWorkflowService --> IErrorHandlerService
     end
-    subgraph "Capa de Pruebas"
-        TIWorkflowRepository --> CWorkflowService
+    
+    subgraph "Capa de Repositorios"
+        CWorkflowRepository --> IWorkflowRepository
+        CWorkflowRepository --> IConfig
+        CWorkflowRepository --> IErrorHandlerService
+    end
+    
+    subgraph "Factorías"
+        modWorkflowServiceFactory --> modRepositoryFactory
+        modWorkflowServiceFactory --> modOperationLoggerFactory
+        modWorkflowServiceFactory --> modErrorHandlerFactory
+    end
+    
+    subgraph "Testing"
+        TestWorkflowService --> CWorkflowService
+        TIWorkflowRepository --> CWorkflowRepository
+        CMockWorkflowService --> IWorkflowService
+        CMockWorkflowRepository --> IWorkflowRepository
     end
 ```
 
@@ -476,6 +562,10 @@ graph TD
 - IWorkflowService.cls (2 métodos)
 - IWorkflowRepository.cls (2 métodos - GetNextStates con Long)
 - CWorkflowService.cls (implementación con conversión de tipos)
+
+#### 🔑 Firmas Clave
+- **CreateWorkflowService** (modWorkflowServiceFactory.bas)
+- **CreateWorkflowRepository** (modRepositoryFactory.bas)
 - CWorkflowRepository.cls (implementación con Long)
 - CMockWorkflowService.cls (mock)
 - CMockWorkflowRepository.cls (mock)
@@ -495,18 +585,31 @@ graph TD
 │ 🧪 CMockMapeoRepository.cls  ← Mock para testing           │
 │    ├─ ConfigureGetMapeoPorTipo() ← Método de configuración │
 │    └─ ConfigureObtenerMapeosPorCategoria() ← Método de configuración │
-│ 🔬 TIMapeoRepository.bas     ← Tests integración (Estándar de Oro) │
+│ 🔬 TIMapeoRepository.bas     ← Tests integración ✅ REFACT │
+│    ├─ SuiteSetup usa modTestUtils.PrepareTestDatabase      │
+│    ├─ SuiteTeardown usa modTestUtils.CleanupTestDatabase   │
+│    ├─ Eliminadas constantes obsoletas                      │
+│    └─ Rutas estandarizadas con GetWorkspacePath()          │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Mapeo
 ```mermaid
 graph TD
-    A[TIMapeoRepository.bas] --> B[CMapeoRepository]
-    A --> C[IConfig]
-    D[CMapeoRepository] --> E[IConfig]
-    F[modRepositoryFactory.bas] --> B
-    F --> E
-    G[CMockMapeoRepository] --> H["Métodos Configure*"]
+    subgraph "Capa de Repositorios"
+        CMapeoRepository --> IMapeoRepository
+        CMapeoRepository --> IConfig
+    end
+    
+    subgraph "Factorías"
+        modRepositoryFactory --> CMapeoRepository
+        modRepositoryFactory --> IConfig
+    end
+    
+    subgraph "Testing"
+        TIMapeoRepository --> CMapeoRepository
+        TIMapeoRepository --> IConfig
+        CMockMapeoRepository --> IMapeoRepository
+    end
 ```
 
 🔗 **Dependencias:**
@@ -529,6 +632,9 @@ graph TD
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
 
+#### 🔑 Firmas Clave
+- **CreateMapeoRepository** (modRepositoryFactory.bas)
+
 ```
 
 ### 3.7. Gestión de Notificaciones (Notification) ⭐ **GOLD STANDARD**
@@ -541,12 +647,12 @@ graph TD
 │    ├─ SendNotification(recipient, subject, body) ← Envía   │
 │    └─ Initialize(config) ← Inicializa servicio             │
 │ 📄 INotificationRepository.cls       ← Interface           │
-│    └─ EnqueueNotification() ← Encola notificación          │
+│    └─ EnqueueEmail() ← Encola email                        │
 │ 🔧 CNotificationService.cls          ← Implementación      │
 │    ├─ SendNotification() ← Con validación y auditoría      │
 │    └─ Initialize() ← Configuración de dependencias         │
 │ 🔧 CNotificationRepository.cls       ← Implementación      │
-│    └─ EnqueueNotification() ← Persiste en BD correos       │
+│    └─ EnqueueEmail() ← Persiste en BD correos              │
 │ 🧪 CMockNotificationService.cls      ← Mock para testing   │
 │    ├─ ConfigureEnviarNotificacion()                        │
 │    └─ ConfigureValidarDestinatario()                       │
@@ -555,9 +661,13 @@ graph TD
 │    └─ ConfigureObtenerNotificacionesPendientes()           │
 │ 🏭 modNotificationServiceFactory.bas ← Factoría            │
 │    └─ CreateNotificationService() ← Crea servicio real     │
-│ 🔬 TINotificationService.bas         ← Suite de Integración│
-│    ├─ SuiteSetup() ← Configuración única por suite        │
-│    ├─ SuiteTeardown() ← Limpieza única por suite          │
+│ 🏭 modRepositoryFactory.bas          ← Factoría Repository │
+│    └─ CreateNotificationRepository() ← Crea repository     │
+│ 🔬 TINotificationService.bas         ← Suite de Integración ✅ REFACT │
+│    ├─ SuiteSetup usa modTestUtils.PrepareTestDatabase      │
+│    ├─ SuiteTeardown usa modTestUtils.CleanupTestDatabase   │
+│    ├─ Eliminadas constantes obsoletas                      │
+│    ├─ Rutas estandarizadas con GetWorkspacePath()          │
 │    ├─ TestSendNotificationSuccessCallsRepositoryCorrectly()│
 │    ├─ TestInitializeWithValidDependencies()                │
 │    ├─ TestSendNotificationWithoutInitialize()              │
@@ -565,38 +675,40 @@ graph TD
 │    └─ TestSendNotificationConfigValuesUsed()               │
 └─────────────────────────────────────────────────────────────┘
 
+#### 🔑 Firmas Clave
+```vba
+' INotificationService.cls
+Public Function SendNotification(destinatarios As String, asunto As String, cuerpoHTML As String, _
+    Optional destinatariosConCopia As String = "", _
+    Optional destinatariosConCopiaOculta As String = "", _
+    Optional urlAdjunto As String = "") As Boolean
+
+' INotificationRepository.cls
+Public Function EnqueueEmail(destinatarios As String, asunto As String, cuerpoHTML As String, _
+    Optional destinatariosConCopia As String = "", _
+    Optional destinatariosConCopiaOculta As String = "", _
+    Optional urlAdjunto As String = "") As Boolean
+
+' modNotificationServiceFactory.bas
+Public Function CreateNotificationService(Optional ByVal config As IConfig = Nothing) As INotificationService
+
+' modRepositoryFactory.bas
+Public Function CreateNotificationRepository(Optional ByVal config As IConfig = Nothing) As INotificationRepository
+```
+
 #### 🏗️ Diagrama de Dependencias Notification
 ```mermaid
 graph TD
-    subgraph "Capa de Pruebas"
-        A[TestNotificationService.bas] --> B[CMockNotificationService]
-        A --> C[CMockNotificationRepository]
-        A --> D[CMockOperationLogger]
-        A --> E[CMockErrorHandlerService]
-        A --> F[CMockConfig]
-        G[TINotificationRepository.bas] --> H[CNotificationRepository]
-        G --> I[IConfig]
-    end
-  
-    subgraph "Capa de Lógica de Negocio"
-        J[CNotificationService] --> K[INotificationRepository]
-        J --> L[IOperationLogger]
-        J --> M[IErrorHandlerService]
-    end
-  
-    subgraph "Capa de Factorías"
-        N[modNotificationServiceFactory.bas] --> J
-        N --> O[modRepositoryFactory.bas]
-        N --> P[modOperationLoggerFactory.bas]
-        N --> Q[modErrorHandlerFactory.bas]
-        O --> H
-        P --> R[COperationLogger]
-        Q --> S[CErrorHandlerService]
-    end
-  
-    subgraph "Capa de Datos"
-        H --> I
-    end
+    CNotificationService --> INotificationRepository
+    CNotificationService --> IErrorHandlerService
+    CNotificationService --> IOperationLogger
+    CNotificationRepository --> IConfig
+    CNotificationRepository --> IErrorHandlerService
+    modNotificationServiceFactory --> CNotificationService
+    modNotificationServiceFactory --> modRepositoryFactory
+    modNotificationServiceFactory --> modErrorHandlerFactory
+    modNotificationServiceFactory --> modOperationLoggerFactory
+    TINotificationService --> modNotificationServiceFactory
 ```
 
 🔗 **Dependencias:**
@@ -617,9 +729,15 @@ graph TD
 🧪 **Patrones de Testing:**
 
 - **Integración con BD Separada**: TINotificationRepository usa BD de notificaciones independiente
+- **Fixtures de Testing**:
+  - Fixture: `back\test_env\fixtures\databases\correos_test_template.accdb`
+  - Activa por suite: `back\test_env\workspace\correos_integration_test.accdb`
+- **Esquema Garantizado**: SuiteSetup garantiza esquema idempotente
+  - Tabla `TbCorreosEnviados` con columnas: Id, Destinatarios, Asunto, Cuerpo, DestinatariosConCopia, DestinatariosConCopiaOculta, URLAdjunto, FechaGrabacion
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
+- **SuiteSetup garantiza esquema idempotente**
 
 ```
 
@@ -640,36 +758,37 @@ graph TD
 │    └─ ConfigureObtenerHistorial()                          │
 │ 🏭 modOperationLoggerFactory.bas                           │
 │ ✅ TestOperationLogger.bas                                 │
-│ 🔬 TIOperationRepository.bas                               │
+│ 🔬 TIOperationRepository.bas                    ✅ REFACT  │
+│    ├─ SuiteSetup usa modTestUtils.PrepareTestDatabase      │
+│    ├─ SuiteTeardown usa modTestUtils.CleanupTestDatabase   │
+│    ├─ Eliminadas constantes obsoletas                      │
+│    └─ Rutas estandarizadas con GetWorkspacePath()          │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Operation
 ```mermaid
 graph TD
-    subgraph "Capa de Pruebas"
-        A[TestOperationLogger.bas] --> B[CMockOperationLogger]
-        A --> C[CMockOperationRepository]
-        A --> D[CMockErrorHandlerService]
-        A --> E[CMockConfig]
-        F[TIOperationRepository.bas] --> G[COperationRepository]
-        F --> H[IConfig]
+    subgraph "Capa de Servicios"
+        COperationLogger --> IOperationLogger
+        COperationLogger --> IOperationRepository
+        COperationLogger --> IErrorHandlerService
     end
-  
-    subgraph "Capa de Lógica de Negocio"
-        I[COperationLogger] --> J[IOperationRepository]
-        I --> K[IErrorHandlerService]
+    
+    subgraph "Capa de Repositorios"
+        COperationRepository --> IOperationRepository
+        COperationRepository --> IConfig
     end
-  
-    subgraph "Capa de Factorías"
-        L[modOperationLoggerFactory.bas] --> I
-        L --> M[modRepositoryFactory.bas]
-        L --> N[modErrorHandlerFactory.bas]
-        M --> G
-        N --> O[CErrorHandlerService]
+    
+    subgraph "Factorías"
+        modOperationLoggerFactory --> modRepositoryFactory
+        modOperationLoggerFactory --> modErrorHandlerFactory
     end
-  
-    subgraph "Capa de Datos"
-        G --> H
+    
+    subgraph "Testing"
+        TestOperationLogger --> COperationLogger
+        TIOperationRepository --> COperationRepository
+        CMockOperationLogger --> IOperationLogger
+        CMockOperationRepository --> IOperationRepository
     end
 ```
 
@@ -695,6 +814,10 @@ graph TD
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Integración con BD**: TIOperationRepository prueba directamente contra BD
 - **Configuración de Pruebas**: TestOperationLogger implementa patrón estándar con inyección de mocks
+
+#### 🔑 Firmas Clave
+- **CreateOperationLogger** (modOperationLoggerFactory.bas)
+- **CreateOperationRepository** (modRepositoryFactory.bas)
 
 ```
 
@@ -795,6 +918,7 @@ graph TD
 │    ├─ WriteLineToFile(path, line) ← Método de alto nivel   │
 │    └─ OpenTextFile() ← [DEPRECATED] Marcado obsoleto       │
 │ 🔧 CFileSystem.cls           ← Implementación (✅ COMPLETA) │
+│    ├─ IFileSystem_CreateFolder() ← RECURSIVO (✅ NUEVO)    │
 │    ├─ IFileSystem_WriteLineToFile() ← Implementa interfaz  │
 │    ├─ WriteLineToFile() ← Método público de conveniencia   │
 │    └─ IFileSystem_OpenTextFile() ← Mantiene compatibilidad │
@@ -866,15 +990,30 @@ graph TD
 ┌─────────────────────────────────────────────────────────────┐
 │                   GESTIÓN DE WORD                          │
 ├─────────────────────────────────────────────────────────────┤
-│ 📄 IWordManager.cls          │
-│ 🔧 CWordManager.cls          │
-│ 🧪 CMockWordManager.cls      │
-│    ├─ ConfigureAbrirDocumento() │
-│    ├─ ConfigureReemplazarTexto() │
-│    ├─ ConfigureGuardarDocumento() │
-│    └─ ConfigureLeerDocumento() │
-│ 🏭 modWordManagerFactory.bas │
-│ 🔬 TIWordManager.bas         │
+│ 📄 IWordManager.cls          ← Interface                   │
+│    ├─ AbrirDocumento(ruta As String) As Boolean            │
+│    ├─ ReemplazarTexto(buscar As String, reemplazar As String) As Boolean │
+│    ├─ GuardarDocumento() As Boolean                        │
+│    ├─ LeerDocumento() As String                            │
+│    └─ Dispose()                                            │
+│ 🔧 CWordManager.cls          ← Implementación              │
+│    ├─ Initialize(fileSystem As IFileSystem, errorHandler As IErrorHandlerService) │
+│    ├─ Implementa todos los métodos de IWordManager         │
+│    └─ Dispose libera recursos vía LimpiarRecursos          │
+│ 🧪 CMockWordManager.cls      ← Mock para testing           │
+│    ├─ ConfigureAbrirDocumento(resultado As Boolean)        │
+│    ├─ ConfigureReemplazarTexto(resultado As Boolean)       │
+│    ├─ ConfigureGuardarDocumento(resultado As Boolean)      │
+│    └─ ConfigureLeerDocumento(contenido As String)          │
+│ 🏭 modWordManagerFactory.bas ← Factory                     │
+│    └─ CreateWordManager() As IWordManager                  │
+│ 🔬 TIWordManager.bas         ✅ REFACT │
+│    ├─ TIWordManagerRunAll usa EnsureFolder/JoinPath y     │
+│    │   cierra Word en teardown                            │
+│    ├─ SuiteSetup usa GetWorkspacePath()+EnsureFolder()    │
+│    ├─ SuiteTeardown usa CloseAllWordInstancesForTesting    │
+│    ├─ CreateTestTemplate con manejo robusto de rutas      │
+│    └─ Cierre garantizado de Word en cleanup               │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias WordManager
@@ -891,6 +1030,67 @@ graph TD
     J --> L[IErrorHandlerService]
     M[modWordManagerFactory.bas] --> J
     N[modFileSystemFactory.bas] --> K
+    O[modErrorHandlerFactory.bas] --> L
+```
+
+🔗 **Dependencias:**
+
+- CWordManager ➜ IFileSystem (inyectado)
+- CWordManager ➜ IErrorHandlerService (inyectado)
+- modWordManagerFactory ➜ modFileSystemFactory, modErrorHandlerFactory
+
+🔧 **Mock Inteligente:**
+
+- CMockWordManager.ConfigureAbrirDocumento(resultado)
+- CMockWordManager.ConfigureReemplazarTexto(resultado)
+- CMockWordManager.ConfigureGuardarDocumento(resultado)
+- CMockWordManager.ConfigureLeerDocumento(contenido)
+
+🧪 **Patrones de Testing:**
+
+- **Suite Optimizado**: TIWordManager implementa patrón Suite con SuiteSetup/SuiteTeardown
+- **Integración Real**: Pruebas con documentos Word reales usando auto-aprovisionamiento
+- **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
+- **Tests Implementados**:
+  - `Test_CicloCompleto_Success()` - Ciclo completo de operaciones Word
+  - `Test_AbrirFicheroInexistente_DevuelveFalse()` - Manejo de errores
+- **Auto-aprovisionamiento**: Configuración automática del entorno de prueba con plantillas
+- **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
+- **Robustez**: Protección condicional en `m_ErrorHandler.LogError` calls
+
+#### 🔑 Firmas Clave
+```vba
+' modWordManagerFactory.bas
+Public Function CreateWordManager() As IWordManager
+    Dim fileSystem As IFileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem()
+    
+    Dim errorHandler As IErrorHandlerService
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    
+    Dim wordManager As CWordManager
+    Set wordManager = New CWordManager
+    wordManager.Initialize fileSystem, errorHandler
+    
+    Set CreateWordManager = wordManager
+End Function
+
+' CWordManager.cls
+Public Sub Initialize(fileSystem As IFileSystem, errorHandler As IErrorHandlerService)
+    Set m_FileSystem = fileSystem
+    Set m_ErrorHandler = errorHandler
+End Sub
+
+Public Function IWordManager_AbrirDocumento(ruta As String) As Boolean
+    ' Implementación con manejo de errores
+End Function
+
+Public Sub IWordManager_Dispose()
+    Call LimpiarRecursos
+End Sub
+```
+
+**Nota Importante sobre Dispose**: El método `Dispose()` es crítico para liberar recursos de Word Application y debe llamarse siempre al finalizar operaciones
     O[modErrorHandlerFactory.bas] --> L
 ```
 
@@ -996,6 +1196,47 @@ graph TD
 ```
 
 ## 8. Framework de Testing
+
+### 🎯 **Autoaprovisionamiento Exclusivo del Framework**
+El autoaprovisionamiento es responsabilidad **exclusiva** del framework de testing, ejecutado automáticamente antes de cada suite. No requiere configuración manual ni intervención externa.
+
+### 📋 **Estándares Oficiales de Naming y Rutas**
+
+**Fixtures (Plantillas):**
+- Ubicación: `back\test_env\fixtures\databases\`
+- Naming: `{Nombre}_test_template.accdb`
+- Ejemplos: `Document_test_template.accdb`, `Expedientes_test_template.accdb`, `Workflow_test_template.accdb`
+
+**Activos (Bases de Datos de Prueba):**
+- Ubicación: `back\test_env\workspace\`
+- Naming: `{Nombre}_integration_test.accdb` (o `_itest.accdb`)
+- Ejemplos: `Document_integration_test.accdb`, `Expedientes_integration_test.accdb`
+
+**Plantillas de Documentos:**
+- Origen: `back\recursos\Plantillas\`
+- Destino: `back\test_env\fixtures\documents\`
+- Copia automática durante el setup de pruebas
+
+### 🔧 **Helpers del Framework**
+
+**Funciones de Ruta:**
+- `GetProjectPath()`: Ruta base del proyecto CONDOR
+- `GetWorkspacePath()`: Ruta del workspace de pruebas (`back\test_env\workspace\`)
+
+**Gestión de Bases de Datos:**
+- `PrepareTestDatabase(templateName, activeName)`: Copia plantilla → activo
+- `CleanupTestDatabase(activeName)`: Elimina base de datos de prueba
+- `CleanupTestFolder(folderName)`: Limpia carpetas de prueba
+
+**Verificación de Plantillas:**
+- `VerifyAllTemplates()`: Verifica existencia de todas las plantillas requeridas
+
+### 🔐 **Gestión de Credenciales**
+Uso de contraseñas (ej: "dpddpd") obtenidas desde:
+- Configuración mock (`CMockConfig`) en entorno de pruebas
+- Configuración real (`CConfig`) en entorno de producción
+- Patrón: `localConfig.GetSetting("DATABASE_PASSWORD")`
+
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │                 FRAMEWORK DE TESTING                       │
@@ -1008,6 +1249,15 @@ graph TD
 │    ├─ Initialize()           ← Inicialización robusta      │
 │    ├─ AllTestsPassed         ← PROPIEDAD (Misión Emergencia Final) │
 │    └─ Scripting.Dictionary   ← Almacenamiento de resultados │
+│                                                             │
+│ ⚠️  REQUISITO DE COMPILACIÓN: Microsoft Scripting Runtime   │
+│    Los siguientes módulos requieren la referencia activa:   │
+│    - CMockConfig.cls (Scripting.Dictionary)                │
+│    - CWorkflowRepository.cls (Scripting.Dictionary)        │
+│    - CTestSuiteResult.cls (Scripting.Dictionary)           │
+│    Activar en VBA: Herramientas → Referencias →            │
+│    "Microsoft Scripting Runtime"                           │
+│                                                             │
 │ 📄 ITestReporter.cls         ← Interface de reportes │
 │    ├─ Initialize()           ← Contrato de inicialización │
 │    └─ GenerateReport()       ← Contrato de generación │
@@ -1027,6 +1277,12 @@ graph TD
 │    ✅ Corrección Arquitectónica: condor_cli.vbs corregido para usar   │
 │       ExecuteAllTestsForCLI en lugar de ExecuteAllTests               │
 │ 📋 modTestUtils.bas          ← Utilidades de testing       │
+│    ├─ GetProjectPath()       ← Ruta base del proyecto      │
+│    ├─ GetWorkspacePath()     ← Ruta workspace de pruebas   │
+│    ├─ PrepareTestDatabase()  ← Copia plantilla → activo    │
+│    ├─ CleanupTestDatabase()  ← Limpieza de BD de prueba    │
+│    ├─ CleanupTestFolder()    ← Limpieza de carpetas        │
+│    └─ VerifyAllTemplates()   ← Verificación de plantillas  │
 │ 📋 modAssert.bas             ← Aserciones                  │
 │                                                             │
 │ MÓDULOS DE PRUEBA (Patrón Estándar):                       │
@@ -1101,7 +1357,7 @@ graph TD
 │    • modRepositoryFactory.bas        ← Usa GetTestConfig()  │
 │                                                             │
 │ ⚙️ CONFIGURACIÓN ESTÁNDAR DE PRUEBAS:                     │
-│    • DATA_PATH: back\test_db\active\CONDOR_integration_test.accdb │
+│    • DATA_PATH: back\test_env\workspace\CONDOR_integration_test.accdb │
 │    • DATABASE_PASSWORD: "" (sin contraseña)               │
 │    • LOG_FILE_PATH: condor_test_run.log                    │
 │    • USUARIO_ACTUAL: test.user@condor.com                  │
@@ -1333,9 +1589,9 @@ graph TD
 ### 🏭 **Factory Pattern (con Singleton de Configuración)**
 
 * **Propósito**: Centralizar la creación de objetos y resolver sus dependencias de forma predecible y consistente.
-* **Implementación**: Cada servicio y repositorio tiene una factoría (`mod*Factory.bas`).
-* **Regla Inquebrantable**: Todas las funciones `Create...()` en las factorías **no deben aceptar ningún parámetro**. Obtienen todas las dependencias que necesitan de otras factorías o, en el caso de la configuración de pruebas, del Singleton `modTestContext.GetTestConfig()`. Se prohíbe la inyección manual.
-* **Beneficios**: Desacoplamiento máximo, configuración centralizada, eliminación de errores de entorno en las pruebas y una arquitectura 100% predecible.
+* **Implementación**: Cada servicio y repositorio tiene una factoría (`mod*Factory.bas`) que sigue un patrón híbrido.
+* **Regla Inquebrantable**: Todas las funciones `Create...()` deben aceptar un parámetro `Optional ByVal config As IConfig = Nothing`. Internamente, si este parámetro es `Nothing`, la factoría debe solicitar la configuración global del Singleton `modTestContext.GetTestConfig()`. Esto permite que los tests simples no pasen parámetros, mientras que los tests complejos pueden inyectar configuraciones locales y específicas.
+* **Beneficios**: Combina la simplicidad de una configuración por defecto con la flexibilidad necesaria para pruebas de integración aisladas, resultando en un sistema robusto y predecible.
 
 ### 🗄️ **Repository Pattern**
 
@@ -1367,411 +1623,86 @@ graph TD
 - **Implementación**: Diferentes implementaciones de IFileSystem, IWordManager
 - **Beneficios**: Flexibilidad, extensibilidad
 
-## 15. Sistema de Autoaprovisionamiento de Tests
+## 15. Sistema de Autoaprovisionamiento de Tests ✅ REFACTORIZADO
 
 ### 🎯 **Principio Fundamental**
+El framework de testing de CONDOR es **100% auto-suficiente y idempotente**. Cada vez que se ejecuta el comando `test`, el framework primero resetea el entorno a un estado prístino y conocido, garantizando resultados consistentes y eliminando la necesidad de configuración manual.
 
-Todas las pruebas de integración en CONDOR implementan un sistema de autoaprovisionamiento que garantiza:
+### ✅ **Estado de Refactorización Completado**
+**9 suites de integración refactorizadas** con el patrón estandarizado:
+- TIAuthRepository.bas
+- TIDocumentService.bas  
+- TIExpedienteRepository.bas
+- TISolicitudRepository.bas
+- TIWorkflowRepository.bas
+- TIMapeoRepository.bas
+- TINotificationService.bas
+- TIOperationRepository.bas
+- TIWordManager.bas
 
-- **Aislamiento**: Cada test ejecuta en un entorno limpio
-- **Reproducibilidad**: Resultados consistentes en cualquier máquina
-- **Autonomía**: No requiere configuración manual del desarrollador
+**Cambios implementados en cada suite:**
+- ✅ SuiteSetup usa `modTestUtils.PrepareTestDatabase()`
+- ✅ SuiteTeardown usa `modTestUtils.CleanupTestDatabase()`
+- ✅ Eliminadas constantes obsoletas (TEST_DB_TEMPLATE, TEST_DB_ACTIVE)
+- ✅ Rutas estandarizadas con `GetWorkspacePath()`
+- ✅ Consistencia arquitectónica mantenida
+
+### 📊 **Resultados de la Refactorización**
+**Rebuild exitoso:** 116 módulos sincronizados sin errores de compilación
+**Estado de pruebas:** 37 de 44 tests pasando (84% éxito)
+**Fallos restantes:** 7 tests en investigación (TIWordManager, TINotificationService, TIOperationRepository)
+**Arquitectura:** Completamente consistente y estandarizada
 
 ### 🔧 **Componentes del Sistema**
 
-#### 📁 **Estructura de Directorios**
+La lógica reside en la función `ResetTestEnvironment` dentro de `modTestUtils.bas` y sigue esta estructura de directorios:
+
+#### 📁 Estructura de Directorios
+
+El entorno de pruebas es gestionado bajo la carpeta `back/test_env/`. Esta estructura sigue convenciones estándar de testing y es la única fuente de verdad para los entornos de prueba.
 
 ```
-back/test_db/
-├── templates/          ← Plantillas maestras (solo lectura)
-│   ├── CONDOR_test_template.accdb
-│   ├── Lanzadera_test_template.accdb
-│   └── Expedientes_test_template.accdb
-└── active/            ← Bases de datos activas (volátil)
-    ├── CONDOR_integration_test.accdb
-    ├── Lanzadera_integration_test.accdb
-    └── Expedientes_integration_test.accdb
+back/test_env/
+├── fixtures/              ← Contiene los activos maestros (plantillas).
+│   ├── databases/         ← Ubicación de plantillas de BD (*_test_template.accdb).
+│   └── documents/         ← Ubicación de plantillas de documentos (Word, etc.).
+└── workspace/             ← Directorio volátil para los tests en ejecución.
+                             Aquí se crean las copias activas de las BD y otros ficheros.
+                             Este directorio no se versiona y se considera desechable.
 ```
 
-#### 🛠️ **Utilidades Centrales**
-
-- `modTestUtils.GetProjectPath()`: Obtiene la ruta base del proyecto
-- `modTestUtils.PrepareTestDatabase()`: Copia plantilla a directorio activo
-- `CreateTestDirectories()`: Crea directorios necesarios
-- `CreateTestDatabase()`: Copia y configura BD de prueba
-- `CopyTestTemplate()`: Prepara plantillas de documentos
-- `Teardown()`: Limpia el entorno después de las pruebas
-
-#### 📊 **Tests con Autoaprovisionamiento**
-
-| Archivo de Test                | Tipo         | Recursos Aprovisionados       | Patrón                    |
-| ------------------------------ | ------------ | ----------------------------- | -------------------------- |
-| `TIDocumentService.bas`      | Integración | BD + Plantillas + Directorios | **Suite Optimizado** |
-| `TIFileSystem.bas`           | Integración | Directorios de prueba         | Individual                 |
-| `TIAuthRepository.bas`       | Integración | BD de prueba                  | **Suite Optimizado** |
-| `TISolicitudRepository.bas`  | Integración | BD de prueba                  | Individual                 |
-| `TIWorkflowRepository.bas`   | Integración | BD de prueba                  | Individual                 |
-| `TIOperationRepository.bas`  | Integración | BD de prueba                  | Individual                 |
-| `TIExpedienteRepository.bas` | Integración | BD de prueba                  | Suite Optimizado           |
-| `TIMapeoRepository.bas`      | Integración | BD de prueba                  | **Suite Optimizado** |
-| `TINotificationService.bas`  | Integración | BD de prueba                  | **⭐ GOLD STANDARD** |
-| `TIWordManager.bas`          | Integración | Plantillas + Directorios      | **Suite Optimizado** |
-
-#### 🎯 **Beneficios del Sistema**
-
-- **✅ Portabilidad**: Los tests funcionan en cualquier máquina sin configuración manual
-- **✅ Aislamiento**: Cada test ejecuta en un entorno limpio y controlado
-- **✅ Mantenibilidad**: Cambios de estructura se reflejan automáticamente
-- **✅ Consistencia**: Patrón uniforme en todos los tests de integración
-- **✅ Automatización**: Setup y teardown completamente automatizados
-- **✅ Trazabilidad**: Logs detallados del proceso de aprovisionamiento
-
-#### 🔄 **Flujo de Ejecución Optimizado (Patrón Suite)**
-
-```text
-1. Suite Inicia
-   ↓
-2. SuiteSetup() - Configuración UNA VEZ
-   ↓
-3. Aprovisionamiento automático
-   ├── Directorios
-   ├── Base de datos
-   └── Plantillas
-   ↓
-4. Ejecución de TODOS los tests
-   ├── Test 1 (sin setup propio)
-   ├── Test 2 (sin setup propio)
-   └── Test N (sin setup propio)
-   ↓
-5. SuiteTeardown() - Limpieza UNA VEZ
-   ↓
-6. Suite Finaliza
-```
-
-**🚀 Optimización Implementada**: El nuevo patrón ejecuta la configuración y limpieza UNA SOLA VEZ por suite completa, no por test individual, mejorando significativamente el rendimiento.
-
-Este sistema garantiza que los tests de integración sean completamente autónomos y reproducibles en cualquier entorno de desarrollo, eliminando la dependencia de configuraciones manuales o rutas específicas del sistema.
-
-### 🌟 **Gold Standard: TINotificationService.bas**
-
-El módulo `TINotificationService.bas` representa el **Gold Standard** para suites de pruebas de integración en CONDOR, implementando las mejores prácticas y patrones más avanzados:
-
-#### 📋 **Características del Gold Standard**
-
-**✅ Patrón Suite Optimizado Avanzado**
-
-- `SuiteSetup()`: Configuración única ejecutada UNA VEZ al inicio de la suite
-- `SuiteTeardown()`: Limpieza única ejecutada UNA VEZ al final de la suite
-- Máximo rendimiento: elimina setup/teardown repetitivo por test individual
-
-**✅ Cobertura de Testing Completa**
-
-- **Casos de Éxito**: `TestSendNotificationSuccessCallsRepositoryCorrectly()`
-- **Validación de Dependencias**: `TestInitializeWithValidDependencies()`
-- **Casos de Error**: `TestSendNotificationWithoutInitialize()`
-- **Validación de Parámetros**: `TestSendNotificationWithInvalidParameters()`
-- **Configuración**: `TestSendNotificationConfigValuesUsed()`
-
-**✅ Gestión de Transacciones de BD**
-
-- Uso de `DBEngine.BeginTrans` y `DBEngine.Rollback`
-- Aislamiento completo entre tests
-- Limpieza automática de datos de prueba
-
-**✅ Manejo de Errores Robusto**
-
-- Bloques `On Error GoTo` en cada función de test
-- Limpieza de recursos garantizada en sección `Cleanup`
-- Reportes de error detallados con `TestFail`
-
-**✅ Integración Real con Mocks Estratégicos**
-
-- Servicios reales: `CNotificationService`, `CNotificationRepository`
-- Mocks solo para configuración: `CMockConfig`
-- Testing de integración verdadera con BD real
-
-#### 🎯 **Metodología de Implementación**
-
-```vba
-Public Function TINotificationServiceRunAll() As CTestSuiteResult
-    Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TINotificationService (Estándar de Oro)"
-  
-    On Error GoTo CleanupSuite
-  
-    Call SuiteSetup  ' ← UNA VEZ por suite
-    suiteResult.AddResult TestSendNotificationSuccessCallsRepositoryCorrectly()
-    suiteResult.AddResult TestInitializeWithValidDependencies()
-    suiteResult.AddResult TestSendNotificationWithoutInitialize()
-    suiteResult.AddResult TestSendNotificationWithInvalidParameters()
-    suiteResult.AddResult TestSendNotificationConfigValuesUsed()
-  
-CleanupSuite:
-    Call SuiteTeardown  ' ← UNA VEZ por suite
-    Set TINotificationServiceRunAll = suiteResult
-End Function
-```
-
-#### 📊 **Beneficios del Gold Standard**
-
-- **🚀 Rendimiento**: 5x más rápido que patrón individual
-- **🔒 Confiabilidad**: 100% de aislamiento entre tests
-- **📈 Mantenibilidad**: Patrón consistente y predecible
-- **🎯 Cobertura**: Testing exhaustivo de todos los escenarios
-- **🔧 Escalabilidad**: Fácil adición de nuevos tests
-
-**Este Gold Standard debe ser el modelo de referencia para todas las nuevas suites de pruebas de integración en CONDOR.**
-
-<br>
-
-🔬 **Arquitectura de Pruebas y Sistema de Autoaprovisionamiento**
-El proyecto CONDOR implementa un sistema de autoaprovisionamiento para todas las pruebas de integración.
-
-**1. Principio Fundamental: Pruebas Aisladas y Reproducibles**
-Cada ejecución de una suite de pruebas de integración es:
-
-**Autónoma**: No requiere configuración manual de carpetas o bases de datos.
-
-**Aislada**: Las pruebas no comparten estado.
-
-**Predecible**: Cada prueba ejecuta sobre un conjunto de datos limpio y conocido.
-
-**2. Cómo Funciona el Sistema de Autoaprovisionamiento**
-El sistema se basa en un patrón Setup / Teardown orquestado por el módulo de utilidades modTestUtils.bas.
-
-**Plantillas Maestras (Templates)**:
-
-En el directorio back/test_db/templates/ se almacenan las bases de datos "maestras" o "doradas" (CONDOR_test_template.accdb, Lanzadera_test_template.accdb, etc.). Estas plantillas contienen la estructura y los datos mínimos necesarios para las pruebas. Nunca se trabajan directamente sobre ellas.
-
-**Bases de Datos Activas (Active)**:
-
-En el directorio back/test_db/active/ es donde se realizarán las pruebas. Este directorio se considera volátil y puede ser limpiado en cualquier momento.
-
-**El Ciclo de Vida Optimizado de una Suite de Integración**:
-
-**SuiteSetup (UNA VEZ al inicio de la suite)**: Se invoca el procedimiento SuiteSetup del módulo de pruebas. Este, a su vez, llama a modTestUtils.PrepareTestDatabase.
-
-PrepareTestDatabase borra la base de datos activa anterior (si existe) del directorio active/.
-
-Copia la plantilla maestra desde templates/ al directorio active/, creando una base de datos limpia para TODA la suite.
-
-**Execute (Durante TODOS los tests)**: Los tests se ejecutan secuencialmente, compartiendo la misma base de datos configurada. Cada test individual maneja sus propios datos mediante transacciones.
-
-**SuiteTeardown (UNA VEZ al final de la suite)**: Se invoca el procedimiento SuiteTeardown, que utiliza nuestro servicio IFileSystem para eliminar la base de datos activa, dejando el entorno limpio.
-
-**🚀 Beneficio**: Esta optimización reduce significativamente el tiempo de ejecución al eliminar la sobrecarga de configuración/limpieza repetitiva por cada test individual.
-
-**3. Guía para Desarrolladores: Nuevos Tests de Integración**
-Cualquier nuevo módulo de pruebas de integración debe seguir esta estructura.
-
-**Plantilla de Código Optimizada (Patrón Suite)**:
-
-```vba
-' =====================================================
-' MÓDULO: TI[MiRepositorio] (Patrón Suite Optimizado)
-' DESCRIPCIÓN: Pruebas de integración para C[MiRepositorio]
-' =====================================================
-
-Option Explicit
-
-' Constantes de configuración
-Private Const TEST_SUITE_NAME As String = "TI[MiRepositorio]"
-Private Const TEST_DATABASE_PATH As String = "C:\Proyectos\CONDOR\data\test\condor_test.accdb"
-
-' FUNCIÓN PRINCIPAL DE LA SUITE (PATRÓN OPTIMIZADO)
-Public Function TI[MiRepositorio]RunAll() As CTestSuiteResult
-    On Error GoTo ErrorHandler
-  
-    Set TI[MiRepositorio]RunAll = New CTestSuiteResult
-    TI[MiRepositorio]RunAll.Initialize TEST_SUITE_NAME
-  
-    ' Configuración UNA VEZ para toda la suite
-    Call SuiteSetup
-  
-    ' Ejecutar todos los tests de la suite
-    Call TestMiMetodo_Exitoso()
-    Call TestMiMetodo_FallaComoSeEspera()
-    ' Agregar más tests según necesidad
-  
-    ' Limpieza UNA VEZ para toda la suite
-    Call SuiteTeardown
-  
-    Exit Function
-  
-ErrorHandler:
-    ' En caso de error, asegurar limpieza
-    Call SuiteTeardown
-    Err.Raise Err.Number, Err.Source, "Error en suite " & TEST_SUITE_NAME & ": " & Err.Description
-End Function
-
-' SUITE SETUP - SE EJECUTA UNA SOLA VEZ AL INICIO
-Private Sub SuiteSetup()
-    ' Configuración del entorno para TODA la suite
-  
-    ' 1. Crear directorios necesarios
-    Call CreateTestDirectories
-  
-    ' 2. Aprovisionar base de datos de test
-    Call ProvisionTestDatabase
-  
-    ' 3. Copiar plantillas necesarias
-    Call CopyWordTemplate
-  
-    ' 4. Insertar datos maestros en BD de test
-    Call InsertMasterDataIntoTestDB
-End Sub
-
-' SUITE TEARDOWN - SE EJECUTA UNA SOLA VEZ AL FINAL
-Private Sub SuiteTeardown()
-    ' Limpieza del entorno para TODA la suite
-    Call CleanupTestEnvironment
-End Sub
-
-' TESTS INDIVIDUALES - NO NECESITAN SETUP/TEARDOWN PROPIO
-Private Sub TestMiMetodo_Exitoso()
-    ' Test individual - el entorno ya está configurado por SuiteSetup
-  
-    ' ARRANGE: Crear dependencias usando la BD ya configurada
-    ' ACT: Ejecutar el método a probar
-    ' ASSERT: Verificar los resultados con modAssert
-End Sub
-
-Private Sub TestMiMetodo_FallaComoSeEspera()
-    ' Otro test individual - comparte el mismo entorno
-  
-    ' ARRANGE, ACT, ASSERT...
-End Sub
-```
-
-### 🚀 **Patrón de Ejecución Optimizado (Setup a Nivel de Suite y Transacciones)**
-
-#### 🎯 **Principio del Gold Standard**
-
-El proyecto CONDOR ha evolucionado hacia un patrón optimizado de pruebas de integración que elimina la sobrecarga de Setup/Teardown por cada test individual, implementando en su lugar:
-
-- **Setup a Nivel de Suite**: Una sola creación de base de datos por suite completa
-- **Auto-aprovisionamiento de Datos**: Cada test crea y limpia sus propios datos dentro de transacciones
-- **Aislamiento por Transacciones**: Uso de `DBEngine.BeginTrans` y `DBEngine.Rollback` para garantizar limpieza automática
-
-#### 📋 **Gold Standard: TIAuthRepository.bas**
-
-**Estructura Optimizada:**
-
-```vba
-Public Function TIAuthRepositoryRunAll() As CTestSuiteResult
-    Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TIAuthRepository"
-  
-    On Error GoTo ErrorHandler
-  
-    ' Setup a nivel de suite (una sola vez)
-    Call SuiteSetup
-  
-    ' Ejecutar todos los tests
-    suiteResult.AddTestResult TestGetUserAuthData_AdminUser_ReturnsCorrectData()
-    ' ... más tests
-  
-    ' Teardown a nivel de suite (una sola vez)
-    Call SuiteTeardown
-  
-    Set TIAuthRepositoryRunAll = suiteResult
-    Exit Function
-  
-ErrorHandler:
-    Call SuiteTeardown
-    suiteResult.Fail "Error en suite: " & Err.Description
-    Set TIAuthRepositoryRunAll = suiteResult
-End Function
-
-Private Sub SuiteSetup()
-    ' Utiliza la utilidad central para crear la BD una sola vez
-    modTestUtils.SuiteSetup
-End Sub
-
-Private Sub SuiteTeardown()
-    ' Utiliza la utilidad central para limpiar la BD una sola vez
-    modTestUtils.SuiteTeardown
-End Sub
-```
-
-> **💡 Nota Especial**: `TIAuthRepository.bas` implementa además **configuración local a nivel de test** usando `CMockConfig` y **auto-aprovisionamiento de datos** dentro de transacciones, convirtiéndolo en un ejemplo completo del patrón optimizado con gestión auto-contenida de datos.
-
-**Test Individual Auto-contenido:**
-
-```vba
-Private Function TestGetUserAuthData_AdminUser_ReturnsCorrectData() As CTestResult
-    Set TestGetUserAuthData_AdminUser_ReturnsCorrectData = New CTestResult
-    TestGetUserAuthData_AdminUser_ReturnsCorrectData.Initialize "GetUserAuthData devuelve datos correctos para usuario admin"
-  
-    Dim db As DAO.Database
-    On Error GoTo TestFail
-  
-    ' ARRANGE: Crear conexión y transacción
-    Set db = DBEngine.OpenDatabase(modTestUtils.GetActiveTestDatabasePath())
-    DBEngine.BeginTrans
-  
-    ' Auto-aprovisionamiento: Crear datos de prueba
-    db.Execute "INSERT INTO TbUsuarios (CorreoUsuario, NombreUsuario, EsAdministrador) " & _
-               "VALUES ('admin@test.com', 'Admin Test', 'Sí')"
-  
-    ' ACT: Ejecutar el método a probar
-    Dim authRepo As New CAuthRepository
-    authRepo.Initialize modConfigFactory.CreateConfig(), db
-    Dim result As CUserAuthData
-    Set result = authRepo.GetUserAuthData("admin@test.com")
-  
-    ' ASSERT: Verificar resultados
-    modAssert.IsNotNothing result, "Debe devolver datos de usuario"
-    modAssert.AreEqual "Admin Test", result.NombreUsuario, "Nombre de usuario correcto"
-    modAssert.IsTrue result.EsAdministrador, "Debe ser administrador"
-  
-    TestGetUserAuthData_AdminUser_ReturnsCorrectData.Pass
-    GoTo Cleanup
-  
-TestFail:
-    TestGetUserAuthData_AdminUser_ReturnsCorrectData.Fail "Error: " & Err.Description
-  
-Cleanup:
-    ' Auto-limpieza: Rollback automático elimina todos los datos
-    If Not db Is Nothing Then
-        DBEngine.Rollback
-        db.Close
-    End If
-    Set db = Nothing
-End Function
-```
-
-#### ⚡ **Beneficios del Patrón Optimizado**
-
-- **🚀 Performance**: Reducción del 80% en tiempo de ejecución (una BD por suite vs. una BD por test)
-- **🔒 Aislamiento Garantizado**: Las transacciones aseguran que ningún test afecte a otros
-- **🧹 Auto-limpieza**: `DBEngine.Rollback` elimina automáticamente todos los datos de prueba
-- **📝 Simplicidad**: Eliminación de procedimientos `Setup()` y `Teardown()` individuales
-- **🎯 Mantenibilidad**: Código más limpio y fácil de entender
-- **🔄 Reutilización**: Patrón consistente aplicable a todas las suites de integración
-
-#### 🏆 **Suites Refactorizadas al Gold Standard**
-
-| Suite                            | Estado                    | Patrón Aplicado            |
-| -------------------------------- | ------------------------- | --------------------------- |
-| `TIAuthRepository.bas`         | ✅**Gold Standard** | Suite Setup + Transacciones |
-| `TIExpedienteRepository.bas`   | ✅ Refactorizada          | Suite Setup + Transacciones |
-| `TISolicitudRepository.bas`    | 🔄 Pendiente              | Patrón tradicional         |
-| `TIWorkflowRepository.bas`     | 🔄 Pendiente              | Patrón tradicional         |
-| `TIOperationRepository.bas`    | 🔄 Pendiente              | Patrón tradicional         |
-| `TINotificationRepository.bas` | 🔄 Pendiente              | Patrón tradicional         |
-
-#### 🎯 **Guía de Migración**
-
-Para migrar una suite existente al patrón optimizado:
-
-1. **Reemplazar función principal**: Agregar `SuiteSetup()` y `SuiteTeardown()` calls
-2. **Eliminar Setup/Teardown individuales**: Remover procedimientos por test
-3. **Refactorizar tests**: Implementar auto-aprovisionamiento con transacciones
-4. **Utilizar modTestUtils**: Aprovechar `SuiteSetup()` y `SuiteTeardown()` centralizados
-5. **Verificar aislamiento**: Confirmar que `DBEngine.Rollback` limpia correctamente
-
-Este patrón representa la evolución natural del sistema de autoaprovisionamiento hacia una arquitectura más eficiente y mantenible.
+### 🔄 **Flujo de Ejecución Automático**
+
+Al ejecutar `cscript condor_cli.vbs test`, ocurre la siguiente secuencia:
+
+1. **Reseteo del Entorno:** El `Test Runner` llama a `modTestUtils.ResetTestEnvironment`.
+2. **Limpieza:** Las carpetas `fixtures` y `workspace` son eliminadas por completo.
+3. **Recreación:** Se vuelven a crear las carpetas `fixtures` (con sus subcarpetas `databases` y `documents`) y `workspace`.
+4. **Aprovisionamiento de Fixtures:**
+   * Las bases de datos maestras (ej. `CONDOR_datos.accdb`) se copian desde `back/` a `back/test_env/fixtures/databases/` y se renombran (ej. `CONDOR_master.accdb`).
+   * Las plantillas de documentos se copian desde `back/recursos/Plantillas/` a `back/test_env/fixtures/documents/`.
+5. **Ejecución de Suites:** Cada suite de pruebas (`TI*.bas`) utiliza los "fixtures" para crear su propio entorno de trabajo dentro de la carpeta `workspace`, asegurando un aislamiento total.
+
+### ⚖️ **Patrón Simétrico SuiteSetup/SuiteTeardown**
+
+Todas las suites de integración implementan un patrón simétrico y estandarizado:
+
+#### 🔧 **SuiteSetup (Preparación)**
+- Utiliza `modTestUtils.PrepareTestDatabase(templateName, activeName)` para crear la BD de trabajo
+- Configura datos específicos de la suite mediante inserts SQL directos
+- Maneja errores con propagación controlada
+
+#### 🧹 **SuiteTeardown (Limpieza)**
+- Utiliza `modTestUtils.CleanupTestDatabase(activeName)` para eliminar la BD de trabajo
+- Implementación centralizada y consistente en todas las suites
+- Garantiza limpieza completa sin dependencias externas
+
+**Beneficios del Patrón:**
+- **Simetría:** Cada operación de setup tiene su contraparte de teardown
+- **Centralización:** El patrón Setup/Teardown es simétrico y se gestiona con las utilidades `modTestUtils.PrepareTestDatabase`, `modTestUtils.CleanupTestDatabase` y `modTestUtils.CleanupTestFolder`
+- **Centralización:** Lógica común en `modTestUtils.bas`
+- **Consistencia:** Mismo patrón en todas las suites `TI*.bas`
+- **Aislamiento:** Cada suite gestiona su propio ciclo de vida
 
 ## 16. Flujo de Trabajo y Gestión de Estados
 
@@ -1858,7 +1789,7 @@ CONDOR utiliza el correo electrónico recibido para determinar el rol del usuari
 
 **Ruta Local**: ./back/Lanzadera_Datos.accdb
 
-**ID de Aplicación para CONDOR**: 231
+**ID de Aplicación para CONDOR**: 231 (parámetro operativo en integración)
 
 #### 17.1.3. Consulta de Rol de Administrador Global
 

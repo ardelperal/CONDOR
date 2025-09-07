@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -31,7 +31,7 @@ Public Sub Initialize(Optional ByVal errorHandler As IErrorHandlerService = Noth
     Set m_ErrorHandler = errorHandler
 End Sub
 
-Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As Long, ByVal details As String)
     Dim errorHandler As IErrorHandlerService
     On Error GoTo errorHandler
     
@@ -123,7 +123,7 @@ End Sub
 ' ============================================================================
 
 ' Método público de conveniencia para LogOperation
-Public Sub LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+Public Sub LogOperation(ByVal operationType As String, ByVal entityId As Long, ByVal details As String)
     IOperationLogger_LogOperation operationType, entityId, details
 End Sub
 

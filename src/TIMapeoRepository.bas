@@ -2,8 +2,7 @@ Attribute VB_Name = "TIMapeoRepository"
 Option Compare Database
 Option Explicit
 
-Private Const CONDOR_TEMPLATE_PATH As String = "back\test_db\templates\CONDOR_test_template.accdb"
-Private Const CONDOR_ACTIVE_PATH As String = "back\test_db\active\CONDOR_mapeo_integration_test.accdb"
+' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO)
@@ -39,12 +38,17 @@ Private Sub SuiteSetup()
     On Error GoTo ErrorHandler
     ' Aprovisionar la base de datos para toda la suite
     Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
-    Dim templatePath As String: templatePath = projectPath & CONDOR_TEMPLATE_PATH
-    Dim activePath As String: activePath = projectPath & CONDOR_ACTIVE_PATH
-    Call modTestUtils.SuiteSetup(templatePath, activePath)
+    
+    ' Usar las constantes ya definidas para construir los nombres de archivo
+    Dim templateDbName As String: templateDbName = "Mapeo_test_template.accdb"
+    Dim activeDbName As String: activeDbName = "Mapeo_integration_test.accdb"
+    
+    ' Llamada al método correcto de modTestUtils
+    modTestUtils.PrepareTestDatabase templateDbName, activeDbName
     
     ' Insertar los datos de prueba maestros para la suite
     Dim db As DAO.Database
+    Dim activePath As String: activePath = modTestUtils.GetWorkspacePath() & activeDbName
     Set db = DBEngine.OpenDatabase(activePath)
     db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) VALUES ('PC', 'refContrato', 'MARCADOR_CONTRATO')", dbFailOnError
     db.Close
@@ -55,8 +59,8 @@ ErrorHandler:
 End Sub
 
 Private Sub SuiteTeardown()
-    Dim activePath As String: activePath = modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    Call modTestUtils.SuiteTeardown(activePath)
+    ' Limpieza estandarizada a través de la utilidad central.
+    Call modTestUtils.CleanupTestDatabase("Mapeo_integration_test.accdb")
 End Sub
 
 ' ============================================================================
@@ -77,18 +81,19 @@ Private Function TestGetMapeoPorTipoSuccess() As CTestResult
     
     On Error GoTo TestFail
 
-    ' Arrange: 1. Crear configuración local apuntando a la BD de prueba activa
+    ' Arrange: Crear configuración local apuntando a la BD de prueba de esta suite
     Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "DATA_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    mockConfigImpl.SetSetting "CONDOR_DATA_PATH", modTestUtils.GetWorkspacePath() & "Mapeo_integration_test.accdb"
+    mockConfigImpl.SetSetting "CONDOR_PASSWORD", ""
     Set localConfig = mockConfigImpl
     
-    ' Arrange: 2. Crear dependencias inyectando la configuración local
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(localConfig)
-    Set repository = modRepositoryFactory.CreateMapeoRepository(localConfig, errorHandler)
+    ' Arrange: Crear dependencias inyectando la configuración local
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateMapeoRepository(localConfig)
     
     ' Arrange: Conectar a la base de datos activa de forma segura
     Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = localConfig.GetDataPath()
+    dbPath = modTestUtils.GetWorkspacePath() & "Mapeo_integration_test.accdb"
     
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 100, "Test.Arrange", "La BD de prueba de Mapeo no existe en la ruta esperada: " & dbPath
@@ -136,17 +141,19 @@ Private Function TestGetMapeoPorTipoNotFound() As CTestResult
     
     On Error GoTo TestFail
 
-    ' Arrange
+    ' Arrange: Crear configuración local apuntando a la BD de prueba de esta suite
     Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "DATA_PATH", modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    mockConfigImpl.SetSetting "CONDOR_DATA_PATH", modTestUtils.GetWorkspacePath() & "Mapeo_integration_test.accdb"
+    mockConfigImpl.SetSetting "CONDOR_PASSWORD", ""
     Set localConfig = mockConfigImpl
     
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(localConfig)
-    Set repository = modRepositoryFactory.CreateMapeoRepository(localConfig, errorHandler)
+    ' Arrange: Crear dependencias inyectando la configuración local
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repository = modRepositoryFactory.CreateMapeoRepository(localConfig)
     
     ' Arrange: Conectar a la base de datos activa de forma segura
     Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = localConfig.GetDataPath()
+    dbPath = modTestUtils.GetWorkspacePath() & "Mapeo_integration_test.accdb"
     
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 100, "Test.Arrange", "La BD de prueba de Mapeo no existe en la ruta esperada: " & dbPath

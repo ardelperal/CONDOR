@@ -10,13 +10,7 @@ Option Explicit
 ' =====================================================
 
 
-' --- Constantes para el entorno de prueba ---
-Private Const TEST_ENV_PATH As String = "back\test_db\active\doc_service_test\"
-Private Const TEST_TEMPLATES_PATH As String = TEST_ENV_PATH & "templates\"
-Private Const TEST_GENERATED_PATH As String = TEST_ENV_PATH & "generated\"
-Private Const TEST_DB_ACTIVE_PATH As String = TEST_ENV_PATH & "CONDOR_integration_test.accdb"
-Private Const SOURCE_TEMPLATE_FILE As String = "back\recursos\Plantillas\PC.docx"
-Private Const DB_TEMPLATE_FILE As String = "back\test_db\templates\CONDOR_test_template.accdb"
+' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
 ' --- Variables eliminadas - ahora se declaran localmente en cada función ---
 
@@ -33,19 +27,25 @@ Private Sub SuiteSetup()
     Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
 
     ' 1. Crear estructura de directorios
-    fs.CreateFolder projectPath & TEST_ENV_PATH
-    fs.CreateFolder projectPath & TEST_TEMPLATES_PATH
-    fs.CreateFolder projectPath & TEST_GENERATED_PATH
+    fs.CreateFolder modTestUtils.GetWorkspacePath() & "doc_service_test\"
+    fs.CreateFolder modTestUtils.GetWorkspacePath() & "doc_service_test\templates\"
+    fs.CreateFolder modTestUtils.GetWorkspacePath() & "doc_service_test\generated\"
 
     ' 2. Aprovisionar BD de prueba
-    modTestUtils.PrepareTestDatabase projectPath & DB_TEMPLATE_FILE, projectPath & TEST_DB_ACTIVE_PATH
+    Dim templateDbName As String: templateDbName = "Document_test_template.accdb"
+    Dim activeDbName As String: activeDbName = "Document_integration_test.accdb"
+    modTestUtils.PrepareTestDatabase templateDbName, activeDbName
 
     ' 3. Aprovisionar plantilla Word
-    fs.CopyFile projectPath & SOURCE_TEMPLATE_FILE, projectPath & TEST_TEMPLATES_PATH & "PC.docx"
+    Dim plantillaSrc As String
+    plantillaSrc = modTestUtils.JoinPath(projectPath, "back\recursos\Plantillas\PC.docx")
+    Call modTestUtils.EnsureFolder(modTestUtils.GetWorkspacePath() & "doc_service_test\templates\")
+    fs.CopyFile plantillaSrc, modTestUtils.GetWorkspacePath() & "doc_service_test\templates\PC.docx"
 
     ' 4. Insertar datos maestros en la BD de prueba
     Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(projectPath & TEST_DB_ACTIVE_PATH)
+    Dim activePath As String: activePath = modTestUtils.GetWorkspacePath() & activeDbName
+    Set db = DBEngine.OpenDatabase(activePath)
 
     ' BLINDAJE: Limpiar tablas antes de insertar, respetando integridad referencial
     db.Execute "DELETE * FROM tbDatosPC", dbFailOnError
@@ -124,7 +124,7 @@ Private Function TestGenerarDocumentoSuccess() As CTestResult
     
     ' ARRANGE (continuación)
     Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
-    Dim templatePath As String: templatePath = projectPath & TEST_TEMPLATES_PATH & "PC.docx"
+    Dim templatePath As String: templatePath = modTestUtils.GetWorkspacePath() & "doc_service_test\templates\PC.docx"
     
     Set fileSystem = modFileSystemFactory.CreateFileSystem()
     If Not fileSystem.FileExists(templatePath) Then
@@ -176,11 +176,10 @@ End Function
 ' SUITE TEARDOWN - LIMPIEZA FINAL DE LA SUITE
 ' =====================================================
 Private Sub SuiteTeardown()
-    On Error Resume Next ' Blindaje
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    fs.DeleteFolderRecursive modTestUtils.GetProjectPath() & TEST_ENV_PATH
-    Set fs = Nothing
+    On Error Resume Next
+    Call modTestUtils.CloseAllWordInstancesForTesting
+    ' Usar función centralizada de limpieza
+    modTestUtils.CleanupTestFolder "doc_service_test\"
 End Sub
 
 ' =====================================================
@@ -191,20 +190,20 @@ Private Sub InitializeRealDependencies(ByRef solicitudService As ISolicitudServi
                                        ByRef operationLogger As IOperationLogger, ByRef ErrorHandler As IErrorHandlerService, _
                                        ByRef documentService As IDocumentService, ByRef fileSystem As IFileSystem)
     
-    ' Crear configuración local para tests de integración
-    Dim localConfig As IConfig
-    Set localConfig = New CConfig
-    localConfig.SetValue "DatabasePath", TEST_DB_PATH
-    localConfig.SetValue "DatabasePassword", TEST_DB_PASSWORD
-    localConfig.SetValue "OutputPath", TEST_OUTPUT_PATH
+    ' ARRANGE: Crear configuración local apuntando a la BD de prueba de esta suite
+    Dim config As IConfig
+    Dim mockConfigImpl As New CMockConfig
+    mockConfigImpl.SetSetting "CONDOR_DATA_PATH", modTestUtils.GetWorkspacePath() & "Document_integration_test.accdb"
+    mockConfigImpl.SetSetting "CONDOR_PASSWORD", ""
+    Set config = mockConfigImpl
     
-    ' Inyectar configuración específica en las factorías
-    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(localConfig)
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(localConfig)
-    Set wordManager = modWordManagerFactory.CreateWordManager(localConfig)
-    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService(localConfig)
-    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(localConfig)
-    Set documentService = modDocumentServiceFactory.CreateDocumentService(localConfig)
+    ' Crear dependencias inyectando la configuración local
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(config)
+    Set wordManager = modWordManagerFactory.CreateWordManager()
+    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService(config)
+    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(config)
+    Set documentService = modDocumentServiceFactory.CreateDocumentService(config)
 End Sub
 
 

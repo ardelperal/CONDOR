@@ -10,6 +10,8 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+' REQUISITO DE COMPILACIÓN: Este módulo usa Scripting.Dictionary. Active "Microsoft Scripting Runtime".
+
 Implements IWorkflowRepository
 
 Private m_Config As IConfig
@@ -32,7 +34,7 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     isValid = False
     
     ' Obtener la conexión a la base de datos del backend
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, ";PWD=" & m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetCondorDataPath(), False, False, ";PWD=" & m_Config.GetCondorPassword())
     
     ' Consulta SQL para verificar si existe la transición
     Dim strSQL As String
@@ -70,7 +72,7 @@ ErrorHandler:
     GoTo Cleanup
 End Function
 
-Private Function IWorkflowRepository_GetNextStates(ByVal idEstadoActual As Long, ByVal usuarioRol As String) As Scripting.Dictionary
+Private Function IWorkflowRepository_GetNextStates(ByVal idEstadoActual As Long, ByVal usuarioRol As String) As Object
     ' Implementación real para obtener los siguientes estados válidos desde la BD.
     On Error GoTo ErrorHandler
     
@@ -80,7 +82,7 @@ Private Function IWorkflowRepository_GetNextStates(ByVal idEstadoActual As Long,
     Dim dict As New Scripting.Dictionary
     
     ' Obtener la conexión a la base de datos del backend
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), False, False, ";PWD=" & m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetCondorDataPath(), False, False, ";PWD=" & m_Config.GetCondorPassword())
     
     ' Consulta SQL parametrizada para seguridad y claridad (Lección 18)
     ' Une transiciones y estados para obtener los nombres de los estados de destino.

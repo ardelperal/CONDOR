@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -32,7 +32,7 @@ Private Function IDocumentService_GenerarDocumento(ByVal SolicitudID As Long) As
     Dim solicitud As ESolicitud
     Set solicitud = m_SolicitudService.ObtenerSolicitudPorId(SolicitudID) ' Asumimos que este método existe
     
-    Dim mapeos As Scripting.Dictionary
+    Dim mapeos As Object
     Set mapeos = m_MapeoRepo.ObtenerMapeosPorCategoria(solicitud.tipoSolicitud) ' Asumimos que este método existe
     
     ' ... Resto de la lógica de generación ...

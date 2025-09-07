@@ -13,31 +13,52 @@ Private g_TestConfig As IConfig
 
 ' FUNCIÓN SINGLETON: Crea la configuración en la primera llamada y la devuelve en las siguientes.
 Public Function GetTestConfig() As IConfig
-    ' Si la configuración no ha sido creada, créala y configúrala UNA SOLA VEZ.
     If g_TestConfig Is Nothing Then
         Dim mockConfigImpl As New CMockConfig
-        Dim projectRoot As String
-        projectRoot = modTestUtils.GetProjectPath()
+        Dim fso As Object
+        Set fso = CreateObject("Scripting.FileSystemObject")
         
-        ' Configuración ESTÁNDAR para todas las bases de datos de prueba.
-        mockConfigImpl.SetSetting "DATA_PATH", projectRoot & "back\test_db\active\CONDOR_integration_test.accdb"
-        mockConfigImpl.SetSetting "DATABASE_PASSWORD", "" ' La BD principal de prueba no tiene pwd
-        mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", projectRoot & "back\test_db\active\Lanzadera_integration_test.accdb"
-        mockConfigImpl.SetSetting "LANZADERA_PASSWORD", "dpddpd"
-        mockConfigImpl.SetSetting "EXPEDIENTES_DATA_PATH", projectRoot & "back\test_db\active\Expedientes_integration_test.accdb"
-        mockConfigImpl.SetSetting "EXPEDIENTES_PASSWORD", "dpddpd"
-        mockConfigImpl.SetSetting "CORREOS_DB_PATH", projectRoot & "back\test_db\active\correos_integration_test.accdb"
-        mockConfigImpl.SetSetting "CORREOS_PASSWORD", "dpddpd"
+        Dim testEnvPath As String
+        testEnvPath = modTestUtils.GetProjectPath() & "back\test_env"
         
-        ' Configuración general del entorno de prueba
-        mockConfigImpl.SetSetting "LOG_FILE_PATH", projectRoot & "condor_test_run.log"
-        mockConfigImpl.SetSetting "USUARIO_ACTUAL", "test.user@condor.com"
-        mockConfigImpl.SetSetting "CORREO_ADMINISTRADOR", "admin.test@condor.com"
+        ' COPIAS en workspace (solo estas 4 BDs)
+        mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "Lanzadera_workspace_test.accdb")
+        mockConfigImpl.SetSetting "EXPEDIENTES_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "Expedientes_integration_test.accdb")
+        mockConfigImpl.SetSetting "CORREOS_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "correos_integration_test.accdb")
+        mockConfigImpl.SetSetting "CONDOR_FRONT_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "CondorFront_integration_test.accdb")
         
+        ' CONDOR BACK (directo) para el resto de dominios
+        Dim condorBackPath As String
+        Set g_TestConfig = mockConfigImpl ' Asignar temporalmente para usar la interfaz
+        condorBackPath = g_TestConfig.GetValue("CONDOR_DATA_PATH")
+        If Len(condorBackPath) = 0 Then condorBackPath = g_TestConfig.GetCondorDataPath()
+        mockConfigImpl.SetSetting "CONDOR_DATA_PATH", condorBackPath
+        mockConfigImpl.SetSetting "SOLICITUD_DATA_PATH", condorBackPath
+        mockConfigImpl.SetSetting "DOCUMENT_DATA_PATH", condorBackPath
+        mockConfigImpl.SetSetting "WORKFLOW_DATA_PATH", condorBackPath
+        mockConfigImpl.SetSetting "MAPEO_DATA_PATH", condorBackPath
+        mockConfigImpl.SetSetting "OPERATION_DATA_PATH", condorBackPath
+        
+        ' Passwords (si vacías, los repos NO deben añadir ;PWD=)
+        mockConfigImpl.SetSetting "LANZADERA_PASSWORD", ""
+        mockConfigImpl.SetSetting "EXPEDIENTES_PASSWORD", ""
+        mockConfigImpl.SetSetting "CORREOS_PASSWORD", ""
+        mockConfigImpl.SetSetting "CONDOR_PASSWORD", ""
+        mockConfigImpl.SetSetting "CONDOR_FRONT_PASSWORD", ""
+        
+        ' Log en workspace
+        mockConfigImpl.SetSetting "LOG_FILE_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "tests.log")
+        
+        ' Otras configuraciones que necesiten los tests
+        mockConfigImpl.SetSetting "EMAIL_SENDER", "test@example.com"
+        mockConfigImpl.SetSetting "EMAIL_SMTP_SERVER", "smtp.test.com"
+        mockConfigImpl.SetSetting "EMAIL_SMTP_PORT", "587"
+        mockConfigImpl.SetSetting "EMAIL_SMTP_USERNAME", "testuser"
+        mockConfigImpl.SetSetting "EMAIL_SMTP_PASSWORD", "testpass"
+
         Set g_TestConfig = mockConfigImpl
+        Set fso = Nothing
     End If
-    
-    ' Devuelve siempre la misma instancia.
     Set GetTestConfig = g_TestConfig
 End Function
 

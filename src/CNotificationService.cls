@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -80,8 +80,8 @@ Private Function INotificationService_SendNotification( _
     End If
     
     ' Registrar operación exitosa
-    m_OperationLogger.LogOperation "NOTIFICATION", "SUCCESS", _
-        "Correo encolado exitosamente. Destinatarios: " & destinatarios
+    m_OperationLogger.LogOperation "NOTIFICATION", 0, _
+        "SUCCESS - Correo encolado exitosamente. Destinatarios: " & destinatarios
     
     INotificationService_SendNotification = True
     Exit Function

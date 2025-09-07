@@ -15,9 +15,9 @@ Option Explicit
 
 Public Const GET_AUTH_DATA_BY_EMAIL As String = _
     "SELECT U.EsAdministrador, P.EsUsuarioAdministrador, P.EsUsuarioCalidad, P.EsUsuarioTecnico " & _
-    "FROM TbUsuariosAplicaciones AS U INNER JOIN TbUsuariosAplicacionesPermisos AS P " & _
-    "ON U.CorreoUsuario = P.CorreoUsuario " & _
-    "WHERE (((P.IDAplicacion)=[pIdAplicacion]) AND ((U.CorreoUsuario)=[pEmail]));"
+    "FROM TbUsuariosAplicaciones AS U LEFT JOIN TbUsuariosAplicacionesPermisos AS P " & _
+    "ON U.CorreoUsuario = P.CorreoUsuario AND P.IDAplicacion=[pIdAplicacion] " & _
+    "WHERE U.CorreoUsuario=[pEmail];"
 
 ' ============================================================================
 ' CONSULTAS DE WORKFLOW

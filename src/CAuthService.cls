@@ -43,7 +43,7 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
 
     ' Logging de auditoría: Consulta de rol de usuario
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "ROLE_QUERY", "Consultando rol para usuario: " & userEmail, "CAuthService.GetUserRole"
+        m_OperationLogger.LogOperation "ROLE_QUERY", 0, "Consultando rol para usuario: " & userEmail & " (CAuthService.GetUserRole)"
     End If
 
     Dim role As UserRole
@@ -87,7 +87,7 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
             Case RolTecnico: roleText = "Técnico"
             Case Else: roleText = "Desconocido"
         End Select
-        m_OperationLogger.LogOperation "ROLE_ASSIGNED", "Rol asignado a " & userEmail & ": " & roleText, "CAuthService.GetUserRole"
+        m_OperationLogger.LogOperation "ROLE_ASSIGNED", 0, "Rol asignado a " & userEmail & ": " & roleText & " (CAuthService.GetUserRole)"
     End If
     
     IAuthService_GetUserRole = role
@@ -99,7 +99,7 @@ errorHandler:
         Set authData = Nothing
     End If
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "ROLE_ERROR", "Error consultando rol para " & userEmail & ": " & Err.Description, "CAuthService.GetUserRole"
+        m_OperationLogger.LogOperation "ROLE_ERROR", 0, "Error consultando rol para " & userEmail & ": " & Err.Description & " (CAuthService.GetUserRole)"
     End If
     If Not m_ErrorHandler Is Nothing Then
         m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthService.GetUserRole"

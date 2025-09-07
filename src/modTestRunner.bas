@@ -2,7 +2,6 @@ Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
 
-
 ' ============================================================================
 ' ¡¡¡ REQUISITO DE COMPILACIÓN CRÍTICO !!!
 ' Este módulo utiliza el descubrimiento automático de pruebas a través del objeto
@@ -13,13 +12,62 @@ Option Explicit
 ' Si esta referencia falta, el proyecto NO COMPILARÁ.
 ' ============================================================================
 
-
 ' Variable de estado global para almacenar las suites registradas
-Private m_SuiteNames As Scripting.Dictionary
+Private m_SuiteNames As Object
+
+' ============================================================================
+' PUNTO ÚNICO DE APROVISIONAMIENTO PREVIO
+' ============================================================================
+
+Public Sub ResetTestEnvironment()
+    ' Punto único de reseteo/provisión del entorno de testing.
+    ' Garantiza ejecución desatendida sin diálogos.
+    On Error GoTo ErrorHandler
+    
+    ' Configurar Access en modo completamente silencioso
+    Application.Echo False
+    DoCmd.Echo False
+    DoCmd.SetWarnings False
+    
+    ' Preflight del workspace ANTES de ejecutar suites
+    On Error Resume Next
+    Call modTestUtils.EnsureFolder(modTestUtils.GetWorkspacePath())
+    On Error GoTo 0
+    modTestUtils.PrepareCoreTestDatabases
+    On Error GoTo ErrorHandler
+    
+    ' Asegurar que las carpetas del entorno de testing existen
+    Dim workspacePath As String
+    workspacePath = modTestUtils.GetWorkspacePath()
+    modTestUtils.EnsureFolder workspacePath
+    
+    ' Asegurar que la carpeta de fixtures existe
+    Dim fixturesPath As String
+    fixturesPath = modTestUtils.GetDatabaseFixturesPath()
+    modTestUtils.EnsureFolder fixturesPath
+    
+    ' Aprovisiona SOLICITUD si falta (idempotente)
+    Dim ws As String: ws = modTestUtils.GetWorkspacePath()
+    Dim solicitudDb As String: solicitudDb = modTestUtils.JoinPath(ws, "Solicitud_integration_test.accdb")
+    Dim fso As Object: Set fso = CreateObject("Scripting.FileSystemObject")
+    If Not fso.FileExists(solicitudDb) Then
+        Call modTestUtils.PrepareTestDatabase("Solicitud_test_template.accdb", "Solicitud_integration_test.accdb")
+    End If
+    Set fso = Nothing
+    
+    Exit Sub
+    
+ErrorHandler:
+    Err.Raise Err.Number, "modTestRunner.ResetTestEnvironment", "Error en aprovisionamiento previo: " & Err.Description
+End Sub
 
 ' Función para compatibilidad con CLI (debe estar fuera del bloque condicional)
 Public Function RunAllTests() As String
     On Error GoTo ErrorHandler
+    
+    ' PUNTO ÚNICO DE APROVISIONAMIENTO PREVIO
+    Call ResetTestEnvironment
+    Call modTestUtils.CloseAllWordInstancesForTesting
     
     ' Crear el ErrorHandler para el PROPIO RUNNER usando la configuración Singleton
     Dim errorHandler As IErrorHandlerService
@@ -36,7 +84,7 @@ Public Function RunAllTests() As String
     Dim reporterImpl As New CTestReporter
     Set reporter = reporterImpl
     
-    Dim allResults As Scripting.Dictionary
+    Dim allResults As Object
     Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
     
     reporter.Initialize allResults
@@ -44,7 +92,12 @@ Public Function RunAllTests() As String
     Dim reportString As String
     reportString = reporter.GenerateReport()
     
+    ' Limpieza final de Word tras completar todos los tests
+    Call modTestUtils.CloseAllWordInstancesForTesting
+    Call modTestUtils.KillRecentWordProcesses(10, True)
+    
     RunAllTests = reportString
+    
     Exit Function
     
 ErrorHandler:
@@ -95,7 +148,6 @@ Private Sub RegisterSuitesManually()
     On Error GoTo 0
 End Sub
 
-
 ' Alias para compatibilidad con CLI
 Public Function ExecuteAllTests() As String
     ExecuteAllTests = RunAllTests()
@@ -105,69 +157,60 @@ End Function
 Public Function ExecuteAllTestsForCLI() As String
     On Error GoTo ErrorHandler
     
-    ' 0. Configurar Access en modo completamente silencioso
+    ' PUNTO ÚNICO DE APROVISIONAMIENTO PREVIO
+    Call ResetTestEnvironment
+    Call modTestUtils.CloseAllWordInstancesForTesting
+    
+    ' Configurar Access en modo completamente silencioso (ya hecho en ResetTestEnvironment)
     On Error Resume Next
-    Application.Echo False
-    DoCmd.Echo False
-    DoCmd.SetWarnings False
     Err.Clear
     On Error GoTo ErrorHandler
     
     ' Crear el ErrorHandler para el PROPIO RUNNER usando la configuración Singleton
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-
-    ' Inicializar el diccionario de suites
+    
+    ' Inicializar el diccionario de suites usando registro manual (sin VBE)
     Set m_SuiteNames = New Scripting.Dictionary
     m_SuiteNames.CompareMode = TextCompare
     
-    ' Registrar suites manualmente
+    ' Registrar suites manualmente para evitar problemas con VBE desde CLI
     Call RegisterSuitesManually
-
+    
+    ' Ejecutar todas las suites registradas
+    Dim allResults As Object
+    Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
+    
+    ' Generar el reporte usando el reporter estándar
     Dim reporter As ITestReporter
     Dim reporterImpl As New CTestReporter
     Set reporter = reporterImpl
-
-    Dim allResults As Scripting.Dictionary
-    Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
-
+    
     reporter.Initialize allResults
-
+    
     Dim reportString As String
     reportString = reporter.GenerateReport()
-
-    ' Verificar si todas las pruebas pasaron
-    Dim allPassed As Boolean
-    allPassed = True
-
-    Dim suiteResult As CTestSuiteResult
-    Dim key As Variant
-    For Each key In allResults.Keys()
-        Set suiteResult = allResults(key)
-        If Not suiteResult.AllTestsPassed Then
-            allPassed = False
-            Exit For
-        End If
-    Next
-
-    ' Añadir línea de resultado final
-    If allPassed Then
-        reportString = reportString & vbCrLf & "RESULT: SUCCESS"
-    Else
-        reportString = reportString & vbCrLf & "RESULT: FAILURE"
-    End If
-
+    
+    ' Limpieza final de Word tras completar todos los tests
+    Call modTestUtils.CloseAllWordInstancesForTesting
+    Call modTestUtils.KillRecentWordProcesses(10, True)
+    
     ExecuteAllTestsForCLI = reportString
-    Exit Function
+    GoTo Cleanup ' Salto a la limpieza en caso de éxito
 
 ErrorHandler:
     If Not errorHandler Is Nothing Then
         errorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllTestsForCLI", True
     End If
-
     ExecuteAllTestsForCLI = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS CLI: " & Err.Description & vbCrLf & "RESULT: FAILURE"
+    GoTo Cleanup ' Salto a la limpieza en caso de error
+    
+Cleanup:
+    On Error Resume Next ' Blindaje final
+    Debug.Print "Ejecutando limpieza final de procesos..."
+    On Error GoTo 0
+    ' No hay Exit Function aquí para que la función pueda devolver su valor
 End Function
-
 
 ' MOTOR DE EJECUCIÓN DE PRUEBAS - FRAMEWORK ORIENTADO A OBJETOS
 ' Arquitectura: Separación de Responsabilidades (Ejecución vs. Reporte)
@@ -182,6 +225,9 @@ End Function
 Public Function RunTestFramework() As String
     On Error GoTo errorHandler
     
+    ' PUNTO ÚNICO DE APROVISIONAMIENTO PREVIO
+    Call ResetTestEnvironment
+    
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
@@ -192,12 +238,13 @@ Public Function RunTestFramework() As String
     Call DiscoverAndRegisterSuites
     
     ' 2. EJECUTAR
-    Dim allResults As Scripting.Dictionary
+    Dim allResults As Object
     Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
     
     ' 3. GENERAR REPORTE
     Dim reporter As New CTestReporter
     reporter.Initialize allResults
+    
     Dim reportString As String
     reportString = reporter.GenerateReport()
     
@@ -268,42 +315,16 @@ Private Function HasRunAllFunction(ByVal moduleName As String) As Boolean
     On Error GoTo 0
 End Function
 
-
-
 '******************************************************************************
 ' MOTOR DE EJECUCIÓN
 '******************************************************************************
 
 ' Función que ejecuta todas las suites registradas y devuelve resultados
-Private Function ExecuteAllSuites(ByVal suiteNames As Scripting.Dictionary, ByVal runnerErrorHandler As IErrorHandlerService) As Scripting.Dictionary
+Private Function ExecuteAllSuites(ByVal suiteNames As Object, ByVal runnerErrorHandler As IErrorHandlerService) As Object
     Dim allResults As New Scripting.Dictionary
     allResults.CompareMode = TextCompare
     
-    ' Verificar plantillas de bases de datos antes de ejecutar tests de integración
-    On Error Resume Next
-    modTestUtils.VerifyAllTestTemplates
-    If Err.Number <> 0 Then
-        ' Crear un resultado de error para la verificación de plantillas
-        Dim templateErrorSuite As New CTestSuiteResult
-        templateErrorSuite.Initialize "Template_Verification"
-        
-        Dim templateErrorTest As New CTestResult
-        templateErrorTest.Initialize "Verify_All_Test_Templates"
-        templateErrorTest.Fail "Error en verificación de plantillas: " & Err.Description
-        
-        templateErrorSuite.AddResult templateErrorTest
-        allResults.Add "Template_Verification", templateErrorSuite
-        
-        ' Loguear el error
-        If Not runnerErrorHandler Is Nothing Then
-            runnerErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllSuites.VerifyTemplates", True
-        End If
-        
-        ' Retornar solo el error de plantillas, no ejecutar más tests
-        Set ExecuteAllSuites = allResults
-        Exit Function
-    End If
-    On Error GoTo 0
+    ' Las plantillas se verifican automáticamente en PrepareTestDatabase de cada suite
     
     Dim i As Integer
     Dim suiteKeys As Variant

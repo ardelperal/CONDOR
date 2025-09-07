@@ -1,32 +1,49 @@
--- Limpiar datos existentes
-DELETE FROM tbTransiciones;
+-- ============================================================================
+-- Script: 002_seed_tbTransiciones.sql
+-- Descripción: Datos semilla para tbTransiciones - Transiciones del flujo de trabajo
+-- Fecha: 2024
+-- Autor: CONDOR-Developer
+-- ============================================================================
 
--- Definir las transiciones de estado permitidas
--- De Borrador a Revisión Técnica (solo Calidad)
-INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido, activa)
-VALUES (1, 1, 2, 'Calidad', TRUE);
+-- Eliminar tabla existente para garantizar idempotencia
+DROP TABLE tbTransiciones;
 
--- De Revisión Técnica a Pendiente Aprobación (solo Técnico)
-INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido, activa)
-VALUES (2, 2, 3, 'Técnico', TRUE);
+-- Crear tabla tbTransiciones con nueva estructura
+CREATE TABLE tbTransiciones (
+    idTransicion LONG PRIMARY KEY,
+    idEstadoOrigen LONG NOT NULL,
+    idEstadoDestino LONG NOT NULL,
+    rolRequerido TEXT(50) NOT NULL
+);
 
--- De Pendiente Aprobación a Cerrado Aprobado (solo Calidad)
-INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido, activa)
-VALUES (3, 3, 4, 'Calidad', TRUE);
+-- Insertar las transiciones del nuevo flujo de trabajo
+-- Basado en el flujo: Registrado -> Desarrollo -> Modificación -> Validación/Revisión -> Formalización -> Aprobada
 
--- De Pendiente Aprobación a Cerrado Rechazado (solo Calidad)
-INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido, activa)
-VALUES (4, 3, 5, 'Calidad', TRUE);
+INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES 
+-- Registrado (1) -> Desarrollo (2) | Rol: Calidad
+(1, 1, 2, 'Calidad'),
 
--- Transiciones para el estado "En Tramitación" (ID 6)
--- 1. Desde "En Revisión Técnica" (ID 2) hacia "En Tramitación" (ID 6) - Acción del Técnico
-INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido, activa)
-VALUES (5, 2, 6, 'Técnico', TRUE);
+-- Desarrollo (2) -> Modificación (3) | Rol: Ingenieria
+(2, 2, 3, 'Ingenieria'),
 
--- 2. Desde "En Tramitación" (ID 6) hacia "Cerrado - Aprobado" (ID 4) - Acción de Calidad
-INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido, activa)
-VALUES (6, 6, 4, 'Calidad', TRUE);
+-- Modificación (3) -> Validación (4) | Rol: Calidad (Si hay cambios)
+(3, 3, 4, 'Calidad'),
 
--- 3. Desde "En Tramitación" (ID 6) hacia "Cerrado - Rechazado" (ID 5) - Acción de Calidad
-INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido, activa)
-VALUES (7, 6, 5, 'Calidad', TRUE);
+-- Modificación (3) -> Revisión (5) | Rol: Calidad (Si no hay cambios)
+(4, 3, 5, 'Calidad'),
+
+-- Validación (4) -> Revisión (5) | Rol: Calidad
+(5, 4, 5, 'Calidad'),
+
+-- Validación (4) -> Revisión (5) | Rol: Ingenieria
+(6, 4, 5, 'Ingenieria'),
+
+-- Revisión (5) -> Formalización (6) | Rol: Calidad
+(7, 5, 6, 'Calidad'),
+
+-- Formalización (6) -> Aprobada (7) | Rol: Calidad
+(8, 6, 7, 'Calidad');
+
+-- Verificación de la inserción
+-- SELECT COUNT(*) AS TotalTransiciones FROM tbTransiciones;
+-- SELECT * FROM tbTransiciones ORDER BY idTransicion;

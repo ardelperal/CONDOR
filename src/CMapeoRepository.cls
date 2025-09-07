@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -33,7 +33,7 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     Dim prm As EQueryParameter
     Dim mapeo As EMapeo
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetCondorDataPath(), dbFailOnError, False, "MS Access;PWD=" & m_Config.GetCondorPassword())
     
     ' Crear QueryDef con consulta desde modQueries
     Set qdf = db.CreateQueryDef("", "SELECT * FROM tbMapeoCampos WHERE NombrePlantilla = [pNombrePlantilla]")
@@ -97,12 +97,12 @@ Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
     Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
 End Function
 
-Private Function IMapeoRepository_ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
+Private Function IMapeoRepository_ObtenerMapeosPorCategoria(ByVal categoria As String) As Object
     ' Placeholder para compilación
     Set IMapeoRepository_ObtenerMapeosPorCategoria = New Scripting.Dictionary
 End Function
 
-Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
+Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Object
     Set ObtenerMapeosPorCategoria = IMapeoRepository_ObtenerMapeosPorCategoria(categoria)
 End Function
 

@@ -120,9 +120,13 @@ End Function
 
 Private Function GetDatabaseConnection() As DAO.Database
     On Error GoTo ErrorHandler
-    Dim dbPath As String: dbPath = m_Config.GetDataPath()
-    Dim dbPassword As String: dbPassword = m_Config.GetDatabasePassword()
-    Set GetDatabaseConnection = DBEngine.OpenDatabase(dbPath, False, False, ";PWD=" & dbPassword)
+    Dim dbPath As String, pwd As String, connect As String
+    dbPath = m_Config.GetValue("SOLICITUD_DATA_PATH")
+    pwd    = m_Config.GetValue("SOLICITUD_PASSWORD")
+    If Len(dbPath) = 0 Then dbPath = m_Config.GetCondorDataPath()
+    If Len(pwd) = 0 Then pwd = m_Config.GetCondorPassword()
+    If Len(pwd) > 0 Then connect = ";PWD=" & pwd Else connect = vbNullString
+    Set GetDatabaseConnection = DBEngine.OpenDatabase(dbPath, False, False, connect)
     Exit Function
 ErrorHandler:
     m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".GetDatabaseConnection: " & Err.Description

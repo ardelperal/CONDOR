@@ -21,7 +21,7 @@ Option Explicit
 ' ============================================================================
 
 Public Name As String
-Public Results As Scripting.Dictionary ' Clave: Nombre del test, Valor: CTestResult
+Public Results As Object ' Clave: Nombre del test, Valor: CTestResult
 Public TotalTests As Long
 Public PassedTests As Long
 Public FailedTests As Long

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -247,6 +247,16 @@ Private Sub LimpiarRecursos()
 End Sub
 
 Private Sub IWordManager_Dispose()
-    Call IWordManager_Dispose
+    On Error Resume Next
+    ' Cierra docs y la app
+    If Not m_WordApp Is Nothing Then
+        Do While m_WordApp.Documents.Count > 0
+            m_WordApp.Documents(1).Close False
+        Loop
+        m_WordApp.Quit 0
+    End If
+    Set m_WordApp = Nothing
+    ' Fallback (solo en testing): limpiar posibles zómbis recientes
+    Call modTestUtils.KillRecentWordProcesses(10, True)
 End Sub
 

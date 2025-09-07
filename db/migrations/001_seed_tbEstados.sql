@@ -1,23 +1,31 @@
--- Fichero: 001_seed_tbEstados.sql
--- Descripción: Define la estructura y datos de la tabla de estados con clave primaria explícita.
+-- ============================================================================
+-- Script: 001_seed_tbEstados.sql
+-- Descripción: Datos semilla para tbEstados - Estados del flujo de trabajo
+-- Fecha: 2024
+-- Autor: CONDOR-Developer
+-- ============================================================================
 
--- Eliminar la tabla si ya existe para asegurar una recreación limpia
+-- Eliminar tabla existente para garantizar idempotencia
 DROP TABLE tbEstados;
-
--- Crear la tabla con la clave primaria controlada por nosotros
+-- Crear tabla tbEstados con nueva estructura
 CREATE TABLE tbEstados (
-    idEstado LONG NOT NULL PRIMARY KEY,
-    nombreEstado TEXT(255),
-    descripcion MEMO,
-    esEstadoInicial YESNO,
-    esEstadoFinal YESNO,
-    orden LONG
+    idEstado LONG PRIMARY KEY,
+    nombreEstado TEXT(100) NOT NULL,
+    descripcion TEXT(255),
+    esEstadoInicial YESNO DEFAULT FALSE,
+    esEstadoFinal YESNO DEFAULT FALSE
 );
 
--- Insertar los estados con IDs explícitos
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (1, 'Borrador', 'La solicitud ha sido creada pero no enviada.', TRUE, FALSE, 10);
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (2, 'En Revisión Técnica', 'La solicitud ha sido enviada al equipo técnico para su evaluación.', FALSE, FALSE, 20);
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (3, 'Pendiente Aprobación Calidad', 'La solicitud está pendiente de la aprobación final del equipo de Calidad.', FALSE, FALSE, 30);
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (6, 'En Tramitación', 'La solicitud ha sido completada por el equipo técnico y está siendo gestionada por Calidad para su tramitación externa.', FALSE, FALSE, 40);
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (4, 'Cerrado - Aprobado', 'La solicitud ha sido aprobada y el flujo de trabajo ha finalizado.', FALSE, TRUE, 100);
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden) VALUES (5, 'Cerrado - Rechazado', 'La solicitud ha sido rechazada y el flujo de trabajo ha finalizado.', FALSE, TRUE, 110);
+-- Insertar los 7 nuevos estados del flujo de trabajo
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES 
+(1, 'Registrado', 'La solicitud ha sido registrada en el sistema y está lista para iniciar el proceso.', TRUE, FALSE),
+(2, 'Desarrollo', 'La solicitud está siendo desarrollada por el equipo de ingeniería.', FALSE, FALSE),
+(3, 'Modificación', 'La solicitud requiere modificaciones adicionales antes de continuar.', FALSE, FALSE),
+(4, 'Validación', 'La solicitud está siendo validada por el equipo correspondiente.', FALSE, FALSE),
+(5, 'Revisión', 'La solicitud está en proceso de revisión final.', FALSE, FALSE),
+(6, 'Formalización', 'La solicitud está siendo formalizada para su aprobación final.', FALSE, FALSE),
+(7, 'Aprobada', 'La solicitud ha sido aprobada y el proceso ha finalizado exitosamente.', FALSE, TRUE);
+
+-- Verificación de la inserción
+-- SELECT COUNT(*) AS TotalEstados FROM tbEstados;
+-- SELECT * FROM tbEstados ORDER BY idEstado;

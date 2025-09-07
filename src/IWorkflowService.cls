@@ -16,7 +16,7 @@ Public Function ValidateTransition(ByVal SolicitudID As Long, ByVal estadoOrigen
 End Function
 
 ' Obtiene los siguientes estados válidos para el flujo refactorizado
-Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
+Public Function GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Object
 End Function
 
 ' Verifica si un estado es final en el nuevo flujo (Aprobada = ID 7)

@@ -12,7 +12,7 @@ Option Explicit
 
 Implements IConfig
 
-Private m_Settings As Scripting.Dictionary
+Private m_Settings As Object
 
 Private Sub Class_Initialize()
     Set m_Settings = New Scripting.Dictionary
@@ -88,7 +88,7 @@ ErrorHandler:
 End Sub
 
 ' Método público para testabilidad que permite cargar configuración desde un diccionario.
-Public Sub LoadFromDictionary(ByVal settings As Scripting.Dictionary)
+Public Sub LoadFromDictionary(ByVal settings As Object)
     Set m_Settings = settings
     
 End Sub
@@ -113,13 +113,7 @@ Private Function IConfig_HasKey(ByVal key As String) As Boolean
     IConfig_HasKey = m_Settings.Exists(key)
 End Function
 
-Private Function IConfig_GetDataPath() As String
-    IConfig_GetDataPath = IConfig_GetValue("DATA_PATH")
-End Function
 
-Private Function IConfig_GetDatabasePassword() As String
-    IConfig_GetDatabasePassword = IConfig_GetValue("DATABASE_PASSWORD")
-End Function
 
 Private Function IConfig_GetAttachmentsPath() As String
     IConfig_GetAttachmentsPath = IConfig_GetValue("ATTACHMENTS_PATH")
@@ -149,6 +143,26 @@ Private Function IConfig_GetLanzaderaPassword() As String
     IConfig_GetLanzaderaPassword = IConfig_GetValue("LANZADERA_PASSWORD")
 End Function
 
+Private Function IConfig_GetCondorDataPath() As String
+    IConfig_GetCondorDataPath = IConfig_GetValue("CONDOR_DATA_PATH")
+End Function
+
+Private Function IConfig_GetExpedientesDataPath() As String
+    IConfig_GetExpedientesDataPath = IConfig_GetValue("EXPEDIENTES_DATA_PATH")
+End Function
+
+Private Function IConfig_GetCondorPassword() As String
+    IConfig_GetCondorPassword = IConfig_GetValue("CONDOR_PASSWORD")
+End Function
+
+Private Function IConfig_GetExpedientesPassword() As String
+    IConfig_GetExpedientesPassword = IConfig_GetValue("EXPEDIENTES_PASSWORD")
+End Function
+
+Private Function IConfig_GetCorreosPassword() As String
+    IConfig_GetCorreosPassword = IConfig_GetValue("CORREOS_PASSWORD")
+End Function
+
 '==============================================================================
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
 '==============================================================================
@@ -161,13 +175,7 @@ Public Function HasKey(ByVal key As String) As Boolean
     HasKey = IConfig_HasKey(key)
 End Function
 
-Public Function GetDataPath() As String
-    GetDataPath = IConfig_GetDataPath()
-End Function
 
-Public Function GetDatabasePassword() As String
-    GetDatabasePassword = IConfig_GetDatabasePassword()
-End Function
 
 Public Function GetAttachmentsPath() As String
     GetAttachmentsPath = IConfig_GetAttachmentsPath()
@@ -195,6 +203,26 @@ End Function
 
 Public Function GetLanzaderaPassword() As String
     GetLanzaderaPassword = IConfig_GetLanzaderaPassword()
+End Function
+
+Public Function GetCondorDataPath() As String
+    GetCondorDataPath = IConfig_GetCondorDataPath()
+End Function
+
+Public Function GetExpedientesDataPath() As String
+    GetExpedientesDataPath = IConfig_GetExpedientesDataPath()
+End Function
+
+Public Function GetCondorPassword() As String
+    GetCondorPassword = IConfig_GetCondorPassword()
+End Function
+
+Public Function GetExpedientesPassword() As String
+    GetExpedientesPassword = IConfig_GetExpedientesPassword()
+End Function
+
+Public Function GetCorreosPassword() As String
+    GetCorreosPassword = IConfig_GetCorreosPassword()
 End Function
 
 Public Sub SetSetting(ByVal key As String, ByVal value As Variant)

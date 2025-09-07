@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TestOperationLogger"
+Attribute VB_Name = "TestOperationLogger"
 Option Compare Database
 Option Explicit
 
@@ -38,7 +38,7 @@ Private Function Test_LogOperation_DelegatesToRepository() As CTestResult
     Set logger = loggerImpl
     
     ' --- ACT ---
-    logger.LogOperation "TEST_OP", "ID_123", "Detalles de prueba"
+    logger.LogOperation "TEST_OP", 123, "Detalles de prueba"
     
     ' --- ASSERT ---
     modAssert.AssertTrue mockRepo.SaveLogCalled, "El método SaveLog del repositorio debería haber sido llamado."

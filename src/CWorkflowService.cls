@@ -30,7 +30,7 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
     
     ' 1. No se puede transicionar desde un estado final (Aprobada)
     If estadoOrigen = "Aprobada" Then
-        m_Logger.LogOperation CStr(SolicitudID), "ValidateTransition", "Intento de transición desde estado final: " & estadoOrigen
+        m_Logger.LogOperation "ValidateTransition", SolicitudID, "Intento de transición desde estado final: " & estadoOrigen
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
@@ -40,13 +40,13 @@ Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, 
     isValidRepo = m_Repo.IsValidTransition(tipoSolicitud, estadoOrigen, estadoDestino)
     
     If Not isValidRepo Then
-        m_Logger.LogOperation CStr(SolicitudID), "ValidateTransition", "Transición no válida: " & estadoOrigen & " -> " & estadoDestino
+        m_Logger.LogOperation "ValidateTransition", SolicitudID, "Transición no válida: " & estadoOrigen & " -> " & estadoDestino
         IWorkflowService_ValidateTransition = False
         Exit Function
     End If
     
     ' 3. Log de transición válida
-    m_Logger.LogOperation CStr(SolicitudID), "ValidateTransition", "Transición válida: " & estadoOrigen & " -> " & estadoDestino & " (Rol: " & usuarioRol & ")"
+    m_Logger.LogOperation "ValidateTransition", SolicitudID, "Transición válida: " & estadoOrigen & " -> " & estadoDestino & " (Rol: " & usuarioRol & ")"
     
     IWorkflowService_ValidateTransition = True
     Exit Function
@@ -56,7 +56,7 @@ ErrorHandler:
     IWorkflowService_ValidateTransition = False
 End Function
 
-Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Scripting.Dictionary
+Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Object
     ' Lógica mejorada para obtener siguientes estados en el flujo de 7 estados
     On Error GoTo ErrorHandler
     

@@ -2,9 +2,7 @@ Attribute VB_Name = "TIExpedienteRepository"
 Option Compare Database
 Option Explicit
 
-' --- Constantes del entorno de prueba ---
-Private Const DB_TEMPLATE_NAME As String = "Expedientes_test_template.accdb"
-Private Const DB_ACTIVE_NAME As String = "Expedientes_integration_test.accdb"
+' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
 ' =====================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE
@@ -33,27 +31,33 @@ End Function
 ' GESTIÓN DEL ENTORNO DE LA SUITE
 ' =====================================================
 Private Sub SuiteSetup()
+    On Error GoTo ErrorHandler
     Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
-    Dim templatePath As String: templatePath = projectPath & "back\test_db\templates\" & DB_TEMPLATE_NAME
-    Dim activePath As String: activePath = projectPath & "back\test_db\active\" & DB_ACTIVE_NAME
+    
+    ' Definir nombres de archivos de base de datos
+    Dim templateDbName As String: templateDbName = "Expedientes_test_template.accdb"
+    Dim activeDbName As String: activeDbName = "Expedientes_integration_test.accdb"
     
     ' Usar la utilidad centralizada para preparar la BD de prueba
-    Call modTestUtils.PrepareTestDatabase(templatePath, activePath)
+    Call modTestUtils.PrepareTestDatabase(templateDbName, activeDbName)
     
     ' Insertar datos de prueba necesarios para la suite
     Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(activePath, False, False, ";PWD=dpddpd")
+    Dim activePath As String: activePath = modTestUtils.GetWorkspacePath() & activeDbName
+    Dim dbPassword As String: dbPassword = "dpddpd" ' TODO: Obtener desde configuración
+    Set db = DBEngine.OpenDatabase(activePath, False, False, ";PWD=" & dbPassword)
     db.Execute "INSERT INTO TbExpedientes (IDExpediente, Nemotecnico, Titulo) VALUES (1, 'NEMO-001', 'Expediente de Prueba');", dbFailOnError
     db.Close
     Set db = Nothing
+    Exit Sub
+ErrorHandler:
+    If Not db Is Nothing Then db.Close
+    Err.Raise Err.Number, "TIExpedienteRepository.SuiteSetup", Err.Description
 End Sub
 
 Private Sub SuiteTeardown()
-    On Error Resume Next
-    Dim activePath As String: activePath = modTestUtils.GetProjectPath() & "back\test_db\active\" & DB_ACTIVE_NAME
-    Dim fs As IFileSystem: Set fs = modFileSystemFactory.CreateFileSystem()
-    If fs.FileExists(activePath) Then fs.DeleteFile activePath
-    Set fs = Nothing
+    ' Limpieza estandarizada a través de la utilidad central.
+    Call modTestUtils.CleanupTestDatabase("Expedientes_integration_test.accdb")
 End Sub
 
 ' =====================================================
@@ -71,7 +75,7 @@ Private Function Test_ObtenerExpedientePorId_Exitoso() As CTestResult
     ' ARRANGE: Crear una configuración LOCAL apuntando a la BD de prueba de Expedientes
     Dim config As IConfig
     Dim mockConfigImpl As New CMockConfig
-    Dim activeDbPath As String: activeDbPath = modTestUtils.GetProjectPath() & "back\test_db\active\Expedientes_integration_test.accdb"
+    Dim activeDbPath As String: activeDbPath = modTestUtils.GetWorkspacePath() & "Expedientes_integration_test.accdb"
     mockConfigImpl.SetSetting "EXPEDIENTES_DATA_PATH", activeDbPath
     mockConfigImpl.SetSetting "EXPEDIENTES_PASSWORD", "dpddpd"
     Set config = mockConfigImpl

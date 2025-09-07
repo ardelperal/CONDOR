@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -25,7 +25,7 @@ End Function
 Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As EExpediente
 End Function
 
-Public Function ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
+Public Function ObtenerExpedientesActivosParaSelector() As Object
 End Function
 
 

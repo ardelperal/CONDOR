@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -38,7 +38,7 @@ End Sub
 
 
 ' Implementación del contrato IOperationLogger
-Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As Long, ByVal details As String)
     On Error GoTo errorHandler
     
     ' Delegar la operación de guardado al repositorio
@@ -55,7 +55,7 @@ Private Sub IOperationLogger_LogSolicitudCreation(ByVal SolicitudID As Long, ByV
     On Error GoTo errorHandler
     
     ' Registrar la creación de solicitud
-    m_OperationRepository.SaveLog "SOLICITUD_CREADA", CStr(SolicitudID), "Usuario: " & userId
+    m_OperationRepository.SaveLog "SOLICITUD_CREADA", SolicitudID, "Usuario: " & userId
     
     Exit Sub
     
@@ -70,7 +70,7 @@ Private Sub IOperationLogger_LogStateChange(ByVal SolicitudID As Long, ByVal old
     ' Registrar el cambio de estado
     Dim details As String
     details = "Estado anterior: " & oldState & ", Estado nuevo: " & newState & ", Usuario: " & userId
-    m_OperationRepository.SaveLog "CAMBIO_ESTADO", CStr(SolicitudID), details
+    m_OperationRepository.SaveLog "CAMBIO_ESTADO", SolicitudID, details
     
     Exit Sub
     
@@ -85,7 +85,7 @@ Private Sub IOperationLogger_LogError(ByVal errNumber As Long, ByVal errDescript
     ' Registrar el error del sistema
     Dim details As String
     details = "Número: " & errNumber & ", Descripción: " & errDescription & ", Módulo: " & moduleName & ", Crítico: " & isCritical
-    m_OperationRepository.SaveLog "ERROR_SISTEMA", CStr(errNumber), details
+    m_OperationRepository.SaveLog "ERROR_SISTEMA", errNumber, details
     
     Exit Sub
     
@@ -98,7 +98,7 @@ End Sub
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
 ' ============================================================================
 
-Public Sub LogOperation(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+Public Sub LogOperation(ByVal operationType As String, ByVal entityId As Long, ByVal details As String)
     IOperationLogger_LogOperation operationType, entityId, details
 End Sub
 

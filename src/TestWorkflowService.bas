@@ -97,7 +97,7 @@ Private Function TestGetNextStates_ValidState() As CTestResult
     Dim mockLogger As CMockOperationLogger
     Dim mockErrorHandler As CMockErrorHandlerService
     Dim service As IWorkflowService
-    Dim mockDict As Scripting.Dictionary
+    Dim mockDict As Object
     
     On Error GoTo TestFail
     
@@ -116,7 +116,7 @@ Private Function TestGetNextStates_ValidState() As CTestResult
     Set service = serviceImpl
     
     ' Act
-    Dim result As Scripting.Dictionary
+    Dim result As Object
     Set result = service.GetNextStates("Registrado", "", "Calidad")
     
     ' Assert

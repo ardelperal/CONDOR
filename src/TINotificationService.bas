@@ -2,9 +2,7 @@ Attribute VB_Name = "TINotificationService"
 Option Compare Database
 Option Explicit
 
-' Constantes para rutas de bases de datos
-Private Const CORREOS_TEMPLATE_PATH As String = "back\test_db\templates\correos_test_template.accdb"
-Private Const CORREOS_ACTIVE_PATH As String = "back\test_db\active\correos_integration_test.accdb"
+' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO)
@@ -40,15 +38,49 @@ End Function
 ' ============================================================================
 
 Private Sub SuiteSetup()
+    On Error GoTo ErrorHandler
     Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
-    Dim templatePath As String: templatePath = projectPath & CORREOS_TEMPLATE_PATH
-    Dim activePath As String: activePath = projectPath & CORREOS_ACTIVE_PATH
-    Call modTestUtils.SuiteSetup(templatePath, activePath)
+    
+    ' Usar las constantes ya definidas para construir los nombres de archivo
+    Dim templateDbName As String: templateDbName = "correos_test_template.accdb"
+    Dim activeDbName As String: activeDbName = "correos_integration_test.accdb"
+    
+    ' Llamada al método correcto de modTestUtils
+    modTestUtils.PrepareTestDatabase templateDbName, activeDbName
+    
+    Dim activePath As String: activePath = projectPath & "back\test_env\workspace\" & activeDbName
+    Dim db As DAO.Database
+    ' Abrir con la password que usan los tests de esta suite
+    Set db = DBEngine.OpenDatabase(activePath, False, False, ";PWD=dpddpd")
+    Call EnsureCorreosSchema(db)
+    db.Close: Set db = Nothing
+    
+    Exit Sub
+ErrorHandler:
+    Err.Raise Err.Number, "TINotificationService.SuiteSetup", Err.Description
 End Sub
 
 Private Sub SuiteTeardown()
-    Dim activePath As String: activePath = modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH
-    Call modTestUtils.SuiteTeardown(activePath)
+    ' Limpieza centralizada usando CleanupTestDatabase
+    modTestUtils.CleanupTestDatabase "correos_integration_test.accdb"
+End Sub
+
+Private Sub EnsureCorreosSchema(ByRef db As DAO.Database)
+    Dim tdf As DAO.TableDef, exists As Boolean: exists = False
+    For Each tdf In db.TableDefs
+        If tdf.Name = "TbCorreosEnviados" Then exists = True: Exit For
+    Next
+    If Not exists Then
+        db.Execute "CREATE TABLE TbCorreosEnviados (" & _
+                   "Id AUTOINCREMENT PRIMARY KEY, " & _
+                   "Destinatarios TEXT(255), " & _
+                   "Asunto TEXT(255), " & _
+                   "Cuerpo MEMO, " & _
+                   "DestinatariosConCopia TEXT(255), " & _
+                   "DestinatariosConCopiaOculta TEXT(255), " & _
+                   "URLAdjunto TEXT(255), " & _
+                   "FechaGrabacion DATETIME );", dbFailOnError
+    End If
 End Sub
 
 ' ============================================================================
@@ -64,16 +96,19 @@ Private Function TestSendNotificationSuccessCallsRepositoryCorrectly() As CTestR
     
     On Error GoTo TestFail
     
-    ' Arrange: Crear configuración local apuntando a la BD de prueba de Correos
+    ' Crear configuración local apuntando a la BD de prueba de Correos
     Dim localConfig As IConfig
     Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & "back\test_db\active\correos_integration_test.accdb"
-    mockConfigImpl.SetSetting "CORREOS_PASSWORD", "dpddpd"
+    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetWorkspacePath() & "correos_integration_test.accdb"
+     mockConfigImpl.SetSetting "CORREOS_PASSWORD", "dpddpd"
+     mockConfigImpl.SetSetting "USUARIO_ACTUAL", "test.user@condor.com"
+     mockConfigImpl.SetSetting "CORREO_ADMINISTRADOR", "admin@condor.com"
     Set localConfig = mockConfigImpl
     
     ' Crear el servicio real inyectando la configuración local
     Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
-    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH, False, False, ";PWD=dpddpd")
+    Dim dbPassword As String: dbPassword = localConfig.GetCorreosPassword()
+    Set db = DBEngine.OpenDatabase(modTestUtils.GetWorkspacePath() & "correos_integration_test.accdb", False, False, ";PWD=" & dbPassword)
 
     ' Act
     DBEngine.BeginTrans
@@ -184,13 +219,16 @@ Private Function TestSendNotificationConfigValuesUsed() As CTestResult
     ' Arrange: Crear configuración local apuntando a la BD de prueba de Correos
     Dim localConfig As IConfig
     Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetProjectPath() & "back\test_db\active\correos_integration_test.accdb"
+    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetWorkspacePath() & "correos_integration_test.accdb"
     mockConfigImpl.SetSetting "CORREOS_PASSWORD", "dpddpd"
+    mockConfigImpl.SetSetting "USUARIO_ACTUAL", "test.user@condor.com"
+    mockConfigImpl.SetSetting "CORREO_ADMINISTRADOR", "admin@condor.com"
     Set localConfig = mockConfigImpl
     
     ' Crear el servicio real inyectando la configuración local
     Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
-    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & CORREOS_ACTIVE_PATH, False, False, ";PWD=dpddpd")
+    Dim dbPassword As String: dbPassword = localConfig.GetCorreosPassword()
+    Set db = DBEngine.OpenDatabase(modTestUtils.GetWorkspacePath() & "correos_integration_test.accdb", False, False, ";PWD=" & dbPassword)
 
     ' Act
     DBEngine.BeginTrans

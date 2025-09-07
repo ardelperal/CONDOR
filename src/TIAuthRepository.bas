@@ -3,9 +3,7 @@ Attribute VB_Name = "TIAuthRepository"
 Option Compare Database
 Option Explicit
 
-' Constantes para el autoaprovisionamiento de la BD de Lanzadera
-Private Const LANZADERA_TEMPLATE_PATH As String = "back\test_db\templates\Lanzadera_test_template.accdb"
-Private Const LANZADERA_ACTIVE_PATH As String = "back\test_db\active\Lanzadera_integration_test.accdb"
+' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO v2.1 - CORREGIDO)
@@ -37,36 +35,31 @@ End Function
 ' ============================================================================
 
 Private Sub SuiteSetup()
-    On Error GoTo errorHandler
-    ' Aprovisionar la base de datos y los datos maestros para toda la suite
-    Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
-    Dim templatePath As String: templatePath = projectPath & LANZADERA_TEMPLATE_PATH
-    Dim activePath As String: activePath = projectPath & LANZADERA_ACTIVE_PATH
-    Call modTestUtils.SuiteSetup(templatePath, activePath)
+    ' Prepara la base de datos de Lanzadera para toda la suite.
+    Const LANZADERA_TEMPLATE As String = "Lanzadera_test_template.accdb"
+    Const LANZADERA_ACTIVE As String = "Lanzadera_workspace_test.accdb"
     
-    ' Insertar los datos de prueba maestros necesarios para esta suite
-    Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(activePath, False, False, ";PWD=dpddpd")
+    Call modTestUtils.PrepareTestDatabase(LANZADERA_TEMPLATE, LANZADERA_ACTIVE)
     
-    ' ASEGURAR UN ESTADO LIMPIO RESPETANDO LA INTEGRIDAD REFERENCIAL
-    db.Execute "DELETE * FROM TbUsuariosAplicacionesPermisos", dbFailOnError
-    db.Execute "DELETE * FROM TbUsuariosAplicaciones", dbFailOnError
-    
-    ' INSERTAR EL REGISTRO DE PRUEBA EN AMBAS TABLAS
-    db.Execute "INSERT INTO TbUsuariosAplicaciones (Id, CorreoUsuario, EsAdministrador, Password) VALUES (1, 'admin@example.com', 'Sí', 'password')", dbFailOnError
-    ' INSERTAR EL REGISTRO DE PERMISOS CON EL ESQUEMA CORRECTO
-    db.Execute "INSERT INTO TbUsuariosAplicacionesPermisos (CorreoUsuario, IDAplicacion, EsUsuarioAdministrador) VALUES ('admin@example.com', 231, True)", dbFailOnError
-
-    db.Close
-    Set db = Nothing
-    Exit Sub
-errorHandler:
-    If Not db Is Nothing Then db.Close
-    Err.Raise Err.Number, "TIAuthRepository.SuiteSetup", Err.Description
+    ' --- INICIO SEEDING ---
+    Dim db As DAO.Database, pathDb As String
+    pathDb = modTestUtils.GetWorkspacePath() & "Lanzadera_workspace_test.accdb"
+    Set db = DBEngine.OpenDatabase(pathDb, False, False, ";PWD=dpddpd")
+    Dim email As String: email = "admin@example.com"
+    Dim idApp As Long: idApp = 231
+    On Error Resume Next
+    db.Execute "DELETE FROM TbUsuariosAplicacionesPermisos WHERE CorreoUsuario='" & email & "' AND IDAplicacion=" & idApp, dbFailOnError
+    db.Execute "DELETE FROM TbUsuariosAplicaciones WHERE CorreoUsuario='" & email & "'", dbFailOnError
+    On Error GoTo 0
+    db.Execute "INSERT INTO TbUsuariosAplicaciones (CorreoUsuario, EsAdministrador) VALUES ('" & email & "','Sí')", dbFailOnError
+    db.Execute "INSERT INTO TbUsuariosAplicacionesPermisos (CorreoUsuario, IDAplicacion, EsUsuarioAdministrador, EsUsuarioCalidad, EsUsuarioTecnico) " & _
+               "VALUES ('" & email & "'," & idApp & ", True, True, True)", dbFailOnError
+    db.Close: Set db = Nothing
+    ' --- FIN SEEDING ---
 End Sub
 Private Sub SuiteTeardown()
-    Dim activePath As String: activePath = modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
-    Call modTestUtils.SuiteTeardown(activePath)
+    ' Limpieza estandarizada a través de la utilidad central.
+    Call modTestUtils.CleanupTestDatabase("Lanzadera_workspace_test.accdb")
 End Sub
 
 ' ============================================================================
@@ -81,18 +74,21 @@ Private Function TestGetUserAuthData_AdminUser_ReturnsCorrectData() As CTestResu
     Dim fs As IFileSystem
     On Error GoTo TestFail
 
-    ' Arrange: Crear configuración local para tests de integración
-    Dim localConfig As IConfig
-    Set localConfig = New CConfig
-    localConfig.SetValue "DatabasePath", TEST_DB_PATH
-    localConfig.SetValue "DatabasePassword", TEST_DB_PASSWORD
-    localConfig.SetValue "OutputPath", TEST_OUTPUT_PATH
-    
-    Set repo = modRepositoryFactory.CreateAuthRepository(localConfig)
+    ' Arrange: Crear configuración LOCAL apuntando a la BD de prueba de Lanzadera
+    Dim config As IConfig
+    Dim mockConfigImpl As New CMockConfig
+    Dim activeDbPath As String: activeDbPath = modTestUtils.GetWorkspacePath() & "Lanzadera_workspace_test.accdb"
+    mockConfigImpl.SetSetting "LANZADERA_DATA_PATH", modTestUtils.GetWorkspacePath() & "Lanzadera_workspace_test.accdb"
+    mockConfigImpl.SetSetting "ID_APLICACION_CONDOR", "231"
+    mockConfigImpl.SetSetting "LANZADERA_PASSWORD", "dpddpd"
+    Set config = mockConfigImpl
+
+    ' Crear una instancia REAL del repositorio, inyectando la configuración local
+    Set repo = modRepositoryFactory.CreateAuthRepository(config)
     
     ' Arrange: Verificar que la BD existe y conectar
-    Set fs = modFileSystemFactory.CreateFileSystem(localConfig)
-    Dim dbPath As String: dbPath = modTestUtils.GetProjectPath() & LANZADERA_ACTIVE_PATH
+    Set fs = modFileSystemFactory.CreateFileSystem(config)
+    Dim dbPath As String: dbPath = modTestUtils.GetWorkspacePath() & "Lanzadera_workspace_test.accdb"
 
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 100, "Test.Arrange", "La BD de prueba no existe en la ruta esperada: " & dbPath

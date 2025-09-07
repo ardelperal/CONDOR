@@ -2,8 +2,7 @@ Attribute VB_Name = "TISolicitudRepository"
 Option Compare Database
 Option Explicit
 
-Private Const TEMPLATE_PATH As String = "back\test_db\templates\CONDOR_test_template.accdb"
-Private Const ACTIVE_PATH As String = "back\test_db\active\CONDOR_solicitud_itest.accdb"
+' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO)
@@ -35,15 +34,24 @@ End Function
 ' ============================================================================
 
 Private Sub SuiteSetup()
+    On Error GoTo ErrorHandler
     Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
-    Dim templatePath As String: templatePath = projectPath & TEMPLATE_PATH
-    Dim activePath As String: activePath = projectPath & ACTIVE_PATH
-    Call modTestUtils.SuiteSetup(templatePath, activePath)
+    
+    ' Usar las constantes ya definidas para construir los nombres de archivo
+    Dim templateDbName As String: templateDbName = "Solicitud_test_template.accdb"
+    Dim activeDbName As String: activeDbName = "Solicitud_integration_test.accdb"
+    
+    ' Llamada al método correcto de modTestUtils
+    modTestUtils.PrepareTestDatabase templateDbName, activeDbName
+    
+    Exit Sub
+ErrorHandler:
+    Err.Raise Err.Number, "TISolicitudRepository.SuiteSetup", Err.Description
 End Sub
 
 Private Sub SuiteTeardown()
-    Dim activePath As String: activePath = modTestUtils.GetProjectPath() & ACTIVE_PATH
-    Call modTestUtils.SuiteTeardown(activePath)
+    ' Limpieza estandarizada a través de la utilidad central.
+    Call modTestUtils.CleanupTestDatabase("Solicitud_integration_test.accdb")
 End Sub
 
 ' ============================================================================
@@ -64,18 +72,19 @@ Private Function TestSaveAndRetrieveSolicitud() As CTestResult
     
     On Error GoTo TestFail
 
-    ' Arrange: 1. Crear configuración local apuntando a la BD de prueba activa
+    ' Arrange: Crear configuración local apuntando a la BD de prueba de esta suite
     Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "DATA_PATH", modTestUtils.GetProjectPath() & ACTIVE_PATH
+    mockConfigImpl.SetSetting "CONDOR_DATA_PATH", modTestUtils.GetWorkspacePath() & "Solicitud_integration_test.accdb"
+    mockConfigImpl.SetSetting "CONDOR_PASSWORD", ""
     Set localConfig = mockConfigImpl
     
-    ' Arrange: 2. Crear dependencias inyectando la configuración local
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(localConfig)
-    Set repo = modRepositoryFactory.CreateSolicitudRepository(localConfig, errorHandler)
+    ' Arrange: Crear dependencias inyectando la configuración local
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Set repo = modRepositoryFactory.CreateSolicitudRepository(localConfig)
     
     ' Arrange: Conectar a la base de datos activa de forma segura
     Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = localConfig.GetDataPath()
+    dbPath = modTestUtils.GetWorkspacePath() & "Solicitud_integration_test.accdb"
     
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 102, "Test.Arrange", "La BD de prueba de Solicitudes no existe en la ruta esperada: " & dbPath

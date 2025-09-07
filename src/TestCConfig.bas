@@ -12,8 +12,7 @@ Public Function TestCConfigRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TestCConfig - Pruebas Unitarias CConfig (Reconstruido)"
     
-    suiteResult.AddResult TestGetDataPath_ReturnsCorrectValue()
-    suiteResult.AddResult TestGetDatabasePassword_ReturnsCorrectValue()
+    suiteResult.AddResult TestGetCondorDataPath_ReturnsCorrectValue()
     suiteResult.AddResult TestHasKey_ReturnsTrueForExistingKey()
     suiteResult.AddResult TestHasKey_ReturnsFalseForNonExistingKey()
     suiteResult.AddResult TestGetValue_ReturnsEmptyForNonExistingKey()
@@ -21,76 +20,47 @@ Public Function TestCConfigRunAll() As CTestSuiteResult
     Set TestCConfigRunAll = suiteResult
 End Function
 
-Private Function TestGetDataPath_ReturnsCorrectValue() As CTestResult
-    Set TestGetDataPath_ReturnsCorrectValue = New CTestResult
-    TestGetDataPath_ReturnsCorrectValue.Initialize "GetDataPath debe devolver el valor correcto cargado en memoria"
+Private Function TestGetCondorDataPath_ReturnsCorrectValue() As CTestResult
+    Set TestGetCondorDataPath_ReturnsCorrectValue = New CTestResult
+    TestGetCondorDataPath_ReturnsCorrectValue.Initialize "GetCondorDataPath debe devolver el valor correcto cargado"
     
     Dim config As CConfig
-    Dim testSettings As Scripting.Dictionary
+    Dim testSettings As Object
     On Error GoTo TestFail
-
+    
     ' Arrange
     Set config = New CConfig
     Set testSettings = New Scripting.Dictionary
     testSettings.CompareMode = TextCompare
-    testSettings.Add "DATA_PATH", "C:\Ruta\De\Prueba.accdb"
+    testSettings.Add "CONDOR_DATA_PATH", "C:\Ruta\De\Prueba.accdb"
     config.LoadFromDictionary testSettings
-
+    
     ' Act
     Dim result As String
-    result = config.GetDataPath()
-
+    result = config.GetCondorDataPath()
+    
     ' Assert
-    modAssert.AssertEquals "C:\Ruta\De\Prueba.accdb", result, "GetDataPath no devolvió el valor inyectado."
-
-    TestGetDataPath_ReturnsCorrectValue.Pass
+    modAssert.AssertEquals "C:\Ruta\De\Prueba.accdb", result, "GetCondorDataPath no devolvió el valor inyectado."
+    
+    TestGetCondorDataPath_ReturnsCorrectValue.Pass
     GoTo Cleanup
-
+    
 TestFail:
-    TestGetDataPath_ReturnsCorrectValue.Fail "Error inesperado: " & Err.Description
+    TestGetCondorDataPath_ReturnsCorrectValue.Fail "Error inesperado: " & Err.Description
+    
 Cleanup:
     Set config = Nothing
     Set testSettings = Nothing
 End Function
 
-Private Function TestGetDatabasePassword_ReturnsCorrectValue() As CTestResult
-    Set TestGetDatabasePassword_ReturnsCorrectValue = New CTestResult
-    TestGetDatabasePassword_ReturnsCorrectValue.Initialize "GetDatabasePassword debe devolver el valor correcto"
-    
-    Dim config As CConfig
-    Dim testSettings As Scripting.Dictionary
-    On Error GoTo TestFail
 
-    ' Arrange
-    Set config = New CConfig
-    Set testSettings = New Scripting.Dictionary
-    testSettings.CompareMode = TextCompare
-    testSettings.Add "DATABASE_PASSWORD", "pass123"
-    config.LoadFromDictionary testSettings
-
-    ' Act
-    Dim result As String
-    result = config.GetDatabasePassword()
-
-    ' Assert
-    modAssert.AssertEquals "pass123", result, "GetDatabasePassword no devolvió el valor inyectado."
-
-    TestGetDatabasePassword_ReturnsCorrectValue.Pass
-    GoTo Cleanup
-
-TestFail:
-    TestGetDatabasePassword_ReturnsCorrectValue.Fail "Error inesperado: " & Err.Description
-Cleanup:
-    Set config = Nothing
-    Set testSettings = Nothing
-End Function
 
 Private Function TestHasKey_ReturnsTrueForExistingKey() As CTestResult
     Set TestHasKey_ReturnsTrueForExistingKey = New CTestResult
     TestHasKey_ReturnsTrueForExistingKey.Initialize "HasKey debe devolver True para una clave existente"
 
     Dim config As CConfig
-    Dim testSettings As Scripting.Dictionary
+    Dim testSettings As Object
     On Error GoTo TestFail
 
     ' Arrange

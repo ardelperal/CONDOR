@@ -1,6 +1,9 @@
 -- Fichero: 004_schema_tbConfiguracion.sql
 -- Descripción: Define la estructura de la tabla de configuración.
 
+-- Eliminar tabla existente para garantizar idempotencia
+DROP TABLE tbConfiguracion;
+
 CREATE TABLE tbConfiguracion (
     idConfiguracion COUNTER PRIMARY KEY,
     clave TEXT(255) NOT NULL,

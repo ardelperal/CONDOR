@@ -318,17 +318,18 @@ Caso Crítico - CTestReporter (2024): La clase CTestReporter violaba el Principi
 
 **Caso Crítico - Refactorización del Framework de Pruebas (2025):** Se refactorizaron los 12 módulos de pruebas de integración para implementar este patrón, eliminando por completo los errores de entorno y garantizando que los fallos de las pruebas ahora solo pueden deberse a regresiones reales en el código de la aplicación.
 
-## Lección 37: El Patrón Singleton de Configuración es la Única Fuente de Verdad
+## Lección 37: Factorías Flexibles con un Contexto Global por Defecto
 
-**Observación:** Un patrón de factorías con parámetros opcionales para la inyección de configuración demostró ser frágil y propenso a errores, creando un estado caótico donde los tests podían intentar usar configuraciones locales que entraban en conflicto con un contexto global.
+**Observación:** Una arquitectura de configuración de pruebas demasiado rígida (un único contexto global) o demasiado caótica (configuraciones locales en cada test) conduce a errores. La primera rompe los tests que necesitan entornos aislados, y la segunda genera inconsistencias.
 
-**Regla Inquebrantable:** Se prohíbe la inyección manual de configuración en las factorías. La creación de objetos en CONDOR se rige por un estricto patrón de **Fuente de Verdad Única**:
+**Regla Inquebrantable:** La arquitectura de configuración de pruebas debe ser híbrida, siguiendo un principio de "convención sobre configuración":
 
-1. **Contexto Centralizado:** El módulo `modTestContext` es el único responsable de crear y gestionar una instancia Singleton de `IConfig` para todo el ciclo de vida de una ejecución de pruebas.
-2. **Factorías Disciplinadas:** Todas las factorías (`mod*Factory.bas`) **no deben aceptar parámetros de configuración**. Deben obtener su configuración llamando exclusivamente a `modTestContext.GetTestConfig()`.
-3. **Tests Simplificados:** Los tests de integración **no deben crear ni gestionar** instancias de `IConfig`. Deben confiar en que las factorías les proporcionarán objetos correctamente configurados a través del contexto global.
+1. **Contexto por Defecto:** El módulo `modTestContext` proporciona una configuración **global y por defecto** a través de su Singleton `GetTestConfig()`. Esta es la "convención".
+2. **Factorías Flexibles:** Todas las factorías (`mod*Factory.bas`) **deben** aceptar un parámetro `Optional ByVal config As IConfig = Nothing`.
+3. **Lógica de la Factoría:** La lógica interna de cada factoría es siempre: "Si recibo un objeto de configuración, lo uso. Si no (`Is Nothing`), pido el global a `modTestContext`."
+4. **Tests Especializados:** Un test que necesite un entorno específico (ej. una base de datos de `Expedientes`) tiene la responsabilidad de crear su propia instancia local de `CMockConfig`, **configurarla** con claves explícitas y luego **inyectarla** en la factoría. Los tests simples no pasan ningún parámetro y usan la convención.
 
-**Principio Fundamental:** Este patrón elimina toda ambigüedad. Garantiza que cada componente del sistema, durante una prueba, utilice exactamente la misma configuración, eliminando una clase entera de errores de entorno y asegurando la reproducibilidad de las pruebas.
+**Principio Fundamental:** Este patrón proporciona una base estable y predecible para el 90% de los tests, al tiempo que ofrece la flexibilidad necesaria para los casos de prueba complejos y aislados, eliminando la ambigüedad.
 
 ## Lección 38: El Plan Maestro como Reflejo del Código (Principio de Documentación Viva)
 Observación: Se ha detectado que el CONDOR_MASTER_PLAN.md, aunque preciso en un momento dado, puede quedar rápidamente obsoleto si los cambios en el código (nuevas dependencias, eliminación de métodos, adición de propiedades a clases de datos) no se reflejan en él. Un plan desactualizado es peor que no tener ningún plan, ya que genera confusión y decisiones basadas en información incorrecta.
@@ -438,3 +439,18 @@ Este patrón asegura que cada servicio sea la única puerta de entrada a su domi
 ** Observación: Las llamadas a DBEngine.OpenDatabase pueden fallar con errores de DAO poco descriptivos si la ruta al fichero .accdb es incorrecta o el fichero no existe.
 
 Regla Inquebrantable: Antes de cualquier llamada a DBEngine.OpenDatabase, el código debe verificar explícitamente que el fichero de base de datos existe en la ruta especificada. Esta verificación se realizará utilizando el servicio IFileSystem.FileExists. Si el fichero no existe, se debe lanzar un error descriptivo y controlado que indique la ruta que ha fallado, en lugar de permitir que el motor DAO falle de forma críptica.
+
+## Lección 48: El Principio de Solicitud de Ficheros (Arquitectura Basada en Evidencia)
+
+**Observación:** Se ha demostrado que generar prompts basándose en una "memoria operativa" o en el contexto de interacciones pasadas es extremadamente propenso a errores. El estado del código en el entorno del Supervisor es la única fuente de verdad, y puede cambiar de formas que el Arquitecto no puede prever.
+
+**Regla Inquebrantable:** El Arquitecto (CONDOR-Expert) **no generará ningún prompt** de modificación de código sin antes solicitar explícitamente y recibir del Supervisor la versión más reciente de **todos** los ficheros implicados en la tarea a resolver.
+
+**Flujo de Trabajo Estricto:**
+1. El Supervisor presenta un problema (ej. un informe de tests fallidos).
+2. El Arquitecto analiza el problema e identifica los ficheros potencialmente implicados.
+3. El Arquitecto **solicita** dichos ficheros.
+4. El Supervisor **proporciona** los ficheros.
+5. **Solo entonces**, el Arquitecto realiza su auditoría sobre el código fresco y genera el prompt.
+
+**Principio Fundamental:** No más suposiciones. Solo análisis basado en la evidencia actual.

@@ -92,14 +92,12 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
         ' ... (resto de los mapeos de roles)
     End If
     
-    Set IAuthRepository_GetUserAuthData = authData
-
 Cleanup:
     On Error Resume Next
+    Set IAuthRepository_GetUserAuthData = authData
     If Not rs Is Nothing Then rs.Close
-    If Not qdf Is Nothing Then qdf.Close
     If Not db Is Nothing Then db.Close
-    Set rs = Nothing: Set qdf = Nothing: Set db = Nothing
+    Set rs = Nothing: Set db = Nothing
     Exit Function
     
 errorHandler:

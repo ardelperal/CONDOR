@@ -67,7 +67,7 @@ Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As Str
     
     ' Obtener configuración de la base de datos de correos
     correosDbPath = m_configService.GetCorreosDBPath()
-    dbPassword = m_configService.GetDatabasePassword()
+    dbPassword = m_configService.GetCorreosPassword()
     
     ' Validar que la configuración esté disponible
     If Len(Trim(correosDbPath)) = 0 Then

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -34,7 +34,7 @@ errorHandler:
 End Sub
 
 ' Implementación del contrato IOperationRepository
-Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal entityId As Long, ByVal details As String)
     On Error GoTo errorHandler
     
     Dim db As DAO.Database
@@ -44,8 +44,8 @@ Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal en
     Dim sql As String
     
     ' Obtener la ruta y contraseña de la base de datos de logs de operaciones
-    logDbPath = m_configService.GetDataPath()
-    logDbPassword = m_configService.GetDatabasePassword()
+    logDbPath = m_configService.GetCondorDataPath()
+    logDbPassword = m_configService.GetCondorPassword()
     
     Set db = DBEngine.OpenDatabase(logDbPath, dbFailOnError, False, ";PWD=" & logDbPassword)
     
@@ -77,7 +77,7 @@ End Sub
 ' MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24)
 ' ============================================================================
 
-Public Sub SaveLog(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+Public Sub SaveLog(ByVal operationType As String, ByVal entityId As Long, ByVal details As String)
     IOperationRepository_SaveLog operationType, entityId, details
 End Sub
 

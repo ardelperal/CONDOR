@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -33,7 +33,7 @@ Private Function IExpedienteService_ObtenerExpedientePorNemotecnico(ByVal Nemote
     Set IExpedienteService_ObtenerExpedientePorNemotecnico = m_Repo.ObtenerExpedientePorNemotecnico(Nemotecnico)
 End Function
 
-Private Function IExpedienteService_ObtenerExpedientesParaSelector() As Scripting.Dictionary
+Private Function IExpedienteService_ObtenerExpedientesParaSelector() As Object
     ' CORRECCIÓN: El nombre del método ahora coincide exactamente con la interfaz.
     ' La lógica de "Activos" está correctamente encapsulada en el repositorio.
     Set IExpedienteService_ObtenerExpedientesParaSelector = m_Repo.ObtenerExpedientesActivosParaSelector()
@@ -49,7 +49,7 @@ Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As 
     Set ObtenerExpedientePorNemotecnico = IExpedienteService_ObtenerExpedientePorNemotecnico(Nemotecnico)
 End Function
 
-Public Function ObtenerExpedientesParaSelector() As Scripting.Dictionary
+Public Function ObtenerExpedientesParaSelector() As Object
     Set ObtenerExpedientesParaSelector = IExpedienteService_ObtenerExpedientesParaSelector()
 End Function
 

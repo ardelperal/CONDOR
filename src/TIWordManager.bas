@@ -7,9 +7,7 @@ Option Explicit
 ' "Microsoft Word XX.X Object Library" debe estar referenciada.
 ' ============================================================================
 
-Private Const TEST_FOLDER_PATH As String = "back\test_db\active\word_manager_tests\"
-Private Const TEMPLATE_DOC_NAME As String = "template_test.docx"
-Private Const MODIFIED_DOC_NAME As String = "modified_test.docx"
+Private Const TEST_FOLDER_REL As String = "word_manager_tests\"
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO)
@@ -42,45 +40,36 @@ End Function
 ' ============================================================================
 
 Private Sub SuiteSetup()
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    Dim testFolder As String: testFolder = modTestUtils.GetProjectPath() & TEST_FOLDER_PATH
-    
-    ' Crear directorio de prueba limpio
-    If fs.FolderExists(testFolder) Then
-        fs.DeleteFolderRecursive testFolder
-    End If
-    fs.CreateFolder testFolder
-    
-    ' Crear el fichero de plantilla de Word mediante programación
-    Call CreateTestTemplate(testFolder & TEMPLATE_DOC_NAME)
+    Dim fs As IFileSystem: Set fs = modFileSystemFactory.CreateFileSystem()
+    Dim testFolder As String: testFolder = modTestUtils.GetWorkspacePath() & "word_manager_tests"
+    If fs.FolderExists(testFolder) Then fs.DeleteFolderRecursive testFolder
+    Call modTestUtils.EnsureFolder(testFolder)
+    Call CreateTestTemplate(modTestUtils.JoinPath(testFolder, "template_test.docx"))
 End Sub
 
 Private Sub SuiteTeardown()
-    On Error Resume Next ' Blindaje
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    fs.DeleteFolderRecursive modTestUtils.GetProjectPath() & TEST_FOLDER_PATH
-    Set fs = Nothing
+    On Error Resume Next
+    Call modTestUtils.CloseAllWordInstancesForTesting
+    modTestUtils.CleanupTestFolder "word_manager_tests"
 End Sub
 
 Private Sub CreateTestTemplate(ByVal templatePath As String)
     Dim wordApp As Object, doc As Object
+    Dim parentDir As String: parentDir = modTestUtils.GetParentDirectory(templatePath)
+    Call modTestUtils.EnsureFolder(parentDir)
     On Error GoTo ErrorHandler
-    
-    Set wordApp = CreateObject("Word.Application")
-    wordApp.Visible = False
-    
+    Set wordApp = CreateObject("Word.Application"): wordApp.Visible = False
     Set doc = wordApp.Documents.Add
     doc.Content.Text = "Hola [NOMBRE], este es un documento de prueba."
     doc.SaveAs2 templatePath
-    
-ErrorHandler:
+Cleanup:
     On Error Resume Next
-    If Not doc Is Nothing Then doc.Close SaveChanges:=0 ' wdDoNotSaveChanges
+    If Not doc Is Nothing Then doc.Close SaveChanges:=0
     If Not wordApp Is Nothing Then wordApp.Quit
-    Set doc = Nothing
-    Set wordApp = Nothing
+    Set doc = Nothing: Set wordApp = Nothing
+    Exit Sub
+ErrorHandler:
+    Resume Cleanup
 End Sub
 
 ' ============================================================================
@@ -95,17 +84,10 @@ Private Function Test_CicloCompleto_Success() As CTestResult
     Dim fs As IFileSystem
     On Error GoTo TestFail
     
-    ' ARRANGE - Crear configuración local para tests de integración
-    Dim localConfig As IConfig
-    Set localConfig = New CConfig
-    localConfig.SetValue "DatabasePath", TEST_DB_PATH
-    localConfig.SetValue "DatabasePassword", TEST_DB_PASSWORD
-    localConfig.SetValue "OutputPath", TEST_OUTPUT_PATH
-    
-    Set wordManager = modWordManagerFactory.CreateWordManager(localConfig)
-    Set fs = modFileSystemFactory.CreateFileSystem(localConfig)
-    Dim templatePath As String: templatePath = modTestUtils.GetProjectPath() & TEST_FOLDER_PATH & TEMPLATE_DOC_NAME
-    Dim modifiedPath As String: modifiedPath = modTestUtils.GetProjectPath() & TEST_FOLDER_PATH & MODIFIED_DOC_NAME
+    Set wordManager = modWordManagerFactory.CreateWordManager()
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    Dim templatePath As String: templatePath = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath() & "word_manager_tests\", "template_test.docx")
+    Dim modifiedPath As String: modifiedPath = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath() & "word_manager_tests\", "modified_test.docx")
     
     ' ACT
     wordManager.AbrirDocumento templatePath
@@ -136,15 +118,8 @@ Private Function Test_AbrirFicheroInexistente_DevuelveFalse() As CTestResult
     Dim wordManager As IWordManager
     On Error GoTo TestFail ' Si hay algún error, el test falla
     
-    ' Arrange - Crear configuración local para tests de integración
-    Dim localConfig As IConfig
-    Set localConfig = New CConfig
-    localConfig.SetValue "DatabasePath", TEST_DB_PATH
-    localConfig.SetValue "DatabasePassword", TEST_DB_PASSWORD
-    localConfig.SetValue "OutputPath", TEST_OUTPUT_PATH
-    
-    Set wordManager = modWordManagerFactory.CreateWordManager(localConfig)
-    Dim inexistentePath As String: inexistentePath = modTestUtils.GetProjectPath() & TEST_FOLDER_PATH & "no_existe.docx"
+    Set wordManager = modWordManagerFactory.CreateWordManager()
+    Dim inexistentePath As String: inexistentePath = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath() & "word_manager_tests\", "no_existe.docx")
     
     ' Act
     Dim result As Boolean

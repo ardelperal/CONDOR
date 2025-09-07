@@ -1043,8 +1043,8 @@ Sub ValidateSchema()
     condorSchema.Add "TbLocalConfig", Array("clave", "valor", "descripcion", "categoria")
     
     ' Validar las bases de datos
-    If Not VerifySchema(strSourcePath & "\..\back\test_db\templates\Lanzadera_test_template.accdb", "dpddpd", lanzaderaSchema) Then allOk = False
-    If Not VerifySchema(strSourcePath & "\..\back\test_db\templates\CONDOR_test_template.accdb", "", condorSchema) Then allOk = False
+    If Not VerifySchema(strSourcePath & "\..\back\test_env\fixtures\databases\Lanzadera_test_template.accdb", "dpddpd", lanzaderaSchema) Then allOk = False
+        If Not VerifySchema(strSourcePath & "\..ack\test_env\fixtures\databases\Document_test_template.accdb", "", condorSchema) Then allOk = False
     
     If allOk Then
         WScript.Echo "✓ VALIDACIÓN DE ESQUEMA EXITOSA. Todas las bases de datos son consistentes."
@@ -1350,8 +1350,7 @@ Sub ExecuteTests()
     Err.Clear
     On Error Resume Next
     
-    ' CORRECCIÓN CRÍTICA: La llamada a .Run se hace directamente y se asigna a la variable.
-    ' VBScript manejará la captura del valor de retorno de la función VBA.
+    ' CORRECCIÓN CRÍTICA: Usar función ExecuteAllTestsForCLI restaurada que ejecuta todas las pruebas
     reportString = objAccess.Run("ExecuteAllTestsForCLI")
     
     If Err.Number <> 0 Then
@@ -2386,7 +2385,8 @@ Function GetFunctionalityFiles(strFunctionality)
             ' Sección 3.7 - Gestión de Notificaciones + Dependencias
             arrFiles = Array("INotificationService.cls", "CNotificationService.cls", "CMockNotificationService.cls", _
                            "INotificationRepository.cls", "CNotificationRepository.cls", "CMockNotificationRepository.cls", _
-                           "modNotificationServiceFactory.bas", "TINotificationService.bas", _
+                           "modNotificationServiceFactory.bas", "modRepositoryFactory.bas", _
+                           "TINotificationService.bas", _
                            "IOperationLogger.cls", "IErrorHandlerService.cls", "IConfig.cls")
         
         Case "operation", "operacion", "logging"
@@ -2411,7 +2411,7 @@ Function GetFunctionalityFiles(strFunctionality)
         Case "word"
             ' Sección 6 - Gestión de Word + Dependencias
             arrFiles = Array("IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
-                           "modWordManagerFactory.bas", "IntegrationTestWordManager.bas", _
+                           "modWordManagerFactory.bas", "TIWordManager.bas", _
                            "IFileSystem.cls", "IErrorHandlerService.cls")
         
         Case "error", "errores", "errors"

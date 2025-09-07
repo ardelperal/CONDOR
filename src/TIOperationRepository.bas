@@ -8,8 +8,7 @@ Option Explicit
 ' ARQUITECTURA: Patrón de Oro (Setup a Nivel de Suite + Transacciones)
 ' ============================================================================
 
-Private Const CONDOR_TEMPLATE_PATH As String = "back\test_db\templates\CONDOR_test_template.accdb"
-Private Const CONDOR_ACTIVE_PATH As String = "back\test_db\active\CONDOR_operation_itest.accdb"
+' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE EJECUCIÓN
@@ -41,15 +40,24 @@ End Function
 ' ============================================================================
 
 Private Sub SuiteSetup()
+    On Error GoTo ErrorHandler
     Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
-    Dim templatePath As String: templatePath = projectPath & CONDOR_TEMPLATE_PATH
-    Dim activePath As String: activePath = projectPath & CONDOR_ACTIVE_PATH
-    Call modTestUtils.SuiteSetup(templatePath, activePath)
+    
+    ' Usar las constantes ya definidas para construir los nombres de archivo
+    Dim templateDbName As String: templateDbName = "Operation_test_template.accdb"
+    Dim activeDbName As String: activeDbName = "Operation_integration_test.accdb"
+    
+    ' Llamada al método correcto de modTestUtils
+    modTestUtils.PrepareTestDatabase templateDbName, activeDbName
+    
+    Exit Sub
+ErrorHandler:
+    Err.Raise Err.Number, "TIOperationRepository.SuiteSetup", Err.Description
 End Sub
 
 Private Sub SuiteTeardown()
-    Dim activePath As String: activePath = modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
-    Call modTestUtils.SuiteTeardown(activePath)
+    ' Limpieza centralizada usando CleanupTestDatabase
+    modTestUtils.CleanupTestDatabase "Operation_integration_test.accdb"
 End Sub
 
 ' ============================================================================
@@ -69,13 +77,20 @@ Private Function TestSaveLog_Success() As CTestResult
     
     On Error GoTo TestFail
 
-    ' Arrange: Las dependencias obtienen la configuración del contexto centralizado
+    ' ARRANGE: Crear configuración local apuntando a la BD de prueba de esta suite
+    Dim config As IConfig
+    Dim mockConfigImpl As New CMockConfig
+    mockConfigImpl.SetSetting "CONDOR_DATA_PATH", modTestUtils.GetWorkspacePath() & "Operation_integration_test.accdb"
+    mockConfigImpl.SetSetting "CONDOR_PASSWORD", ""
+    Set config = mockConfigImpl
+    
+    ' Crear dependencias inyectando la configuración local
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
-    Set repository = modRepositoryFactory.CreateOperationRepository(errorHandler)
+    Set repository = modRepositoryFactory.CreateOperationRepository(config)
     
     ' Arrange: Conectar a la base de datos activa de forma segura
     Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = modTestUtils.GetProjectPath() & CONDOR_ACTIVE_PATH
+    dbPath = modTestUtils.GetWorkspacePath() & "Operation_integration_test.accdb"
     
     If Not fs.FileExists(dbPath) Then
         Err.Raise vbObjectError + 101, "Test.Arrange", "La BD de prueba de Operaciones no existe en la ruta esperada: " & dbPath
@@ -85,12 +100,12 @@ Private Function TestSaveLog_Success() As CTestResult
 
     ' Act: Ejecutar la operación a probar dentro de una transacción
     DBEngine.BeginTrans
-    repository.SaveLog "TEST_OP", "ENTITY_123", "Detalles de prueba."
+    repository.SaveLog "TEST_OP", 123, "Detalles de prueba."
     
     ' Assert: Verificar directamente en la BD que el registro se insertó
     Set rs = db.OpenRecordset("SELECT * FROM tbOperacionesLog WHERE tipoOperacion = 'TEST_OP'")
     modAssert.AssertFalse rs.EOF, "Se debería haber insertado un registro de log."
-    modAssert.AssertEquals "ENTITY_123", rs!idEntidad, "El ID de entidad no coincide."
+    modAssert.AssertEquals "123", rs!idEntidad, "El ID de entidad no coincide."
     modAssert.AssertEquals "Detalles de prueba.", rs!detalles, "Los detalles no coinciden."
 
     TestSaveLog_Success.Pass
