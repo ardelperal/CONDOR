@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -12,15 +12,17 @@ Option Explicit
 
 Implements INotificationRepository
 
-' Propiedades públicas para verificación en pruebas
-Public WasEnqueueEmailCalled As Boolean
-Public LastDestinatarios As String
-Public LastAsunto As String
-Public LastCuerpoHTML As String
-Public LastUsuario As String
-Public LastAdminEmail As String
-Public LastAdjuntoPath As String
-Public EnqueueEmailReturnValue As Boolean
+' --- Variables "Espía" privadas ---
+Private m_WasEnqueueEmailCalled As Boolean
+Private m_LastDestinatarios As String
+Private m_LastAsunto As String
+Private m_LastCuerpoHTML As String
+Private m_LastConCopia As String
+Private m_LastConCopiaOculta As String
+Private m_LastAdjuntoPath As String
+
+' --- Variable de configuración de comportamiento ---
+Private m_EnqueueEmailReturnValue As Boolean
 
 ' Constructor
 Private Sub Class_Initialize()
@@ -29,33 +31,56 @@ End Sub
 
 ' Reinicia el estado del mock
 Public Sub Reset()
-    WasEnqueueEmailCalled = False
-    LastDestinatarios = ""
-    LastAsunto = ""
-    LastCuerpoHTML = ""
-    LastUsuario = ""
-    LastAdminEmail = ""
-    LastAdjuntoPath = ""
-    EnqueueEmailReturnValue = True
+    m_WasEnqueueEmailCalled = False
+    m_LastDestinatarios = ""
+    m_LastAsunto = ""
+    m_LastCuerpoHTML = ""
+    m_LastConCopia = ""
+    m_LastConCopiaOculta = ""
+    m_LastAdjuntoPath = ""
+    m_EnqueueEmailReturnValue = True ' Comportamiento por defecto: éxito
 End Sub
 
-' Implementación de la interfaz
-Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpoHTML As String, ByVal usuario As String, ByVal adminEmail As String, Optional ByVal adjuntoPath As String = "") As Boolean
-    ' Registrar la llamada para verificación
-    WasEnqueueEmailCalled = True
-    LastDestinatarios = destinatarios
-    LastAsunto = asunto
-    LastCuerpoHTML = cuerpoHTML
-    LastUsuario = usuario
-    LastAdminEmail = adminEmail
-    LastAdjuntoPath = adjuntoPath
+' --- Método de configuración ---
+Public Sub ConfigureEnqueueEmail(ByVal returnValue As Boolean)
+    m_EnqueueEmailReturnValue = returnValue
+End Sub
+
+' --- Propiedades "Espía" públicas de solo lectura ---
+Public Property Get WasEnqueueEmailCalled() As Boolean
+    WasEnqueueEmailCalled = m_WasEnqueueEmailCalled
+End Property
+Public Property Get LastDestinatarios() As String
+    LastDestinatarios = m_LastDestinatarios
+End Property
+Public Property Get LastAsunto() As String
+    LastAsunto = m_LastAsunto
+End Property
+Public Property Get LastCuerpoHTML() As String
+    LastCuerpoHTML = m_LastCuerpoHTML
+End Property
+Public Property Get LastConCopia() As String
+    LastConCopia = m_LastConCopia
+End Property
+Public Property Get LastConCopiaOculta() As String
+    LastConCopiaOculta = m_LastConCopiaOculta
+End Property
+Public Property Get LastAdjuntoPath() As String
+    LastAdjuntoPath = m_LastAdjuntoPath
+End Property
+
+' --- Implementación de la interfaz ---
+Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpoHTML As String, Optional ByVal conCopia As String = "", Optional ByVal conCopiaOculta As String = "", Optional ByVal adjuntoPath As String = "") As Boolean
+    ' Registrar la llamada y los parámetros para verificación
+    m_WasEnqueueEmailCalled = True
+    m_LastDestinatarios = destinatarios
+    m_LastAsunto = asunto
+    m_LastCuerpoHTML = cuerpoHTML
+    m_LastConCopia = conCopia
+    m_LastConCopiaOculta = conCopiaOculta
+    m_LastAdjuntoPath = adjuntoPath
     
     ' Devolver el valor configurado
-    INotificationRepository_EnqueueEmail = EnqueueEmailReturnValue
-End Function
-
-' Método público de conveniencia
-Public Function EnqueueEmail(ByVal destinatarios As String, ByVal asunto As String, ByVal cuerpoHTML As String, ByVal usuario As String, ByVal adminEmail As String, Optional ByVal adjuntoPath As String = "") As Boolean
-    EnqueueEmail = INotificationRepository_EnqueueEmail(destinatarios, asunto, cuerpoHTML, usuario, adminEmail, adjuntoPath)
+    INotificationRepository_EnqueueEmail = m_EnqueueEmailReturnValue
 End Function
 

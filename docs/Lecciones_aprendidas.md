@@ -454,3 +454,68 @@ Regla Inquebrantable: Antes de cualquier llamada a DBEngine.OpenDatabase, el có
 5. **Solo entonces**, el Arquitecto realiza su auditoría sobre el código fresco y genera el prompt.
 
 **Principio Fundamental:** No más suposiciones. Solo análisis basado en la evidencia actual.
+
+## Lección Aprendida 49: Principio de Transferencia de Artefactos Atómica y Verificable
+Observación: La solicitud de artefactos de código mediante peticiones conversacionales ("dame el fichero X", "necesito los mocks de Y") ha demostrado ser un proceso ineficiente y propenso a errores. 
+
+Regla Inquebrantable: Toda solicitud de artefactos de código por parte de un agente de IA de análisis (como CONDOR-Architect) al Supervisor debe ser gestionada por :
+
+cscript condor_cli.vbs bundle [Archivo1],[Archivo2]
+
+Le debes decir al supervisor ejecuta el comando cscript condor_cli.vbs bundle y ya le pones tú en una lista los que necesitas
+
+## Lección 50: Los Fixtures de Integración son los Artefactos de Producción
+
+**Observación:** Las pruebas de integración no deben mantener sus propias versiones de artefactos estáticos como plantillas o bases de datos de prueba. Hacerlo lleva a que las pruebas validen una realidad paralela que puede no coincidir con la de producción.
+
+**Regla Inquebrantable:** Las pruebas de integración deben, en su fase de `Setup` centralizada, copiar dinámicamente los artefactos desde su ubicación de "producción" (en el contexto de desarrollo, el directorio `/back`) al entorno de `workspace` de pruebas. El aprovisionamiento debe ser centralizado en el motor de pruebas (`modTestRunner`) y ocurrir una sola vez por ejecución, no en cada suite individual.
+
+## Lección Aprendida 51: Inmutabilidad de las Bases de Datos Externas. Las bases de datos externas (Lanzadera_Datos.accdb, Expedientes_datos.accdb, correos_datos.accdb) son sistemas de terceros en producción y deben ser tratadas como fuentes de datos de solo lectura e inmutables. Está terminantemente prohibido generar cualquier script de migración, ALTER TABLE, UPDATE o DELETE que modifique su esquema o sus datos de configuración. Nuestro sistema debe adaptarse a sus contratos existentes, sin excepción. Cualquier inconsistencia debe ser resuelta dentro del código de CONDOR, encapsulando la lógica de adaptación en la capa de Repositorio.
+
+## Lección 52: El Acceso Explícito a `.Value` en Recordsets DAO no es Negociable
+
+**Observación:** Se han detectado errores sutiles y difíciles de depurar al poblar colecciones y diccionarios desde un recordset, donde se asignaban referencias a objetos `DAO.Field` en lugar de sus valores primitivos.
+
+**Regla Inquebrantable:** Toda lectura de un `DAO.Recordset` debe usar explícitamente la propiedad `.Value` (ej. `miVariable = rs!MiCampo.Value`). Confiar en la resolución implícita de la propiedad por defecto de VBA es una práctica frágil y está prohibida. El uso explícito de `.Value` elimina toda ambigüedad entre obtener el valor del campo y obtener una referencia al objeto `DAO.Field`.
+
+## Lección 53: La Interacción con Bookmarks que Contienen Campos de Formulario Requiere la API `FormFields`
+
+**Observación:** Se han detectado fallos al intentar leer o escribir en bookmarks de plantillas `.docx`, donde se obtenía el texto del placeholder (`FORMTEXT`) en lugar del valor real.
+
+**Regla Inquebrantable:** Cuando un bookmark en un documento de Word contiene un Campo de Formulario (Form Field), no se debe interactuar con la propiedad `.Range.Text` del bookmark. La única forma correcta y robusta de acceder al valor es a través de la colección `Document.FormFields` y su propiedad `.Result`.
+* **Para escribir:** `miDoc.FormFields("NombreBookmark").Result = "Nuevo Valor"`
+* **Para leer:** `miVariable = miDoc.FormFields("NombreBookmark").Result`
+
+## Lección 54: El Aislamiento de Suites de Pruebas Requiere Procedimientos `SuiteSetup` y `SuiteTeardown` Obligatorios
+
+**Observación:** Se han detectado fallos intermitentes en suites de pruebas de integración debido a contaminación entre ejecuciones, especialmente en suites que manejan recursos externos como archivos temporales y aplicaciones COM (Word, Excel).
+
+**Regla Inquebrantable:** Toda suite de pruebas de integración debe implementar obligatoriamente:
+1. **`SuiteSetup()`**: Procedimiento privado que prepara el entorno limpio antes de ejecutar las pruebas (crear carpetas, limpiar datos previos, etc.)
+2. **`SuiteTeardown()`**: Procedimiento privado que limpia completamente el entorno después de todas las pruebas (eliminar archivos temporales, cerrar aplicaciones COM, resetear estados)
+3. **Manejo de errores con `On Error GoTo CleanupSuite`**: La función principal de la suite debe garantizar que `SuiteTeardown()` se ejecute incluso si ocurren errores catastróficos
+
+**Patrón Obligatorio para Suites de Integración:**
+```vba
+Public Function MiSuiteRunAll() As CTestSuiteResult
+    Dim suiteResult As New CTestSuiteResult
+    suiteResult.Initialize "MiSuite"
+    
+    On Error GoTo CleanupSuite
+    
+    Call SuiteSetup
+    ' ... ejecutar pruebas ...
+    
+CleanupSuite:
+    Call SuiteTeardown
+    
+    If Err.Number <> 0 Then
+        Dim errorTest As New CTestResult
+        errorTest.Initialize "Suite_Execution_Failed"
+        errorTest.Fail "La suite falló: " & Err.Description
+        suiteResult.AddResult errorTest
+    End If
+    
+    Set MiSuiteRunAll = suiteResult
+End Function
+```

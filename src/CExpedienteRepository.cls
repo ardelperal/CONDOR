@@ -115,11 +115,11 @@ Private Function MapRecordsetToExpediente(ByVal rs As DAO.Recordset) As EExpedie
     Dim expediente As New EExpediente
     
     ' Mapeo completo y seguro de propiedades
-    expediente.idExpediente = Nz(rs!idExpediente, 0)
-    expediente.Nemotecnico = Nz(rs!Nemotecnico, "")
-    expediente.Titulo = Nz(rs!Titulo, "")
-    expediente.ContratistaPrincipal = Nz(rs!ContratistaPrincipal, "")
-    expediente.Pecal = Nz(rs!Pecal, "")
+    expediente.idExpediente = Nz(rs!idExpediente.Value, 0)
+    expediente.Nemotecnico = Nz(rs!Nemotecnico.Value, "")
+    expediente.Titulo = Nz(rs!Titulo.Value, "")
+    expediente.ContratistaPrincipal = Nz(rs!ContratistaPrincipal.Value, "")
+    expediente.Pecal = Nz(rs!Pecal.Value, "")
     
     Set MapRecordsetToExpediente = expediente
     

@@ -520,6 +520,12 @@ cscript condor_cli.vbs rebuild
 
 **⚠️ Importante**: Las pruebas requieren que los módulos estén compilados. Siempre ejecute `update` o `rebuild` antes de ejecutar las pruebas manualmente para garantizar un estado limpio y compilado.
 
+### Documentación de Comandos CLI
+
+Para información detallada sobre los comandos disponibles:
+
+- **[Comando listtables](docs/CLI_listtables.md)**: Documentación completa del comando para listar tablas y esquemas, incluyendo el nuevo campo "Requerido"
+
 ### Configuración
 
 - **Base de Datos**: `back/Desarrollo/CONDOR.accdb`

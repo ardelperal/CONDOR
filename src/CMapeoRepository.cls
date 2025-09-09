@@ -56,11 +56,11 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     ' Mapear recordset a objeto de dominio
     If Not rs.EOF Then
         Set mapeo = New EMapeo
-        mapeo.IdMapeo = rs!IdMapeo
-        mapeo.NombrePlantilla = rs!NombrePlantilla & ""
-        mapeo.NombreCampoTabla = rs!NombreCampoTabla & ""
-        mapeo.ValorAsociado = rs!ValorAsociado & ""
-        mapeo.NombreCampoWord = rs!NombreCampoWord & ""
+        mapeo.IdMapeo = rs!IdMapeo.Value
+        mapeo.NombrePlantilla = rs!NombrePlantilla.Value & ""
+        mapeo.NombreCampoTabla = rs!NombreCampoTabla.Value & ""
+        mapeo.ValorAsociado = rs!ValorAsociado.Value & ""
+        mapeo.NombreCampoWord = rs!NombreCampoWord.Value & ""
     End If
     
     ' Limpiar recursos

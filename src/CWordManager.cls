@@ -74,133 +74,54 @@ Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As B
     Exit Function
     
 errorHandler:
-    ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-    If Not m_ErrorHandler Is Nothing Then
-        m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_AbrirDocumento"
-    End If
-    
-    ' Limpiar recursos en caso de error
-    If Not m_WordDoc Is Nothing Then
-        On Error Resume Next
-        m_WordDoc.Close False
-        Set m_WordDoc = Nothing
-        On Error GoTo 0
-    End If
-    
-    If m_IsWordAppCreated And Not m_WordApp Is Nothing Then
-        On Error Resume Next
-        m_WordApp.Quit
-        Set m_WordApp = Nothing
-        m_IsWordAppCreated = False
-        On Error GoTo 0
-    End If
-    
+    ' Si el fichero no se encuentra (error común), no lo logueamos como un error del sistema.
+    ' La función simplemente devolverá False, que es el comportamiento esperado.
     IWordManager_AbrirDocumento = False
 End Function
 
-Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
-    On Error GoTo errorHandler
-    
-    If m_WordDoc Is Nothing Then
-        ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-        If Not m_ErrorHandler Is Nothing Then
-            m_ErrorHandler.LogError -1, "No hay documento abierto", "CWordManager.IWordManager_ReemplazarTexto"
-        End If
-        IWordManager_ReemplazarTexto = False
-        Exit Function
+Private Function IWordManager_SetBookmarkText(ByVal BookmarkName As String, ByVal Value As String) As Boolean
+    On Error GoTo ErrorHandler
+
+    IWordManager_SetBookmarkText = False
+    If m_WordDoc Is Nothing Then Exit Function
+
+    If m_WordDoc.Bookmarks.Exists(BookmarkName) Then
+        m_WordDoc.FormFields(BookmarkName).Result = Value
+        IWordManager_SetBookmarkText = True
     End If
     
-    ' Realizar el reemplazo
-    With m_WordDoc.content.Find
-        .Text = textoABuscar
-        .Replacement.Text = textoReemplazo
-        .Execute Replace:=2 ' wdReplaceAll
-    End With
-    
-    IWordManager_ReemplazarTexto = True
     Exit Function
-    
-errorHandler:
-    ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-    If Not m_ErrorHandler Is Nothing Then
-        m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_ReemplazarTexto"
-    End If
-    IWordManager_ReemplazarTexto = False
+ErrorHandler:
+    ' No se considera un error del sistema si el bookmark no existe.
+    ' Simplemente se devuelve False.
 End Function
 
-Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As Boolean
-    On Error GoTo errorHandler
+Private Function IWordManager_GetBookmarkText(ByVal BookmarkName As String) As String
+    On Error GoTo ErrorHandler
     
-    If m_WordDoc Is Nothing Then
-        ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-        If Not m_ErrorHandler Is Nothing Then
-            m_ErrorHandler.LogError -1, "No hay documento abierto", "CWordManager.IWordManager_GuardarDocumento"
-        End If
-        IWordManager_GuardarDocumento = False
-        Exit Function
+    IWordManager_GetBookmarkText = ""
+    If m_WordDoc Is Nothing Then Exit Function
+
+    If m_WordDoc.Bookmarks.Exists(BookmarkName) Then
+        IWordManager_GetBookmarkText = m_WordDoc.FormFields(BookmarkName).Result
     End If
+
+    Exit Function
+ErrorHandler:
+    IWordManager_GetBookmarkText = ""
+End Function
+
+Private Function IWordManager_GuardarDocumento() As Boolean
+    On Error GoTo errorHandler
+    If m_WordDoc Is Nothing Then Exit Function
     
-    ' Guardar el documento
-    m_WordDoc.SaveAs2 rutaDestino
-    
+    m_WordDoc.Save
     IWordManager_GuardarDocumento = True
-    Exit Function
     
+    Exit Function
 errorHandler:
-    ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-    If Not m_ErrorHandler Is Nothing Then
-        m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_GuardarDocumento"
-    End If
     IWordManager_GuardarDocumento = False
-End Function
-
-Private Sub IWordManager_CerrarDocumento()
-    Call LimpiarRecursos
-End Sub
-
-Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As String) As String
-    Dim contenido As String
-    Dim tempWordDoc As Object
-    
-    On Error GoTo errorHandler
-    
-    ' Verificar que la aplicación Word esté disponible
-    If m_WordApp Is Nothing Then
-        If Not m_ErrorHandler Is Nothing Then
-            m_ErrorHandler.LogError -1, "Aplicación Word no inicializada", "CWordManager.IWordManager_LeerContenidoDocumento"
-        End If
-        IWordManager_LeerContenidoDocumento = ""
-        Exit Function
-    End If
-    
-    ' Abrir el documento usando la aplicación Word inyectada
-    Set tempWordDoc = m_WordApp.Documents.Open(rutaDocumento)
-    
-    ' Leer el contenido
-    contenido = tempWordDoc.content.Text
-    
-    ' Limpiar recursos temporales
-    tempWordDoc.Close False
-    Set tempWordDoc = Nothing
-    
-    IWordManager_LeerContenidoDocumento = contenido
-    Exit Function
-    
-errorHandler:
-    ' Corregir llamada a LogError (Lección 1) y usar m_ErrorHandler (Lección 8)
-    If Not m_ErrorHandler Is Nothing Then
-        m_ErrorHandler.LogError Err.Number, Err.Description, "CWordManager.IWordManager_LeerContenidoDocumento"
-    End If
-    
-    ' Limpiar recursos en caso de error
-    If Not tempWordDoc Is Nothing Then
-        On Error Resume Next
-        tempWordDoc.Close False
-        Set tempWordDoc = Nothing
-        On Error GoTo 0
-    End If
-    
-    IWordManager_LeerContenidoDocumento = ""
+    ' El error ya será logueado por el llamador si es necesario.
 End Function
 
 ' ============================================================================
@@ -211,20 +132,16 @@ Public Function AbrirDocumento(ByVal rutaDocumento As String) As Boolean
     AbrirDocumento = IWordManager_AbrirDocumento(rutaDocumento)
 End Function
 
-Public Function ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
-    ReemplazarTexto = IWordManager_ReemplazarTexto(textoABuscar, textoReemplazo)
+Public Function SetBookmarkText(ByVal BookmarkName As String, ByVal Value As String) As Boolean
+    SetBookmarkText = IWordManager_SetBookmarkText(BookmarkName, Value)
 End Function
 
-Public Function GuardarDocumento(ByVal rutaDestino As String) As Boolean
-    GuardarDocumento = IWordManager_GuardarDocumento(rutaDestino)
+Public Function GetBookmarkText(ByVal BookmarkName As String) As String
+    GetBookmarkText = IWordManager_GetBookmarkText(BookmarkName)
 End Function
 
-Public Sub CerrarDocumento()
-    Call IWordManager_CerrarDocumento
-End Sub
-
-Public Function LeerContenidoDocumento(ByVal rutaDocumento As String) As String
-    LeerContenidoDocumento = IWordManager_LeerContenidoDocumento(rutaDocumento)
+Public Function GuardarDocumento() As Boolean
+    GuardarDocumento = IWordManager_GuardarDocumento()
 End Function
 
 ' ============================================================================
@@ -248,15 +165,23 @@ End Sub
 
 Private Sub IWordManager_Dispose()
     On Error Resume Next
-    ' Cierra docs y la app
+    
+    ' 1. Cerrar documento actual si existe
+    If Not m_WordDoc Is Nothing Then
+        m_WordDoc.Close False
+        Set m_WordDoc = Nothing
+    End If
+    
+    ' 2. Cerrar todos los documentos abiertos y la aplicación Word
     If Not m_WordApp Is Nothing Then
         Do While m_WordApp.Documents.Count > 0
             m_WordApp.Documents(1).Close False
         Loop
         m_WordApp.Quit 0
+        Set m_WordApp = Nothing
     End If
-    Set m_WordApp = Nothing
-    ' Fallback (solo en testing): limpiar posibles zómbis recientes
-    Call modTestUtils.KillRecentWordProcesses(10, True)
+    
+    ' 3. Resetear flags de estado
+    m_IsWordAppCreated = False
 End Sub
 

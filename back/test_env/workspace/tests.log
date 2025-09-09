@@ -1,14 +1,8 @@
-07/09/2025 11:35:51 | ERROR | Err: 3078 | Error en CSolicitudRepository.SaveSolicitud: El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'tbSolicitudes'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: 
-07/09/2025 11:35:51 | CRITICAL ERROR | Err: 76 | No se ha encontrado la ruta de acceso | Source: modTestRunner.ExecuteAllSuites
-07/09/2025 11:35:58 | ERROR | Err: 5174 | No hemos podido encontrar el archivo. ¿Se ha movido, cambiado de nombre o eliminado? (C:\Proyectos\CONDOR\...\no_existe.docx) | Source: CWordManager.IWordManager_AbrirDocumento
-07/09/2025 11:37:42 | ERROR | Err: 3078 | Error en CSolicitudRepository.SaveSolicitud: El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'tbSolicitudes'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: 
-07/09/2025 11:37:46 | CRITICAL ERROR | Err: 76 | No se ha encontrado la ruta de acceso | Source: modTestRunner.ExecuteAllSuites
-07/09/2025 11:37:46 | CRITICAL ERROR | Err: 76 | No se ha encontrado la ruta de acceso | Source: modTestRunner.ExecuteAllSuites
-07/09/2025 11:37:53 | ERROR | Err: 5174 | No hemos podido encontrar el archivo. ¿Se ha movido, cambiado de nombre o eliminado? (C:\Proyectos\CONDOR\...\no_existe.docx) | Source: CWordManager.IWordManager_AbrirDocumento
-07/09/2025 11:38:27 | ERROR | Err: 3078 | Error en CSolicitudRepository.SaveSolicitud: El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'tbSolicitudes'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: 
-07/09/2025 11:38:27 | CRITICAL ERROR | Err: 76 | No se ha encontrado la ruta de acceso | Source: modTestRunner.ExecuteAllSuites
-07/09/2025 11:38:36 | ERROR | Err: 5174 | No hemos podido encontrar el archivo. ¿Se ha movido, cambiado de nombre o eliminado? (C:\Proyectos\CONDOR\...\no_existe.docx) | Source: CWordManager.IWordManager_AbrirDocumento
-07/09/2025 11:42:34 | ERROR | Err: 3078 | Error en CSolicitudRepository.SaveSolicitud: El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'tbSolicitudes'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: 
-07/09/2025 11:42:38 | CRITICAL ERROR | Err: 76 | No se ha encontrado la ruta de acceso | Source: modTestRunner.ExecuteAllSuites
-07/09/2025 11:42:38 | CRITICAL ERROR | Err: 76 | No se ha encontrado la ruta de acceso | Source: modTestRunner.ExecuteAllSuites
-07/09/2025 11:42:44 | ERROR | Err: 5174 | No hemos podido encontrar el archivo. ¿Se ha movido, cambiado de nombre o eliminado? (C:\Proyectos\CONDOR\...\no_existe.docx) | Source: CWordManager.IWordManager_AbrirDocumento
+09/09/2025 14:16:46 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+09/09/2025 14:31:09 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+09/09/2025 14:31:09 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+09/09/2025 14:31:10 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+09/09/2025 14:34:40 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+09/09/2025 14:34:40 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+09/09/2025 14:43:21 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+09/09/2025 14:43:21 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog

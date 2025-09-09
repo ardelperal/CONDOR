@@ -37,3 +37,10 @@ errorHandler:
     Set CreateWorkflowService = Nothing
 End Function
 
+Public Function CreateWorkflowServiceWithMocks(ByVal mockRepo As IWorkflowRepository) As IWorkflowService
+    Dim serviceImpl As New CWorkflowService
+    ' Inyectar el mock del repositorio y mocks pasivos para las otras dependencias
+    serviceImpl.Initialize mockRepo, New CMockOperationLogger, New CMockErrorHandlerService
+    Set CreateWorkflowServiceWithMocks = serviceImpl
+End Function
+

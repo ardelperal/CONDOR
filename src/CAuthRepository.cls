@@ -83,10 +83,10 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     ' Poblar el objeto AuthData basándose en los resultados
     If Not rs.EOF Then
         authData.UserExists = True
-        If Not IsNull(rs("EsAdministrador")) And rs("EsAdministrador") = "Sí" Then
+        If Not IsNull(rs("EsAdministrador").Value) And rs("EsAdministrador").Value = "Sí" Then
             authData.IsGlobalAdmin = True
         End If
-        If Not IsNull(rs("EsUsuarioAdministrador")) And rs("EsUsuarioAdministrador") = True Then
+        If Not IsNull(rs("EsUsuarioAdministrador").Value) And rs("EsUsuarioAdministrador").Value = True Then
             authData.IsAppAdmin = True
         End If
         ' ... (resto de los mapeos de roles)

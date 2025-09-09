@@ -102,7 +102,6 @@
 - TestAuthService.bas
 - TestCConfig.bas
 - TestCExpedienteService.bas
-- TestDocumentService.bas
 - TestErrorHandlerService.bas
 - TestModAssert.bas
 - TestOperationLogger.bas
@@ -119,11 +118,13 @@
 - modErrorHandlerFactory.bas
 - modExpedienteServiceFactory.bas
 - modFileSystemFactory.bas
+- modHealthCheck.bas
 - modNotificationServiceFactory.bas
 - modOperationLoggerFactory.bas
 - modQueries.bas
 - modRepositoryFactory.bas
 - modSolicitudServiceFactory.bas
+- modSystemUtils.bas
 - modTestContext.bas
 - modTestRunner.bas
 - modTestUtils.bas
@@ -131,13 +132,13 @@
 - modWorkflowServiceFactory.bas
 
 ## Resumen
-- **Total de archivos:** 116
+- **Total de archivos:** 117
 - **Clases de Entidad:** 16
 - **Interfaces:** 20
-- **Implementaciones Concretas:** 23
+- **Implementaciones Concretas:** 22
 - **Mocks:** 19
 - **Pruebas de Integración:** 10
-- **Pruebas Unitarias:** 10
-- **Módulos de Infraestructura:** 18
+- **Pruebas Unitarias:** 9
+- **Módulos de Infraestructura:** 21
 
 *Última actualización: $(Get-Date -Format "dd/MM/yyyy HH:mm")*

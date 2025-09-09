@@ -47,6 +47,8 @@ Private Function INotificationService_SendNotification( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
+    Optional ByVal conCopia As String = "", _
+    Optional ByVal conCopiaOculta As String = "", _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
     On Error GoTo errorHandler
@@ -72,7 +74,7 @@ Private Function INotificationService_SendNotification( _
     
     ' Llamar al repositorio para encolar el correo (el repositorio calcula el ID)
     Dim Resultado As Boolean
-    Resultado = m_NotificationRepository.EnqueueEmail(destinatarios, asunto, cuerpoHTML, usuarioActual, correoAdministrador, urlAdjunto)
+    Resultado = m_NotificationRepository.EnqueueEmail(destinatarios, asunto, cuerpoHTML, conCopia, conCopiaOculta, urlAdjunto)
     
     If Not Resultado Then
         INotificationService_SendNotification = False
@@ -80,8 +82,16 @@ Private Function INotificationService_SendNotification( _
     End If
     
     ' Registrar operación exitosa
-    m_OperationLogger.LogOperation "NOTIFICATION", 0, _
-        "SUCCESS - Correo encolado exitosamente. Destinatarios: " & destinatarios
+    Dim logEntry As EOperationLog
+    Set logEntry = New EOperationLog
+    With logEntry
+        .tipoOperacion = "ENQUEUE_EMAIL"
+        .idEntidadAfectada = 0 ' El ID lo gestiona el repositorio y no es devuelto al servicio
+        .usuario = m_Config.GetUsuarioActual()
+        .resultado = "Success"
+        .descripcion = "Correo encolado para envío. Destinatarios: " & destinatarios
+    End With
+    m_OperationLogger.LogOperation logEntry
     
     INotificationService_SendNotification = True
     Exit Function
@@ -103,9 +113,11 @@ Public Function SendNotification( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
+    Optional ByVal conCopia As String = "", _
+    Optional ByVal conCopiaOculta As String = "", _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
-    SendNotification = INotificationService_SendNotification(destinatarios, asunto, cuerpoHTML, urlAdjunto)
+    SendNotification = INotificationService_SendNotification(destinatarios, asunto, cuerpoHTML, conCopia, conCopiaOculta, urlAdjunto)
 End Function
 
 ' Destructor

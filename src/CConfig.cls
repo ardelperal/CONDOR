@@ -19,71 +19,64 @@ Private Sub Class_Initialize()
     m_Settings.CompareMode = TextCompare ' Case-insensitive keys
 End Sub
 
-' Método para cargar la configuración desde la BD. Lanza errores si falla.
 Public Sub LoadConfiguration()
-    Dim db As DAO.Database
-    Dim rs As DAO.Recordset
-    Dim rsConfig As DAO.Recordset
-    Dim backendPath As String
-    Dim backendPassword As String
-    
     On Error GoTo ErrorHandler
     
-    ' 1. Leer TbLocalConfig del Frontend para determinar el entorno
+    Dim db As DAO.Database, rs As DAO.Recordset
+    
+    ' 1. LEER EL CONMUTADOR DE ENTORNO DESDE EL FRONTEND
     Set db = CurrentDb
-    Set rs = db.OpenRecordset("SELECT [Entorno] FROM [TbLocalConfig]")
-    If rs.EOF Then
-        Err.Raise vbObjectError + 1001, "CConfig.LoadConfiguration", "No se encontró ningún registro en TbLocalConfig."
-    End If
+    Set rs = db.OpenRecordset("SELECT TOP 1 Entorno FROM TbLocalConfig")
+    
     Dim entorno As String
-    entorno = rs.Fields("Entorno").value
+    If Not rs.EOF Then
+        entorno = UCase(Trim(rs.Fields("Entorno").value & ""))
+    Else
+        entorno = "DESARROLLO" ' Fallback seguro
+    End If
     rs.Close
     
-    ' 2. Determinar la ruta del Backend según el entorno
-    ' Esta lógica asume que las rutas base están definidas en la tabla de configuración del backend
-    ' Por ahora, para que funcione, deducimos la ruta base de la ruta del frontend.
-    Dim basePath As String
-    basePath = Left(db.Name, InStrRev(db.Name, "\")) & "..\.."
-    
-    If entorno = "LOCAL" Then
-        backendPath = basePath & "\back\CONDOR_datos.accdb"
-        backendPassword = "dpddpd" ' Contraseña estándar para entornos locales
-    Else ' Asumimos "OFICINA" o cualquier otro valor
-        ' Aquí iría la lógica para obtener la ruta de red, por ahora usamos la local
-        backendPath = basePath & "\back\CONDOR_datos.accdb"
-        backendPassword = "dpddpd"
+    ' 2. ESTABLECER RUTAS POR DEFECTO BASADAS EN EL ENTORNO
+    If entorno = "PRODUCCION" Then
+        Dim prodBasePath As String: prodBasePath = "\\datoste\APLICACIONES_DYS\Aplicaciones PpD\"
+        m_Settings("DATA_PATH") = JoinPath(prodBasePath, "Condor\condor_datos.accdb")
+        m_Settings("LANZADERA_DATA_PATH") = JoinPath(prodBasePath, "0Lanzadera\Lanzadera_Datos.accdb")
+        m_Settings("EXPEDIENTES_DATA_PATH") = JoinPath(prodBasePath, "EXPEDIENTES\Expedientes_datos.accdb")
+        m_Settings("CORREOS_DB_PATH") = JoinPath(prodBasePath, "00Recursos\correos_datos.accdb")
+        m_Settings("TEMPLATES_PATH") = JoinPath(JoinPath(prodBasePath, "Condor\"), "recursos\Plantillas\")
+    Else ' DESARROLLO
+        Dim devBasePath As String: devBasePath = Left(CurrentDb.Name, InStrRev(CurrentDb.Name, "\back\") - 1)
+        m_Settings("DATA_PATH") = JoinPath(devBasePath, "back\condor_datos.accdb")
+        m_Settings("LANZADERA_DATA_PATH") = JoinPath(devBasePath, "back\Lanzadera_Datos.accdb")
+        m_Settings("EXPEDIENTES_DATA_PATH") = JoinPath(devBasePath, "back\Expedientes_datos.accdb")
+        m_Settings("CORREOS_DB_PATH") = JoinPath(devBasePath, "back\correos_datos.accdb")
+        m_Settings("TEMPLATES_PATH") = JoinPath(devBasePath, "back\recursos\Plantillas\")
     End If
 
-    ' Guardar la ruta del backend en la configuración para que otros servicios la usen
-    m_Settings.Add "DATA_PATH", backendPath
-    m_Settings.Add "DATABASE_PASSWORD", backendPassword
+    ' 3. LEER *TODA* LA CONFIGURACIÓN DEL BACKEND PARA SOBRESCRIBIR
+    Dim backendPath As String: backendPath = m_Settings("DATA_PATH")
     
-    ' 3. Conectar al Backend y leer tbConfiguracion
+    ' Contraseña por defecto para la conexión inicial, que puede ser sobrescrita
+    Dim backendPassword As String: backendPassword = "dpddpd"
+    If entorno = "DESARROLLO" Then backendPassword = ""
+
     Set db = DBEngine.OpenDatabase(backendPath, False, True, ";PWD=" & backendPassword)
-    Set rsConfig = db.OpenRecordset("SELECT clave, valor FROM tbConfiguracion")
+    Set rs = db.OpenRecordset("SELECT clave, valor FROM tbConfiguracion")
     
-    Do While Not rsConfig.EOF
-        If Not m_Settings.Exists(rsConfig!clave) Then
-            m_Settings.Add rsConfig!clave, rsConfig!valor
-        Else
-            m_Settings(rsConfig!clave) = rsConfig!valor
+    Do While Not rs.EOF
+        If Not IsNull(rs!clave.value) And Len(Trim(rs!clave.value & "")) > 0 Then
+            ' La base de datos SIEMPRE tiene la última palabra.
+            m_Settings(rs!clave.value) = rs!valor.value
         End If
-        rsConfig.MoveNext
+        rs.MoveNext
     Loop
-    
-    rsConfig.Close
+    rs.Close
     db.Close
     
     Exit Sub
-    
 ErrorHandler:
     If Not rs Is Nothing Then rs.Close
-    If Not rsConfig Is Nothing Then rsConfig.Close
     If Not db Is Nothing Then db.Close
-    Set rs = Nothing
-    Set rsConfig = Nothing
-    Set db = Nothing
-    ' Propagar el error hacia arriba para que sea manejado por el ErrorHandler global
     Err.Raise Err.Number, "CConfig.LoadConfiguration", Err.Description
 End Sub
 
@@ -117,6 +110,17 @@ End Function
 
 Private Function IConfig_GetAttachmentsPath() As String
     IConfig_GetAttachmentsPath = IConfig_GetValue("ATTACHMENTS_PATH")
+End Function
+
+' Añadir función de utilidad JoinPath si no existe
+Private Function JoinPath(ByVal basePath As String, ByVal relativePath As String) As String
+    Dim b As String: b = Trim$(basePath)
+    Dim r As String: r = Trim$(relativePath)
+    If Len(b) = 0 Then JoinPath = r: Exit Function
+    If Len(r) = 0 Then JoinPath = b: Exit Function
+    If Right$(b, 1) = "\" Then b = Left$(b, Len(b) - 1)
+    If Left$(r, 1) = "\" Then r = Mid$(r, 2)
+    JoinPath = b & "\" & r
 End Function
 
 Private Function IConfig_GetCorreosDBPath() As String
@@ -228,6 +232,10 @@ End Function
 Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
     Call IConfig_SetSetting(key, value)
 End Sub
+
+Public Function GetAllKeys() As Variant
+    GetAllKeys = m_Settings.Keys
+End Function
 
 
 

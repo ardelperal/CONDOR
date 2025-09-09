@@ -2,6 +2,7 @@ Attribute VB_Name = "TIWordManager"
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' REQUISITO DE COMPILACIÓN CRÍTICO:
 ' "Microsoft Word XX.X Object Library" debe estar referenciada.
@@ -25,6 +26,7 @@ Public Function TIWordManagerRunAll() As CTestSuiteResult
     
 CleanupSuite:
     Call SuiteTeardown
+    
     If Err.Number <> 0 Then
         Dim errorTest As New CTestResult
         errorTest.Initialize "Suite_Execution_Failed"
@@ -41,36 +43,38 @@ End Function
 
 Private Sub SuiteSetup()
     Dim fs As IFileSystem: Set fs = modFileSystemFactory.CreateFileSystem()
-    Dim testFolder As String: testFolder = modTestUtils.GetWorkspacePath() & "word_manager_tests"
-    If fs.FolderExists(testFolder) Then fs.DeleteFolderRecursive testFolder
-    Call modTestUtils.EnsureFolder(testFolder)
-    Call CreateTestTemplate(modTestUtils.JoinPath(testFolder, "template_test.docx"))
+    Dim testFolder As String: testFolder = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), TEST_FOLDER_REL)
+    
+    If fs.FolderExists(testFolder) Then
+        fs.DeleteFolderRecursive testFolder
+    End If
+    fs.CreateFolder testFolder
 End Sub
 
 Private Sub SuiteTeardown()
+    On Error Resume Next ' Ignorar errores durante la limpieza
+    
+    ' 1. Limpiar carpeta de pruebas
+    Dim fs As IFileSystem: Set fs = modFileSystemFactory.CreateFileSystem()
+    Dim testFolder As String: testFolder = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), TEST_FOLDER_REL)
+    fs.DeleteFolderRecursive testFolder
+    Set fs = Nothing
+    
+    ' 2. Forzar cierre de todas las instancias de Word que puedan haber quedado abiertas
+    Dim wordApp As Object
+    Set wordApp = Nothing
+    
+    ' Intentar cerrar Word mediante automation si está disponible
     On Error Resume Next
-    Call modTestUtils.CloseAllWordInstancesForTesting
-    modTestUtils.CleanupTestFolder "word_manager_tests"
+    Set wordApp = GetObject(, "Word.Application")
+    If Not wordApp Is Nothing Then
+        wordApp.Quit SaveChanges:=False
+        Set wordApp = Nothing
+    End If
+    On Error GoTo 0
 End Sub
 
-Private Sub CreateTestTemplate(ByVal templatePath As String)
-    Dim wordApp As Object, doc As Object
-    Dim parentDir As String: parentDir = modTestUtils.GetParentDirectory(templatePath)
-    Call modTestUtils.EnsureFolder(parentDir)
-    On Error GoTo ErrorHandler
-    Set wordApp = CreateObject("Word.Application"): wordApp.Visible = False
-    Set doc = wordApp.Documents.Add
-    doc.Content.Text = "Hola [NOMBRE], este es un documento de prueba."
-    doc.SaveAs2 templatePath
-Cleanup:
-    On Error Resume Next
-    If Not doc Is Nothing Then doc.Close SaveChanges:=0
-    If Not wordApp Is Nothing Then wordApp.Quit
-    Set doc = Nothing: Set wordApp = Nothing
-    Exit Sub
-ErrorHandler:
-    Resume Cleanup
-End Sub
+
 
 ' ============================================================================
 ' TESTS INDIVIDUALES (SE AÑADIRÁN EN LOS SIGUIENTES PROMPTS)
@@ -78,27 +82,49 @@ End Sub
 
 Private Function Test_CicloCompleto_Success() As CTestResult
     Set Test_CicloCompleto_Success = New CTestResult
-    Test_CicloCompleto_Success.Initialize "Ciclo completo (Abrir, Reemplazar, Guardar, Leer) debe tener éxito"
+    Test_CicloCompleto_Success.Initialize "Ciclo completo debe usar plantilla real de /recursos/"
     
-    Dim wordManager As IWordManager
+    Dim writerWordManager As IWordManager
+    Dim readerWordManager As IWordManager
     Dim fs As IFileSystem
+    Dim config As IConfig ' Usaremos una instancia local
+    
     On Error GoTo TestFail
     
-    Set wordManager = modWordManagerFactory.CreateWordManager()
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    Dim templatePath As String: templatePath = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath() & "word_manager_tests\", "template_test.docx")
-    Dim modifiedPath As String: modifiedPath = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath() & "word_manager_tests\", "modified_test.docx")
+    ' --- Arrange ---
+    ' 1. Obtener configuración del contexto de pruebas centralizado
+    Set config = modTestContext.GetTestConfig()
     
-    ' ACT
-    wordManager.AbrirDocumento templatePath
-    wordManager.ReemplazarTexto "[NOMBRE]", "CONDOR"
-    wordManager.GuardarDocumento modifiedPath
-    Dim contenido As String: contenido = wordManager.LeerContenidoDocumento(modifiedPath)
+    Set fs = modFileSystemFactory.CreateFileSystem(config)
     
-    ' ASSERT
-    modAssert.AssertTrue InStr(contenido, "CONDOR") > 0, "El contenido debería contener 'CONDOR'"
-    modAssert.AssertTrue fs.FileExists(modifiedPath), "El fichero modificado debe existir."
+    ' 2. Construir rutas DINÁMICAMENTE desde la configuración
+    Dim templatesPath As String: templatesPath = config.GetValue("TEMPLATES_PATH")
+    Dim templateFilename As String: templateFilename = config.GetValue("TEMPLATE_CDCA_FILENAME")
+    Dim sourceTemplatePath As String: sourceTemplatePath = modTestUtils.JoinPath(templatesPath, templateFilename)
     
+    Dim workspacePath As String: workspacePath = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), TEST_FOLDER_REL)
+    Dim testDocPath As String: testDocPath = modTestUtils.JoinPath(workspacePath, "test_document.docx")
+
+    ' 3. Aprovisionar el entorno de la prueba: Copiar la plantilla REAL al workspace
+    modAssert.AssertTrue fs.FileExists(sourceTemplatePath), "La plantilla '" & templateFilename & "' no se encontró en " & templatesPath
+    fs.CopyFile sourceTemplatePath, testDocPath
+    
+    ' --- Act (Escritura) ---
+    Set writerWordManager = modWordManagerFactory.CreateWordManager()
+    writerWordManager.AbrirDocumento testDocPath
+    writerWordManager.SetBookmarkText "Parte0_1", "TEST-REF-SUMINISTRADOR"
+    writerWordManager.GuardarDocumento
+    writerWordManager.Dispose
+    Set writerWordManager = Nothing
+    
+    ' --- Act (Lectura) ---
+    Set readerWordManager = modWordManagerFactory.CreateWordManager()
+    readerWordManager.AbrirDocumento testDocPath
+    Dim contenidoLeido As String
+    contenidoLeido = readerWordManager.GetBookmarkText("Parte0_1")
+    
+    ' --- Assert ---
+    modAssert.AssertEquals "TEST-REF-SUMINISTRADOR", contenidoLeido, "El contenido leído del bookmark no es el esperado."
     Test_CicloCompleto_Success.Pass
     GoTo Cleanup
 
@@ -106,9 +132,12 @@ TestFail:
     Test_CicloCompleto_Success.Fail "Error: " & Err.Description
     
 Cleanup:
-    If Not wordManager Is Nothing Then wordManager.Dispose
+    If Not writerWordManager Is Nothing Then writerWordManager.Dispose
+    If Not readerWordManager Is Nothing Then readerWordManager.Dispose
     Set fs = Nothing
-    Set wordManager = Nothing
+    Set config = Nothing
+    Set writerWordManager = Nothing
+    Set readerWordManager = Nothing
 End Function
 
 Private Function Test_AbrirFicheroInexistente_DevuelveFalse() As CTestResult
@@ -138,3 +167,4 @@ Cleanup:
     If Not wordManager Is Nothing Then wordManager.Dispose
     Set wordManager = Nothing
 End Function
+

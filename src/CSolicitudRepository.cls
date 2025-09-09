@@ -96,7 +96,7 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
     ' Obtener el ID para devolverlo
     If solicitud.idSolicitud = 0 Then
         rs.Bookmark = rs.LastModified
-        newId = rs!idSolicitud
+        newId = rs!idSolicitud.Value
         solicitud.idSolicitud = newId ' Actualizar el objeto original con el nuevo ID
     Else
         newId = solicitud.idSolicitud
@@ -134,18 +134,18 @@ End Function
 
 Private Function MapRecordsetToSolicitud(ByVal rs As DAO.Recordset) As ESolicitud
     Dim s As New ESolicitud
-    s.idSolicitud = Nz(rs!idSolicitud, 0)
-    s.idExpediente = Nz(rs!idExpediente, 0)
-    s.tipoSolicitud = Nz(rs!tipoSolicitud, "")
-    s.subTipoSolicitud = Nz(rs!subTipoSolicitud, "")
-    s.codigoSolicitud = Nz(rs!codigoSolicitud, "")
-    s.idEstadoInterno = Nz(rs!idEstadoInterno, 0) ' Usando el campo Long normalizado
-    s.fechaCreacion = rs!fechaCreacion
-    s.usuarioCreacion = Nz(rs!usuarioCreacion, "")
-    s.fechaPaseTecnico = Nz(rs!fechaPaseTecnico, 0)
-    s.fechaCompletadoTecnico = Nz(rs!fechaCompletadoTecnico, 0)
-    s.fechaModificacion = Nz(rs!fechaModificacion, 0)
-    s.usuarioModificacion = Nz(rs!usuarioModificacion, "")
+    s.idSolicitud = Nz(rs!idSolicitud.Value, 0)
+    s.idExpediente = Nz(rs!idExpediente.Value, 0)
+    s.tipoSolicitud = Nz(rs!tipoSolicitud.Value, "")
+    s.subTipoSolicitud = Nz(rs!subTipoSolicitud.Value, "")
+    s.codigoSolicitud = Nz(rs!codigoSolicitud.Value, "")
+    s.idEstadoInterno = Nz(rs!idEstadoInterno.Value, 0) ' Usando el campo Long normalizado
+    s.fechaCreacion = rs!fechaCreacion.Value
+    s.usuarioCreacion = Nz(rs!usuarioCreacion.Value, "")
+    s.fechaPaseTecnico = Nz(rs!fechaPaseTecnico.Value, 0)
+    s.fechaCompletadoTecnico = Nz(rs!fechaCompletadoTecnico.Value, 0)
+    s.fechaModificacion = Nz(rs!fechaModificacion.Value, 0)
+    s.usuarioModificacion = Nz(rs!usuarioModificacion.Value, "")
     
     Set MapRecordsetToSolicitud = s
 End Function

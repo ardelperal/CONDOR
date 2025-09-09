@@ -4,6 +4,7 @@ Option Explicit
 
 
 
+
 '''
 ' Módulo Central de Consultas SQL - CONDOR
 ' Principio: Centralización de consultas para mantenibilidad y seguridad
@@ -24,7 +25,7 @@ Public Const GET_AUTH_DATA_BY_EMAIL As String = _
 ' ============================================================================
 
 Public Const IS_VALID_TRANSITION As String = _
-    "SELECT COUNT(*) AS TransitionCount " & _
+    "SELECT COUNT(idTransicion) AS TransitionCount " & _
     "FROM tbTransiciones " & _
     "WHERE idEstadoOrigen = [pIdEstadoOrigen] AND idEstadoDestino = [pIdEstadoDestino] AND rolRequerido = [pRolRequerido];"
 
@@ -78,8 +79,12 @@ Public Const GET_MAPEO_POR_TIPO As String = _
 ' ============================================================================
 
 Public Const INSERT_OPERATION_LOG As String = _
+    "PARAMETERS pUsuario TEXT(255), pTipoOperacion TEXT(255), pIdEntidad LONG, pDescripcion MEMO, pResultado TEXT(50), pDetalles MEMO; " & _
     "INSERT INTO tbOperacionesLog (fechaHora, usuario, tipoOperacion, idEntidad, descripcion, resultado, detalles) " & _
     "VALUES (Now(), [pUsuario], [pTipoOperacion], [pIdEntidad], [pDescripcion], [pResultado], [pDetalles]);"
+
+
+
 
 
 

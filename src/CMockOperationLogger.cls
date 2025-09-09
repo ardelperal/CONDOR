@@ -10,138 +10,44 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-
-
-' Clase: CMockOperationLogger
-' Descripción: Mock del servicio de logging de operaciones para pruebas unitarias.
-'              Almacena las operaciones loggeadas en una colección para su verificación.
+' Versión 2.0 - Mock Inteligente con espía (Lección 22)
 
 Implements IOperationLogger
 
-Public LoggedOperations As Collection
-Public LogOperationCalled As Boolean
-Private m_ErrorHandler As IErrorHandlerService
+Private m_SaveLog_WasCalled As Boolean
+Private m_SaveLog_LastEntry As EOperationLog
+Private m_LogSolicitudOperation_WasCalled As Boolean
+Private m_LogSolicitudOperation_LastEntry As EOperationLog
+Private m_LogSolicitudOperation_LastSolicitud As ESolicitud
+Private m_LogSolicitudOperation_LastUserId As String
 
-Private Sub Class_Initialize()
-    Reset
-End Sub
+Public Property Get SaveLog_WasCalled() As Boolean: SaveLog_WasCalled = m_SaveLog_WasCalled: End Property
+Public Property Get SaveLog_LastEntry() As EOperationLog: Set SaveLog_LastEntry = m_SaveLog_LastEntry: End Property
+Public Property Get LogSolicitudOperation_WasCalled() As Boolean: LogSolicitudOperation_WasCalled = m_LogSolicitudOperation_WasCalled: End Property
+Public Property Get LogSolicitudOperation_LastEntry() As EOperationLog: Set LogSolicitudOperation_LastEntry = m_LogSolicitudOperation_LastEntry: End Property
+Public Property Get LogSolicitudOperation_LastSolicitud() As ESolicitud: Set LogSolicitudOperation_LastSolicitud = m_LogSolicitudOperation_LastSolicitud: End Property
+Public Property Get LogSolicitudOperation_LastUserId() As String: LogSolicitudOperation_LastUserId = m_LogSolicitudOperation_LastUserId: End Property
 
-' Método público para inicializar el mock desde el factory
-Public Sub Initialize(Optional ByVal errorHandler As IErrorHandlerService = Nothing)
-    Set m_ErrorHandler = errorHandler
-End Sub
-
-Private Sub IOperationLogger_LogOperation(ByVal operationType As String, ByVal entityId As Long, ByVal details As String)
-    Dim errorHandler As IErrorHandlerService
-    On Error GoTo errorHandler
-    
-    ' Registrar que el método fue llamado
-    LogOperationCalled = True
-    
-    Dim logEntry As New Collection
-    logEntry.Add operationType, "OperationType"
-    logEntry.Add entityId, "EntityId"
-    logEntry.Add details, "Details"
-    logEntry.Add "LogOperation", "Method"
-    
-    LoggedOperations.Add logEntry
-    
-    Exit Sub
-    
-errorHandler:
-    ' En un mock, los errores internos no suelen ser críticos, pero se podrían registrar para depuración del mock
-    Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogOperation: " & Err.Description
-End Sub
-
-Private Sub IOperationLogger_LogSolicitudCreation(ByVal SolicitudID As Long, ByVal userId As String)
-    On Error GoTo errorHandler
-    
-    ' Registrar que el método fue llamado
-    LogOperationCalled = True
-    
-    Dim logEntry As New Collection
-    logEntry.Add "SOLICITUD_CREADA", "OperationType"
-    logEntry.Add CStr(SolicitudID), "EntityId"
-    logEntry.Add "Usuario: " & userId, "Details"
-    logEntry.Add "LogSolicitudCreation", "Method"
-    
-    LoggedOperations.Add logEntry
-    
-    Exit Sub
-    
-errorHandler:
-    Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogSolicitudCreation: " & Err.Description
-End Sub
-
-Private Sub IOperationLogger_LogStateChange(ByVal SolicitudID As Long, ByVal oldState As String, ByVal newState As String, ByVal userId As String)
-    On Error GoTo errorHandler
-    
-    ' Registrar que el método fue llamado
-    LogOperationCalled = True
-    
-    Dim logEntry As New Collection
-    logEntry.Add "CAMBIO_ESTADO", "OperationType"
-    logEntry.Add CStr(SolicitudID), "EntityId"
-    logEntry.Add "Estado anterior: " & oldState & ", Estado nuevo: " & newState & ", Usuario: " & userId, "Details"
-    logEntry.Add "LogStateChange", "Method"
-    
-    LoggedOperations.Add logEntry
-    
-    Exit Sub
-    
-errorHandler:
-    Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogStateChange: " & Err.Description
-End Sub
-
-Private Sub IOperationLogger_LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
-    On Error GoTo errorHandler
-    
-    ' Registrar que el método fue llamado
-    LogOperationCalled = True
-    
-    Dim logEntry As New Collection
-    logEntry.Add "ERROR_SISTEMA", "OperationType"
-    logEntry.Add CStr(errNumber), "EntityId"
-    logEntry.Add "Número: " & errNumber & ", Descripción: " & errDescription & ", Módulo: " & moduleName & ", Crítico: " & isCritical, "Details"
-    logEntry.Add "LogError", "Method"
-    
-    LoggedOperations.Add logEntry
-    
-    Exit Sub
-    
-errorHandler:
-    Debug.Print "Error en CMockOperationLogger.IOperationLogger_LogError: " & Err.Description
-End Sub
+Private Sub Class_Initialize(): Call Reset: End Sub
 
 Public Sub Reset()
-    Set LoggedOperations = New Collection
-    LogOperationCalled = False
+    m_SaveLog_WasCalled = False
+    Set m_SaveLog_LastEntry = Nothing
+    
+    m_LogSolicitudOperation_WasCalled = False
+    Set m_LogSolicitudOperation_LastEntry = Nothing
+    Set m_LogSolicitudOperation_LastSolicitud = Nothing
+    m_LogSolicitudOperation_LastUserId = ""
 End Sub
 
-' ============================================================================
-' MÉTODOS PÚBLICOS DE CONVENIENCIA - ESTÁNDAR DE ORO PARA MOCKS
-' ============================================================================
-
-' Método público de conveniencia para LogOperation
-Public Sub LogOperation(ByVal operationType As String, ByVal entityId As Long, ByVal details As String)
-    IOperationLogger_LogOperation operationType, entityId, details
+Private Sub IOperationLogger_LogOperation(ByVal logEntry As EOperationLog)
+    m_SaveLog_WasCalled = True
+    Set m_SaveLog_LastEntry = logEntry
 End Sub
 
-' Método público de conveniencia para LogSolicitudCreation
-Public Sub LogSolicitudCreation(ByVal SolicitudID As Long, ByVal userId As String)
-    IOperationLogger_LogSolicitudCreation SolicitudID, userId
+Private Sub IOperationLogger_LogSolicitudOperation(ByVal logEntry As EOperationLog, ByVal solicitud As ESolicitud, ByVal userId As String)
+    m_LogSolicitudOperation_WasCalled = True
+    Set m_LogSolicitudOperation_LastEntry = logEntry
+    Set m_LogSolicitudOperation_LastSolicitud = solicitud
+    m_LogSolicitudOperation_LastUserId = userId
 End Sub
-
-' Método público de conveniencia para LogStateChange
-Public Sub LogStateChange(ByVal SolicitudID As Long, ByVal oldState As String, ByVal newState As String, ByVal userId As String)
-    IOperationLogger_LogStateChange SolicitudID, oldState, newState, userId
-End Sub
-
-' Método público de conveniencia para LogError
-Public Sub LogError(ByVal errNumber As Long, ByVal errDescription As String, Optional ByVal moduleName As String, Optional ByVal isCritical As Boolean = False)
-    IOperationLogger_LogError errNumber, errDescription, moduleName, isCritical
-End Sub
-
-
-
-

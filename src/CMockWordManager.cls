@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -12,18 +12,20 @@ Option Explicit
 
 Implements IWordManager
 
-' --- Variables de estado para configurar el comportamiento ---
+' --- Variables de configuración de comportamiento ---
 Private m_AbrirDocumento_ReturnValue As Boolean
-Private m_ReemplazarTexto_ReturnValue As Boolean
 Private m_GuardarDocumento_ReturnValue As Boolean
-Private m_LeerDocumento_ReturnValue As String
+Private m_SetBookmarkText_ReturnValue As Boolean
+Private m_GetBookmarkText_ReturnValue As String
 
-' --- Propiedades de seguimiento para las aserciones ---
-Public AbrirDocumento_WasCalled As Boolean
-Public GuardarDocumento_WasCalled As Boolean
-Public ReemplazarTexto_CallCount As Long
-Public LeerDocumento_CallCount As Long
-Public LeerDocumento_FilePath_Param As String
+' --- Variables "Espía" para verificación ---
+Private m_AbrirDocumento_WasCalled As Boolean
+Private m_GuardarDocumento_WasCalled As Boolean
+Private m_Dispose_WasCalled As Boolean
+
+Private m_SetBookmarkText_WasCalled As Boolean
+Private m_SetBookmarkText_LastBookmarkName As String
+Private m_SetBookmarkText_LastValue As String
 
 ' Constructor
 Private Sub Class_Initialize()
@@ -35,55 +37,82 @@ Public Sub ConfigureAbrirDocumento(ByVal returnValue As Boolean)
     m_AbrirDocumento_ReturnValue = returnValue
 End Sub
 
-Public Sub ConfigureReemplazarTexto(ByVal returnValue As Boolean)
-    m_ReemplazarTexto_ReturnValue = returnValue
-End Sub
-
 Public Sub ConfigureGuardarDocumento(ByVal returnValue As Boolean)
     m_GuardarDocumento_ReturnValue = returnValue
 End Sub
 
-Public Sub ConfigureLeerDocumento(ByVal returnValue As String)
-    m_LeerDocumento_ReturnValue = returnValue
+Public Sub ConfigureSetBookmarkText(ByVal returnValue As Boolean)
+    m_SetBookmarkText_ReturnValue = returnValue
 End Sub
+
+Public Sub ConfigureGetBookmarkText(ByVal returnValue As String)
+    m_GetBookmarkText_ReturnValue = returnValue
+End Sub
+
+' --- Métodos públicos "Espía" de solo lectura ---
+Public Property Get AbrirDocumento_WasCalled() As Boolean
+    AbrirDocumento_WasCalled = m_AbrirDocumento_WasCalled
+End Property
+
+Public Property Get GuardarDocumento_WasCalled() As Boolean
+    GuardarDocumento_WasCalled = m_GuardarDocumento_WasCalled
+End Property
+
+Public Property Get Dispose_WasCalled() As Boolean
+    Dispose_WasCalled = m_Dispose_WasCalled
+End Property
+
+Public Property Get SetBookmarkText_WasCalled() As Boolean
+    SetBookmarkText_WasCalled = m_SetBookmarkText_WasCalled
+End Property
+
+Public Property Get SetBookmarkText_LastBookmarkName() As String
+    SetBookmarkText_LastBookmarkName = m_SetBookmarkText_LastBookmarkName
+End Property
+
+Public Property Get SetBookmarkText_LastValue() As String
+    SetBookmarkText_LastValue = m_SetBookmarkText_LastValue
+End Property
+
 
 Public Sub Reset()
     m_AbrirDocumento_ReturnValue = False
-    m_ReemplazarTexto_ReturnValue = False
     m_GuardarDocumento_ReturnValue = False
-    m_LeerDocumento_ReturnValue = ""
-    AbrirDocumento_WasCalled = False
-    GuardarDocumento_WasCalled = False
-    ReemplazarTexto_CallCount = 0
-    LeerDocumento_CallCount = 0
-    LeerDocumento_FilePath_Param = ""
+    m_SetBookmarkText_ReturnValue = False
+    m_GetBookmarkText_ReturnValue = ""
+    
+    m_AbrirDocumento_WasCalled = False
+    m_GuardarDocumento_WasCalled = False
+    m_Dispose_WasCalled = False
+    
+    m_SetBookmarkText_WasCalled = False
+    m_SetBookmarkText_LastBookmarkName = ""
+    m_SetBookmarkText_LastValue = ""
 End Sub
 
-' --- Implementación de la Interfaz ---
+' --- Implementación de la Interfaz IWordManager ---
+
 Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As Boolean
-    AbrirDocumento_WasCalled = True
+    m_AbrirDocumento_WasCalled = True
     IWordManager_AbrirDocumento = m_AbrirDocumento_ReturnValue
 End Function
 
-Private Sub IWordManager_CerrarDocumento()
-    ' No necesita implementación para el mock
-End Sub
-
-Private Function IWordManager_GuardarDocumento(ByVal rutaDestino As String) As Boolean
-    GuardarDocumento_WasCalled = True
+Private Function IWordManager_GuardarDocumento() As Boolean
+    m_GuardarDocumento_WasCalled = True
     IWordManager_GuardarDocumento = m_GuardarDocumento_ReturnValue
 End Function
 
-Private Function IWordManager_LeerContenidoDocumento(ByVal rutaDocumento As String) As String
-    ' Devuelve un valor por defecto, puede mejorarse si es necesario
-    IWordManager_LeerContenidoDocumento = "Contenido de prueba del mock."
+Private Sub IWordManager_Dispose()
+    m_Dispose_WasCalled = True
+End Sub
+
+Private Function IWordManager_SetBookmarkText(ByVal BookmarkName As String, ByVal Value As String) As Boolean
+    m_SetBookmarkText_WasCalled = True
+    m_SetBookmarkText_LastBookmarkName = BookmarkName
+    m_SetBookmarkText_LastValue = Value
+    IWordManager_SetBookmarkText = m_SetBookmarkText_ReturnValue
 End Function
 
-Private Function IWordManager_ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
-    ReemplazarTexto_CallCount = ReemplazarTexto_CallCount + 1
-    IWordManager_ReemplazarTexto = m_ReemplazarTexto_ReturnValue
+Private Function IWordManager_GetBookmarkText(ByVal BookmarkName As String) As String
+    IWordManager_GetBookmarkText = m_GetBookmarkText_ReturnValue
 End Function
-Private Sub IWordManager_Dispose()
-    ' En un mock, este método puede estar vacío o registrar que fue llamado.
-    ' Por ahora, lo dejamos vacío para resolver la compilación.
-End Sub

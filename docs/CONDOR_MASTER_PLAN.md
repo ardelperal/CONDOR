@@ -15,7 +15,8 @@
    - 3.6. [Gestión de Mapeos (Mapeo)](#36-gestión-de-mapeos-mapeo)
    - 3.7. [Gestión de Notificaciones (Notification)](#37-gestión-de-notificaciones-notification)
    - 3.8. [Gestión de Operaciones y Logging (Operation)](#38-gestión-de-operaciones-y-logging-operation)
-4. [Configuración](#4-configuración)
+   - 3.9. [Diagnóstico y Utilidades del Sistema](#39-diagnóstico-y-utilidades-del-sistema)
+4. [Configuración (Arquitectura de Dos Niveles)](#4-configuración-arquitectura-de-dos-niveles)
 5. [Sistema de Archivos](#5-sistema-de-archivos)
 6. [Gestión de Word](#6-gestión-de-word)
 7. [Gestión de Errores](#7-gestión-de-errores)
@@ -31,9 +32,10 @@
 17. [Especificaciones de Integración Clave](#17-especificaciones-de-integración-clave)
 18. [Estructura de la Base de Datos](#18-estructura-de-la-base-de-datos)
 19. [Ciclo de Trabajo de Desarrollo](#19-ciclo-de-trabajo-de-desarrollo)
-20. [Lecciones Aprendidas](#20-lecciones-aprendidas)
-21. [Anexo A: Estructura Detallada de la Base de Datos](#21-anexo-a-estructura-detallada-de-la-base-de-datos)
+20. [Principios Arquitectónicos](#20-principios-arquitectónicos)
+21. [Anexo A: Estructura Detallada de Bases de Datos](#21-anexo-a-estructura-detallada-de-bases-de-datos)
 22. [Anexo B: Mapeo de Campos para Generación de Documentos](#22-anexo-b-mapeo-de-campos-para-generación-de-documentos)
+23. [Sistema de Migraciones de Base de Datos](#23-sistema-de-migraciones-de-base-de-datos)
 
 ---
 
@@ -80,6 +82,7 @@ El sistema sigue una arquitectura en 3 Capas sobre un entorno Cliente-Servidor c
 
 - **Manejo de Errores Centralizado**: Todo procedimiento susceptible de fallar debe implementar un bloque `On Error GoTo` que obligatoriamente registre el error a través del servicio central `modErrorHandler`. Los errores silenciosos están prohibidos.
 - **Auditoría de Operaciones**: Toda operación que represente una acción de negocio significativa (creación, cambio de estado, etc.) debe ser registrada a través del servicio `IOperationLogger`. La trazabilidad de las acciones es un requisito fundamental.
+- **Acceso Explícito a Recordsets DAO**: Todo acceso a campos de recordsets DAO debe usar explícitamente la propiedad `.Value` (ej. `rs!Campo.Value`). El uso implícito está prohibido para evitar errores sutiles de asignación de referencias a objetos `DAO.Field` en lugar de valores primitivos.
 
 ## 3. Resumen de Componentes por Funcionalidad
 
@@ -168,9 +171,16 @@ graph TD
 🔗 **Dependencias:**
 
 - CAuthService ➜ IAuthRepository (inyectado)
+- CAuthService ➜ IOperationLogger (inyectado)
 - CAuthService ➜ IErrorHandlerService (inyectado)
 - CAuthRepository ➜ IConfig (inyectado)
-- modAuthFactory ➜ modConfigFactory, modErrorHandlerFactory, modRepositoryFactory
+- modAuthFactory ➜ modConfigFactory, modErrorHandlerFactory, modRepositoryFactory, modOperationLoggerFactory
+
+#### ✅ Estado de Refactorización
+- **CAuthService.cls**: ✅ REFACTORIZADO - Migrado a patrón EOperationLog
+- **Logging**: Todas las llamadas a `LogOperation` ahora usan objetos `EOperationLog`
+- **Compatibilidad**: Mantiene compatibilidad con interfaces existentes
+- **Auditoría**: Logging mejorado con campos estructurados (tipoOperacion, entidad, usuario, resultado)
 
 🔧 **Mock Inteligente:**
 
@@ -191,39 +201,28 @@ graph TD
 - **Servicios Inyectados**: CErrorHandlerService.cls con dependencias correctas
 - **Base de Datos de Prueba**: TIAuthRepository.bas usa Lanzadera_integration_test.accdb
 - **Contexto de BD**: Separación entre Lanzadera_datos y CONDOR_datos
-- **Autoaprovisionamiento**: Setup/Teardown con BD de prueba
+- **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
+- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
 - **Configuración**: CMockConfig e inyección de dependencias
 - **Runner de Pruebas**: modTestRunner.bas con inyección de dependencias
 - **QueryDef Nombrado**: CAuthRepository.cls con "tempAuthQuery" para evitar conflictos
 - **Compilación**: Todos los componentes compilan sin errores
 - **Componente**: Operativo
+- **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
 
 ```
 
 ### 3.2. Gestión de Documentos (Document)
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                 GESTIÓN DE DOCUMENTOS                      │
+│                 GESTIÓN DE DOCUMENTOS (Consolidada)        │
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IDocumentService.cls      ← Interface                   │
-│    ├─ GenerarDocumento(solicitudId As Long) As String      │
-│    └─ LeerDocumento(rutaDocumento As String) As ESolicitud │
 │ 🔧 CDocumentService.cls      ← Implementación              │
-│    ├─ Initialize(wordMgr, errHandler, solicitudSrv, mapeoRepo) │
-│    └─ Colaboración entre servicios simplificada           │
-│ 🧪 CMockDocumentService.cls  ← Mock Service (Estandarizado) │
-│    ├─ ConfigureGenerarDocumento(rutaEsperada As String)    │
-│    ├─ ConfigureLeerDocumento(solicitudEsperada As ESolicitud) │
-│    ├─ Reset() ← Método de limpieza                         │
-│    └─ Propiedades de verificación (*_WasCalled, *_Last*)  │
-│ 🏭 modDocumentServiceFactory.bas ← Factory (Simplificado)  │
-│ ✅ TestDocumentService.bas   ← Tests unitarios             │
-│    └─ TestGenerarDocumentoSuccess() ← Test principal       │
-│ 🔬 TIDocumentService.bas     ← Tests integración ✅ REFACT │
-│    ├─ SuiteSetup crea "doc_service_test\" con CreateFolder │
-│    ├─ SuiteTeardown usa CleanupTestFolder "doc_service_test\" │
-│    ├─ Rutas relativas al workspace (templates\, generated\) │
-│    └─ Compatible con CreateFolder recursivo                │
+│ 🧪 CMockDocumentService.cls  ← Mock Service                │
+│ 🏭 modDocumentServiceFactory.bas ← Factoría                │
+│ 🔬 TIDocumentService.bas     ← Test de Integración ÚNICO   │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🔑 Firmas Clave
@@ -239,40 +238,30 @@ Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As
 ```mermaid
 graph TD
     subgraph "Capa de Servicios"
-        CDocumentService --> IWordManager
         CDocumentService --> ISolicitudService
         CDocumentService --> IMapeoRepository
-        CDocumentService --> IOperationLogger
-        CDocumentService --> IErrorHandlerService
-    end
-    
-    subgraph "Capa de Repositorios"
-        CMapeoRepository --> IConfig
+        CDocumentService --> IWordManager
     end
     
     subgraph "Factorías"
         modDocumentServiceFactory --> CDocumentService
-        modDocumentServiceFactory --> modWordManagerFactory
-        modDocumentServiceFactory --> modErrorHandlerFactory
         modDocumentServiceFactory --> modSolicitudServiceFactory
-        modDocumentServiceFactory --> modRepositoryFactory
-        modWordManagerFactory --> CWordManager
-        modRepositoryFactory --> CMapeoRepository
     end
     
     subgraph "Testing"
-        TestDocumentService --> CMockDocumentService
-        TIDocumentService --> CDocumentService
+        TIDocumentService --> modDocumentServiceFactory
     end
 ```
 
 🔗 **Dependencias (Arquitectura Simplificada):**
 
+- CDocumentService ➜ IConfig (inyectado)
+- CDocumentService ➜ IFileSystem (inyectado)
 - CDocumentService ➜ IWordManager (inyectado)
 - CDocumentService ➜ IErrorHandlerService (inyectado)
 - CDocumentService ➜ ISolicitudService (inyectado)
 - CDocumentService ➜ IMapeoRepository (inyectado)
-- modDocumentServiceFactory ➜ modWordManagerFactory, modErrorHandlerFactory, modSolicitudServiceFactory, modRepositoryFactory
+- modDocumentServiceFactory ➜ modConfigFactory, modFileSystemFactory, modWordManagerFactory, modErrorHandlerFactory, modSolicitudServiceFactory, modRepositoryFactory
 
 🔧 **Mock Inteligente:**
 
@@ -287,16 +276,19 @@ graph TD
 - Test principal (TestGenerarDocumentoSuccess)
 - CMockDocumentService con patrón Reset(), Configure*() y propiedades *_WasCalled
 - Verificación directa de llamadas a métodos y captura de parámetros
-- Arquitectura con 4 servicios inyectados
+- Arquitectura con 6 servicios inyectados
 - Todos los componentes de gestión de documentos compilan sin errores
-- **Patrón Factory**: modDocumentServiceFactory orquesta las 4 dependencias necesarias
+- **Patrón Factory**: modDocumentServiceFactory orquesta las 6 dependencias necesarias
 
 🧪 **Patrones de Testing:**
 
 - **Integración Real**: TIDocumentService usa dependencias reales con BD de prueba
-- **Autoaprovisionamiento**: Creación automática de estructura de directorios y BD
+- **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
+- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
 - **Limpieza Completa**: Eliminación de archivos temporales y cierre de Word
 - **Manejo de Errores**: Bloques TestFail/Cleanup con liberación de recursos
+- **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
 
 ```
 
@@ -454,6 +446,12 @@ graph TD
   - ✅ Mapeo completo de campos normalizados
 - **Normalización de Datos**: Campo idEstadoInterno como Long (FK a tbEstados)
   - Estados finales: ID 4 ("Cerrado - Aprobado") e ID 5 ("Cerrado - Rechazado")
+
+#### ✅ Estado de Refactorización
+- **CSolicitudService.cls**: ✅ REFACTORIZADO - Migrado a patrón EOperationLog
+- **Logging**: Todas las llamadas a `LogOperation` ahora usan objetos `EOperationLog`
+- **Métodos Actualizados**: CreateSolicitud, SaveSolicitud, CambiarEstadoSolicitud
+- **Auditoría**: Logging estructurado con campos (tipoOperacion, entidad, idEntidadAfectada, usuario, resultado)
   - Una vez en estado final, las solicitudes no pueden cambiar de estado
 - **Compilación**: ✅ Sin errores de contrato de interfaz
 - **Reconstrucción**: ✅ 116 archivos sincronizados exitosamente
@@ -492,11 +490,18 @@ graph TD
 │    └─ CreateWorkflowService() As IWorkflowService          │
 │ ✅ TestWorkflowService.bas   ← Test Unitario Simplificado  │
 │    └─ TestValidateTransition_ValidCase()                  │
-│ 🔬 TIWorkflowRepository.bas  ← Test Integración ✅ REFACT  │
+│ 🔬 TIWorkflowRepository.bas  ← Test Integración ✅ ACTUALIZADO │
+│    ├─ TestIsValidTransition_TrueForValidPath() ← Valida transiciones permitidas │
+│    │   ├─ Calidad: Registrado → Desarrollo (✓)            │
+│    │   └─ Tecnico: Desarrollo → Modificacion (✓)          │
+│    ├─ TestIsValidTransition_FalseForInvalidPath() ← Valida transiciones prohibidas │
+│    │   ├─ Tecnico: Registrado → Desarrollo (✗)            │
+│    │   └─ Calidad: Registrado → Aprobada (✗)              │
+│    ├─ TestGetNextStates_ReturnsCorrectStates() ← Valida estados siguientes │
+│    │   └─ Tecnico en Validacion (ID 4) → Solo Revision (ID 5) │
 │    ├─ SuiteSetup usa modTestUtils.PrepareTestDatabase      │
 │    ├─ SuiteTeardown usa modTestUtils.CleanupTestDatabase   │
-│    ├─ Eliminadas constantes obsoletas                      │
-│    └─ Rutas estandarizadas con GetWorkspacePath()          │
+│    └─ Arquitectura simplificada sin variables globales    │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🏗️ Diagrama de Dependencias Workflow
@@ -544,18 +549,31 @@ graph TD
 - **IWorkflowService.GetNextStates**: Mantiene estadoActual As String (compatibilidad)
 - **CWorkflowService**: Convierte String a Long internamente usando CLng()
 
+#### ✅ Estado de Refactorización
+- **CWorkflowService.cls**: ✅ REFACTORIZADO - Migrado a patrón EOperationLog
+- **Logging**: Todas las llamadas a `LogOperation` ahora usan objetos `EOperationLog`
+- **Método Actualizado**: ValidateTransition
+- **Auditoría**: Logging estructurado con campos (tipoOperacion, entidad, idEntidadAfectada, usuario, resultado)
+
 **Comportamiento con Estados Finales:**
 - Si `idEstadoActual` es 4 ("Cerrado - Aprobado") o 5 ("Cerrado - Rechazado"), `GetNextStates` retorna una colección vacía
 - Los estados finales no tienen transiciones salientes permitidas
 - El método consulta `tbTransiciones` donde estos IDs nunca aparecen como `idEstadoOrigen`
+
+#### Reglas de Permisos Especiales
+- El rol **"Administrador"** y el rol **"Calidad"** tienen permisos de anulación y pueden ejecutar cualquier transición de estado, independientemente del `rolRequerido` en la base de datos.
+- Otros roles como **"Tecnico"** están restringidos a las transiciones explícitamente asignadas a ellos.
 
 🧪 **Patrones de Testing:**
 
 - **Test Unitario Mínimo**: Un solo test que valida el flujo básico
 - **Mocks Esenciales**: Solo los métodos críticos están mockeados
 - **Integración Básica**: TIWorkflowRepository prueba conexión a BD con tipos correctos
-- **Autoaprovisionamiento**: Copia automática de template de BD
+- **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
+- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
 - **Manejo de Errores**: Bloques TestFail/Cleanup consistentes
+- **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
 
 📋 **Lista de Archivos Workflow:**
 
@@ -627,10 +645,13 @@ graph TD
 
 - **Suite Optimizado**: Setup/Teardown una sola vez por suite completa
 - **Integración Directa**: TIMapeoRepository prueba directamente contra BD
-- **Autoaprovisionamiento**: BD de prueba creada automáticamente
+- **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
+- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
 - **Sin Variables Globales**: Variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
+- **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
 
 #### 🔑 Firmas Clave
 - **CreateMapeoRepository** (modRepositoryFactory.bas)
@@ -719,6 +740,12 @@ graph TD
 - CNotificationRepository ➜ IConfig (inyectado)
 - modNotificationServiceFactory ➜ modRepositoryFactory, modOperationLoggerFactory, modErrorHandlerFactory
 
+#### ✅ Estado de Refactorización
+- **CNotificationService.cls**: ✅ REFACTORIZADO - Migrado a patrón EOperationLog
+- **Logging**: Todas las llamadas a `LogOperation` ahora usan objetos `EOperationLog`
+- **Método Actualizado**: SendNotification
+- **Auditoría**: Logging estructurado con campos (tipoOperacion, entidad, usuario, resultado)
+
 🔧 **Mock Inteligente:**
 
 - CMockNotificationService.ConfigureEnviarNotificacion(boolean)
@@ -729,6 +756,9 @@ graph TD
 🧪 **Patrones de Testing:**
 
 - **Integración con BD Separada**: TINotificationRepository usa BD de notificaciones independiente
+- **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
+- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
 - **Fixtures de Testing**:
   - Fixture: `back\test_env\fixtures\databases\correos_test_template.accdb`
   - Activa por suite: `back\test_env\workspace\correos_integration_test.accdb`
@@ -737,7 +767,7 @@ graph TD
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
-- **SuiteSetup garantiza esquema idempotente**
+- **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
 
 ```
 
@@ -813,7 +843,11 @@ graph TD
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Integración con BD**: TIOperationRepository prueba directamente contra BD
+- **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
+- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
 - **Configuración de Pruebas**: TestOperationLogger implementa patrón estándar con inyección de mocks
+- **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
 
 #### 🔑 Firmas Clave
 - **CreateOperationLogger** (modOperationLoggerFactory.bas)
@@ -821,91 +855,96 @@ graph TD
 
 ```
 
-## 4. Configuración
+### 3.9. Diagnóstico y Utilidades del Sistema
+
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                    CONFIGURACIÓN                           │
+│              DIAGNÓSTICO Y UTILIDADES                      │
 ├─────────────────────────────────────────────────────────────┤
-│ 📄 IConfig.cls                                             │
-│    ├─ GetValue(clave As String) As String                  │
-│    ├─ SetSetting(clave As String, valor As String)         │
-│    ├─ HasKey(clave As String) As Boolean                   │
-│    ├─ GetDataPath() As String                              │
-│    ├─ GetDatabasePassword() As String                      │
-│    ├─ GetAttachmentsPath() As String                       │
-│    ├─ GetCorreosDBPath() As String                         │
-│    ├─ GetUsuarioActual() As String                         │
-│    ├─ GetCorreoAdministrador() As String                   │
-│    ├─ GetIDAplicacionCondor() As String                    │
-│    ├─ GetLanzaderaDataPath() As String                     │
-│    └─ GetLanzaderaPassword() As String                     │
-│ 🔧 CConfig.cls                                             │
-│    ├─ Scripting.Dictionary para almacenamiento interno     │
-│    ├─ LoadConfiguration() - Arquitectura de dos niveles    │
-│    │   ├─ Lee TbLocalConfig del frontend (entorno)         │
-│    │   └─ Carga tbConfiguracion del backend               │
-│    ├─ Implementa todos los métodos de IConfig              │
-│    ├─ Métodos públicos de conveniencia (GetValue, HasKey)  │
-│    ├─ Métodos específicos públicos (GetDataPath, etc.)     │
-│    └─ Sin dependencias externas                            │
-│ 🧪 CMockConfig.cls                                         │
-│    ├─ Scripting.Dictionary para configuración simulada     │
-│    ├─ Implementación completa de IConfig                   │
-│    ├─ Reset()                                              │
-│    ├─ SetSetting()                                         │
-│    └─ Métodos públicos de conveniencia                     │
-│ 🏭 modConfigFactory.bas                                    │
-│    ├─ CreateConfigService() detecta entorno de pruebas      │
-│    ├─ Application.GetOption("IsTestEnvironment")           │
-│    ├─ CMockConfig para entorno de pruebas                  │
-│    └─ CConfig para entorno de producción                   │
+│ 📋 modHealthCheck.bas        ← Lógica de Diagnóstico       │
+│    └─ GenerateHealthReport() ← Genera informe de salud      │
+│ 📋 modSystemUtils.bas        ← Utilidades Generales        │
+│    └─ (Contiene funciones de ayuda para todo el sistema)    │
+│ 🚀 modAppManager.bas         ← Punto de Entrada            │
+│    └─ RunSystemHealthCheck()  ← Ejecuta el diagnóstico      │
 └─────────────────────────────────────────────────────────────┘
-
-#### 🏗️ Diagrama de Dependencias Config (Post Misión de Emergencia)
-```mermaid
-graph TD
-    A[modConfigFactory.bas] --> B[CConfig]
-    B --> C[Scripting.Dictionary]
-    D[CMockConfig] --> C
-    E[IConfig.cls] -.-> B
-    E -.-> D
 ```
 
-🔗 **Dependencias:**
+- **GenerateHealthReport()**: Verifica claves de configuración críticas del sistema
+  - Rutas de archivos y directorios
+  - Configuración de base de datos
+  - Configuración de correos
+  - Configuración de aplicación
+- **RunSystemHealthCheck()**: Punto de entrada para ejecutar diagnóstico completo
+  - Ejecuta GenerateHealthReport()
+  - Muestra informe con MsgBox
+  - Manejo de errores integrado
 
-- ❌ CConfig ➜ IErrorHandlerService (eliminada dependencia circular)
-- ❌ modConfigFactory ➜ modErrorHandlerFactory (eliminada)
+🧪 **Patrones de Implementación:**
 
-🔧 **Estado:**
+- **Inyección de Dependencias**: Usa factories para obtener servicios
+- **Separación de Responsabilidades**: modHealthCheck genera, modSystemUtils ejecuta
+- **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
+- **Arquitectura Limpia**: Sin dependencias circulares
+- **Punto de Entrada Único**: RunSystemHealthCheck() como interfaz principal
 
-- **Interface**: GetValue(), SetSetting(), HasKey() y métodos específicos de configuración
-- **Métodos Específicos**: GetDataPath(), GetDatabasePassword(), GetAttachmentsPath(), etc.
-- **Implementación**: CConfig sin dependencias externas
-- **LoadConfiguration**: Implementación robusta con arquitectura de dos niveles
-  - Lee TbLocalConfig del frontend para determinar el entorno
-  - Conecta al backend y carga tbConfiguracion completa
-  - Manejo robusto de errores con cleanup de recursos
-- **Métodos Públicos**: Conjunto completo de métodos de conveniencia expuestos públicamente
-- **Sincronización**: Todos los métodos públicos de CConfig están en IConfig
-- **Mock**: CMockConfig con Dictionary interno y métodos públicos de conveniencia
-- **Factory**: Detección automática de entorno de pruebas
-- **Sin Dependencia Circular**: Sin referencia a IErrorHandlerService
-- IConfig_GetValue devuelve cadena vacía ("") en lugar de Null para evitar errores "Uso no válido de Null"
-- **Logging de Pruebas**: CMockConfig con LOG_FILE_PATH="condor_test_run.log" en entorno de pruebas
+#### 🔑 Firmas Clave
+```vba
+' modHealthCheck.bas
+Public Function GenerateHealthReport() As String
+    ' Verifica configuración crítica del sistema
+    ' Retorna informe detallado de salud
+End Function
 
-**Resultado:**
+' modSystemUtils.bas
+Public Sub RunSystemHealthCheck()
+    ' Ejecuta diagnóstico completo del sistema
+    ' Muestra resultados al usuario
+End Sub
+```
 
-- **Compilación**: Dependencia circular eliminada
-- **Interface**: IConfig alineada con CConfig
-- **Métodos**: 10 métodos de configuración específica
-- **Sin Duplicados**: Método SetSetting único
-- **Arquitectura**: Configuración autónoma y funcional
-- **Mock**: CMockConfig sin métodos Configure, solo SetSetting
-- **Tests**: TestCConfig.bas usa SetSetting exclusivamente
-- Eliminados errores "Uso no válido de Null" - IConfig_GetValue devuelve "" en CConfig.cls y CMockConfig.cls
-- **Rebuild**: Proyecto reconstruido sin errores tras sincronización
+**Archivos:**
+- modHealthCheck.bas
+- modSystemUtils.bas
 
 ```
+
+## 4. Configuración (Arquitectura de Dos Niveles)
+
+El sistema CONDOR implementa una arquitectura de configuración robusta de dos niveles para ser completamente portable entre los entornos de Desarrollo y Producción.
+
+### 4.1. Nivel 1: El Conmutador de Entorno (Frontend)
+
+La base de datos del Frontend (`condor.accde` o `condor.accdb`) contiene una única tabla de configuración:
+
+-   **`TbLocalConfig`**: Esta tabla actúa como el conmutador principal del sistema.
+    -   Contiene un único registro con un campo llamado `Entorno`.
+    -   Valores posibles: "DESARROLLO" o "PRODUCCION".
+
+Al arrancar, la aplicación lee este valor para determinar en qué entorno está operando.
+
+### 4.2. Nivel 2: Configuración Centralizada (Backend)
+
+La base de datos del Backend (`CONDOR_datos.accdb`) contiene la tabla de configuración principal:
+
+-   **`tbConfiguracion`**: Almacena todos los parámetros de la aplicación que **no dependen de la ruta de instalación**, como:
+    -   `ID_APLICACION_CONDOR`
+    -   `CORREO_ADMINISTRADOR`
+    -   Nombres de fichero de las plantillas (`TEMPLATE_NAME_PC`, etc.).
+
+### 4.3. Lógica de Carga (`CConfig.LoadConfiguration`)
+
+La clase `CConfig` implementa la siguiente lógica:
+
+1.  **Lee `TbLocalConfig`** desde el Frontend para identificar el entorno.
+2.  **Si `Entorno` = "PRODUCCION":**
+    -   Carga un conjunto de rutas absolutas y fijas (hardcodeadas) en el código, que apuntan a la infraestructura de red (`\\datoste\...`).
+3.  **Si `Entorno` = "DESARROLLO":**
+    -   Determina la ruta base del proyecto de forma relativa a la ubicación del fichero Frontend.
+    -   Construye dinámicamente todas las rutas a las bases de datos y recursos del directorio `/back`.
+4.  **Finalmente**, se conecta a `CONDOR_datos.accdb` (cuya ruta ya ha sido determinada) y lee la tabla `tbConfiguracion` para cargar el resto de parámetros de la aplicación.
+
+Este diseño garantiza que el sistema es completamente agnóstico a la ruta de instalación en el entorno de desarrollo y utiliza una configuración fija y segura en producción.
 
 
 
@@ -992,13 +1031,14 @@ graph TD
 ├─────────────────────────────────────────────────────────────┤
 │ 📄 IWordManager.cls          ← Interface                   │
 │    ├─ AbrirDocumento(ruta As String) As Boolean            │
-│    ├─ ReemplazarTexto(buscar As String, reemplazar As String) As Boolean │
+│    ├─ SetBookmarkText(BookmarkName As String, Value As String) As Boolean │
+│    ├─ GetBookmarkText(BookmarkName As String) As String    │
 │    ├─ GuardarDocumento() As Boolean                        │
-│    ├─ LeerDocumento() As String                            │
 │    └─ Dispose()                                            │
 │ 🔧 CWordManager.cls          ← Implementación              │
-│    ├─ Initialize(fileSystem As IFileSystem, errorHandler As IErrorHandlerService) │
+│    ├─ Initialize(wordApp As Object, errorHandler As IErrorHandlerService) │
 │    ├─ Implementa todos los métodos de IWordManager         │
+│    ├─ Manejo especializado de bookmarks de Word            │
 │    └─ Dispose libera recursos vía LimpiarRecursos          │
 │ 🧪 CMockWordManager.cls      ← Mock para testing           │
 │    ├─ ConfigureAbrirDocumento(resultado As Boolean)        │
@@ -1020,31 +1060,27 @@ graph TD
 ```mermaid
 graph TD
     A[TestCWordManager.bas] --> B[CMockWordManager]
-    A --> C[CMockFileSystem]
     A --> D[CMockErrorHandlerService]
-    A --> E[CMockConfig]
     F[TIWordManager.bas] --> G[CWordManager]
-    F --> H[IFileSystem]
     F --> I[IErrorHandlerService]
-    J[CWordManager] --> K[IFileSystem]
-    J --> L[IErrorHandlerService]
-    M[modWordManagerFactory.bas] --> J
-    N[modFileSystemFactory.bas] --> K
+    G --> L[IErrorHandlerService]
+    G --> WA[Word Application Object]
+    M[modWordManagerFactory.bas] --> G
     O[modErrorHandlerFactory.bas] --> L
 ```
 
 🔗 **Dependencias:**
 
-- CWordManager ➜ IFileSystem (inyectado)
 - CWordManager ➜ IErrorHandlerService (inyectado)
-- modWordManagerFactory ➜ modFileSystemFactory, modErrorHandlerFactory
+- CWordManager ➜ Word Application (inyectado como Object)
+- modWordManagerFactory ➜ modErrorHandlerFactory
 
 🔧 **Mock Inteligente:**
 
 - CMockWordManager.ConfigureAbrirDocumento(resultado)
-- CMockWordManager.ConfigureReemplazarTexto(resultado)
+- CMockWordManager.ConfigureSetBookmarkText(resultado)
+- CMockWordManager.ConfigureGetBookmarkText(contenido)
 - CMockWordManager.ConfigureGuardarDocumento(resultado)
-- CMockWordManager.ConfigureLeerDocumento(contenido)
 
 🧪 **Patrones de Testing:**
 
@@ -1052,32 +1088,35 @@ graph TD
 - **Integración Real**: Pruebas con documentos Word reales usando auto-aprovisionamiento
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
 - **Tests Implementados**:
-  - `Test_CicloCompleto_Success()` - Ciclo completo de operaciones Word
+  - `Test_CicloCompleto_Success()` - Ciclo completo de operaciones Word con configuración real inyectada a través de `modTestContext.GetTestConfig()` para acceder a plantillas de producción (sin mocks de configuración)
   - `Test_AbrirFicheroInexistente_DevuelveFalse()` - Manejo de errores
-- **Auto-aprovisionamiento**: Configuración automática del entorno de prueba con plantillas
+- **Configuración Centralizada**: Utiliza `modTestContext.GetTestConfig()` como única fuente de verdad para configuración de tests
+- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Robustez**: Protección condicional en `m_ErrorHandler.LogError` calls
+- **Estado Refactorizado**: ✅ Integrado con sistema de configuración centralizada de tests
 
 #### 🔑 Firmas Clave
 ```vba
 ' modWordManagerFactory.bas
 Public Function CreateWordManager() As IWordManager
-    Dim fileSystem As IFileSystem
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-    
     Dim errorHandler As IErrorHandlerService
     Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
+    Dim wordApp As Object
+    Set wordApp = CreateObject("Word.Application")
+    
     Dim wordManager As CWordManager
     Set wordManager = New CWordManager
-    wordManager.Initialize fileSystem, errorHandler
+    wordManager.Initialize wordApp, errorHandler
     
     Set CreateWordManager = wordManager
 End Function
 
 ' CWordManager.cls
-Public Sub Initialize(fileSystem As IFileSystem, errorHandler As IErrorHandlerService)
-    Set m_FileSystem = fileSystem
+Public Sub Initialize(wordApp As Object, errorHandler As IErrorHandlerService)
+    Set m_WordApp = wordApp
     Set m_ErrorHandler = errorHandler
 End Sub
 
@@ -1085,12 +1124,24 @@ Public Function IWordManager_AbrirDocumento(ruta As String) As Boolean
     ' Implementación con manejo de errores
 End Function
 
+Public Function IWordManager_SetBookmarkText(BookmarkName As String, Value As String) As Boolean
+    ' Implementación para establecer texto en bookmarks
+End Function
+
+Public Function IWordManager_GetBookmarkText(BookmarkName As String) As String
+    ' Implementación para obtener texto de bookmarks
+End Function
+
 Public Sub IWordManager_Dispose()
     Call LimpiarRecursos
 End Sub
 ```
 
-**Nota Importante sobre Dispose**: El método `Dispose()` es crítico para liberar recursos de Word Application y debe llamarse siempre al finalizar operaciones
+**Notas Importantes:**
+- **Dispose**: El método `Dispose()` es crítico para liberar recursos de Word Application y debe llamarse siempre al finalizar operaciones
+- **Bookmarks**: La implementación actual se centra en el manejo de bookmarks de Word, eliminando la funcionalidad genérica de reemplazo de texto
+- **Inyección Simplificada**: Se inyecta directamente la aplicación Word como Object, eliminando la dependencia de IFileSystem
+- **Refactorización Completada**: TIWordManager.bas utiliza el patrón estandarizado SuiteSetup/SuiteTeardown con `modTestUtils`
     O[modErrorHandlerFactory.bas] --> L
 ```
 
@@ -1361,6 +1412,8 @@ Uso de contraseñas (ej: "dpddpd") obtenidas desde:
 │    • DATABASE_PASSWORD: "" (sin contraseña)               │
 │    • LOG_FILE_PATH: condor_test_run.log                    │
 │    • USUARIO_ACTUAL: test.user@condor.com                  │
+│    • TEMPLATES_PATH: back\recursos\Plantillas\             │
+│    • TEMPLATE_*_FILENAME: Nombres exactos de plantillas Word │
 │                                                             │
 │ 💡 PATRÓN SINGLETON:                                       │
 │    • Primera llamada: Crea y configura la instancia        │
@@ -1634,11 +1687,17 @@ El framework de testing de CONDOR es **100% auto-suficiente y idempotente**. Cad
 - TIDocumentService.bas  
 - TIExpedienteRepository.bas
 - TISolicitudRepository.bas
-- TIWorkflowRepository.bas
+- **TIWorkflowRepository.bas ✅ ACTUALIZADO** - Incluye validación completa del nuevo flujo de trabajo
 - TIMapeoRepository.bas
-- TINotificationService.bas
-- TIOperationRepository.bas
+- **TINotificationService.bas ✅ REFACTORIZADO** - Aplicada regla .Value en recordsets DAO
+- **TIOperationRepository.bas ✅ REFACTORIZADO** - Aplicada regla .Value en recordsets DAO
 - TIWordManager.bas
+
+**Refactorización de Capa de Datos Completada (Enero 2025):**
+- ✅ **CMapeoRepository.cls** - Agregado .Value explícito en función IMapeoRepository_GetMapeoPorTipo
+- ✅ **TIOperationRepository.bas** - Agregado .Value en aserciones TestSaveLog_Success
+- ✅ **TINotificationService.bas** - Agregado .Value en aserción TestSendNotificationSuccessCallsRepositoryCorrectly
+- ✅ **Regla Arquitectónica** - Uso explícito de .Value en recordsets DAO es ahora obligatorio
 
 **Cambios implementados en cada suite:**
 - ✅ SuiteSetup usa `modTestUtils.PrepareTestDatabase()`
@@ -1646,6 +1705,19 @@ El framework de testing de CONDOR es **100% auto-suficiente y idempotente**. Cad
 - ✅ Eliminadas constantes obsoletas (TEST_DB_TEMPLATE, TEST_DB_ACTIVE)
 - ✅ Rutas estandarizadas con `GetWorkspacePath()`
 - ✅ Consistencia arquitectónica mantenida
+
+**Actualización específica TIWorkflowRepository.bas:**
+- ✅ TestIsValidTransition_TrueForValidPath() - Valida transiciones permitidas del flujo
+- ✅ TestIsValidTransition_FalseForInvalidPath() - Valida transiciones prohibidas
+- ✅ TestGetNextStates_ReturnsCorrectStates() - Verifica estados siguientes correctos
+- ✅ Arquitectura simplificada sin variables globales ni conexiones manuales a BD
+- ✅ Cobertura completa del motor de workflow con casos válidos e inválidos
+
+**Nuevos Tests de Reglas de Negocio Implementados:**
+- ✅ TestValidateTransition_CalidadCanOverrideRepository() - Verifica que el rol "Calidad" puede anular restricciones del repositorio
+- ✅ TestValidateTransition_TecnicoIsRestrictedByRepository() - Confirma que el rol "Tecnico" está restringido por las reglas del repositorio
+- ✅ CreateWorkflowServiceWithMocks() - Nueva función de factoría para testing con mocks configurables
+- ✅ Cobertura completa de las reglas de permisos especiales para roles "Administrador" y "Calidad"
 
 ### 📊 **Resultados de la Refactorización**
 **Rebuild exitoso:** 116 módulos sincronizados sin errores de compilación
@@ -1982,6 +2054,26 @@ cscript condor_cli.vbs validate-schema
 - Reporta discrepancias entre el esquema esperado y el actual
 - Esencial para prevenir desincronización entre código y estructura de base de datos
 
+**Empaquetado de Artefactos (Bundle)**
+
+```bash
+# Empaquetado por funcionalidad
+cscript condor_cli.vbs bundle Auth
+cscript condor_cli.vbs bundle Document
+cscript condor_cli.vbs bundle Tests
+
+# Empaquetado por lista de ficheros específicos
+cscript condor_cli.vbs bundle IConfig.cls,modTestRunner.bas,Lecciones_aprendidas.md
+```
+
+- **Doble Capacidad**: El comando bundle soporta dos modos de operación:
+  - **Por Funcionalidad**: Empaqueta automáticamente todos los archivos relacionados con una funcionalidad específica (Auth, Document, Tests, etc.)
+  - **Por Lista de Ficheros**: Permite especificar una lista exacta de archivos separados por comas
+- **Detección Inteligente**: El sistema detecta automáticamente si el argumento es una funcionalidad conocida o una lista de archivos
+- **Generación de Manifiesto**: Crea automáticamente un archivo `bundle_manifest.txt` con hashes SHA256 para verificación de integridad
+- **Estructura Organizada**: Los paquetes se crean en directorios `bundle_[funcionalidad]_[timestamp]` o `bundle_custom_[timestamp]`
+- **Preservación de Rutas**: Mantiene la estructura de directorios relativa de los archivos empaquetados
+
 **Ayuda de Comandos**
 
 ```bash
@@ -1997,6 +2089,29 @@ cscript condor_cli.vbs help
 - **Desarrollo Iterativo**: Facilita ciclos rápidos de desarrollo-prueba-corrección
 - **Flexibilidad**: Permite trabajar en funcionalidades específicas sin impactar el proyecto completo
 - **Validación**: El comando `validate-schema` asegura la coherencia entre especificaciones y implementación
+
+### 19.2. Herramienta de Diagnóstico en Tiempo de Ejecución
+
+El sistema incluye una potente herramienta de autodiagnóstico para verificar la salud y la configuración del entorno en tiempo de ejecución. Esta herramienta es el primer paso recomendado para depurar problemas de despliegue o de configuración.
+
+**Ejecución:**
+
+Para ejecutar el diagnóstico, abra el editor de VBA (Alt+F11), abra la Ventana Inmediato (Ctrl+G) y ejecute el siguiente comando:
+
+```vba
+RunSystemHealthCheck
+```
+
+**Funcionalidad:**
+
+El comando `RunSystemHealthCheck` (ubicado en `modAppManager.bas`) invoca la lógica de `modHealthCheck.bas` para realizar una auditoría completa del sistema, que incluye:
+
+- **Carga de Configuración:** Intenta cargar la configuración real a través de `CConfig.LoadConfiguration`.
+- **Auditoría Dinámica de Claves:** Descubre y lista **todas** las claves de configuración cargadas.
+- **Verificación de Rutas:** Para cada clave que represente una ruta de fichero o directorio, verifica su existencia y accesibilidad en el sistema de ficheros.
+- **Verificación de Plantillas:** Comprueba explícitamente la existencia de las tres plantillas de Word críticas en la ruta configurada.
+
+La salida se imprime directamente en la Ventana Inmediato, proporcionando un informe claro del estado de cada dependencia crítica del sistema.
 
 ## 20. Principios Arquitectónicos
 

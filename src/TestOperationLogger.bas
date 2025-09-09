@@ -3,59 +3,107 @@ Option Compare Database
 Option Explicit
 
 Public Function TestOperationLoggerRunAll() As CTestSuiteResult
-    Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TestOperationLogger"
-    
-    suiteResult.AddResult Test_LogOperation_DelegatesToRepository()
-    
-    Set TestOperationLoggerRunAll = suiteResult
+    Set TestOperationLoggerRunAll = New CTestSuiteResult
+    TestOperationLoggerRunAll.Initialize "TestOperationLogger"
+    TestOperationLoggerRunAll.AddResult TestLogOperation_CallsRepository()
+    TestOperationLoggerRunAll.AddResult TestLogSolicitudOperation_EnrichesLogEntry()
 End Function
 
-Private Function Test_LogOperation_DelegatesToRepository() As CTestResult
-    Set Test_LogOperation_DelegatesToRepository = New CTestResult
-    Test_LogOperation_DelegatesToRepository.Initialize "LogOperation debe delegar la llamada a SaveLog del repositorio"
-    
-    ' --- Declaraciones ---
-    Dim loggerImpl As COperationLogger
+Private Function TestLogOperation_CallsRepository() As CTestResult
+    Set TestLogOperation_CallsRepository = New CTestResult
+    TestLogOperation_CallsRepository.Initialize "LogOperation debe llamar al método SaveLog del repositorio"
+
+    Dim serviceImpl As COperationLogger
     Dim mockRepo As CMockOperationRepository
-    Dim mockConfig As CMockConfig
-    Dim mockError As CMockErrorHandlerService
-    Dim logger As IOperationLogger
+    Dim mockErrorHandler As CMockErrorHandlerService
+    Dim service As IOperationLogger
+    Dim logEntry As EOperationLog
     
     On Error GoTo TestFail
-    
-    ' --- ARRANGE ---
+
+    ' Arrange
     Set mockRepo = New CMockOperationRepository
-    Set mockConfig = New CMockConfig
-    Set mockError = New CMockErrorHandlerService
+    Set mockErrorHandler = New CMockErrorHandlerService
     
-    ' ¡¡CONFIGURACIÓN DEL MOCK!!
-    ' Aquí le decimos al mock qué debe devolver cuando se le pregunte por "USUARIO_ACTUAL"
-    mockConfig.SetSetting "USUARIO_ACTUAL", "test.user@condor.com"
+    Set serviceImpl = New COperationLogger
+    serviceImpl.Initialize Nothing, mockRepo, mockErrorHandler
+    Set service = serviceImpl
     
-    Set loggerImpl = New COperationLogger
-    loggerImpl.Initialize mockConfig, mockRepo, mockError
-    Set logger = loggerImpl
+    Set logEntry = New EOperationLog
+    logEntry.Initialize Now, "test_user", "TEST", 1, "Desc", "OK", "Details"
     
-    ' --- ACT ---
-    logger.LogOperation "TEST_OP", 123, "Detalles de prueba"
+    ' Act
+    service.LogOperation logEntry
     
-    ' --- ASSERT ---
-    modAssert.AssertTrue mockRepo.SaveLogCalled, "El método SaveLog del repositorio debería haber sido llamado."
-    modAssert.AssertEquals 1, mockRepo.CallCount, "SaveLog debería haber sido llamado exactamente una vez."
-    modAssert.AssertEquals "TEST_OP", mockRepo.LastOperationType, "El tipo de operación no se delegó correctamente."
-    
-    Test_LogOperation_DelegatesToRepository.Pass
+    ' Assert
+    modAssert.AssertTrue mockRepo.SaveLog_WasCalled, "El método SaveLog del repositorio debería haber sido llamado."
+    modAssert.AssertEquals "TEST", mockRepo.SaveLog_LastEntry.tipoOperacion, "El tipo de operación no coincide."
+
+    TestLogOperation_CallsRepository.Pass
     GoTo Cleanup
-    
+
 TestFail:
-    Test_LogOperation_DelegatesToRepository.Fail "Error inesperado: " & Err.Description
+    TestLogOperation_CallsRepository.Fail "Error: " & Err.Description
     
 Cleanup:
-    Set loggerImpl = Nothing
+    Set serviceImpl = Nothing
     Set mockRepo = Nothing
-    Set mockConfig = Nothing
-    Set mockError = Nothing
-    Set logger = Nothing
+    Set mockErrorHandler = Nothing
+    Set service = Nothing
+    Set logEntry = Nothing
 End Function
 
+Private Function TestLogSolicitudOperation_EnrichesLogEntry() As CTestResult
+    Set TestLogSolicitudOperation_EnrichesLogEntry = New CTestResult
+    TestLogSolicitudOperation_EnrichesLogEntry.Initialize "LogSolicitudOperation debe enriquecer el log y llamar al repositorio"
+
+    Dim serviceImpl As COperationLogger
+    Dim mockRepo As CMockOperationRepository
+    Dim mockErrorHandler As CMockErrorHandlerService
+    Dim service As IOperationLogger
+    Dim logEntry As EOperationLog
+    Dim mockSolicitud As ESolicitud
+    Dim testUserId As String
+    
+    On Error GoTo TestFail
+
+    ' Arrange
+    Set mockRepo = New CMockOperationRepository
+    Set mockErrorHandler = New CMockErrorHandlerService
+    
+    Set serviceImpl = New COperationLogger
+    serviceImpl.Initialize Nothing, mockRepo, mockErrorHandler
+    Set service = serviceImpl
+    
+    Set logEntry = New EOperationLog
+    Set mockSolicitud = New ESolicitud
+    mockSolicitud.idSolicitud = 123 ' ID de prueba
+    testUserId = "test.user@example.com"
+    
+    ' Act
+    service.LogSolicitudOperation logEntry, mockSolicitud, testUserId
+    
+    ' Assert
+    modAssert.AssertTrue mockRepo.SaveLog_WasCalled, "El método SaveLog del repositorio debería haber sido llamado."
+    
+    Dim capturedLog As EOperationLog
+    Set capturedLog = mockRepo.SaveLog_LastEntry
+    
+    modAssert.AssertNotNull capturedLog, "El objeto log capturado no debería ser nulo."
+    modAssert.AssertEquals testUserId, capturedLog.usuario, "El UserID no fue enriquecido correctamente en el log."
+    modAssert.AssertEquals mockSolicitud.idSolicitud, capturedLog.idEntidadAfectada, "El ID de la solicitud no fue enriquecido correctamente."
+    
+    TestLogSolicitudOperation_EnrichesLogEntry.Pass
+    GoTo Cleanup
+
+TestFail:
+    TestLogSolicitudOperation_EnrichesLogEntry.Fail "Error: " & Err.Description
+    
+Cleanup:
+    Set serviceImpl = Nothing
+    Set mockRepo = Nothing
+    Set mockErrorHandler = Nothing
+    Set service = Nothing
+    Set logEntry = Nothing
+    Set mockSolicitud = Nothing
+End Function

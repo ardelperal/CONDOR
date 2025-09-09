@@ -30,7 +30,7 @@ Public Sub ConfigureGetNextStates(ByVal value As Object)
     Set m_GetNext_Result = value
 End Sub
 
-Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As String, ByVal estadoOrigen As String, ByVal estadoDestino As String) As Boolean
+Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As String, ByVal estadoOrigen As String, ByVal estadoDestino As String, ByVal usuarioRol As String) As Boolean
     IWorkflowRepository_IsValidTransition = m_IsValid_Result
 End Function
 

@@ -30,8 +30,11 @@ Public Function CreateDocumentService(Optional ByVal config As IConfig = Nothing
     Dim mapeoRepo As IMapeoRepository
     Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(effectiveConfig)
     
+    Dim fileSystem As IFileSystem
+    Set fileSystem = modFileSystemFactory.CreateFileSystem(effectiveConfig)
+    
     ' Inyectar dependencias en el orden correcto
-    serviceImpl.Initialize wordMgr, errHandler, solicitudSrv, mapeoRepo
+    serviceImpl.Initialize effectiveConfig, fileSystem, wordMgr, errHandler, solicitudSrv, mapeoRepo
     
     Set CreateDocumentService = serviceImpl
     Exit Function

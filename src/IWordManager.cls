@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -30,30 +30,24 @@ Option Explicit
 Public Function AbrirDocumento(ByVal rutaDocumento As String) As Boolean
 End Function
 
-' Reemplaza texto en el documento actualmente abierto
+' Establece el texto de un marcador (bookmark) en el documento
 ' Parámetros:
-'   - textoABuscar: Texto que se va a reemplazar
-'   - textoReemplazo: Texto de reemplazo
-' Retorna: True si se realizó el reemplazo, False en caso contrario
-Public Function ReemplazarTexto(ByVal textoABuscar As String, ByVal textoReemplazo As String) As Boolean
+'   - BookmarkName: Nombre del marcador
+'   - Value: Valor a establecer en el marcador
+' Retorna: True si se estableció correctamente, False en caso contrario
+Public Function SetBookmarkText(ByVal BookmarkName As String, ByVal Value As String) As Boolean
 End Function
 
-' Guarda el documento actualmente abierto en una ruta específica
+' Obtiene el texto de un marcador (bookmark) del documento
 ' Parámetros:
-'   - rutaDestino: Ruta donde guardar el documento
+'   - BookmarkName: Nombre del marcador
+' Retorna: El texto del marcador o cadena vacía si no existe
+Public Function GetBookmarkText(ByVal BookmarkName As String) As String
+End Function
+
+' Guarda el documento actualmente abierto
 ' Retorna: True si se guardó correctamente, False en caso contrario
-Public Function GuardarDocumento(ByVal rutaDestino As String) As Boolean
-End Function
-
-' Cierra el documento y libera los recursos de Word
-Public Sub CerrarDocumento()
-End Sub
-
-' Lee el contenido de texto de un documento Word
-' Parámetros:
-'   - rutaDocumento: Ruta completa al archivo Word
-' Retorna: El contenido de texto del documento o cadena vacía si falla
-Public Function LeerContenidoDocumento(ByVal rutaDocumento As String) As String
+Public Function GuardarDocumento() As Boolean
 End Function
 Public Sub Dispose()
 End Sub

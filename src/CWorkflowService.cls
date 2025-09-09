@@ -23,37 +23,42 @@ Public Sub Initialize(ByVal repo As IWorkflowRepository, ByVal logger As IOperat
 End Sub
 
 Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, ByVal estadoOrigen As String, ByVal estadoDestino As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Boolean
-    ' Lógica de negocio mejorada para el nuevo flujo de 7 estados
     On Error GoTo ErrorHandler
     
-    ' Validaciones de negocio específicas del nuevo flujo
+    Dim isValid As Boolean
     
-    ' 1. No se puede transicionar desde un estado final (Aprobada)
-    If estadoOrigen = "Aprobada" Then
-        m_Logger.LogOperation "ValidateTransition", SolicitudID, "Intento de transición desde estado final: " & estadoOrigen
-        IWorkflowService_ValidateTransition = False
-        Exit Function
+    ' REGLA 1: (MÁXIMA PRIORIDAD) Ninguna transición puede salir de un estado final.
+    If IWorkflowService_IsEstadoFinal(estadoOrigen) Then
+        isValid = False
+    ' REGLA 2: (PRIORIDAD MEDIA) Administrador y Calidad pueden realizar cualquier transición NO-FINAL.
+    ElseIf usuarioRol = "Administrador" Or usuarioRol = "Calidad" Then
+        isValid = True
+    ' REGLA 3: (PRIORIDAD BAJA) Para otros roles, consultar al repositorio.
+    Else
+        isValid = m_Repo.IsValidTransition(tipoSolicitud, estadoOrigen, estadoDestino, usuarioRol)
     End If
     
-    ' 2. Validar que la transición existe en el repositorio
-    Dim isValidRepo As Boolean
-    isValidRepo = m_Repo.IsValidTransition(tipoSolicitud, estadoOrigen, estadoDestino)
+    ' Registrar la operación de validación
+    Dim logEntry As EOperationLog
+    Set logEntry = New EOperationLog
+    With logEntry
+        .tipoOperacion = "VALIDATE_TRANSITION"
+        .idEntidadAfectada = SolicitudID
+        .usuario = "" ' No disponible en este contexto, dejar vacío
+        .resultado = IIf(isValid, "Success", "Failure")
+        .descripcion = "Validación de transición: " & estadoOrigen & " -> " & estadoDestino & " para rol " & usuarioRol
+    End With
+    m_Logger.LogOperation logEntry
     
-    If Not isValidRepo Then
-        m_Logger.LogOperation "ValidateTransition", SolicitudID, "Transición no válida: " & estadoOrigen & " -> " & estadoDestino
-        IWorkflowService_ValidateTransition = False
-        Exit Function
-    End If
+    IWorkflowService_ValidateTransition = isValid
     
-    ' 3. Log de transición válida
-    m_Logger.LogOperation "ValidateTransition", SolicitudID, "Transición válida: " & estadoOrigen & " -> " & estadoDestino & " (Rol: " & usuarioRol & ")"
-    
-    IWorkflowService_ValidateTransition = True
+Cleanup:
     Exit Function
     
 ErrorHandler:
     m_ErrorHandler.LogError Err.Number, "Error en CWorkflowService.ValidateTransition: " & Err.Description, "CWorkflowService"
     IWorkflowService_ValidateTransition = False
+    GoTo Cleanup
 End Function
 
 Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Object

@@ -24,7 +24,7 @@ Public Function TIOperationRepositoryRunAll() As CTestSuiteResult
     suiteResult.AddResult TestSaveLog_Success()
     
 CleanupSuite:
-    Call SuiteTeardown
+    
     If Err.Number <> 0 Then
         Dim errorTest As New CTestResult
         errorTest.Initialize "Suite_Execution_Failed"
@@ -41,24 +41,24 @@ End Function
 
 Private Sub SuiteSetup()
     On Error GoTo ErrorHandler
-    Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
+
+    ' Conectar a la BD y limpiar los datos de prueba específicos de esta suite
+    Dim config As IConfig: Set config = modTestContext.GetTestConfig()
+    Dim dbPath As String: dbPath = config.GetValue("CONDOR_DATA_PATH")
+    Dim db As DAO.Database: Set db = DBEngine.OpenDatabase(dbPath, False, False)
     
-    ' Usar las constantes ya definidas para construir los nombres de archivo
-    Dim templateDbName As String: templateDbName = "Operation_test_template.accdb"
-    Dim activeDbName As String: activeDbName = "Operation_integration_test.accdb"
+    ' BLINDAJE DE IDEMPOTENCIA: Eliminar el registro de prueba por su tipo único
+    db.Execute "DELETE FROM tbOperacionesLog WHERE tipoOperacion = 'TEST_OP'", dbFailOnError
     
-    ' Llamada al método correcto de modTestUtils
-    modTestUtils.PrepareTestDatabase templateDbName, activeDbName
-    
+    db.Close
+    Set db = Nothing
     Exit Sub
+    
 ErrorHandler:
     Err.Raise Err.Number, "TIOperationRepository.SuiteSetup", Err.Description
 End Sub
 
-Private Sub SuiteTeardown()
-    ' Limpieza centralizada usando CleanupTestDatabase
-    modTestUtils.CleanupTestDatabase "Operation_integration_test.accdb"
-End Sub
+
 
 ' ============================================================================
 ' PRUEBAS DE INTEGRACIÓN
@@ -66,47 +66,36 @@ End Sub
 
 Private Function TestSaveLog_Success() As CTestResult
     Set TestSaveLog_Success = New CTestResult
-    TestSaveLog_Success.Initialize "SaveLog debe guardar correctamente un log de operación"
+    TestSaveLog_Success.Initialize "SaveLog debe guardar correctamente un EOperationLog"
     
-    Dim errorHandler As IErrorHandlerService
     Dim repository As IOperationRepository
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
-    Dim fs As IFileSystem
-    Dim dbPath As String
+    Dim config As IConfig
+    Dim logEntry As EOperationLog
     
     On Error GoTo TestFail
 
-    ' ARRANGE: Crear configuración local apuntando a la BD de prueba de esta suite
-    Dim config As IConfig
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "CONDOR_DATA_PATH", modTestUtils.GetWorkspacePath() & "Operation_integration_test.accdb"
-    mockConfigImpl.SetSetting "CONDOR_PASSWORD", ""
-    Set config = mockConfigImpl
-    
-    ' Crear dependencias inyectando la configuración local
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    ' ARRANGE:
+    Set config = modTestContext.GetTestConfig()
     Set repository = modRepositoryFactory.CreateOperationRepository(config)
     
-    ' Arrange: Conectar a la base de datos activa de forma segura
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    dbPath = modTestUtils.GetWorkspacePath() & "Operation_integration_test.accdb"
-    
-    If Not fs.FileExists(dbPath) Then
-        Err.Raise vbObjectError + 101, "Test.Arrange", "La BD de prueba de Operaciones no existe en la ruta esperada: " & dbPath
-    End If
-    
-    Set db = DBEngine.OpenDatabase(dbPath, False, False)
+    ' Crear el objeto de entidad a guardar
+    Set logEntry = New EOperationLog
+    logEntry.Initialize Now, "test_user", "TEST_OP", 123, "Descripción de prueba.", "SUCCESS", "Detalles de prueba."
 
-    ' Act: Ejecutar la operación a probar dentro de una transacción
-    DBEngine.BeginTrans
-    repository.SaveLog "TEST_OP", 123, "Detalles de prueba."
+    ' ACT: Ejecutar la operación a probar
+    repository.SaveLog logEntry
     
-    ' Assert: Verificar directamente en la BD que el registro se insertó
+    ' ASSERT: Verificar directamente en la BD
+    Set db = DBEngine.OpenDatabase(config.GetCondorDataPath(), False, False)
     Set rs = db.OpenRecordset("SELECT * FROM tbOperacionesLog WHERE tipoOperacion = 'TEST_OP'")
+    
     modAssert.AssertFalse rs.EOF, "Se debería haber insertado un registro de log."
-    modAssert.AssertEquals "123", rs!idEntidad, "El ID de entidad no coincide."
-    modAssert.AssertEquals "Detalles de prueba.", rs!detalles, "Los detalles no coinciden."
+    modAssert.AssertEquals 123, rs!idEntidad.Value, "El ID de entidad no coincide."
+    modAssert.AssertEquals "Descripción de prueba.", rs!descripcion.Value, "La descripción no coincide."
+    modAssert.AssertEquals "SUCCESS", rs!resultado.Value, "El resultado no coincide."
+    modAssert.AssertEquals "Detalles de prueba.", rs!detalles.Value, "Los detalles no coinciden."
 
     TestSaveLog_Success.Pass
     GoTo Cleanup
@@ -116,14 +105,13 @@ TestFail:
     
 Cleanup:
     On Error Resume Next
-    DBEngine.Rollback
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
     Set rs = Nothing
     Set db = Nothing
     Set repository = Nothing
-    Set errorHandler = Nothing
-    Set fs = Nothing
+    Set config = Nothing
+    Set logEntry = Nothing
 End Function
 
 

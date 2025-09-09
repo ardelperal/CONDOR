@@ -50,3 +50,15 @@ Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
     Call IConfig_SetSetting(key, value)
 End Sub
 
+Public Function GetValue(ByVal key As String) As Variant
+    GetValue = IConfig_GetValue(key)
+End Function
+
+Public Function HasKey(ByVal key As String) As Boolean
+    HasKey = m_Settings.Exists(key)
+End Function
+
+Public Function GetAllKeys() As Variant
+    GetAllKeys = m_Settings.Keys
+End Function
+

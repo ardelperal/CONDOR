@@ -19,7 +19,7 @@ Public Function TIFileSystemRunAll() As CTestSuiteResult
     suiteResult.AddResult TestCreateAndDeleteFile()
     
 CleanupSuite:
-    Call SuiteTeardown
+    
     If Err.Number <> 0 Then
         Dim errorTest As New CTestResult
         errorTest.Initialize "Suite_Execution_Failed"
@@ -36,7 +36,7 @@ End Function
 
 Private Sub SuiteSetup()
     ' Asegurarse de que el entorno está limpio antes de empezar
-    Call SuiteTeardown
+    
     
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
@@ -44,10 +44,6 @@ Private Sub SuiteSetup()
     Set fs = Nothing
 End Sub
 
-Private Sub SuiteTeardown()
-    ' Usar función centralizada de limpieza
-    modTestUtils.CleanupTestFolder TEST_DIR
-End Sub
 
 ' ============================================================================
 ' TESTS INDIVIDUALES

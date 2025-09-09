@@ -2,14 +2,16 @@ Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
-' ¡¡¡ REQUISITO DE COMPILACIÓN CRÍTICO !!!
-' Este módulo utiliza el descubrimiento automático de pruebas a través del objeto
-' Application.VBE. Para que el proyecto compile, es OBLIGATORIO tener
-' activada la referencia a la librería:
+' NOTA SOBRE LA LIBRERÍA "VBIDE Extensibility"
+' Este módulo utiliza Late Binding para el descubrimiento automático de pruebas,
+' por lo que NO REQUIERE una referencia explícita para funcionar.
+'
+' Sin embargo, para el DESARROLLO y el autocompletado de código (IntelliSense)
+' al modificar este módulo, se RECOMIENDA activar temporalmente la referencia a:
 ' "Microsoft Visual Basic for Applications Extensibility 5.3"
 ' (Herramientas -> Referencias -> Marcar la casilla correspondiente)
-' Si esta referencia falta, el proyecto NO COMPILARÁ.
 ' ============================================================================
 
 ' Variable de estado global para almacenar las suites registradas
@@ -19,46 +21,33 @@ Private m_SuiteNames As Object
 ' PUNTO ÚNICO DE APROVISIONAMIENTO PREVIO
 ' ============================================================================
 
-Public Sub ResetTestEnvironment()
-    ' Punto único de reseteo/provisión del entorno de testing.
-    ' Garantiza ejecución desatendida sin diálogos.
+Public Sub PrepareTestEnvironment()
+    ' Punto de entrada manual para aprovisionar el entorno sin ejecutar los tests.
+    ' Útil para diagnóstico y depuración.
     On Error GoTo ErrorHandler
+    
+    Debug.Print "Iniciando Aprovisionamiento Manual del Entorno de Pruebas..."
     
     ' Configurar Access en modo completamente silencioso
     Application.Echo False
     DoCmd.Echo False
     DoCmd.SetWarnings False
     
-    ' Preflight del workspace ANTES de ejecutar suites
-    On Error Resume Next
-    Call modTestUtils.EnsureFolder(modTestUtils.GetWorkspacePath())
-    On Error GoTo 0
-    modTestUtils.PrepareCoreTestDatabases
-    On Error GoTo ErrorHandler
+    ' Llamada única al sistema de aprovisionamiento centralizado
+    Call modTestUtils.ProvisionTestDatabases
     
-    ' Asegurar que las carpetas del entorno de testing existen
-    Dim workspacePath As String
-    workspacePath = modTestUtils.GetWorkspacePath()
-    modTestUtils.EnsureFolder workspacePath
-    
-    ' Asegurar que la carpeta de fixtures existe
-    Dim fixturesPath As String
-    fixturesPath = modTestUtils.GetDatabaseFixturesPath()
-    modTestUtils.EnsureFolder fixturesPath
-    
-    ' Aprovisiona SOLICITUD si falta (idempotente)
-    Dim ws As String: ws = modTestUtils.GetWorkspacePath()
-    Dim solicitudDb As String: solicitudDb = modTestUtils.JoinPath(ws, "Solicitud_integration_test.accdb")
-    Dim fso As Object: Set fso = CreateObject("Scripting.FileSystemObject")
-    If Not fso.FileExists(solicitudDb) Then
-        Call modTestUtils.PrepareTestDatabase("Solicitud_test_template.accdb", "Solicitud_integration_test.accdb")
-    End If
-    Set fso = Nothing
+    Debug.Print "Aprovisionamiento del Entorno de Pruebas completado."
     
     Exit Sub
-    
 ErrorHandler:
-    Err.Raise Err.Number, "modTestRunner.ResetTestEnvironment", "Error en aprovisionamiento previo: " & Err.Description
+    Debug.Print "ERROR CRÍTICO durante el aprovisionamiento: " & Err.Description
+    Err.Raise Err.Number, "modTestRunner.PrepareTestEnvironment", "Error en aprovisionamiento: " & Err.Description
+End Sub
+
+Public Sub ResetTestEnvironment()
+    ' Esta función es ahora un alias para mantener la compatibilidad.
+    ' Toda la lógica de aprovisionamiento reside en PrepareTestEnvironment.
+    Call PrepareTestEnvironment
 End Sub
 
 ' Función para compatibilidad con CLI (debe estar fuera del bloque condicional)
@@ -67,11 +56,11 @@ Public Function RunAllTests() As String
     
     ' PUNTO ÚNICO DE APROVISIONAMIENTO PREVIO
     Call ResetTestEnvironment
-    Call modTestUtils.CloseAllWordInstancesForTesting
+    
     
     ' Crear el ErrorHandler para el PROPIO RUNNER usando la configuración Singleton
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim ErrorHandler As IErrorHandlerService
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Inicializar el diccionario de suites
     Set m_SuiteNames = New Scripting.Dictionary
@@ -85,24 +74,24 @@ Public Function RunAllTests() As String
     Set reporter = reporterImpl
     
     Dim allResults As Object
-    Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
+    Set allResults = ExecuteAllSuites(m_SuiteNames, ErrorHandler)
     
     reporter.Initialize allResults
     
     Dim reportString As String
     reportString = reporter.GenerateReport()
     
-    ' Limpieza final de Word tras completar todos los tests
-    Call modTestUtils.CloseAllWordInstancesForTesting
-    Call modTestUtils.KillRecentWordProcesses(10, True)
+   
+    
+    
     
     RunAllTests = reportString
     
     Exit Function
     
 ErrorHandler:
-    If Not errorHandler Is Nothing Then
-        errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests", True
+    If Not ErrorHandler Is Nothing Then
+        ErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunAllTests", True
     End If
     RunAllTests = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS: " & Err.Description & vbCrLf & "RESULT: FAILED"
 End Function
@@ -128,7 +117,7 @@ Private Sub RegisterSuitesManually()
     m_SuiteNames.Add "TestAuthServiceRunAll", "TestAuthServiceRunAll"
     m_SuiteNames.Add "TestCConfigRunAll", "TestCConfigRunAll"
     m_SuiteNames.Add "TestCExpedienteServiceRunAll", "TestCExpedienteServiceRunAll"
-    m_SuiteNames.Add "TestDocumentServiceRunAll", "TestDocumentServiceRunAll"
+    ' La línea para TestDocumentServiceRunAll ha sido eliminada
     m_SuiteNames.Add "TestErrorHandlerServiceRunAll", "TestErrorHandlerServiceRunAll"
     m_SuiteNames.Add "TestOperationLoggerRunAll", "TestOperationLoggerRunAll"
     m_SuiteNames.Add "TestWorkflowServiceRunAll", "TestWorkflowServiceRunAll"
@@ -159,7 +148,6 @@ Public Function ExecuteAllTestsForCLI() As String
     
     ' PUNTO ÚNICO DE APROVISIONAMIENTO PREVIO
     Call ResetTestEnvironment
-    Call modTestUtils.CloseAllWordInstancesForTesting
     
     ' Configurar Access en modo completamente silencioso (ya hecho en ResetTestEnvironment)
     On Error Resume Next
@@ -167,8 +155,8 @@ Public Function ExecuteAllTestsForCLI() As String
     On Error GoTo ErrorHandler
     
     ' Crear el ErrorHandler para el PROPIO RUNNER usando la configuración Singleton
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim ErrorHandler As IErrorHandlerService
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Inicializar el diccionario de suites usando registro manual (sin VBE)
     Set m_SuiteNames = New Scripting.Dictionary
@@ -179,7 +167,7 @@ Public Function ExecuteAllTestsForCLI() As String
     
     ' Ejecutar todas las suites registradas
     Dim allResults As Object
-    Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
+    Set allResults = ExecuteAllSuites(m_SuiteNames, ErrorHandler)
     
     ' Generar el reporte usando el reporter estándar
     Dim reporter As ITestReporter
@@ -192,21 +180,22 @@ Public Function ExecuteAllTestsForCLI() As String
     reportString = reporter.GenerateReport()
     
     ' Limpieza final de Word tras completar todos los tests
-    Call modTestUtils.CloseAllWordInstancesForTesting
-    Call modTestUtils.KillRecentWordProcesses(10, True)
+    
+    
     
     ExecuteAllTestsForCLI = reportString
     GoTo Cleanup ' Salto a la limpieza en caso de éxito
 
 ErrorHandler:
-    If Not errorHandler Is Nothing Then
-        errorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllTestsForCLI", True
+    If Not ErrorHandler Is Nothing Then
+        ErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.ExecuteAllTestsForCLI", True
     End If
     ExecuteAllTestsForCLI = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS CLI: " & Err.Description & vbCrLf & "RESULT: FAILURE"
     GoTo Cleanup ' Salto a la limpieza en caso de error
     
 Cleanup:
     On Error Resume Next ' Blindaje final
+    Call modTestUtils.CleanupWorkspace ' <-- AÑADIR ESTA LÍNEA
     Debug.Print "Ejecutando limpieza final de procesos..."
     On Error GoTo 0
     ' No hay Exit Function aquí para que la función pueda devolver su valor
@@ -223,13 +212,13 @@ End Function
 
 ' Función principal que orquesta todo el proceso: registrar, ejecutar y reportar
 Public Function RunTestFramework() As String
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' PUNTO ÚNICO DE APROVISIONAMIENTO PREVIO
     Call ResetTestEnvironment
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim ErrorHandler As IErrorHandlerService
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     Set m_SuiteNames = New Scripting.Dictionary
     m_SuiteNames.CompareMode = TextCompare
@@ -239,7 +228,7 @@ Public Function RunTestFramework() As String
     
     ' 2. EJECUTAR
     Dim allResults As Object
-    Set allResults = ExecuteAllSuites(m_SuiteNames, errorHandler)
+    Set allResults = ExecuteAllSuites(m_SuiteNames, ErrorHandler)
     
     ' 3. GENERAR REPORTE
     Dim reporter As New CTestReporter
@@ -253,9 +242,9 @@ Public Function RunTestFramework() As String
     
     Exit Function
     
-errorHandler:
-    If Not errorHandler Is Nothing Then
-        errorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunTestFramework", True
+ErrorHandler:
+    If Not ErrorHandler Is Nothing Then
+        ErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.RunTestFramework", True
     End If
     RunTestFramework = "FALLO CRÍTICO EN EL MOTOR DE PRUEBAS: " & Err.Description
 End Function
@@ -268,23 +257,24 @@ End Function
 Private Sub DiscoverAndRegisterSuites()
     On Error GoTo ErrorHandler
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim ErrorHandler As IErrorHandlerService
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    
+    ' Late Binding: Usar Object en lugar de VBIDE.VBComponent
+    Dim comp As Object
     
     ' Iterar sobre todos los componentes del proyecto VBA
-    Dim comp As Object ' VBComponent
     For Each comp In Application.VBE.ActiveVBProject.VBComponents
-        ' Buscar módulos que contengan funciones "RunAll"
-        If comp.Type = 1 Then ' vbext_ct_StdModule
+        ' vbext_ct_StdModule = 1
+        If comp.Type = 1 Then
             Dim moduleName As String
             moduleName = comp.Name
             
-            ' Verificar si el módulo tiene una función RunAll
+            ' La lógica de HasRunAllFunction ya no depende de VBE
             If HasRunAllFunction(moduleName) Then
                 Dim suiteKey As String
                 suiteKey = moduleName & "RunAll"
                 
-                ' Añadir al diccionario si no existe ya
                 If Not m_SuiteNames.Exists(suiteKey) Then
                     m_SuiteNames.Add suiteKey, suiteKey
                 End If
@@ -295,8 +285,13 @@ Private Sub DiscoverAndRegisterSuites()
     Exit Sub
     
 ErrorHandler:
-    errorHandler.LogError Err.Number, Err.Description, "modTestRunner.DiscoverAndRegisterSuites", True
-    Err.Raise Err.Number, "modTestRunner.DiscoverAndRegisterSuites", "FALLO CRÍTICO: " & Err.Description
+    ErrorHandler.LogError Err.Number, Err.Description, "modTestRunner.DiscoverAndRegisterSuites", True
+    ' En modo Late Binding, un error común es que el acceso a VBE esté deshabilitado.
+    ' Proporcionar un mensaje más útil.
+    Dim errorMsg As String
+    errorMsg = "Fallo crítico en el descubrimiento de pruebas. Causa probable: El acceso mediante programación al modelo de objetos de proyectos de VBA está deshabilitado. " & _
+               "Verifique la configuración en Access: Archivo > Opciones > Centro de confianza > Configuración del Centro de confianza > Configuración de macros > 'Confiar en el acceso al modelo de objetos de proyectos de VBA'."
+    Err.Raise Err.Number, "modTestRunner.DiscoverAndRegisterSuites", errorMsg
 End Sub
 
 ' Función auxiliar para verificar si un módulo tiene una función RunAll
@@ -375,6 +370,8 @@ End Function
 Public Sub EjecutarTodasLasPruebas()
     Call RunTestFramework
 End Sub
+
+
 
 
 

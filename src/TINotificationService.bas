@@ -20,9 +20,10 @@ Public Function TINotificationServiceRunAll() As CTestSuiteResult
     suiteResult.AddResult TestSendNotificationWithoutInitialize()
     suiteResult.AddResult TestSendNotificationWithInvalidParameters()
     suiteResult.AddResult TestSendNotificationConfigValuesUsed()
+    suiteResult.AddResult TestSendNotification_WithCCAndBCC_SavesCorrectly()
     
 CleanupSuite:
-    Call SuiteTeardown
+    
     If Err.Number <> 0 Then
         Dim errorTest As New CTestResult
         errorTest.Initialize "Suite_Execution_Failed"
@@ -38,21 +39,19 @@ End Function
 ' ============================================================================
 
 Private Sub SuiteSetup()
-    On Error GoTo ErrorHandler
-    Dim projectPath As String: projectPath = modTestUtils.GetProjectPath()
-    
-    ' Usar las constantes ya definidas para construir los nombres de archivo
-    Dim templateDbName As String: templateDbName = "correos_test_template.accdb"
-    Dim activeDbName As String: activeDbName = "correos_integration_test.accdb"
-    
-    ' Llamada al método correcto de modTestUtils
-    modTestUtils.PrepareTestDatabase templateDbName, activeDbName
-    
-    Dim activePath As String: activePath = projectPath & "back\test_env\workspace\" & activeDbName
     Dim db As DAO.Database
-    ' Abrir con la password que usan los tests de esta suite
+    On Error GoTo ErrorHandler
+    
+    Dim config As IConfig: Set config = modTestContext.GetTestConfig()
+    Dim activePath As String: activePath = config.GetValue("CORREOS_DATA_PATH")
+
     Set db = DBEngine.OpenDatabase(activePath, False, False, ";PWD=dpddpd")
+    
     Call EnsureCorreosSchema(db)
+    
+    ' BLINDAJE DE IDEMPOTENCIA: Limpiar datos de una ejecución anterior
+    db.Execute "DELETE FROM TbCorreosEnviados WHERE Asunto = 'Asunto Test'", dbFailOnError
+    
     db.Close: Set db = Nothing
     
     Exit Sub
@@ -60,10 +59,7 @@ ErrorHandler:
     Err.Raise Err.Number, "TINotificationService.SuiteSetup", Err.Description
 End Sub
 
-Private Sub SuiteTeardown()
-    ' Limpieza centralizada usando CleanupTestDatabase
-    modTestUtils.CleanupTestDatabase "correos_integration_test.accdb"
-End Sub
+
 
 Private Sub EnsureCorreosSchema(ByRef db As DAO.Database)
     Dim tdf As DAO.TableDef, exists As Boolean: exists = False
@@ -72,14 +68,14 @@ Private Sub EnsureCorreosSchema(ByRef db As DAO.Database)
     Next
     If Not exists Then
         db.Execute "CREATE TABLE TbCorreosEnviados (" & _
-                   "Id AUTOINCREMENT PRIMARY KEY, " & _
+                   "Id COUNTER PRIMARY KEY, " & _
                    "Destinatarios TEXT(255), " & _
                    "Asunto TEXT(255), " & _
                    "Cuerpo MEMO, " & _
                    "DestinatariosConCopia TEXT(255), " & _
                    "DestinatariosConCopiaOculta TEXT(255), " & _
                    "URLAdjunto TEXT(255), " & _
-                   "FechaGrabacion DATETIME );", dbFailOnError
+                   "FechaGrabacion DATETIME);", dbFailOnError
     End If
 End Sub
 
@@ -89,36 +85,38 @@ End Sub
 
 Private Function TestSendNotificationSuccessCallsRepositoryCorrectly() As CTestResult
     Set TestSendNotificationSuccessCallsRepositoryCorrectly = New CTestResult
-    TestSendNotificationSuccessCallsRepositoryCorrectly.Initialize "SendNotification con éxito debe llamar al repositorio correctamente"
+    TestSendNotificationSuccessCallsRepositoryCorrectly.Initialize "SendNotification con éxito debe encolar el correo en la BD"
     
     Dim notificationService As INotificationService
     Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim localConfig As IConfig
     
     On Error GoTo TestFail
     
-    ' Crear configuración local apuntando a la BD de prueba de Correos
-    Dim localConfig As IConfig
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetWorkspacePath() & "correos_integration_test.accdb"
-     mockConfigImpl.SetSetting "CORREOS_PASSWORD", "dpddpd"
-     mockConfigImpl.SetSetting "USUARIO_ACTUAL", "test.user@condor.com"
-     mockConfigImpl.SetSetting "CORREO_ADMINISTRADOR", "admin@condor.com"
-    Set localConfig = mockConfigImpl
+    ' ARRANGE: Usar la configuración centralizada del entorno de pruebas
+    Set localConfig = modTestContext.GetTestConfig()
     
     ' Crear el servicio real inyectando la configuración local
     Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
-    Dim dbPassword As String: dbPassword = localConfig.GetCorreosPassword()
-    Set db = DBEngine.OpenDatabase(modTestUtils.GetWorkspacePath() & "correos_integration_test.accdb", False, False, ";PWD=" & dbPassword)
-
-    ' Act
-    DBEngine.BeginTrans
+    
+    ' ACT: Ejecutar el método a probar
     Dim success As Boolean
     success = notificationService.SendNotification("dest@empresa.com", "Asunto Test", "<html>Cuerpo Test</html>")
     
-    ' Assert
+    ' ASSERT:
+    ' 1. Verificar que el método retornó True
     modAssert.AssertTrue success, "SendNotification debe retornar True en caso de éxito."
-    ' Aquí podríamos añadir una aserción que verifique directamente en la BD que el correo se ha encolado.
-
+    
+    ' 2. Verificar que el registro existe REALMENTE en la base de datos
+    Dim dbPath As String: dbPath = localConfig.GetValue("CORREOS_DATA_PATH")
+    Dim dbPassword As String: dbPassword = localConfig.GetValue("CORREOS_PASSWORD")
+    Set db = DBEngine.OpenDatabase(dbPath, False, False, ";PWD=" & dbPassword)
+    Set rs = db.OpenRecordset("SELECT * FROM TbCorreosEnviados WHERE Asunto = 'Asunto Test'")
+    
+    modAssert.AssertFalse rs.EOF, "El correo debería haber sido insertado en la tabla TbCorreosEnviados."
+    modAssert.AssertEquals "dest@empresa.com", rs!Destinatarios.Value, "El destinatario en la BD no coincide."
+    
     TestSendNotificationSuccessCallsRepositoryCorrectly.Pass
     GoTo Cleanup
 
@@ -127,10 +125,12 @@ TestFail:
     
 Cleanup:
     On Error Resume Next
-    DBEngine.Rollback
+    If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
     Set notificationService = Nothing
     Set db = Nothing
+    Set rs = Nothing
+    Set localConfig = Nothing
 End Function
 
 Private Function TestInitializeWithValidDependencies() As CTestResult
@@ -216,22 +216,13 @@ Private Function TestSendNotificationConfigValuesUsed() As CTestResult
     
     On Error GoTo TestFail
     
-    ' Arrange: Crear configuración local apuntando a la BD de prueba de Correos
+    ' ARRANGE: Usar la configuración centralizada del entorno de pruebas
     Dim localConfig As IConfig
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "CORREOS_DB_PATH", modTestUtils.GetWorkspacePath() & "correos_integration_test.accdb"
-    mockConfigImpl.SetSetting "CORREOS_PASSWORD", "dpddpd"
-    mockConfigImpl.SetSetting "USUARIO_ACTUAL", "test.user@condor.com"
-    mockConfigImpl.SetSetting "CORREO_ADMINISTRADOR", "admin@condor.com"
-    Set localConfig = mockConfigImpl
+    Set localConfig = modTestContext.GetTestConfig()
     
     ' Crear el servicio real inyectando la configuración local
     Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
-    Dim dbPassword As String: dbPassword = localConfig.GetCorreosPassword()
-    Set db = DBEngine.OpenDatabase(modTestUtils.GetWorkspacePath() & "correos_integration_test.accdb", False, False, ";PWD=" & dbPassword)
-
     ' Act
-    DBEngine.BeginTrans
     Dim success As Boolean
     success = notificationService.SendNotification("dest@empresa.com", "Asunto Config Test", "<html>Test Config</html>")
     
@@ -246,9 +237,60 @@ TestFail:
     
 Cleanup:
     On Error Resume Next
-    DBEngine.Rollback
+    Set notificationService = Nothing
+    Set localConfig = Nothing
+End Function
+
+Private Function TestSendNotification_WithCCAndBCC_SavesCorrectly() As CTestResult
+    Set TestSendNotification_WithCCAndBCC_SavesCorrectly = New CTestResult
+    TestSendNotification_WithCCAndBCC_SavesCorrectly.Initialize "SendNotification con CC/BCC debe guardar los campos correctos en la BD"
+    
+    Dim notificationService As INotificationService
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim localConfig As IConfig
+    
+    On Error GoTo TestFail
+    
+    ' ARRANGE
+    Set localConfig = modTestContext.GetTestConfig()
+    Set notificationService = modNotificationServiceFactory.CreateNotificationService(localConfig)
+    db.Execute "DELETE FROM TbCorreosEnviados WHERE Asunto = 'Asunto Test CC/BCC'", dbFailOnError
+
+    ' ACT
+    Dim success As Boolean
+    success = notificationService.SendNotification( _
+        destinatarios:="dest@empresa.com", _
+        asunto:="Asunto Test CC/BCC", _
+        cuerpoHTML:="<html>Cuerpo Test</html>", _
+        conCopia:="cc@empresa.com", _
+        conCopiaOculta:="bcc@empresa.com")
+    
+    ' ASSERT
+    modAssert.AssertTrue success, "SendNotification con CC/BCC debe retornar True."
+    
+    Dim dbPath As String: dbPath = localConfig.GetValue("CORREOS_DATA_PATH")
+    Dim dbPassword As String: dbPassword = localConfig.GetValue("CORREOS_PASSWORD")
+    Set db = DBEngine.OpenDatabase(dbPath, False, False, ";PWD=" & dbPassword)
+    Set rs = db.OpenRecordset("SELECT * FROM TbCorreosEnviados WHERE Asunto = 'Asunto Test CC/BCC'")
+    
+    modAssert.AssertFalse rs.EOF, "El correo con CC/BCC debería haber sido insertado."
+    modAssert.AssertEquals "cc@empresa.com", rs!DestinatariosConCopia.Value, "El destinatario en CC no coincide."
+    modAssert.AssertEquals "bcc@empresa.com", rs!DestinatariosConCopiaOculta.Value, "El destinatario en BCC no coincide."
+    
+    TestSendNotification_WithCCAndBCC_SavesCorrectly.Pass
+    GoTo Cleanup
+
+TestFail:
+    TestSendNotification_WithCCAndBCC_SavesCorrectly.Fail "Error inesperado: " & Err.Description
+    
+Cleanup:
+    On Error Resume Next
+    If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
     Set notificationService = Nothing
     Set db = Nothing
+    Set rs = Nothing
+    Set localConfig = Nothing
 End Function
 

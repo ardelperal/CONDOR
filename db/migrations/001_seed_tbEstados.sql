@@ -1,31 +1,18 @@
--- ============================================================================
--- Script: 001_seed_tbEstados.sql
--- Descripción: Datos semilla para tbEstados - Estados del flujo de trabajo
--- Fecha: 2024
--- Autor: CONDOR-Developer
--- ============================================================================
-
--- Eliminar tabla existente para garantizar idempotencia
-DROP TABLE tbEstados;
--- Crear tabla tbEstados con nueva estructura
-CREATE TABLE tbEstados (
-    idEstado LONG PRIMARY KEY,
-    nombreEstado TEXT(100) NOT NULL,
-    descripcion TEXT(255),
-    esEstadoInicial YESNO DEFAULT FALSE,
-    esEstadoFinal YESNO DEFAULT FALSE
-);
-
--- Insertar los 7 nuevos estados del flujo de trabajo
-INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal) VALUES 
-(1, 'Registrado', 'La solicitud ha sido registrada en el sistema y está lista para iniciar el proceso.', TRUE, FALSE),
-(2, 'Desarrollo', 'La solicitud está siendo desarrollada por el equipo de ingeniería.', FALSE, FALSE),
-(3, 'Modificación', 'La solicitud requiere modificaciones adicionales antes de continuar.', FALSE, FALSE),
-(4, 'Validación', 'La solicitud está siendo validada por el equipo correspondiente.', FALSE, FALSE),
-(5, 'Revisión', 'La solicitud está en proceso de revisión final.', FALSE, FALSE),
-(6, 'Formalización', 'La solicitud está siendo formalizada para su aprobación final.', FALSE, FALSE),
-(7, 'Aprobada', 'La solicitud ha sido aprobada y el proceso ha finalizado exitosamente.', FALSE, TRUE);
-
--- Verificación de la inserción
--- SELECT COUNT(*) AS TotalEstados FROM tbEstados;
--- SELECT * FROM tbEstados ORDER BY idEstado;
+ -- Fichero: 001_schema_and_seed_tbEstados.sql
+-- Eliminar registros existentes para idempotencia
+DELETE FROM tbEstados;
+-- Insertar los estados del flujo de trabajo
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (1, 'Registrado', 'La solicitud ha sido registrada.', TRUE, FALSE, 10);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (2, 'Desarrollo', 'La solicitud está en fase de desarrollo técnico.', FALSE, FALSE, 20);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (3, 'Modificación', 'La solicitud requiere modificaciones de Calidad.', FALSE, FALSE, 30);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (4, 'Validación', 'La solicitud está pendiente de validación por RAC.', FALSE, FALSE, 40);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (5, 'Revisión', 'La solicitud está en revisión por el Cliente.', FALSE, FALSE, 50);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (6, 'Formalización', 'La solicitud está en fase de formalización final.', FALSE, FALSE, 60);
+INSERT INTO tbEstados (idEstado, nombreEstado, descripcion, esEstadoInicial, esEstadoFinal, orden)
+VALUES (7, 'Aprobada', 'La solicitud ha sido aprobada y cerrada.', FALSE, TRUE, 70);

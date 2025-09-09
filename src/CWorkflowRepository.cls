@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' REQUISITO DE COMPILACIÓN: Este módulo usa Scripting.Dictionary. Active "Microsoft Scripting Runtime".
 
 Implements IWorkflowRepository
@@ -17,41 +18,37 @@ Implements IWorkflowRepository
 Private m_Config As IConfig
 Private m_ErrorHandler As IErrorHandlerService
 
-Public Sub Initialize(ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal config As IConfig, ByVal ErrorHandler As IErrorHandlerService)
     Set m_Config = config
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
 End Sub
 
-Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As String, ByVal estadoOrigen As String, ByVal estadoDestino As String) As Boolean
-    ' Implementación real para validar transiciones basada en los nuevos estados
+Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As String, ByVal estadoOrigen As String, ByVal estadoDestino As String, ByVal usuarioRol As String) As Boolean
     On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.Recordset
     Dim isValid As Boolean
-    
     isValid = False
     
-    ' Obtener la conexión a la base de datos del backend
     Set db = DBEngine.OpenDatabase(m_Config.GetCondorDataPath(), False, False, ";PWD=" & m_Config.GetCondorPassword())
     
-    ' Consulta SQL para verificar si existe la transición
     Dim strSQL As String
-    strSQL = "SELECT COUNT(*) AS TransicionExiste " & _
-             "FROM tbTransiciones AS T " & _
-             "INNER JOIN tbEstados AS EO ON T.idEstadoOrigen = EO.idEstado " & _
+    strSQL = "SELECT Count(T.idTransicion) As TransicionExiste " & _
+             "FROM (tbTransiciones AS T INNER JOIN tbEstados AS EO ON T.idEstadoOrigen = EO.idEstado) " & _
              "INNER JOIN tbEstados AS ED ON T.idEstadoDestino = ED.idEstado " & _
-             "WHERE EO.nombreEstado = [prmEstadoOrigen] AND ED.nombreEstado = [prmEstadoDestino];"
+             "WHERE EO.nombreEstado = [prmEstadoOrigen] AND ED.nombreEstado = [prmEstadoDestino] AND T.rolRequerido = [prmRolRequerido];"
              
     Set qdf = db.CreateQueryDef("", strSQL)
-    qdf.Parameters("[prmEstadoOrigen]") = estadoOrigen
-    qdf.Parameters("[prmEstadoDestino]") = estadoDestino
+    qdf.Parameters("prmEstadoOrigen") = estadoOrigen
+    qdf.Parameters("prmEstadoDestino") = estadoDestino
+    qdf.Parameters("prmRolRequerido") = usuarioRol
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     If Not rs.EOF Then
-        isValid = (rs!TransicionExiste > 0)
+        isValid = (rs!TransicionExiste.Value > 0)
     End If
     
     IWorkflowRepository_IsValidTransition = isValid
@@ -94,14 +91,14 @@ Private Function IWorkflowRepository_GetNextStates(ByVal idEstadoActual As Long,
              "WHERE T.idEstadoOrigen = [prmIdEstadoActual] AND T.rolRequerido = [prmRolRequerido];"
              
     Set qdf = db.CreateQueryDef("", strSQL)
-    qdf.Parameters("[prmIdEstadoActual]") = idEstadoActual
-    qdf.Parameters("[prmRolRequerido]") = usuarioRol
+    qdf.Parameters("prmIdEstadoActual") = idEstadoActual
+    qdf.Parameters("prmRolRequerido") = usuarioRol
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     ' Poblar el diccionario con los resultados (ID como clave, Nombre como valor)
     While Not rs.EOF
-        dict.Add Key:=rs!idEstadoDestino, Item:=rs!nombreEstado
+        dict.Add key:=rs!IdEstadoDestino.Value, Item:=rs!NombreEstado.Value
         rs.MoveNext
     Wend
     
@@ -122,6 +119,9 @@ ErrorHandler:
     Set IWorkflowRepository_GetNextStates = dict ' Devolver diccionario vacío en caso de error
     GoTo Cleanup
 End Function
+
+
+
 
 
 
