@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 Implements INotificationRepository
 
 Private m_configService As IConfig
@@ -28,7 +29,7 @@ Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As Str
     INotificationRepository_EnqueueEmail = False
     If Not m_isInitialized Then Exit Function
     
-    Dim db As DAO.Database, rs As DAO.Recordset
+    Dim db As DAO.Database, rs As DAO.Recordset, rsMax As DAO.Recordset
     Dim correosDbPath As String, dbPassword As String
     
     correosDbPath = m_configService.GetCorreosDBPath()
@@ -42,9 +43,23 @@ Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As Str
         Set db = DBEngine.OpenDatabase(correosDbPath, False, False)
     End If
     
+    ' PASO 1: Calcular el nuevo ID manualmente usando una consulta SQL explícita
+    Dim nuevoId As Long
+    Dim maxId As Variant
+    
+    Set rsMax = db.OpenRecordset("SELECT MAX(IDCorreo) AS MaxID FROM TbCorreosEnviados", dbOpenSnapshot)
+    If Not rsMax.EOF Then
+        maxId = rsMax.Fields("MaxID").value
+    End If
+    rsMax.Close
+    
+    nuevoId = Nz(maxId, 0) + 1
+    
+    ' PASO 2: Insertar el nuevo registro con el ID calculado
     Set rs = db.OpenRecordset("TbCorreosEnviados", dbOpenDynaset)
     
     rs.AddNew
+    rs("IDCorreo") = nuevoId ' Asignar el nuevo ID
     rs("Destinatarios") = destinatarios
     rs("Asunto") = asunto
     rs("Cuerpo") = cuerpoHTML
@@ -61,7 +76,11 @@ Private Function INotificationRepository_EnqueueEmail(ByVal destinatarios As Str
     Exit Function
     
 ErrorHandler:
+    If Not rsMax Is Nothing Then rsMax.Close
     If Not rs Is Nothing Then rs.Close
     If Not db Is Nothing Then db.Close
-    m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationRepository.EnqueueEmail"
+    If Not m_ErrorHandler Is Nothing Then
+        m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationRepository.EnqueueEmail"
+    End If
 End Function
+

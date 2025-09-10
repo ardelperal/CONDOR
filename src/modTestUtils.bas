@@ -39,8 +39,13 @@ Option Compare Database
             destKey = dbsToProvision(i) & "_DATA_PATH"
             sourcePath = config.GetValue(sourceKey)
             destPath = config.GetValue(destKey)
-            
+    
             Debug.Print "Aprovisionando: Origen=[" & sourcePath & "], Destino=[" & destPath & "]"
+            
+            ' BLINDAJE: Lanzar un error claro si la clave de destino no se encuentra en modTestContext
+            If Len(destPath) = 0 Then
+                Err.Raise vbObjectError + 5002, "Provision", "La clave de destino '" & destKey & "' no fue encontrada en modTestContext.bas"
+            End If
             
             If Not fs.FileExists(sourcePath) Then
                 Err.Raise vbObjectError + 5001, "Provision", "Origen no encontrado: " & sourcePath

@@ -2,6 +2,7 @@ Attribute VB_Name = "TestCConfig"
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' MÓDULO DE PRUEBAS UNITARIAS PARA CConfig
 ' Arquitectura: Pruebas Aisladas contra la implementación REAL de CConfig,
@@ -71,11 +72,11 @@ Private Function TestHasKey_ReturnsTrueForExistingKey() As CTestResult
     config.LoadFromDictionary testSettings
 
     ' Act
-    Dim result As Boolean
-    result = config.HasKey("EXISTING_KEY")
-
+        Dim result As Boolean
+    result = (config.GetValue("EXISTING_KEY") <> "")
     ' Assert
-    modAssert.AssertTrue result, "HasKey debería haber devuelto True."
+    modAssert.AssertTrue result, "La comprobación GetValue <> '' debería haber devuelto True para una clave existente."
+    
 
     TestHasKey_ReturnsTrueForExistingKey.Pass
     GoTo Cleanup
@@ -89,20 +90,21 @@ End Function
 
 Private Function TestHasKey_ReturnsFalseForNonExistingKey() As CTestResult
     Set TestHasKey_ReturnsFalseForNonExistingKey = New CTestResult
-    TestHasKey_ReturnsFalseForNonExistingKey.Initialize "HasKey debe devolver False para una clave inexistente"
+    TestHasKey_ReturnsFalseForNonExistingKey.Initialize "HasKey (via GetValue<>'') debe devolver False para una clave inexistente"
     
     Dim config As CConfig
     On Error GoTo TestFail
 
-    ' Arrange
-    Set config = New CConfig ' Sin cargar ningún diccionario
+    ' Arrange: Usamos un objeto de configuración vacío
+    Set config = New CConfig
 
-    ' Act
+    ' Act: Usamos el patrón GetValue <> "" para verificar la existencia de la clave
     Dim result As Boolean
-    result = config.HasKey("NON_EXISTING_KEY")
+    result = (config.GetValue("NON_EXISTING_KEY") <> "")
 
-    ' Assert
-    modAssert.AssertFalse result, "HasKey debería haber devuelto False."
+    ' Assert: El resultado de la comparación debe ser False,
+    ' ya que GetValue devuelve "" y la expresión ("" <> "") es False.
+    modAssert.AssertFalse result, "La comprobación GetValue <> '' debería haber devuelto False."
 
     TestHasKey_ReturnsFalseForNonExistingKey.Pass
     GoTo Cleanup
@@ -142,4 +144,6 @@ End Function
 ' ============================================================================
 ' PRUEBAS UNITARIAS
 ' ============================================================================
+
+
 

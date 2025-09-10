@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' ============================================================================
 ' REQUISITO DE COMPILACIÓN CRÍTICO:
 ' "Microsoft Word XX.X Object Library" debe estar referenciada.
@@ -42,14 +43,40 @@ End Function
 ' ============================================================================
 
 Private Sub SuiteSetup()
-    Dim fs As IFileSystem: Set fs = modFileSystemFactory.CreateFileSystem()
-    Dim testFolder As String: testFolder = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), TEST_FOLDER_REL)
-    
-    If fs.FolderExists(testFolder) Then
-        fs.DeleteFolderRecursive testFolder
-    End If
-    fs.CreateFolder testFolder
-End Sub
+        On Error GoTo ErrorHandler
+        
+        ' 1. OBTENER CONFIGURACIÓN EXCLUSIVAMENTE DESDE EL CONTEXTO DE PRUEBAS (Lección 37)
+        Dim config As IConfig: Set config = modTestContext.GetTestConfig()
+        Dim fs As IFileSystem: Set fs = modFileSystemFactory.CreateFileSystem(config)
+        
+        ' 2. OBTENER RUTAS Y NOMBRES DE LA PLANTILLA REAL DE PRODUCCIÓN DESDE LA CONFIGURACIÓN
+        Dim productionTemplatesPath As String: productionTemplatesPath = config.GetValue("PRODUCTION_TEMPLATES_PATH")
+        Dim templateFilename As String: templateFilename = config.GetValue("TEMPLATE_CDCA_FILENAME")
+        
+        ' 3. CONSTRUIR RUTAS DE ORIGEN Y DESTINO
+        Dim sourceTemplatePath As String: sourceTemplatePath = modTestUtils.JoinPath(productionTemplatesPath, templateFilename)
+        Dim destinationFolder As String: destinationFolder = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), TEST_FOLDER_REL)
+        Dim destinationFilePath As String: destinationFilePath = modTestUtils.JoinPath(destinationFolder, templateFilename)
+        
+        ' 4. APROVISIONAR EL ENTORNO: LIMPIAR Y COPIAR
+        ' Asegurarse de que la carpeta de destino existe y está vacía
+        If fs.FolderExists(destinationFolder) Then fs.DeleteFolderRecursive destinationFolder
+        fs.CreateFolder destinationFolder
+        
+        ' Verificar que la plantilla de producción (el fixture) existe antes de copiarla
+        If Not fs.FileExists(sourceTemplatePath) Then
+            Err.Raise vbObjectError + 5501, "SuiteSetup", "La plantilla de origen maestra no se encontró en: " & sourceTemplatePath
+        End If
+        
+        ' Copiar la plantilla de producción al workspace de pruebas
+        fs.CopyFile sourceTemplatePath, destinationFilePath
+        
+        Exit Sub
+
+ErrorHandler:
+        ' Si el setup falla, la suite entera debe fallar con un mensaje claro.
+        Err.Raise vbObjectError + 5500, "SuiteSetup", "Fallo catastrófico al aprovisionar el entorno para TIWordManager: " & Err.Description
+    End Sub
 
 Private Sub SuiteTeardown()
     On Error Resume Next ' Ignorar errores durante la limpieza
@@ -87,27 +114,19 @@ Private Function Test_CicloCompleto_Success() As CTestResult
     Dim writerWordManager As IWordManager
     Dim readerWordManager As IWordManager
     Dim fs As IFileSystem
-    Dim config As IConfig ' Usaremos una instancia local
+    Dim config As IConfig
     
     On Error GoTo TestFail
     
     ' --- Arrange ---
-    ' 1. Obtener configuración del contexto de pruebas centralizado
+    ' 1. Obtener configuración.
     Set config = modTestContext.GetTestConfig()
     
-    Set fs = modFileSystemFactory.CreateFileSystem(config)
-    
-    ' 2. Construir rutas DINÁMICAMENTE desde la configuración
-    Dim templatesPath As String: templatesPath = config.GetValue("TEMPLATES_PATH")
+    ' 2. Construir la ruta al documento de prueba que SuiteSetup ya ha aprovisionado.
+    '    SuiteSetup ya ha copiado 'CD_CA.docx' a la carpeta 'word_manager_tests\'.
     Dim templateFilename As String: templateFilename = config.GetValue("TEMPLATE_CDCA_FILENAME")
-    Dim sourceTemplatePath As String: sourceTemplatePath = modTestUtils.JoinPath(templatesPath, templateFilename)
-    
     Dim workspacePath As String: workspacePath = modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), TEST_FOLDER_REL)
-    Dim testDocPath As String: testDocPath = modTestUtils.JoinPath(workspacePath, "test_document.docx")
-
-    ' 3. Aprovisionar el entorno de la prueba: Copiar la plantilla REAL al workspace
-    modAssert.AssertTrue fs.FileExists(sourceTemplatePath), "La plantilla '" & templateFilename & "' no se encontró en " & templatesPath
-    fs.CopyFile sourceTemplatePath, testDocPath
+    Dim testDocPath As String: testDocPath = modTestUtils.JoinPath(workspacePath, templateFilename)
     
     ' --- Act (Escritura) ---
     Set writerWordManager = modWordManagerFactory.CreateWordManager()
@@ -167,4 +186,6 @@ Cleanup:
     If Not wordManager Is Nothing Then wordManager.Dispose
     Set wordManager = Nothing
 End Function
+
+
 

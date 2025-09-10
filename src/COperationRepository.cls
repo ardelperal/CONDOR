@@ -34,6 +34,7 @@ Private Sub IOperationRepository_SaveLog(ByVal logEntry As EOperationLog)
     
     qdf.Parameters("pUsuario") = logEntry.usuario
     qdf.Parameters("pTipoOperacion") = logEntry.tipoOperacion
+    qdf.Parameters("pEntidad") = logEntry.entidad
     qdf.Parameters("pIdEntidad") = logEntry.idEntidadAfectada
     qdf.Parameters("pDescripcion") = logEntry.descripcion
     qdf.Parameters("pResultado") = logEntry.resultado

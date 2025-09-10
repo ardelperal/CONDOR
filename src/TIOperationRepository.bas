@@ -82,7 +82,7 @@ Private Function TestSaveLog_Success() As CTestResult
     
     ' Crear el objeto de entidad a guardar
     Set logEntry = New EOperationLog
-    logEntry.Initialize Now, "test_user", "TEST_OP", 123, "Descripción de prueba.", "SUCCESS", "Detalles de prueba."
+    logEntry.Initialize Now, "test_user", "TEST_OP", "Solicitud", 123, "Descripción de prueba.", "SUCCESS", "Detalles de prueba."
 
     ' ACT: Ejecutar la operación a probar
     repository.SaveLog logEntry
@@ -93,6 +93,7 @@ Private Function TestSaveLog_Success() As CTestResult
     
     modAssert.AssertFalse rs.EOF, "Se debería haber insertado un registro de log."
     modAssert.AssertEquals 123, rs!idEntidad.Value, "El ID de entidad no coincide."
+    modAssert.AssertEquals "Solicitud", rs!entidad.Value, "La entidad no coincide."
     modAssert.AssertEquals "Descripción de prueba.", rs!descripcion.Value, "La descripción no coincide."
     modAssert.AssertEquals "SUCCESS", rs!resultado.Value, "El resultado no coincide."
     modAssert.AssertEquals "Detalles de prueba.", rs!detalles.Value, "Los detalles no coinciden."

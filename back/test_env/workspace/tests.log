@@ -6,3 +6,120 @@
 09/09/2025 14:34:40 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
 09/09/2025 14:43:21 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
 09/09/2025 14:43:21 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 7:56:39 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 7:56:40 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 9:12:14 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 9:12:14 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 9:14:08 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 9:14:08 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 9:58:33 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 9:58:33 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 10:06:37 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 10:06:38 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 10:06:40 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 10:10:24 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 10:10:25 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 10:11:24 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 10:33:01 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 10:33:02 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 10:33:02 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 10:34:57 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 10:36:19 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 10:36:20 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 10:36:20 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 10:42:26 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:05:57 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:05:58 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:05:58 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 11:06:12 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:06:13 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:06:13 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:06:24 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:07:09 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:07:09 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:07:09 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 11:14:51 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:14:51 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:14:52 | ERROR | Err: 3058 | El índice o la clave principal no puede contener un valor Null. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:14:52 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:16:11 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:16:12 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:16:12 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 11:18:57 | ERROR | Err: 3078 | El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'TbCorreosEnviados'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:19:00 | ERROR | Err: 3078 | El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'TbCorreosEnviados'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:19:00 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:26:06 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:26:07 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:26:07 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 11:30:48 | ERROR | Err: 3078 | El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'TbCorreosEnviados'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:30:50 | ERROR | Err: 3078 | El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'TbCorreosEnviados'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:30:50 | ERROR | Err: 3078 | El motor de base de datos de Microsoft Access no puede encontrar la tabla o consulta de entrada 'TbCorreosEnviados'. Asegúrese de que existe y de que el nombre está escrito correctamente. | Source: CNotificationRepository.EnqueueEmail
+10/09/2025 11:30:51 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:32:15 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:32:16 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:32:16 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 11:32:29 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:32:48 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:32:48 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:32:48 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:37:47 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:37:48 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:37:48 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 11:37:49 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:37:49 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:37:49 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:37:49 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:39:11 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:39:12 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:39:12 | ERROR | Err: 500 | No se pudo abrir el documento generado. | Source: CDocumentService
+10/09/2025 11:39:12 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:39:12 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:39:12 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:39:12 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:44:08 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:44:09 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:45:29 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:45:29 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:45:29 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:45:29 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:48:13 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:48:14 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:48:50 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:48:50 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:48:50 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:48:50 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:50:12 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 11:50:12 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:50:18 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:50:19 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:50:19 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 11:50:19 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:02:01 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 12:02:02 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:02:03 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:02:03 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:02:03 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:02:03 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:16:52 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 12:16:53 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:16:55 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:16:55 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:16:55 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:16:55 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:21:19 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 12:21:20 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:21:21 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:21:21 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:21:21 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:21:30 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:23:41 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 12:23:42 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:23:43 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:23:43 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:23:43 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:27:39 | ERROR | Err: 3139 | Error de sintaxis en la cláusula PARAMETER. | Source: COperationRepository.SaveLog
+10/09/2025 12:32:19 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+10/09/2025 12:32:20 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+10/09/2025 12:32:22 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+10/09/2025 12:32:22 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+10/09/2025 12:32:22 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog

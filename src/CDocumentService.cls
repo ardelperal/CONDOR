@@ -12,6 +12,7 @@ Option Explicit
 
 
 
+
 Implements IDocumentService
 
 ' Dependencias inyectadas
@@ -53,10 +54,10 @@ Private Function IDocumentService_GenerarDocumento(ByVal SolicitudID As Long) As
     Dim templateFilenameKey As String
     templateFilenameKey = "TEMPLATE_" & solicitud.tipoSolicitud & "_FILENAME"
     
-    plantillaPath = m_Config.GetValue("TEMPLATES_PATH") & m_Config.GetValue(templateFilenameKey)
+    plantillaPath = JoinPath(m_Config.GetValue("TEMPLATES_PATH"), m_Config.GetValue(templateFilenameKey))
     generatedDocsPath = m_Config.GetValue("GENERATED_DOCS_PATH")
     generatedFilename = "Generated_" & solicitud.codigoSolicitud & "_" & Format(Now, "yyyymmddhhmmss") & ".docx"
-    finalDocPath = generatedDocsPath & generatedFilename
+    finalDocPath = JoinPath(generatedDocsPath, generatedFilename)
 
     ' 4. Asegurarse de que la carpeta de destino existe
     m_fileSystem.CreateFolder generatedDocsPath
@@ -99,5 +100,15 @@ Public Function LeerDocumento(ByVal rutaDocumento As String) As ESolicitud
     Set LeerDocumento = IDocumentService_LeerDocumento(rutaDocumento)
 End Function
 
+
+Private Function JoinPath(ByVal basePath As String, ByVal relativePath As String) As String
+    Dim b As String: b = Trim$(basePath)
+    Dim r As String: r = Trim$(relativePath)
+    If Len(b) = 0 Then JoinPath = r: Exit Function
+    If Len(r) = 0 Then JoinPath = b: Exit Function
+    If Right$(b, 1) = "\" Then b = Left$(b, Len(b) - 1)
+    If Left$(r, 1) = "\" Then r = Mid$(r, 2)
+    JoinPath = b & "\" & r
+End Function
 
 

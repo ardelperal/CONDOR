@@ -30,7 +30,7 @@ Private Function TestLogOperation_CallsRepository() As CTestResult
     Set service = serviceImpl
     
     Set logEntry = New EOperationLog
-    logEntry.Initialize Now, "test_user", "TEST", 1, "Desc", "OK", "Details"
+    logEntry.Initialize Now, "test_user", "TEST", "TestEntity", 1, "Desc", "OK", "Details"
     
     ' Act
     service.LogOperation logEntry
