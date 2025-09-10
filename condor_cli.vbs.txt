@@ -1268,7 +1268,7 @@ Sub ShowHelp()
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
-    WScript.Echo "  rebuild                      - Método principal de sincronización del proyecto"
+    WScript.Echo "  rebuild [fichero1,fichero2,...] - Reconstruye el proyecto. Completo por defecto, o selectivo si se especifican ficheros."
     WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
     WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
     WScript.Echo ""
@@ -1981,8 +1981,19 @@ Function RelinkSingleDatabase(strDbPath, strPassword, strBackPath)
     On Error GoTo 0
 End Function
 
-' Subrutina para reconstruir completamente el proyecto VBA
+' Punto de entrada para el comando rebuild
 Sub RebuildProject()
+    If objArgs.Count > 1 Then
+        ' Se han pasado argumentos, ejecutar rebuild selectivo
+        Call RebuildProject_Selective()
+    Else
+        ' No hay argumentos, ejecutar rebuild completo
+        Call RebuildProject_Full()
+    End If
+End Sub
+
+' Subrutina para reconstruir completamente el proyecto VBA
+Sub RebuildProject_Full()
     WScript.Echo "=== RECONSTRUCCION COMPLETA DEL PROYECTO VBA ==="
     WScript.Echo "ADVERTENCIA: Se eliminaran TODOS los modulos VBA existentes"
     WScript.Echo "Iniciando proceso de reconstruccion..."
@@ -2182,7 +2193,89 @@ Sub RebuildProject()
     On Error GoTo 0
 End Sub
 
-
+' Subrutina para reconstruir selectivamente módulos específicos
+Sub RebuildProject_Selective()
+    WScript.Echo "=== RECONSTRUCCION SELECTIVA DEL PROYECTO VBA ==="
+    
+    ' Obtener la lista de ficheros del segundo argumento
+    Dim fileList
+    fileList = objArgs(1)
+    
+    ' Crear un array de ficheros separando la cadena por comas
+    Dim filesToRebuild
+    filesToRebuild = Split(fileList, ",")
+    
+    WScript.Echo "Ficheros a reconstruir: " & UBound(filesToRebuild) + 1
+    
+    On Error Resume Next
+    
+    ' Procesar cada fichero en la lista
+    Dim i, fileName, moduleName, vbComponent, found
+    For i = 0 To UBound(filesToRebuild)
+        fileName = Trim(filesToRebuild(i))
+        
+        ' Obtener el nombre del módulo sin la extensión
+        moduleName = objFSO.GetBaseName(fileName)
+        
+        WScript.Echo "Procesando: " & fileName & " (Modulo: " & moduleName & ")"
+        
+        ' Buscar y eliminar el componente existente
+        found = False
+        For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
+            If vbComponent.Name = moduleName Then
+                WScript.Echo "  Eliminando modulo existente: " & moduleName
+                objAccess.VBE.ActiveVBProject.VBComponents.Remove vbComponent
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "  ❌ Error eliminando " & moduleName & ": " & Err.Description
+                    Err.Clear
+                Else
+                    WScript.Echo "  ✓ Eliminado: " & moduleName
+                End If
+                
+                found = True
+                Exit For
+            End If
+        Next
+        
+        If Not found Then
+            WScript.Echo "  ⚠️ Modulo " & moduleName & " no encontrado en el proyecto"
+        End If
+        
+        ' Construir la ruta completa al fichero fuente
+        Dim sourceFilePath
+        sourceFilePath = objFSO.BuildPath(strSourcePath, fileName)
+        
+        ' Verificar que el fichero fuente existe
+        If objFSO.FileExists(sourceFilePath) Then
+            WScript.Echo "  Importando desde: " & sourceFilePath
+            
+            ' Determinar tipo de archivo
+            Dim fileExtension
+            fileExtension = LCase(objFSO.GetExtensionName(fileName))
+            
+            ' Limpiar archivo antes de importar
+            Dim cleanedContent
+            cleanedContent = CleanVBAFile(sourceFilePath, fileExtension)
+            
+            ' Importar el módulo usando la función existente
+            Call ImportModuleWithAnsiEncoding(sourceFilePath, moduleName, fileExtension, Nothing, cleanedContent)
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "  ❌ Error importando " & moduleName & ": " & Err.Description
+                Err.Clear
+            Else
+                WScript.Echo "  ✅ Importado exitosamente: " & moduleName
+            End If
+        Else
+            WScript.Echo "  ❌ Error: Fichero fuente no existe: " & sourceFilePath
+        End If
+    Next
+    
+    WScript.Echo "=== RECONSTRUCCION SELECTIVA COMPLETADA ==="
+    
+    On Error GoTo 0
+End Sub
 
 ' Subrutina para verificar y cerrar procesos de Access existentes
 Sub CloseExistingAccessProcesses()
@@ -2997,9 +3090,13 @@ Sub ExportForm()
         End If
     Next
     
-    ' Asignar valor por defecto si no se especificó output
+    ' Construir ruta de salida por defecto si no se especifica
     If strOutputPath = "" Then
-        strOutputPath = strFormName & ".json"
+        Dim uiDefinitionsPath
+        uiDefinitionsPath = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\ui\definitions\"
+        ' Asegurarse de que el directorio existe
+        If Not objFSO.FolderExists(uiDefinitionsPath) Then objFSO.CreateFolder uiDefinitionsPath
+        strOutputPath = objFSO.BuildPath(uiDefinitionsPath, strFormName & ".json")
     End If
     
     ' Verificar que el archivo de base de datos existe
@@ -3192,6 +3289,14 @@ Sub ImportForm()
     
     ' Asignar argumentos
     strJsonPath = objArgs(1)
+    
+    ' Si la ruta no es completa, construir la ruta por defecto
+    If Not objFSO.FileExists(strJsonPath) Then
+        Dim defaultUiPath
+        defaultUiPath = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\ui\definitions\"
+        strJsonPath = objFSO.BuildPath(defaultUiPath, objArgs(1))
+    End If
+    
     strDbPath = objArgs(2)
     strPassword = ""
     

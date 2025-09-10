@@ -1268,7 +1268,7 @@ Sub ShowHelp()
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
-    WScript.Echo "  rebuild                      - Método principal de sincronización del proyecto"
+    WScript.Echo "  rebuild [fichero1,fichero2,...] - Reconstruye el proyecto. Completo por defecto, o selectivo si se especifican ficheros."
     WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
     WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
     WScript.Echo ""
@@ -1981,8 +1981,19 @@ Function RelinkSingleDatabase(strDbPath, strPassword, strBackPath)
     On Error GoTo 0
 End Function
 
-' Subrutina para reconstruir completamente el proyecto VBA
+' Punto de entrada para el comando rebuild
 Sub RebuildProject()
+    If objArgs.Count > 1 Then
+        ' Se han pasado argumentos, ejecutar rebuild selectivo
+        Call RebuildProject_Selective()
+    Else
+        ' No hay argumentos, ejecutar rebuild completo
+        Call RebuildProject_Full()
+    End If
+End Sub
+
+' Subrutina para reconstruir completamente el proyecto VBA
+Sub RebuildProject_Full()
     WScript.Echo "=== RECONSTRUCCION COMPLETA DEL PROYECTO VBA ==="
     WScript.Echo "ADVERTENCIA: Se eliminaran TODOS los modulos VBA existentes"
     WScript.Echo "Iniciando proceso de reconstruccion..."
@@ -2182,7 +2193,123 @@ Sub RebuildProject()
     On Error GoTo 0
 End Sub
 
-
+' Subrutina para reconstruir selectivamente módulos específicos
+Sub RebuildProject_Selective()
+    WScript.Echo "=== RECONSTRUCCION SELECTIVA DEL PROYECTO VBA ==="
+    
+    ' Obtener la lista de ficheros del segundo argumento
+    Dim fileList
+    fileList = objArgs(1)
+    
+    ' Crear un array de ficheros separando la cadena por comas
+    Dim filesToRebuild
+    filesToRebuild = Split(fileList, ",")
+    
+    WScript.Echo "Ficheros a reconstruir: " & UBound(filesToRebuild) + 1
+    
+    On Error Resume Next
+    
+    ' Procesar cada fichero en la lista
+    Dim i, fileName, moduleName, vbComponent, found
+    For i = 0 To UBound(filesToRebuild)
+        fileName = Trim(filesToRebuild(i))
+        
+        ' Obtener el nombre del módulo sin la extensión
+        moduleName = objFSO.GetBaseName(fileName)
+        
+        WScript.Echo "Procesando: " & fileName & " (Modulo: " & moduleName & ")"
+        
+        ' Buscar y eliminar el componente existente
+        found = False
+        For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
+            If vbComponent.Name = moduleName Then
+                WScript.Echo "  Eliminando modulo existente: " & moduleName
+                objAccess.VBE.ActiveVBProject.VBComponents.Remove vbComponent
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "  ❌ Error eliminando " & moduleName & ": " & Err.Description
+                    Err.Clear
+                Else
+                    WScript.Echo "  ✓ Eliminado: " & moduleName
+                End If
+                
+                found = True
+                Exit For
+            End If
+        Next
+        
+        If Not found Then
+            WScript.Echo "  ⚠️ Modulo " & moduleName & " no encontrado en el proyecto"
+        End If
+        
+        ' Construir la ruta completa al fichero fuente
+        Dim sourceFilePath
+        sourceFilePath = objFSO.BuildPath(strSourcePath, fileName)
+        
+        ' Verificar que el fichero fuente existe
+        If objFSO.FileExists(sourceFilePath) Then
+            WScript.Echo "  Importando desde: " & sourceFilePath
+            On Error Resume Next
+            
+            ' Usar el método .Import, que es más robusto para esta operación
+            Dim importedComponent
+            Set importedComponent = objAccess.VBE.ActiveVBProject.VBComponents.Import(sourceFilePath)
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "  ❌ Error importando " & moduleName & ": " & Err.Description
+                Err.Clear
+            Else
+                ' Asegurarse de que el nombre es correcto, ya que a veces Access añade un '1' al final
+                If importedComponent.Name <> moduleName Then
+                    importedComponent.Name = moduleName
+                End If
+                WScript.Echo "  ✅ Importado exitosamente: " & moduleName
+            End If
+            On Error GoTo 0
+        Else
+            WScript.Echo "  ❌ Error: Fichero fuente no existe: " & sourceFilePath
+        End If
+    Next
+    
+    WScript.Echo "=== RECONSTRUCCION SELECTIVA COMPLETADA ==="
+    
+    WScript.Echo "Finalizando sesión para consolidar cambios..."
+    
+    ' Guardar y cerrar la base de datos actual
+    objAccess.CloseCurrentDatabase
+    objAccess.Quit
+    Set objAccess = Nothing
+    
+    ' Pequeña pausa para asegurar que el proceso se ha cerrado completamente
+    WScript.Sleep 1000
+    
+    ' Volver a abrir la instancia de Access para dejarla lista para el siguiente comando
+    WScript.Echo "Reabriendo base de datos en estado estable..."
+    Set objAccess = CreateObject("Access.Application")
+    ' Re-aplicar configuración silenciosa
+    objAccess.Visible = False
+    On Error Resume Next
+    objAccess.DisplayAlerts = False
+    Err.Clear
+    On Error GoTo 0
+    
+    ' Reabrir la base de datos con la contraseña correcta
+    strDbPassword = GetDatabasePassword(strAccessPath)
+    If strDbPassword = "" Then
+        objAccess.OpenCurrentDatabase strAccessPath
+    Else
+        objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error fatal al reabrir la base de datos después del rebuild selectivo: " & Err.Description
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "Proyecto consolidado exitosamente."
+    
+    On Error GoTo 0
+End Sub
 
 ' Subrutina para verificar y cerrar procesos de Access existentes
 Sub CloseExistingAccessProcesses()
@@ -3014,7 +3141,7 @@ Sub ExportForm()
     
     ' Crear instancia de Access
     Set objAccess = CreateObject("Access.Application")
-    objAccess.Visible = True
+    objAccess.Visible = False
     
     ' Abrir base de datos
     On Error Resume Next

@@ -2027,16 +2027,21 @@ cscript condor_cli.vbs export
 - Exporta todos los módulos VBA desde la base de datos Access hacia archivos `.bas` en el directorio `src/`
 - Útil para sincronizar cambios realizados directamente en Access hacia el control de versiones
 
-**Reconstrucción Completa del Proyecto**
+**Reconstrucción del Proyecto**
 
 ```bash
+# Reconstrucción completa (comportamiento por defecto)
 cscript condor_cli.vbs rebuild
+
+# Reconstrucción selectiva de módulos específicos
+cscript condor_cli.vbs rebuild CAuthService,modUtils,CConfig
 ```
 
-- Elimina todos los módulos VBA existentes de la base de datos Access
-- Importa todos los archivos `.bas` del directorio `src/` hacia la base de datos Access
+- **Modo Completo** (sin argumentos): Elimina todos los módulos VBA existentes e importa todos los archivos desde `src/`
+- **Modo Selectivo** (con argumentos): Elimina e importa únicamente los módulos especificados
 - Compila automáticamente los módulos después de la importación
 - Garantiza un estado 100% limpio y compilado
+- Sintaxis selectiva: Los nombres de módulos se separan con comas (sin espacios)
 - Usar solo cuando `update` no sea suficiente (problemas de sincronización graves)
 
 **Validación de Esquemas de Base de Datos**
