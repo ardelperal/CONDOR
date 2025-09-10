@@ -1377,8 +1377,9 @@ Sub ShowHelp()
     WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
     WScript.Echo ""
     WScript.Echo "✅ VALIDACIÓN Y PRUEBAS:"
-    WScript.Echo "  validate [--verbose]         - Validar sintaxis VBA sin importar a Access"
+    WScript.Echo "  validate [--verbose] [--src] - Validar sintaxis VBA sin importar a Access"
     WScript.Echo "                                 --verbose: Mostrar detalles de validación"
+    WScript.Echo "                                 --src: Usar directorio fuente alternativo"
     WScript.Echo "  test                         - Ejecutar suite completa de pruebas unitarias"
     WScript.Echo "  lint                         - Auditar código VBA (detectar cabeceras duplicadas)"
     WScript.Echo ""
@@ -1414,15 +1415,17 @@ Sub ShowHelp()
     WScript.Echo "                                   • caption: string - Título del formulario"
     WScript.Echo "                                   • popUp/modal: boolean - Comportamiento de ventana"
     WScript.Echo "                                   • width: number (twips) - Ancho del formulario"
-    WScript.Echo "                                   • borderStyle: \"None\"|\"Thin\"|\"Sizable\"|\"Dialog\""
-    WScript.Echo "                                   • scrollBars: \"Neither\"|\"Horizontal\"|\"Vertical\"|\"Both\""
-    WScript.Echo "                                   • minMaxButtons: \"None\"|\"Min Enabled\"|\"Max Enabled\"|\"Both Enabled\""
-    WScript.Echo "                                   • recordsetType: \"Dynaset\"|\"Snapshot\"|\"Dynaset (Inconsistent Updates)\""
-    WScript.Echo "                                   • orientation: \"LeftToRight\"|\"RightToLeft\""
+    WScript.Echo "                                   • borderStyle: ""None""|""Thin""|""Sizable""|""Dialog"""
+    WScript.Echo "                                   • scrollBars: ""Neither""|""Horizontal""|""Vertical""|""Both"""
+    WScript.Echo "                                   • minMaxButtons: ""None""|""Min Enabled""|""Max Enabled""|""Both Enabled"""
+    WScript.Echo "                                   • recordsetType: ""Dynaset""|""Snapshot""|""Dynaset (Inconsistent Updates)"""
+    WScript.Echo "                                   • orientation: ""LeftToRight""|""RightToLeft"""
     WScript.Echo "                                   • splitForm*: propiedades específicas para formularios divididos"
     WScript.Echo "                                 Ejemplo: export-form db.accdb MiForm --pretty --expand=events,formatting"
     WScript.Echo "  import-form <json_path> <db_path> [--password] - Crear/Modificar formulario desde JSON."
     WScript.Echo "  validate-form-json <json_path> [--strict] [--schema] - Validar estructura JSON de formulario"
+    WScript.Echo "                                 --strict: Validación exhaustiva de coherencia con código VBA"
+    WScript.Echo "                                 --schema: Validar contra esquema específico"
     WScript.Echo "  roundtrip-form <db_path> <form> [--password] [--temp-dir] [--verbose] - Test export→import de formulario"
     WScript.Echo ""
     WScript.Echo "FUNCIONALIDADES DISPONIBLES PARA 'bundle' (con dependencias automáticas):"
@@ -1479,7 +1482,10 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo ""
     WScript.Echo "OPCIONES GLOBALES:"
     WScript.Echo "  --help, -h, help             - Mostrar esta ayuda completa"
-  
+    WScript.Echo "  --src <directorio>           - Especificar directorio fuente alternativo"
+    WScript.Echo "                                 (por defecto: C:\\Proyectos\\CONDOR\\src)"
+    WScript.Echo "  --strict                     - Modo estricto: validación exhaustiva de coherencia"
+    WScript.Echo "                                 entre JSON y código VBA en formularios"
     WScript.Echo "  --verbose                    - Mostrar información detallada durante la operación"
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
@@ -1489,8 +1495,9 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo ""
     WScript.Echo "EJEMPLOS DE USO:"
     WScript.Echo "  cscript condor_cli.vbs --help"
-    WScript.Echo "  cscript condor_cli.vbs validate --verbose"
+    WScript.Echo "  cscript condor_cli.vbs validate --verbose --src C:\\MiProyecto\\src"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
+    WScript.Echo "  cscript condor_cli.vbs validate-form-json formulario.json --strict"
     WScript.Echo "  cscript condor_cli.vbs bundle Auth"
     WScript.Echo "  cscript condor_cli.vbs bundle Document C:\\\\temp"
     WScript.Echo "  cscript condor_cli.vbs createtable MiTabla ""CREATE TABLE MiTabla (ID LONG)"""
@@ -3105,8 +3112,8 @@ End Function
 ' ===================================================================
 Sub ExportForm()
     Dim strDbPath, strFormName, strOutputPath, strPassword
-    Dim strSchemaVersion, strExpand, strResourceRoot
-    Dim bPretty, bNoControls
+    Dim strSchemaVersion, strExpand, strResourceRoot, strSrcDir
+    Dim bPretty, bNoControls, bStrict
     Dim i
     
     ' Verificar argumentos mínimos
@@ -3124,8 +3131,10 @@ Sub ExportForm()
     strSchemaVersion = "1.0.0"
     strExpand = "events,formatting,resources"
     strResourceRoot = ""
+    strSrcDir = ""
     bPretty = False
     bNoControls = False
+    bStrict = False
     
     ' Procesar argumentos opcionales
     For i = 3 To objArgs.Count - 1
@@ -3145,12 +3154,21 @@ Sub ExportForm()
             bNoControls = True
         ElseIf LCase(objArgs(i)) = "--verbose" Then
             gVerbose = True
+        ElseIf LCase(objArgs(i)) = "--src" And i < objArgs.Count - 1 Then
+            strSrcDir = objArgs(i + 1)
+        ElseIf LCase(objArgs(i)) = "--strict" Then
+            bStrict = True
         End If
     Next
     
     ' Configurar resource root por defecto
     If strResourceRoot = "" Then
         strResourceRoot = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\ui\assets\"
+    End If
+    
+    ' Configurar src directory por defecto
+    If strSrcDir = "" Then
+        strSrcDir = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\src\"
     End If
     
     ' Construir ruta de salida por defecto si no se especifica
@@ -3537,6 +3555,39 @@ Sub ExportForm()
                              If control.OnDblClick <> "" Then jsonWriter.AddProperty "OnDblClick", control.OnDblClick
                              If control.OnGotFocus <> "" Then jsonWriter.AddProperty "OnGotFocus", control.OnGotFocus
                              If control.OnLostFocus <> "" Then jsonWriter.AddProperty "OnLostFocus", control.OnLostFocus
+                             If control.OnChange <> "" Then jsonWriter.AddProperty "OnChange", control.OnChange
+                             If control.OnAfterUpdate <> "" Then jsonWriter.AddProperty "OnAfterUpdate", control.OnAfterUpdate
+                             If control.OnBeforeUpdate <> "" Then jsonWriter.AddProperty "OnBeforeUpdate", control.OnBeforeUpdate
+                             
+                             ' Agregar events.detected basado en handlers encontrados en código
+                             Dim detectedEvents, eventKey
+                             Set detectedEvents = CreateObject("Scripting.Dictionary")
+                             
+                             ' Buscar handlers para este control
+                             Dim eventTypes
+                             eventTypes = Array("Click", "DblClick", "GotFocus", "LostFocus", "Change", "AfterUpdate", "BeforeUpdate", "Current", "Load", "Open")
+                             
+                             Dim j
+                             For j = 0 To UBound(eventTypes)
+                                 eventKey = control.Name & "." & eventTypes(j)
+                                 If detectedHandlers.Exists(eventKey) Then
+                                     If Not detectedEvents.Exists(eventTypes(j)) Then
+                                         detectedEvents.Add eventTypes(j), True
+                                     End If
+                                 End If
+                             Next
+                             
+                             ' Escribir array detected si hay eventos detectados
+                             If detectedEvents.Count > 0 Then
+                                 jsonWriter.WriteProperty "detected"
+                                 jsonWriter.StartArray
+                                 Dim detectedKey
+                                 For Each detectedKey In detectedEvents.Keys
+                                     jsonWriter.WriteValue detectedKey
+                                 Next
+                                 jsonWriter.EndArray
+                             End If
+                             
                              jsonWriter.EndObject
                          End If
                          
@@ -3553,6 +3604,10 @@ Sub ExportForm()
      Next
      
      jsonWriter.EndObject ' sections
+    
+    ' Code module detection and event handlers
+    Dim detectedHandlers
+    Set detectedHandlers = DetectModuleAndHandlers(jsonWriter, strFormName, strSrcDir, gVerbose)
     
     jsonWriter.EndObject ' root object
     
@@ -3582,6 +3637,108 @@ Sub ExportForm()
     ' Lógica de limpieza
     objAccess.DoCmd.Close
 End Sub
+
+' Detecta módulo y handlers de eventos para el formulario
+' Parámetros:
+'   jsonWriter - Objeto JsonWriter para escribir la sección code
+'   formName - Nombre del formulario
+'   srcDir - Directorio donde buscar el módulo
+'   verbose - Si mostrar información detallada
+' Retorna: Diccionario con handlers detectados (clave: "control.event")
+Function DetectModuleAndHandlers(jsonWriter, formName, srcDir, verbose)
+    Dim objFSO, moduleFile, moduleExists, moduleFilename
+    Dim handlers, fileContent, regEx, matches, match
+    Dim i, controlName, eventName, signature
+    
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Set handlers = CreateObject("Scripting.Dictionary")
+    
+    moduleExists = False
+    moduleFilename = ""
+    
+    ' Heurística para encontrar el archivo del módulo
+    Dim candidateFiles(3)
+    candidateFiles(0) = srcDir & "Form_" & formName & ".bas"
+    candidateFiles(1) = srcDir & formName & ".bas"
+    candidateFiles(2) = srcDir & "frm" & formName & ".bas"
+    candidateFiles(3) = srcDir & "Form_" & formName & ".cls"
+    
+    For i = 0 To 3
+        If objFSO.FileExists(candidateFiles(i)) Then
+            moduleExists = True
+            moduleFilename = objFSO.GetFileName(candidateFiles(i))
+            moduleFile = candidateFiles(i)
+            Exit For
+        End If
+    Next
+    
+    ' Escribir sección code.module
+    jsonWriter.WriteProperty "code"
+    jsonWriter.StartObject
+    jsonWriter.WriteProperty "module"
+    jsonWriter.StartObject
+    jsonWriter.WriteProperty "exists", moduleExists
+    jsonWriter.WriteProperty "filename", moduleFilename
+    
+    ' Si existe el módulo, parsear handlers
+    If moduleExists Then
+        If verbose Then WScript.Echo "Detectando handlers en: " & moduleFile
+        
+        ' Leer contenido del archivo
+        Dim textStream
+        Set textStream = objFSO.OpenTextFile(moduleFile, 1) ' ForReading
+        fileContent = textStream.ReadAll
+        textStream.Close
+        
+        ' Crear expresión regular para detectar handlers
+        Set regEx = CreateObject("VBScript.RegExp")
+        regEx.Global = True
+        regEx.IgnoreCase = True
+        regEx.MultiLine = True
+        regEx.Pattern = "^\s*(Public|Private)?\s*Sub\s+([A-Za-z0-9_]+)_(Click|DblClick|Current|Load|Open|GotFocus|LostFocus|Change|AfterUpdate|BeforeUpdate)\s*\("
+        
+        Set matches = regEx.Execute(fileContent)
+        
+        ' Procesar matches
+        jsonWriter.WriteProperty "handlers"
+        jsonWriter.StartArray
+        
+        For Each match In matches
+            controlName = match.SubMatches(1)
+            eventName = match.SubMatches(2)
+            signature = Trim(match.Value)
+            
+            ' Agregar handler al JSON
+            jsonWriter.StartObject
+            jsonWriter.WriteProperty "control", controlName
+            jsonWriter.WriteProperty "event", eventName
+            jsonWriter.WriteProperty "signature", signature
+            jsonWriter.EndObject
+            
+            ' Guardar en diccionario para referencia
+            Dim handlerKey
+            handlerKey = controlName & "." & eventName
+            handlers.Add handlerKey, True
+            
+            If verbose Then WScript.Echo "Handler detectado: " & controlName & "." & eventName
+        Next
+        
+        jsonWriter.EndArray ' handlers
+    Else
+        ' No hay módulo, array vacío
+        jsonWriter.WriteProperty "handlers"
+        jsonWriter.StartArray
+        jsonWriter.EndArray
+        
+        If verbose Then WScript.Echo "No se encontró módulo para el formulario " & formName
+    End If
+    
+    jsonWriter.EndObject ' module
+    jsonWriter.EndObject ' code
+    
+    ' Retornar diccionario de handlers para uso posterior
+    Set DetectModuleAndHandlers = handlers
+End Function
 
 ' ===================================================================
 ' SUBRUTINA: RoundtripFormCommand
@@ -3814,12 +3971,12 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     Set frm = objAccessLocal.Forms(formName)
     
     jsonContent = "{" & vbCrLf
-    jsonContent = jsonContent & "  \"schemaVersion\": \"1.0.0\"," & vbCrLf
-    jsonContent = jsonContent & "  \"formName\": \"" & frm.Name & "\"," & vbCrLf
-    jsonContent = jsonContent & "  \"properties\": {" & vbCrLf
-    jsonContent = jsonContent & "    \"caption\": \"" & frm.Caption & "\"," & vbCrLf
-    jsonContent = jsonContent & "    \"width\": " & frm.Width & "," & vbCrLf
-    jsonContent = jsonContent & "    \"recordSource\": \"" & frm.RecordSource & "\"" & vbCrLf
+    jsonContent = jsonContent & "  ""schemaVersion"": ""1.0.0""," & vbCrLf
+    jsonContent = jsonContent & "  ""formName"": """ & frm.Name & """," & vbCrLf
+    jsonContent = jsonContent & "  ""properties"": {" & vbCrLf
+    jsonContent = jsonContent & "    ""caption"": """ & frm.Caption & """," & vbCrLf
+    jsonContent = jsonContent & "    ""width"": " & frm.Width & "," & vbCrLf
+    jsonContent = jsonContent & "    ""recordSource"": """ & frm.RecordSource & """" & vbCrLf
     jsonContent = jsonContent & "  }" & vbCrLf
     jsonContent = jsonContent & "}" & vbCrLf
     
@@ -3848,7 +4005,7 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
     ' Extraer formName usando regex simple
     Dim regEx, matches
     Set regEx = CreateObject("VBScript.RegExp")
-    regEx.Pattern = "\"formName\"\s*:\s*\"([^\"]+)\""
+    regEx.Pattern = """formName""\s*:\s*""([^""]+)"""
     Set matches = regEx.Execute(jsonContent)
     If matches.Count > 0 Then
         formName = matches(0).SubMatches(0)
@@ -3896,7 +4053,7 @@ Private Function NormalizeJsonForComparison(jsonText)
     regEx.Global = True
     
     ' Remover generatedAtUTC
-    regEx.Pattern = "\"generatedAtUTC\"\s*:\s*\"[^\"]+\",?"
+    regEx.Pattern = """generatedAtUTC""\s*:\s*""[^""]+"",?"
     result = regEx.Replace(result, "")
     
     ' Remover espacios extra y normalizar
@@ -4073,419 +4230,7 @@ End Function
 ' FUNCIÓN: JsonParser
 ' DESCRIPCIÓN: Parser robusto para JSON enriquecido con validaciones
 ' ================================================================================
-Private Function JsonParser(jsonText, bStrict)
-    ' Parser mejorado para JSON enriquecido con validaciones
-    Set JsonParser = CreateObject("Scripting.Dictionary")
-    
-    Dim regEx, matches, i
-    Set regEx = CreateObject("VBScript.RegExp")
-    
-    ' Validar estructura básica JSON
-    If Len(Trim(jsonText)) = 0 Then
-        Err.Raise 1001, "JsonParser", "JSON vacío o inválido"
-        Exit Function
-    End If
-    
-    ' Extraer schemaVersion
-    regEx.Pattern = """schemaVersion""\s*:\s*""([^""]+)"""
-    regEx.Global = False
-    Set matches = regEx.Execute(jsonText)
-    If matches.Count > 0 Then
-        JsonParser.Add "schemaVersion", matches(0).SubMatches(0)
-    Else
-        JsonParser.Add "schemaVersion", "1.0.0"
-    End If
-    
-    ' Extraer formName (requerido)
-    regEx.Pattern = """formName""\s*:\s*""([^""]+)"""
-    Set matches = regEx.Execute(jsonText)
-    If matches.Count > 0 Then
-        JsonParser.Add "formName", matches(0).SubMatches(0)
-    Else
-        If bStrict Then
-            Err.Raise 1002, "JsonParser", "formName es requerido en modo strict"
-            Exit Function
-        End If
-        JsonParser.Add "formName", "FormularioSinNombre"
-    End If
-    
-    ' Extraer metadata
-    Dim metadata
-    Set metadata = CreateObject("Scripting.Dictionary")
-    
-    regEx.Pattern = """created""\s*:\s*""([^""]+)"""
-    Set matches = regEx.Execute(jsonText)
-    If matches.Count > 0 Then
-        metadata.Add "created", matches(0).SubMatches(0)
-    End If
-    
-    regEx.Pattern = """modified""\s*:\s*""([^""]+)"""
-    Set matches = regEx.Execute(jsonText)
-    If matches.Count > 0 Then
-        metadata.Add "modified", matches(0).SubMatches(0)
-    End If
-    
-    regEx.Pattern = """generator""\s*:\s*""([^""]+)"""
-    Set matches = regEx.Execute(jsonText)
-    If matches.Count > 0 Then
-        metadata.Add "generator", matches(0).SubMatches(0)
-    End If
-    
-    JsonParser.Add "metadata", metadata
-    
-    ' Extraer resources
-    Dim resources
-    Set resources = CreateObject("Scripting.Dictionary")
-    
-    ' Buscar images en resources
-    regEx.Pattern = """images""\s*:\s*\[([^\]]+)\]"
-    Set matches = regEx.Execute(jsonText)
-    If matches.Count > 0 Then
-        Dim imagesArray
-        imagesArray = Split(Replace(Replace(matches(0).SubMatches(0), Chr(34), ""), " ", ""), ",")
-        resources.Add "images", imagesArray
-    Else
-        resources.Add "images", Array()
-    End If
-    
-    JsonParser.Add "resources", resources
-    
-    ' Extraer properties del formulario
-    Dim formProps
-    Set formProps = CreateObject("Scripting.Dictionary")
-    
-    ' Propiedades básicas
-    Dim basicProps
-    basicProps = Array("caption", "width", "height", "recordSource", "recordSourceType", "cycle", "defaultView")
-    
-    For i = 0 To UBound(basicProps)
-        regEx.Pattern = """" & basicProps(i) & """\s*:\s*""([^""]+)"""
-        Set matches = regEx.Execute(jsonText)
-        If matches.Count > 0 Then
-            formProps.Add basicProps(i), matches(0).SubMatches(0)
-        End If
-    Next
-    
-    ' Propiedades numéricas
-    Dim numProps
-    numProps = Array("width", "height")
-    
-    For i = 0 To UBound(numProps)
-        regEx.Pattern = """" & numProps(i) & """\s*:\s*(\d+)"
-        Set matches = regEx.Execute(jsonText)
-        If matches.Count > 0 Then
-            formProps.Add numProps(i), CLng(matches(0).SubMatches(0))
-        End If
-    Next
-    
-    JsonParser.Add "properties", formProps
-    
-    ' Extraer sections
-    Dim sections
-    Set sections = CreateObject("Scripting.Dictionary")
-    
-    ' Buscar sección Detail (requerida)
-    regEx.Pattern = """Detail""\s*:\s*\{([^}]+)\}"
-    Set matches = regEx.Execute(jsonText)
-    If matches.Count > 0 Then
-        Dim detailSection
-        Set detailSection = ParseSection(matches(0).Value, bStrict)
-        sections.Add "Detail", detailSection
-    Else
-        If bStrict Then
-            Err.Raise 1003, "JsonParser", "Sección Detail es requerida en modo strict"
-            Exit Function
-        End If
-    End If
-    
-    JsonParser.Add "sections", sections
-    
-    ' Extraer events si existe
-    regEx.Pattern = """events""\s*:\s*\{([^}]+)\}"
-    Set matches = regEx.Execute(jsonText)
-    If matches.Count > 0 Then
-        Dim events
-        Set events = CreateObject("Scripting.Dictionary")
-        ' Parsear eventos básicos
-        Dim eventNames
-        eventNames = Array("onLoad", "onCurrent", "onOpen", "onClose")
-        
-        For i = 0 To UBound(eventNames)
-            regEx.Pattern = """" & eventNames(i) & """\s*:\s*""([^""]+)"""
-            Set matches = regEx.Execute(jsonText)
-            If matches.Count > 0 Then
-                events.Add eventNames(i), matches(0).SubMatches(0)
-            End If
-        Next
-        
-        JsonParser.Add "events", events
-    End If
-End Function
 
-' ================================================================================
-' FUNCIÓN: ParseSection
-' DESCRIPCIÓN: Parsear una sección individual del JSON
-' ================================================================================
-Private Function ParseSection(sectionText, bStrict)
-    Set ParseSection = CreateObject("Scripting.Dictionary")
-    
-    Dim regEx, matches
-    Set regEx = CreateObject("VBScript.RegExp")
-    
-    ' Extraer propiedades de la sección
-    Dim sectionProps
-    Set sectionProps = CreateObject("Scripting.Dictionary")
-    
-    regEx.Pattern = """height""\s*:\s*(\d+)"
-    Set matches = regEx.Execute(sectionText)
-    If matches.Count > 0 Then
-        sectionProps.Add "height", CLng(matches(0).SubMatches(0))
-    End If
-    
-    ParseSection.Add "properties", sectionProps
-    
-    ' Extraer controles
-    Dim controls
-    Set controls = CreateObject("Scripting.Dictionary")
-    
-    ' Buscar todos los controles
-    regEx.Pattern = "\{[^}]*""name""\s*:\s*""([^""]+)""[^}]*\}"
-    regEx.Global = True
-    Set matches = regEx.Execute(sectionText)
-    
-    Dim controlIndex
-    controlIndex = 0
-    
-    Dim i
-    For i = 0 To matches.Count - 1
-        Dim ctrl
-        Set ctrl = ParseControl(matches(i).Value, bStrict)
-        If Not ctrl Is Nothing Then
-            controls.Add controlIndex, ctrl
-            controlIndex = controlIndex + 1
-        End If
-    Next
-    
-    ParseSection.Add "controls", controls
-End Function
-
-' ================================================================================
-' FUNCIÓN: ParseControl
-' DESCRIPCIÓN: Parsear un control individual del JSON
-' ================================================================================
-Private Function ParseControl(controlText, bStrict)
-    Set ParseControl = CreateObject("Scripting.Dictionary")
-    
-    Dim regEx, matches
-    Set regEx = CreateObject("VBScript.RegExp")
-    
-    ' Extraer name (requerido)
-    regEx.Pattern = """name""\s*:\s*""([^""]+)"""
-    Set matches = regEx.Execute(controlText)
-    If matches.Count > 0 Then
-        ParseControl.Add "name", matches(0).SubMatches(0)
-    Else
-        If bStrict Then
-            Set ParseControl = Nothing
-            Exit Function
-        End If
-        ParseControl.Add "name", "ControlSinNombre"
-    End If
-    
-    ' Extraer type (requerido)
-    regEx.Pattern = """type""\s*:\s*""([^""]+)"""
-    Set matches = regEx.Execute(controlText)
-    If matches.Count > 0 Then
-        ParseControl.Add "type", matches(0).SubMatches(0)
-    Else
-        If bStrict Then
-            Set ParseControl = Nothing
-            Exit Function
-        End If
-        ParseControl.Add "type", "TextBox"
-    End If
-    
-    ' Extraer propiedades del control
-    Dim ctrlProps
-    Set ctrlProps = CreateObject("Scripting.Dictionary")
-    
-    ' Propiedades de texto
-    Dim textProps
-    textProps = Array("caption", "controlSource", "picture", "fontName")
-    
-    Dim i
-    For i = 0 To UBound(textProps)
-        regEx.Pattern = """" & textProps(i) & """\s*:\s*""([^""]+)"""
-        Set matches = regEx.Execute(controlText)
-        If matches.Count > 0 Then
-            ctrlProps.Add textProps(i), matches(0).SubMatches(0)
-        End If
-    Next
-    
-    ' Propiedades numéricas
-    Dim numProps
-    numProps = Array("top", "left", "width", "height", "tabIndex", "zIndex", "fontSize")
-    
-    For i = 0 To UBound(numProps)
-        regEx.Pattern = """" & numProps(i) & """\s*:\s*(\d+)"
-        Set matches = regEx.Execute(controlText)
-        If matches.Count > 0 Then
-            ctrlProps.Add numProps(i), CLng(matches(0).SubMatches(0))
-        End If
-    Next
-    
-    ' Validar colores #RRGGBB
-    regEx.Pattern = """(backgroundColor|foreColor)""\s*:\s*""(#[0-9A-Fa-f]{6})"""
-    regEx.Global = True
-    Set matches = regEx.Execute(controlText)
-    
-    For i = 0 To matches.Count - 1
-        Dim colorProp, colorValue
-        colorProp = matches(i).SubMatches(0)
-        colorValue = matches(i).SubMatches(1)
-        
-        ' Validar formato hexadecimal
-        If ValidateHexColor(colorValue) Then
-            ctrlProps.Add colorProp, colorValue
-        Else
-            If bStrict Then
-                Set ParseControl = Nothing
-                Exit Function
-            End If
-        End If
-    Next
-    
-    ParseControl.Add "properties", ctrlProps
-End Function
-
-' ================================================================================
-' FUNCIÓN: ValidateHexColor
-' DESCRIPCIÓN: Validar formato de color hexadecimal #RRGGBB
-' ================================================================================
-Private Function ValidateHexColor(colorStr)
-    ValidateHexColor = False
-    
-    If Len(colorStr) <> 7 Then Exit Function
-    If Left(colorStr, 1) <> "#" Then Exit Function
-    
-    Dim i, char
-    For i = 2 To 7
-        char = Mid(colorStr, i, 1)
-        If Not ((char >= "0" And char <= "9") Or _
-                (char >= "A" And char <= "F") Or _
-                (char >= "a" And char <= "f")) Then
-            Exit Function
-        End If
-    Next
-    
-    ValidateHexColor = True
-End Function
-
-' ================================================================================
-' SUBRUTINA: ValidateFormData
-' DESCRIPCIÓN: Validar datos del formulario parseado
-' ================================================================================
-Private Sub ValidateFormData(formData, bStrict, warnings)
-    ' Validar propiedades requeridas del formulario
-    If Not formData.Exists("formName") Or formData("formName") = "" Then
-        If bStrict Then
-            Err.Raise 1004, "ValidateFormData", "formName es requerido"
-        Else
-            warnings.Add "formName", "formName faltante o vacío"
-        End If
-    End If
-    
-    ' Validar que existe sección Detail
-    If formData.Exists("sections") Then
-        Dim sections
-        Set sections = formData("sections")
-        If Not sections.Exists("Detail") Then
-            If bStrict Then
-                Err.Raise 1005, "ValidateFormData", "Sección Detail es requerida"
-            Else
-                warnings.Add "sections", "Sección Detail faltante"
-            End If
-        End If
-    Else
-        If bStrict Then
-            Err.Raise 1006, "ValidateFormData", "Secciones son requeridas"
-        Else
-            warnings.Add "sections", "No se encontraron secciones"
-        End If
-    End If
-    
-    ' Validar propiedades del formulario
-    If formData.Exists("properties") Then
-        Dim formProps
-        Set formProps = formData("properties")
-        
-        ' Validar tipos de datos numéricos
-        Dim numericProps
-        numericProps = Array("width", "height")
-        
-        Dim i
-        For i = 0 To UBound(numericProps)
-            If formProps.Exists(numericProps(i)) Then
-                If Not IsNumeric(formProps(numericProps(i))) Then
-                    If bStrict Then
-                        Err.Raise 1007, "ValidateFormData", "Propiedad " & numericProps(i) & " debe ser numérica"
-                    Else
-                        warnings.Add numericProps(i), "Propiedad " & numericProps(i) & " no es numérica"
-                    End If
-                End If
-            End If
-        Next
-    End If
-End Sub
-
-' ================================================================================
-' SUBRUTINA: ValidateResources
-' DESCRIPCIÓN: Validar recursos de imágenes
-' ================================================================================
-Private Sub ValidateResources(formData, resourceRoot, bStrict, missingResources)
-    If Not formData.Exists("resources") Then Exit Sub
-    
-    Dim resources
-    Set resources = formData("resources")
-    
-    If Not resources.Exists("images") Then Exit Sub
-    
-    Dim images, i, imagePath
-    images = resources("images")
-    
-    For i = 0 To UBound(images)
-        If images(i) <> "" Then
-            imagePath = objFSO.BuildPath(resourceRoot, images(i))
-            If Not objFSO.FileExists(imagePath) Then
-                If bStrict Then
-                    Err.Raise 1008, "ValidateResources", "Imagen no encontrada: " & imagePath
-                Else
-                    missingResources.Add "img_" & i, images(i) & " -> " & imagePath
-                End If
-            End If
-        End If
-    Next
-End Sub
-
-' ================================================================================
-' FUNCIÓN: ConvertHexToOLE
-' DESCRIPCIÓN: Convertir color #RRGGBB a formato OLE de Access
-' ================================================================================
-Private Function ConvertHexToOLE(hexColor)
-    ' Convertir #RRGGBB a formato OLE (BGR)
-    If Len(hexColor) <> 7 Or Left(hexColor, 1) <> "#" Then
-        ConvertHexToOLE = 0
-        Exit Function
-    End If
-    
-    Dim r, g, b
-    r = CLng("&H" & Mid(hexColor, 2, 2))
-    g = CLng("&H" & Mid(hexColor, 4, 2))
-    b = CLng("&H" & Mid(hexColor, 6, 2))
-    
-    ' Formato OLE: BGR
-    ConvertHexToOLE = b * 65536 + g * 256 + r
-End Function
 
 ' ================================================================================
 ' FUNCIÓN: MapEnumValue
@@ -4547,6 +4292,7 @@ Sub ImportForm()
     Dim controls, ctrl, ctlDest
     Dim sections, detailSection, formProps, sectionProps, ctlProps
     Dim reportSummary, warnings, missingResources, fallbacksApplied
+    Dim codeModule, detectedHandlers, eventDiscrepancies
     
     ' Inicializar variables
     strJsonPath = objArgs(1)
@@ -4562,6 +4308,7 @@ Sub ImportForm()
     Set warnings = CreateObject("Scripting.Dictionary")
     Set missingResources = CreateObject("Scripting.Dictionary")
     Set fallbacksApplied = CreateObject("Scripting.Dictionary")
+    Set eventDiscrepancies = CreateObject("Scripting.Dictionary")
     
     ' Procesar argumentos opcionales
     For i = 3 To objArgs.Count - 1
@@ -4667,6 +4414,28 @@ Sub ImportForm()
     ' Obtener nombre del formulario
     formName = formData("formName")
     WScript.Echo "Formulario a procesar: " & formName
+    
+    ' Extraer handlers detectados del JSON si existen
+    Set detectedHandlers = CreateObject("Scripting.Dictionary")
+    If formData.Exists("code") Then
+        Set codeModule = formData("code")
+        If codeModule.Exists("module") And codeModule("module").Exists("handlers") Then
+            Dim handlers, handler, controlName, eventName, handlerKey
+            Set handlers = codeModule("module")("handlers")
+            For i = 0 To handlers.Count - 1
+                Set handler = handlers(i)
+                If handler.Exists("control") And handler.Exists("event") Then
+                    controlName = handler("control")
+                    eventName = handler("event")
+                    handlerKey = controlName & "." & eventName
+                    detectedHandlers.Add handlerKey, True
+                    If gVerbose Then
+                        WScript.Echo "Handler detectado: " & handlerKey
+                    End If
+                End If
+            Next
+        End If
+    End If
     
     ' Validaciones mínimas
     Call ValidateFormData(formData, bStrict, warnings)
@@ -5008,6 +4777,62 @@ Sub ImportForm()
                             End If
                         End If
                         
+                        ' Aplicar eventos basados en handlers detectados
+                        If ctrl.Exists("events") Then
+                            Dim ctrlEvents, currentEventName, currentEventValue, shouldBeEventProcedure
+                            Set ctrlEvents = ctrl("events")
+                            
+                            ' Procesar cada evento del control
+                            Dim eventKeys
+                            eventKeys = Array("onClick", "onDblClick", "onCurrent", "onLoad", "onOpen", "onGotFocus", "onLostFocus", "onChange", "onAfterUpdate", "onBeforeUpdate")
+                            
+                            For j = 0 To UBound(eventKeys)
+                                currentEventName = eventKeys(j)
+                                If ctrlEvents.Exists(currentEventName) Then
+                                    currentEventValue = ctrlEvents(currentEventName)
+                                    shouldBeEventProcedure = False
+                                    
+                                    ' Determinar si debe ser [Event Procedure]
+                                    ' 1) Si el JSON especifica explícitamente [Event Procedure]
+                                    If currentEventValue = "[Event Procedure]" Then
+                                        shouldBeEventProcedure = True
+                                    End If
+                                    
+                                    ' 2) Si hay handler detectado para este control y evento
+                                    Dim currentEventKey, currentMappedEventName
+                                    currentMappedEventName = MapEventNameToHandler(currentEventName)
+                                    currentEventKey = ctrl("name") & "." & currentMappedEventName
+                                    If detectedHandlers.Exists(currentEventKey) Then
+                                        If currentEventValue <> "[Event Procedure]" And currentEventValue <> "" Then
+                                            ' Discrepancia: hay handler pero JSON indica otra cosa
+                                            Dim discrepancyMsg
+                                            discrepancyMsg = "Control " & ctrl("name") & "." & currentEventName & ": handler detectado pero JSON indica '" & currentEventValue & "'"
+                                            eventDiscrepancies.Add eventDiscrepancies.Count, discrepancyMsg
+                                            If bStrict Then
+                                                WScript.Echo "ERROR: " & discrepancyMsg
+                                            Else
+                                                WScript.Echo "WARNING: " & discrepancyMsg
+                                            End If
+                                        End If
+                                        shouldBeEventProcedure = True
+                                    End If
+                                    
+                                    ' Aplicar [Event Procedure] si es necesario
+                                    If shouldBeEventProcedure Then
+                                        On Error Resume Next
+                                        Call SetControlEventProperty(ctlDest, currentEventName, "[Event Procedure]")
+                                        If Err.Number <> 0 Then
+                                            WScript.Echo "Error al establecer evento " & currentEventName & ": " & Err.Description
+                                            Err.Clear
+                                        ElseIf gVerbose Then
+                                            WScript.Echo "Evento " & currentEventName & " establecido como [Event Procedure] para " & ctrl("name")
+                                        End If
+                                        On Error GoTo 0
+                                    End If
+                                End If
+                            Next
+                        End If
+                        
                         WScript.Echo "Control " & ctrl("name") & " creado exitosamente"
                     Else
                         WScript.Echo "Error: No se pudo crear el control " & ctrl("name")
@@ -5059,10 +4884,98 @@ Sub ImportForm()
     
     WScript.Echo "Formulario final: " & formName
     
+    ' Mostrar resumen de discrepancias de eventos si las hay
+    If eventDiscrepancies.Count > 0 Then
+        WScript.Echo ""
+        WScript.Echo "=== RESUMEN DE DISCREPANCIAS DE EVENTOS ==="
+        Dim discrepancyKey
+        For Each discrepancyKey In eventDiscrepancies.Keys
+            WScript.Echo eventDiscrepancies(discrepancyKey)
+        Next
+        WScript.Echo "Total de discrepancias: " & eventDiscrepancies.Count
+        
+        If bStrict Then
+            WScript.Echo "ERROR: Modo --strict activado. Import fallido debido a discrepancias."
+            WScript.Quit 1
+        End If
+    End If
+    
     On Error GoTo 0
     
     WScript.Echo "Formulario '" & formName & "' creado exitosamente."
     
+End Sub
+
+' ============================================================================
+' FUNCIÓN: MapEventNameToHandler
+' Descripción: Mapea nombres de eventos JSON a nombres de handlers VBA
+' Parámetros: eventName - nombre del evento en JSON (ej: "onClick")
+' Retorna: nombre del evento para handler VBA (ej: "Click")
+' ============================================================================
+Private Function MapEventNameToHandler(eventName)
+    Select Case LCase(eventName)
+        Case "onclick"
+            MapEventNameToHandler = "Click"
+        Case "ondblclick"
+            MapEventNameToHandler = "DblClick"
+        Case "oncurrent"
+            MapEventNameToHandler = "Current"
+        Case "onload"
+            MapEventNameToHandler = "Load"
+        Case "onopen"
+            MapEventNameToHandler = "Open"
+        Case "ongotfocus"
+            MapEventNameToHandler = "GotFocus"
+        Case "onlostfocus"
+            MapEventNameToHandler = "LostFocus"
+        Case "onchange"
+            MapEventNameToHandler = "Change"
+        Case "onafterupdate"
+            MapEventNameToHandler = "AfterUpdate"
+        Case "onbeforeupdate"
+            MapEventNameToHandler = "BeforeUpdate"
+        Case Else
+            MapEventNameToHandler = eventName
+    End Select
+End Function
+
+' ============================================================================
+' SUBRUTINA: SetControlEventProperty
+' Descripción: Establece la propiedad de evento de un control
+' Parámetros: 
+'   ctrl - objeto control de Access
+'   eventName - nombre del evento (ej: "onClick")
+'   eventValue - valor a asignar (ej: "[Event Procedure]")
+' ============================================================================
+Private Sub SetControlEventProperty(ctrl, eventName, eventValue)
+    On Error Resume Next
+    
+    Select Case LCase(eventName)
+        Case "onclick"
+            ctrl.OnClick = eventValue
+        Case "ondblclick"
+            ctrl.OnDblClick = eventValue
+        Case "oncurrent"
+            ctrl.OnCurrent = eventValue
+        Case "onload"
+            ctrl.OnLoad = eventValue
+        Case "onopen"
+            ctrl.OnOpen = eventValue
+        Case "ongotfocus"
+            ctrl.OnGotFocus = eventValue
+        Case "onlostfocus"
+            ctrl.OnLostFocus = eventValue
+        Case "onchange"
+            ctrl.OnChange = eventValue
+        Case "onafterupdate"
+            ctrl.OnAfterUpdate = eventValue
+        Case "onbeforeupdate"
+            ctrl.OnBeforeUpdate = eventValue
+    End Select
+    
+    If Err.Number <> 0 Then
+        Err.Raise Err.Number, Err.Source, Err.Description
+    End If
 End Sub
 
 ' ============================================================================
@@ -5188,46 +5101,46 @@ End Sub
 Private Sub ShowFormJsonSchema()
     WScript.Echo "\n=== ESQUEMA JSON DE FORMULARIO ==="
     WScript.Echo "{"
-    WScript.Echo "  \"name\": \"string (requerido)\","
-    WScript.Echo "  \"properties\": {"
-    WScript.Echo "    \"caption\": \"string\","
-    WScript.Echo "    \"width\": \"number\","
-    WScript.Echo "    \"height\": \"number\","
-    WScript.Echo "    \"backColor\": \"string (hex: #RRGGBB)\","
-    WScript.Echo "    \"defaultView\": \"enum (single|continuous|datasheet|pivotTable|pivotChart)\","
-    WScript.Echo "    \"cycle\": \"enum (currentRecord|allRecords)\","
-    WScript.Echo "    \"recordSourceType\": \"enum (table|dynaset|snapshot)\","
-    WScript.Echo "    \"recordSource\": \"string\","
-    WScript.Echo "    \"allowEdits\": \"boolean\","
-    WScript.Echo "    \"allowAdditions\": \"boolean\","
-    WScript.Echo "    \"allowDeletions\": \"boolean\""
+    WScript.Echo "  ""name"": ""string (requerido)"","
+    WScript.Echo "  ""properties"": {"
+    WScript.Echo "    ""caption"": ""string"","
+    WScript.Echo "    ""width"": ""number"","
+    WScript.Echo "    ""height"": ""number"","
+    WScript.Echo "    ""backColor"": ""string (hex: #RRGGBB)"","
+    WScript.Echo "    ""defaultView"": ""enum (single|continuous|datasheet|pivotTable|pivotChart)"","
+    WScript.Echo "    ""cycle"": ""enum (currentRecord|allRecords)"","
+    WScript.Echo "    ""recordSourceType"": ""enum (table|dynaset|snapshot)"","
+    WScript.Echo "    ""recordSource"": ""string"","
+    WScript.Echo "    ""allowEdits"": ""boolean"","
+    WScript.Echo "    ""allowAdditions"": ""boolean"","
+    WScript.Echo "    ""allowDeletions"": ""boolean"""
     WScript.Echo "  },"
-    WScript.Echo "  \"sections\": {"
-    WScript.Echo "    \"detail\": {"
-    WScript.Echo "      \"height\": \"number\","
-    WScript.Echo "      \"backColor\": \"string (hex: #RRGGBB)\""
+    WScript.Echo "  ""sections"": {"
+    WScript.Echo "    ""detail"": {"
+    WScript.Echo "      ""height"": ""number"","
+    WScript.Echo "      ""backColor"": ""string (hex: #RRGGBB)"""
     WScript.Echo "    }"
     WScript.Echo "  },"
-    WScript.Echo "  \"controls\": ["
+    WScript.Echo "  ""controls"": ["
     WScript.Echo "    {"
-    WScript.Echo "      \"name\": \"string (requerido)\","
-    WScript.Echo "      \"type\": \"enum (CommandButton|Label|TextBox) (requerido)\","
-    WScript.Echo "      \"properties\": {"
-    WScript.Echo "        \"caption\": \"string\","
-    WScript.Echo "        \"top\": \"number (requerido)\","
-    WScript.Echo "        \"left\": \"number (requerido)\","
-    WScript.Echo "        \"width\": \"number (requerido)\","
-    WScript.Echo "        \"height\": \"number (requerido)\","
-    WScript.Echo "        \"backColor\": \"string (hex: #RRGGBB)\","
-    WScript.Echo "        \"foreColor\": \"string (hex: #RRGGBB)\","
-    WScript.Echo "        \"fontName\": \"string\","
-    WScript.Echo "        \"fontSize\": \"number\","
-    WScript.Echo "        \"fontBold\": \"boolean\","
-    WScript.Echo "        \"fontItalic\": \"boolean\","
-    WScript.Echo "        \"picture\": \"string (ruta relativa)\","
-    WScript.Echo "        \"textAlign\": \"enum (left|center|right)\","
-    WScript.Echo "        \"borderStyle\": \"enum (transparent|solid|dashes|dots)\","
-    WScript.Echo "        \"specialEffect\": \"enum (flat|raised|sunken|etched|shadowed|chiseled)\""
+    WScript.Echo "      ""name"": ""string (requerido)"","
+    WScript.Echo "      ""type"": ""enum (CommandButton|Label|TextBox) (requerido)"","
+    WScript.Echo "      ""properties"": {"
+    WScript.Echo "        ""caption"": ""string"","
+    WScript.Echo "        ""top"": ""number (requerido)"","
+    WScript.Echo "        ""left"": ""number (requerido)"","
+    WScript.Echo "        ""width"": ""number (requerido)"","
+    WScript.Echo "        ""height"": ""number (requerido)"","
+    WScript.Echo "        ""backColor"": ""string (hex: #RRGGBB)"","
+    WScript.Echo "        ""foreColor"": ""string (hex: #RRGGBB)"","
+    WScript.Echo "        ""fontName"": ""string"","
+    WScript.Echo "        ""fontSize"": ""number"","
+    WScript.Echo "        ""fontBold"": ""boolean"","
+    WScript.Echo "        ""fontItalic"": ""boolean"","
+    WScript.Echo "        ""picture"": ""string (ruta relativa)"","
+    WScript.Echo "        ""textAlign"": ""enum (left|center|right)"","
+    WScript.Echo "        ""borderStyle"": ""enum (transparent|solid|dashes|dots)"","
+    WScript.Echo "        ""specialEffect"": ""enum (flat|raised|sunken|etched|shadowed|chiseled)"""
     WScript.Echo "      }"
     WScript.Echo "    }"
     WScript.Echo "  ]"
