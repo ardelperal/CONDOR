@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -14,7 +14,7 @@ Implements IExpedienteService
 
 Private m_GetById_Result As EExpediente
 Private m_GetByNemo_Result As EExpediente
-Private m_GetSelector_Result As Scripting.Dictionary
+Private m_GetSelector_Result As Object
 
 Private Sub Class_Initialize(): Call Reset: End Sub
 Public Sub Reset()
@@ -29,7 +29,7 @@ End Sub
 Public Sub ConfigureObtenerExpedientePorNemotecnico(ByVal value As EExpediente)
     Set m_GetByNemo_Result = value
 End Sub
-Public Sub ConfigureObtenerExpedientesParaSelector(ByVal value As Scripting.Dictionary)
+Public Sub ConfigureObtenerExpedientesParaSelector(ByVal value As Object)
     Set m_GetSelector_Result = value
 End Sub
 
@@ -43,7 +43,7 @@ Private Function IExpedienteService_ObtenerExpedientePorNemotecnico(ByVal Nemote
     Set IExpedienteService_ObtenerExpedientePorNemotecnico = m_GetByNemo_Result
 End Function
 
-Private Function IExpedienteService_ObtenerExpedientesParaSelector() As Scripting.Dictionary
+Private Function IExpedienteService_ObtenerExpedientesParaSelector() As Object
     ' CORRECCIÓN: El nombre del método ahora coincide exactamente con la interfaz.
     Set IExpedienteService_ObtenerExpedientesParaSelector = m_GetSelector_Result
 End Function

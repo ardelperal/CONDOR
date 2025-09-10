@@ -3,6 +3,8 @@ Option Compare Database
 Option Explicit
 
 
+
+
 '''
 ' Módulo Central de Consultas SQL - CONDOR
 ' Principio: Centralización de consultas para mantenibilidad y seguridad
@@ -14,16 +16,16 @@ Option Explicit
 
 Public Const GET_AUTH_DATA_BY_EMAIL As String = _
     "SELECT U.EsAdministrador, P.EsUsuarioAdministrador, P.EsUsuarioCalidad, P.EsUsuarioTecnico " & _
-    "FROM TbUsuariosAplicaciones AS U INNER JOIN TbUsuariosAplicacionesPermisos AS P " & _
-    "ON U.CorreoUsuario = P.CorreoUsuario " & _
-    "WHERE (((P.IDAplicacion)=231) AND ((U.CorreoUsuario)=[pEmail]));"
+    "FROM TbUsuariosAplicaciones AS U LEFT JOIN TbUsuariosAplicacionesPermisos AS P " & _
+    "ON U.CorreoUsuario = P.CorreoUsuario AND P.IDAplicacion=[pIdAplicacion] " & _
+    "WHERE U.CorreoUsuario=[pEmail];"
 
 ' ============================================================================
 ' CONSULTAS DE WORKFLOW
 ' ============================================================================
 
 Public Const IS_VALID_TRANSITION As String = _
-    "SELECT COUNT(*) AS TransitionCount " & _
+    "SELECT COUNT(idTransicion) AS TransitionCount " & _
     "FROM tbTransiciones " & _
     "WHERE idEstadoOrigen = [pIdEstadoOrigen] AND idEstadoDestino = [pIdEstadoDestino] AND rolRequerido = [pRolRequerido];"
 
@@ -76,8 +78,15 @@ Public Const GET_MAPEO_POR_TIPO As String = _
 ' CONSULTAS DE OPERACIONES Y LOGGING
 ' ============================================================================
 
-Public Const INSERT_OPERATION_LOG As String = _
-    "INSERT INTO tbOperacionesLog (fechaHora, usuario, tipoOperacion, idEntidad, descripcion, resultado, detalles) " & _
-    "VALUES (Now(), [pUsuario], [pTipoOperacion], [pIdEntidad], [pDescripcion], [pResultado], [pDetalles]);"
+ublic Const INSERT_OPERATION_LOG As String = _
+        "PARAMETERS pUsuario TEXT(255), pTipoOperacion TEXT(255), pEntidad TEXT(100), pIdEntidad LONG, pDescripcion TEXT, pResultado TEXT(50), pDetalles TEXT; " & _
+        "INSERT INTO tbOperacionesLog (fechaHora, usuario, tipoOperacion, entidad, idEntidad, descripcion, resultado, detalles) " & _
+        "VALUES (Now(), [pUsuario], [pTipoOperacion], [pEntidad], [pIdEntidad], [pDescripcion], [pResultado], [pDetalles]);"
+
+
+
+
+
+
 
 

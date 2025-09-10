@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -15,7 +15,7 @@ Implements IExpedienteRepository
 ' --- Variables para Configuración de Retorno ---
 Private m_GetById_Result As EExpediente
 Private m_GetByNemo_Result As EExpediente
-Private m_GetSelector_Result As Scripting.Dictionary
+Private m_GetSelector_Result As Object
 
 ' --- Variables para Verificación de Llamadas (Spy Properties) ---
 Private m_ObtenerPorId_WasCalled As Boolean
@@ -76,7 +76,7 @@ Public Sub ConfigureObtenerExpedientePorNemotecnico(ByVal value As EExpediente)
     Set m_GetByNemo_Result = value
 End Sub
 
-Public Sub ConfigureObtenerExpedientesActivosParaSelector(ByVal value As Scripting.Dictionary)
+Public Sub ConfigureObtenerExpedientesActivosParaSelector(ByVal value As Object)
     Set m_GetSelector_Result = value
 End Sub
 
@@ -98,7 +98,7 @@ Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nem
     Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = m_GetByNemo_Result
 End Function
 
-Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
+Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As Object
     ' Registrar la llamada
     m_ObtenerSelector_WasCalled = True
     ' Devolver el resultado configurado

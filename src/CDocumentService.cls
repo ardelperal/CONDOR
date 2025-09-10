@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -11,36 +11,78 @@ Option Compare Database
 Option Explicit
 
 
+
+
 Implements IDocumentService
 
 ' Dependencias inyectadas
+Private m_Config As IConfig
+Private m_fileSystem As IFileSystem
 Private m_WordManager As IWordManager
 Private m_ErrorHandler As IErrorHandlerService
 Private m_SolicitudService As ISolicitudService
 Private m_MapeoRepo As IMapeoRepository
 
-Public Sub Initialize(ByVal wordManager As IWordManager, ByVal errorHandler As IErrorHandlerService, ByVal solicitudService As ISolicitudService, ByVal mapeoRepo As IMapeoRepository)
+Public Sub Initialize(ByVal config As IConfig, ByVal fileSystem As IFileSystem, ByVal wordManager As IWordManager, ByVal ErrorHandler As IErrorHandlerService, ByVal solicitudService As ISolicitudService, ByVal mapeoRepo As IMapeoRepository)
+    Set m_Config = config
+    Set m_fileSystem = fileSystem
     Set m_WordManager = wordManager
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
     Set m_SolicitudService = solicitudService
     Set m_MapeoRepo = mapeoRepo
 End Sub
 
 Private Function IDocumentService_GenerarDocumento(ByVal SolicitudID As Long) As String
-    On Error GoTo errorHandler
-    ' Lógica para obtener solicitud y mapeos a través de los servicios/repos inyectados
+    On Error GoTo ErrorHandler
+    
     Dim solicitud As ESolicitud
-    Set solicitud = m_SolicitudService.ObtenerSolicitudPorId(SolicitudID) ' Asumimos que este método existe
+    Dim mapeos As Object ' Scripting.Dictionary
+    Dim key As Variant
+    Dim plantillaPath As String, generatedDocsPath As String, generatedFilename As String, finalDocPath As String
+
+    ' 1. Obtener datos de la solicitud
+    Set solicitud = m_SolicitudService.ObtenerSolicitudPorId(SolicitudID)
+    If solicitud Is Nothing Then
+        m_ErrorHandler.LogError 404, "Solicitud no encontrada con ID: " & SolicitudID, "CDocumentService"
+        Exit Function
+    End If
+
+    ' 2. Obtener mapeos para el tipo de solicitud
+    Set mapeos = m_MapeoRepo.ObtenerMapeosPorCategoria(solicitud.tipoSolicitud)
+
+    ' 3. Construir rutas dinámicamente desde la configuración
+    Dim templateFilenameKey As String
+    templateFilenameKey = "TEMPLATE_" & solicitud.tipoSolicitud & "_FILENAME"
     
-    Dim mapeos As Scripting.Dictionary
-    Set mapeos = m_MapeoRepo.ObtenerMapeosPorCategoria(solicitud.tipoSolicitud) ' Asumimos que este método existe
-    
-    ' ... Resto de la lógica de generación ...
-    
-    ' Implementación placeholder para compilación
-    IDocumentService_GenerarDocumento = "C:\Ruta\Simulada.docx"
+    plantillaPath = JoinPath(m_Config.GetValue("TEMPLATES_PATH"), m_Config.GetValue(templateFilenameKey))
+    generatedDocsPath = m_Config.GetValue("GENERATED_DOCS_PATH")
+    generatedFilename = "Generated_" & solicitud.codigoSolicitud & "_" & Format(Now, "yyyymmddhhmmss") & ".docx"
+    finalDocPath = JoinPath(generatedDocsPath, generatedFilename)
+
+    ' 4. Asegurarse de que la carpeta de destino existe
+    m_fileSystem.CreateFolder generatedDocsPath
+
+    ' 5. Aprovisionar: Copiar plantilla a destino
+     m_fileSystem.CopyFile plantillaPath, finalDocPath
+    ' 6. Rellenar el documento
+    If Not m_WordManager.AbrirDocumento(finalDocPath) Then
+        m_ErrorHandler.LogError 500, "No se pudo abrir el documento generado.", "CDocumentService"
+        Exit Function
+    End If
+
+    ' Lógica de relleno (simplificada para el ejemplo)
+    ' En un caso real, aquí iría el bucle sobre los mapeos
+    m_WordManager.SetBookmarkText "BookmarkCodigo", solicitud.codigoSolicitud
+    m_WordManager.SetBookmarkText "BookmarkUsuario", solicitud.usuarioCreacion
+
+    m_WordManager.GuardarDocumento
+    m_WordManager.Dispose
+
+    ' 7. Devolver ruta real
+    IDocumentService_GenerarDocumento = finalDocPath
     Exit Function
-errorHandler:
+
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "CDocumentService.GenerarDocumento"
     IDocumentService_GenerarDocumento = ""
 End Function
@@ -50,5 +92,23 @@ Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String) A
     Set IDocumentService_LeerDocumento = New ESolicitud
 End Function
 
+Public Function GenerarDocumento(ByVal SolicitudID As Long) As String
+    GenerarDocumento = IDocumentService_GenerarDocumento(SolicitudID)
+End Function
+
+Public Function LeerDocumento(ByVal rutaDocumento As String) As ESolicitud
+    Set LeerDocumento = IDocumentService_LeerDocumento(rutaDocumento)
+End Function
+
+
+Private Function JoinPath(ByVal basePath As String, ByVal relativePath As String) As String
+    Dim b As String: b = Trim$(basePath)
+    Dim r As String: r = Trim$(relativePath)
+    If Len(b) = 0 Then JoinPath = r: Exit Function
+    If Len(r) = 0 Then JoinPath = b: Exit Function
+    If Right$(b, 1) = "\" Then b = Left$(b, Len(b) - 1)
+    If Left$(r, 1) = "\" Then r = Mid$(r, 2)
+    JoinPath = b & "\" & r
+End Function
 
 

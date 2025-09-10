@@ -2,133 +2,114 @@ Attribute VB_Name = "TIWorkflowRepository"
 Option Compare Database
 Option Explicit
 
-Private Const TEST_DB_TEMPLATE As String = "back\test_db\templates\CONDOR_test_template.accdb"
-Private Const TEST_DB_ACTIVE As String = "back\test_db\active\workflow_test.accdb"
-
-Private m_Config As IConfig
-Private m_Repo As IWorkflowRepository
-
 Public Function TIWorkflowRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TIWorkflowRepository"
+    suiteResult.Initialize "TIWorkflowRepository (Estándar de Oro)"
     
+    On Error GoTo CleanupSuite
+    
+    Call SuiteSetup
     suiteResult.AddResult TestIsValidTransition_TrueForValidPath()
     suiteResult.AddResult TestIsValidTransition_FalseForInvalidPath()
     suiteResult.AddResult TestGetNextStates_ReturnsCorrectStates()
     
+CleanupSuite:
+    If Err.Number <> 0 Then
+        Dim errorTest As New CTestResult
+        errorTest.Initialize "Suite_Execution_Failed"
+        errorTest.Fail "La suite falló de forma catastrófica: " & Err.Description
+        suiteResult.AddResult errorTest
+    End If
+    
     Set TIWorkflowRepositoryRunAll = suiteResult
 End Function
 
-Private Sub Setup()
-    On Error GoTo TestFail
-    
-    Dim testDbPath As String: testDbPath = modTestUtils.GetProjectPath & TEST_DB_ACTIVE
-    modTestUtils.PrepareTestDatabase modTestUtils.GetProjectPath & TEST_DB_TEMPLATE, testDbPath
-    
-    Dim mockConfigImpl As New CMockConfig
-    mockConfigImpl.SetSetting "DATA_PATH", testDbPath
-    mockConfigImpl.SetSetting "DATABASE_PASSWORD", "dpddpd"
-    Set m_Config = mockConfigImpl
-    
-    Call PopulateTestData(m_Config)
-    
-    Set m_Repo = modRepositoryFactory.CreateWorkflowRepository(m_Config)
-    Exit Sub
-TestFail:
-    Err.Raise Err.Number, "TIWorkflowRepository.Setup", Err.Description
-End Sub
-
-Private Sub Teardown()
-    On Error Resume Next
-    Set m_Repo = Nothing
-    Set m_Config = Nothing
-    
-    ' Lógica de limpieza correcta usando IFileSystem
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    Dim testDbPath As String
-    testDbPath = modTestUtils.GetProjectPath & TEST_DB_ACTIVE
-    
-    If fs.FileExists(testDbPath) Then
-        fs.DeleteFile testDbPath, True ' Forzar borrado
-    End If
-    
-    Set fs = Nothing
-End Sub
-
-Private Sub PopulateTestData(ByVal config As IConfig)
+Private Sub SuiteSetup()
+    On Error GoTo ErrorHandler
     Dim db As DAO.Database
-    Dim dbPath As String: dbPath = config.GetDataPath()
-    Dim dbPass As String: dbPass = config.GetDatabasePassword()
-    Set db = DBEngine.OpenDatabase(dbPath, False, False, ";PWD=" & dbPass)
-    
-    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, esEstadoInicial, esEstadoFinal) VALUES (1, 'Borrador', True, False);", dbFailOnError
-    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, esEstadoInicial, esEstadoFinal) VALUES (2, 'Aprobado', False, True);", dbFailOnError
-    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado, esEstadoInicial, esEstadoFinal) VALUES (3, 'Rechazado', False, True);", dbFailOnError
-    
-    db.Execute "INSERT INTO tbTransiciones (idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (1, 2, 'Admin');", dbFailOnError
-    
+    Dim config As IConfig: Set config = modTestContext.GetTestConfig()
+    Dim activePath As String: activePath = config.GetValue("CONDOR_DATA_PATH")
+    Set db = DBEngine.OpenDatabase(activePath)
+    db.Execute "DELETE FROM tbTransiciones", dbFailOnError
+    db.Execute "DELETE FROM tbEstados", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (1, 'Registrado');", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (2, 'Desarrollo');", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (3, 'Modificacion');", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (4, 'Validacion');", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (5, 'Revision');", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (6, 'Formalizacion');", dbFailOnError
+    db.Execute "INSERT INTO tbEstados (idEstado, nombreEstado) VALUES (7, 'Aprobada');", dbFailOnError
+     db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (1, 1, 2, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (2, 2, 3, 'Tecnico');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (3, 3, 4, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (4, 4, 5, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (5, 4, 5, 'Tecnico');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (6, 5, 6, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (7, 5, 3, 'Calidad');", dbFailOnError
+    db.Execute "INSERT INTO tbTransiciones (idTransicion, idEstadoOrigen, idEstadoDestino, rolRequerido) VALUES (8, 6, 7, 'Calidad');", dbFailOnError
     db.Close
     Set db = Nothing
+    Exit Sub
+ErrorHandler:
+    Err.Raise Err.Number, "TIWorkflowRepository.SuiteSetup", Err.Description
 End Sub
 
 Private Function TestIsValidTransition_TrueForValidPath() As CTestResult
     Set TestIsValidTransition_TrueForValidPath = New CTestResult
-    TestIsValidTransition_TrueForValidPath.Initialize "IsValidTransition debe devolver True para una transición válida"
+    TestIsValidTransition_TrueForValidPath.Initialize "IsValidTransition debe devolver True para transiciones válidas del nuevo flujo"
+    Dim repo As IWorkflowRepository
     On Error GoTo TestFail
-    Call Setup
+    Set repo = modRepositoryFactory.CreateWorkflowRepository(modTestContext.GetTestConfig())
     
-    Dim isValid As Boolean
-    isValid = m_Repo.IsValidTransition(1, 2, "Admin")
-    
-    modAssert.AssertTrue isValid, "La transición 1 -> 2 para Admin debería ser válida."
+    modAssert.AssertTrue repo.IsValidTransition("", "Registrado", "Desarrollo", "Calidad"), "Calidad debe poder pasar de Registrado a Desarrollo."
+    modAssert.AssertTrue repo.IsValidTransition("", "Desarrollo", "Modificacion", "Tecnico"), "Tecnico debe poder pasar de Desarrollo a Modificacion."
+    modAssert.AssertTrue repo.IsValidTransition("", "Revision", "Formalizacion", "Calidad"), "Calidad debe poder pasar de Revision a Formalizacion."
     
     TestIsValidTransition_TrueForValidPath.Pass
     GoTo Cleanup
 TestFail:
-    TestIsValidTransition_TrueForValidPath.Fail Err.Description
+    TestIsValidTransition_TrueForValidPath.Fail "Error inesperado: " & Err.Description
 Cleanup:
-    Call Teardown
+    Set repo = Nothing
 End Function
 
 Private Function TestIsValidTransition_FalseForInvalidPath() As CTestResult
     Set TestIsValidTransition_FalseForInvalidPath = New CTestResult
-    TestIsValidTransition_FalseForInvalidPath.Initialize "IsValidTransition debe devolver False para una transición inválida"
+    TestIsValidTransition_FalseForInvalidPath.Initialize "IsValidTransition debe devolver False para transiciones inválidas"
+    Dim repo As IWorkflowRepository
     On Error GoTo TestFail
-    Call Setup
-    
-    Dim isValid As Boolean
-    isValid = m_Repo.IsValidTransition(1, 3, "Admin")
-    
-    modAssert.AssertFalse isValid, "La transición 1 -> 3 no debería ser válida."
+    Set repo = modRepositoryFactory.CreateWorkflowRepository(modTestContext.GetTestConfig())
+
+    modAssert.AssertFalse repo.IsValidTransition("", "Registrado", "Desarrollo", "Tecnico"), "Un Tecnico NO debe poder pasar de Registrado a Desarrollo."
+    modAssert.AssertFalse repo.IsValidTransition("", "Registrado", "Aprobada", "Calidad"), "Nadie debe poder saltar directamente a Aprobada."
     
     TestIsValidTransition_FalseForInvalidPath.Pass
     GoTo Cleanup
 TestFail:
-    TestIsValidTransition_FalseForInvalidPath.Fail Err.Description
+    TestIsValidTransition_FalseForInvalidPath.Fail "Error inesperado: " & Err.Description
 Cleanup:
-    Call Teardown
+    Set repo = Nothing
 End Function
 
 Private Function TestGetNextStates_ReturnsCorrectStates() As CTestResult
     Set TestGetNextStates_ReturnsCorrectStates = New CTestResult
-    TestGetNextStates_ReturnsCorrectStates.Initialize "GetNextStates debe devolver los estados siguientes correctos"
-    Dim nextStates As Scripting.Dictionary
+    TestGetNextStates_ReturnsCorrectStates.Initialize "GetNextStates debe devolver los estados correctos para un rol"
+    Dim repo As IWorkflowRepository, nextStates As Scripting.Dictionary
     On Error GoTo TestFail
-    Call Setup
+    Set repo = modRepositoryFactory.CreateWorkflowRepository(modTestContext.GetTestConfig())
     
-    Set nextStates = m_Repo.GetNextStates(1, "Admin")
+    ' Act: Para un Técnico en estado 'Validacion' (ID 4)
+    Set nextStates = repo.GetNextStates(4, "Tecnico")
     
-    modAssert.AssertEquals 1, nextStates.Count, "Debe haber exactamente un estado siguiente."
-    modAssert.AssertTrue nextStates.Exists(2), "El estado siguiente debe ser ID 2 (Aprobado)."
+    ' Assert: Solo debe poder moverlo a 'Revision' (ID 5)
+    modAssert.AssertEquals 1, nextStates.Count, "Un Tecnico en Validacion solo debe tener un estado siguiente."
+    modAssert.AssertTrue nextStates.Exists(5), "El estado siguiente para un Tecnico en Validacion debe ser 'Revision' (ID 5)."
     
     TestGetNextStates_ReturnsCorrectStates.Pass
     GoTo Cleanup
 TestFail:
-    TestGetNextStates_ReturnsCorrectStates.Fail Err.Description
+    TestGetNextStates_ReturnsCorrectStates.Fail "Error inesperado: " & Err.Description
 Cleanup:
     Set nextStates = Nothing
-    Call Teardown
+    Set repo = Nothing
 End Function
-
-

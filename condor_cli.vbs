@@ -46,9 +46,11 @@ If objArgs.Count = 0 Then
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
-    WScript.Echo "  listtables [db_path] [--schema] [--output] - Listar tablas de BD. --schema: muestra campos y tipos. --output: exporta a listtables_output.txt"
-    WScript.Echo "  relink <db_path> <folder> - Re-vincular tablas a bases locales"
+    WScript.Echo "  listtables [db_path] [--schema] [--output] - Listar tablas de BD. --schema: muestra campos, tipos y requerido. --output: exporta a [nombre_bd]_listtables.txt"
+    WScript.Echo "  relink [db_path] [folder]    - Re-vincular tablas a bases locales"
+    WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
     WScript.Echo "  relink --all - Re-vincular todas las bases en ./back automaticamente"
+    WScript.Echo "  migrate [file.sql] - Ejecutar scripts de migración SQL en /db/migrations"
     WScript.Echo ""
 
 
@@ -70,7 +72,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "  Tests: Empaqueta todos los archivos de pruebas (Test* e IntegrationTest*)"
     WScript.Echo ""
     WScript.Echo "OPCIONES ESPECIALES:"
-    WScript.Echo "  --dry-run  - Simular operacion sin modificar Access (solo con import)"
+
     WScript.Echo "  --verbose  - Mostrar informacion detallada durante la operacion"
     WScript.Echo ""
     WScript.Echo "EJEMPLOS:"
@@ -86,8 +88,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint' o 'bundle'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle' o 'migrate'"
     WScript.Quit 1
 End If
 
@@ -110,7 +112,7 @@ ElseIf strAction = "validate-schema" Then
 End If
 
 ' Determinar qué base de datos usar según la acción
-If strAction = "createtable" Or strAction = "droptable" Then
+If strAction = "createtable" Or strAction = "droptable" Or strAction = "migrate" Then
     strAccessPath = strDataPath
 ElseIf strAction = "listtables" Then
     pathArg = ""
@@ -207,15 +209,11 @@ WScript.Echo "Base de datos abierta correctamente."
 Call EnsureVBReferences
 
 ' Verificar opciones especiales
-Dim bDryRun, bVerbose
-bDryRun = False
+Dim bVerbose
 bVerbose = False
 
 For i = 1 To objArgs.Count - 1
-    If LCase(objArgs(i)) = "--dry-run" Then
-        bDryRun = True
-        WScript.Echo "[MODO DRY-RUN] Simulacion activada - no se modificara Access"
-    ElseIf LCase(objArgs(i)) = "--verbose" Then
+    If LCase(objArgs(i)) = "--verbose" Then
         bVerbose = True
         WScript.Echo "[MODO VERBOSE] Informacion detallada activada"
     End If
@@ -241,6 +239,8 @@ ElseIf strAction = "lint" Then
     Call LintProject()
 ElseIf strAction = "relink" Then
     Call RelinkTables()
+ElseIf strAction = "migrate" Then
+    Call ExecuteMigrations()
 
 End If
 
@@ -503,7 +503,9 @@ Sub ListTables()
     
     ' Configurar salida
     If outputToFile Then
-        outputPath = objFSO.GetAbsolutePathName(".") & "\listtables_output.txt"
+        Dim dbName
+        dbName = objFSO.GetBaseName(strAccessPath)
+        outputPath = objFSO.GetAbsolutePathName(".") & "\" & dbName & "_listtables.txt"
         Set outputFile = objFSO.CreateTextFile(outputPath, True)
         WScript.Echo "Exportando resultados a: " & outputPath
     End If
@@ -542,17 +544,18 @@ Sub ListTables()
                     End If
                 Next
     
-                WScript.Echo "Campo" & vbTab & vbTab & "Tipo" & vbTab & vbTab & "PK"
-                If outputToFile Then outputFile.WriteLine "Campo" & vbTab & vbTab & "Tipo" & vbTab & vbTab & "PK"
+                WScript.Echo PadRight("Campo", 25) & PadRight("Tipo", 15) & PadRight("PK", 8) & "Requerido"
+                If outputToFile Then outputFile.WriteLine PadRight("Campo", 25) & PadRight("Tipo", 15) & PadRight("PK", 8) & "Requerido"
                 
-                WScript.Echo "------------------------------------------------------------"
-                If outputToFile Then outputFile.WriteLine "------------------------------------------------------------"
+                WScript.Echo "--------------------------------------------------------------------"
+                If outputToFile Then outputFile.WriteLine "--------------------------------------------------------------------"
                 
                 For Each fld In tbl.Fields
-                    Dim pkMarker
+                    Dim pkMarker, requiredMarker
                     If primaryKeys.Exists(fld.Name) Then pkMarker = "PK" Else pkMarker = ""
-                    WScript.Echo fld.Name & vbTab & vbTab & DaoTypeToString(fld.Type) & vbTab & vbTab & pkMarker
-                    If outputToFile Then outputFile.WriteLine fld.Name & vbTab & vbTab & DaoTypeToString(fld.Type) & vbTab & vbTab & pkMarker
+                    If fld.Required Then requiredMarker = "true" Else requiredMarker = "false"
+                    WScript.Echo PadRight(fld.Name, 25) & PadRight(DaoTypeToString(fld.Type), 15) & PadRight(pkMarker, 8) & requiredMarker
+                    If outputToFile Then outputFile.WriteLine PadRight(fld.Name, 25) & PadRight(DaoTypeToString(fld.Type), 15) & PadRight(pkMarker, 8) & requiredMarker
                 Next
             End If
         End If
@@ -1023,8 +1026,8 @@ Sub ValidateSchema()
     
     ' Definir esquema esperado para Lanzadera
     Set lanzaderaSchema = CreateObject("Scripting.Dictionary")
-    lanzaderaSchema.Add "TbUsuariosAplicaciones", Array("CorreoUsuario", "EsAdministrador", "ID")
-    lanzaderaSchema.Add "TbUsuariosAplicacionesPermisos", Array("CorreoUsuario", "IDAplicacion", "IDPermiso")
+    lanzaderaSchema.Add "TbUsuariosAplicaciones", Array("CorreoUsuario", "Password", "UsuarioRed", "Nombre", "Matricula", "FechaAlta")
+    lanzaderaSchema.Add "TbUsuariosAplicacionesPermisos", Array("CorreoUsuario", "IDAplicacion", "EsUsuarioAdministrador", "EsUsuarioCalidad", "EsUsuarioEconomia", "EsUsuarioSecretaria")
     
     ' Definir esquema esperado para CONDOR
     Set condorSchema = CreateObject("Scripting.Dictionary")
@@ -1043,8 +1046,8 @@ Sub ValidateSchema()
     condorSchema.Add "TbLocalConfig", Array("clave", "valor", "descripcion", "categoria")
     
     ' Validar las bases de datos
-    If Not VerifySchema(strSourcePath & "\..\back\test_db\templates\Lanzadera_test_template.accdb", "dpddpd", lanzaderaSchema) Then allOk = False
-    If Not VerifySchema(strSourcePath & "\..\back\test_db\templates\CONDOR_test_template.accdb", "", condorSchema) Then allOk = False
+    If Not VerifySchema(strSourcePath & "\..\back\test_env\fixtures\databases\Lanzadera_test_template.accdb", "dpddpd", lanzaderaSchema) Then allOk = False
+        If Not VerifySchema(strSourcePath & "\..ack\test_env\fixtures\databases\Document_test_template.accdb", "", condorSchema) Then allOk = False
     
     If allOk Then
         WScript.Echo "✓ VALIDACIÓN DE ESQUEMA EXITOSA. Todas las bases de datos son consistentes."
@@ -1193,8 +1196,9 @@ Sub ShowHelp()
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
-    WScript.Echo "  rebuild                      - Reconstrucción completa del proyecto VBA"
-    WScript.Echo "                                 (Elimina todos los módulos y reimporta)"
+    WScript.Echo "  rebuild                      - Método principal de sincronización del proyecto"
+    WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
+    WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
     WScript.Echo ""
     WScript.Echo "✅ VALIDACIÓN Y PRUEBAS:"
     WScript.Echo "  validate [--verbose]         - Validar sintaxis VBA sin importar a Access"
@@ -1213,6 +1217,7 @@ Sub ShowHelp()
     WScript.Echo "                                 db_path opcional (por defecto: CONDOR_datos.accdb)"
     WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
     WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
+    WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
     WScript.Echo ""
     WScript.Echo "FUNCIONALIDADES DISPONIBLES PARA 'bundle' (con dependencias automáticas):"
     WScript.Echo "(Basadas en CONDOR_MASTER_PLAN.md)"
@@ -1268,7 +1273,7 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo ""
     WScript.Echo "OPCIONES GLOBALES:"
     WScript.Echo "  --help, -h, help             - Mostrar esta ayuda completa"
-    WScript.Echo "  --dry-run                    - Simular operación sin modificar Access (solo import)"
+  
     WScript.Echo "  --verbose                    - Mostrar información detallada durante la operación"
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
@@ -1332,6 +1337,10 @@ Sub ExecuteTests()
     WScript.Echo "=== INICIANDO EJECUCION DE PRUEBAS ==="
     Dim reportString
     
+    ' Verificar refactorización de logging antes de ejecutar pruebas
+    WScript.Echo "Verificando refactorización de logging..."
+    Call VerifyLoggingRefactoring()
+    
     WScript.Echo "Ejecutando suite de pruebas en Access..."
     On Error Resume Next
     
@@ -1348,8 +1357,7 @@ Sub ExecuteTests()
     Err.Clear
     On Error Resume Next
     
-    ' CORRECCIÓN CRÍTICA: La llamada a .Run se hace directamente y se asigna a la variable.
-    ' VBScript manejará la captura del valor de retorno de la función VBA.
+    ' CORRECCIÓN CRÍTICA: Usar función ExecuteAllTestsForCLI restaurada que ejecuta todas las pruebas
     reportString = objAccess.Run("ExecuteAllTestsForCLI")
     
     If Err.Number <> 0 Then
@@ -1379,6 +1387,7 @@ Sub ExecuteTests()
     ' Determinar el éxito o fracaso buscando la línea final
     If InStr(UCase(reportString), "RESULT: SUCCESS") > 0 Then
         WScript.Echo "RESULTADO FINAL: ✓ Todas las pruebas pasaron."
+        WScript.Echo "✅ REFACTORIZACIÓN COMPLETADA: Patrón EOperationLog implementado correctamente"
         WScript.Quit 0 ' Éxito
     Else
         WScript.Echo "RESULTADO FINAL: ✗ Pruebas fallidas."
@@ -2092,10 +2101,6 @@ Sub RebuildProject()
     WScript.Echo "Verificando integridad de nombres de modulos..."
     Call VerifyModuleNames()
     
-    ' PASO 4.5: Copiar todos los archivos de src a la caché
-    WScript.Echo "Paso 5: Copiando todos los archivos de /src a la cache..."
-    Call CopyAllFilesToCache()
-    
     WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
     WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
     WScript.Echo "Todos los modulos han sido reimportados desde /src"
@@ -2226,58 +2231,7 @@ End Sub
 
 
 
-' Función para copiar todos los archivos de src a la caché
-Sub CopyAllFilesToCache()
-    On Error Resume Next
-    
-    ' Definir ruta de la caché
-    Dim strCachePath
-    strCachePath = objFSO.BuildPath(objFSO.GetParentFolderName(strSourcePath), ".vba_cache")
-    
-    ' Crear directorio de caché si no existe
-    If Not objFSO.FolderExists(strCachePath) Then
-        objFSO.CreateFolder strCachePath
-        If Err.Number <> 0 Then
-            WScript.Echo "Error creando directorio de cache: " & Err.Description
-            Err.Clear
-            Exit Sub
-        End If
-    End If
-    
-    ' Copiar todos los archivos .bas y .cls de src a cache
-    Dim objFolder, objFile
-    Dim copiedCount
-    copiedCount = 0
-    
-    If Not objFSO.FolderExists(strSourcePath) Then
-        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
-        Exit Sub
-    End If
-    
-    Set objFolder = objFSO.GetFolder(strSourcePath)
-    
-    For Each objFile In objFolder.Files
-        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-            Dim destPath
-            destPath = objFSO.BuildPath(strCachePath, objFile.Name)
-            
-            ' Copiar archivo
-            objFSO.CopyFile objFile.Path, destPath, True
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "  ❌ Error copiando " & objFile.Name & ": " & Err.Description
-                Err.Clear
-            Else
-                WScript.Echo "  ✓ Copiado: " & objFile.Name
-                copiedCount = copiedCount + 1
-            End If
-        End If
-    Next
-    
-    WScript.Echo "✓ Cache actualizada: " & copiedCount & " archivos copiados"
-    
-    On Error GoTo 0
-End Sub
+
 
 ' Función para verificar cambios antes de abrir la base de datos
 
@@ -2385,7 +2339,7 @@ Function GetFunctionalityFiles(strFunctionality)
             ' Sección 3.1 - Autenticación + Dependencias
             arrFiles = Array("IAuthService.cls", "CAuthService.cls", "CMockAuthService.cls", _
                            "IAuthRepository.cls", "CAuthRepository.cls", "CMockAuthRepository.cls", _
-                           "AuthData.cls", "modAuthFactory.bas", "TestAuthService.bas", _
+                           "EAuthData.cls", "modAuthFactory.bas", "TestAuthService.bas", _
                            "TIAuthRepository.bas", _
                            "IConfig.cls", "IErrorHandlerService.cls", "modEnumeraciones.bas")
         
@@ -2394,52 +2348,32 @@ Function GetFunctionalityFiles(strFunctionality)
             arrFiles = Array("IDocumentService.cls", "CDocumentService.cls", "CMockDocumentService.cls", _
                            "IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
                            "IMapeoRepository.cls", "CMapeoRepository.cls", "CMockMapeoRepository.cls", _
-                           "EMapeo.cls", "modDocumentServiceFactory.bas", "TestDocumentService.bas", _
+                           "EMapeo.cls", "modDocumentServiceFactory.bas", _
                            "TIDocumentService.bas", _
                            "ISolicitudService.cls", "CSolicitudService.cls", "modSolicitudServiceFactory.bas", _
                            "IOperationLogger.cls", "IConfig.cls", "IErrorHandlerService.cls", "IFileSystem.cls", _
                            "modWordManagerFactory.bas", "modRepositoryFactory.bas", "modErrorHandlerFactory.bas")
         
         Case "expediente", "expedientes"
-            arrFiles = Array( _
-                "IExpedienteService.cls", _
-                "IExpedienteRepository.cls", _
-                "CExpedienteService.cls", _
-                "CExpedienteRepository.cls", _
-                "CMockExpedienteService.cls", _
-                "CMockExpedienteRepository.cls", _
-                "EExpediente.cls", _
-                "modExpedienteServiceFactory.bas", _
-                "TestCExpedienteService.bas", _
-                "TIExpedienteRepository.bas", _
-                "modRepositoryFactory.bas", _
-                "IConfig.cls", _
-                "IOperationLogger.cls", _
-                "IErrorHandlerService.cls" _
-            )
-        
-        
-
+            ' Sección 3.3 - Gestión de Expedientes + Dependencias
+            arrFiles = Array("IExpedienteService.cls", "CExpedienteService.cls", "CMockExpedienteService.cls", _
+                           "IExpedienteRepository.cls", "CExpedienteRepository.cls", "CMockExpedienteRepository.cls", _
+                           "EExpediente.cls", "modExpedienteServiceFactory.bas", "TestCExpedienteService.bas", _
+                           "TIExpedienteRepository.bas", "modRepositoryFactory.bas", _
+                           "IConfig.cls", "IOperationLogger.cls", "IErrorHandlerService.cls")
         
         Case "solicitud", "solicitudes"
-            arrFiles = Array( _
-                "ISolicitudService.cls", _
-                "CSolicitudService.cls", _
-                "CMockSolicitudService.cls", _
-                "ISolicitudRepository.cls", _
-                "CSolicitudRepository.cls", _
-                "CMockSolicitudRepository.cls", _
-                "ESolicitud.cls", _
-                "EDatosPc.cls", _
-                "EDatosCdCa.cls", _
-                "EDatosCdCaSub.cls", _
-                "modSolicitudServiceFactory.bas", _
-                "TestSolicitudService.bas", _
-                "TISolicitudRepository.bas" _
-            )
+            ' Sección 3.4 - Gestión de Solicitudes + Dependencias
+            arrFiles = Array("ISolicitudService.cls", "CSolicitudService.cls", "CMockSolicitudService.cls", _
+                           "ISolicitudRepository.cls", "CSolicitudRepository.cls", "CMockSolicitudRepository.cls", _
+                           "ESolicitud.cls", "EDatosPc.cls", "EDatosCdCa.cls", "EDatosCdCaSub.cls", _
+                           "modSolicitudServiceFactory.bas", "TestSolicitudService.bas", _
+                           "TISolicitudRepository.bas", _
+                           "IAuthService.cls", "modAuthFactory.bas", _
+                           "IOperationLogger.cls", "IErrorHandlerService.cls", "IConfig.cls")
         
         Case "workflow", "flujo"
-            ' Sección 3.5 - Gestión de Workflow (v2.0 Simplificada) + Dependencias
+            ' Sección 3.5 - Gestión de Workflow + Dependencias
             arrFiles = Array("IWorkflowService.cls", "CWorkflowService.cls", "CMockWorkflowService.cls", _
                            "IWorkflowRepository.cls", "CWorkflowRepository.cls", "CMockWorkflowRepository.cls", _
                            "modWorkflowServiceFactory.bas", "TestWorkflowService.bas", _
@@ -2463,35 +2397,35 @@ Function GetFunctionalityFiles(strFunctionality)
             ' Sección 3.8 - Gestión de Operaciones y Logging + Dependencias
             arrFiles = Array("IOperationLogger.cls", "COperationLogger.cls", "CMockOperationLogger.cls", _
                            "IOperationRepository.cls", "COperationRepository.cls", "CMockOperationRepository.cls", _
-                           "OperationLog.cls", "modOperationLoggerFactory.bas", "TestOperationLogger.bas", _
+                           "EOperationLog.cls", "modOperationLoggerFactory.bas", "TestOperationLogger.bas", _
                            "TIOperationRepository.bas", _
                            "IErrorHandlerService.cls", "IConfig.cls")
         
         Case "config", "configuracion"
-            ' Sección 4 - Configuración + Dependencias (Simplificado tras Misión de Emergencia)
+            ' Sección 4 - Configuración + Dependencias
             arrFiles = Array("IConfig.cls", "CConfig.cls", "CMockConfig.cls", "modConfigFactory.bas", _
                            "TestCConfig.bas")
         
         Case "filesystem", "archivos"
             ' Sección 5 - Sistema de Archivos + Dependencias
             arrFiles = Array("IFileSystem.cls", "CFileSystem.cls", "CMockFileSystem.cls", _
-                           "modFileSystemFactory.bas", "TestFileSystem.bas", "TIFileSystem.bas", _
+                           "modFileSystemFactory.bas", "TIFileSystem.bas", _
                            "IErrorHandlerService.cls")
         
         Case "word"
             ' Sección 6 - Gestión de Word + Dependencias
             arrFiles = Array("IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
-                           "modWordManagerFactory.bas", "IntegrationTestWordManager.bas", _
+                           "modWordManagerFactory.bas", "TIWordManager.bas", _
                            "IFileSystem.cls", "IErrorHandlerService.cls")
         
         Case "error", "errores", "errors"
             ' Sección 7 - Gestión de Errores + Dependencias
             arrFiles = Array("IErrorHandlerService.cls", "CErrorHandlerService.cls", "CMockErrorHandlerService.cls", _
-                           "modErrorHandlerFactory.bas", "modErrorHandler.bas", "TestErrorHandlerService.bas", _
+                           "modErrorHandlerFactory.bas", "TestErrorHandlerService.bas", _
                            "IConfig.cls", "IFileSystem.cls")
         
         Case "testframework", "testing", "framework"
-            ' Sección 8 - Framework de Testing + Dependencias (Actualizado con ITestReporter)
+            ' Sección 8 - Framework de Testing + Dependencias
             arrFiles = Array("ITestReporter.cls", "CTestResult.cls", "CTestSuiteResult.cls", "CTestReporter.cls", _
                            "modTestRunner.bas", "modTestUtils.bas", "modAssert.bas", _
                            "TestModAssert.bas", "IFileSystem.cls", "IConfig.cls", _
@@ -2500,14 +2434,14 @@ Function GetFunctionalityFiles(strFunctionality)
         Case "app", "aplicacion", "application"
             ' Sección 9 - Gestión de Aplicación + Dependencias
             arrFiles = Array("IAppManager.cls", "CAppManager.cls", "CMockAppManager.cls", _
-                           "modAppManagerFactory.bas", "TestAppManager.bas", "IAuthService.cls", _
+                           "ModAppManagerFactory.bas", "TestAppManager.bas", "IAuthService.cls", _
                            "IConfig.cls", "IErrorHandlerService.cls")
         
         Case "models", "modelos", "datos"
             ' Sección 10 - Modelos de Datos
             arrFiles = Array("EUsuario.cls", "ESolicitud.cls", "EExpediente.cls", "EDatosPc.cls", _
                            "EDatosCdCa.cls", "EDatosCdCaSub.cls", "EEstado.cls", "ETransicion.cls", _
-                           "EMapeo.cls", "EAdjunto.cls", "ELogCambio.cls", "ELogError.cls", "EOperationLog.cls")
+                           "EMapeo.cls", "EAdjuntos.cls", "ELogCambios.cls", "ELogErrores.cls", "EOperationLog.cls", "EAuthData.cls")
         
         Case "utils", "utilidades", "enumeraciones"
             ' Sección 11 - Utilidades y Enumeraciones
@@ -2521,11 +2455,9 @@ Function GetFunctionalityFiles(strFunctionality)
         
         Case "tests", "pruebas", "testing", "test"
             ' Sección 12 - Archivos de Pruebas (Autodescubrimiento)
-            ' Retornar array vacío para activar autodescubrimiento por prefijo T/TI
             arrFiles = Array()
-        
         Case Else
-            ' Para funcionalidades no definidas, usar búsqueda por nombre (comportamiento anterior)
+            ' Funcionalidad no reconocida - devolver array vacío
             arrFiles = Array()
     End Select
     
@@ -2538,24 +2470,20 @@ End Function
 
 
 ' Subrutina para empaquetar archivos de código por funcionalidad
+' Subrutina para empaquetar archivos de código por funcionalidad o por lista de ficheros
 Sub BundleFunctionality()
     On Error Resume Next
     
-    Dim strFunctionality, strDestPath, strBundlePath
-    Dim objFolder, objFile
-    Dim foundFiles, copiedFiles
-    Dim timestamp
-    Dim arrFunctionalityFiles, i
-    Dim usePredefinedList
+    Dim strFunctionalityOrFiles, strDestPath, strBundlePath, timestamp
     
     ' Verificar argumentos
     If objArgs.Count < 2 Then
-        WScript.Echo "Error: Se requiere nombre de funcionalidad"
-        WScript.Echo "Uso: cscript condor_cli.vbs bundle <funcionalidad> [ruta_destino]"
+        WScript.Echo "Error: Se requiere nombre de funcionalidad o lista de ficheros"
+        WScript.Echo "Uso: cscript condor_cli.vbs bundle <funcionalidad | fichero1,fichero2,...> [ruta_destino]"
         WScript.Quit 1
     End If
     
-    strFunctionality = objArgs(1)
+    strFunctionalityOrFiles = objArgs(1)
     
     ' Determinar ruta de destino
     If objArgs.Count >= 3 Then
@@ -2569,33 +2497,17 @@ Sub BundleFunctionality()
                 Right("0" & Hour(Now), 2) & Right("0" & Minute(Now), 2) & Right("0" & Second(Now), 2)
     
     ' Crear nombre de carpeta bundle
-    strBundlePath = objFSO.BuildPath(strDestPath, "bundle_" & strFunctionality & "_" & timestamp)
+    Dim bundleName
+    If InStr(strFunctionalityOrFiles, ",") > 0 Then
+        bundleName = "bundle_custom_" & timestamp
+    Else
+        bundleName = "bundle_" & strFunctionalityOrFiles & "_" & timestamp
+    End If
+    strBundlePath = objFSO.BuildPath(strDestPath, bundleName)
     
-    WScript.Echo "=== EMPAQUETANDO FUNCIONALIDAD: " & strFunctionality & " ==="
+    WScript.Echo "=== EMPAQUETANDO ARTEFACTOS ==="
     WScript.Echo "Buscando archivos en: " & strSourcePath
     WScript.Echo "Carpeta destino: " & strBundlePath
-    
-    ' Obtener lista de archivos para la funcionalidad
-    arrFunctionalityFiles = GetFunctionalityFiles(strFunctionality)
-    usePredefinedList = (UBound(arrFunctionalityFiles) >= 0)
-    
-    If usePredefinedList Then
-        WScript.Echo "Usando lista predefinida de archivos según CONDOR_MASTER_PLAN.md"
-        WScript.Echo "Archivos esperados: " & (UBound(arrFunctionalityFiles) + 1)
-    Else
-        If LCase(strFunctionality) = "tests" Or LCase(strFunctionality) = "test" Or LCase(strFunctionality) = "pruebas" Or LCase(strFunctionality) = "testing" Then
-            WScript.Echo "Usando autodescubrimiento para archivos de pruebas (T* y TI*)"
-        Else
-            WScript.Echo "Usando búsqueda por nombre de funcionalidad"
-        End If
-    End If
-    WScript.Echo ""
-    
-    ' Verificar que existe la carpeta src
-    If Not objFSO.FolderExists(strSourcePath) Then
-        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
-        WScript.Quit 1
-    End If
     
     ' Crear carpeta de destino
     If Not objFSO.FolderExists(strBundlePath) Then
@@ -2606,98 +2518,90 @@ Sub BundleFunctionality()
         End If
     End If
     
-    Set objFolder = objFSO.GetFolder(strSourcePath)
-    foundFiles = 0
-    copiedFiles = 0
+    Dim arrFilesToBundle
     
-    If usePredefinedList Then
-        ' Usar lista predefinida de archivos
-        For i = 0 To UBound(arrFunctionalityFiles)
-            Dim fileName, filePath, destFilePath
-            fileName = arrFunctionalityFiles(i)
-            filePath = objFSO.BuildPath(strSourcePath, fileName)
-            
-            If objFSO.FileExists(filePath) Then
-                foundFiles = foundFiles + 1
-                
-                ' Copiar archivo con extensión .txt añadida
-                destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
-                
-                objFSO.CopyFile filePath, destFilePath, True
-                
-                If Err.Number <> 0 Then
-                    WScript.Echo "  ❌ Error copiando " & fileName & ": " & Err.Description
-                    Err.Clear
-                Else
-                    WScript.Echo "  ✓ " & fileName & " -> " & fileName & ".txt"
-                    copiedFiles = copiedFiles + 1
-                End If
-            Else
-                WScript.Echo "  ⚠️ Archivo no encontrado: " & fileName
-            End If
-        Next
+    ' Lógica de Detección Inteligente
+    If InStr(strFunctionalityOrFiles, ",") > 0 Then
+        ' MODO 1: Lista de ficheros explícita
+        WScript.Echo "Modo: Lista de ficheros explícita."
+        arrFilesToBundle = Split(strFunctionalityOrFiles, ",")
     Else
-        ' Usar búsqueda por nombre o autodescubrimiento para Tests
-        For Each objFile In objFolder.Files
-            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                Dim shouldInclude
-                shouldInclude = False
-                
-                ' Para funcionalidad Tests/test, buscar archivos que empiecen por T o TI
-                If LCase(strFunctionality) = "tests" Or LCase(strFunctionality) = "test" Or LCase(strFunctionality) = "pruebas" Or LCase(strFunctionality) = "testing" Then
-                    Dim baseName
-                    baseName = objFSO.GetBaseName(objFile.Name)
-                    If Left(LCase(baseName), 1) = "t" Then
-                        ' Incluir archivos que empiecen por T o TI
-                        If Left(LCase(baseName), 2) = "ti" Or Left(LCase(baseName), 4) = "test" Then
-                            shouldInclude = True
-                        End If
-                    End If
-                Else
-                    ' Comportamiento anterior para otras funcionalidades
-                    If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
-                        shouldInclude = True
-                    End If
-                End If
-                
-                If shouldInclude Then
-                    foundFiles = foundFiles + 1
-                    
-                    ' Copiar archivo con extensión .txt añadida
-                    Dim destFilePathLegacy
-                    destFilePathLegacy = objFSO.BuildPath(strBundlePath, objFile.Name & ".txt")
-                    
-                    objFSO.CopyFile objFile.Path, destFilePathLegacy, True
-                    
-                    If Err.Number <> 0 Then
-                        WScript.Echo "  ❌ Error copiando " & objFile.Name & ": " & Err.Description
-                        Err.Clear
-                    Else
-                        WScript.Echo "  ✓ " & objFile.Name & " -> " & objFile.Name & ".txt"
-                        copiedFiles = copiedFiles + 1
-                    End If
-                End If
+        ' MODO 2: Verificar si es funcionalidad conocida o archivo individual
+        arrFilesToBundle = GetFunctionalityFiles(strFunctionalityOrFiles)
+        
+        If UBound(arrFilesToBundle) >= 0 Then
+            ' Es una funcionalidad conocida
+            WScript.Echo "Modo: Funcionalidad '" & strFunctionalityOrFiles & "'."
+        Else
+            ' No es funcionalidad conocida, buscar archivo individual en src
+            Dim singleFilePath
+            singleFilePath = objFSO.BuildPath(strSourcePath, strFunctionalityOrFiles)
+            
+            If objFSO.FileExists(singleFilePath) Then
+                ' Archivo encontrado, tratarlo como lista de un elemento
+                WScript.Echo "Modo: Archivo individual '" & strFunctionalityOrFiles & "'."
+                ReDim arrFilesToBundle(0)
+                arrFilesToBundle(0) = strFunctionalityOrFiles
+            Else
+                ' Archivo no encontrado
+                WScript.Echo "Error: '" & strFunctionalityOrFiles & "' no es una funcionalidad conocida ni un archivo existente en src."
+                WScript.Echo "Funcionalidades disponibles: Auth, Document, Expediente, Solicitud, Workflow, Mapeo, Notification, Operation, Config, FileSystem, Word, Error, TestFramework, App, Models, Utils, Tests"
+                WScript.Quit 1
             End If
-        Next
+        End If
     End If
+    
+    ' Llamar a la subrutina de ayuda para copiar los ficheros
+    Call CopyFilesToBundle(arrFilesToBundle, strBundlePath)
+    
+    On Error GoTo 0
+End Sub
+
+' NUEVA SUBRUTINA DE AYUDA
+' Copia una lista de ficheros al directorio del paquete
+Sub CopyFilesToBundle(arrFiles, strBundlePath)
+    Dim copiedFiles, notFoundFiles
+    copiedFiles = 0
+    notFoundFiles = 0
+    
+    If UBound(arrFiles) < 0 Then
+        WScript.Echo "Advertencia: La lista de ficheros a empaquetar está vacía."
+    End If
+
+    Dim i, fileName, filePath, destFilePath
+    For i = 0 To UBound(arrFiles)
+        fileName = Trim(arrFiles(i))
+        filePath = objFSO.BuildPath(strSourcePath, fileName)
+        
+        If objFSO.FileExists(filePath) Then
+            ' Copiar archivo con extensión .txt añadida
+            destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
+            objFSO.CopyFile filePath, destFilePath, True
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "  ? Error copiando " & fileName & ": " & Err.Description
+                Err.Clear
+            Else
+                WScript.Echo "  ? " & fileName & " -> " & fileName & ".txt"
+                copiedFiles = copiedFiles + 1
+            End If
+        Else
+            WScript.Echo "  ? Archivo no encontrado: " & fileName
+            notFoundFiles = notFoundFiles + 1
+        End If
+    Next
     
     WScript.Echo ""
     WScript.Echo "=== RESULTADO DEL EMPAQUETADO ==="
-    WScript.Echo "Archivos encontrados: " & foundFiles
     WScript.Echo "Archivos copiados: " & copiedFiles
+    WScript.Echo "Archivos no encontrados: " & notFoundFiles
     WScript.Echo "Ubicación del paquete: " & strBundlePath
     
     If copiedFiles = 0 Then
-        If usePredefinedList Then
-            WScript.Echo "⚠️ No se encontraron archivos de la funcionalidad '" & strFunctionality & "' según CONDOR_MASTER_PLAN.md"
-        Else
-            WScript.Echo "⚠️ No se encontraron archivos que contengan '" & strFunctionality & "'"
-        End If
+        WScript.Echo "? No se copió ningún archivo."
     Else
-        WScript.Echo "✅ Empaquetado completado exitosamente"
+        WScript.Echo "? Empaquetado completado exitosamente"
     End If
-    
-    On Error GoTo 0
 End Sub
 
 ' Función auxiliar para convertir rutas relativas a absolutas
@@ -2746,4 +2650,245 @@ Private Function DaoTypeToString(dataType)
         Case 20: DaoTypeToString = "BigInt"
         Case Else: DaoTypeToString = "Desconocido (" & dataType & ")"
     End Select
+End Function
+
+' ===================================================================
+' SUBRUTINA: ExecuteMigrations
+' Descripción: Ejecuta scripts de migración SQL desde la carpeta /db/migrations
+' ===================================================================
+Sub ExecuteMigrations()
+    Dim strMigrationsPath, objMigrationsFolder, objFile, strTargetFile
+    
+    strMigrationsPath = objFSO.GetParentFolderName(strSourcePath) & "\db\migrations"
+    WScript.Echo "=== INICIANDO MIGRACION DE DATOS SQL ==="
+    WScript.Echo "Directorio de migraciones: " & strMigrationsPath
+    
+    If Not objFSO.FolderExists(strMigrationsPath) Then
+        WScript.Echo "ERROR: El directorio de migraciones no existe: " & strMigrationsPath
+        WScript.Quit 1
+    End If
+    
+    Set objMigrationsFolder = objFSO.GetFolder(strMigrationsPath)
+    
+    ' Modo 1: Migrar un fichero específico
+    If objArgs.Count > 1 Then
+        strTargetFile = objArgs(1)
+        Dim targetPath
+        targetPath = objFSO.BuildPath(strMigrationsPath, strTargetFile)
+        If objFSO.FileExists(targetPath) Then
+            WScript.Echo "Ejecutando migración específica: " & strTargetFile
+            Call ProcessSqlFile(targetPath)
+        Else
+            WScript.Echo "ERROR: El archivo de migración especificado no existe: " & targetPath
+            WScript.Quit 1
+        End If
+    ' Modo 2: Migrar todos los ficheros .sql
+    Else
+        WScript.Echo "Ejecutando todas las migraciones en el directorio (en orden alfabético)..."
+        
+        ' Crear un array para almacenar los nombres de archivos y ordenarlos
+        Dim arrFiles(), intFileCount, i, j, strTemp
+        intFileCount = 0
+        
+        ' Contar archivos SQL
+        For Each objFile In objMigrationsFolder.Files
+            If LCase(objFSO.GetExtensionName(objFile.Name)) = "sql" Then
+                intFileCount = intFileCount + 1
+            End If
+        Next
+        
+        ' Redimensionar array
+        ReDim arrFiles(intFileCount - 1)
+        
+        ' Llenar array con rutas de archivos
+        i = 0
+        For Each objFile In objMigrationsFolder.Files
+            If LCase(objFSO.GetExtensionName(objFile.Name)) = "sql" Then
+                arrFiles(i) = objFile.Path
+                i = i + 1
+            End If
+        Next
+        
+        ' Ordenar array usando bubble sort
+        For i = 0 To UBound(arrFiles) - 1
+            For j = i + 1 To UBound(arrFiles)
+                If UCase(objFSO.GetFileName(arrFiles(i))) > UCase(objFSO.GetFileName(arrFiles(j))) Then
+                    strTemp = arrFiles(i)
+                    arrFiles(i) = arrFiles(j)
+                    arrFiles(j) = strTemp
+                End If
+            Next
+        Next
+        
+        ' Ejecutar archivos en orden
+        For i = 0 To UBound(arrFiles)
+            Call ProcessSqlFile(arrFiles(i))
+        Next
+    End If
+    
+    WScript.Echo "=== MIGRACION COMPLETADA EXITOSAMENTE ==="
+End Sub
+
+' ===================================================================
+' SUBRUTINA: ProcessSqlFile
+' Descripción: Parsea y ejecuta los comandos de un fichero SQL
+' CORREGIDO: Utiliza ADODB.Stream para leer ficheros con codificación UTF-8.
+' ===================================================================
+' FUNCIÓN: CleanSqlContent
+' Elimina comentarios SQL y líneas vacías del contenido
+Function CleanSqlContent(sqlContent)
+    Dim arrLines, cleanedLines, i, trimmedLine
+    
+    ' Dividir en líneas
+    arrLines = Split(sqlContent, vbCrLf)
+    If UBound(arrLines) = 0 Then
+        arrLines = Split(sqlContent, vbLf)
+    End If
+    
+    ' Filtrar líneas
+    cleanedLines = ""
+    For i = 0 To UBound(arrLines)
+        trimmedLine = Trim(arrLines(i))
+        
+        ' Ignorar líneas vacías y comentarios
+        If Len(trimmedLine) > 0 And Left(trimmedLine, 2) <> "--" Then
+            If cleanedLines <> "" Then
+                cleanedLines = cleanedLines & vbCrLf
+            End If
+            cleanedLines = cleanedLines & arrLines(i)
+        End If
+    Next
+    
+    CleanSqlContent = cleanedLines
+End Function
+
+Sub ProcessSqlFile(filePath)
+    Dim objStream, strContent, arrCommands, sqlCommand, conn
+    
+    WScript.Echo "------------------------------------------------------------"
+    WScript.Echo "Procesando fichero: " & objFSO.GetFileName(filePath)
+    
+    On Error Resume Next
+    Set objStream = CreateObject("ADODB.Stream")
+    objStream.Type = 2 ' adTypeText
+    objStream.Charset = "UTF-8"
+    objStream.Open
+    objStream.LoadFromFile filePath
+    strContent = objStream.ReadText
+    objStream.Close
+    Set objStream = Nothing
+    If Err.Number <> 0 Then
+        WScript.Echo "  ERROR: No se pudo leer el fichero: " & Err.Description
+        WScript.Quit 1 ' Detener en caso de error de lectura
+    End If
+    On Error GoTo 0
+    
+    ' Usar conexión ADO para un manejo de errores DDL robusto
+    Set conn = CreateObject("ADODB.Connection")
+    conn.Open "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & strAccessPath & ";"
+    
+    ' Limpiar comentarios y líneas vacías antes de procesar
+    strContent = CleanSqlContent(strContent)
+    
+    ' Dividir en comandos por punto y coma
+    arrCommands = Split(strContent, ";")
+    
+    ' Ejecutar cada comando
+    For Each sqlCommand In arrCommands
+        sqlCommand = Trim(sqlCommand)
+        
+        ' Solo ejecutar comandos que no estén vacías
+        If Len(sqlCommand) > 5 Then
+            On Error Resume Next
+            conn.Execute sqlCommand
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "    ERROR al ejecutar comando: " & Err.Description
+                WScript.Echo "    SQL: " & sqlCommand
+                WScript.Echo "  MIGRACIÓN FALLIDA. Abortando."
+                WScript.Echo "------------------------------------------------------------"
+                conn.Close
+                Set conn = Nothing
+                WScript.Quit 1 ' Detener la ejecución inmediatamente
+            Else
+                WScript.Echo "    Comando ejecutado exitosamente."
+            End If
+            On Error GoTo 0
+        End If
+    Next
+    
+    conn.Close
+    Set conn = Nothing
+    
+    WScript.Echo "  Fichero procesado exitosamente."
+    WScript.Echo "------------------------------------------------------------"
+End Sub
+
+' Función para formatear texto con ancho fijo
+Function PadRight(text, width)
+    If Len(text) >= width Then
+        PadRight = Left(text, width)
+    Else
+        PadRight = text & String(width - Len(text), " ")
+    End If
+End Function
+
+' Función para verificar la refactorización de logging
+Sub VerifyLoggingRefactoring()
+    Dim serviceFiles, fileName, filePath, fileContent
+    Dim obsoleteCalls, refactoredCalls
+    Dim totalObsolete, totalRefactored
+    
+    serviceFiles = Array("CAuthService.cls", "CNotificationService.cls", "CWorkflowService.cls", "CSolicitudService.cls")
+    totalObsolete = 0
+    totalRefactored = 0
+    
+    WScript.Echo "  Verificando servicios refactorizados..."
+    
+    For Each fileName In serviceFiles
+        filePath = strSourcePath & "\" & fileName
+        
+        If objFSO.FileExists(filePath) Then
+            fileContent = objFSO.OpenTextFile(filePath, 1).ReadAll
+            
+            ' Buscar llamadas obsoletas (3 parámetros)
+            obsoleteCalls = CountMatches(fileContent, "LogOperation\s*\(\s*""[^""]*""\s*,\s*\d+\s*,\s*""[^""]*""\s*\)")
+            
+            ' Buscar llamadas refactorizadas (EOperationLog)
+            refactoredCalls = CountMatches(fileContent, "LogOperation\s*\(\s*operationLog\)")
+            
+            totalObsolete = totalObsolete + obsoleteCalls
+            totalRefactored = totalRefactored + refactoredCalls
+            
+            If obsoleteCalls > 0 Then
+                WScript.Echo "    ⚠️  " & fileName & ": " & obsoleteCalls & " llamadas obsoletas encontradas"
+            Else
+                WScript.Echo "    ✅ " & fileName & ": Refactorizado (" & refactoredCalls & " llamadas EOperationLog)"
+            End If
+        Else
+            WScript.Echo "    ❌ " & fileName & ": Archivo no encontrado"
+        End If
+    Next
+    
+    WScript.Echo "  Resumen de refactorización:"
+    WScript.Echo "    - Llamadas obsoletas: " & totalObsolete
+    WScript.Echo "    - Llamadas refactorizadas: " & totalRefactored
+    
+    If totalObsolete > 0 Then
+        WScript.Echo "    ⚠️  ADVERTENCIA: Aún existen llamadas obsoletas por refactorizar"
+    Else
+        WScript.Echo "    ✅ ÉXITO: Todos los servicios han sido refactorizados"
+    End If
+End Sub
+
+' Función auxiliar para contar coincidencias de regex
+Function CountMatches(text, pattern)
+    Dim regex, matches
+    Set regex = CreateObject("VBScript.RegExp")
+    regex.Pattern = pattern
+    regex.Global = True
+    regex.IgnoreCase = True
+    
+    Set matches = regex.Execute(text)
+    CountMatches = matches.Count
 End Function

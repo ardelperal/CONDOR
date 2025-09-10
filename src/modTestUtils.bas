@@ -1,98 +1,139 @@
 Attribute VB_Name = "modTestUtils"
 Option Compare Database
-Option Explicit
+    Option Explicit
 
-'******************************************************************************
-' MÓDULO: modTestUtils
-' DESCRIPCIÓN: Utilidades compartidas para el framework de pruebas.
-'******************************************************************************
+    Public Function GetProjectPath() As String
+        GetProjectPath = Left(CurrentProject.FullName, InStrRev(CurrentProject.FullName, "\back\") - 1)
+    End Function
 
-Public Function GetProjectPath() As String
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    Dim parentFolder As String
-    parentFolder = fso.GetParentFolderName(CurrentProject.Path) ' Sube a /back
-    parentFolder = fso.GetParentFolderName(parentFolder) ' Sube a / (raíz del proyecto)
-    GetProjectPath = parentFolder & "\"
-    Set fso = Nothing
-End Function
+    Public Function GetWorkspacePath() As String
+        GetWorkspacePath = JoinPath(GetProjectPath(), "back\test_env\workspace\")
+    End Function
+    
+    Public Function JoinPath(ByVal basePath As String, ByVal relativePath As String) As String
+        Dim b As String: b = Trim$(basePath)
+        Dim r As String: r = Trim$(relativePath)
+        If Len(b) = 0 Then JoinPath = r: Exit Function
+        If Len(r) = 0 Then JoinPath = b: Exit Function
+        If Right$(b, 1) = "\" Then b = Left$(b, Len(b) - 1)
+        If Left$(r, 1) = "\" Then r = Mid$(r, 2)
+        JoinPath = b & "\" & r
+    End Function
 
-Public Sub VerifyAllTestTemplates()
-    On Error GoTo errorHandler
-    
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    
-    Dim projectPath As String
-    projectPath = GetProjectPath()
-    
-    ' Lista de todas las plantillas requeridas por los tests de integración
-    Dim templates As Variant
-    templates = Array( _
-        "back\test_db\templates\CONDOR_test_template.accdb", _
-        "back\test_db\templates\Expedientes_test_template.accdb", _
-        "back\test_db\templates\Lanzadera_test_template.accdb", _
-        "back\test_db\templates\correos_test_template.accdb" _
-    )
-    
-    Dim i As Integer
-    Dim missingTemplates As String
-    missingTemplates = ""
-    
-    For i = 0 To UBound(templates)
-        Dim templatePath As String
-        templatePath = projectPath & templates(i)
+    Public Sub ProvisionTestDatabases()
+        On Error GoTo ErrorHandler
+        Debug.Print "--- INICIO DE APROVISIONAMIENTO CENTRALIZADO ---"
         
-        If Not fs.FileExists(templatePath) Then
-            If missingTemplates <> "" Then missingTemplates = missingTemplates & vbCrLf
-            missingTemplates = missingTemplates & "- " & templatePath
+        Dim config As IConfig: Set config = modTestContext.GetTestConfig()
+        Dim fs As IFileSystem: Set fs = modFileSystemFactory.createFileSystem(config)
+        
+        fs.CreateFolder GetWorkspacePath()
+        
+        Dim dbsToProvision As Variant
+        dbsToProvision = Array("CONDOR", "LANZADERA", "EXPEDIENTES", "CORREOS")
+        
+        Dim i As Integer, sourceKey As String, destKey As String, sourcePath As String, destPath As String
+        
+        For i = LBound(dbsToProvision) To UBound(dbsToProvision)
+            sourceKey = "DEV_" & dbsToProvision(i) & "_DATA_PATH"
+            destKey = dbsToProvision(i) & "_DATA_PATH"
+            sourcePath = config.GetValue(sourceKey)
+            destPath = config.GetValue(destKey)
+    
+            Debug.Print "Aprovisionando: Origen=[" & sourcePath & "], Destino=[" & destPath & "]"
+            
+            ' BLINDAJE: Lanzar un error claro si la clave de destino no se encuentra en modTestContext
+            If Len(destPath) = 0 Then
+                Err.Raise vbObjectError + 5002, "Provision", "La clave de destino '" & destKey & "' no fue encontrada en modTestContext.bas"
+            End If
+            
+            If Not fs.FileExists(sourcePath) Then
+                Err.Raise vbObjectError + 5001, "Provision", "Origen no encontrado: " & sourcePath
+            End If
+            
+            If fs.FileExists(destPath) Then fs.DeleteFile destPath
+            
+            fs.CopyFile sourcePath, destPath
+            
+            If Not fs.FileExists(destPath) Then
+                Err.Raise vbObjectError + 5003, "Provision", "Copia fallida a: " & destPath
+            Else
+                Debug.Print "   -> Copia exitosa."
+            End If
+        Next i
+
+        Debug.Print "--- FIN DE APROVISIONAMIENTO ---"
+        Exit Sub
+    ErrorHandler:
+        Debug.Print "--- FALLO CRÍTICO EN APROVISIONAMIENTO: " & Err.Description & " ---"
+        Err.Raise Err.Number, "modTestUtils.ProvisionTestDatabases", Err.Description
+    End Sub
+    
+    Public Sub CleanupWorkspace()
+        On Error Resume Next
+        Dim fs As IFileSystem: Set fs = modFileSystemFactory.createFileSystem()
+        Dim workspacePath As String: workspacePath = GetWorkspacePath()
+        If fs.FolderExists(workspacePath) Then
+            fs.DeleteFolderRecursive workspacePath
+            fs.CreateFolder workspacePath
         End If
-    Next i
-    
-    If missingTemplates <> "" Then
-        Err.Raise 53, "VerifyAllTestTemplates", "Las siguientes plantillas de base de datos no se encontraron:" & vbCrLf & missingTemplates & vbCrLf & vbCrLf & "Los tests de integración no pueden ejecutarse sin estas plantillas."
-    End If
-    
-    Exit Sub
-    
-errorHandler:
-    Err.Raise Err.Number, "modTestUtils.VerifyAllTestTemplates", Err.Description
-End Sub
+    End Sub
 
-Public Sub PrepareTestDatabase(ByVal templatePath As String, ByVal activeTestPath As String)
-    On Error GoTo errorHandler
+    Public Sub PrintTestConfigStatus()
+        On Error GoTo ErrorHandler
+        
+        Debug.Print "--- INICIO: AUDITORÍA DE CONFIGURACIÓN DE PRUEBAS ---"
+        
+        Dim config As IConfig
+        Set config = modTestContext.GetTestConfig()
+        
+        If config Is Nothing Then
+            Debug.Print "ERROR: No se pudo obtener la configuración de pruebas."
+            Exit Sub
+        End If
+        
+        Dim fs As IFileSystem
+        Set fs = modFileSystemFactory.CreateFileSystem(config)
+        
+        ' Para acceder a las claves, necesitamos castear a la implementación concreta
+        Dim mockConfig As CMockConfig
+        Set mockConfig = config
+        
+        Dim key As Variant
+        Dim value As String
+        Dim status As String
+        
+        For Each key In mockConfig.GetAllKeys() ' Asumimos que CMockConfig expondrá este método
+            value = config.GetValue(key)
+            status = ""
+            
+            ' Heurística para detectar si el valor es una ruta de fichero o directorio
+            If InStr(value, "\") > 0 And (InStr(value, ".accdb") > 0 Or InStr(value, ".log") > 0 Or Right(value, 1) = "\") Then
+                If Right(value, 1) = "\" Then ' Es un directorio
+                    If fs.FolderExists(value) Then
+                        status = "[✓ DIRECTORIO OK]"
+                    Else
+                        status = "[X DIRECTORIO NO ENCONTRADO]"
+                    End If
+                Else ' Es un fichero
+                    If fs.FileExists(value) Then
+                        status = "[✓ FICHERO OK]"
+                    Else
+                        status = "[X FICHERO NO ENCONTRADO]"
+                    End If
+                End If
+            End If
+            
+            Debug.Print Left(key & Space(35), 35) & "| " & value & " " & status
+        Next key
 
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
+        Debug.Print "--- FIN: AUDITORÍA DE CONFIGURACIÓN DE PRUEBAS ---"
+        
+        Set config = Nothing
+        Set fs = Nothing
+        Set mockConfig = Nothing
+        Exit Sub
 
-    ' Asegurarse de que la ruta completa a la plantilla existe
-    If Not fs.FileExists(templatePath) Then
-        Err.Raise 53, "PrepareTestDatabase", "El archivo plantilla de la base de datos no se encontró en: " & templatePath
-    End If
-
-    ' Borrar la base de datos de prueba activa si ya existe
-    If fs.FileExists(activeTestPath) Then
-        fs.DeleteFile activeTestPath, True ' True para forzar el borrado
-    End If
-
-    ' Crear el directorio de destino si no existe
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    Dim destinationFolder As String
-    destinationFolder = fso.GetParentFolderName(activeTestPath)
-    Set fso = Nothing
-    
-    If Not fs.FolderExists(destinationFolder) Then
-        fs.CreateFolder destinationFolder
-    End If
-
-    ' Copiar la plantilla para crear la nueva base de datos de prueba activa
-    fs.CopyFile templatePath, activeTestPath
-
-    Exit Sub
-
-errorHandler:
-    ' Propagar el error para que el test que lo llamó falle con una descripción clara
-    Err.Raise Err.Number, "modTestUtils.PrepareTestDatabase", Err.Description
-End Sub
-
+    ErrorHandler:
+        Debug.Print "ERROR CRÍTICO durante la auditoría de configuración: " & Err.Description
+    End Sub

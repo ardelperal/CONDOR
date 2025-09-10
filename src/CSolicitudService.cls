@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -27,6 +27,8 @@ Implements ISolicitudService
 Private m_solicitudRepository As ISolicitudRepository
 Private m_OperationLogger As IOperationLogger
 Private m_ErrorHandler As IErrorHandlerService
+Private m_authService As IAuthService
+Private m_workflowService As IWorkflowService
 Private m_isInitialized As Boolean
 
 ' ============================================================================
@@ -37,7 +39,9 @@ Private m_isInitialized As Boolean
 ' @param solicitudRepository: Repositorio para operaciones de persistencia
 ' @param operationLogger: Logger para registrar operaciones
 ' @param errorHandler: Manejador de errores para logging
-Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal errorHandler As IErrorHandlerService)
+' @param authService: Servicio de autenticación para obtener contexto del usuario
+' @param workflowService: Servicio de workflow para validar transiciones
+Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal operationLogger As IOperationLogger, ByVal errorHandler As IErrorHandlerService, ByVal authService As IAuthService, ByVal workflowService As IWorkflowService)
     If solicitudRepository Is Nothing Then
         Err.Raise 5, "CSolicitudService.Initialize", "solicitudRepository no puede ser Nothing"
     End If
@@ -50,9 +54,19 @@ Public Sub Initialize(ByVal solicitudRepository As ISolicitudRepository, ByVal o
         Err.Raise 5, "CSolicitudService.Initialize", "errorHandler no puede ser Nothing"
     End If
     
+    If authService Is Nothing Then
+        Err.Raise 5, "CSolicitudService.Initialize", "authService no puede ser Nothing"
+    End If
+    
+    If workflowService Is Nothing Then
+        Err.Raise 5, "CSolicitudService.Initialize", "workflowService no puede ser Nothing"
+    End If
+    
     Set m_solicitudRepository = solicitudRepository
     Set m_OperationLogger = operationLogger
     Set m_ErrorHandler = errorHandler
+    Set m_authService = authService
+    Set m_workflowService = workflowService
     m_isInitialized = True
 End Sub
 
@@ -68,7 +82,11 @@ Private Function ISolicitudService_CreateSolicitud(ByVal paraExpediente As EExpe
     End If
     
     If paraExpediente Is Nothing Then
-        Err.Raise 5, "CSolicitudService.CreateSolicitud", "paraExpediente no puede ser Nothing"
+        Err.Raise 5, "CSolicitudService.CreateSolicitud", "El parámetro paraExpediente no puede ser Nothing."
+    End If
+    
+    If paraExpediente.idExpediente <= 0 Then
+        Err.Raise vbObjectError + 1001, "CSolicitudService.CreateSolicitud", "El ID del expediente proporcionado no es válido."
     End If
     
 
@@ -87,27 +105,51 @@ Private Function ISolicitudService_CreateSolicitud(ByVal paraExpediente As EExpe
         .codigoSolicitud = GenerateCodigoSolicitud(CStr(paraExpediente.idExpediente), "PC")
         .idEstadoInterno = 1 ' ID del estado Borrador en tbEstados
         .fechaCreacion = Now()
-        .usuarioCreacion = Environ("USERNAME") ' Usuario actual del sistema
-        .fechaModificacion = Null
+        .usuarioCreacion = m_authService.GetCurrentUserEmail() ' Usuario actual del sistema
         .usuarioModificacion = ""
     End With
     
     ' Delegar al repositorio para guardar
-    If m_solicitudRepository.SaveSolicitud(nuevaSolicitud) Then
-        m_OperationLogger.LogOperation "CREATE", CStr(nuevaSolicitud.idSolicitud), _
-            "Nueva solicitud creada: ID=" & nuevaSolicitud.idSolicitud & ", Expediente=" & paraExpediente.idExpediente & ", Tipo=PC"
+    If m_solicitudRepository.SaveSolicitud(nuevaSolicitud) > 0 Then
+        Dim logEntry As EOperationLog
+        Set logEntry = New EOperationLog
+        With logEntry
+            .tipoOperacion = "CREATE"
+            .idEntidadAfectada = nuevaSolicitud.idSolicitud
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Success"
+            .descripcion = "Nueva solicitud creada: ID=" & nuevaSolicitud.idSolicitud & ", Expediente=" & paraExpediente.idExpediente & ", Tipo=PC"
+        End With
+        m_OperationLogger.LogOperation logEntry
         
         Set ISolicitudService_CreateSolicitud = nuevaSolicitud
     Else
-        m_OperationLogger.LogOperation "CREATE_ERROR", CStr(paraExpediente.idExpediente), _
-            "Error: No se pudo crear la solicitud para expediente " & paraExpediente.idExpediente
+        Dim logErrorEntry As EOperationLog
+        Set logErrorEntry = New EOperationLog
+        With logErrorEntry
+            .tipoOperacion = "CREATE"
+            .idEntidadAfectada = paraExpediente.idExpediente
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Error"
+            .descripcion = "Fallo al intentar crear la solicitud para el expediente ID=" & paraExpediente.idExpediente
+        End With
+        m_OperationLogger.LogOperation logErrorEntry
         Err.Raise 5, "CSolicitudService.CreateSolicitud", "No se pudo crear la solicitud"
     End If
     
     Exit Function
     
 errorHandler:
-    m_OperationLogger.LogOperation "CREATE_ERROR", "", "Error: " & Err.Description
+    Dim logCrashEntry As EOperationLog
+    Set logCrashEntry = New EOperationLog
+    With logCrashEntry
+        .tipoOperacion = "CREATE"
+        .idEntidadAfectada = 0
+        .usuario = m_authService.GetCurrentUserEmail()
+        .resultado = "Crash"
+        .detalles = "Error: " & Err.Description
+    End With
+    m_OperationLogger.LogOperation logCrashEntry
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CreateSolicitud"
     Err.Raise Err.Number, "CSolicitudService.CreateSolicitud", Err.Description
 End Function
@@ -120,32 +162,61 @@ Private Function ISolicitudService_SaveSolicitud(ByVal solicitud As ESolicitud) 
     End If
     
     If solicitud Is Nothing Then
-        Err.Raise 5, "CSolicitudService.SaveSolicitud", "solicitud no puede ser Nothing"
+        Err.Raise 5, "CSolicitudService.SaveSolicitud", "El parámetro solicitud no puede ser Nothing."
+    End If
+    
+    If solicitud.idSolicitud <= 0 Then
+        Err.Raise vbObjectError + 1002, "CSolicitudService.SaveSolicitud", "El método SaveSolicitud solo puede usarse en solicitudes con un ID existente."
     End If
     
     On Error GoTo errorHandler
     
     ' Actualizar campos de modificación
     solicitud.fechaModificacion = Now()
-    solicitud.usuarioModificacion = Environ("USERNAME")
+    solicitud.usuarioModificacion = m_authService.GetCurrentUserEmail()
     
     ' Delegar al repositorio para guardar
     Dim Resultado As Long
     Resultado = m_solicitudRepository.SaveSolicitud(solicitud)
     If Resultado > 0 Then
-        m_OperationLogger.LogOperation "SAVE", CStr(solicitud.idSolicitud), _
-            "Solicitud guardada correctamente: ID=" & solicitud.idSolicitud
+        Dim logEntry As EOperationLog
+        Set logEntry = New EOperationLog
+        With logEntry
+            .tipoOperacion = "SAVE"
+            .idEntidadAfectada = solicitud.idSolicitud
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Success"
+            .descripcion = "Solicitud guardada correctamente: ID=" & solicitud.idSolicitud
+        End With
+        m_OperationLogger.LogOperation logEntry
         ISolicitudService_SaveSolicitud = Resultado
     Else
-        m_OperationLogger.LogOperation "SAVE_ERROR", CStr(solicitud.idSolicitud), _
-            "Error: No se pudo guardar la solicitud ID=" & solicitud.idSolicitud
+        Dim logErrorEntry As EOperationLog
+        Set logErrorEntry = New EOperationLog
+        With logErrorEntry
+            .tipoOperacion = "SAVE"
+            .idEntidadAfectada = solicitud.idSolicitud
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Error"
+            .descripcion = "Error: No se pudo guardar la solicitud ID=" & solicitud.idSolicitud
+        End With
+        m_OperationLogger.LogOperation logErrorEntry
         ISolicitudService_SaveSolicitud = 0
     End If
     
     Exit Function
     
 errorHandler:
-    m_OperationLogger.LogOperation "SAVE_ERROR", "", "Error: " & Err.Description
+    Dim logCrashEntry As EOperationLog
+    Set logCrashEntry = New EOperationLog
+    With logCrashEntry
+        .tipoOperacion = "SAVE"
+        .idEntidadAfectada = 0
+        .usuario = m_authService.GetCurrentUserEmail()
+        .resultado = "Crash"
+        .detalles = "Error: " & Err.Description
+    End With
+    m_OperationLogger.LogOperation logCrashEntry
     m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.SaveSolicitud"
     ISolicitudService_SaveSolicitud = 0
 End Function
@@ -181,13 +252,209 @@ End Function
 
 ' Obtiene una solicitud por su ID
 Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
-    ' Asumimos que el repositorio tiene un método similar
-    Set ISolicitudService_ObtenerSolicitudPorId = m_solicitudRepository.ObtenerSolicitudPorId(SolicitudID)
+    
+    If Not m_isInitialized Then
+        Err.Raise 5, "CSolicitudService.ObtenerSolicitudPorId", "El servicio no ha sido inicializado. Llame a Initialize() primero."
+    End If
+    
+    If SolicitudID <= 0 Then
+        Err.Raise 5, "CSolicitudService.ObtenerSolicitudPorId", "SolicitudID debe ser mayor que 0"
+    End If
+    
+    On Error GoTo errorHandler
+    
+    ' Delegar al repositorio para obtener la solicitud
+    Dim solicitud As ESolicitud
+    Set solicitud = m_solicitudRepository.ObtenerSolicitudPorId(SolicitudID)
+    
+    If solicitud Is Nothing Then
+        Dim logNotFoundEntry As EOperationLog
+        Set logNotFoundEntry = New EOperationLog
+        With logNotFoundEntry
+            .tipoOperacion = "GET"
+            .idEntidadAfectada = SolicitudID
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "NotFound"
+            .descripcion = "Solicitud no encontrada: ID=" & SolicitudID
+        End With
+        m_OperationLogger.LogOperation logNotFoundEntry
+    Else
+        Dim logSuccessEntry As EOperationLog
+        Set logSuccessEntry = New EOperationLog
+        With logSuccessEntry
+            .tipoOperacion = "GET"
+            .idEntidadAfectada = SolicitudID
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Success"
+            .descripcion = "Solicitud obtenida correctamente: ID=" & SolicitudID
+        End With
+        m_OperationLogger.LogOperation logSuccessEntry
+    End If
+    
+    Set ISolicitudService_ObtenerSolicitudPorId = solicitud
+    Exit Function
+    
+errorHandler:
+    Dim logCrashEntry As EOperationLog
+    Set logCrashEntry = New EOperationLog
+    With logCrashEntry
+        .tipoOperacion = "GET"
+        .idEntidadAfectada = SolicitudID
+        .usuario = m_authService.GetCurrentUserEmail()
+        .resultado = "Crash"
+        .detalles = "Error: " & Err.Description
+    End With
+    m_OperationLogger.LogOperation logCrashEntry
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.ObtenerSolicitudPorId"
+    Err.Raise Err.Number, "CSolicitudService.ObtenerSolicitudPorId", Err.Description
 End Function
 
 ' Método público de conveniencia que delega a la implementación de la interfaz
 Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
     Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(SolicitudID)
+End Function
+
+' Cambia el estado de una solicitud validando la transición
+Private Function ISolicitudService_CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
+    
+    If Not m_isInitialized Then
+        Err.Raise 5, "CSolicitudService.CambiarEstadoSolicitud", "El servicio no ha sido inicializado. Llame a Initialize() primero."
+    End If
+    
+    If solicitudId <= 0 Then
+        Err.Raise vbObjectError + 1003, "CSolicitudService.CambiarEstadoSolicitud", "El ID de la solicitud no es válido."
+    End If
+
+    If nuevoEstadoId <= 0 Then
+        Err.Raise vbObjectError + 1004, "CSolicitudService.CambiarEstadoSolicitud", "El ID del nuevo estado no es válido."
+    End If
+    
+    On Error GoTo errorHandler
+    
+    ' Obtener la solicitud actual
+    Dim solicitud As ESolicitud
+    Set solicitud = m_solicitudRepository.ObtenerSolicitudPorId(solicitudId)
+    
+    If solicitud Is Nothing Then
+        Dim logNotFoundEntry As EOperationLog
+        Set logNotFoundEntry = New EOperationLog
+        With logNotFoundEntry
+            .tipoOperacion = "CHANGE_STATE"
+            .idEntidadAfectada = solicitudId
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Error"
+            .descripcion = "Solicitud no encontrada: ID=" & solicitudId
+        End With
+        m_OperationLogger.LogOperation logNotFoundEntry
+        ISolicitudService_CambiarEstadoSolicitud = False
+        Exit Function
+    End If
+    
+    ' Obtener el estado actual y nuevo estado como strings
+    Dim estadoActual As String
+    Dim estadoDestino As String
+    
+    ' Mapear IDs a nombres de estados
+    Select Case solicitud.idEstadoInterno
+        Case 1: estadoActual = "Registrado"
+        Case 2: estadoActual = "Desarrollo"
+        Case 3: estadoActual = "Modificación"
+        Case 4: estadoActual = "Validación"
+        Case 5: estadoActual = "Revisión"
+        Case 6: estadoActual = "Formalización"
+        Case 7: estadoActual = "Aprobada"
+        Case Else: estadoActual = "Desconocido"
+    End Select
+    
+    Select Case nuevoEstadoId
+        Case 1: estadoDestino = "Registrado"
+        Case 2: estadoDestino = "Desarrollo"
+        Case 3: estadoDestino = "Modificación"
+        Case 4: estadoDestino = "Validación"
+        Case 5: estadoDestino = "Revisión"
+        Case 6: estadoDestino = "Formalización"
+        Case 7: estadoDestino = "Aprobada"
+        Case Else: estadoDestino = "Desconocido"
+    End Select
+    
+    ' Obtener el rol del usuario actual (simplificado)
+    Dim usuarioRol As String
+    usuarioRol = "Calidad" ' Por defecto, en una implementación real se obtendría del contexto del usuario
+    
+    ' Validar la transición usando el WorkflowService
+    Dim esTransicionValida As Boolean
+    esTransicionValida = m_workflowService.ValidateTransition(solicitudId, estadoActual, estadoDestino, solicitud.tipoSolicitud, usuarioRol)
+    
+    If Not esTransicionValida Then
+        Dim logTransitionEntry As EOperationLog
+        Set logTransitionEntry = New EOperationLog
+        With logTransitionEntry
+            .tipoOperacion = "CHANGE_STATE"
+            .idEntidadAfectada = solicitudId
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Error"
+            .descripcion = "Transición no permitida: " & estadoActual & " -> " & estadoDestino & " para rol " & usuarioRol
+        End With
+        m_OperationLogger.LogOperation logTransitionEntry
+        m_ErrorHandler.LogError 5, "Transición de estado no permitida", "CSolicitudService.CambiarEstadoSolicitud"
+        Err.Raise 5, "CSolicitudService.CambiarEstadoSolicitud", "Transición de estado no permitida"
+    End If
+    
+    ' Si la transición es válida, actualizar el estado
+    solicitud.idEstadoInterno = nuevoEstadoId
+    solicitud.fechaModificacion = Now()
+    solicitud.usuarioModificacion = m_authService.GetCurrentUserEmail()
+    
+    ' Guardar la solicitud actualizada
+    Dim resultado As Long
+    resultado = m_solicitudRepository.SaveSolicitud(solicitud)
+    
+    If resultado > 0 Then
+        Dim logSuccessEntry As EOperationLog
+        Set logSuccessEntry = New EOperationLog
+        With logSuccessEntry
+            .tipoOperacion = "CHANGE_STATE"
+            .idEntidadAfectada = solicitudId
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Success"
+            .descripcion = "Estado cambiado exitosamente: " & estadoActual & " -> " & estadoDestino
+        End With
+        m_OperationLogger.LogOperation logSuccessEntry
+        ISolicitudService_CambiarEstadoSolicitud = True
+    Else
+        Dim logSaveErrorEntry As EOperationLog
+        Set logSaveErrorEntry = New EOperationLog
+        With logSaveErrorEntry
+            .tipoOperacion = "CHANGE_STATE"
+            .idEntidadAfectada = solicitudId
+            .usuario = m_authService.GetCurrentUserEmail()
+            .resultado = "Error"
+            .descripcion = "Error al guardar solicitud con nuevo estado"
+        End With
+        m_OperationLogger.LogOperation logSaveErrorEntry
+        ISolicitudService_CambiarEstadoSolicitud = False
+    End If
+    
+    Exit Function
+    
+errorHandler:
+    Dim logCrashEntry As EOperationLog
+    Set logCrashEntry = New EOperationLog
+    With logCrashEntry
+        .tipoOperacion = "CHANGE_STATE"
+        .idEntidadAfectada = solicitudId
+        .usuario = m_authService.GetCurrentUserEmail()
+        .resultado = "Crash"
+        .detalles = "Error: " & Err.Description
+    End With
+    m_OperationLogger.LogOperation logCrashEntry
+    m_ErrorHandler.LogError Err.Number, Err.Description, "CSolicitudService.CambiarEstadoSolicitud"
+    ISolicitudService_CambiarEstadoSolicitud = False
+End Function
+
+' Método público de conveniencia que delega a la implementación de la interfaz
+Public Function CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
+    CambiarEstadoSolicitud = ISolicitudService_CambiarEstadoSolicitud(solicitudId, nuevoEstadoId)
 End Function
 
 

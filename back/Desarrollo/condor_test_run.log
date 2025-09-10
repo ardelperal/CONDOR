@@ -62,3 +62,4 @@
 02/09/2025 19:33:26 | CRITICAL ERROR | Err: 438 | El objeto no admite esta propiedad o método | Source: modTestRunner.ExecuteAllSuites
 02/09/2025 19:41:03 | CRITICAL ERROR | Err: 438 | El objeto no admite esta propiedad o método | Source: modTestRunner.ExecuteAllSuites
 02/09/2025 19:44:50 | CRITICAL ERROR | Err: 438 | El objeto no admite esta propiedad o método | Source: modTestRunner.ExecuteAllSuites
+05/09/2025 13:38:45 | CRITICAL ERROR | Err: 2517 | Microsoft Access no encuentra el procedimiento 'TIDocumentServiceRunAll'. | Source: modTestRunner.ExecuteAllSuites

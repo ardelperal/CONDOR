@@ -1,0 +1,448 @@
+=== LISTADO DE TABLAS ===
+Modo: Esquema Detallado
+
+------------------------------------------------------------
+1. Errores de pegado (1 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+F1                       Text                   false
+F2                       Double                 false
+F3                       Text                   false
+F4                       Text                   false
+F5                       Text                   false
+F6                       Text                   false
+F7                       Text                   false
+F8                       Text                   false
+F9                       Text                   false
+
+------------------------------------------------------------
+2. Tb0HerramientaDocAyuda (4 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+NombreFormulario         Text           PK      true
+NombreArchivoAyuda       Text           PK      true
+
+------------------------------------------------------------
+3. TbAplicaciones (19 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDAplicacion             Long           PK      true
+NombreAplicacion         Text                   true
+NombreCorto              Text                   true
+NombreEjecutable         Text                   false
+NombreArchivoDatos       Text                   false
+Pass                     Text                   false
+NombreCarpeta            Text                   false
+NombreFuncionPublicacion Text                   false
+NombreCarpetaTemporal    Text                   false
+TituloAplicacion         Text                   false
+NombreIconoParaArbol     Text                   false
+NombreIcono              Text                   false
+NombreIconoLanzadera     Text                   false
+EjecucionEnOficina       Text                   false
+NombreCarpetaDocumentacioText                   false
+NombreDirectorioIconos   Text                   false
+NombreDirectorioAyuda    Text                   false
+NombreDirectorioRecursos Text                   false
+URLDIrectorioIconoAplicacText                   false
+EnPruebas                Text                   false
+ConIconoEnLanzadera      Text                   false
+Comando                  Memo                   false
+
+------------------------------------------------------------
+4. TbAplicacionesAperturas (1697 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDApertura               Long           PK      true
+IDAplicacion             Long                   true
+NombreUsuario            Text                   false
+FechaApertura            DateTime               false
+HoraApertura             DateTime               false
+FechaCierre              DateTime               false
+HoraCierre               DateTime               false
+NombreAplicacion         Text                   false
+FechaEnvioCorreoAdministrDateTime               false
+EnOficina                Text                   false
+UsuarioConectadoMaquina  Text                   false
+VersionAplicacion        Text                   false
+NombreMaquina            Text                   false
+UsuarioMaquina           Text                   false
+Observaciones            Memo                   false
+
+------------------------------------------------------------
+5. TbAplicacionesEdiciones (1262 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDAplicacion             Long           PK      true
+IDVersion                Long           PK      true
+Version                  Text                   true
+FechaPublicacion         DateTime               false
+ParaInforme              Text                   false
+
+------------------------------------------------------------
+6. TbAplicacionesEdicionesCambios (1364 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDCambio                 Long           PK      true
+IDVersion                Long                   true
+Cambio                   Text                   true
+FechaCambio              DateTime               false
+DescripcionCambio        Memo                   false
+
+------------------------------------------------------------
+7. TbAplicacionesEstados (6 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+PerfilAplicacion         Text           PK      true
+PerfilAplicacionEncriptadText                   false
+
+------------------------------------------------------------
+8. TbAplicacionesParametros (60 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDAplicacion             Long           PK      true
+IDParametro              Long           PK      true
+Valor                    Memo                   true
+
+------------------------------------------------------------
+9. TbAplicacionesPerfiles (34 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDAplicacion             Long           PK      true
+Perfil                   Text           PK      true
+
+------------------------------------------------------------
+10. TbAplicacionesVideos (0 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDAplicacionVideo        Long           PK      true
+IDVideo                  Long                   true
+IDAplicacion             Long                   false
+Descripcion              Memo                   false
+NombreArchivo            Text                   false
+FechaCreacion            DateTime               false
+UsuarioCrea              Text                   false
+FechaModificacion        DateTime               false
+UsuarioModifica          Text                   false
+
+------------------------------------------------------------
+11. TbCategorias (2 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDCategoria              Long           PK      true
+NombreCategoria          Text                   false
+
+------------------------------------------------------------
+12. TbConexiones (24 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+Usuario                  Text           PK      true
+UltimaConexion           DateTime               false
+UltimaDesconexion        DateTime               false
+InstaladoFW3             Text                   false
+InstaladoFW4             Text                   false
+Exitoso                  Text                   false
+
+------------------------------------------------------------
+13. TbConexionesRegistro (10360 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDConexion               Long           PK      true
+Usuario                  Text                   true
+FechaConexion            DateTime               false
+FechaCierre              DateTime               false
+ConContraseña            Boolean                false
+UsuarioSSID              Text                   false
+EnOficina                Boolean                false
+Vertical                 Long                   false
+Horizontal               Long                   false
+
+------------------------------------------------------------
+14. TbConexionUltimaAppAbierta (1469 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDConexion               Long           PK      true
+IDUltimaAplicacionAbiertaLong                   false
+
+------------------------------------------------------------
+15. TbCuestionarioPreguntas (0 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDPregunta               Long           PK      true
+IDCuestionario           Long                   false
+Texto                    Memo                   false
+
+------------------------------------------------------------
+16. TbCuestionarios (0 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDCuestionario           Long           PK      true
+FechaRealizado           DateTime               false
+IDUsuarioRealiza         Long                   false
+IDAplicacion             Long                   false
+IDRespuestaCorrecta      Long                   false
+Observaciones            Memo                   false
+
+------------------------------------------------------------
+17. TbCuestionaroRespuestas (0 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDRespuesta              Long           PK      true
+IDPregunta               Long                   false
+Letra                    Text                   false
+Texto                    Memo                   false
+
+------------------------------------------------------------
+18. TbDetalleVersiones (28 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDAplicacion             Long           PK      true
+IDVersion                Long           PK      true
+IDDetalle                Long           PK      true
+Detalle                  Memo                   false
+
+------------------------------------------------------------
+19. TbParametros (53 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDParametro              Long           PK      true
+Parametro                Text                   true
+
+------------------------------------------------------------
+20. TbPermisos (205 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDAplicacion             Long           PK      true
+Usuario                  Text           PK      true
+F3                       Text                   false
+F4                       Text                   false
+F5                       Text                   false
+F6                       Text                   false
+F7                       Text                   false
+F8                       Text                   false
+F9                       Text                   false
+
+------------------------------------------------------------
+21. TbTablasAVincular (411 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDBBDD                   Long                   false
+IDAplicacion             Long                   false
+NombreTabla              Text                   true
+NombreTablaEnLocal       Text                   false
+
+------------------------------------------------------------
+22. TbUbicaciones (8 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+NombreUbicacion          Text           PK      true
+Sirdee                   Text           PK      true
+Ubicacion                Text                   false
+
+------------------------------------------------------------
+23. TbUsuarioAplicacionesSolicitud (0 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+CorreoUsuario            Text           PK      true
+Password                 Text                   false
+Nombre                   Text                   false
+Matricula                Text                   false
+Telefono                 Text                   false
+Movil                    Text                   false
+FechaSolicitud           DateTime               false
+
+------------------------------------------------------------
+24. TbUsuarioConfiguracion (14 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+UsuarioDeRed             Text           PK      true
+MantenerLanzaderaAbierta Text                   false
+
+------------------------------------------------------------
+25. tbUsuarios (156 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+Id                       Long           PK      true
+Nombre                   Text                   false
+UsuarioRed               Text                   false
+DirCorreo                Text                   false
+Matricula_DNI            Text                   false
+Cargo                    Text                   false
+telfijo                  Long                   false
+telmovil                 Long                   false
+JefeDelUsuario           Text                   false
+FechaAlta                DateTime               false
+FechaBaja                DateTime               false
+EmplazamientoExterno     Text                   false
+SeLogean                 Boolean                false
+ParaTareasProgramadas    Boolean                false
+Autorizador              Boolean                false
+DiaEnvioTareas           Byte                   false
+UsuarioDeGestionRiesgos  Text                   false
+UsuariosI3D              Text                   false
+
+------------------------------------------------------------
+26. TbUsuariosAplicaciones (174 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+CorreoUsuario            Text           PK      true
+Password                 Text                   false
+UsuarioRed               Text                   false
+Nombre                   Text                   false
+Matricula                Text                   false
+FechaAlta                DateTime               false
+Activado                 Boolean                false
+FechaProximoCambioContrasDateTime               false
+FechaUltimaConexion      DateTime               false
+TieneQueCambiarLaContraseBoolean                false
+Telefono                 Text                   false
+Movil                    Text                   false
+Observaciones            Memo                   false
+UsuarioImborrable        Boolean                false
+EsAdministrador          Text                   false
+PermisosAsignados        Boolean                false
+FechaBaja                DateTime               false
+PasswordNuncaCaduca      Boolean                false
+MantenerLanzaderaAbierta Boolean                false
+PassIncialPlana          Text                   false
+UsuarioSSID              Text                   false
+Id                       Integer                true
+JefeDelUsuario           Text                   false
+PermisoPruebas           Text                   false
+ParaTareasProgramadas    Boolean                false
+FechaBloqueo             DateTime               false
+
+------------------------------------------------------------
+27. TbUsuariosAplicacionesPermisos (526 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+CorreoUsuario            Text           PK      true
+IDAplicacion             Long           PK      true
+EsUsuarioAdministrador   Text                   false
+EsUsuarioCalidad         Text                   false
+EsUsuarioEconomia        Text                   false
+EsUsuarioSecretaria      Text                   false
+EsUsuarioTecnico         Text                   false
+EsUsuarioSinAcceso       Text                   false
+EsUsuarioCalidadAvisos   Text                   false
+
+------------------------------------------------------------
+28. TbUsuariosAplicacionesTareas (7 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+CorreoUsuario            Text           PK      true
+EsAdministrador          Text                   false
+EsTecnico                Text                   false
+EsCalidad                Text                   false
+EsEconomia               Text                   false
+
+------------------------------------------------------------
+29. TbUsuariosCorreosEnvio (1042 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDCorreo                 Long           PK      true
+Destinatarios            Memo                   false
+DestinatariosConCopia    Memo                   false
+DestinatariosConCopiaOculMemo                   false
+Asunto                   Text                   false
+Cuerpo                   Memo                   false
+FechaEnvio               DateTime               false
+FechaCreado              DateTime               false
+URLAdjunto               Text                   false
+
+------------------------------------------------------------
+30. TbUsuariosHistoricoContrasenias (434 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+Usuario                  Text           PK      true
+PassAntigua              Text           PK      true
+FechaPass                DateTime               false
+
+------------------------------------------------------------
+31. TbUsuariosTareasDiarias (8 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+UsuarioRed               Text           PK      true
+
+------------------------------------------------------------
+32. TbVideos (16 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDVideo                  Long           PK      true
+Titulo                   Text                   false
+NombreArchivo            Text                   false
+IDAplicacion             Long                   false
+Observaciones            Memo                   false
+Descripcion              Memo                   false
+SubidoPor                Text                   false
+FechaSubido              DateTime               false
+ParaCalidad              Text                   false
+ParaAdministrador        Text                   false
+ParaTecnicos             Text                   false
+
+------------------------------------------------------------
+33. TbVideosCategorias (15 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDCategoriaVideo         Long           PK      true
+IDCategoria              Long                   false
+IDVideo                  Long                   false
+
+------------------------------------------------------------
+34. TbVideosCuestionario (0 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDVideoCuestionario      Long           PK      true
+IDCuestionario           Long                   true
+IDVideo                  Long                   false
+FechaRealizado           DateTime               false
+UsuarioRealiza           Text                   false
+Observaciones            Memo                   false
+
+------------------------------------------------------------
+35. TbVideosVisionados (138 registros)
+------------------------------------------------------------
+Campo                    Tipo           PK      Requerido
+--------------------------------------------------------------------
+IDVisionado              Long           PK      true
+IDVideo                  Long                   false
+TiempoVisionado          Long                   false
+TiempoVideo              Long                   false
+IDUsuario                Long                   false
+FechaVisionado           DateTime               false
+
+Total de tablas: 35

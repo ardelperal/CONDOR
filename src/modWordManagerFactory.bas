@@ -14,21 +14,20 @@ Option Explicit
 Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As IWordManager
     On Error GoTo errorHandler
     
-    ' Determinar configuración final
-    Dim finalConfig As IConfig
+    Dim effectiveConfig As IConfig
     If config Is Nothing Then
-        Set finalConfig = modConfigFactory.CreateConfigService()
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
     Else
-        Set finalConfig = config
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
     End If
     
     Dim wordApp As Object
     Dim errorHandler As IErrorHandlerService
-    Dim fileSystem As IFileSystem
     
-    ' Crear dependencias propagando la configuración
-    Set fileSystem = modFileSystemFactory.CreateFileSystem(finalConfig)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(finalConfig)
+    ' Crear dependencias
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     ' Crear instancia de Word y luego inicializar
     Set wordApp = CreateObject("Word.Application")

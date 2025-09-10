@@ -10,20 +10,21 @@ Option Explicit
 Public Function CreateOperationLogger(Optional ByVal config As IConfig = Nothing) As IOperationLogger
     On Error GoTo errorHandler
     
-    ' Determinar configuración final
-    Dim finalConfig As IConfig
+    Dim effectiveConfig As IConfig
     If config Is Nothing Then
-        Set finalConfig = modConfigFactory.CreateConfigService()
+        ' Si no se pasa una configuración, usar la global por defecto
+        Set effectiveConfig = modTestContext.GetTestConfig()
     Else
-        Set finalConfig = config
+        ' Si se pasa una configuración (desde un test), usarla
+        Set effectiveConfig = config
     End If
     
-    ' Crear dependencias propagando la configuración
+    ' Crear dependencias
     Dim errorHandler As IErrorHandlerService
     Dim fileSystem As IFileSystem
     
-    Set fileSystem = modFileSystemFactory.CreateFileSystem(finalConfig)
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(finalConfig)
+    Set fileSystem = modFileSystemFactory.CreateFileSystem(effectiveConfig)
+    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     ' Crear instancia real del logger
     Dim loggerInstance As COperationLogger
@@ -33,10 +34,10 @@ Public Function CreateOperationLogger(Optional ByVal config As IConfig = Nothing
     Set repositoryInstance = New COperationRepository
     
     ' Inicializar el repositorio con la configuración y errorHandler
-    repositoryInstance.Initialize finalConfig, errorHandler
+    repositoryInstance.Initialize effectiveConfig, errorHandler
     
     ' Inyectar las dependencias en el logger
-    loggerInstance.Initialize finalConfig, repositoryInstance, errorHandler
+    loggerInstance.Initialize effectiveConfig, repositoryInstance, errorHandler
     
     Set CreateOperationLogger = loggerInstance
     

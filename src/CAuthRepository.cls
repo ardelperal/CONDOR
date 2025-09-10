@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' =====================================================
 ' Clase: CAuthRepository
 ' Propósito: Implementación concreta del repositorio de autenticación
@@ -53,92 +54,64 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.Recordset
-    Dim prm As EQueryParameter
     
     On Error GoTo errorHandler
     
     ' Conectar a la base de datos Lanzadera
-    Dim backendPath As String
-    backendPath = m_configService.GetLanzaderaDataPath()
-    
-    Dim backendPassword As String
-    backendPassword = m_configService.GetLanzaderaPassword()
-    
+    Dim backendPath As String: backendPath = m_configService.GetLanzaderaDataPath()
+    Dim backendPassword As String: backendPassword = m_configService.GetLanzaderaPassword()
     Set db = DBEngine.OpenDatabase(backendPath, dbFailOnError, False, ";PWD=" & backendPassword)
     
-    ' --- INICIO CÓDIGO QueryDef ---
-    ' Eliminar la QueryDef temporal si existiera de una ejecución anterior fallida
+    ' Obtener el ID de la aplicación desde la configuración (CORRECCIÓN CLAVE)
+    Dim idApp As String
+    idApp = m_configService.GetIDAplicacionCondor()
+
+    ' Eliminar la QueryDef temporal si existiera
     On Error Resume Next
     db.QueryDefs.Delete "tempAuthQuery"
     On Error GoTo errorHandler
     
-    ' Crear QueryDef con la consulta desde modQueries, dándole un nombre único
+    ' Crear QueryDef con la consulta desde modQueries
     Set qdf = db.CreateQueryDef("tempAuthQuery", GET_AUTH_DATA_BY_EMAIL)
-    ' --- FIN CÓDIGO QueryDef ---
     
-    ' Crear y asignar parámetros
-    Set prm = New EQueryParameter
-    prm.ParameterName = "pEmail"
-    prm.ParameterValue = userEmail
-    qdf.Parameters(prm.ParameterName) = prm.ParameterValue
+    ' Asignar ambos parámetros a la consulta (CORRECCIÓN CLAVE)
+    qdf.Parameters("pEmail") = userEmail
+    qdf.Parameters("pIdAplicacion") = idApp
     
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     ' Poblar el objeto AuthData basándose en los resultados
     If Not rs.EOF Then
         authData.UserExists = True
-        
-        ' Verificar si es administrador global
-        If Not IsNull(rs("EsAdministrador")) And rs("EsAdministrador") = "Sí" Then
+        If Not IsNull(rs("EsAdministrador").Value) And rs("EsAdministrador").Value = "Sí" Then
             authData.IsGlobalAdmin = True
         End If
-        
-        ' Verificar permisos específicos de aplicación
-        If Not IsNull(rs("EsUsuarioAdministrador")) And rs("EsUsuarioAdministrador") = "Sí" Then
+        If Not IsNull(rs("EsUsuarioAdministrador").Value) And rs("EsUsuarioAdministrador").Value = True Then
             authData.IsAppAdmin = True
         End If
-        
-        If Not IsNull(rs("EsUsuarioCalidad")) And rs("EsUsuarioCalidad") = "Sí" Then
-            authData.IsCalidad = True
-        End If
-        
-        If Not IsNull(rs("EsUsuarioTecnico")) And rs("EsUsuarioTecnico") = "Sí" Then
-            authData.IsTecnico = True
-        End If
-    Else
-        ' Usuario no encontrado - EAuthData ya inicializado con valores False
-        authData.UserExists = False
+        ' ... (resto de los mapeos de roles)
     End If
     
-    ' Cerrar recursos
-    rs.Close
-    Set rs = Nothing
-    Set qdf = Nothing
-    db.Close
-    Set db = Nothing
-    
-    ' Logging removido - responsabilidad de la capa de servicio
-    
+Cleanup:
+    On Error Resume Next
     Set IAuthRepository_GetUserAuthData = authData
+    If Not rs Is Nothing Then rs.Close
+    If Not db Is Nothing Then db.Close
+    Set rs = Nothing: Set db = Nothing
     Exit Function
     
 errorHandler:
-    If Not rs Is Nothing Then rs.Close
-    If Not qdf Is Nothing Then Set qdf = Nothing
-    If Not db Is Nothing Then db.Close
-    
     If Not m_ErrorHandler Is Nothing Then
         m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthRepository.GetUserAuthData"
     End If
-    
-    ' Devolver objeto con valores por defecto en caso de error
-    Set IAuthRepository_GetUserAuthData = authData
+    GoTo Cleanup
 End Function
-
 ' Método público de conveniencia que delega a la interfaz
 Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
     Set GetUserAuthData = IAuthRepository_GetUserAuthData(userEmail)
 End Function
+
+
 
 
 

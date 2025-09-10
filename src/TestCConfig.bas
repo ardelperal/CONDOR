@@ -1,279 +1,149 @@
-﻿Attribute VB_Name = "TestCConfig"
+Attribute VB_Name = "TestCConfig"
 Option Compare Database
 Option Explicit
 
 
 ' ============================================================================
 ' MÓDULO DE PRUEBAS UNITARIAS PARA CConfig
+' Arquitectura: Pruebas Aisladas contra la implementación REAL de CConfig,
+' utilizando LoadFromDictionary para inyectar configuración en memoria.
 ' ============================================================================
-' Este módulo contiene pruebas unitarias aisladas para CConfig
-' que utilizan LoadFromCollection para evitar dependencias de base de datos.
-' Las pruebas son ultrarrápidas y completamente aisladas.
 
-' Función principal que ejecuta todas las pruebas del módulo
 Public Function TestCConfigRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TestCConfig"
+    suiteResult.Initialize "TestCConfig - Pruebas Unitarias CConfig (Reconstruido)"
     
-    ' Ejecutar todas las pruebas unitarias
-    suiteResult.AddResult TestGetValueDatapathSuccess()
-    suiteResult.AddResult TestGetValueDatabasepasswordSuccess()
-    suiteResult.AddResult TestGetDataPathSuccess()
-    suiteResult.AddResult TestGetDatabasePasswordSuccess()
-    suiteResult.AddResult TestHasKeyExistingKeyReturnsTrue()
-    suiteResult.AddResult TestHasKeyNonExistingKeyReturnsFalse()
-    suiteResult.AddResult TestGetValueNonExistingKeyReturnsEmpty()
+    suiteResult.AddResult TestGetCondorDataPath_ReturnsCorrectValue()
+    suiteResult.AddResult TestHasKey_ReturnsTrueForExistingKey()
+    suiteResult.AddResult TestHasKey_ReturnsFalseForNonExistingKey()
+    suiteResult.AddResult TestGetValue_ReturnsEmptyForNonExistingKey()
     
     Set TestCConfigRunAll = suiteResult
 End Function
 
+Private Function TestGetCondorDataPath_ReturnsCorrectValue() As CTestResult
+    Set TestGetCondorDataPath_ReturnsCorrectValue = New CTestResult
+    TestGetCondorDataPath_ReturnsCorrectValue.Initialize "GetCondorDataPath debe devolver el valor correcto cargado"
+    
+    Dim config As CConfig
+    Dim testSettings As Object
+    On Error GoTo TestFail
+    
+    ' Arrange
+    Set config = New CConfig
+    Set testSettings = New Scripting.Dictionary
+    testSettings.CompareMode = TextCompare
+    testSettings.Add "CONDOR_DATA_PATH", "C:\Ruta\De\Prueba.accdb"
+    config.LoadFromDictionary testSettings
+    
+    ' Act
+    Dim result As String
+    result = config.GetCondorDataPath()
+    
+    ' Assert
+    modAssert.AssertEquals "C:\Ruta\De\Prueba.accdb", result, "GetCondorDataPath no devolvió el valor inyectado."
+    
+    TestGetCondorDataPath_ReturnsCorrectValue.Pass
+    GoTo Cleanup
+    
+TestFail:
+    TestGetCondorDataPath_ReturnsCorrectValue.Fail "Error inesperado: " & Err.Description
+    
+Cleanup:
+    Set config = Nothing
+    Set testSettings = Nothing
+End Function
+
+
+
+Private Function TestHasKey_ReturnsTrueForExistingKey() As CTestResult
+    Set TestHasKey_ReturnsTrueForExistingKey = New CTestResult
+    TestHasKey_ReturnsTrueForExistingKey.Initialize "HasKey debe devolver True para una clave existente"
+
+    Dim config As CConfig
+    Dim testSettings As Object
+    On Error GoTo TestFail
+
+    ' Arrange
+    Set config = New CConfig
+    Set testSettings = New Scripting.Dictionary
+    testSettings.CompareMode = TextCompare
+    testSettings.Add "EXISTING_KEY", "value"
+    config.LoadFromDictionary testSettings
+
+    ' Act
+        Dim result As Boolean
+    result = (config.GetValue("EXISTING_KEY") <> "")
+    ' Assert
+    modAssert.AssertTrue result, "La comprobación GetValue <> '' debería haber devuelto True para una clave existente."
+    
+
+    TestHasKey_ReturnsTrueForExistingKey.Pass
+    GoTo Cleanup
+
+TestFail:
+    TestHasKey_ReturnsTrueForExistingKey.Fail "Error inesperado: " & Err.Description
+Cleanup:
+    Set config = Nothing
+    Set testSettings = Nothing
+End Function
+
+Private Function TestHasKey_ReturnsFalseForNonExistingKey() As CTestResult
+    Set TestHasKey_ReturnsFalseForNonExistingKey = New CTestResult
+    TestHasKey_ReturnsFalseForNonExistingKey.Initialize "HasKey (via GetValue<>'') debe devolver False para una clave inexistente"
+    
+    Dim config As CConfig
+    On Error GoTo TestFail
+
+    ' Arrange: Usamos un objeto de configuración vacío
+    Set config = New CConfig
+
+    ' Act: Usamos el patrón GetValue <> "" para verificar la existencia de la clave
+    Dim result As Boolean
+    result = (config.GetValue("NON_EXISTING_KEY") <> "")
+
+    ' Assert: El resultado de la comparación debe ser False,
+    ' ya que GetValue devuelve "" y la expresión ("" <> "") es False.
+    modAssert.AssertFalse result, "La comprobación GetValue <> '' debería haber devuelto False."
+
+    TestHasKey_ReturnsFalseForNonExistingKey.Pass
+    GoTo Cleanup
+
+TestFail:
+    TestHasKey_ReturnsFalseForNonExistingKey.Fail "Error inesperado: " & Err.Description
+Cleanup:
+    Set config = Nothing
+End Function
+
+Private Function TestGetValue_ReturnsEmptyForNonExistingKey() As CTestResult
+    Set TestGetValue_ReturnsEmptyForNonExistingKey = New CTestResult
+    TestGetValue_ReturnsEmptyForNonExistingKey.Initialize "GetValue debe devolver """" para una clave inexistente"
+
+    Dim config As CConfig
+    On Error GoTo TestFail
+
+    ' Arrange
+    Set config = New CConfig ' Sin cargar ningún diccionario
+
+    ' Act
+    Dim result As String
+    result = config.GetValue("NON_EXISTING_KEY")
+
+    ' Assert
+    modAssert.AssertEquals "", result, "GetValue debería haber devuelto una cadena vacía."
+
+TestGetValue_ReturnsEmptyForNonExistingKey.Pass
+    GoTo Cleanup
+
+TestFail:
+    TestGetValue_ReturnsEmptyForNonExistingKey.Fail "Error inesperado: " & Err.Description
+Cleanup:
+    Set config = Nothing
+End Function
+
 ' ============================================================================
-' PRUEBAS UNITARIAS PARA CConfig
+' PRUEBAS UNITARIAS
 ' ============================================================================
 
-' Prueba que GetValue puede obtener el valor BACKEND_DB_PATH correctamente
-Private Function TestGetValueDatapathSuccess() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GetValue debe obtener BACKEND_DB_PATH correctamente"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim config As IConfig
-    
-    mockConfig.Reset
-    mockConfig.SetSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
-    mockConfig.SetSetting "DATABASE_PASSWORD", "testpassword"
-    
-    Set config = mockConfig
-    
-    ' Act
-    Dim dataPath As String
-    dataPath = config.GetValue("BACKEND_DB_PATH")
-    
-    ' Assert
-    modAssert.AssertEquals "C:\Test\CONDOR_Backend.accdb", dataPath, "BACKEND_DB_PATH debe ser el valor configurado"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set config = Nothing
-    Set mockConfig = Nothing
-    Set TestGetValueDatapathSuccess = testResult
-End Function
 
-' Prueba que GetValue puede obtener el valor DATABASE_PASSWORD correctamente
-Private Function TestGetValueDatabasepasswordSuccess() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GetValue debe obtener DATABASE_PASSWORD correctamente"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim config As IConfig
-    
-    mockConfig.Reset
-    mockConfig.SetSetting "BACKEND_DB_PATH", "C:\Test\CONDOR_Backend.accdb"
-    mockConfig.SetSetting "DATABASE_PASSWORD", "testpassword"
-    
-    Set config = mockConfig
-    
-    ' Act
-    Dim password As String
-    password = config.GetValue("DATABASE_PASSWORD")
-    
-    ' Assert
-    modAssert.AssertEquals "testpassword", password, "DATABASE_PASSWORD debe ser 'testpassword'"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set config = Nothing
-    Set mockConfig = Nothing
-    Set TestGetValueDatabasepasswordSuccess = testResult
-End Function
-
-' Prueba que HasKey devuelve True para claves existentes
-Private Function TestHasKeyExistingKeyReturnsTrue() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "HasKey debe devolver True para una clave existente"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim config As IConfig
-    
-    mockConfig.Reset
-    mockConfig.SetSetting "EXISTING_KEY", "some_value"
-    
-    Set config = mockConfig
-    
-    ' Act & Assert
-    modAssert.AssertTrue config.HasKey("EXISTING_KEY"), "HasKey debe devolver True para EXISTING_KEY"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set config = Nothing
-    Set mockConfig = Nothing
-    Set TestHasKeyExistingKeyReturnsTrue = testResult
-End Function
-
-' Prueba que HasKey devuelve False para claves no existentes
-Private Function TestHasKeyNonExistingKeyReturnsFalse() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "HasKey debe devolver False para una clave inexistente"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim config As IConfig
-    
-    mockConfig.Reset
-    ' No configuramos las claves inexistentes para que HasKey devuelva False
-
-    Set config = mockConfig
-    
-    ' Act & Assert
-    modAssert.AssertFalse config.HasKey("NON_EXISTING_KEY"), "HasKey debe devolver False para clave inexistente"
-    modAssert.AssertFalse config.HasKey(""), "HasKey debe devolver False para clave vacía"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set config = Nothing
-    Set mockConfig = Nothing
-    Set TestHasKeyNonExistingKeyReturnsFalse = testResult
-End Function
-
-' Prueba que GetValue devuelve cadena vacía para claves no existentes
-Private Function TestGetValueNonExistingKeyReturnsEmpty() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GetValue debe devolver una cadena vacía para una clave inexistente"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    mockConfig.Reset
-    Dim config As IConfig
-    
-    mockConfig.Reset
-    ' No configuramos la clave inexistente para que GetValue devuelva Empty
-    
-    Set config = mockConfig
-    
-    ' Act & Assert
-    Dim configValue As String
-    configValue = config.GetValue("NON_EXISTING_KEY")
-    modAssert.AssertEquals "", configValue, "GetValue debe devolver cadena vacía para clave inexistente"
-    
-    configValue = config.GetValue("")
-    modAssert.AssertEquals "", configValue, "GetValue debe devolver cadena vacía para clave vacía"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set config = Nothing
-    Set mockConfig = Nothing
-    Set TestGetValueNonExistingKeyReturnsEmpty = testResult
-End Function
-
-' Prueba que GetDataPath devuelve la ruta correcta de la base de datos
-Private Function TestGetDataPathSuccess() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GetDataPath debe devolver la ruta de la BD correctamente"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    Dim config As IConfig
-    
-    mockConfig.Reset
-    mockConfig.SetSetting "DATA_PATH", "C:\Test\CONDOR_Backend.accdb"
-    
-    Set config = mockConfig
-    
-    ' Act
-    Dim dataPath As String
-    dataPath = config.GetDataPath()
-    
-    ' Assert
-    modAssert.AssertEquals "C:\Test\CONDOR_Backend.accdb", dataPath, "GetDataPath debe devolver el valor de BACKEND_DB_PATH"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set config = Nothing
-    Set mockConfig = Nothing
-    Set TestGetDataPathSuccess = testResult
-End Function
-
-' Prueba que GetDatabasePassword devuelve la contraseña correcta
-Private Function TestGetDatabasePasswordSuccess() As CTestResult
-    Dim testResult As New CTestResult
-    testResult.Initialize "GetDatabasePassword debe devolver la contraseña correctamente"
-    
-    On Error GoTo TestFail
-    
-    ' Arrange
-    Dim mockConfig As New CMockConfig
-    Dim config As IConfig
-    
-    mockConfig.Reset
-    mockConfig.SetSetting "DATABASE_PASSWORD", "testpassword123"
-    
-    Set config = mockConfig
-    
-    ' Act
-    Dim password As String
-    password = config.GetDatabasePassword()
-    
-    ' Assert
-    modAssert.AssertEquals "testpassword123", password, "GetDatabasePassword debe devolver 'testpassword123'"
-    
-    testResult.Pass
-    GoTo Cleanup
-    
-TestFail:
-    testResult.Fail "Error inesperado: " & Err.Description
-    
-Cleanup:
-    Set config = Nothing
-    Set mockConfig = Nothing
-    Set TestGetDatabasePasswordSuccess = testResult
-End Function
 

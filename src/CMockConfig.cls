@@ -10,122 +10,55 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-' REQUISITO DE COMPILACIÓN:
-' Este módulo utiliza Scripting.Dictionary y requiere la referencia a
-' la librería "Microsoft Scripting Runtime" para compilar correctamente.
+' REQUISITO DE COMPILACIÓN: Este módulo usa Scripting.Dictionary. Active "Microsoft Scripting Runtime".
 
 Implements IConfig
 
-Private m_Settings As Scripting.Dictionary
+Private m_Settings As Object
 
-Private Sub Class_Initialize(): Call Reset: End Sub
+Private Sub Class_Initialize(): Set m_Settings = New Scripting.Dictionary: m_Settings.CompareMode = TextCompare: End Sub
 Public Sub Reset(): Set m_Settings = New Scripting.Dictionary: m_Settings.CompareMode = TextCompare: End Sub
 
-' --- Implementación COMPLETA de la Interfaz IConfig ---
-
 Private Function IConfig_GetValue(ByVal key As String) As Variant
-    If m_Settings.Exists(key) Then
-        IConfig_GetValue = m_Settings(key)
-    Else
-        IConfig_GetValue = "" ' Devolver cadena vacía en lugar de Null o Empty
-    End If
+    If m_Settings.Exists(key) Then IConfig_GetValue = m_Settings(key) Else IConfig_GetValue = ""
 End Function
-
 Private Sub IConfig_SetSetting(ByVal key As String, ByVal value As Variant)
-    If m_Settings.Exists(key) Then
-        m_Settings(key) = value
-    Else
-        m_Settings.Add key, value
-    End If
+    If m_Settings.Exists(key) Then m_Settings(key) = value Else m_Settings.Add key, value
 End Sub
 
-Private Function IConfig_HasKey(ByVal key As String) As Boolean
-    IConfig_HasKey = m_Settings.Exists(key)
-End Function
+' --- Implementaciones Específicas ---
+Private Function IConfig_GetCondorDataPath() As String: IConfig_GetCondorDataPath = IConfig_GetValue("CONDOR_DATA_PATH"): End Function
+Private Function IConfig_GetLanzaderaDataPath() As String: IConfig_GetLanzaderaDataPath = IConfig_GetValue("LANZADERA_DATA_PATH"): End Function
+Private Function IConfig_GetExpedientesDataPath() As String: IConfig_GetExpedientesDataPath = IConfig_GetValue("EXPEDIENTES_DATA_PATH"): End Function
+Private Function IConfig_GetCorreosDBPath() As String: IConfig_GetCorreosDBPath = IConfig_GetValue("CORREOS_DB_PATH"): End Function
 
-Private Function IConfig_GetDataPath() As String
-    IConfig_GetDataPath = IConfig_GetValue("DATA_PATH")
-End Function
+Private Function IConfig_GetAttachmentsPath() As String: IConfig_GetAttachmentsPath = IConfig_GetValue("ATTACHMENTS_PATH"): End Function
 
-Private Function IConfig_GetDatabasePassword() As String
-    IConfig_GetDatabasePassword = IConfig_GetValue("DATABASE_PASSWORD")
-End Function
+' --- Contraseñas Específicas ---
+Private Function IConfig_GetCondorPassword() As String: IConfig_GetCondorPassword = IConfig_GetValue("CONDOR_PASSWORD"): End Function
+Private Function IConfig_GetLanzaderaPassword() As String: IConfig_GetLanzaderaPassword = IConfig_GetValue("LANZADERA_PASSWORD"): End Function
+Private Function IConfig_GetExpedientesPassword() As String: IConfig_GetExpedientesPassword = IConfig_GetValue("EXPEDIENTES_PASSWORD"): End Function
+Private Function IConfig_GetCorreosPassword() As String: IConfig_GetCorreosPassword = IConfig_GetValue("CORREOS_PASSWORD"): End Function
 
-Private Function IConfig_GetAttachmentsPath() As String
-    IConfig_GetAttachmentsPath = IConfig_GetValue("ATTACHMENTS_PATH")
-End Function
+' --- Configuración General ---
+Private Function IConfig_GetUsuarioActual() As String: IConfig_GetUsuarioActual = IConfig_GetValue("USUARIO_ACTUAL"): End Function
+Private Function IConfig_GetCorreoAdministrador() As String: IConfig_GetCorreoAdministrador = IConfig_GetValue("CORREO_ADMINISTRADOR"): End Function
+Private Function IConfig_GetIDAplicacionCondor() As String: IConfig_GetIDAplicacionCondor = IConfig_GetValue("ID_APLICACION_CONDOR"): End Function
 
-Private Function IConfig_GetCorreosDBPath() As String
-    IConfig_GetCorreosDBPath = IConfig_GetValue("CORREOS_DB_PATH")
-End Function
-
-Private Function IConfig_GetUsuarioActual() As String
-    IConfig_GetUsuarioActual = IConfig_GetValue("USUARIO_ACTUAL")
-End Function
-
-Private Function IConfig_GetCorreoAdministrador() As String
-    IConfig_GetCorreoAdministrador = IConfig_GetValue("CORREO_ADMINISTRADOR")
-End Function
-
-Private Function IConfig_GetIDAplicacionCondor() As String
-    IConfig_GetIDAplicacionCondor = IConfig_GetValue("ID_APLICACION_CONDOR")
-End Function
-
-Private Function IConfig_GetLanzaderaDataPath() As String
-    IConfig_GetLanzaderaDataPath = IConfig_GetValue("LANZADERA_DATA_PATH")
-End Function
-
-Private Function IConfig_GetLanzaderaPassword() As String
-    IConfig_GetLanzaderaPassword = IConfig_GetValue("LANZADERA_PASSWORD")
-End Function
-
-' --- MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24) ---
+' --- Métodos Públicos de Conveniencia ---
+Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
+    Call IConfig_SetSetting(key, value)
+End Sub
 
 Public Function GetValue(ByVal key As String) As Variant
     GetValue = IConfig_GetValue(key)
 End Function
 
 Public Function HasKey(ByVal key As String) As Boolean
-    HasKey = IConfig_HasKey(key)
+    HasKey = m_Settings.Exists(key)
 End Function
 
-Public Function GetDataPath() As String
-    GetDataPath = IConfig_GetDataPath()
+Public Function GetAllKeys() As Variant
+    GetAllKeys = m_Settings.Keys
 End Function
-
-Public Function GetDatabasePassword() As String
-    GetDatabasePassword = IConfig_GetDatabasePassword()
-End Function
-
-Public Function GetAttachmentsPath() As String
-    GetAttachmentsPath = IConfig_GetAttachmentsPath()
-End Function
-
-Public Function GetCorreosDBPath() As String
-    GetCorreosDBPath = IConfig_GetCorreosDBPath()
-End Function
-
-Public Function GetUsuarioActual() As String
-    GetUsuarioActual = IConfig_GetUsuarioActual()
-End Function
-
-Public Function GetCorreoAdministrador() As String
-    GetCorreoAdministrador = IConfig_GetCorreoAdministrador()
-End Function
-
-Public Function GetIDAplicacionCondor() As String
-    GetIDAplicacionCondor = IConfig_GetIDAplicacionCondor()
-End Function
-
-Public Function GetLanzaderaDataPath() As String
-    GetLanzaderaDataPath = IConfig_GetLanzaderaDataPath()
-End Function
-
-Public Function GetLanzaderaPassword() As String
-    GetLanzaderaPassword = IConfig_GetLanzaderaPassword()
-End Function
-
-Public Sub SetSetting(ByVal key As String, ByVal value As Variant)
-    Call IConfig_SetSetting(key, value)
-End Sub
 

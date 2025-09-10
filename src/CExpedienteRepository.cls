@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -67,7 +67,7 @@ Private Function IExpedienteRepository_ObtenerExpedientePorNemotecnico(ByVal Nem
     Set IExpedienteRepository_ObtenerExpedientePorNemotecnico = New EExpediente
 End Function
 
-Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
+Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() As Object
     ' TODO: Implementar lógica de base de datos
     Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = New Scripting.Dictionary
 End Function
@@ -82,7 +82,7 @@ Public Function ObtenerExpedientePorNemotecnico(ByVal Nemotecnico As String) As 
     Set ObtenerExpedientePorNemotecnico = IExpedienteRepository_ObtenerExpedientePorNemotecnico(Nemotecnico)
 End Function
 
-Public Function ObtenerExpedientesActivosParaSelector() As Scripting.Dictionary
+Public Function ObtenerExpedientesActivosParaSelector() As Object
     Set ObtenerExpedientesActivosParaSelector = IExpedienteRepository_ObtenerExpedientesActivosParaSelector()
 End Function
 
@@ -92,10 +92,10 @@ Private Function GetDatabaseConnection() As DAO.Database
     On Error GoTo errorHandler
     
     Dim dbPath As String
-    dbPath = m_Config.GetValue("ExpedientesDBPath")
+    dbPath = m_Config.GetExpedientesDataPath()
     
     Dim dbPassword As String
-    dbPassword = m_Config.GetDatabasePassword()
+    dbPassword = m_Config.GetExpedientesPassword()
     
     If Dir(dbPath) = "" Then
         Err.Raise vbObjectError + 1001, MODULE_NAME, "La base de datos de expedientes no se encontró en la ruta: " & dbPath
@@ -115,11 +115,11 @@ Private Function MapRecordsetToExpediente(ByVal rs As DAO.Recordset) As EExpedie
     Dim expediente As New EExpediente
     
     ' Mapeo completo y seguro de propiedades
-    expediente.idExpediente = Nz(rs!idExpediente, 0)
-    expediente.Nemotecnico = Nz(rs!Nemotecnico, "")
-    expediente.Titulo = Nz(rs!Titulo, "")
-    expediente.ContratistaPrincipal = Nz(rs!ContratistaPrincipal, "")
-    expediente.Pecal = Nz(rs!Pecal, "")
+    expediente.idExpediente = Nz(rs!idExpediente.Value, 0)
+    expediente.Nemotecnico = Nz(rs!Nemotecnico.Value, "")
+    expediente.Titulo = Nz(rs!Titulo.Value, "")
+    expediente.ContratistaPrincipal = Nz(rs!ContratistaPrincipal.Value, "")
+    expediente.Pecal = Nz(rs!Pecal.Value, "")
     
     Set MapRecordsetToExpediente = expediente
     

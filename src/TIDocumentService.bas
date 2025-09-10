@@ -3,172 +3,127 @@ Option Compare Database
 Option Explicit
 
 ' =====================================================
-' Módulo: IntegrationTestDocumentService
+' Módulo: TIDocumentService
 ' Descripción: Pruebas de integración para CDocumentService
-' Versión: 3.0 (Refactorización completa)
+' Versión: 3.1 (Consolidada y robustecida)
 ' =====================================================
 
+Private Sub SuiteSetup()
+    On Error GoTo ErrorHandler
+    
+    Dim fs As IFileSystem
+    Dim config As IConfig
+    Dim db As DAO.Database
+    
+    ' 1. OBTENER CONFIGURACIÓN Y SISTEMA DE FICHEROS
+    Set config = modTestContext.GetTestConfig()
+    Set fs = modFileSystemFactory.CreateFileSystem()
+    
+    ' 2. PREPARAR SISTEMA DE ARCHIVOS Y APROVISIONAR PLANTILLA
+    Dim testTemplatesPath As String: testTemplatesPath = config.GetValue("TEMPLATES_PATH")
+    fs.CreateFolder testTemplatesPath ' Crear la carpeta de plantillas en el workspace
+    
+    Dim productionTemplatePath As String: productionTemplatePath = config.GetValue("PRODUCTION_TEMPLATES_PATH") & config.GetValue("TEMPLATE_PC_FILENAME")
+    Dim testTemplatePath As String: testTemplatePath = testTemplatesPath & config.GetValue("TEMPLATE_PC_FILENAME")
+    
+    fs.CopyFile productionTemplatePath, testTemplatePath ' Copiar la plantilla para el test
+    
+    ' 3. PREPARAR BASE DE DATOS (SEMBRADO IDEMPOTENTE)
+    Dim dbPath As String: dbPath = config.GetCondorDataPath()
+    
+    If Not fs.FileExists(dbPath) Then
+        Err.Raise vbObjectError + 1001, "TIDocumentService.SuiteSetup", "La base de datos de prueba no fue encontrada en la ruta: " & dbPath
+    End If
+    
+    Set db = DBEngine.OpenDatabase(dbPath, False, False)
+    
+    db.Execute "DELETE FROM tbSolicitudes WHERE idSolicitud = 1", dbFailOnError
+    db.Execute "DELETE FROM tbMapeoCampos WHERE nombrePlantilla = 'PC'", dbFailOnError
+    
+    db.Execute "INSERT INTO tbSolicitudes (idSolicitud, idExpediente, tipoSolicitud, codigoSolicitud, idEstadoInterno, usuarioCreacion, fechaCreacion) " & _
+               "VALUES (1, 999, 'PC', 'COD-001', 1, 'test_user', Now())", dbFailOnError
+               
+    db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) " & _
+               "VALUES ('PC', 'codigoSolicitud', 'BookmarkCodigo')", dbFailOnError
+    db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) " & _
+               "VALUES ('PC', 'usuarioCreacion', 'BookmarkUsuario')", dbFailOnError
+               
+    db.Close
+    
+    Exit Sub
+    
+ErrorHandler:
+    If Not db Is Nothing Then db.Close
+    Set db = Nothing
+    Set fs = Nothing
+    Set config = Nothing
+    Err.Raise Err.Number, "TIDocumentService.SuiteSetup", Err.Description
+End Sub
 
-' --- Constantes para el entorno de prueba ---
-Private Const TEST_ENV_PATH As String = "back\test_db\active\doc_service_test\"
-Private Const TEST_TEMPLATES_PATH As String = TEST_ENV_PATH & "templates\"
-Private Const TEST_GENERATED_PATH As String = TEST_ENV_PATH & "generated\"
-Private Const TEST_DB_ACTIVE_PATH As String = TEST_ENV_PATH & "CONDOR_integration_test.accdb"
-Private Const SOURCE_TEMPLATE_FILE As String = "back\recursos\Plantillas\PC.docx"
-Private Const DB_TEMPLATE_FILE As String = "back\test_db\templates\CONDOR_test_template.accdb"
-
-' --- Variables eliminadas - ahora se declaran localmente en cada función ---
-
-' =====================================================
-' FUNCIÓN PRINCIPAL DEL FRAMEWORK ESTÁNDAR
-' =====================================================
 Public Function TIDocumentServiceRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
     suiteResult.Initialize "TIDocumentService"
+    
+    On Error GoTo CleanupSuite
 
-    Call suiteResult.AddResult(TestGenerarDocumentoSuccess())
-
+    Call SuiteSetup
+    suiteResult.AddResult TestGenerarDocumentoSuccess()
+    
+CleanupSuite:
+    Call SuiteTeardown
+    If Err.Number <> 0 Then
+        Dim errorTest As New CTestResult
+        errorTest.Initialize "Suite_Execution_Error"
+        errorTest.Fail "La suite falló de forma catastrófica: " & Err.Description
+        suiteResult.AddResult errorTest
+    End If
+    
     Set TIDocumentServiceRunAll = suiteResult
 End Function
 
-' =====================================================
-' FUNCIONES SETUP Y TEARDOWN ELIMINADAS
-' Cada función de prueba maneja sus propios recursos
-' =====================================================
-
-' =====================================================
-' TEST DE INTEGRACIÓN PRINCIPAL
-' =====================================================
 Private Function TestGenerarDocumentoSuccess() As CTestResult
     Set TestGenerarDocumentoSuccess = New CTestResult
-    TestGenerarDocumentoSuccess.Initialize "GenerarDocumento debe crear un archivo Word con datos reales"
+    TestGenerarDocumentoSuccess.Initialize "GenerarDocumento debe crear un archivo Word con datos reales de la BD"
 
+    Dim documentService As IDocumentService
+    Dim fs As IFileSystem
+    Dim config As IConfig
+    
     On Error GoTo TestFail
 
-    ' Declarar variables locales
-    Dim config As IConfig
-    Dim solicitudService As ISolicitudService
-    Dim mapeoRepo As IMapeoRepository
-    Dim wordManager As IWordManager
-    Dim operationLogger As IOperationLogger
-    Dim errorHandler As IErrorHandlerService
-    Dim documentService As IDocumentService
-    Dim fileSystem As IFileSystem
-    Dim expedienteRepo As IExpedienteRepository
-
-    ' ARRANGE: Preparar el entorno de prueba
-    Set fileSystem = modFileSystemFactory.CreateFileSystem()
-
-    ' 1. Crear estructura de directorios de prueba
-    fileSystem.CreateFolder modTestUtils.GetProjectPath() & TEST_ENV_PATH
-    fileSystem.CreateFolder modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH
-    fileSystem.CreateFolder modTestUtils.GetProjectPath() & TEST_GENERATED_PATH
-
-    ' 2. Aprovisionar BD de prueba
-    modTestUtils.PrepareTestDatabase modTestUtils.GetProjectPath() & DB_TEMPLATE_FILE, modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH
-
-    ' 3. Aprovisionar plantilla de Word de prueba
-    fileSystem.CopyFile modTestUtils.GetProjectPath() & SOURCE_TEMPLATE_FILE, modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH & "PC.docx"
-
-    ' 4. Insertar datos necesarios en la BD de prueba
-    InsertTestData
-
-    ' 5. Inicializar todas las dependencias en el orden correcto
-    InitializeRealDependencies config, solicitudService, mapeoRepo, wordManager, operationLogger, errorHandler, documentService, fileSystem, expedienteRepo
-
-    ' Obtener la solicitud de prueba (ID 999) que hemos insertado
-    Dim solicitudPrueba As ESolicitud
-    Set solicitudPrueba = solicitudService.ObtenerSolicitudPorId(999)
-    modAssert.AssertNotNull solicitudPrueba, "La solicitud de prueba no se pudo cargar desde la BD."
-
-    ' ACT: Ejecutar el método principal a probar
+    Set config = modTestContext.GetTestConfig()
+    Set fs = modFileSystemFactory.CreateFileSystem(config)
+    Set documentService = modDocumentServiceFactory.CreateDocumentService(config)
+    
     Dim rutaGenerada As String
-    rutaGenerada = documentService.GenerarDocumento(solicitudPrueba)
+    rutaGenerada = documentService.GenerarDocumento(1)
 
-    ' ASSERT: Verificar los resultados
     modAssert.AssertNotEquals "", rutaGenerada, "La ruta del documento generado no debe estar vacía."
-    modAssert.AssertTrue fileSystem.FileExists(rutaGenerada), "El archivo generado debe existir en el disco."
-
+    modAssert.AssertTrue fs.FileExists(rutaGenerada), "El archivo generado debe existir en el disco."
+    
     TestGenerarDocumentoSuccess.Pass
     GoTo Cleanup
 
 TestFail:
-    TestGenerarDocumentoSuccess.Fail "Error en tiempo de ejecución: " & Err.Description & " en línea " & Erl
-
-Cleanup:
-    Call Teardown
+    TestGenerarDocumentoSuccess.Fail "Error: " & Err.Description
     
-    ' Liberar todos los objetos
-    Set config = Nothing
-    Set solicitudService = Nothing
-    Set mapeoRepo = Nothing
-    Set wordManager = Nothing
-    Set operationLogger = Nothing
-    Set errorHandler = Nothing
+Cleanup:
     Set documentService = Nothing
-    Set fileSystem = Nothing
-    Set expedienteRepo = Nothing
+    Set fs = Nothing
+    Set config = Nothing
 End Function
 
-' =====================================================
-' TEARDOWN - LIMPIEZA ROBUSTA DEL ENTORNO DE PRUEBA
-' =====================================================
-Private Sub Teardown()
-    On Error Resume Next ' Blindaje contra cualquier error en la limpieza
+Private Sub SuiteTeardown()
+    On Error Resume Next
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
-    
-    ' Usar el nuevo método de borrado recursivo
-    fs.DeleteFolderRecursive modTestUtils.GetProjectPath() & TEST_ENV_PATH
-    
+    fs.DeleteFolderRecursive modTestUtils.GetWorkspacePath() & "doc_service_test\"
     Set fs = Nothing
 End Sub
 
-' =====================================================
-' MÉTODOS AUXILIARES PRIVADOS
-' =====================================================
-Private Sub InitializeRealDependencies(ByRef config As IConfig, ByRef solicitudService As ISolicitudService, _
-                                       ByRef mapeoRepo As IMapeoRepository, ByRef wordManager As IWordManager, _
-                                       ByRef operationLogger As IOperationLogger, ByRef errorHandler As IErrorHandlerService, _
-                                       ByRef documentService As IDocumentService, ByRef fileSystem As IFileSystem, _
-                                       ByRef expedienteRepo As IExpedienteRepository)
-    ' Crea e inicializa todas las dependencias en el orden correcto
 
-    ' 1. Crear configuración de prueba
-    Set config = modConfigFactory.CreateConfigService()
-    config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH
-    config.SetSetting "DB_PASSWORD", "" ' La BD de prueba no tiene contraseña
-    config.SetSetting "PLANTILLA_PATH", modTestUtils.GetProjectPath() & TEST_TEMPLATES_PATH
-    config.SetSetting "GENERATED_DOCS_PATH", modTestUtils.GetProjectPath() & TEST_GENERATED_PATH
 
-    ' 2. Crear servicios y repositorios propagando la configuración de prueba
-    '    CORRECCIÓN CRÍTICA: Propagar config a TODAS las factorías para evitar configuraciones vacías
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
-    Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(config)
-    Set wordManager = modWordManagerFactory.CreateWordManager(config)
-    Set solicitudService = modSolicitudServiceFactory.CreateSolicitudService(config)
-    Set mapeoRepo = modRepositoryFactory.CreateMapeoRepository(config)
 
-    ' 3. Finalmente, crear el servicio principal a probar propagando la configuración
-    '    La factoría se encargará de crear y conectar todas las piezas con la configuración correcta
-    Set documentService = modDocumentServiceFactory.CreateDocumentService(config)
-
-End Sub
-
-Private Sub InsertTestData()
-    ' Inserta el mínimo de datos necesarios en la BD de prueba activa
-    Dim db As DAO.Database
-    Set db = DBEngine.OpenDatabase(modTestUtils.GetProjectPath() & TEST_DB_ACTIVE_PATH)
-
-    db.Execute "INSERT INTO tbSolicitudes (idSolicitud, tipoSolicitud, codigoSolicitud, idExpediente) VALUES (999, 'PC', 'TEST-001', 1)"
-    ' CORRECCIÓN: Usar un campo real de la tabla tbDatosPC
-    db.Execute "INSERT INTO tbDatosPC (idSolicitud, refContratoInspeccionOficial) VALUES (999, 'DATO_PRUEBA_CONTRATO')"
-    ' CORRECCIÓN: Alinear el mapeo con el campo real
-    db.Execute "INSERT INTO tbMapeoCampos (nombrePlantilla, nombreCampoTabla, nombreCampoWord) VALUES ('PC', 'refContratoInspeccionOficial', 'MARCADOR_CONTRATO')"
-
-    db.Close
-    Set db = Nothing
-End Sub
 
 
 

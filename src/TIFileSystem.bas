@@ -2,39 +2,52 @@ Attribute VB_Name = "TIFileSystem"
 Option Compare Database
 Option Explicit
 
-Private Const TEST_DIR As String = "condor_test_fs"
-Private Const TEST_FILE As String = "test_file.txt"
+Private Const TEST_DIR As String = "fs_tests\"
 
-Private Function GetTestPath() As String
-    GetTestPath = modTestUtils.GetProjectPath & TEST_DIR
-End Function
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO)
+' ============================================================================
 
 Public Function TIFileSystemRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
-    suiteResult.Initialize "TIFileSystem"
+    suiteResult.Initialize "TIFileSystem (Estándar de Oro)"
     
+    On Error GoTo CleanupSuite
+    
+    Call SuiteSetup
     suiteResult.AddResult TestCreateAndFolderExists()
     suiteResult.AddResult TestCreateAndDeleteFile()
+    
+CleanupSuite:
+    
+    If Err.Number <> 0 Then
+        Dim errorTest As New CTestResult
+        errorTest.Initialize "Suite_Execution_Failed"
+        errorTest.Fail "La suite falló de forma catastrófica: " & Err.Description
+        suiteResult.AddResult errorTest
+    End If
     
     Set TIFileSystemRunAll = suiteResult
 End Function
 
-Private Sub Setup()
-    On Error Resume Next
-    Teardown
-    On Error GoTo 0
+' ============================================================================
+' PROCEDIMIENTOS HELPER DE LA SUITE
+' ============================================================================
+
+Private Sub SuiteSetup()
+    ' Asegurarse de que el entorno está limpio antes de empezar
+    
     
     Dim fs As IFileSystem
     Set fs = modFileSystemFactory.CreateFileSystem()
-    fs.CreateFolder GetTestPath
+    fs.CreateFolder modTestUtils.GetWorkspacePath() & TEST_DIR
+    Set fs = Nothing
 End Sub
 
-Private Sub Teardown()
-    On Error Resume Next
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    fs.DeleteFolderRecursive GetTestPath
-End Sub
+
+' ============================================================================
+' TESTS INDIVIDUALES
+' ============================================================================
 
 Private Function TestCreateAndFolderExists() As CTestResult
     Set TestCreateAndFolderExists = New CTestResult
@@ -44,20 +57,16 @@ Private Function TestCreateAndFolderExists() As CTestResult
     On Error GoTo TestFail
     
     ' Arrange
-    Call Setup
     Set fs = modFileSystemFactory.CreateFileSystem()
     
     ' Assert
-    modAssert.AssertTrue fs.FolderExists(GetTestPath), "La carpeta de prueba debería existir después del Setup."
+    modAssert.AssertTrue fs.FolderExists(modTestUtils.GetWorkspacePath() & TEST_DIR), "La carpeta de prueba debería existir después del SuiteSetup."
     
     TestCreateAndFolderExists.Pass
-    GoTo Cleanup
+    Exit Function
     
 TestFail:
     TestCreateAndFolderExists.Fail Err.Description
-    
-Cleanup:
-    Call Teardown
 End Function
 
 Private Function TestCreateAndDeleteFile() As CTestResult
@@ -66,17 +75,16 @@ Private Function TestCreateAndDeleteFile() As CTestResult
     
     Dim fs As IFileSystem
     Dim testFilePath As String
+    Dim fso As Object
     On Error GoTo TestFail
     
     ' Arrange
-    Call Setup
     Set fs = modFileSystemFactory.CreateFileSystem()
-    testFilePath = GetTestPath & "\" & TEST_FILE
+    testFilePath = modTestUtils.GetWorkspacePath() & TEST_DIR & "test_file.txt"
     
     ' Crear un fichero dummy para copiar
     Dim tempSourcePath As String
-    tempSourcePath = GetTestPath & "\source.txt"
-    Dim fso As Object
+    tempSourcePath = modTestUtils.GetWorkspacePath() & TEST_DIR & "source.txt"
     Set fso = CreateObject("Scripting.FileSystemObject")
     fso.CreateTextFile(tempSourcePath, True).Write "test"
     
@@ -85,17 +93,17 @@ Private Function TestCreateAndDeleteFile() As CTestResult
     
     ' Assert
     modAssert.AssertTrue fs.FileExists(testFilePath), "El archivo copiado debería existir."
+    
     fs.DeleteFile testFilePath
     modAssert.AssertFalse fs.FileExists(testFilePath), "El archivo eliminado no debería existir."
     
     TestCreateAndDeleteFile.Pass
     GoTo Cleanup
-    
+
 TestFail:
     TestCreateAndDeleteFile.Fail Err.Description
     
 Cleanup:
-    Call Teardown
+    Set fs = Nothing
+    Set fso = Nothing
 End Function
-
-

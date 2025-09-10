@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -27,6 +27,8 @@ Public UltimaLlamada_Destinatarios As String
 Public UltimaLlamada_Asunto As String
 Public UltimaLlamada_CuerpoHTML As String
 Public UltimaLlamada_URLAdjunto As String
+Public UltimaLlamada_ConCopia As String
+Public UltimaLlamada_ConCopiaOculta As String
 Public NumeroLlamadas As Long
 Public SimularError As Boolean
 Public ValorRetorno As Boolean
@@ -47,6 +49,8 @@ Public Sub Reset()
     UltimaLlamada_Asunto = ""
     UltimaLlamada_CuerpoHTML = ""
     UltimaLlamada_URLAdjunto = ""
+    UltimaLlamada_ConCopia = ""
+    UltimaLlamada_ConCopiaOculta = ""
     NumeroLlamadas = 0
 End Sub
 
@@ -55,6 +59,8 @@ Private Function INotificationService_SendNotification( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
+    Optional ByVal conCopia As String = "", _
+    Optional ByVal conCopiaOculta As String = "", _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
     
@@ -66,6 +72,8 @@ Private Function INotificationService_SendNotification( _
     UltimaLlamada_Asunto = asunto
     UltimaLlamada_CuerpoHTML = cuerpoHTML
     UltimaLlamada_URLAdjunto = urlAdjunto
+    UltimaLlamada_ConCopia = conCopia
+    UltimaLlamada_ConCopiaOculta = conCopiaOculta
     
     ' Simular error si está configurado
     If SimularError Then
@@ -81,10 +89,12 @@ Public Function SendNotification( _
     ByVal destinatarios As String, _
     ByVal asunto As String, _
     ByVal cuerpoHTML As String, _
+    Optional ByVal conCopia As String = "", _
+    Optional ByVal conCopiaOculta As String = "", _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
     ' Delegar a la implementación de la interfaz
-    SendNotification = INotificationService_SendNotification(destinatarios, asunto, cuerpoHTML, urlAdjunto)
+    SendNotification = INotificationService_SendNotification(destinatarios, asunto, cuerpoHTML, conCopia, conCopiaOculta, urlAdjunto)
 End Function
 
 ' Método helper para verificar si se llamó con parámetros específicos

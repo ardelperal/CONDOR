@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -43,7 +43,16 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
 
     ' Logging de auditoría: Consulta de rol de usuario
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "ROLE_QUERY", "Consultando rol para usuario: " & userEmail, "CAuthService.GetUserRole"
+        Dim logEntry As EOperationLog
+        Set logEntry = New EOperationLog
+        With logEntry
+            .tipoOperacion = "ROLE_QUERY"
+            .idEntidadAfectada = 0
+            .usuario = userEmail
+            .resultado = "Info"
+            .descripcion = "Iniciando consulta de rol para usuario: " & userEmail
+        End With
+        m_OperationLogger.LogOperation logEntry
     End If
 
     Dim role As UserRole
@@ -87,7 +96,16 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
             Case RolTecnico: roleText = "Técnico"
             Case Else: roleText = "Desconocido"
         End Select
-        m_OperationLogger.LogOperation "ROLE_ASSIGNED", "Rol asignado a " & userEmail & ": " & roleText, "CAuthService.GetUserRole"
+        Dim logResultEntry As EOperationLog
+        Set logResultEntry = New EOperationLog
+        With logResultEntry
+            .tipoOperacion = "ROLE_QUERY"
+            .idEntidadAfectada = 0
+            .usuario = userEmail
+            .resultado = "Success"
+            .descripcion = "Rol asignado a " & userEmail & ": " & roleText
+        End With
+        m_OperationLogger.LogOperation logResultEntry
     End If
     
     IAuthService_GetUserRole = role
@@ -99,7 +117,17 @@ errorHandler:
         Set authData = Nothing
     End If
     If Not m_OperationLogger Is Nothing Then
-        m_OperationLogger.LogOperation "ROLE_ERROR", "Error consultando rol para " & userEmail & ": " & Err.Description, "CAuthService.GetUserRole"
+        Dim logErrorEntry As EOperationLog
+        Set logErrorEntry = New EOperationLog
+        With logErrorEntry
+            .tipoOperacion = "ROLE_QUERY"
+            .idEntidadAfectada = 0
+            .usuario = userEmail
+            .resultado = "Crash"
+            .descripcion = "Error fatal consultando rol para " & userEmail
+            .detalles = Err.Description
+        End With
+        m_OperationLogger.LogOperation logErrorEntry
     End If
     If Not m_ErrorHandler Is Nothing Then
         m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthService.GetUserRole"
@@ -119,6 +147,16 @@ End Function
 
 Public Function AuthenticateUser(ByVal userEmail As String, ByVal password As String) As Boolean
     AuthenticateUser = IAuthService_AuthenticateUser(userEmail, password)
+End Function
+
+' Implementación del nuevo método de la interfaz
+Private Function IAuthService_GetCurrentUserEmail() As String
+    IAuthService_GetCurrentUserEmail = configSvc.GetUsuarioActual()
+End Function
+
+' Método público de conveniencia
+Public Function GetCurrentUserEmail() As String
+    GetCurrentUserEmail = IAuthService_GetCurrentUserEmail()
 End Function
 
 

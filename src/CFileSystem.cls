@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Implements IFileSystem
 
 ' =====================================================
@@ -26,7 +27,7 @@ Implements IFileSystem
 ' para facilitar las pruebas unitarias con mocks
 
 Private fso As Object ' Scripting.FileSystemObject
-Private m_config As IConfig
+Private m_Config As IConfig
 
 ' ============================================================================
 ' CONSTRUCTOR Y DESTRUCTOR
@@ -34,7 +35,7 @@ Private m_config As IConfig
 
 Private Sub Class_Terminate()
     Set fso = Nothing
-    Set m_config = Nothing
+    Set m_Config = Nothing
 End Sub
 
 ' ============================================================================
@@ -42,7 +43,7 @@ End Sub
 ' ============================================================================
 
 Public Sub Initialize(ByVal config As IConfig)
-    Set m_config = config
+    Set m_Config = config
     Set fso = CreateObject("Scripting.FileSystemObject")
 End Sub
 
@@ -77,7 +78,29 @@ End Sub
 
 ' Implementa la creación de carpetas
 Private Sub IFileSystem_CreateFolder(ByVal Path As String)
-    fso.CreateFolder Path
+    On Error GoTo ErrorHandler
+    If Len(Path) = 0 Then Exit Sub
+    Dim parent As String: parent = fso.GetParentFolderName(Path)
+    If Len(parent) > 0 And Not fso.FolderExists(parent) Then
+        IFileSystem_CreateFolder parent
+    End If
+    If Not fso.FolderExists(Path) Then fso.CreateFolder Path
+    Exit Sub
+ErrorHandler:
+    Err.Raise Err.Number, "CFileSystem.CreateFolder", _
+              "No se pudo crear la carpeta: " & Path & " - " & Err.Description
+End Sub
+
+' Helper privada para creación recursiva de carpetas
+Private Sub CreateFolderRecursive(ByVal folderPath As String)
+    On Error GoTo Fail
+    If fso.FolderExists(folderPath) Then Exit Sub
+    Dim parentPath As String: parentPath = fso.GetParentFolderName(folderPath)
+    If Len(parentPath) > 0 And Not fso.FolderExists(parentPath) Then CreateFolderRecursive parentPath
+    fso.CreateFolder folderPath
+    Exit Sub
+Fail:
+    Err.Raise Err.Number, "CFileSystem.CreateFolderRecursive", Err.Description
 End Sub
 
 ' Implementa la eliminación de carpetas
@@ -87,11 +110,35 @@ End Sub
 
 ' Implementa la eliminación recursiva de carpetas
 Private Sub IFileSystem_DeleteFolderRecursive(ByVal Path As String)
-    On Error Resume Next
-    If fso.FolderExists(Path) Then
-        fso.DeleteFolder Path, True ' El True fuerza el borrado recursivo
-    End If
-    On Error GoTo 0
+
+    Dim subFolder As Object ' Folder
+    Dim file As Object      ' File
+    Dim folder As Object    ' Folder
+    
+    On Error GoTo ErrorHandler ' Manejo de errores centralizado
+    
+    If Not fso.FolderExists(Path) Then Exit Sub
+    
+    Set folder = fso.GetFolder(Path)
+    
+    ' 1. Borrar todos los ficheros dentro de la carpeta actual
+    For Each file In folder.Files
+        file.Delete True ' True = forzar borrado si es de solo lectura
+    Next file
+    
+    ' 2. Llamar recursivamente para cada subcarpeta
+    For Each subFolder In folder.SubFolders
+        Call IFileSystem_DeleteFolderRecursive(subFolder.Path)
+    Next subFolder
+    
+    ' 3. Borrar la carpeta actual, que ahora está vacía
+    folder.Delete True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ' No enmascarar el error, simplemente salir. El On Error del llamador lo gestionará.
+    ' Esto nos permitirá ver si hay un error de "Permiso denegado" por un fichero bloqueado.
 End Sub
 
 ' Implementa la escritura de líneas a archivo
@@ -145,6 +192,8 @@ End Sub
 Public Sub WriteLineToFile(ByVal filePath As String, ByVal line As String)
     Call IFileSystem_WriteLineToFile(filePath, line)
 End Sub
+
+
 
 
 

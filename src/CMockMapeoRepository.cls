@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -14,7 +14,7 @@ Implements IMapeoRepository
 
 ' --- Variable de estado para configurar el comportamiento ---
 Private m_GetMapeoPorTipo_Result As EMapeo
-Private m_ObtenerMapeosPorCategoria_Result As Scripting.Dictionary
+Private m_ObtenerMapeosPorCategoria_Result As Object
 
 ' Constructor
 Private Sub Class_Initialize()
@@ -26,7 +26,7 @@ Public Sub ConfigureGetMapeoPorTipo(ByVal mapeo As EMapeo)
     Set m_GetMapeoPorTipo_Result = mapeo
 End Sub
 
-Public Sub ConfigureObtenerMapeosPorCategoria(ByVal mapeos As Scripting.Dictionary)
+Public Sub ConfigureObtenerMapeosPorCategoria(ByVal mapeos As Object)
     Set m_ObtenerMapeosPorCategoria_Result = mapeos
 End Sub
 
@@ -51,11 +51,11 @@ Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
     Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
 End Function
 
-Private Function IMapeoRepository_ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
+Private Function IMapeoRepository_ObtenerMapeosPorCategoria(ByVal categoria As String) As Object
     Set IMapeoRepository_ObtenerMapeosPorCategoria = m_ObtenerMapeosPorCategoria_Result
 End Function
 
-Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
+Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Object
     Set ObtenerMapeosPorCategoria = IMapeoRepository_ObtenerMapeosPorCategoria(categoria)
 End Function
 

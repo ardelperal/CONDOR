@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -38,6 +38,12 @@ Private m_SaveSolicitudReturnValue As Long
 Private m_CreateSolicitudCallCount As Long
 Private m_SaveSolicitudCallCount As Long
 
+' Propiedades para el nuevo método CambiarEstadoSolicitud
+Private m_CambiarEstado_WasCalled As Boolean
+Private m_CambiarEstado_LastSolicitudId As Long
+Private m_CambiarEstado_LastNuevoEstadoId As Long
+Private m_CambiarEstado_ReturnValue As Boolean
+
 ' Constructor
 Private Sub Class_Initialize()
     Reset
@@ -72,6 +78,18 @@ Public Property Get SaveSolicitudCallCount() As Long
     SaveSolicitudCallCount = m_SaveSolicitudCallCount
 End Property
 
+Public Property Get CambiarEstadoSolicitud_WasCalled() As Boolean
+    CambiarEstadoSolicitud_WasCalled = m_CambiarEstado_WasCalled
+End Property
+
+Public Property Get CambiarEstadoSolicitud_LastSolicitudId() As Long
+    CambiarEstadoSolicitud_LastSolicitudId = m_CambiarEstado_LastSolicitudId
+End Property
+
+Public Property Get CambiarEstadoSolicitud_LastNuevoEstadoId() As Long
+    CambiarEstadoSolicitud_LastNuevoEstadoId = m_CambiarEstado_LastNuevoEstadoId
+End Property
+
 ' Métodos para configurar valores de retorno
 Public Sub ConfigureCreateSolicitud(ByRef solicitud As ESolicitud)
     Set m_CreateSolicitudReturnValue = solicitud
@@ -83,6 +101,10 @@ End Sub
 
 Public Sub ConfigureObtenerSolicitudPorId(ByVal result As ESolicitud)
     Set m_ObtenerSolicitudPorId_Result = result
+End Sub
+
+Public Sub ConfigureCambiarEstadoSolicitud(ByVal returnValue As Boolean)
+    m_CambiarEstado_ReturnValue = returnValue
 End Sub
 
 ' Método para resetear el estado del mock
@@ -97,6 +119,10 @@ Public Sub Reset()
     m_CreateSolicitudCallCount = 0
     m_SaveSolicitudCallCount = 0
     Set m_ObtenerSolicitudPorId_Result = Nothing
+    m_CambiarEstado_WasCalled = False
+    m_CambiarEstado_LastSolicitudId = 0
+    m_CambiarEstado_LastNuevoEstadoId = 0
+    m_CambiarEstado_ReturnValue = False
 End Sub
 
 ' Implementación de ISolicitudService
@@ -121,6 +147,13 @@ Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal SolicitudID As Lo
     Set ISolicitudService_ObtenerSolicitudPorId = m_ObtenerSolicitudPorId_Result
 End Function
 
+Private Function ISolicitudService_CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
+    m_CambiarEstado_WasCalled = True
+    m_CambiarEstado_LastSolicitudId = solicitudId
+    m_CambiarEstado_LastNuevoEstadoId = nuevoEstadoId
+    ISolicitudService_CambiarEstadoSolicitud = m_CambiarEstado_ReturnValue
+End Function
+
 ' Métodos públicos de conveniencia
 Public Function CreateSolicitud(ByVal paraExpediente As EExpediente) As ESolicitud
     Set CreateSolicitud = ISolicitudService_CreateSolicitud(paraExpediente)
@@ -132,5 +165,9 @@ End Function
 
 Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
     Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(SolicitudID)
+End Function
+
+Public Function CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
+    CambiarEstadoSolicitud = ISolicitudService_CambiarEstadoSolicitud(solicitudId, nuevoEstadoId)
 End Function
 

@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -33,10 +33,10 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     Dim prm As EQueryParameter
     Dim mapeo As EMapeo
     
-    Set db = DBEngine.OpenDatabase(m_Config.GetDataPath(), dbFailOnError, False, "MS Access;PWD=" & m_Config.GetDatabasePassword())
+    Set db = DBEngine.OpenDatabase(m_Config.GetCondorDataPath(), dbFailOnError, False, "MS Access;PWD=" & m_Config.GetCondorPassword())
     
     ' Crear QueryDef con consulta desde modQueries
-    Set qdf = db.CreateQueryDef("", GET_MAPEO_POR_TIPO)
+    Set qdf = db.CreateQueryDef("", "SELECT * FROM tbMapeoCampos WHERE NombrePlantilla = [pNombrePlantilla]")
     
     ' Crear colección de parámetros usando el tipoSolicitud
     Set params = New Collection
@@ -56,11 +56,11 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     ' Mapear recordset a objeto de dominio
     If Not rs.EOF Then
         Set mapeo = New EMapeo
-        mapeo.IdMapeo = rs!IdMapeo
-        mapeo.NombrePlantilla = rs!NombrePlantilla & ""
-        mapeo.NombreCampoTabla = rs!NombreCampoTabla & ""
-        mapeo.ValorAsociado = rs!ValorAsociado & ""
-        mapeo.NombreCampoWord = rs!NombreCampoWord & ""
+        mapeo.IdMapeo = rs!IdMapeo.Value
+        mapeo.NombrePlantilla = rs!NombrePlantilla.Value & ""
+        mapeo.NombreCampoTabla = rs!NombreCampoTabla.Value & ""
+        mapeo.ValorAsociado = rs!ValorAsociado.Value & ""
+        mapeo.NombreCampoWord = rs!NombreCampoWord.Value & ""
     End If
     
     ' Limpiar recursos
@@ -97,12 +97,12 @@ Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
     Set GetMapeoPorTipo = IMapeoRepository_GetMapeoPorTipo(tipoSolicitud)
 End Function
 
-Private Function IMapeoRepository_ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
+Private Function IMapeoRepository_ObtenerMapeosPorCategoria(ByVal categoria As String) As Object
     ' Placeholder para compilación
     Set IMapeoRepository_ObtenerMapeosPorCategoria = New Scripting.Dictionary
 End Function
 
-Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Scripting.Dictionary
+Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Object
     Set ObtenerMapeosPorCategoria = IMapeoRepository_ObtenerMapeosPorCategoria(categoria)
 End Function
 

@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "TestSolicitudService"
+Attribute VB_Name = "TestSolicitudService"
 Option Compare Database
 Option Explicit
 
@@ -37,6 +37,8 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     Dim mockRepo As CMockSolicitudRepository
     Dim mockLogger As CMockOperationLogger
     Dim mockErrorHandler As CMockErrorHandlerService
+    Dim mockAuth As CMockAuthService
+    Dim mockWorkflow As CMockWorkflowService
     Dim service As ISolicitudService
     Dim expediente As EExpediente
     Dim result As ESolicitud
@@ -47,9 +49,12 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     Set mockRepo = New CMockSolicitudRepository
     Set mockLogger = New CMockOperationLogger
     Set mockErrorHandler = New CMockErrorHandlerService
+    Set mockAuth = New CMockAuthService
+    Set mockWorkflow = New CMockWorkflowService
+    mockAuth.ConfigureGetCurrentUserEmail "creator.user@condor.com"
     
     Set serviceImpl = New CSolicitudService
-    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler
+    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler, mockAuth, mockWorkflow
     Set service = serviceImpl
     
     Set expediente = New EExpediente
@@ -63,6 +68,7 @@ Private Function TestCreateSolicitudSuccess() As CTestResult
     ' Assert
     modAssert.AssertNotNull result, "La solicitud devuelta no debe ser nula."
     modAssert.AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio."
+    modAssert.AssertEquals "creator.user@condor.com", mockRepo.SaveSolicitud_LastSolicitud.usuarioCreacion, "El usuario de creación debe ser establecido por el servicio de autenticación."
     
     TestCreateSolicitudSuccess.Pass
     GoTo Cleanup
@@ -75,6 +81,8 @@ Cleanup:
     Set mockRepo = Nothing
     Set mockLogger = Nothing
     Set mockErrorHandler = Nothing
+    Set mockAuth = Nothing
+    Set mockWorkflow = Nothing
     Set service = Nothing
     Set expediente = Nothing
     Set result = Nothing
@@ -118,6 +126,8 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
     Dim mockRepo As CMockSolicitudRepository
     Dim mockLogger As CMockOperationLogger
     Dim mockErrorHandler As CMockErrorHandlerService
+    Dim mockAuth As CMockAuthService
+    Dim mockWorkflow As CMockWorkflowService
     Dim service As ISolicitudService ' Variable de interfaz para el test
     Dim solicitud As ESolicitud
     
@@ -127,10 +137,13 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
     Set mockRepo = New CMockSolicitudRepository
     Set mockLogger = New CMockOperationLogger
     Set mockErrorHandler = New CMockErrorHandlerService
+    Set mockAuth = New CMockAuthService
+    Set mockWorkflow = New CMockWorkflowService
+    mockAuth.ConfigureGetCurrentUserEmail "test.user@condor.com"
 
     ' PATRÓN CORRECTO: Instanciar la clase concreta, inicializarla, y LUEGO asignarla a la interfaz
     Set serviceImpl = New CSolicitudService
-    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler
+    serviceImpl.Initialize mockRepo, mockLogger, mockErrorHandler, mockAuth, mockWorkflow
     Set service = serviceImpl
     
     Set solicitud = New ESolicitud
@@ -142,7 +155,7 @@ Private Function TestSaveSolicitudSuccess() As CTestResult
     
     ' Assert
     modAssert.AssertTrue mockRepo.SaveSolicitudCalled, "Se debe llamar al método SaveSolicitud del repositorio"
-    modAssert.AssertEquals "test.user@condor.com", mockRepo.Update_LastUsuarioModificacion, "El campo usuarioModificacion debe ser establecido correctamente"
+    modAssert.AssertEquals "test.user@condor.com", mockRepo.SaveSolicitud_LastSolicitud.usuarioModificacion, "El campo usuarioModificacion debe ser establecido correctamente"
     
     TestSaveSolicitudSuccess.Pass
     GoTo Cleanup
@@ -154,6 +167,8 @@ Cleanup:
     Set mockRepo = Nothing
     Set mockLogger = Nothing
     Set mockErrorHandler = Nothing
+    Set mockAuth = Nothing
+    Set mockWorkflow = Nothing
     Set service = Nothing
     Set solicitud = Nothing
 End Function

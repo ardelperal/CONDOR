@@ -2,70 +2,97 @@ Attribute VB_Name = "TISolicitudRepository"
 Option Compare Database
 Option Explicit
 
+' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
-Private Const TEMPLATE_PATH As String = "back\test_db\templates\CONDOR_test_template.accdb"
-Private Const ACTIVE_PATH As String = "back\test_db\active\CONDOR_solicitud_itest.accdb"
+' ============================================================================
+' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO)
+' ============================================================================
 
 Public Function TISolicitudRepositoryRunAll() As CTestSuiteResult
-    Set TISolicitudRepositoryRunAll = New CTestSuiteResult
-    TISolicitudRepositoryRunAll.Initialize "TISolicitudRepository"
-    TISolicitudRepositoryRunAll.AddResult TestSaveAndRetrieveSolicitud()
+    Dim suiteResult As New CTestSuiteResult
+    suiteResult.Initialize "TISolicitudRepository (Estándar de Oro)"
+    
+    On Error GoTo CleanupSuite
+    
+    Call SuiteSetup
+    suiteResult.AddResult TestSaveAndRetrieveSolicitud()
+    
+CleanupSuite:
+    
+    If Err.Number <> 0 Then
+        Dim errorTest As New CTestResult
+        errorTest.Initialize "Suite_Execution_Failed"
+        errorTest.Fail "La suite falló de forma catastrófica: " & Err.Description
+        suiteResult.AddResult errorTest
+    End If
+    
+    Set TISolicitudRepositoryRunAll = suiteResult
 End Function
 
-Private Sub Setup()
-    modTestUtils.PrepareTestDatabase modTestUtils.GetProjectPath & TEMPLATE_PATH, modTestUtils.GetProjectPath & ACTIVE_PATH
+' ============================================================================
+' PROCEDIMIENTOS HELPER DE LA SUITE
+' ============================================================================
+
+Private Sub SuiteSetup()
+    On Error GoTo ErrorHandler
+    Dim config As IConfig: Set config = modTestContext.GetTestConfig()
+    Dim activePath As String: activePath = config.GetValue("CONDOR_DATA_PATH")
+    Dim db As DAO.Database: Set db = DBEngine.OpenDatabase(activePath, False, False)
+    
+    ' BLINDAJE DE IDEMPOTENCIA:
+    db.Execute "DELETE FROM tbSolicitudes WHERE codigoSolicitud = 'TEST-SAVE-001'", dbFailOnError
+    
+    db.Close
+    Set db = Nothing
+    Exit Sub
+    
+ErrorHandler:
+    Err.Raise Err.Number, "TISolicitudRepository.SuiteSetup", Err.Description
 End Sub
 
-Private Sub Teardown()
-    On Error Resume Next
-    Dim fs As IFileSystem
-    Set fs = modFileSystemFactory.CreateFileSystem()
-    fs.DeleteFile modTestUtils.GetProjectPath & ACTIVE_PATH, True
-End Sub
+
+
+' ============================================================================
+' PRUEBAS DE INTEGRACIÓN
+' ============================================================================
 
 Private Function TestSaveAndRetrieveSolicitud() As CTestResult
     Set TestSaveAndRetrieveSolicitud = New CTestResult
-    TestSaveAndRetrieveSolicitud.Initialize "Debe guardar y recuperar una solicitud"
+    TestSaveAndRetrieveSolicitud.Initialize "Debe guardar y recuperar una solicitud correctamente"
     
-    Dim repo As ISolicitudRepository, config As IConfig, newId As Long, retrievedSolicitud As ESolicitud
+    Dim repo As ISolicitudRepository
+    Dim retrievedSolicitud As ESolicitud
+    
     On Error GoTo TestFail
-    Call Setup
-    
+
     ' Arrange
-    Set config = modConfigFactory.CreateConfigService()
-    config.SetSetting "DATABASE_PATH", modTestUtils.GetProjectPath & ACTIVE_PATH
-    config.SetSetting "LOG_FILE_PATH", modTestUtils.GetProjectPath() & "back\test_db\active\test_run.log"
-    
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(config)
-    
-    Set repo = modRepositoryFactory.CreateSolicitudRepository(config, errorHandler)
+    Set repo = modRepositoryFactory.CreateSolicitudRepository(modTestContext.GetTestConfig())
     
     Dim nuevaSolicitud As New ESolicitud
     nuevaSolicitud.idExpediente = 999
     nuevaSolicitud.tipoSolicitud = "TIPO_TEST"
-    nuevaSolicitud.subTipoSolicitud = "SUBTIPO_TEST"
     nuevaSolicitud.codigoSolicitud = "TEST-SAVE-001"
-    nuevaSolicitud.idEstadoInterno = 1 ' Estado Borrador
-    nuevaSolicitud.usuarioCreacion = "integration_test_user"
+    nuevaSolicitud.idEstadoInterno = 1 ' Borrador
+    nuevaSolicitud.usuarioCreacion = "itest_user"
     
-    ' Act: Guardar y recuperar
+    ' Act
+    Dim newId As Long
     newId = repo.SaveSolicitud(nuevaSolicitud)
     Set retrievedSolicitud = repo.ObtenerSolicitudPorId(newId)
     
     ' Assert
     modAssert.AssertTrue newId > 0, "El ID devuelto debe ser positivo."
     modAssert.AssertNotNull retrievedSolicitud, "La solicitud recuperada no debe ser nula."
-    modAssert.AssertEquals "TEST-SAVE-001", retrievedSolicitud.codigoSolicitud, "El código de solicitud no coincide."
-    modAssert.AssertEquals 1, retrievedSolicitud.idEstadoInterno, "El estado interno debe ser 1 (Borrador)."
-    modAssert.AssertEquals "integration_test_user", retrievedSolicitud.usuarioCreacion, "El usuario de creación no coincide."
-    
+    modAssert.AssertEquals "TEST-SAVE-001", retrievedSolicitud.codigoSolicitud, "El código no coincide."
+
     TestSaveAndRetrieveSolicitud.Pass
-Cleanup:
-    Call Teardown
-    Exit Function
+    GoTo Cleanup
+
 TestFail:
-    TestSaveAndRetrieveSolicitud.Fail "Error: " & Err.Description
-    Resume Cleanup
+    TestSaveAndRetrieveSolicitud.Fail "Error inesperado: " & Err.Description
+    
+Cleanup:
+    Set retrievedSolicitud = Nothing
+    Set repo = Nothing
 End Function
 

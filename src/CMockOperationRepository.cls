@@ -1,4 +1,4 @@
-﻿VERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -12,33 +12,38 @@ Option Explicit
 
 Implements IOperationRepository
 
-' Variables públicas para seguimiento del mock
-Public SaveLogCalled As Boolean
-Public CallCount As Long
-Public LastOperationType As String
-Public LastEntityId As String
-Public LastDetails As String
+' Variables espía privadas (Lección 22)
+Private m_SaveLog_WasCalled As Boolean
+Private m_CallCount As Long
+Private m_SaveLog_LastEntry As EOperationLog
+
+' Propiedades públicas de solo lectura para verificación en tests
+Public Property Get SaveLog_WasCalled() As Boolean
+    SaveLog_WasCalled = m_SaveLog_WasCalled
+End Property
+Public Property Get CallCount() As Long
+    CallCount = m_CallCount
+End Property
+Public Property Get SaveLog_LastEntry() As EOperationLog
+    Set SaveLog_LastEntry = m_SaveLog_LastEntry
+End Property
 
 ' Constructor
 Private Sub Class_Initialize()
-    Reset
+    Call Reset
 End Sub
 
-Private Sub IOperationRepository_SaveLog(ByVal operationType As String, ByVal entityId As String, ByVal details As String)
+Private Sub IOperationRepository_SaveLog(ByVal logEntry As EOperationLog)
     ' Registrar la llamada para verificación en tests
-    SaveLogCalled = True
-    CallCount = CallCount + 1
-    LastOperationType = operationType
-    LastEntityId = entityId
-    LastDetails = details
+    m_SaveLog_WasCalled = True
+    m_CallCount = m_CallCount + 1
+    Set m_SaveLog_LastEntry = logEntry
 End Sub
 
 ' Resetea el estado del mock para asegurar el aislamiento entre tests
 Public Sub Reset()
-    SaveLogCalled = False
-    CallCount = 0
-    LastOperationType = ""
-    LastEntityId = ""
-    LastDetails = ""
+    m_SaveLog_WasCalled = False
+    m_CallCount = 0
+    Set m_SaveLog_LastEntry = Nothing
 End Sub
 

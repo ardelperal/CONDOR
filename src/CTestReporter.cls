@@ -10,62 +10,21 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
-' REQUISITO DE COMPILACIÓN:
-' Este módulo utiliza Scripting.Dictionary y requiere la referencia a
-' la librería "Microsoft Scripting Runtime" para compilar correctamente.
-
 Implements ITestReporter
 
-Private m_suiteResults As Scripting.Dictionary
+Private m_suiteResults As Object
 
-' --- MÉTODOS PÚBLICOS DE CONVENIENCIA (Lección 24) ---
-Public Sub Initialize(ByVal suiteResults As Scripting.Dictionary)
+Public Sub Initialize(ByVal suiteResults As Object)
     Set m_suiteResults = suiteResults
 End Sub
 
-' --- IMPLEMENTACIÓN DEL CONTRATO ITestReporter (Lección 1) ---
-Private Sub ITestReporter_Initialize(ByVal suiteResults As Scripting.Dictionary)
+Private Sub ITestReporter_Initialize(ByVal suiteResults As Object)
     Call Me.Initialize(suiteResults)
 End Sub
 
 Private Function ITestReporter_GenerateReport() As String
     ITestReporter_GenerateReport = Me.GenerateReport()
 End Function
-
-' --- PROPIEDADES Y MÉTODOS PÚBLICOS ---
-Public Property Get TotalSuites() As Long
-    TotalSuites = m_suiteResults.Count
-End Property
-
-Public Property Get TotalTests() As Long
-    Dim total As Long
-    Dim result As CTestSuiteResult
-    Dim key As Variant
-    
-    For Each key In m_suiteResults.Keys()
-        Set result = m_suiteResults(key)
-        total = total + result.TotalTests
-    Next key
-    
-    TotalTests = total
-End Property
-
-Public Property Get TotalPassed() As Long
-    Dim total As Long
-    Dim result As CTestSuiteResult
-    Dim key As Variant
-    
-    For Each key In m_suiteResults.Keys()
-        Set result = m_suiteResults(key)
-        total = total + result.PassedTests
-    Next key
-    
-    TotalPassed = total
-End Property
-
-Public Property Get TotalFailed() As Long
-    TotalFailed = TotalTests - TotalPassed
-End Property
 
 Public Function GenerateReport() As String
     Dim report As String
@@ -78,6 +37,11 @@ Public Function GenerateReport() As String
     report = report & "Fecha: " & Format(Now, "dd/mm/yyyy hh:nn:ss") & vbCrLf
     report = report & String(80, "=") & vbCrLf & vbCrLf
     
+    If m_suiteResults Is Nothing Then
+        GenerateReport = "Error: El objeto de resultados de la suite no ha sido inicializado."
+        Exit Function
+    End If
+
     For Each key In m_suiteResults.Keys()
         Set suiteResult = m_suiteResults(key)
         report = report & "SUITE: " & suiteResult.Name & " (" & suiteResult.PassedTests & "/" & suiteResult.TotalTests & " pasadas)" & vbCrLf
@@ -98,22 +62,73 @@ Public Function GenerateReport() As String
     
     report = report & String(80, "-") & vbCrLf
     report = report & "RESUMEN GLOBAL" & vbCrLf
-    report = report & "Suites ejecutadas: " & TotalSuites & vbCrLf
-    report = report & "Total de pruebas: " & TotalTests & vbCrLf
-    report = report & "Pruebas exitosas: " & TotalPassed & vbCrLf
-    report = report & "Pruebas fallidas: " & TotalFailed & vbCrLf
+    report = report & "Suites ejecutadas: " & Me.TotalSuites & vbCrLf
+    report = report & "Total de pruebas: " & Me.TotalTests & vbCrLf
+    report = report & "Pruebas exitosas: " & Me.TotalPassed & vbCrLf
+    report = report & "Pruebas fallidas: " & Me.TotalFailed & vbCrLf
     report = report & String(80, "-") & vbCrLf
     
-    If TotalFailed = 0 Then
+    If Me.TotalFailed = 0 Then
         report = report & "RESULTADO: V TODAS LAS PRUEBAS PASARON" & vbCrLf
-        report = report & "RESULT: SUCCESS" & vbCrLf
     Else
         report = report & "RESULTADO: X HAY PRUEBAS FALLIDAS" & vbCrLf
-        report = report & "RESULT: FAILED" & vbCrLf
     End If
     
     report = report & String(80, "=") & vbCrLf
     
     GenerateReport = report
 End Function
+
+Public Property Get TotalSuites() As Long
+    If m_suiteResults Is Nothing Then
+        TotalSuites = 0
+    Else
+        TotalSuites = m_suiteResults.Count
+    End If
+End Property
+
+Public Property Get TotalTests() As Long
+    Dim total As Long
+    Dim key As Variant
+    Dim suiteResult As CTestSuiteResult
+    
+    total = 0
+    If Not m_suiteResults Is Nothing Then
+        For Each key In m_suiteResults.Keys()
+            Set suiteResult = m_suiteResults(key)
+            total = total + suiteResult.TotalTests
+        Next key
+    End If
+    TotalTests = total
+End Property
+
+Public Property Get TotalPassed() As Long
+    Dim total As Long
+    Dim key As Variant
+    Dim suiteResult As CTestSuiteResult
+    
+    total = 0
+    If Not m_suiteResults Is Nothing Then
+        For Each key In m_suiteResults.Keys()
+            Set suiteResult = m_suiteResults(key)
+            total = total + suiteResult.PassedTests
+        Next key
+    End If
+    TotalPassed = total
+End Property
+
+Public Property Get TotalFailed() As Long
+    Dim total As Long
+    Dim key As Variant
+    Dim suiteResult As CTestSuiteResult
+    
+    total = 0
+    If Not m_suiteResults Is Nothing Then
+        For Each key In m_suiteResults.Keys()
+            Set suiteResult = m_suiteResults(key)
+            total = total + suiteResult.FailedTests
+        Next key
+    End If
+    TotalFailed = total
+End Property
 
