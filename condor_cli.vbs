@@ -1422,36 +1422,64 @@ Sub ShowHelp()
     WScript.Echo "                                   • orientation: ""LeftToRight""|""RightToLeft"""
     WScript.Echo "                                   • splitForm*: propiedades específicas para formularios divididos"
     WScript.Echo "                                 Ejemplo: export-form db.accdb MiForm --pretty --expand=events,formatting"
-    WScript.Echo "  import-form <json_path> <db_path> [opciones] - Crear/Modificar formulario desde JSON.
-                                 Soporta normalización automática ES→EN y reglas de coherencia.
-                                 Opciones:
-                                   --password <pwd>          - Contraseña de la base de datos
-                                   --strict                  - Modo estricto: errores por incoherencias
-                                   --verbose                 - Mostrar decisiones de normalización
-                                   --dry-run                 - Validar sin crear el formulario
-                                   --schema <version>        - Versión del esquema a validar
-                                 Normalización automática (ES→EN):
-                                   • scrollBars: "Ninguna"→"Neither", "Horizontal"→"Horizontal",
-                                                 "Vertical"→"Vertical", "Ambas"/"Ambos"→"Both"
-                                   • borderStyle: "Ninguno"→"None", "Fino"→"Thin",
-                                                  "Redimensionable"→"Sizable", "Cuadro de diálogo"→"Dialog"
-                                   • minMaxButtons: "Ninguno"→"None", "Solo minimizar"→"Min Enabled",
-                                                    "Solo maximizar"→"Max Enabled", "Ambos"→"Both Enabled"
-                                   • recordsetType: "Instantánea"→"Snapshot",
-                                                    "Dynaset (actualizaciones incoherentes)"→"Dynaset (Inconsistent Updates)"
-                                   • orientation: "De izquierda a derecha"→"LeftToRight",
-                                                  "De derecha a izquierda"→"RightToLeft"
-                                   • booleans: "Sí"→true, "No"→false
-                                 Reglas de coherencia aplicadas:
-                                   • borderStyle ∈ {"None","Dialog"} ⇒ controlBox=false, minMaxButtons="None"
-                                   • controlBox=false ⇒ ignora closeButton y minMaxButtons
-                                   • modal/popUp=true + borderStyle≠"Sizable" ⇒ no min/max (WARN o ERROR)
-                                   • splitForm*: solo aplicable si defaultView="Split Form"
-                                 Ejemplo: import-form form.json db.accdb --strict --verbose"
+    WScript.Echo "  import-form <json_path> <db_path> [opciones] - Crear/Modificar formulario desde JSON."
+    WScript.Echo "                                 Soporta normalización automática ES→EN y reglas de coherencia."
+    WScript.Echo "                                 Opciones:"
+    WScript.Echo "                                   --password <pwd>          - Contraseña de la base de datos"
+    WScript.Echo "                                   --strict                  - Modo estricto: errores por incoherencias"
+    WScript.Echo "                                   --verbose                 - Mostrar decisiones de normalización"
+    WScript.Echo "                                   --dry-run                 - Validar sin crear el formulario"
+    WScript.Echo "                                   --schema <version>        - Versión del esquema a validar"
+    WScript.Echo "                                 Normalización automática (ES→EN):"
+    WScript.Echo "                                   • scrollBars: ""Ninguna""→""Neither"", ""Horizontal""→""Horizontal"","
+    WScript.Echo "                                                 ""Vertical""→""Vertical"", ""Ambas""/""Ambos""→""Both"""
+    WScript.Echo "                                   • borderStyle: ""Ninguno""→""None"", ""Fino""→""Thin"","
+    WScript.Echo "                                                  ""Redimensionable""→""Sizable"", ""Cuadro de diálogo""→""Dialog"""
+    WScript.Echo "                                   • minMaxButtons: ""Ninguno""→""None"", ""Solo minimizar""→""Min Enabled"","
+    WScript.Echo "                                                    ""Solo maximizar""→""Max Enabled"", ""Ambos""→""Both Enabled"""
+    WScript.Echo "                                   • recordsetType: ""Instantánea""→""Snapshot"","
+    WScript.Echo "                                                    ""Dynaset (actualizaciones incoherentes)""→""Dynaset (Inconsistent Updates)"""
+    WScript.Echo "                                   • orientation: ""De izquierda a derecha""→""LeftToRight"","
+    WScript.Echo "                                                  ""De derecha a izquierda""→""RightToLeft"""
+    WScript.Echo "                                   • booleans: ""Sí""→true, ""No""→false"
+    WScript.Echo "                                 Reglas de coherencia aplicadas:"
+    WScript.Echo "                                   • borderStyle ∈ {""None"",""Dialog""} ⇒ controlBox=false, minMaxButtons=""None"""
+    WScript.Echo "                                   • controlBox=false ⇒ ignora closeButton y minMaxButtons"
+    WScript.Echo "                                   • modal/popUp=true + borderStyle≠""Sizable"" ⇒ no min/max (WARN o ERROR)"
+    WScript.Echo "                                   • splitForm*: solo aplicable si defaultView=""Split Form"""
+    WScript.Echo "                                 Ejemplo: import-form form.json db.accdb --strict --verbose"
     WScript.Echo "  validate-form-json <json_path> [--strict] [--schema] - Validar estructura JSON de formulario"
     WScript.Echo "                                 --strict: Validación exhaustiva de coherencia con código VBA"
     WScript.Echo "                                 --schema: Validar contra esquema específico"
     WScript.Echo "  roundtrip-form <db_path> <form> [--password] [--temp-dir] [--verbose] - Test export→import de formulario"
+    WScript.Echo ""
+    WScript.Echo "🔗 UI as Code — Vinculación UI↔Código:"
+    WScript.Echo "  Los comandos export-form e import-form detectan automáticamente módulos .bas/.cls"
+    WScript.Echo "  asociados al formulario y gestionan la vinculación entre eventos UI y handlers VBA."
+    WScript.Echo ""
+    WScript.Echo "  📋 Detección de Módulos:"
+    WScript.Echo "    • Busca archivos: Form_<FormName>.bas, <FormName>.bas, frm<FormName>.bas, Form_<FormName>.cls"
+    WScript.Echo "    • Extrae handlers con patrón: Sub <Control>_<Event>(...)"
+    WScript.Echo "    • Eventos soportados: Click, DblClick, Current, Load, Open, GotFocus, LostFocus,"
+    WScript.Echo "                          Change, AfterUpdate, BeforeUpdate"
+    WScript.Echo ""
+    WScript.Echo "  📤 En export-form:"
+    WScript.Echo "    • Genera bloque JSON 'code.module' con: exists, filename, handlers[]"
+    WScript.Echo "    • Cada handler incluye: control, event, signature"
+    WScript.Echo "    • Añade 'events.detected' a controles con handlers encontrados"
+    WScript.Echo ""
+    WScript.Echo "  📥 En import-form:"
+    WScript.Echo "    • Establece automáticamente '[Event Procedure]' cuando:"
+    WScript.Echo "      - El JSON especifica explícitamente '[Event Procedure]'"
+    WScript.Echo "      - Existe handler correspondiente en código detectado"
+    WScript.Echo "    • Modo --strict: ERROR si hay discrepancias entre JSON y código"
+    WScript.Echo "    • Sin --strict: WARNING por discrepancias, continúa procesamiento"
+    WScript.Echo ""
+    WScript.Echo "  💡 Ejemplo de flujo:"
+    WScript.Echo "    1. export-form db.accdb MiForm --src ./src"
+    WScript.Echo "    2. Editar MiForm.json (cambiar propiedades UI)"
+    WScript.Echo "    3. import-form MiForm.json db.accdb --strict"
+    WScript.Echo "    → Los handlers existentes se preservan automáticamente"
     WScript.Echo ""
     WScript.Echo "FUNCIONALIDADES DISPONIBLES PARA 'bundle' (con dependencias automáticas):"
     WScript.Echo "(Basadas en CONDOR_MASTER_PLAN.md)"

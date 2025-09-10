@@ -2388,6 +2388,111 @@ Este principio se integra con el **Ciclo de Trabajo de Desarrollo** definido en 
 
 **Nota**: Este principio es fundamental para mantener la coherencia y trazabilidad de la interfaz de usuario en el proyecto CONDOR, y su cumplimiento es obligatorio para todas las modificaciones de formularios.
 
+### Vinculación UI↔Código
+
+El sistema implementa detección automática y vinculación entre elementos de la interfaz de usuario (controles de formularios) y el código VBA asociado (Event Procedures), garantizando la coherencia entre la definición JSON y los handlers de eventos existentes.
+
+#### Detección Automática de Módulos
+
+Durante la exportación (`export-form`), el sistema busca automáticamente archivos de módulo asociados al formulario:
+
+- **Patrones de búsqueda**: `Form_<FormName>.bas`, `<FormName>.bas`, `frm<FormName>.bas`, `Form_<FormName>.cls`
+- **Ubicación**: Directorio especificado por `--src` (por defecto: `./src`)
+- **Detección de handlers**: Expresión regular `Sub\s+(\w+)_(\w+)\s*\(` para identificar Event Procedures
+
+#### Eventos Soportados
+
+El sistema reconoce y gestiona los siguientes eventos de controles:
+- **Click**, **DblClick**: Eventos de clic en controles
+- **Current**: Cambio de registro actual
+- **Load**, **Open**: Carga y apertura de formularios
+- **GotFocus**, **LostFocus**: Eventos de foco
+- **Change**, **AfterUpdate**, **BeforeUpdate**: Eventos de modificación de datos
+
+#### Estructura JSON Extendida
+
+La exportación genera un bloque `code.module` en el JSON:
+
+```json
+{
+  "form": {
+    "name": "MiFormulario",
+    // ... propiedades del formulario
+  },
+  "code": {
+    "module": {
+      "exists": true,
+      "filename": "Form_MiFormulario.bas",
+      "handlers": [
+        {
+          "control": "btnGuardar",
+          "event": "Click",
+          "signature": "Sub btnGuardar_Click()"
+        },
+        {
+          "control": "txtNombre",
+          "event": "AfterUpdate",
+          "signature": "Sub txtNombre_AfterUpdate()"
+        }
+      ]
+    }
+  },
+  "controls": [
+    {
+      "name": "btnGuardar",
+      "type": "CommandButton",
+      "events": {
+        "detected": ["Click"]
+      }
+      // ... otras propiedades
+    }
+  ]
+}
+```
+
+#### Enforcement de Event Procedures
+
+Durante la importación (`import-form`), el sistema establece automáticamente `[Event Procedure]` cuando:
+
+1. **Especificación explícita**: El JSON especifica `"onClick": "[Event Procedure]"`
+2. **Handler detectado**: Existe un handler correspondiente en el código detectado
+3. **Coherencia automática**: Se garantiza la sincronización entre UI y código
+
+#### Modos de Validación
+
+**Modo Normal** (sin `--strict`):
+- **WARNING**: Discrepancias entre JSON y código detectado
+- **Continuación**: El procesamiento continúa aplicando la configuración del JSON
+- **Flexibilidad**: Permite desarrollo iterativo
+
+**Modo Estricto** (`--strict`):
+- **ERROR**: Discrepancias entre JSON y código detectado
+- **Interrupción**: El procesamiento se detiene si hay inconsistencias
+- **Garantía**: Asegura coherencia absoluta entre UI y código
+
+#### Flujo de Trabajo con Vinculación
+
+```bash
+# 1. Exportar formulario con detección de código
+cscript condor_cli.vbs export-form db.accdb MiForm --src ./src
+
+# 2. El JSON generado incluye handlers detectados automáticamente
+# 3. Modificar propiedades UI en el JSON (sin tocar eventos)
+
+# 4. Importar con enforcement automático de Event Procedures
+cscript condor_cli.vbs import-form MiForm.json db.accdb --strict
+
+# Resultado: Los handlers VBA existentes se preservan automáticamente
+```
+
+#### Ventajas de la Vinculación
+
+- **Preservación automática**: Los Event Procedures existentes se mantienen durante import/export
+- **Detección inteligente**: Identificación automática de handlers sin intervención manual
+- **Validación de coherencia**: Verificación de sincronización entre UI y código
+- **Desarrollo seguro**: Prevención de pérdida accidental de funcionalidad VBA
+- **Trazabilidad completa**: Documentación automática de la relación UI↔Código
+
 **UI como Código**: Los formularios de Access se gestionan como código fuente mediante serialización JSON, permitiendo versionado, revisión y gestión a través de herramientas de control de versiones. Este principio establece que los archivos JSON son la fuente de verdad para los formularios, implementando mediante los comandos CLI `export-form` e `import-form`. Los formularios se almacenan en la estructura canónica `ui/definitions/` como archivos JSON versionables, con recursos gráficos en `ui/assets/` y plantillas en `ui/templates/`. El flujo de trabajo obligatorio requiere: exportar → modificar JSON → versionar → importar → validar.
 
 ## 23. Sistema de Migraciones de Base de Datos
