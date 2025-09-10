@@ -89,8 +89,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle', 'migrate', 'export-form', 'import-form', 'validate-form-json' o 'roundtrip-form'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle', 'migrate', 'export-form', 'import-form', 'validate-form-json', 'roundtrip-form' o 'list-forms'"
     WScript.Quit 1
 End If
 
@@ -263,6 +263,8 @@ ElseIf strAction = "export-form" Then
     Call ExportForm()
 ElseIf strAction = "import-form" Then
     Call ImportForm()
+ElseIf strAction = "list-forms" Then
+    Call ListForms()
 
 End If
 
@@ -1392,6 +1394,10 @@ Sub ShowHelp()
     WScript.Echo "  droptable <nombre>           - Eliminar tabla de la base de datos"
     WScript.Echo "  listtables [db_path]         - Listar todas las tablas"
     WScript.Echo "                                 db_path opcional (por defecto: CONDOR_datos.accdb)"
+    WScript.Echo "  list-forms [db_path] [--password <pwd>] [--json] - Listar todos los formularios"
+    WScript.Echo "                                 db_path opcional (por defecto: ./condor.accdb)"
+    WScript.Echo "                                 --password: Contraseña de la base de datos"
+    WScript.Echo "                                 --json: Salida en formato JSON (array de nombres)"
     WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
     WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
     WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
@@ -4328,96 +4334,60 @@ Sub ImportForm()
         WScript.Echo "Error: Se requieren al menos 2 argumentos: <json_path> <db_path>"
         WScript.Echo "Sintaxis: cscript condor_cli.vbs import-form <json_path> <db_path> [opciones]"
         WScript.Echo "Opciones:"
-        WScript.Echo "  --schema <path>        Validar contra esquema específico"
         WScript.Echo "  --dry-run              Solo validar, no crear formulario"
-        WScript.Echo "  --strict               Modo estricto: fallar en propiedades desconocidas"
-        WScript.Echo "  --resource-root <DIR>  Directorio raíz para recursos (imágenes)"
-        WScript.Echo "  --font-fallback <font> Fuente de respaldo (default: Segoe UI)"
-        WScript.Echo "  --password             Solicitar contraseña de base de datos"
+        WScript.Echo "  --strict               Modo estricto: fallar en coherencias"
+        WScript.Echo "  --password <pwd>       Contraseña de base de datos"
         WScript.Quit 1
     End If
     
     ' Declarar variables
-    Dim strJsonPath, strDbPath, strPassword, strSchemaPath, strResourceRoot, strFontFallback
+    Dim strJsonPath, strDbPath, strPassword
     Dim bDryRun, bStrict
     Dim jsonString, formData, formName
-    Dim frm, i, j
+    Dim frm, tmpName, i, j
     Dim controls, ctrl, ctlDest
-    Dim sections, detailSection, formProps, sectionProps, ctlProps
-    Dim reportSummary, warnings, missingResources, fallbacksApplied
-    Dim codeModule, detectedHandlers, eventDiscrepancies
+    Dim sections, detailSection, formProps, ctlProps
+    Dim warnings
     
     ' Inicializar variables
     strJsonPath = objArgs(1)
     strDbPath = objArgs(2)
     strPassword = ""
-    strSchemaPath = ""
-    strResourceRoot = ""
-    strFontFallback = "Segoe UI"
     bDryRun = False
     bStrict = False
     
-    Set reportSummary = CreateObject("Scripting.Dictionary")
     Set warnings = CreateObject("Scripting.Dictionary")
-    Set missingResources = CreateObject("Scripting.Dictionary")
-    Set fallbacksApplied = CreateObject("Scripting.Dictionary")
-    Set eventDiscrepancies = CreateObject("Scripting.Dictionary")
     
     ' Procesar argumentos opcionales
     For i = 3 To objArgs.Count - 1
         Select Case LCase(objArgs(i))
-            Case "--schema"
-                If i + 1 <= objArgs.Count - 1 Then
-                    strSchemaPath = objArgs(i + 1)
-                    i = i + 1
-                Else
-                    WScript.Echo "Error: --schema requiere una ruta"
-                    WScript.Quit 1
-                End If
             Case "--dry-run"
                 bDryRun = True
             Case "--strict"
                 bStrict = True
-            Case "--resource-root"
-                If i + 1 <= objArgs.Count - 1 Then
-                    strResourceRoot = objArgs(i + 1)
-                    i = i + 1
-                Else
-                    WScript.Echo "Error: --resource-root requiere un directorio"
-                    WScript.Quit 1
-                End If
-            Case "--font-fallback"
-                If i + 1 <= objArgs.Count - 1 Then
-                    strFontFallback = objArgs(i + 1)
-                    i = i + 1
-                Else
-                    WScript.Echo "Error: --font-fallback requiere un nombre de fuente"
-                    WScript.Quit 1
-                End If
             Case "--password"
-                strPassword = InputBox("Ingrese la contraseña de la base de datos:", "Contraseña")
-                If strPassword = "" Then
-                    WScript.Echo "Error: Contraseña requerida."
+                If i + 1 <= objArgs.Count - 1 Then
+                    strPassword = objArgs(i + 1)
+                    i = i + 1
+                Else
+                    WScript.Echo "Error: --password requiere una contraseña"
                     WScript.Quit 1
                 End If
         End Select
     Next
     
-    ' Si la ruta JSON no es completa, construir la ruta por defecto
-    If Not objFSO.FileExists(strJsonPath) Then
-        Dim defaultUiPath
-        defaultUiPath = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\ui\definitions\"
-        strJsonPath = objFSO.BuildPath(defaultUiPath, objArgs(1))
+    ' Convertir rutas relativas a absolutas si es necesario
+    If InStr(strJsonPath, ":") = 0 Then
+        strJsonPath = objFSO.GetAbsolutePathName(strJsonPath)
     End If
     
-    ' Convertir ruta de BD relativa a absoluta si es necesario
     If InStr(strDbPath, ":") = 0 Then
-        strDbPath = objFSO.GetAbsolutePathName(strDbPath)
-    End If
-    
-    ' Establecer resource-root por defecto si no se especificó
-    If strResourceRoot = "" Then
-        strResourceRoot = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\ui\resources"
+        ' Si no se especifica ruta, usar la base de datos de desarrollo por defecto
+        If strDbPath = "" Then
+            strDbPath = objFSO.GetAbsolutePathName("C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb")
+        Else
+            strDbPath = objFSO.GetAbsolutePathName(strDbPath)
+        End If
     End If
     
     ' Verificar que los archivos existen
@@ -4431,76 +4401,37 @@ Sub ImportForm()
         WScript.Quit 1
     End If
     
-    ' Verificar directorio de recursos
-    If Not objFSO.FolderExists(strResourceRoot) Then
-        If bStrict Then
-            WScript.Echo "Error: Directorio de recursos no existe: " & strResourceRoot
-            WScript.Quit 1
-        Else
-            warnings.Add "resource_root", "Directorio de recursos no encontrado: " & strResourceRoot
-        End If
-    End If
+    ' Leer y parsear el archivo JSON
+    Dim strJsonContent, objJsonData
+    strJsonContent = ReadTextFile(strJsonPath)
     
-    ' Leer contenido del archivo JSON
-    Dim objFile
-    Set objFile = objFSO.OpenTextFile(strJsonPath, 1)
-    jsonString = objFile.ReadAll
-    objFile.Close
-    
-    WScript.Echo "Parseando JSON con JsonParser..."
-    
-    ' Parsear JSON con JsonParser mejorado
     On Error Resume Next
-    Set formData = JsonParser(jsonString, bStrict)
-    
+    Set objJsonData = ParseJson(strJsonContent)
     If Err.Number <> 0 Then
         WScript.Echo "Error al parsear JSON: " & Err.Description
         WScript.Quit 1
     End If
     On Error GoTo 0
     
-    If formData Is Nothing Then
-        WScript.Echo "Error: No se pudo parsear el fichero JSON."
+    ' Validaciones mínimas de los datos del formulario
+    If Not objJsonData.Exists("formName") Then
+        WScript.Echo "Error: El JSON debe contener 'formName'"
+        WScript.Quit 1
+    End If
+    
+    If Not objJsonData.Exists("controls") Then
+        WScript.Echo "Error: El JSON debe contener 'controls'"
         WScript.Quit 1
     End If
     
     ' Obtener nombre del formulario
-    formName = formData("formName")
+    formName = objJsonData("formName")
     WScript.Echo "Formulario a procesar: " & formName
-    
-    ' Extraer handlers detectados del JSON si existen
-    Set detectedHandlers = CreateObject("Scripting.Dictionary")
-    If formData.Exists("code") Then
-        Set codeModule = formData("code")
-        If codeModule.Exists("module") And codeModule("module").Exists("handlers") Then
-            Dim handlers, handler, controlName, eventName, handlerKey
-            Set handlers = codeModule("module")("handlers")
-            For i = 0 To handlers.Count - 1
-                Set handler = handlers(i)
-                If handler.Exists("control") And handler.Exists("event") Then
-                    controlName = handler("control")
-                    eventName = handler("event")
-                    handlerKey = controlName & "." & eventName
-                    detectedHandlers.Add handlerKey, True
-                    If gVerbose Then
-                        WScript.Echo "Handler detectado: " & handlerKey
-                    End If
-                End If
-            Next
-        End If
-    End If
-    
-    ' Validaciones mínimas
-    Call ValidateFormData(formData, bStrict, warnings)
-    
-    ' Verificar recursos de imágenes
-    Call ValidateResources(formData, strResourceRoot, bStrict, missingResources)
     
     ' Si es dry-run, mostrar reporte y salir
     If bDryRun Then
         WScript.Echo "=== MODO DRY-RUN: VALIDACIÓN COMPLETADA ==="
         WScript.Echo "Formulario: " & formName
-        WScript.Echo "Schema Version: " & formData("schemaVersion")
         
         If warnings.Count > 0 Then
             WScript.Echo "Advertencias encontradas:"
@@ -4510,95 +4441,43 @@ Sub ImportForm()
             Next
         End If
         
-        If missingResources.Count > 0 Then
-            WScript.Echo "Recursos faltantes:"
-            For Each key In missingResources.Keys
-                WScript.Echo "  - " & missingResources(key)
-            Next
-        End If
-        
         WScript.Echo "Validación completada exitosamente."
         WScript.Quit 0
     End If
     
-    ' Obtener nombre del formulario para procesamiento real
-    On Error Resume Next
-    If Err.Number <> 0 Then
-        WScript.Echo "Error: No se pudo obtener el nombre del formulario del JSON: " & Err.Description
-        WScript.Quit 1
-    End If
-    On Error GoTo 0
-    
-    WScript.Echo "Nombre del formulario desde JSON: " & formName
-    
-    ' Cerrar Access completamente y crear nueva instancia
-    If Not objAccess Is Nothing Then
-        On Error Resume Next
-        objAccess.Quit
-        Set objAccess = Nothing
-        On Error GoTo 0
-    End If
-    
-    ' Crear nueva instancia de Access
+    ' Crear instancia de Access oculta si no existe
     On Error Resume Next
     Set objAccess = CreateObject("Access.Application")
     If Err.Number <> 0 Then
-        WScript.Echo "Error al crear nueva instancia de Access: " & Err.Description
+        WScript.Echo "Error al crear instancia de Access: " & Err.Description
         WScript.Quit 1
     End If
+    On Error GoTo 0
     
     ' Configurar Access
     objAccess.Visible = False
     objAccess.UserControl = False
-    On Error GoTo 0
     
-    ' Abrir la base de datos especificada con manejo de contraseña
+    ' Abrir la base de datos
     On Error Resume Next
-    Dim dbPassword
-    dbPassword = GetDatabasePassword(strDbPath)
-    
-    If dbPassword = "" Then
-        objAccess.OpenCurrentDatabase strDbPath
+    If strPassword <> "" Then
+        objAccess.OpenCurrentDatabase strDbPath, , strPassword
     Else
-        objAccess.OpenCurrentDatabase strDbPath, , dbPassword
+        objAccess.OpenCurrentDatabase strDbPath
     End If
     
     If Err.Number <> 0 Then
         WScript.Echo "Error al abrir la base de datos: " & Err.Description
         WScript.Echo "Ruta: " & strDbPath
-        WScript.Echo "Contraseña detectada: " & IIf(dbPassword = "", "No", "Sí")
         WScript.Quit 1
     End If
     On Error GoTo 0
     
     WScript.Echo "Base de datos abierta: " & objAccess.CurrentProject.Name
     
-    ' Crear el formulario dinámicamente
+    ' Eliminar formulario existente si existe
     On Error Resume Next
-    
-    ' Verificar si el formulario ya existe y eliminarlo
-    Dim formExists
-    formExists = False
-    
-    ' Verificar si el formulario existe
-    Dim formIndex
-    For formIndex = 0 To objAccess.CurrentProject.AllForms.Count - 1
-        If objAccess.CurrentProject.AllForms(formIndex).Name = formName Then
-            formExists = True
-            Exit For
-        End If
-    Next
-    
-    If formExists Then
-        ' Cerrar si está abierto
-        If objAccess.CurrentProject.AllForms(formName).IsLoaded Then
-            objAccess.DoCmd.Close 1, formName, 0  ' acForm, formName, acSaveNo
-        End If
-        ' Eliminar el formulario existente
-        objAccess.DoCmd.DeleteObject 1, formName  ' acForm, formName
-        WScript.Echo "Formulario existente '" & formName & "' eliminado."
-    End If
-    
+    objAccess.DoCmd.DeleteObject 1, formName  ' acForm
     On Error GoTo 0
     
     ' Crear nuevo formulario
@@ -4610,370 +4489,135 @@ Sub ImportForm()
     End If
     On Error GoTo 0
     
-    ' Guardar el nombre original del formulario para referencia
-    Dim originalFormName
-    originalFormName = frm.Name
+    ' Guardar el nombre temporal del formulario
+    tmpName = frm.Name
     
-    WScript.Echo "Nombre original del formulario creado: " & originalFormName
-    WScript.Echo "Nombre deseado del formulario: " & formName
+    WScript.Echo "Formulario creado con nombre temporal: " & tmpName
     
-    ' Según la documentación de Microsoft, el nombre del formulario no se puede cambiar
-    ' inmediatamente después de crearlo. Se debe hacer después de guardarlo.
+    ' Asignar propiedades del formulario desde JSON
+    If objJsonData.Exists("properties") Then
+        Set formProps = objJsonData("properties")
+        
+        ' Propiedades básicas
+        If formProps.Exists("caption") Then
+            frm.Caption = formProps("caption")
+        End If
+        
+        If formProps.Exists("width") Then
+            frm.Width = CLng(formProps("width"))
+        End If
+        
+        If formProps.Exists("height") Then
+            frm.WindowHeight = CLng(formProps("height"))
+        End If
+        
+        ' Colores (convertir #RRGGBB a OLE)
+        If formProps.Exists("backColor") Then
+            frm.Detail.BackColor = HexToOLE(formProps("backColor"))
+        End If
+        
+        ' Propiedades booleanas
+        If formProps.Exists("modal") Then
+            frm.Modal = CBool(formProps("modal"))
+        End If
+        
+        If formProps.Exists("popup") Then
+            frm.PopUp = CBool(formProps("popup"))
+        End If
+        
+        ' Aplicar reglas de coherencia para MinMaxButtons
+        If formProps.Exists("minMaxButtons") And formProps.Exists("borderStyle") And formProps.Exists("controlBox") Then
+            Dim borderStyle, controlBox, minMaxButtons
+            borderStyle = formProps("borderStyle")
+            controlBox = CBool(formProps("controlBox"))
+            minMaxButtons = CBool(formProps("minMaxButtons"))
+            
+            If (borderStyle = "Dialog" Or borderStyle = "None" Or Not controlBox) And minMaxButtons Then
+                If bStrict Then
+                    WScript.Echo "ERROR: MinMaxButtons=True incompatible con BorderStyle=" & borderStyle & " o ControlBox=False"
+                    WScript.Quit 1
+                Else
+                    WScript.Echo "WARN: MinMaxButtons forzado a False por coherencia"
+                    frm.MinMaxButtons = 0  ' None
+                End If
+            Else
+                frm.MinMaxButtons = IIf(minMaxButtons, 3, 0)  ' Both o None
+            End If
+        End If
+    End If
+    
+    ' Añadir controles del JSON
+    If objJsonData.Exists("controls") Then
+        Set controls = objJsonData("controls")
+        
+        For i = 0 To controls.Count - 1
+            Set control = controls(i)
+            
+            ' Determinar tipo de control
+            Dim section
+            controlType = GetAccessControlType(control("type"))
+            section = 0  ' acDetail por defecto
+            
+            ' Crear control
+            On Error Resume Next
+            Dim newControl
+            Set newControl = objAccess.CreateControl(tmpName, controlType, section, , , _
+                CLng(control("left")), CLng(control("top")), _
+                CLng(control("width")), CLng(control("height")))
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "Error creando control " & control("name") & ": " & Err.Description
+            Else
+                ' Asignar propiedades del control
+                If control.Exists("name") Then newControl.Name = control("name")
+                If control.Exists("caption") Then newControl.Caption = control("caption")
+                If control.Exists("controlSource") Then newControl.ControlSource = control("controlSource")
+                
+                ' Eventos: si hay handler detectado o es "[Event Procedure]", asignar
+                If control.Exists("onClick") Then
+                    If control("onClick") = "[Event Procedure]" Then
+                        newControl.OnClick = "[Event Procedure]"
+                    End If
+                End If
+                
+                WScript.Echo "Control creado: " & control("name")
+            End If
+            On Error GoTo 0
+        Next
+        End If
+    
+    ' Guardar el formulario
     On Error Resume Next
-    frm.Name = formName
-    If Err.Number = 0 Then
-        originalFormName = formName
-        WScript.Echo "Formulario renombrado inmediatamente a: " & formName
-    Else
-        WScript.Echo "No se pudo cambiar el nombre inmediatamente: " & Err.Description
+    objAccess.DoCmd.Save 1, tmpName  ' acForm
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al guardar el formulario: " & Err.Description
+        WScript.Quit 1
     End If
     On Error GoTo 0
     
-    ' Establecer propiedades del formulario
-    ' Nota: Name se establecerá al final con DoCmd.Rename
-    If formData.Exists("properties") Then
-        Set formProps = formData("properties")
-        
-        ' NORMALIZACIÓN Y MAPEO DE PROPIEDADES
-        ' Crear diccionario para propiedades normalizadas
-        Dim normalizedProps
-        Set normalizedProps = CreateObject("Scripting.Dictionary")
-        
-        ' Copiar todas las propiedades al diccionario normalizado
-        Dim propKey
-        For Each propKey In formProps.Keys
-            normalizedProps(propKey) = formProps(propKey)
-        Next
-        
-        ' Aplicar normalización ES→EN
-        For Each propKey In normalizedProps.Keys
-            Dim originalValue, normalizedValue
-            originalValue = normalizedProps(propKey)
-            normalizedValue = NormalizeToken(propKey, originalValue)
-            
-            If normalizedValue <> originalValue Then
-                If bVerbose Then LogInfo "Normalización: " & propKey & " '" & originalValue & "' → '" & normalizedValue & "'"
-                normalizedProps(propKey) = normalizedValue
-            End If
-        Next
-        
-        ' Aplicar reglas de coherencia
-        ApplyCoherenceRules normalizedProps, bStrict, bVerbose
-        
-        ' Aplicar propiedades básicas
-        If normalizedProps.Exists("caption") Then
-            frm.Caption = normalizedProps("caption")
+    ' Renombrar si el nombre generado difiere del deseado
+    If tmpName <> formName Then
+        On Error Resume Next
+        objAccess.DoCmd.Rename formName, 1, tmpName  ' acForm
+        If Err.Number <> 0 Then
+            WScript.Echo "Error al renombrar formulario: " & Err.Description
+            WScript.Quit 1
+        Else
+            WScript.Echo "Formulario renombrado de " & tmpName & " a " & formName
         End If
-        
-        If normalizedProps.Exists("width") Then
-            frm.Width = CLng(normalizedProps("width"))
-        End If
-        
-        If normalizedProps.Exists("height") Then
-            frm.WindowHeight = CLng(normalizedProps("height"))
-        End If
-        
-        ' Aplicar colores del formulario
-        If normalizedProps.Exists("backColor") Then
-            If ValidateHexColor(normalizedProps("backColor")) Then
-                frm.Detail.BackColor = ConvertHexToOLE(normalizedProps("backColor"))
-            ElseIf bStrict Then
-                WScript.Echo "Error: Color de fondo del formulario inválido: " & normalizedProps("backColor")
-            End If
-        End If
-        
-        ' Aplicar propiedades con mapeo token→enum
-        If normalizedProps.Exists("borderStyle") Then
-            frm.BorderStyle = TokenToBorderStyle(normalizedProps("borderStyle"))
-        End If
-        
-        If normalizedProps.Exists("scrollBars") Then
-            frm.ScrollBars = TokenToScrollBars(normalizedProps("scrollBars"))
-        End If
-        
-        If normalizedProps.Exists("minMaxButtons") Then
-            frm.MinMaxButtons = TokenToMinMaxButtons(normalizedProps("minMaxButtons"))
-        End If
-        
-        If normalizedProps.Exists("recordsetType") Then
-            frm.RecordsetType = TokenToRecordsetType(normalizedProps("recordsetType"))
-        End If
-        
-        If normalizedProps.Exists("orientation") Then
-            frm.Orientation = TokenToOrientation(normalizedProps("orientation"))
-        End If
-        
-        If normalizedProps.Exists("splitFormOrientation") Then
-            frm.SplitFormOrientation = TokenToSplitFormOrientation(normalizedProps("splitFormOrientation"))
-        End If
-        
-        ' Aplicar propiedades enum del formulario (usando MapEnumValue existente)
-        If normalizedProps.Exists("defaultView") Then
-            frm.DefaultView = MapEnumValue("defaultView", normalizedProps("defaultView"))
-        End If
-        
-        If normalizedProps.Exists("cycle") Then
-            frm.Cycle = MapEnumValue("cycle", normalizedProps("cycle"))
-        End If
-        
-        If normalizedProps.Exists("recordSourceType") Then
-            frm.RecordSourceType = MapEnumValue("recordSourceType", normalizedProps("recordSourceType"))
-        End If
-        
-        ' Aplicar propiedades booleanas normalizadas
-        If normalizedProps.Exists("allowEdits") Then
-            frm.AllowEdits = CBool(normalizedProps("allowEdits"))
-        End If
-        
-        If normalizedProps.Exists("allowAdditions") Then
-            frm.AllowAdditions = CBool(normalizedProps("allowAdditions"))
-        End If
-        
-        If normalizedProps.Exists("allowDeletions") Then
-            frm.AllowDeletions = CBool(normalizedProps("allowDeletions"))
-        End If
-        
-        If normalizedProps.Exists("controlBox") Then
-            frm.ControlBox = CBool(normalizedProps("controlBox"))
-        End If
-        
-        If normalizedProps.Exists("closeButton") Then
-            frm.CloseButton = CBool(normalizedProps("closeButton"))
-        End If
-        
-        If normalizedProps.Exists("modal") Then
-            frm.Modal = CBool(normalizedProps("modal"))
-        End If
-        
-        If normalizedProps.Exists("popUp") Then
-            frm.PopUp = CBool(normalizedProps("popUp"))
-        End If
-        
-        ' Aplicar otras propiedades
-        If normalizedProps.Exists("recordSource") Then
-            frm.RecordSource = normalizedProps("recordSource")
-        End If
-        
-        If normalizedProps.Exists("splitFormSize") Then
-            frm.SplitFormSize = CLng(normalizedProps("splitFormSize"))
-        End If
-        
-        If normalizedProps.Exists("splitFormSplitterBar") Then
-            frm.SplitFormSplitterBar = CBool(normalizedProps("splitFormSplitterBar"))
-        End If
+        On Error GoTo 0
     End If
     
-    ' Crear controles si existen secciones
-    If formData.Exists("sections") Then
-        Set sections = formData("sections")
-        
-        If sections.Exists("Detail") Then
-            Set detailSection = sections("Detail")
-            
-            ' Establecer propiedades de la sección Detail
-            If detailSection.Exists("properties") Then
-                Set sectionProps = detailSection("properties")
-                
-                If sectionProps.Exists("height") Then
-                    frm.Section(0).Height = CLng(sectionProps("height"))  ' acDetail = 0
-                End If
-            End If
-            
-            ' Crear controles
-            If detailSection.Exists("controls") Then
-                Set controls = detailSection("controls")
-                
-                WScript.Echo "Creando " & controls.Count & " controles en la sección Detail"
-                
-                For i = 0 To controls.Count - 1
-                    Set ctrl = controls(i)
-                    
-                    WScript.Echo "Creando control: " & ctrl("name") & " de tipo: " & ctrl("type")
-                    
-                    On Error Resume Next
-                    Set ctlDest = Nothing
-                    
-                    ' Crear control según su tipo usando originalFormName
-                    If ctrl("type") = "CommandButton" Then
-                        Set ctlDest = objAccess.CreateControl(originalFormName, 104, 0)  ' acCommandButton, acDetail
-                    ElseIf ctrl("type") = "Label" Then
-                        Set ctlDest = objAccess.CreateControl(originalFormName, 100, 0)  ' acLabel, acDetail
-                    ElseIf ctrl("type") = "TextBox" Then
-                        Set ctlDest = objAccess.CreateControl(originalFormName, 109, 0)  ' acTextBox, acDetail
-                    End If
-                    
-                    If Err.Number <> 0 Then
-                        WScript.Echo "Error al crear control " & ctrl("name") & ": " & Err.Description
-                        Err.Clear
-                    ElseIf Not ctlDest Is Nothing Then
-                        ' Establecer nombre del control
-                        ctlDest.Name = ctrl("name")
-                        
-                        ' Establecer propiedades del control
-                        If ctrl.Exists("properties") Then
-                            Set ctlProps = ctrl("properties")
-                            
-                            If ctlProps.Exists("caption") Then
-                                ctlDest.Caption = ctlProps("caption")
-                            End If
-                            
-                            If ctlProps.Exists("top") Then
-                                ctlDest.Top = CLng(ctlProps("top"))
-                            End If
-                            
-                            If ctlProps.Exists("left") Then
-                                ctlDest.Left = CLng(ctlProps("left"))
-                            End If
-                            
-                            If ctlProps.Exists("width") Then
-                                ctlDest.Width = CLng(ctlProps("width"))
-                            End If
-                            
-                            If ctlProps.Exists("height") Then
-                                ctlDest.Height = CLng(ctlProps("height"))
-                            End If
-                            
-                            ' Aplicar colores si existen
-                            If ctlProps.Exists("backColor") Then
-                                If ValidateHexColor(ctlProps("backColor")) Then
-                                    ctlDest.BackColor = ConvertHexToOLE(ctlProps("backColor"))
-                                ElseIf bStrict Then
-                                    WScript.Echo "Error: Color de fondo inválido: " & ctlProps("backColor")
-                                End If
-                            End If
-                            
-                            If ctlProps.Exists("foreColor") Then
-                                If ValidateHexColor(ctlProps("foreColor")) Then
-                                    ctlDest.ForeColor = ConvertHexToOLE(ctlProps("foreColor"))
-                                ElseIf bStrict Then
-                                    WScript.Echo "Error: Color de texto inválido: " & ctlProps("foreColor")
-                                End If
-                            End If
-                            
-                            ' Aplicar propiedades enum
-                            If ctlProps.Exists("textAlign") Then
-                                ctlDest.TextAlign = MapEnumValue("textAlign", ctlProps("textAlign"))
-                            End If
-                            
-                            ' Aplicar fuente con fallback
-                            If ctlProps.Exists("fontName") Then
-                                Dim fontToUse
-                                fontToUse = ctlProps("fontName")
-                                
-                                ' Si font-fallback está habilitado, verificar disponibilidad
-                                If bFontFallback Then
-                                    ' Usar fuente por defecto si no está disponible
-                                    ' En Access, las fuentes no disponibles se sustituyen automáticamente
-                                    If strFontFallback <> "" Then
-                                        fontToUse = strFontFallback
-                                    End If
-                                End If
-                                
-                                On Error Resume Next
-                                ctlDest.FontName = fontToUse
-                                If Err.Number <> 0 And bStrict Then
-                                    WScript.Echo "Error: No se pudo aplicar fuente: " & fontToUse
-                                    Err.Clear
-                                End If
-                                On Error GoTo 0
-                            End If
-                            
-                            If ctlProps.Exists("fontSize") Then
-                                ctlDest.FontSize = CLng(ctlProps("fontSize"))
-                            End If
-                            
-                            ' Aplicar imagen si existe (asignación directa según documentación Microsoft Access)
-                            If ctlProps.Exists("picture") And ctrl("type") = "CommandButton" Then
-                                Dim picturePath
-                                picturePath = objFSO.BuildPath(strResourceRoot, ctlProps("picture"))
-                                If objFSO.FileExists(picturePath) Then
-                                    On Error Resume Next
-                                    ' Usar asignación directa de ruta según documentación Microsoft Access
-                                    ctlDest.Picture = picturePath
-                                    If Err.Number <> 0 Then
-                                        WScript.Echo "Error al cargar imagen: " & Err.Description
-                                        Err.Clear
-                                    Else
-                                        WScript.Echo "Imagen aplicada correctamente: " & ctlProps("picture")
-                                    End If
-                                    On Error GoTo 0
-                                Else
-                                    If bStrict Then
-                                        WScript.Echo "Error: Imagen no encontrada: " & picturePath
-                                    Else
-                                        WScript.Echo "Advertencia: Imagen no encontrada: " & picturePath
-                                    End If
-                                End If
-                            End If
-                        End If
-                        
-                        ' Aplicar eventos basados en handlers detectados
-                        If ctrl.Exists("events") Then
-                            Dim ctrlEvents, currentEventName, currentEventValue, shouldBeEventProcedure
-                            Set ctrlEvents = ctrl("events")
-                            
-                            ' Procesar cada evento del control
-                            Dim eventKeys
-                            eventKeys = Array("onClick", "onDblClick", "onCurrent", "onLoad", "onOpen", "onGotFocus", "onLostFocus", "onChange", "onAfterUpdate", "onBeforeUpdate")
-                            
-                            For j = 0 To UBound(eventKeys)
-                                currentEventName = eventKeys(j)
-                                If ctrlEvents.Exists(currentEventName) Then
-                                    currentEventValue = ctrlEvents(currentEventName)
-                                    shouldBeEventProcedure = False
-                                    
-                                    ' Determinar si debe ser [Event Procedure]
-                                    ' 1) Si el JSON especifica explícitamente [Event Procedure]
-                                    If currentEventValue = "[Event Procedure]" Then
-                                        shouldBeEventProcedure = True
-                                    End If
-                                    
-                                    ' 2) Si hay handler detectado para este control y evento
-                                    Dim currentEventKey, currentMappedEventName
-                                    currentMappedEventName = MapEventNameToHandler(currentEventName)
-                                    currentEventKey = ctrl("name") & "." & currentMappedEventName
-                                    If detectedHandlers.Exists(currentEventKey) Then
-                                        If currentEventValue <> "[Event Procedure]" And currentEventValue <> "" Then
-                                            ' Discrepancia: hay handler pero JSON indica otra cosa
-                                            Dim discrepancyMsg
-                                            discrepancyMsg = "Control " & ctrl("name") & "." & currentEventName & ": handler detectado pero JSON indica '" & currentEventValue & "'"
-                                            eventDiscrepancies.Add eventDiscrepancies.Count, discrepancyMsg
-                                            If bStrict Then
-                                                WScript.Echo "ERROR: " & discrepancyMsg
-                                            Else
-                                                WScript.Echo "WARNING: " & discrepancyMsg
-                                            End If
-                                        End If
-                                        shouldBeEventProcedure = True
-                                    End If
-                                    
-                                    ' Aplicar [Event Procedure] si es necesario
-                                    If shouldBeEventProcedure Then
-                                        On Error Resume Next
-                                        Call SetControlEventProperty(ctlDest, currentEventName, "[Event Procedure]")
-                                        If Err.Number <> 0 Then
-                                            WScript.Echo "Error al establecer evento " & currentEventName & ": " & Err.Description
-                                            Err.Clear
-                                        ElseIf gVerbose Then
-                                            WScript.Echo "Evento " & currentEventName & " establecido como [Event Procedure] para " & ctrl("name")
-                                        End If
-                                        On Error GoTo 0
-                                    End If
-                                End If
-                            Next
-                        End If
-                        
-                        WScript.Echo "Control " & ctrl("name") & " creado exitosamente"
-                    Else
-                        WScript.Echo "Error: No se pudo crear el control " & ctrl("name")
-                    End If
-                    
-                    On Error GoTo 0
-                Next
-            End If
-        End If
+    ' Cerrar el formulario
+    On Error Resume Next
+    objAccess.DoCmd.Close 1, formName, 1  ' acForm, formName, acSaveYes
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al cerrar el formulario: " & Err.Description
     End If
+    On Error GoTo 0
     
+    WScript.Echo "Formulario '" & formName & "' creado exitosamente."
+
     ' Guardar y cerrar el formulario
     On Error Resume Next
     
@@ -5014,98 +4658,156 @@ Sub ImportForm()
     
     WScript.Echo "Formulario final: " & formName
     
-    ' Mostrar resumen de discrepancias de eventos si las hay
-    If eventDiscrepancies.Count > 0 Then
-        WScript.Echo ""
-        WScript.Echo "=== RESUMEN DE DISCREPANCIAS DE EVENTOS ==="
-        Dim discrepancyKey
-        For Each discrepancyKey In eventDiscrepancies.Keys
-            WScript.Echo eventDiscrepancies(discrepancyKey)
-        Next
-        WScript.Echo "Total de discrepancias: " & eventDiscrepancies.Count
-        
-        If bStrict Then
-            WScript.Echo "ERROR: Modo --strict activado. Import fallido debido a discrepancias."
-            WScript.Quit 1
-        End If
-    End If
-    
     On Error GoTo 0
-    
-    WScript.Echo "Formulario '" & formName & "' creado exitosamente."
     
 End Sub
 
 ' ============================================================================
-' FUNCIÓN: MapEventNameToHandler
-' Descripción: Mapea nombres de eventos JSON a nombres de handlers VBA
-' Parámetros: eventName - nombre del evento en JSON (ej: "onClick")
-' Retorna: nombre del evento para handler VBA (ej: "Click")
+' SUBRUTINA: ListForms
+' Descripción: Lista todos los formularios de una base de datos Access
+' Sintaxis: list-forms [db_path] [--password <pwd>] [--json]
+' Parámetros:
+'   db_path: Ruta a la base de datos (opcional, por defecto ./condor.accdb)
+'   --password: Contraseña de la base de datos (opcional)
+'   --json: Salida en formato JSON (opcional, por defecto texto)
 ' ============================================================================
-Private Function MapEventNameToHandler(eventName)
-    Select Case LCase(eventName)
-        Case "onclick"
-            MapEventNameToHandler = "Click"
-        Case "ondblclick"
-            MapEventNameToHandler = "DblClick"
-        Case "oncurrent"
-            MapEventNameToHandler = "Current"
-        Case "onload"
-            MapEventNameToHandler = "Load"
-        Case "onopen"
-            MapEventNameToHandler = "Open"
-        Case "ongotfocus"
-            MapEventNameToHandler = "GotFocus"
-        Case "onlostfocus"
-            MapEventNameToHandler = "LostFocus"
-        Case "onchange"
-            MapEventNameToHandler = "Change"
-        Case "onafterupdate"
-            MapEventNameToHandler = "AfterUpdate"
-        Case "onbeforeupdate"
-            MapEventNameToHandler = "BeforeUpdate"
-        Case Else
-            MapEventNameToHandler = eventName
-    End Select
-End Function
-
-' ============================================================================
-' SUBRUTINA: SetControlEventProperty
-' Descripción: Establece la propiedad de evento de un control
-' Parámetros: 
-'   ctrl - objeto control de Access
-'   eventName - nombre del evento (ej: "onClick")
-'   eventValue - valor a asignar (ej: "[Event Procedure]")
-' ============================================================================
-Private Sub SetControlEventProperty(ctrl, eventName, eventValue)
-    On Error Resume Next
+Sub ListForms()
+    Dim dbPath, password, bJsonOutput
+    Dim i, arg
+    Dim objAccess, objFSO
+    Dim formsList, formCount
+    Dim accessObj
     
-    Select Case LCase(eventName)
-        Case "onclick"
-            ctrl.OnClick = eventValue
-        Case "ondblclick"
-            ctrl.OnDblClick = eventValue
-        Case "oncurrent"
-            ctrl.OnCurrent = eventValue
-        Case "onload"
-            ctrl.OnLoad = eventValue
-        Case "onopen"
-            ctrl.OnOpen = eventValue
-        Case "ongotfocus"
-            ctrl.OnGotFocus = eventValue
-        Case "onlostfocus"
-            ctrl.OnLostFocus = eventValue
-        Case "onchange"
-            ctrl.OnChange = eventValue
-        Case "onafterupdate"
-            ctrl.OnAfterUpdate = eventValue
-        Case "onbeforeupdate"
-            ctrl.OnBeforeUpdate = eventValue
-    End Select
+    ' Inicializar variables
+    dbPath = "./condor.accdb"
+    password = ""
+    bJsonOutput = False
+    
+    ' Procesar argumentos
+    i = 1
+    While i < objArgs.Count
+        arg = LCase(objArgs(i))
+        
+        If arg = "--help" Or arg = "-h" Or arg = "help" Then
+            WScript.Echo "SINTAXIS: cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json]"
+            WScript.Echo ""
+            WScript.Echo "PARÁMETROS:"
+            WScript.Echo "  db_path          Ruta a la base de datos (opcional, por defecto ./condor.accdb)"
+            WScript.Echo "  --password <pwd> Contraseña de la base de datos"
+            WScript.Echo "  --json           Salida en formato JSON"
+            WScript.Echo ""
+            WScript.Echo "EJEMPLOS:"
+            WScript.Echo "  cscript condor_cli.vbs list-forms"
+            WScript.Echo "  cscript condor_cli.vbs list-forms ./otra.accdb --password 1234"
+            WScript.Echo "  cscript condor_cli.vbs list-forms --json"
+            WScript.Quit 0
+        ElseIf arg = "--password" Then
+            If i + 1 < objArgs.Count Then
+                i = i + 1
+                password = objArgs(i)
+            Else
+                WScript.Echo "Error: --password requiere un valor"
+                WScript.Quit 1
+            End If
+        ElseIf arg = "--json" Then
+            bJsonOutput = True
+        ElseIf Left(arg, 2) <> "--" Then
+            ' Es el db_path
+            dbPath = objArgs(i)
+        Else
+            WScript.Echo "Error: Opción desconocida: " & objArgs(i)
+            WScript.Quit 1
+        End If
+        
+        i = i + 1
+    Wend
+    
+    ' Verificar que existe la base de datos
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    If Not objFSO.FileExists(dbPath) Then
+        WScript.Echo "Error: No se encuentra la base de datos: " & dbPath
+        WScript.Quit 1
+    End If
+    
+    ' Crear instancia de Access
+    On Error Resume Next
+    Set objAccess = CreateObject("Access.Application")
+    If Err.Number <> 0 Then
+        WScript.Echo "Error: No se puede crear instancia de Access: " & Err.Description
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
+    
+    ' Configurar Access en modo silencioso
+    objAccess.Visible = False
+    objAccess.Application.Echo False
+    
+    ' Abrir la base de datos
+    On Error Resume Next
+    If password <> "" Then
+        objAccess.OpenCurrentDatabase dbPath, False, password
+    Else
+        objAccess.OpenCurrentDatabase dbPath, False
+    End If
     
     If Err.Number <> 0 Then
-        Err.Raise Err.Number, Err.Source, Err.Description
+        WScript.Echo "Error al abrir la base de datos: " & Err.Description
+        objAccess.Quit 2
+        WScript.Quit 1
     End If
+    On Error GoTo 0
+    
+    ' Enumerar formularios
+    Dim formsArray()
+    formCount = 0
+    
+    ' Contar formularios primero
+    For Each accessObj In objAccess.CurrentProject.AllForms
+        formCount = formCount + 1
+    Next
+    
+    ' Redimensionar array y llenar
+    If formCount > 0 Then
+        ReDim formsArray(formCount - 1)
+        Dim formIndex
+        formIndex = 0
+        For Each accessObj In objAccess.CurrentProject.AllForms
+            formsArray(formIndex) = accessObj.Name
+            formIndex = formIndex + 1
+        Next
+    End If
+    
+    ' Generar salida
+    If bJsonOutput Then
+        ' Salida JSON
+        Dim jsonOutput, i_form
+        jsonOutput = "["
+        If formCount > 0 Then
+            For i_form = 0 To UBound(formsArray)
+                If i_form > 0 Then jsonOutput = jsonOutput & ","
+                jsonOutput = jsonOutput & "\"" & formsArray(i_form) & "\""
+            Next
+        End If
+        jsonOutput = jsonOutput & "]"
+        WScript.Echo jsonOutput
+    Else
+        ' Salida texto
+        If formCount = 0 Then
+            WScript.Echo "No se encontraron formularios en la base de datos."
+        Else
+            WScript.Echo "Formularios encontrados (" & formCount & "):"
+            For i_form = 0 To UBound(formsArray)
+                WScript.Echo "  " & formsArray(i_form)
+            Next
+        End If
+    End If
+    
+    ' Cerrar Access
+    On Error Resume Next
+    objAccess.Application.Echo True
+    objAccess.Quit 2
+    On Error GoTo 0
+    
 End Sub
 
 ' ============================================================================
