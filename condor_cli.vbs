@@ -3195,7 +3195,6 @@ Sub ImportForm()
     Dim propName
     
     ' Asignar argumentos
-    Dim strJsonPath
     strJsonPath = objArgs(1)
     
     ' Si la ruta no es completa, construir la ruta por defecto
