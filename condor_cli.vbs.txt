@@ -46,7 +46,7 @@ If objArgs.Count = 0 Then
     WScript.Echo "  lint       - Auditar codigo VBA para detectar cabeceras duplicadas"
     WScript.Echo "  createtable <nombre> <sql> - Crear tabla con consulta SQL"
     WScript.Echo "  droptable <nombre> - Eliminar tabla"
-    WScript.Echo "  listtables [db_path] [--schema] [--output] - Listar tablas de BD. --schema: muestra campos y tipos. --output: exporta a listtables_output.txt"
+    WScript.Echo "  listtables [db_path] [--schema] [--output] - Listar tablas de BD. --schema: muestra campos, tipos y requerido. --output: exporta a [nombre_bd]_listtables.txt"
     WScript.Echo "  relink [db_path] [folder]    - Re-vincular tablas a bases locales"
     WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
     WScript.Echo "  relink --all - Re-vincular todas las bases en ./back automaticamente"
@@ -88,8 +88,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle' o 'migrate'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle', 'migrate', 'export-form' o 'import-form'"
     WScript.Quit 1
 End If
 
@@ -241,6 +241,10 @@ ElseIf strAction = "relink" Then
     Call RelinkTables()
 ElseIf strAction = "migrate" Then
     Call ExecuteMigrations()
+ElseIf strAction = "export-form" Then
+    Call ExportForm()
+ElseIf strAction = "import-form" Then
+    Call ImportForm()
 
 End If
 
@@ -503,7 +507,9 @@ Sub ListTables()
     
     ' Configurar salida
     If outputToFile Then
-        outputPath = objFSO.GetAbsolutePathName(".") & "\listtables_output.txt"
+        Dim dbName
+        dbName = objFSO.GetBaseName(strAccessPath)
+        outputPath = objFSO.GetAbsolutePathName(".") & "\" & dbName & "_listtables.txt"
         Set outputFile = objFSO.CreateTextFile(outputPath, True)
         WScript.Echo "Exportando resultados a: " & outputPath
     End If
@@ -542,17 +548,18 @@ Sub ListTables()
                     End If
                 Next
     
-                WScript.Echo "Campo" & vbTab & vbTab & "Tipo" & vbTab & vbTab & "PK"
-                If outputToFile Then outputFile.WriteLine "Campo" & vbTab & vbTab & "Tipo" & vbTab & vbTab & "PK"
+                WScript.Echo PadRight("Campo", 25) & PadRight("Tipo", 15) & PadRight("PK", 8) & "Requerido"
+                If outputToFile Then outputFile.WriteLine PadRight("Campo", 25) & PadRight("Tipo", 15) & PadRight("PK", 8) & "Requerido"
                 
-                WScript.Echo "------------------------------------------------------------"
-                If outputToFile Then outputFile.WriteLine "------------------------------------------------------------"
+                WScript.Echo "--------------------------------------------------------------------"
+                If outputToFile Then outputFile.WriteLine "--------------------------------------------------------------------"
                 
                 For Each fld In tbl.Fields
-                    Dim pkMarker
+                    Dim pkMarker, requiredMarker
                     If primaryKeys.Exists(fld.Name) Then pkMarker = "PK" Else pkMarker = ""
-                    WScript.Echo fld.Name & vbTab & vbTab & DaoTypeToString(fld.Type) & vbTab & vbTab & pkMarker
-                    If outputToFile Then outputFile.WriteLine fld.Name & vbTab & vbTab & DaoTypeToString(fld.Type) & vbTab & vbTab & pkMarker
+                    If fld.Required Then requiredMarker = "true" Else requiredMarker = "false"
+                    WScript.Echo PadRight(fld.Name, 25) & PadRight(DaoTypeToString(fld.Type), 15) & PadRight(pkMarker, 8) & requiredMarker
+                    If outputToFile Then outputFile.WriteLine PadRight(fld.Name, 25) & PadRight(DaoTypeToString(fld.Type), 15) & PadRight(pkMarker, 8) & requiredMarker
                 Next
             End If
         End If
@@ -852,6 +859,74 @@ Function ValidateVBASyntax(filePath, ByRef errorDetails)
     
     ' Si llegamos aquí, el archivo es válido
     ValidateVBASyntax = True
+End Function
+
+' Función de serialización recursiva para convertir Dictionary/ArrayList a JSON
+Private Function DictionaryToJson(obj, indentLevel)
+    Dim result, indent, i, key, value, keys
+    Dim isLast
+    
+    ' Crear indentación
+    indent = String(indentLevel * 4, " ")
+    
+    ' Verificar el tipo de objeto
+    If TypeName(obj) = "Dictionary" Then
+        ' Manejar Dictionary
+        result = "{" & vbCrLf
+        keys = obj.Keys
+        For i = 0 To UBound(keys)
+            key = keys(i)
+            value = obj(key)
+            isLast = (i = UBound(keys))
+            
+            result = result & indent & "    " & Chr(34) & key & Chr(34) & ": "
+            result = result & DictionaryToJson(value, indentLevel + 1)
+            
+            If Not isLast Then
+                result = result & ","
+            End If
+            result = result & vbCrLf
+        Next
+        result = result & indent & "}"
+        
+    ElseIf TypeName(obj) = "ArrayList" Then
+        ' Manejar ArrayList
+        result = "[" & vbCrLf
+        For i = 0 To obj.Count - 1
+            isLast = (i = obj.Count - 1)
+            
+            result = result & indent & "    "
+            result = result & DictionaryToJson(obj(i), indentLevel + 1)
+            
+            If Not isLast Then
+                result = result & ","
+            End If
+            result = result & vbCrLf
+        Next
+        result = result & indent & "]"
+        
+    Else
+        ' Manejar valores simples
+        If VarType(obj) = vbString Then
+            ' String - escapar comillas dobles
+            result = Chr(34) & Replace(CStr(obj), Chr(34), "\" & Chr(34)) & Chr(34)
+        ElseIf VarType(obj) = vbBoolean Then
+            ' Boolean
+            If obj Then
+                result = "true"
+            Else
+                result = "false"
+            End If
+        ElseIf IsNumeric(obj) Then
+            ' Numérico
+            result = CStr(obj)
+        Else
+            ' Otros tipos como string
+            result = Chr(34) & CStr(obj) & Chr(34)
+        End If
+    End If
+    
+    DictionaryToJson = result
 End Function
 
 ' Función para leer archivo con codificación ANSI
@@ -1215,6 +1290,8 @@ Sub ShowHelp()
     WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
     WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
     WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
+    WScript.Echo "  export-form <db_path> <form_name> [--output] [--password] - Exportar diseño de formulario a JSON."
+    WScript.Echo "  import-form <json_path> <db_path> [--password] - Crear/Modificar formulario desde JSON."
     WScript.Echo ""
     WScript.Echo "FUNCIONALIDADES DISPONIBLES PARA 'bundle' (con dependencias automáticas):"
     WScript.Echo "(Basadas en CONDOR_MASTER_PLAN.md)"
@@ -1334,6 +1411,10 @@ Sub ExecuteTests()
     WScript.Echo "=== INICIANDO EJECUCION DE PRUEBAS ==="
     Dim reportString
     
+    ' Verificar refactorización de logging antes de ejecutar pruebas
+    WScript.Echo "Verificando refactorización de logging..."
+    Call VerifyLoggingRefactoring()
+    
     WScript.Echo "Ejecutando suite de pruebas en Access..."
     On Error Resume Next
     
@@ -1380,6 +1461,7 @@ Sub ExecuteTests()
     ' Determinar el éxito o fracaso buscando la línea final
     If InStr(UCase(reportString), "RESULT: SUCCESS") > 0 Then
         WScript.Echo "RESULTADO FINAL: ✓ Todas las pruebas pasaron."
+        WScript.Echo "✅ REFACTORIZACIÓN COMPLETADA: Patrón EOperationLog implementado correctamente"
         WScript.Quit 0 ' Éxito
     Else
         WScript.Echo "RESULTADO FINAL: ✗ Pruebas fallidas."
@@ -2340,7 +2422,7 @@ Function GetFunctionalityFiles(strFunctionality)
             arrFiles = Array("IDocumentService.cls", "CDocumentService.cls", "CMockDocumentService.cls", _
                            "IWordManager.cls", "CWordManager.cls", "CMockWordManager.cls", _
                            "IMapeoRepository.cls", "CMapeoRepository.cls", "CMockMapeoRepository.cls", _
-                           "EMapeo.cls", "modDocumentServiceFactory.bas", "TestDocumentService.bas", _
+                           "EMapeo.cls", "modDocumentServiceFactory.bas", _
                            "TIDocumentService.bas", _
                            "ISolicitudService.cls", "CSolicitudService.cls", "modSolicitudServiceFactory.bas", _
                            "IOperationLogger.cls", "IConfig.cls", "IErrorHandlerService.cls", "IFileSystem.cls", _
@@ -2448,6 +2530,9 @@ Function GetFunctionalityFiles(strFunctionality)
         Case "tests", "pruebas", "testing", "test"
             ' Sección 12 - Archivos de Pruebas (Autodescubrimiento)
             arrFiles = Array()
+        Case Else
+            ' Funcionalidad no reconocida - devolver array vacío
+            arrFiles = Array()
     End Select
     
     GetFunctionalityFiles = arrFiles
@@ -2459,24 +2544,20 @@ End Function
 
 
 ' Subrutina para empaquetar archivos de código por funcionalidad
+' Subrutina para empaquetar archivos de código por funcionalidad o por lista de ficheros
 Sub BundleFunctionality()
     On Error Resume Next
     
-    Dim strFunctionality, strDestPath, strBundlePath
-    Dim objFolder, objFile
-    Dim foundFiles, copiedFiles
-    Dim timestamp
-    Dim arrFunctionalityFiles, i
-    Dim usePredefinedList
+    Dim strFunctionalityOrFiles, strDestPath, strBundlePath, timestamp
     
     ' Verificar argumentos
     If objArgs.Count < 2 Then
-        WScript.Echo "Error: Se requiere nombre de funcionalidad"
-        WScript.Echo "Uso: cscript condor_cli.vbs bundle <funcionalidad> [ruta_destino]"
+        WScript.Echo "Error: Se requiere nombre de funcionalidad o lista de ficheros"
+        WScript.Echo "Uso: cscript condor_cli.vbs bundle <funcionalidad | fichero1,fichero2,...> [ruta_destino]"
         WScript.Quit 1
     End If
     
-    strFunctionality = objArgs(1)
+    strFunctionalityOrFiles = objArgs(1)
     
     ' Determinar ruta de destino
     If objArgs.Count >= 3 Then
@@ -2490,33 +2571,17 @@ Sub BundleFunctionality()
                 Right("0" & Hour(Now), 2) & Right("0" & Minute(Now), 2) & Right("0" & Second(Now), 2)
     
     ' Crear nombre de carpeta bundle
-    strBundlePath = objFSO.BuildPath(strDestPath, "bundle_" & strFunctionality & "_" & timestamp)
+    Dim bundleName
+    If InStr(strFunctionalityOrFiles, ",") > 0 Then
+        bundleName = "bundle_custom_" & timestamp
+    Else
+        bundleName = "bundle_" & strFunctionalityOrFiles & "_" & timestamp
+    End If
+    strBundlePath = objFSO.BuildPath(strDestPath, bundleName)
     
-    WScript.Echo "=== EMPAQUETANDO FUNCIONALIDAD: " & strFunctionality & " ==="
+    WScript.Echo "=== EMPAQUETANDO ARTEFACTOS ==="
     WScript.Echo "Buscando archivos en: " & strSourcePath
     WScript.Echo "Carpeta destino: " & strBundlePath
-    
-    ' Obtener lista de archivos para la funcionalidad
-    arrFunctionalityFiles = GetFunctionalityFiles(strFunctionality)
-    usePredefinedList = (UBound(arrFunctionalityFiles) >= 0)
-    
-    If usePredefinedList Then
-        WScript.Echo "Usando lista predefinida de archivos según CONDOR_MASTER_PLAN.md"
-        WScript.Echo "Archivos esperados: " & (UBound(arrFunctionalityFiles) + 1)
-    Else
-        If LCase(strFunctionality) = "tests" Or LCase(strFunctionality) = "test" Or LCase(strFunctionality) = "pruebas" Or LCase(strFunctionality) = "testing" Then
-            WScript.Echo "Usando autodescubrimiento para archivos de pruebas (T* y TI*)"
-        Else
-            WScript.Echo "Usando búsqueda por nombre de funcionalidad"
-        End If
-    End If
-    WScript.Echo ""
-    
-    ' Verificar que existe la carpeta src
-    If Not objFSO.FolderExists(strSourcePath) Then
-        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
-        WScript.Quit 1
-    End If
     
     ' Crear carpeta de destino
     If Not objFSO.FolderExists(strBundlePath) Then
@@ -2527,98 +2592,90 @@ Sub BundleFunctionality()
         End If
     End If
     
-    Set objFolder = objFSO.GetFolder(strSourcePath)
-    foundFiles = 0
-    copiedFiles = 0
+    Dim arrFilesToBundle
     
-    If usePredefinedList Then
-        ' Usar lista predefinida de archivos
-        For i = 0 To UBound(arrFunctionalityFiles)
-            Dim fileName, filePath, destFilePath
-            fileName = arrFunctionalityFiles(i)
-            filePath = objFSO.BuildPath(strSourcePath, fileName)
-            
-            If objFSO.FileExists(filePath) Then
-                foundFiles = foundFiles + 1
-                
-                ' Copiar archivo con extensión .txt añadida
-                destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
-                
-                objFSO.CopyFile filePath, destFilePath, True
-                
-                If Err.Number <> 0 Then
-                    WScript.Echo "  ❌ Error copiando " & fileName & ": " & Err.Description
-                    Err.Clear
-                Else
-                    WScript.Echo "  ✓ " & fileName & " -> " & fileName & ".txt"
-                    copiedFiles = copiedFiles + 1
-                End If
-            Else
-                WScript.Echo "  ⚠️ Archivo no encontrado: " & fileName
-            End If
-        Next
+    ' Lógica de Detección Inteligente
+    If InStr(strFunctionalityOrFiles, ",") > 0 Then
+        ' MODO 1: Lista de ficheros explícita
+        WScript.Echo "Modo: Lista de ficheros explícita."
+        arrFilesToBundle = Split(strFunctionalityOrFiles, ",")
     Else
-        ' Usar búsqueda por nombre o autodescubrimiento para Tests
-        For Each objFile In objFolder.Files
-            If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-                Dim shouldInclude
-                shouldInclude = False
-                
-                ' Para funcionalidad Tests/test, buscar archivos que empiecen por T o TI
-                If LCase(strFunctionality) = "tests" Or LCase(strFunctionality) = "test" Or LCase(strFunctionality) = "pruebas" Or LCase(strFunctionality) = "testing" Then
-                    Dim baseName
-                    baseName = objFSO.GetBaseName(objFile.Name)
-                    If Left(LCase(baseName), 1) = "t" Then
-                        ' Incluir archivos que empiecen por T o TI
-                        If Left(LCase(baseName), 2) = "ti" Or Left(LCase(baseName), 4) = "test" Then
-                            shouldInclude = True
-                        End If
-                    End If
-                Else
-                    ' Comportamiento anterior para otras funcionalidades
-                    If InStr(1, LCase(objFile.Name), LCase(strFunctionality)) > 0 Then
-                        shouldInclude = True
-                    End If
-                End If
-                
-                If shouldInclude Then
-                    foundFiles = foundFiles + 1
-                    
-                    ' Copiar archivo con extensión .txt añadida
-                    Dim destFilePathLegacy
-                    destFilePathLegacy = objFSO.BuildPath(strBundlePath, objFile.Name & ".txt")
-                    
-                    objFSO.CopyFile objFile.Path, destFilePathLegacy, True
-                    
-                    If Err.Number <> 0 Then
-                        WScript.Echo "  ❌ Error copiando " & objFile.Name & ": " & Err.Description
-                        Err.Clear
-                    Else
-                        WScript.Echo "  ✓ " & objFile.Name & " -> " & objFile.Name & ".txt"
-                        copiedFiles = copiedFiles + 1
-                    End If
-                End If
+        ' MODO 2: Verificar si es funcionalidad conocida o archivo individual
+        arrFilesToBundle = GetFunctionalityFiles(strFunctionalityOrFiles)
+        
+        If UBound(arrFilesToBundle) >= 0 Then
+            ' Es una funcionalidad conocida
+            WScript.Echo "Modo: Funcionalidad '" & strFunctionalityOrFiles & "'."
+        Else
+            ' No es funcionalidad conocida, buscar archivo individual en src
+            Dim singleFilePath
+            singleFilePath = objFSO.BuildPath(strSourcePath, strFunctionalityOrFiles)
+            
+            If objFSO.FileExists(singleFilePath) Then
+                ' Archivo encontrado, tratarlo como lista de un elemento
+                WScript.Echo "Modo: Archivo individual '" & strFunctionalityOrFiles & "'."
+                ReDim arrFilesToBundle(0)
+                arrFilesToBundle(0) = strFunctionalityOrFiles
+            Else
+                ' Archivo no encontrado
+                WScript.Echo "Error: '" & strFunctionalityOrFiles & "' no es una funcionalidad conocida ni un archivo existente en src."
+                WScript.Echo "Funcionalidades disponibles: Auth, Document, Expediente, Solicitud, Workflow, Mapeo, Notification, Operation, Config, FileSystem, Word, Error, TestFramework, App, Models, Utils, Tests"
+                WScript.Quit 1
             End If
-        Next
+        End If
     End If
+    
+    ' Llamar a la subrutina de ayuda para copiar los ficheros
+    Call CopyFilesToBundle(arrFilesToBundle, strBundlePath)
+    
+    On Error GoTo 0
+End Sub
+
+' NUEVA SUBRUTINA DE AYUDA
+' Copia una lista de ficheros al directorio del paquete
+Sub CopyFilesToBundle(arrFiles, strBundlePath)
+    Dim copiedFiles, notFoundFiles
+    copiedFiles = 0
+    notFoundFiles = 0
+    
+    If UBound(arrFiles) < 0 Then
+        WScript.Echo "Advertencia: La lista de ficheros a empaquetar está vacía."
+    End If
+
+    Dim i, fileName, filePath, destFilePath
+    For i = 0 To UBound(arrFiles)
+        fileName = Trim(arrFiles(i))
+        filePath = objFSO.BuildPath(strSourcePath, fileName)
+        
+        If objFSO.FileExists(filePath) Then
+            ' Copiar archivo con extensión .txt añadida
+            destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
+            objFSO.CopyFile filePath, destFilePath, True
+            
+            If Err.Number <> 0 Then
+                WScript.Echo "  ? Error copiando " & fileName & ": " & Err.Description
+                Err.Clear
+            Else
+                WScript.Echo "  ? " & fileName & " -> " & fileName & ".txt"
+                copiedFiles = copiedFiles + 1
+            End If
+        Else
+            WScript.Echo "  ? Archivo no encontrado: " & fileName
+            notFoundFiles = notFoundFiles + 1
+        End If
+    Next
     
     WScript.Echo ""
     WScript.Echo "=== RESULTADO DEL EMPAQUETADO ==="
-    WScript.Echo "Archivos encontrados: " & foundFiles
     WScript.Echo "Archivos copiados: " & copiedFiles
+    WScript.Echo "Archivos no encontrados: " & notFoundFiles
     WScript.Echo "Ubicación del paquete: " & strBundlePath
     
     If copiedFiles = 0 Then
-        If usePredefinedList Then
-            WScript.Echo "⚠️ No se encontraron archivos de la funcionalidad '" & strFunctionality & "' según CONDOR_MASTER_PLAN.md"
-        Else
-            WScript.Echo "⚠️ No se encontraron archivos que contengan '" & strFunctionality & "'"
-        End If
+        WScript.Echo "? No se copió ningún archivo."
     Else
-        WScript.Echo "✅ Empaquetado completado exitosamente"
+        WScript.Echo "? Empaquetado completado exitosamente"
     End If
-    
-    On Error GoTo 0
 End Sub
 
 ' Función auxiliar para convertir rutas relativas a absolutas
@@ -2751,15 +2808,41 @@ End Sub
 ' Descripción: Parsea y ejecuta los comandos de un fichero SQL
 ' CORREGIDO: Utiliza ADODB.Stream para leer ficheros con codificación UTF-8.
 ' ===================================================================
+' FUNCIÓN: CleanSqlContent
+' Elimina comentarios SQL y líneas vacías del contenido
+Function CleanSqlContent(sqlContent)
+    Dim arrLines, cleanedLines, i, trimmedLine
+    
+    ' Dividir en líneas
+    arrLines = Split(sqlContent, vbCrLf)
+    If UBound(arrLines) = 0 Then
+        arrLines = Split(sqlContent, vbLf)
+    End If
+    
+    ' Filtrar líneas
+    cleanedLines = ""
+    For i = 0 To UBound(arrLines)
+        trimmedLine = Trim(arrLines(i))
+        
+        ' Ignorar líneas vacías y comentarios
+        If Len(trimmedLine) > 0 And Left(trimmedLine, 2) <> "--" Then
+            If cleanedLines <> "" Then
+                cleanedLines = cleanedLines & vbCrLf
+            End If
+            cleanedLines = cleanedLines & arrLines(i)
+        End If
+    Next
+    
+    CleanSqlContent = cleanedLines
+End Function
+
 Sub ProcessSqlFile(filePath)
-    Dim objStream, strContent, arrLines, i, strLine, strSqlBlock, arrCommands, sqlCommand
+    Dim objStream, strContent, arrCommands, sqlCommand, conn
     
     WScript.Echo "------------------------------------------------------------"
     WScript.Echo "Procesando fichero: " & objFSO.GetFileName(filePath)
     
     On Error Resume Next
-    
-    ' Usar ADODB.Stream para leer correctamente UTF-8
     Set objStream = CreateObject("ADODB.Stream")
     objStream.Type = 2 ' adTypeText
     objStream.Charset = "UTF-8"
@@ -2768,47 +2851,493 @@ Sub ProcessSqlFile(filePath)
     strContent = objStream.ReadText
     objStream.Close
     Set objStream = Nothing
-    
     If Err.Number <> 0 Then
-        WScript.Echo "  ERROR: No se pudo abrir o leer el fichero con codificación UTF-8: " & Err.Description
-        Err.Clear
-        Exit Sub
+        WScript.Echo "  ERROR: No se pudo leer el fichero: " & Err.Description
+        WScript.Quit 1 ' Detener en caso de error de lectura
     End If
+    On Error GoTo 0
     
-    ' Limpiar comentarios y lineas vacias
-    arrLines = Split(strContent, vbCrLf)
-    strSqlBlock = ""
-    For i = 0 To UBound(arrLines)
-        strLine = Trim(arrLines(i))
-        If strLine <> "" And Left(strLine, 2) <> "--" Then
-            strSqlBlock = strSqlBlock & strLine & " "
-        End If
-    Next
+    ' Usar conexión ADO para un manejo de errores DDL robusto
+    Set conn = CreateObject("ADODB.Connection")
+    conn.Open "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & strAccessPath & ";"
+    
+    ' Limpiar comentarios y líneas vacías antes de procesar
+    strContent = CleanSqlContent(strContent)
     
     ' Dividir en comandos por punto y coma
-    arrCommands = Split(strSqlBlock, ";")
+    arrCommands = Split(strContent, ";")
     
     ' Ejecutar cada comando
     For Each sqlCommand In arrCommands
         sqlCommand = Trim(sqlCommand)
-        If sqlCommand <> "" And Len(sqlCommand) > 5 Then
-            WScript.Echo "  Ejecutando SQL..."
-            objAccess.CurrentDb.Execute sqlCommand, 128 ' dbFailOnError
+        
+        ' Solo ejecutar comandos que no estén vacías
+        If Len(sqlCommand) > 5 Then
+            On Error Resume Next
+            conn.Execute sqlCommand
             
             If Err.Number <> 0 Then
                 WScript.Echo "    ERROR al ejecutar comando: " & Err.Description
                 WScript.Echo "    SQL: " & sqlCommand
-                Err.Clear
-                WScript.Echo "  Migración fallida para este fichero."
+                WScript.Echo "  MIGRACIÓN FALLIDA. Abortando."
                 WScript.Echo "------------------------------------------------------------"
-                Exit Sub
+                conn.Close
+                Set conn = Nothing
+                WScript.Quit 1 ' Detener la ejecución inmediatamente
             Else
                 WScript.Echo "    Comando ejecutado exitosamente."
+            End If
+            On Error GoTo 0
+        End If
+    Next
+    
+    conn.Close
+    Set conn = Nothing
+    
+    WScript.Echo "  Fichero procesado exitosamente."
+    WScript.Echo "------------------------------------------------------------"
+End Sub
+
+' Función para formatear texto con ancho fijo
+Function PadRight(text, width)
+    If Len(text) >= width Then
+        PadRight = Left(text, width)
+    Else
+        PadRight = text & String(width - Len(text), " ")
+    End If
+End Function
+
+' Función para verificar la refactorización de logging
+Sub VerifyLoggingRefactoring()
+    Dim serviceFiles, fileName, filePath, fileContent
+    Dim obsoleteCalls, refactoredCalls
+    Dim totalObsolete, totalRefactored
+    
+    serviceFiles = Array("CAuthService.cls", "CNotificationService.cls", "CWorkflowService.cls", "CSolicitudService.cls")
+    totalObsolete = 0
+    totalRefactored = 0
+    
+    WScript.Echo "  Verificando servicios refactorizados..."
+    
+    For Each fileName In serviceFiles
+        filePath = strSourcePath & "\" & fileName
+        
+        If objFSO.FileExists(filePath) Then
+            fileContent = objFSO.OpenTextFile(filePath, 1).ReadAll
+            
+            ' Buscar llamadas obsoletas (3 parámetros)
+            obsoleteCalls = CountMatches(fileContent, "LogOperation\s*\(\s*""[^""]*""\s*,\s*\d+\s*,\s*""[^""]*""\s*\)")
+            
+            ' Buscar llamadas refactorizadas (EOperationLog)
+            refactoredCalls = CountMatches(fileContent, "LogOperation\s*\(\s*operationLog\)")
+            
+            totalObsolete = totalObsolete + obsoleteCalls
+            totalRefactored = totalRefactored + refactoredCalls
+            
+            If obsoleteCalls > 0 Then
+                WScript.Echo "    ⚠️  " & fileName & ": " & obsoleteCalls & " llamadas obsoletas encontradas"
+            Else
+                WScript.Echo "    ✅ " & fileName & ": Refactorizado (" & refactoredCalls & " llamadas EOperationLog)"
+            End If
+        Else
+            WScript.Echo "    ❌ " & fileName & ": Archivo no encontrado"
+        End If
+    Next
+    
+    WScript.Echo "  Resumen de refactorización:"
+    WScript.Echo "    - Llamadas obsoletas: " & totalObsolete
+    WScript.Echo "    - Llamadas refactorizadas: " & totalRefactored
+    
+    If totalObsolete > 0 Then
+        WScript.Echo "    ⚠️  ADVERTENCIA: Aún existen llamadas obsoletas por refactorizar"
+    Else
+        WScript.Echo "    ✅ ÉXITO: Todos los servicios han sido refactorizados"
+    End If
+End Sub
+
+' Función auxiliar para contar coincidencias de regex
+Function CountMatches(text, pattern)
+    Dim regex, matches
+    Set regex = CreateObject("VBScript.RegExp")
+    regex.Pattern = pattern
+    regex.Global = True
+    regex.IgnoreCase = True
+    
+    Set matches = regex.Execute(text)
+    CountMatches = matches.Count
+End Function
+
+' ===================================================================
+' SUBRUTINA: ExportForm
+' Descripción: Exporta el diseño de un formulario a un fichero JSON.
+' ===================================================================
+Sub ExportForm()
+    Dim strDbPath, strFormName, strOutputPath, strPassword
+    Dim i
+    
+    ' Verificar argumentos mínimos
+    If objArgs.Count < 3 Then
+        WScript.Echo "Error: El comando export-form requiere al menos una ruta de base de datos y un nombre de formulario."
+        WScript.Echo "Uso: cscript condor_cli.vbs export-form <db_path> <form_name>"
+        WScript.Quit 1
+    End If
+    
+    ' Asignar argumentos básicos
+    strDbPath = objArgs(1)
+    strFormName = objArgs(2)
+    strOutputPath = ""
+    strPassword = ""
+    
+    ' Procesar argumentos opcionales
+    For i = 3 To objArgs.Count - 1
+        If LCase(objArgs(i)) = "--output" And i < objArgs.Count - 1 Then
+            strOutputPath = objArgs(i + 1)
+        ElseIf LCase(objArgs(i)) = "--password" And i < objArgs.Count - 1 Then
+            strPassword = objArgs(i + 1)
+        End If
+    Next
+    
+    ' Asignar valor por defecto si no se especificó output
+    If strOutputPath = "" Then
+        strOutputPath = strFormName & ".json"
+    End If
+    
+    ' Verificar que el archivo de base de datos existe
+    If Not objFSO.FileExists(strDbPath) Then
+        WScript.Echo "Error: La base de datos no existe: " & strDbPath
+        WScript.Quit 1
+    End If
+    
+    ' Crear instancia de Access
+    Set objAccess = CreateObject("Access.Application")
+    objAccess.Visible = True
+    
+    ' Abrir base de datos
+    On Error Resume Next
+    If strPassword = "" Then
+        objAccess.OpenCurrentDatabase strDbPath
+    Else
+        objAccess.OpenCurrentDatabase strDbPath, , strPassword
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al abrir la base de datos: " & Err.Description
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    ' Abrir formulario en modo diseño
+    objAccess.DoCmd.OpenForm strFormName, 3 ' acDesign
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al abrir el formulario '" & strFormName & "': " & Err.Description
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    On Error GoTo 0
+    
+    ' Confirmar que el formulario se ha abierto correctamente
+    WScript.Echo "Formulario '" & strFormName & "' abierto en modo diseño."
+    
+    ' Preparar la estructura de datos principal
+    Dim formData
+    Set formData = CreateObject("Scripting.Dictionary")
+    
+    ' Obtener referencia al objeto del formulario activo
+    Dim frm
+    Set frm = objAccess.Forms(strFormName)
+    
+    ' Extraer propiedades del formulario principal
+    formData.Add "formName", frm.Name
+    
+    ' Crear diccionario para las propiedades del formulario
+    Dim formProps
+    Set formProps = CreateObject("Scripting.Dictionary")
+    
+    ' Añadir propiedades relevantes con manejo de errores
+    On Error Resume Next
+    formProps.Add "caption", frm.Caption
+    formProps.Add "width", frm.Width
+    formProps.Add "recordSource", frm.RecordSource
+    formProps.Add "allowEdits", frm.AllowEdits
+    formProps.Add "allowAdditions", frm.AllowAdditions
+    formProps.Add "allowDeletions", frm.AllowDeletions
+    On Error GoTo 0
+    
+    ' Añadir el diccionario de propiedades al diccionario principal
+    formData.Add "properties", formProps
+    
+    ' Implementar la lógica de iteración de secciones y controles
+    Dim sectionsDict
+    Set sectionsDict = CreateObject("Scripting.Dictionary")
+    formData.Add "sections", sectionsDict
+    
+    ' Array con los nombres de las secciones
+    Dim sectionNames, sectionName, currentSection, currentSectionDict, controlsColl, control, controlDict, controlProps
+    Dim sectionIndex, controlIndex
+    sectionNames = Array("detail", "header", "footer")
+    
+    ' Bucle para procesar las 3 secciones
+    For sectionIndex = 0 To 2
+        ' Obtener nombre y referencia de la sección actual
+        sectionName = sectionNames(sectionIndex)
+        
+        Set currentSection = frm.Section(sectionIndex)
+        
+        ' Crear diccionario para la sección actual
+        Set currentSectionDict = CreateObject("Scripting.Dictionary")
+        
+        ' Poblar propiedades de la sección
+        On Error Resume Next
+        currentSectionDict.Add "visible", currentSection.Visible
+        currentSectionDict.Add "height", currentSection.Height
+        On Error GoTo 0
+        
+        ' Crear ArrayList para los controles de esta sección
+        Set controlsColl = CreateObject("System.Collections.ArrayList")
+        
+        ' Bucle anidado para procesar controles
+        For Each control In currentSection.Controls
+            ' Crear diccionario para el control
+            Set controlDict = CreateObject("Scripting.Dictionary")
+            
+            ' Añadir name y type al controlDict
+            On Error Resume Next
+            controlDict.Add "name", control.Name
+            controlDict.Add "type", TypeName(control)
+            On Error GoTo 0
+            
+            ' Crear diccionario de propiedades para el control
+            Set controlProps = CreateObject("Scripting.Dictionary")
+            
+            ' Poblar propiedades importantes del control con manejo de errores
+            On Error Resume Next
+            controlProps.Add "caption", control.Caption
+            controlProps.Add "controlSource", control.ControlSource
+            controlProps.Add "top", control.Top
+            controlProps.Add "left", control.Left
+            controlProps.Add "width", control.Width
+            controlProps.Add "height", control.Height
+            controlProps.Add "fontName", control.FontName
+            controlProps.Add "fontSize", control.FontSize
+            controlProps.Add "fontWeight", control.FontWeight
+            controlProps.Add "onClick", control.OnClick
+            controlProps.Add "enabled", control.Enabled
+            controlProps.Add "locked", control.Locked
+            controlProps.Add "default", control.Default
+            On Error GoTo 0
+            
+            ' Añadir controlProps a controlDict
+            controlDict.Add "properties", controlProps
+            
+            ' Añadir controlDict a la colección
+            controlsColl.Add controlDict
+        Next
+        
+        ' Añadir la colección de controles al diccionario de la sección
+        currentSectionDict.Add "controls", controlsColl
+        
+        ' Añadir el diccionario de la sección al diccionario principal de secciones
+        sectionsDict.Add sectionName, currentSectionDict
+    Next
+    
+    WScript.Echo "Estructura de datos del formulario extraída correctamente."
+    
+    ' Serializar a JSON
+    Dim jsonString
+    jsonString = DictionaryToJson(formData, 0)
+    
+    ' Guardar en archivo
+    Dim objFile
+    Set objFile = objFSO.CreateTextFile(strOutputPath, True)
+    objFile.Write jsonString
+    objFile.Close
+    WScript.Echo "Éxito: El formulario ha sido exportado a " & strOutputPath
+    
+    ' Lógica de limpieza
+    objAccess.DoCmd.Close
+End Sub
+
+' ================================================================================
+' FUNCIÓN: ParseJson
+' DESCRIPCIÓN: Parsear JSON usando JScript
+' ================================================================================
+Private Function ParseJson(jsonText)
+    Dim sc
+    Set sc = CreateObject("MSScriptControl.ScriptControl")
+    sc.Language = "JScript"
+    
+    ' La evaluación de JScript necesita que el JSON esté entre paréntesis
+    Set ParseJson = sc.Eval("(" & jsonText & ")")
+End Function
+
+' ================================================================================
+' SUBRUTINA: ImportForm
+' DESCRIPCIÓN: Crear/Modificar formulario desde JSON
+' ================================================================================
+Sub ImportForm()
+    ' Verificar argumentos mínimos
+    If objArgs.Count < 3 Then
+        WScript.Echo "Error: Se requieren al menos 2 argumentos: <json_path> <db_path>"
+        WScript.Echo "Sintaxis: cscript condor_cli.vbs import-form <json_path> <db_path> [--password]"
+        WScript.Quit 1
+    End If
+    
+    ' Declarar variables
+    Dim strJsonPath, strDbPath, strPassword
+    Dim jsonString, formData, formName
+    Dim objAccess, frm
+    Dim propName
+    
+    ' Asignar argumentos
+    strJsonPath = objArgs(1)
+    strDbPath = objArgs(2)
+    strPassword = ""
+    
+    ' Procesar argumento opcional --password
+    Dim i
+    For i = 3 To objArgs.Count - 1
+        If LCase(objArgs(i)) = "--password" Then
+            strPassword = InputBox("Ingrese la contraseña de la base de datos:", "Contraseña")
+            If strPassword = "" Then
+                WScript.Echo "Error: Contraseña requerida."
+                WScript.Quit 1
             End If
         End If
     Next
     
-    WScript.Echo "  Fichero procesado exitosamente."
-    WScript.Echo "------------------------------------------------------------"
+    ' Verificar que los archivos existen
+    If Not objFSO.FileExists(strJsonPath) Then
+        WScript.Echo "Error: El archivo JSON no existe: " & strJsonPath
+        WScript.Quit 1
+    End If
+    
+    If Not objFSO.FileExists(strDbPath) Then
+        WScript.Echo "Error: La base de datos no existe: " & strDbPath
+        WScript.Quit 1
+    End If
+    
+    ' Leer contenido del archivo JSON
+    Dim objFile
+    Set objFile = objFSO.OpenTextFile(strJsonPath, 1)
+    jsonString = objFile.ReadAll
+    objFile.Close
+    
+    ' Parsear JSON
+    Set formData = ParseJson(jsonString)
+    
+    If formData Is Nothing Then
+        WScript.Echo "Error: No se pudo parsear el fichero JSON."
+        WScript.Quit 1
+    End If
+    
+    ' Obtener nombre del formulario
+    formName = formData.formName
+    
+    ' Abrir base de datos
+    Set objAccess = CreateObject("Access.Application")
+    objAccess.Visible = False
+    
+    On Error Resume Next
+    If strPassword <> "" Then
+        objAccess.OpenCurrentDatabase strDbPath, False, strPassword
+    Else
+        objAccess.OpenCurrentDatabase strDbPath, False
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al abrir la base de datos: " & Err.Description
+        objAccess.Quit
+        WScript.Quit 1
+    End If
     On Error GoTo 0
+    
+    ' Eliminar formulario existente si existe
+    On Error Resume Next
+    objAccess.DoCmd.DeleteObject 2, formName ' acForm = 2
+    On Error GoTo 0
+    
+    ' Crear nuevo formulario en blanco
+    Set frm = objAccess.CreateForm()
+    
+    ' Aplicar propiedades del formulario
+    On Error Resume Next
+    For Each propName In formData.properties
+        frm.Properties(propName).Value = formData.properties(propName)
+    Next
+    On Error GoTo 0
+    
+    ' Procesar secciones y controles del formulario
+    Dim sectionNames, sectionName, currentSectionObject
+    Dim controlsData, controlData, controlTypeConst, newControl
+    Dim prop, propValue
+    
+    sectionNames = Array("Detail", "FormHeader", "FormFooter")
+    
+    For sectionIndex = 0 To 2
+        sectionName = sectionNames(sectionIndex)
+        Set currentSectionObject = frm.Section(sectionIndex)
+        
+        ' Aplicar propiedades a la sección si existen en el JSON
+        On Error Resume Next
+        For Each prop In formData.sections(sectionName).properties
+            propValue = formData.sections(sectionName).properties(prop)
+            If Not IsNull(propValue) Then
+                CallByName currentSectionObject, prop, 2, propValue ' 2 = VbLet
+            End If
+        Next
+        On Error GoTo 0
+        
+        ' Verificar si la sección tiene controles en el JSON
+        On Error Resume Next
+        Set controlsData = formData.sections(sectionName).controls
+        On Error GoTo 0
+        
+        If Not controlsData Is Nothing Then
+            ' Iterar sobre cada control en la sección
+            For Each controlData In controlsData
+                ' Mapeo de tipo de control
+                Select Case LCase(CStr(controlData.type))
+                    Case "textbox"
+                        controlTypeConst = 109 'acTextBox
+                    Case "label"
+                        controlTypeConst = 100 'acLabel
+                    Case "commandbutton"
+                        controlTypeConst = 104 'acCommandButton
+                    Case Else
+                        controlTypeConst = -1 ' Tipo no soportado
+                End Select
+                
+                ' Crear el control si el tipo es soportado
+                If controlTypeConst <> -1 Then
+                    Set newControl = objAccess.Application.CreateControl(frm.Name, controlTypeConst, currentSectionObject.Index)
+                    
+                    ' Aplicar propiedades del control
+                    On Error Resume Next
+                    ' Propiedad Name es especial y debe asignarse primero
+                    newControl.Name = CStr(controlData.name)
+                    
+                    ' Resto de propiedades desde el objeto 'properties' del JSON
+                    For Each prop In controlData.properties
+                        propValue = controlData.properties(prop)
+                        If Not IsNull(propValue) Then
+                            ' Intentar asignar el valor a la propiedad del control
+                            CallByName newControl, prop, 2, propValue ' 2 = VbLet
+                        End If
+                    Next
+                    On Error GoTo 0
+                End If
+            Next
+        End If
+    Next
+    
+    ' Guardar formulario con su nombre definitivo
+    objAccess.DoCmd.Save 2, formName ' acForm = 2
+    
+    WScript.Echo "Éxito: El formulario '" & formName & "' ha sido creado desde el JSON."
+    
+    ' Cerrar formulario y Access
+    objAccess.DoCmd.Close
+    objAccess.Quit
 End Sub

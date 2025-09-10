@@ -518,4 +518,7 @@ CleanupSuite:
     
     Set MiSuiteRunAll = suiteResult
 End Function
+
+
 ```
+"Un test individual (`Private Function Test...`) NUNCA debe replicar la lógica de aprovisionamiento de `SuiteSetup`. Debe asumir que el entorno ya está preparado y operar directamente sobre los ficheros y datos que `SuiteSetup` ha creado."

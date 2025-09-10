@@ -88,8 +88,8 @@ End If
 
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle' o 'migrate'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle', 'migrate', 'export-form' o 'import-form'"
     WScript.Quit 1
 End If
 
@@ -241,6 +241,10 @@ ElseIf strAction = "relink" Then
     Call RelinkTables()
 ElseIf strAction = "migrate" Then
     Call ExecuteMigrations()
+ElseIf strAction = "export-form" Then
+    Call ExportForm()
+ElseIf strAction = "import-form" Then
+    Call ImportForm()
 
 End If
 
@@ -857,6 +861,74 @@ Function ValidateVBASyntax(filePath, ByRef errorDetails)
     ValidateVBASyntax = True
 End Function
 
+' Función de serialización recursiva para convertir Dictionary/ArrayList a JSON
+Private Function DictionaryToJson(obj, indentLevel)
+    Dim result, indent, i, key, value, keys
+    Dim isLast
+    
+    ' Crear indentación
+    indent = String(indentLevel * 4, " ")
+    
+    ' Verificar el tipo de objeto
+    If TypeName(obj) = "Dictionary" Then
+        ' Manejar Dictionary
+        result = "{" & vbCrLf
+        keys = obj.Keys
+        For i = 0 To UBound(keys)
+            key = keys(i)
+            value = obj(key)
+            isLast = (i = UBound(keys))
+            
+            result = result & indent & "    " & Chr(34) & key & Chr(34) & ": "
+            result = result & DictionaryToJson(value, indentLevel + 1)
+            
+            If Not isLast Then
+                result = result & ","
+            End If
+            result = result & vbCrLf
+        Next
+        result = result & indent & "}"
+        
+    ElseIf TypeName(obj) = "ArrayList" Then
+        ' Manejar ArrayList
+        result = "[" & vbCrLf
+        For i = 0 To obj.Count - 1
+            isLast = (i = obj.Count - 1)
+            
+            result = result & indent & "    "
+            result = result & DictionaryToJson(obj(i), indentLevel + 1)
+            
+            If Not isLast Then
+                result = result & ","
+            End If
+            result = result & vbCrLf
+        Next
+        result = result & indent & "]"
+        
+    Else
+        ' Manejar valores simples
+        If VarType(obj) = vbString Then
+            ' String - escapar comillas dobles
+            result = Chr(34) & Replace(CStr(obj), Chr(34), "\" & Chr(34)) & Chr(34)
+        ElseIf VarType(obj) = vbBoolean Then
+            ' Boolean
+            If obj Then
+                result = "true"
+            Else
+                result = "false"
+            End If
+        ElseIf IsNumeric(obj) Then
+            ' Numérico
+            result = CStr(obj)
+        Else
+            ' Otros tipos como string
+            result = Chr(34) & CStr(obj) & Chr(34)
+        End If
+    End If
+    
+    DictionaryToJson = result
+End Function
+
 ' Función para leer archivo con codificación ANSI
 Function ReadFileWithAnsiEncoding(filePath)
     Dim objStream, strContent
@@ -1218,6 +1290,8 @@ Sub ShowHelp()
     WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
     WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
     WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
+    WScript.Echo "  export-form <db_path> <form_name> [--output] [--password] - Exportar diseño de formulario a JSON."
+    WScript.Echo "  import-form <json_path> <db_path> [--password] - Crear/Modificar formulario desde JSON."
     WScript.Echo ""
     WScript.Echo "FUNCIONALIDADES DISPONIBLES PARA 'bundle' (con dependencias automáticas):"
     WScript.Echo "(Basadas en CONDOR_MASTER_PLAN.md)"
@@ -2892,3 +2966,391 @@ Function CountMatches(text, pattern)
     Set matches = regex.Execute(text)
     CountMatches = matches.Count
 End Function
+
+' ===================================================================
+' SUBRUTINA: ExportForm
+' Descripción: Exporta el diseño de un formulario a un fichero JSON.
+' ===================================================================
+Sub ExportForm()
+    Dim strDbPath, strFormName, strOutputPath, strPassword
+    Dim i
+    
+    ' Verificar argumentos mínimos
+    If objArgs.Count < 3 Then
+        WScript.Echo "Error: El comando export-form requiere al menos una ruta de base de datos y un nombre de formulario."
+        WScript.Echo "Uso: cscript condor_cli.vbs export-form <db_path> <form_name>"
+        WScript.Quit 1
+    End If
+    
+    ' Asignar argumentos básicos
+    strDbPath = objArgs(1)
+    strFormName = objArgs(2)
+    strOutputPath = ""
+    strPassword = ""
+    
+    ' Procesar argumentos opcionales
+    For i = 3 To objArgs.Count - 1
+        If LCase(objArgs(i)) = "--output" And i < objArgs.Count - 1 Then
+            strOutputPath = objArgs(i + 1)
+        ElseIf LCase(objArgs(i)) = "--password" And i < objArgs.Count - 1 Then
+            strPassword = objArgs(i + 1)
+        End If
+    Next
+    
+    ' Construir ruta de salida por defecto si no se especifica
+    If strOutputPath = "" Then
+        Dim uiDefinitionsPath
+        uiDefinitionsPath = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\ui\definitions\"
+        ' Asegurarse de que el directorio existe
+        If Not objFSO.FolderExists(uiDefinitionsPath) Then objFSO.CreateFolder uiDefinitionsPath
+        strOutputPath = objFSO.BuildPath(uiDefinitionsPath, strFormName & ".json")
+    End If
+    
+    ' Verificar que el archivo de base de datos existe
+    If Not objFSO.FileExists(strDbPath) Then
+        WScript.Echo "Error: La base de datos no existe: " & strDbPath
+        WScript.Quit 1
+    End If
+    
+    ' Crear instancia de Access
+    Set objAccess = CreateObject("Access.Application")
+    objAccess.Visible = True
+    
+    ' Abrir base de datos
+    On Error Resume Next
+    If strPassword = "" Then
+        objAccess.OpenCurrentDatabase strDbPath
+    Else
+        objAccess.OpenCurrentDatabase strDbPath, , strPassword
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al abrir la base de datos: " & Err.Description
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    ' Abrir formulario en modo diseño
+    objAccess.DoCmd.OpenForm strFormName, 3 ' acDesign
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al abrir el formulario '" & strFormName & "': " & Err.Description
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    
+    On Error GoTo 0
+    
+    ' Confirmar que el formulario se ha abierto correctamente
+    WScript.Echo "Formulario '" & strFormName & "' abierto en modo diseño."
+    
+    ' Preparar la estructura de datos principal
+    Dim formData
+    Set formData = CreateObject("Scripting.Dictionary")
+    
+    ' Obtener referencia al objeto del formulario activo
+    Dim frm
+    Set frm = objAccess.Forms(strFormName)
+    
+    ' Extraer propiedades del formulario principal
+    formData.Add "formName", frm.Name
+    
+    ' Crear diccionario para las propiedades del formulario
+    Dim formProps
+    Set formProps = CreateObject("Scripting.Dictionary")
+    
+    ' Añadir propiedades relevantes con manejo de errores
+    On Error Resume Next
+    formProps.Add "caption", frm.Caption
+    formProps.Add "width", frm.Width
+    formProps.Add "recordSource", frm.RecordSource
+    formProps.Add "allowEdits", frm.AllowEdits
+    formProps.Add "allowAdditions", frm.AllowAdditions
+    formProps.Add "allowDeletions", frm.AllowDeletions
+    On Error GoTo 0
+    
+    ' Añadir el diccionario de propiedades al diccionario principal
+    formData.Add "properties", formProps
+    
+    ' Implementar la lógica de iteración de secciones y controles
+    Dim sectionsDict
+    Set sectionsDict = CreateObject("Scripting.Dictionary")
+    formData.Add "sections", sectionsDict
+    
+    ' Array con los nombres de las secciones
+    Dim sectionNames, sectionName, currentSection, currentSectionDict, controlsColl, control, controlDict, controlProps
+    Dim sectionIndex, controlIndex
+    sectionNames = Array("detail", "header", "footer")
+    
+    ' Bucle para procesar las 3 secciones
+    For sectionIndex = 0 To 2
+        ' Obtener nombre y referencia de la sección actual
+        sectionName = sectionNames(sectionIndex)
+        
+        Set currentSection = frm.Section(sectionIndex)
+        
+        ' Crear diccionario para la sección actual
+        Set currentSectionDict = CreateObject("Scripting.Dictionary")
+        
+        ' Poblar propiedades de la sección
+        On Error Resume Next
+        currentSectionDict.Add "visible", currentSection.Visible
+        currentSectionDict.Add "height", currentSection.Height
+        On Error GoTo 0
+        
+        ' Crear ArrayList para los controles de esta sección
+        Set controlsColl = CreateObject("System.Collections.ArrayList")
+        
+        ' Bucle anidado para procesar controles
+        For Each control In currentSection.Controls
+            ' Crear diccionario para el control
+            Set controlDict = CreateObject("Scripting.Dictionary")
+            
+            ' Añadir name y type al controlDict
+            On Error Resume Next
+            controlDict.Add "name", control.Name
+            controlDict.Add "type", TypeName(control)
+            On Error GoTo 0
+            
+            ' Crear diccionario de propiedades para el control
+            Set controlProps = CreateObject("Scripting.Dictionary")
+            
+            ' Poblar propiedades importantes del control con manejo de errores
+            On Error Resume Next
+            controlProps.Add "caption", control.Caption
+            controlProps.Add "controlSource", control.ControlSource
+            controlProps.Add "top", control.Top
+            controlProps.Add "left", control.Left
+            controlProps.Add "width", control.Width
+            controlProps.Add "height", control.Height
+            controlProps.Add "fontName", control.FontName
+            controlProps.Add "fontSize", control.FontSize
+            controlProps.Add "fontWeight", control.FontWeight
+            controlProps.Add "onClick", control.OnClick
+            controlProps.Add "enabled", control.Enabled
+            controlProps.Add "locked", control.Locked
+            controlProps.Add "default", control.Default
+            On Error GoTo 0
+            
+            ' Añadir controlProps a controlDict
+            controlDict.Add "properties", controlProps
+            
+            ' Añadir controlDict a la colección
+            controlsColl.Add controlDict
+        Next
+        
+        ' Añadir la colección de controles al diccionario de la sección
+        currentSectionDict.Add "controls", controlsColl
+        
+        ' Añadir el diccionario de la sección al diccionario principal de secciones
+        sectionsDict.Add sectionName, currentSectionDict
+    Next
+    
+    WScript.Echo "Estructura de datos del formulario extraída correctamente."
+    
+    ' Serializar a JSON
+    Dim jsonString
+    jsonString = DictionaryToJson(formData, 0)
+    
+    ' Guardar en archivo
+    Dim objFile
+    Set objFile = objFSO.CreateTextFile(strOutputPath, True)
+    objFile.Write jsonString
+    objFile.Close
+    WScript.Echo "Éxito: El formulario ha sido exportado a " & strOutputPath
+    
+    ' Lógica de limpieza
+    objAccess.DoCmd.Close
+End Sub
+
+' ================================================================================
+' FUNCIÓN: ParseJson
+' DESCRIPCIÓN: Parsear JSON usando JScript
+' ================================================================================
+Private Function ParseJson(jsonText)
+    Dim sc
+    Set sc = CreateObject("MSScriptControl.ScriptControl")
+    sc.Language = "JScript"
+    
+    ' La evaluación de JScript necesita que el JSON esté entre paréntesis
+    Set ParseJson = sc.Eval("(" & jsonText & ")")
+End Function
+
+' ================================================================================
+' SUBRUTINA: ImportForm
+' DESCRIPCIÓN: Crear/Modificar formulario desde JSON
+' ================================================================================
+Sub ImportForm()
+    ' Verificar argumentos mínimos
+    If objArgs.Count < 3 Then
+        WScript.Echo "Error: Se requieren al menos 2 argumentos: <json_path> <db_path>"
+        WScript.Echo "Sintaxis: cscript condor_cli.vbs import-form <json_path> <db_path> [--password]"
+        WScript.Quit 1
+    End If
+    
+    ' Declarar variables
+    Dim strJsonPath, strDbPath, strPassword
+    Dim jsonString, formData, formName
+    Dim objAccess, frm
+    Dim propName
+    
+    ' Asignar argumentos
+    Dim strJsonPath
+    strJsonPath = objArgs(1)
+    
+    ' Si la ruta no es completa, construir la ruta por defecto
+    If Not objFSO.FileExists(strJsonPath) Then
+        Dim defaultUiPath
+        defaultUiPath = objFSO.GetParentFolderName(WScript.ScriptFullName) & "\ui\definitions\"
+        strJsonPath = objFSO.BuildPath(defaultUiPath, objArgs(1))
+    End If
+    
+    strDbPath = objArgs(2)
+    strPassword = ""
+    
+    ' Procesar argumento opcional --password
+    Dim i
+    For i = 3 To objArgs.Count - 1
+        If LCase(objArgs(i)) = "--password" Then
+            strPassword = InputBox("Ingrese la contraseña de la base de datos:", "Contraseña")
+            If strPassword = "" Then
+                WScript.Echo "Error: Contraseña requerida."
+                WScript.Quit 1
+            End If
+        End If
+    Next
+    
+    ' Verificar que los archivos existen
+    If Not objFSO.FileExists(strJsonPath) Then
+        WScript.Echo "Error: El archivo JSON no existe: " & strJsonPath
+        WScript.Quit 1
+    End If
+    
+    If Not objFSO.FileExists(strDbPath) Then
+        WScript.Echo "Error: La base de datos no existe: " & strDbPath
+        WScript.Quit 1
+    End If
+    
+    ' Leer contenido del archivo JSON
+    Dim objFile
+    Set objFile = objFSO.OpenTextFile(strJsonPath, 1)
+    jsonString = objFile.ReadAll
+    objFile.Close
+    
+    ' Parsear JSON
+    Set formData = ParseJson(jsonString)
+    
+    If formData Is Nothing Then
+        WScript.Echo "Error: No se pudo parsear el fichero JSON."
+        WScript.Quit 1
+    End If
+    
+    ' Obtener nombre del formulario
+    formName = formData.formName
+    
+    ' Abrir base de datos
+    Set objAccess = CreateObject("Access.Application")
+    objAccess.Visible = False
+    
+    On Error Resume Next
+    If strPassword <> "" Then
+        objAccess.OpenCurrentDatabase strDbPath, False, strPassword
+    Else
+        objAccess.OpenCurrentDatabase strDbPath, False
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al abrir la base de datos: " & Err.Description
+        objAccess.Quit
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
+    
+    ' Eliminar formulario existente si existe
+    On Error Resume Next
+    objAccess.DoCmd.DeleteObject 2, formName ' acForm = 2
+    On Error GoTo 0
+    
+    ' Crear nuevo formulario en blanco
+    Set frm = objAccess.CreateForm()
+    
+    ' Aplicar propiedades del formulario
+    On Error Resume Next
+    For Each propName In formData.properties
+        frm.Properties(propName).Value = formData.properties(propName)
+    Next
+    On Error GoTo 0
+    
+    ' Procesar secciones y controles del formulario
+    Dim sectionNames, sectionName, currentSectionObject
+    Dim controlsData, controlData, controlTypeConst, newControl
+    Dim prop, propValue
+    
+    sectionNames = Array("Detail", "FormHeader", "FormFooter")
+    
+    For sectionIndex = 0 To 2
+        sectionName = sectionNames(sectionIndex)
+        Set currentSectionObject = frm.Section(sectionIndex)
+        
+        ' Aplicar propiedades a la sección si existen en el JSON
+        On Error Resume Next
+        For Each prop In formData.sections(sectionName).properties
+            propValue = formData.sections(sectionName).properties(prop)
+            If Not IsNull(propValue) Then
+                CallByName currentSectionObject, prop, 2, propValue ' 2 = VbLet
+            End If
+        Next
+        On Error GoTo 0
+        
+        ' Verificar si la sección tiene controles en el JSON
+        On Error Resume Next
+        Set controlsData = formData.sections(sectionName).controls
+        On Error GoTo 0
+        
+        If Not controlsData Is Nothing Then
+            ' Iterar sobre cada control en la sección
+            For Each controlData In controlsData
+                ' Mapeo de tipo de control
+                Select Case LCase(CStr(controlData.type))
+                    Case "textbox"
+                        controlTypeConst = 109 'acTextBox
+                    Case "label"
+                        controlTypeConst = 100 'acLabel
+                    Case "commandbutton"
+                        controlTypeConst = 104 'acCommandButton
+                    Case Else
+                        controlTypeConst = -1 ' Tipo no soportado
+                End Select
+                
+                ' Crear el control si el tipo es soportado
+                If controlTypeConst <> -1 Then
+                    Set newControl = objAccess.Application.CreateControl(frm.Name, controlTypeConst, currentSectionObject.Index)
+                    
+                    ' Aplicar propiedades del control
+                    On Error Resume Next
+                    ' Propiedad Name es especial y debe asignarse primero
+                    newControl.Name = CStr(controlData.name)
+                    
+                    ' Resto de propiedades desde el objeto 'properties' del JSON
+                    For Each prop In controlData.properties
+                        propValue = controlData.properties(prop)
+                        If Not IsNull(propValue) Then
+                            ' Intentar asignar el valor a la propiedad del control
+                            CallByName newControl, prop, 2, propValue ' 2 = VbLet
+                        End If
+                    Next
+                    On Error GoTo 0
+                End If
+            Next
+        End If
+    Next
+    
+    ' Guardar formulario con su nombre definitivo
+    objAccess.DoCmd.Save 2, formName ' acForm = 2
+    
+    WScript.Echo "Éxito: El formulario '" & formName & "' ha sido creado desde el JSON."
+    
+    ' Cerrar formulario y Access
+    objAccess.DoCmd.Close
+    objAccess.Quit
+End Sub

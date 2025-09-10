@@ -2052,6 +2052,72 @@ cscript condor_cli.vbs validate-schema
 - Reporta discrepancias entre el esquema esperado y el actual
 - Esencial para prevenir desincronización entre código y estructura de base de datos
 
+**Ejecución de Pruebas Automatizadas**
+
+```bash
+cscript condor_cli.vbs test
+```
+
+- Ejecuta el framework completo de testing de CONDOR de forma automatizada
+- **Auto-suficiente e Idempotente**: Resetea automáticamente el entorno a un estado prístino antes de cada ejecución
+- **Aprovisionamiento Automático**: Crea y configura las bases de datos de prueba necesarias
+- **Ejecución Desatendida**: No requiere interacción del usuario, ideal para integración continua
+- **Reporte Detallado**: Genera reportes completos de resultados con estadísticas de éxito/fallo
+- **Validación Completa**: Ejecuta todas las suites de pruebas registradas en el sistema
+
+**Gestión de Tablas de Base de Datos**
+
+```bash
+# Listar todas las tablas de una base de datos
+cscript condor_cli.vbs listtables <db_path> [--schema] [--output]
+
+# Crear tabla desde definición
+cscript condor_cli.vbs createtable <table_definition>
+
+# Eliminar tabla
+cscript condor_cli.vbs droptable <table_name>
+```
+
+- **Listado de Tablas**: Muestra todas las tablas existentes en una base de datos Access
+- **Esquema Detallado**: Con `--schema` incluye información de campos y tipos de datos
+- **Salida Configurable**: Con `--output` permite especificar formato y destino de la salida
+- **Creación de Tablas**: Permite crear nuevas tablas mediante definiciones estructuradas
+- **Eliminación Segura**: Elimina tablas con validaciones de integridad
+
+**Validación y Mantenimiento**
+
+```bash
+# Validar integridad del proyecto
+cscript condor_cli.vbs validate
+
+# Análisis de calidad de código
+cscript condor_cli.vbs lint
+
+# Reenlazar tablas vinculadas
+cscript condor_cli.vbs relink
+```
+
+- **Validación de Integridad**: Verifica la consistencia general del proyecto y sus componentes
+- **Análisis de Código**: Ejecuta verificaciones de calidad y estándares de codificación
+- **Reenlazado de Tablas**: Actualiza las conexiones de tablas vinculadas en bases de datos Access
+- **Mantenimiento Preventivo**: Detecta y reporta problemas potenciales antes de que afecten la producción
+
+**Migraciones de Base de Datos**
+
+```bash
+# Ejecutar todas las migraciones
+cscript condor_cli.vbs migrate
+
+# Ejecutar una migración específica
+cscript condor_cli.vbs migrate 001_seed_tbEstados.sql
+```
+
+- **Database as Code**: Gestiona cambios de base de datos mediante scripts SQL versionados
+- **Ejecución Idempotente**: Los scripts pueden ejecutarse múltiples veces sin efectos secundarios
+- **Orden Secuencial**: Ejecuta automáticamente todos los archivos `.sql` en orden alfabético
+- **Migración Específica**: Permite ejecutar scripts individuales para cambios puntuales
+- **Trazabilidad Completa**: Todos los cambios quedan registrados en el control de versiones
+
 **Empaquetado de Artefactos (Bundle)**
 
 ```bash
@@ -2072,6 +2138,43 @@ cscript condor_cli.vbs bundle IConfig.cls,modTestRunner.bas,Lecciones_aprendidas
 - **Estructura Organizada**: Los paquetes se crean en directorios `bundle_[funcionalidad]_[timestamp]` o `bundle_custom_[timestamp]`
 - **Preservación de Rutas**: Mantiene la estructura de directorios relativa de los archivos empaquetados
 
+**Exportación de Formularios (UI as Code)**
+
+```bash
+# Exportar formulario a JSON
+cscript condor_cli.vbs export-form <db_path> <form_name> [--output] [--password]
+
+# Ejemplos
+cscript condor_cli.vbs export-form ./front/CONDOR.accdb frmPrincipal
+cscript condor_cli.vbs export-form ./front/CONDOR.accdb frmPrincipal --output ./forms/
+cscript condor_cli.vbs export-form ./front/CONDOR.accdb frmPrincipal --password mipassword
+```
+
+- **Exportación Completa**: Extrae el diseño completo del formulario incluyendo propiedades, secciones y controles
+- **Formato JSON Estructurado**: Genera archivos JSON legibles y versionables para control de cambios
+- **Soporte de Controles Dinámicos**: Captura todos los tipos de controles (TextBox, Label, CommandButton, etc.)
+- **Propiedades Detalladas**: Incluye posición, tamaño, formato, fuentes y todas las propiedades configurables
+- **Salida Configurable**: Permite especificar directorio de destino con `--output`
+- **Bases de Datos Protegidas**: Soporte para bases de datos con contraseña mediante `--password`
+
+**Importación de Formularios (UI as Code)**
+
+```bash
+# Crear/Modificar formulario desde JSON
+cscript condor_cli.vbs import-form <json_path> <db_path> [--password]
+
+# Ejemplos
+cscript condor_cli.vbs import-form ./forms/frmPrincipal.json ./front/CONDOR.accdb
+cscript condor_cli.vbs import-form ./forms/frmPrincipal.json ./front/CONDOR.accdb --password mipassword
+```
+
+- **Creación Automática**: Crea formularios nuevos o reemplaza existentes basándose en la definición JSON
+- **Controles Dinámicos**: Genera automáticamente todos los controles especificados en el JSON
+- **Aplicación de Propiedades**: Configura automáticamente posición, tamaño, formato y todas las propiedades
+- **Mapeo de Tipos**: Convierte automáticamente los tipos de controles del JSON a objetos Access nativos
+- **Reemplazo Seguro**: Elimina formularios existentes antes de crear la nueva versión
+- **Validación de Estructura**: Verifica la integridad del JSON antes de proceder con la importación
+
 **Ayuda de Comandos**
 
 ```bash
@@ -2080,13 +2183,16 @@ cscript condor_cli.vbs help
 
 - Muestra una lista detallada de todos los comandos disponibles y su descripción
 
-**Ventajas de la Sincronización Discrecional:**
+**Ventajas del Sistema CLI:**
 
-- **Eficiencia**: Solo actualiza los módulos, reduciendo el tiempo de sincronización
+- **Eficiencia**: Solo actualiza los módulos necesarios, reduciendo el tiempo de sincronización
 - **Estabilidad**: Minimiza el riesgo de afectar módulos no relacionados con los cambios
 - **Desarrollo Iterativo**: Facilita ciclos rápidos de desarrollo-prueba-corrección
 - **Flexibilidad**: Permite trabajar en funcionalidades específicas sin impactar el proyecto completo
 - **Validación**: El comando `validate-schema` asegura la coherencia entre especificaciones y implementación
+- **UI as Code**: Los comandos `export-form` e `import-form` permiten versionar y gestionar formularios como código
+- **Automatización Completa**: Soporte para operaciones desatendidas con manejo de contraseñas y rutas configurables
+- **Trazabilidad**: Todos los cambios de interfaz quedan registrados en archivos JSON versionables
 
 ### 19.2. Herramienta de Diagnóstico en Tiempo de Ejecución
 
