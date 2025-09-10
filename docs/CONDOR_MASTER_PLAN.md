@@ -178,10 +178,10 @@ graph TD
 - modAuthFactory ➜ modConfigFactory, modErrorHandlerFactory, modRepositoryFactory, modOperationLoggerFactory
 
 #### ✅ Estado de Refactorización
-- **CAuthService.cls**: ✅ REFACTORIZADO - Migrado a patrón EOperationLog
+- **CAuthService.cls**: ✅ REFACTORIZANDO - Migrando a patrón EOperationLog
 - **Logging**: Todas las llamadas a `LogOperation` ahora usan objetos `EOperationLog`
 - **Compatibilidad**: Mantiene compatibilidad con interfaces existentes
-- **Auditoría**: Logging mejorado con campos estructurados (tipoOperacion, entidad, usuario, resultado)
+- **Auditoría**: Logging mejorando con campos estructurados (tipoOperacion, entidad, usuario, resultado)
 
 🔧 **Mock Inteligente:**
 
@@ -343,7 +343,7 @@ graph TD
     end
 ```
 
-🧪 **Patrones de Testing Implementados ✅:**
+🧪 **Patrones de Testing Implementando ✅:**
 
 - **Arquitectura de Pruebas Clara**: Los repositorios se prueban con Tests de Integración (`TIExpedienteRepository.bas`). Los servicios se prueban con Tests Unitarios (`TestCExpedienteService.bas`) usando mocks de repositorio. ✅
 - **Mock Inteligente**: Patrón Configure/Reset + propiedades espía para verificación de comportamiento ✅
@@ -383,7 +383,7 @@ graph TD
 │ 📊 EDatosPc.cls              ← Entidad Datos PC            │
 │ 📊 EDatosCdCa.cls            ← Entidad Datos CDCA          │
 │ 📊 EDatosCdCaSub.cls         ← Entidad Datos CDCASUB       │
-│ ❌ CMockTextFile.cls         ← ELIMINADO (obsoleto)        │
+│ ❌ CMockTextFile.cls         ← ELIMINANDO (obsoleto)        │
 └─────────────────────────────────────────────────────────────┘
 
 #### 🔑 Firmas Clave
@@ -449,15 +449,15 @@ graph TD
   - Estados finales: ID 4 ("Cerrado - Aprobado") e ID 5 ("Cerrado - Rechazado")
 
 #### ✅ Estado de Refactorización
-- **CSolicitudService.cls**: ✅ REFACTORIZADO - Migrado a patrón EOperationLog
+- **CSolicitudService.cls**: ✅ REFACTORIZANDO - Migrando a patrón EOperationLog
 - **Logging**: Todas las llamadas a `LogOperation` ahora usan objetos `EOperationLog`
-- **Métodos Actualizados**: CreateSolicitud, SaveSolicitud, CambiarEstadoSolicitud
+- **Métodos Actualizando**: CreateSolicitud, SaveSolicitud, CambiarEstadoSolicitud
 - **Auditoría**: Logging estructurado con campos (tipoOperacion, entidad, idEntidadAfectada, usuario, resultado)
   - Una vez en estado final, las solicitudes no pueden cambiar de estado
 - **Compilación**: ✅ Sin errores de contrato de interfaz
 - **Reconstrucción**: ✅ 116 archivos sincronizados exitosamente
-- **Limpieza de Código**: ✅ CMockTextFile.cls eliminado (obsoleto)
-- **Sincronización**: ✅ listado_archivos_src.txt actualizado
+- **Limpieza de Código**: ✅ CMockTextFile.cls eliminando (obsoleto)
+- **Sincronización**: ✅ listado_archivos_src.txt actualizando
 - **Estado Final**: ✅ Proyecto completamente estabilizado y funcional
 
 ### 3.5. Gestión de Flujos de Trabajo (Workflow)
@@ -491,7 +491,7 @@ graph TD
 │    └─ CreateWorkflowService() As IWorkflowService          │
 │ ✅ TestWorkflowService.bas   ← Test Unitario Simplificado  │
 │    └─ TestValidateTransition_ValidCase()                  │
-│ 🔬 TIWorkflowRepository.bas  ← Test Integración ✅ ACTUALIZADO │
+│ 🔬 TIWorkflowRepository.bas  ← Test Integración ✅ ACTUALIZANDO │
 │    ├─ TestIsValidTransition_TrueForValidPath() ← Valida transiciones permitidas │
 │    │   ├─ Calidad: Registrado → Desarrollo (✓)            │
 │    │   └─ Tecnico: Desarrollo → Modificacion (✓)          │
@@ -551,9 +551,9 @@ graph TD
 - **CWorkflowService**: Convierte String a Long internamente usando CLng()
 
 #### ✅ Estado de Refactorización
-- **CWorkflowService.cls**: ✅ REFACTORIZADO - Migrado a patrón EOperationLog
+- **CWorkflowService.cls**: ✅ REFACTORIZANDO - Migrando a patrón EOperationLog
 - **Logging**: Todas las llamadas a `LogOperation` ahora usan objetos `EOperationLog`
-- **Método Actualizado**: ValidateTransition
+- **Método Actualizando**: ValidateTransition
 - **Auditoría**: Logging estructurado con campos (tipoOperacion, entidad, idEntidadAfectada, usuario, resultado)
 
 **Comportamiento con Estados Finales:**
@@ -644,7 +644,7 @@ graph TD
 
 🧪 **Patrones de Testing (Estándar de Oro):**
 
-- **Suite Optimizado**: Setup/Teardown una sola vez por suite completa
+- **Suite Optimizando**: Setup/Teardown una sola vez por suite completa
 - **Integración Directa**: TIMapeoRepository prueba directamente contra BD
 - **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
 - **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
@@ -742,9 +742,9 @@ graph TD
 - modNotificationServiceFactory ➜ modRepositoryFactory, modOperationLoggerFactory, modErrorHandlerFactory
 
 #### ✅ Estado de Refactorización
-- **CNotificationService.cls**: ✅ REFACTORIZADO - Migrado a patrón EOperationLog
+- **CNotificationService.cls**: ✅ REFACTORIZANDO - Migrando a patrón EOperationLog
 - **Logging**: Todas las llamadas a `LogOperation` ahora usan objetos `EOperationLog`
-- **Método Actualizado**: SendNotification
+- **Método Actualizando**: SendNotification
 - **Auditoría**: Logging estructurado con campos (tipoOperacion, entidad, usuario, resultado)
 
 🔧 **Mock Inteligente:**
@@ -880,6 +880,11 @@ graph TD
   - Ejecuta GenerateHealthReport()
   - Muestra informe con MsgBox
   - Manejo de errores integrado
+- **Funcionalidad de Exportación de Formularios**: Sistema robusto de exportación UI-as-Code
+  - Utiliza estructuras de datos nativas de VBA (Scripting.Dictionary)
+  - No depende de librerías externas (.NET ArrayList)
+  - Serialización JSON nativa para máxima compatibilidad
+  - Manejo de errores mejorado para formularios externos
 
 🧪 **Patrones de Implementación:**
 
@@ -962,7 +967,7 @@ Este diseño garantiza que el sistema es completamente agnóstico a la ruta de i
 │    ├─ IFileSystem_WriteLineToFile() ← Implementa interfaz  │
 │    ├─ WriteLineToFile() ← Método público de conveniencia   │
 │    └─ IFileSystem_OpenTextFile() ← Mantiene compatibilidad │
-│ 🧪 CMockFileSystem.cls       ← Mock (✅ ACTUALIZADO)        │
+│ 🧪 CMockFileSystem.cls       ← Mock (✅ ACTUALIZANDO)        │
 │    ├─ WriteLineToFile_WasCalled ← Propiedad espía          │
 │    ├─ WriteLineToFile_LastPath ← Captura parámetros        │
 │    ├─ WriteLineToFile_LastLine ← Captura contenido         │
@@ -999,8 +1004,8 @@ graph TD
 - **NUEVO**: CMockFileSystem.WriteLineToFile_WasCalled ← Verificación de llamada
 - **NUEVO**: CMockFileSystem.WriteLineToFile_LastPath ← Captura de ruta
 - **NUEVO**: CMockFileSystem.WriteLineToFile_LastLine ← Captura de contenido
-- **ELIMINADO**: WasOpenTextFileCalled, LastPath, m_mockTextFile
-- **ELIMINADO**: GetMockTextFile(), IFileSystem_OpenTextFile()
+- **ELIMINANDO**: WasOpenTextFileCalled, LastPath, m_mockTextFile
+- **ELIMINANDO**: GetMockTextFile(), IFileSystem_OpenTextFile()
 - **MANTENIDO**: ConfigureFileExists(), ConfigureReadFile(), etc.
 
 🧪 **Patrones de Testing (Arquitectura Mejorada):**
@@ -1011,8 +1016,8 @@ graph TD
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Eliminación de archivos temporales en pruebas
-- **NUEVO**: Tests actualizados para usar WriteLineToFile_* en lugar de OpenTextFile
-- **NUEVO**: Verificación simplificada con propiedades espía del mock
+- **AÑADIENDO**: Tests actualizados para usar WriteLineToFile_* en lugar de OpenTextFile
+- **AÑADIENDO**: Verificación simplificada con propiedades espía del mock
 
 🏗️ **Beneficios Arquitectónicos Logrados:**
 
@@ -1088,7 +1093,7 @@ graph TD
 - **Suite Optimizado**: TIWordManager implementa patrón Suite con SuiteSetup/SuiteTeardown
 - **Integración Real**: Pruebas con documentos Word reales usando auto-aprovisionamiento
 - **Estructura AAA**: Arrange/Act/Assert en todas las pruebas
-- **Tests Implementados**:
+- **Tests Implementando**:
   - `Test_CicloCompleto_Success()` - Ciclo completo de operaciones Word con configuración real inyectada a través de `modTestContext.GetTestConfig()` para acceder a plantillas de producción (sin mocks de configuración)
   - `Test_AbrirFicheroInexistente_DevuelveFalse()` - Manejo de errores
 - **Configuración Centralizada**: Utiliza `modTestContext.GetTestConfig()` como única fuente de verdad para configuración de tests
@@ -1326,7 +1331,7 @@ Uso de contraseñas (ej: "dpddpd") obtenidas desde:
 │    ├─ RunAllTests()          ← Inyección de dependencias CMockConfig │
 │    └─ ExecuteAllTestsForCLI() ← Inyección de dependencias CMockConfig │
 │                                                                       │
-│    ✅ Corrección Arquitectónica: condor_cli.vbs corregido para usar   │
+│    ✅ Corrección Arquitectónica: condor_cli.vbs corrigiendo para usar   │
 │       ExecuteAllTestsForCLI en lugar de ExecuteAllTests               │
 │ 📋 modTestUtils.bas          ← Utilidades de testing       │
 │    ├─ GetProjectPath()       ← Ruta base del proyecto      │
@@ -1365,7 +1370,7 @@ Uso de contraseñas (ej: "dpddpd") obtenidas desde:
 │    - Parámetros: suiteNames y runnerErrorHandler           │
 │ CONTEXTO DE CONFIGURACIÓN COMPLETO:                       │
 │    - TIAuthRepository.bas: Configuración robusta CMockConfig│
-│    - TISolicitudRepository.bas: Patrón completo implementado│
+│    - TISolicitudRepository.bas: Patrón completo implementando│
 │    - TIMapeoRepository.bas: Patrón de configuración completo│
 │    - LOG_FILE_PATH explícito en TODOS los tests de integración│
 │    - Eliminación de dependencias implícitas en mocks       │
@@ -1381,7 +1386,7 @@ Uso de contraseñas (ej: "dpddpd") obtenidas desde:
 │    - TIWordManager.bas: API de testing corregida (Pass/Fail)│
 │    - TIWordManager.bas: Métodos normalizados a inglés     │
 │    - TIWordManager.bas: DeleteFolderRecursive en cleanup  │
-│    - condor_cli.vbs: ExecuteAllTestsForCLI implementado   │
+│    - condor_cli.vbs: ExecuteAllTestsForCLI implementando   │
 │    - TIExpedienteRepository.bas: DBEngine.OpenDatabase()   │
 └─────────────────────────────────────────────────────────────┘
 
@@ -1674,30 +1679,30 @@ graph TD
 - **Implementación**: Diferentes implementaciones de IFileSystem, IWordManager
 - **Beneficios**: Flexibilidad, extensibilidad
 
-## 15. Sistema de Autoaprovisionamiento de Tests ✅ REFACTORIZADO
+## 15. Sistema de Autoaprovisionamiento de Tests ✅ REFACTORIZANDO
 
 ### 🎯 **Principio Fundamental**
 El framework de testing de CONDOR es **100% auto-suficiente y idempotente**. Cada vez que se ejecuta el comando `test`, el framework primero resetea el entorno a un estado prístino y conocido, garantizando resultados consistentes y eliminando la necesidad de configuración manual.
 
-### ✅ **Estado de Refactorización Completado**
+### ✅ **Estado de Refactorización Completando**
 **9 suites de integración refactorizadas** con el patrón estandarizado:
 - TIAuthRepository.bas
 - TIDocumentService.bas  
 - TIExpedienteRepository.bas
 - TISolicitudRepository.bas
-- **TIWorkflowRepository.bas ✅ ACTUALIZADO** - Incluye validación completa del nuevo flujo de trabajo
+- **TIWorkflowRepository.bas ✅ ACTUALIZANDO** - Incluye validación completa del nuevo flujo de trabajo
 - TIMapeoRepository.bas
-- **TINotificationService.bas ✅ REFACTORIZADO** - Aplicada regla .Value en recordsets DAO
-- **TIOperationRepository.bas ✅ REFACTORIZADO** - Aplicada regla .Value en recordsets DAO
+- **TINotificationService.bas ✅ REFACTORIZANDO** - Aplicada regla .Value en recordsets DAO
+- **TIOperationRepository.bas ✅ REFACTORIZANDO** - Aplicada regla .Value en recordsets DAO
 - TIWordManager.bas
 
-**Refactorización de Capa de Datos Completada (Enero 2025):**
-- ✅ **CMapeoRepository.cls** - Agregado .Value explícito en función IMapeoRepository_GetMapeoPorTipo
-- ✅ **TIOperationRepository.bas** - Agregado .Value en aserciones TestSaveLog_Success
-- ✅ **TINotificationService.bas** - Agregado .Value en aserción TestSendNotificationSuccessCallsRepositoryCorrectly
+**Refactorización de Capa de Datos Completando (Enero 2025):**
+- ✅ **CMapeoRepository.cls** - Agregando .Value explícito en función IMapeoRepository_GetMapeoPorTipo
+- ✅ **TIOperationRepository.bas** - Agregando .Value en aserciones TestSaveLog_Success
+- ✅ **TINotificationService.bas** - Agregando .Value en aserción TestSendNotificationSuccessCallsRepositoryCorrectly
 - ✅ **Regla Arquitectónica** - Uso explícito de .Value en recordsets DAO es ahora obligatorio
 
-**Cambios implementados en cada suite:**
+**Cambios implementando en cada suite:**
 - ✅ SuiteSetup usa `modTestUtils.PrepareTestDatabase()`
 - ✅ SuiteTeardown usa `modTestUtils.CleanupTestDatabase()`
 - ✅ Eliminadas constantes obsoletas (TEST_DB_TEMPLATE, TEST_DB_ACTIVE)
@@ -1711,7 +1716,7 @@ El framework de testing de CONDOR es **100% auto-suficiente y idempotente**. Cad
 - ✅ Arquitectura simplificada sin variables globales ni conexiones manuales a BD
 - ✅ Cobertura completa del motor de workflow con casos válidos e inválidos
 
-**Nuevos Tests de Reglas de Negocio Implementados:**
+**Nuevos Tests de Reglas de Negocio Implementando:**
 - ✅ TestValidateTransition_CalidadCanOverrideRepository() - Verifica que el rol "Calidad" puede anular restricciones del repositorio
 - ✅ TestValidateTransition_TecnicoIsRestrictedByRepository() - Confirma que el rol "Tecnico" está restringido por las reglas del repositorio
 - ✅ CreateWorkflowServiceWithMocks() - Nueva función de factoría para testing con mocks configurables
@@ -2012,7 +2017,7 @@ cscript condor_cli.vbs update CAuthService,modUtils,CConfig
 cscript condor_cli.vbs update
 ```
 
-- Comando optimizado para sincronización discrecional de archivos
+- Comando optimizando para sincronización discrecional de archivos
 - Optimización de rendimiento: verifica cambios antes de abrir la base de datos
 - Conversión automática UTF-8 a ANSI para soporte completo de caracteres especiales
 - Permite actualizar módulos específicos sin afectar el resto del proyecto
@@ -2175,6 +2180,45 @@ cscript condor_cli.vbs import-form ./forms/frmPrincipal.json ./front/CONDOR.accd
 - **Reemplazo Seguro**: Elimina formularios existentes antes de crear la nueva versión
 - **Validación de Estructura**: Verifica la integridad del JSON antes de proceder con la importación
 
+**Validación de Formularios JSON**
+
+```bash
+# Validar estructura JSON de formulario
+cscript condor_cli.vbs validate-form-json <json_path> [--strict] [--schema]
+
+# Ejemplos
+cscript condor_cli.vbs validate-form-json ./forms/frmPrincipal.json
+cscript condor_cli.vbs validate-form-json ./forms/frmPrincipal.json --strict
+cscript condor_cli.vbs validate-form-json ./forms/frmPrincipal.json --schema
+```
+
+- **Validación de Estructura**: Verifica que el JSON tenga la estructura correcta para formularios
+- **Validación de Tipos**: Comprueba que los tipos de controles sean válidos
+- **Validación de Propiedades**: Verifica que las propiedades tengan valores válidos
+- **Modo Estricto**: Con `--strict` aplica validaciones adicionales más rigurosas
+- **Validación de Esquema**: Con `--schema` valida contra el esquema JSON formal
+- **Validación de Colores**: Verifica que los códigos de color sean válidos
+- **Validación de Enums**: Comprueba que los valores enumerados sean correctos
+
+**Test de Roundtrip de Formularios**
+
+```bash
+# Test export→import→export de formulario
+cscript condor_cli.vbs roundtrip-form <db_path> <form_name> [--password] [--temp-dir] [--verbose]
+
+# Ejemplos
+cscript condor_cli.vbs roundtrip-form ./front/CONDOR.accdb frmPrincipal
+cscript condor_cli.vbs roundtrip-form ./front/CONDOR.accdb frmPrincipal --password mipassword
+cscript condor_cli.vbs roundtrip-form ./front/CONDOR.accdb frmPrincipal --temp-dir ./temp --verbose
+```
+
+- **Test de Integridad**: Verifica que export→import→export produzca resultados idénticos
+- **Detección de Pérdida de Datos**: Identifica propiedades que se pierden en el proceso
+- **Comparación Automática**: Compara automáticamente los JSON inicial y final
+- **Directorio Temporal**: Permite especificar directorio para archivos temporales
+- **Modo Verbose**: Proporciona información detallada del proceso de testing
+- **Limpieza Automática**: Elimina archivos temporales al finalizar el test
+
 **Ayuda de Comandos**
 
 ```bash
@@ -2193,6 +2237,9 @@ cscript condor_cli.vbs help
 - **UI as Code**: Los comandos `export-form` e `import-form` permiten versionar y gestionar formularios como código
 - **Automatización Completa**: Soporte para operaciones desatendidas con manejo de contraseñas y rutas configurables
 - **Trazabilidad**: Todos los cambios de interfaz quedan registrados en archivos JSON versionables
+- **Validación de Calidad**: El comando `validate-form-json` asegura la integridad de los archivos JSON de formularios
+- **Testing de Integridad**: El comando `roundtrip-form` verifica que el proceso export→import→export sea consistente
+- **Detección Temprana de Errores**: Las validaciones previenen problemas antes de la importación de formularios
 
 ### 19.2. Herramienta de Diagnóstico en Tiempo de Ejecución
 
@@ -2234,10 +2281,114 @@ La salida se imprime directamente en la Ventana Inmediato, proporcionando un inf
 **Framework de Tests**: El sistema de pruebas aplica el Principio de Responsabilidad Única (SRP):
 
 - **modTestRunner.bas**: Motor de ejecución puro, responsable únicamente de ejecutar suites registradas
-- **CTestReporter.cls**: Clase especializada en generar informes consolidados de resultados
+- **CTestReporter.cls**: Clase especializada en generar informes consolidando de resultados
 - **CTestSuiteResult.cls**: Encapsula los resultados de cada suite de pruebas
 - **Integración Simplificada**: Nuevos módulos de prueba se registran en `RegisterTestSuites()` siguiendo el patrón
   **Arquitectura 100% orientada a objetos con separación clara de responsabilidades.**
+
+## 21. Principio Arquitectónico: UI como Código
+
+El proyecto CONDOR implementa el principio arquitectónico **"UI como Código"** para la gestión de formularios de Microsoft Access. Este principio establece que los formularios de Access deben ser tratados como código fuente, permitiendo su versionado, revisión y gestión a través de herramientas de control de versiones.
+
+### Definición del Principio
+
+Los formularios de Access se serializan como archivos JSON estructurados que contienen toda la información necesaria para recrear el formulario: propiedades, controles, posicionamiento, formato y configuración. Estos archivos JSON se consideran la **fuente de verdad** para los formularios de la aplicación.
+
+### Estructura de Directorios Canónica
+
+```
+ui/
+├── definitions/     ← Definiciones JSON de formularios (fuente de verdad)
+│   ├── frmPrincipal.json
+│   ├── frmSolicitudes.json
+│   └── TestForm.json
+├── assets/         ← Recursos gráficos (iconos, imágenes)
+│   ├── Guardar1_25x25.png
+│   ├── Cerrar1_25x25.png
+│   └── ...
+└── templates/      ← Plantillas base para nuevos formularios
+```
+
+### Herramientas CLI
+
+El sistema proporciona dos comandos principales para implementar este principio:
+
+#### Exportación de Formularios (`export-form`)
+
+```bash
+# Exportar formulario a JSON
+cscript condor_cli.vbs export-form <db_path> <form_name> [--output] [--password]
+
+# Ejemplos
+cscript condor_cli.vbs export-form ./back/CONDOR.accdb frmPrincipal
+cscript condor_cli.vbs export-form ./back/CONDOR.accdb frmPrincipal --output ./ui/definitions/
+```
+
+**Funcionalidades:**
+- Extrae el diseño completo del formulario incluyendo propiedades, secciones y controles
+- Genera archivos JSON legibles y versionables
+- Captura todos los tipos de controles (TextBox, Label, CommandButton, etc.)
+- Incluye propiedades detalladas: posición, tamaño, formato, fuentes
+- Soporte para bases de datos protegidas con contraseña
+
+#### Importación de Formularios (`import-form`)
+
+```bash
+# Crear/Modificar formulario desde JSON
+cscript condor_cli.vbs import-form <json_path> <db_path> [--password]
+
+# Ejemplos
+cscript condor_cli.vbs import-form ./ui/definitions/frmPrincipal.json ./back/CONDOR.accdb
+```
+
+**Funcionalidades:**
+- Crea formularios nuevos o reemplaza existentes basándose en la definición JSON
+- Genera automáticamente todos los controles especificados
+- Configura automáticamente posición, tamaño, formato y propiedades
+- Mapeo automático de tipos de controles del JSON a objetos Access nativos
+- Reemplazo seguro con eliminación previa de formularios existentes
+- Validación de estructura del JSON antes de proceder
+
+### Flujo de Trabajo Obligatorio
+
+Para cualquier modificación de formularios en CONDOR, se debe seguir este flujo:
+
+1. **Exportar**: Usar `export-form` para extraer el formulario actual a JSON
+2. **Modificar**: Editar el archivo JSON con los cambios requeridos
+3. **Versionar**: Confirmar los cambios en el control de versiones (Git)
+4. **Importar**: Usar `import-form` para aplicar los cambios al formulario de Access
+5. **Validar**: Verificar que el formulario funciona correctamente
+
+### Ventajas del Principio
+
+- **Versionado**: Los formularios pueden ser versionados como cualquier código fuente
+- **Revisión de Código**: Los cambios en formularios pueden ser revisados mediante pull requests
+- **Trazabilidad**: Historial completo de cambios en la interfaz de usuario
+- **Colaboración**: Múltiples desarrolladores pueden trabajar en formularios sin conflictos
+- **Automatización**: Posibilidad de generar formularios programáticamente
+- **Backup y Restauración**: Los formularios están respaldados en el repositorio
+- **Consistencia**: Garantiza que todos los entornos tengan la misma versión de formularios
+
+### Consideraciones Técnicas
+
+- Los archivos JSON deben mantener la estructura definida por el sistema de exportación
+- Las rutas de imágenes en `assets/` deben ser relativas al directorio `ui/`
+- Se recomienda usar imágenes PNG para compatibilidad con Access
+- Los nombres de controles deben seguir las convenciones de nomenclatura de VBA
+- Las propiedades de formularios deben ser válidas según la versión de Access utilizada
+
+### Integración con el Ciclo de Desarrollo
+
+Este principio se integra con el **Ciclo de Trabajo de Desarrollo** definido en el proyecto:
+
+1. Los cambios de UI se realizan mediante modificación de archivos JSON
+2. Los archivos JSON se incluyen en el proceso de revisión de código
+3. La importación de formularios forma parte del proceso de despliegue
+4. Las pruebas de UI se ejecutan contra los formularios importados desde JSON
+
+**Nota**: Este principio es fundamental para mantener la coherencia y trazabilidad de la interfaz de usuario en el proyecto CONDOR, y su cumplimiento es obligatorio para todas las modificaciones de formularios.
+
+**UI como Código**: Los formularios de Access se gestionan como código fuente mediante serialización JSON, permitiendo versionado, revisión y gestión a través de herramientas de control de versiones. Este principio establece que los archivos JSON son la fuente de verdad para los formularios, implementando mediante los comandos CLI `export-form` e `import-form`. Los formularios se almacenan en la estructura canónica `ui/definitions/` como archivos JSON versionables, con recursos gráficos en `ui/assets/` y plantillas en `ui/templates/`. El flujo de trabajo obligatorio requiere: exportar → modificar JSON → versionar → importar → validar.
 
 ## 23. Sistema de Migraciones de Base de Datos
 
@@ -2267,7 +2418,7 @@ Actualmente el proyecto incluye los siguientes scripts de migración:
 
 1. **`001_seed_tbEstados.sql`** - Esquema y datos iniciales de estados del workflow
 
-   - **REFACTORIZADO**: Incluye DDL (DROP TABLE, CREATE TABLE) y DML (INSERT)
+   - **REFACTORIZANDO**: Incluye DDL (DROP TABLE, CREATE TABLE) y DML (INSERT)
    - Define la tabla tbEstados con clave primaria explícita (idEstado LONG)
    - Establece los 6 estados del sistema con IDs explícitos:
      - ID 1: Borrador (Estado inicial)
@@ -2277,7 +2428,7 @@ Actualmente el proyecto incluye los siguientes scripts de migración:
      - ID 5: Cerrado - Rechazado (Estado final)
      - ID 6: En Tramitación
    - Implementa principio de idempotencia con DROP/CREATE TABLE
-   - Consolidado desde scripts separados de esquema y datos
+   - Consolidando desde scripts separados de esquema y datos
 2. **`002_seed_tbTransiciones.sql`** - Configuración de transiciones de estado
 
    - Define las transiciones permitidas entre estados según roles de usuario
@@ -2309,14 +2460,14 @@ Actualmente el proyecto incluye los siguientes scripts de migración:
 Los scripts SQL deben ser **idempotentes**, lo que significa que pueden ejecutarse múltiples veces sin causar errores ni efectos secundarios no deseados. CONDOR implementa dos patrones de idempotencia:
 
 - **Patrón DELETE/INSERT**: Para scripts que solo manejan datos (DML)
-- **Patrón DROP/CREATE**: Para scripts consolidados que incluyen esquema y datos (DDL + DML)
+- **Patrón DROP/CREATE**: Para scripts consolidando que incluyen esquema y datos (DDL + DML)
 
 El script `001_seed_tbEstados.sql` utiliza el patrón DROP/CREATE para garantizar la recreación completa de la tabla con la estructura correcta y clave primaria explícita.
 
-**Ejemplo de Script Idempotente Consolidado (`001_seed_tbEstados.sql`):**
+**Ejemplo de Script Idempotente Consolidando (`001_seed_tbEstados.sql`):**
 
 ```sql
--- REFACTORIZADO: Script consolidado con DDL y DML
+-- REFACTORIZANDO: Script consolidando con DDL y DML
 -- Eliminar tabla existente para asegurar la idempotencia
 DROP TABLE tbEstados;
 
@@ -2709,7 +2860,7 @@ Una vez que una solicitud alcanza el estado final "Aprobada" (ID 7), no puede tr
 - ✅ Consolidación de scripts de migración en `001_seed_tbEstados.sql`
 - ✅ Integración del estado "En Tramitación" (ID 6)
 - ✅ Verificación de integridad referencial con tbTransiciones
-- ✅ Principio de idempotencia implementado con DROP/CREATE TABLE
+- ✅ Principio de idempotencia implementando con DROP/CREATE TABLE
 
 **7. tbLogCambios**
 
@@ -2771,13 +2922,13 @@ Una vez que una solicitud alcanza el estado final "Aprobada" (ID 7), no puede tr
 | tipoSolicitud          | Text       | 20       | No   | -     | Tipo de solicitud: "PC", "CD/CA", "CD/CA-SUB"     |
 | subTipoSolicitud       | Text       | 20       | Sí  | -     | Subtipo: "Desviación" o "Concesión"             |
 | codigoSolicitud        | Text       | 50       | No   | -     | Código único autogenerado                       |
-| idEstadoInterno        | Long       | -        | No   | FK    | REFACTORIZADO: Referencia a tbEstados             |
+| idEstadoInterno        | Long       | -        | No   | FK    | REFACTORIZANDO: Referencia a tbEstados             |
 | fechaCreacion          | DateTime   | -        | No   | -     | Timestamp de creación del registro               |
 | usuarioCreacion        | Text       | 100      | No   | -     | Email del usuario que creó la solicitud          |
 | fechaPaseTecnico       | DateTime   | -        | Sí  | -     | Fecha de envío a revisión técnica              |
 | fechaCompletadoTecnico | DateTime   | -        | Sí  | -     | Fecha de finalización técnica                   |
-| fechaModificacion      | DateTime   | -        | Sí  | -     | AÑADIDO: Timestamp de la última modificación   |
-| usuarioModificacion    | Text       | 100      | Sí  | -     | AÑADIDO: Email del último usuario que modificó |
+| fechaModificacion      | DateTime   | -        | Sí  | -     | AÑADIENDO: Timestamp de la última modificación   |
+| usuarioModificacion    | Text       | 100      | Sí  | -     | AÑADIENDO: Email del último usuario que modificó |
 | observaciones          | Memo       | -        | Sí  | -     | Observaciones generales de la solicitud           |
 
 **12. tbTransiciones**
@@ -2943,3 +3094,77 @@ Una vez que una solicitud alcanza el estado final "Aprobada" (ID 7), no puede tr
 | "CDCASUB"       | firmaSuministradorPrincipalNombreCargo | NULL           | Parte3_27_4     |
 | "CDCASUB"       | obsRACDelegador                        | NULL           | Parte4_28       |
 | "CDCASUB"       | fechaFirmaRACDelegador                 | NULL           | Parte4_30       |
+
+---
+
+## 24. Nuevas Funcionalidades CLI Implementadas
+
+### 24.1. Exportación de Formularios con JSON Enriquecido
+
+**Comando:** `export-form`
+
+```bash
+cscript condor_cli.vbs export-form <db_path> <form_name> [--output] [--password]
+```
+
+**Funcionalidades Implementadas:**
+- Exportación completa de formularios Access a formato JSON estructurado
+- Captura de todas las propiedades de controles (posición, tamaño, formato, fuentes)
+- Soporte para todos los tipos de controles (TextBox, Label, CommandButton, etc.)
+- Generación de archivos JSON legibles y versionables
+- Soporte para bases de datos protegidas con contraseña
+- Salida configurable con directorio de destino personalizable
+
+### 24.2. Importación de Formularios desde JSON
+
+**Comando:** `import-form`
+
+```bash
+cscript condor_cli.vbs import-form <json_path> <db_path> [--password]
+```
+
+**Funcionalidades Implementadas:**
+- Creación automática de formularios desde definiciones JSON
+- Reemplazo seguro de formularios existentes
+- Generación dinámica de controles con todas sus propiedades
+- Mapeo automático de tipos de controles JSON a objetos Access nativos
+- Configuración automática de posición, tamaño y formato
+- Soporte para bases de datos protegidas
+
+### 24.3. Validación de JSON de Formularios
+
+**Comando:** `validate-form-json`
+
+```bash
+cscript condor_cli.vbs validate-form-json <json_path> [--strict] [--schema]
+```
+
+**Funcionalidades Implementadas:**
+- Validación de estructura JSON de formularios
+- Verificación de campos obligatorios (schemaVersion, formName, sections)
+- Validación de tipos de datos y formatos
+- Modo estricto (`--strict`) para validación exhaustiva de coherencia
+- Validación contra esquemas específicos (`--schema`)
+- Detección de errores de sintaxis JSON
+- Verificación de integridad de propiedades de controles
+
+### 24.4. Nuevos Flags CLI Globales
+
+**Flags Implementados:**
+
+- `--src <directorio>`: Especifica directorio fuente alternativo (por defecto: C:\\Proyectos\\CONDOR\\src)
+- `--strict`: Habilita validación exhaustiva de coherencia con código VBA
+- `--verbose`: Muestra información detallada durante la ejecución
+
+**Comandos Actualizados:**
+- `validate [--src] [--verbose]`: Validación de integridad con directorio fuente configurable
+- `validate-form-json [--strict] [--schema]`: Validación de JSON con modos avanzados
+
+### 24.5. Mejoras en Documentación de Ayuda
+
+**Actualizaciones Realizadas:**
+- Documentación completa de nuevos comandos en `ShowHelp()`
+- Ejemplos de uso actualizados con nuevos flags
+- Descripciones detalladas de funcionalidades de exportación/importación
+- Guías de uso para validación de JSON
+- Documentación de flags globales y sus valores por defecto

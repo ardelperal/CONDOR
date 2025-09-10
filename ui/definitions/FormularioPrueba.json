@@ -1,0 +1,51 @@
+{
+    "formName": "FormularioPrueba",
+    "properties": {
+        "caption": "Formulario de Prueba Nuevo",
+        "width": 8500
+    },
+    "sections": {
+        "Detail": {
+            "properties": {
+                "height": 4500
+            },
+            "controls": [
+                {
+                    "name": "btnNuevaPrueba",
+                    "type": "CommandButton",
+                    "properties": {
+                        "caption": "Nueva Prueba",
+                        "top": 600,
+                        "left": 600,
+                        "width": 1400,
+                        "height": 450,
+                        "picture": "Guardar1_25x25.png"
+                    }
+                },
+                {
+                    "name": "btnCerrar",
+                    "type": "CommandButton",
+                    "properties": {
+                        "caption": "Cerrar",
+                        "top": 1200,
+                        "left": 600,
+                        "width": 1400,
+                        "height": 450,
+                        "picture": "Cerrar1_25x25.png"
+                    }
+                },
+                {
+                    "name": "lblTitulo",
+                    "type": "Label",
+                    "properties": {
+                        "caption": "Formulario de Prueba Único",
+                        "top": 200,
+                        "left": 600,
+                        "width": 2000,
+                        "height": 300
+                    }
+                }
+            ]
+        }
+    }
+}

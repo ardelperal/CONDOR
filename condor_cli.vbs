@@ -1422,7 +1422,32 @@ Sub ShowHelp()
     WScript.Echo "                                   • orientation: ""LeftToRight""|""RightToLeft"""
     WScript.Echo "                                   • splitForm*: propiedades específicas para formularios divididos"
     WScript.Echo "                                 Ejemplo: export-form db.accdb MiForm --pretty --expand=events,formatting"
-    WScript.Echo "  import-form <json_path> <db_path> [--password] - Crear/Modificar formulario desde JSON."
+    WScript.Echo "  import-form <json_path> <db_path> [opciones] - Crear/Modificar formulario desde JSON.
+                                 Soporta normalización automática ES→EN y reglas de coherencia.
+                                 Opciones:
+                                   --password <pwd>          - Contraseña de la base de datos
+                                   --strict                  - Modo estricto: errores por incoherencias
+                                   --verbose                 - Mostrar decisiones de normalización
+                                   --dry-run                 - Validar sin crear el formulario
+                                   --schema <version>        - Versión del esquema a validar
+                                 Normalización automática (ES→EN):
+                                   • scrollBars: "Ninguna"→"Neither", "Horizontal"→"Horizontal",
+                                                 "Vertical"→"Vertical", "Ambas"/"Ambos"→"Both"
+                                   • borderStyle: "Ninguno"→"None", "Fino"→"Thin",
+                                                  "Redimensionable"→"Sizable", "Cuadro de diálogo"→"Dialog"
+                                   • minMaxButtons: "Ninguno"→"None", "Solo minimizar"→"Min Enabled",
+                                                    "Solo maximizar"→"Max Enabled", "Ambos"→"Both Enabled"
+                                   • recordsetType: "Instantánea"→"Snapshot",
+                                                    "Dynaset (actualizaciones incoherentes)"→"Dynaset (Inconsistent Updates)"
+                                   • orientation: "De izquierda a derecha"→"LeftToRight",
+                                                  "De derecha a izquierda"→"RightToLeft"
+                                   • booleans: "Sí"→true, "No"→false
+                                 Reglas de coherencia aplicadas:
+                                   • borderStyle ∈ {"None","Dialog"} ⇒ controlBox=false, minMaxButtons="None"
+                                   • controlBox=false ⇒ ignora closeButton y minMaxButtons
+                                   • modal/popUp=true + borderStyle≠"Sizable" ⇒ no min/max (WARN o ERROR)
+                                   • splitForm*: solo aplicable si defaultView="Split Form"
+                                 Ejemplo: import-form form.json db.accdb --strict --verbose"
     WScript.Echo "  validate-form-json <json_path> [--strict] [--schema] - Validar estructura JSON de formulario"
     WScript.Echo "                                 --strict: Validación exhaustiva de coherencia con código VBA"
     WScript.Echo "                                 --schema: Validar contra esquema específico"
@@ -4581,55 +4606,132 @@ Sub ImportForm()
     If formData.Exists("properties") Then
         Set formProps = formData("properties")
         
-        If formProps.Exists("caption") Then
-            frm.Caption = formProps("caption")
+        ' NORMALIZACIÓN Y MAPEO DE PROPIEDADES
+        ' Crear diccionario para propiedades normalizadas
+        Dim normalizedProps
+        Set normalizedProps = CreateObject("Scripting.Dictionary")
+        
+        ' Copiar todas las propiedades al diccionario normalizado
+        Dim propKey
+        For Each propKey In formProps.Keys
+            normalizedProps(propKey) = formProps(propKey)
+        Next
+        
+        ' Aplicar normalización ES→EN
+        For Each propKey In normalizedProps.Keys
+            Dim originalValue, normalizedValue
+            originalValue = normalizedProps(propKey)
+            normalizedValue = NormalizeToken(propKey, originalValue)
+            
+            If normalizedValue <> originalValue Then
+                If bVerbose Then LogInfo "Normalización: " & propKey & " '" & originalValue & "' → '" & normalizedValue & "'"
+                normalizedProps(propKey) = normalizedValue
+            End If
+        Next
+        
+        ' Aplicar reglas de coherencia
+        ApplyCoherenceRules normalizedProps, bStrict, bVerbose
+        
+        ' Aplicar propiedades básicas
+        If normalizedProps.Exists("caption") Then
+            frm.Caption = normalizedProps("caption")
         End If
         
-        If formProps.Exists("width") Then
-            frm.Width = CLng(formProps("width"))
+        If normalizedProps.Exists("width") Then
+            frm.Width = CLng(normalizedProps("width"))
         End If
         
-        If formProps.Exists("height") Then
-            frm.WindowHeight = CLng(formProps("height"))
+        If normalizedProps.Exists("height") Then
+            frm.WindowHeight = CLng(normalizedProps("height"))
         End If
         
         ' Aplicar colores del formulario
-        If formProps.Exists("backColor") Then
-            If ValidateHexColor(formProps("backColor")) Then
-                frm.Detail.BackColor = ConvertHexToOLE(formProps("backColor"))
+        If normalizedProps.Exists("backColor") Then
+            If ValidateHexColor(normalizedProps("backColor")) Then
+                frm.Detail.BackColor = ConvertHexToOLE(normalizedProps("backColor"))
             ElseIf bStrict Then
-                WScript.Echo "Error: Color de fondo del formulario inválido: " & formProps("backColor")
+                WScript.Echo "Error: Color de fondo del formulario inválido: " & normalizedProps("backColor")
             End If
         End If
         
-        ' Aplicar propiedades enum del formulario
-        If formProps.Exists("defaultView") Then
-            frm.DefaultView = MapEnumValue("defaultView", formProps("defaultView"))
+        ' Aplicar propiedades con mapeo token→enum
+        If normalizedProps.Exists("borderStyle") Then
+            frm.BorderStyle = TokenToBorderStyle(normalizedProps("borderStyle"))
         End If
         
-        If formProps.Exists("cycle") Then
-            frm.Cycle = MapEnumValue("cycle", formProps("cycle"))
+        If normalizedProps.Exists("scrollBars") Then
+            frm.ScrollBars = TokenToScrollBars(normalizedProps("scrollBars"))
         End If
         
-        If formProps.Exists("recordSourceType") Then
-            frm.RecordSourceType = MapEnumValue("recordSourceType", formProps("recordSourceType"))
+        If normalizedProps.Exists("minMaxButtons") Then
+            frm.MinMaxButtons = TokenToMinMaxButtons(normalizedProps("minMaxButtons"))
+        End If
+        
+        If normalizedProps.Exists("recordsetType") Then
+            frm.RecordsetType = TokenToRecordsetType(normalizedProps("recordsetType"))
+        End If
+        
+        If normalizedProps.Exists("orientation") Then
+            frm.Orientation = TokenToOrientation(normalizedProps("orientation"))
+        End If
+        
+        If normalizedProps.Exists("splitFormOrientation") Then
+            frm.SplitFormOrientation = TokenToSplitFormOrientation(normalizedProps("splitFormOrientation"))
+        End If
+        
+        ' Aplicar propiedades enum del formulario (usando MapEnumValue existente)
+        If normalizedProps.Exists("defaultView") Then
+            frm.DefaultView = MapEnumValue("defaultView", normalizedProps("defaultView"))
+        End If
+        
+        If normalizedProps.Exists("cycle") Then
+            frm.Cycle = MapEnumValue("cycle", normalizedProps("cycle"))
+        End If
+        
+        If normalizedProps.Exists("recordSourceType") Then
+            frm.RecordSourceType = MapEnumValue("recordSourceType", normalizedProps("recordSourceType"))
+        End If
+        
+        ' Aplicar propiedades booleanas normalizadas
+        If normalizedProps.Exists("allowEdits") Then
+            frm.AllowEdits = CBool(normalizedProps("allowEdits"))
+        End If
+        
+        If normalizedProps.Exists("allowAdditions") Then
+            frm.AllowAdditions = CBool(normalizedProps("allowAdditions"))
+        End If
+        
+        If normalizedProps.Exists("allowDeletions") Then
+            frm.AllowDeletions = CBool(normalizedProps("allowDeletions"))
+        End If
+        
+        If normalizedProps.Exists("controlBox") Then
+            frm.ControlBox = CBool(normalizedProps("controlBox"))
+        End If
+        
+        If normalizedProps.Exists("closeButton") Then
+            frm.CloseButton = CBool(normalizedProps("closeButton"))
+        End If
+        
+        If normalizedProps.Exists("modal") Then
+            frm.Modal = CBool(normalizedProps("modal"))
+        End If
+        
+        If normalizedProps.Exists("popUp") Then
+            frm.PopUp = CBool(normalizedProps("popUp"))
         End If
         
         ' Aplicar otras propiedades
-        If formProps.Exists("recordSource") Then
-            frm.RecordSource = formProps("recordSource")
+        If normalizedProps.Exists("recordSource") Then
+            frm.RecordSource = normalizedProps("recordSource")
         End If
         
-        If formProps.Exists("allowEdits") Then
-            frm.AllowEdits = CBool(formProps("allowEdits"))
+        If normalizedProps.Exists("splitFormSize") Then
+            frm.SplitFormSize = CLng(normalizedProps("splitFormSize"))
         End If
         
-        If formProps.Exists("allowAdditions") Then
-            frm.AllowAdditions = CBool(formProps("allowAdditions"))
-        End If
-        
-        If formProps.Exists("allowDeletions") Then
-            frm.AllowDeletions = CBool(formProps("allowDeletions"))
+        If normalizedProps.Exists("splitFormSplitterBar") Then
+            frm.SplitFormSplitterBar = CBool(normalizedProps("splitFormSplitterBar"))
         End If
     End If
     
@@ -5743,6 +5845,243 @@ Function MapSplitFormOrientationToToken(splitFormOrientationValue)
         Case Else: MapSplitFormOrientationToToken = "DatasheetOnTop" ' Default
     End Select
 End Function
+
+' ============================================================================
+' FUNCIONES DE NORMALIZACIÓN Y MAPEO INVERSO
+' ============================================================================
+
+' Normaliza tokens de entrada en español a inglés canónico
+Function NormalizeToken(propName, value)
+    Dim normalizedValue
+    normalizedValue = Trim(value)
+    
+    Select Case LCase(propName)
+        Case "scrollbars"
+            Select Case LCase(normalizedValue)
+                Case "ninguna": NormalizeToken = "Neither"
+                Case "horizontal": NormalizeToken = "Horizontal"
+                Case "vertical": NormalizeToken = "Vertical"
+                Case "ambas", "ambos": NormalizeToken = "Both"
+                Case Else: NormalizeToken = normalizedValue
+            End Select
+            
+        Case "borderstyle"
+            Select Case LCase(normalizedValue)
+                Case "ninguno": NormalizeToken = "None"
+                Case "fino": NormalizeToken = "Thin"
+                Case "redimensionable": NormalizeToken = "Sizable"
+                Case "cuadro de diálogo": NormalizeToken = "Dialog"
+                Case Else: NormalizeToken = normalizedValue
+            End Select
+            
+        Case "minmaxbuttons"
+            Select Case LCase(normalizedValue)
+                Case "ninguno": NormalizeToken = "None"
+                Case "solo minimizar": NormalizeToken = "Min Enabled"
+                Case "solo maximizar": NormalizeToken = "Max Enabled"
+                Case "ambos": NormalizeToken = "Both Enabled"
+                Case Else: NormalizeToken = normalizedValue
+            End Select
+            
+        Case "recordsettype"
+            Select Case LCase(normalizedValue)
+                Case "instantánea": NormalizeToken = "Snapshot"
+                Case "dynaset (actualizaciones incoherentes)": NormalizeToken = "Dynaset (Inconsistent Updates)"
+                Case Else: NormalizeToken = normalizedValue
+            End Select
+            
+        Case "orientation"
+            Select Case LCase(normalizedValue)
+                Case "de izquierda a derecha": NormalizeToken = "LeftToRight"
+                Case "de derecha a izquierda": NormalizeToken = "RightToLeft"
+                Case Else: NormalizeToken = normalizedValue
+            End Select
+            
+        Case "splitformorientation"
+            Select Case LCase(normalizedValue)
+                Case "hoja de datos arriba": NormalizeToken = "DatasheetOnTop"
+                Case "hoja de datos abajo": NormalizeToken = "DatasheetOnBottom"
+                Case "hoja de datos izquierda": NormalizeToken = "DatasheetOnLeft"
+                Case "hoja de datos derecha": NormalizeToken = "DatasheetOnRight"
+                Case Else: NormalizeToken = normalizedValue
+            End Select
+            
+        Case Else
+            ' Para propiedades booleanas
+            Select Case LCase(normalizedValue)
+                Case "sí", "si": NormalizeToken = "true"
+                Case "no": NormalizeToken = "false"
+                Case Else: NormalizeToken = normalizedValue
+            End Select
+    End Select
+End Function
+
+' Mapea token canónico a valor numérico de BorderStyle
+Function TokenToBorderStyle(token)
+    Select Case LCase(token)
+        Case "none": TokenToBorderStyle = 0
+        Case "thin": TokenToBorderStyle = 1
+        Case "sizable": TokenToBorderStyle = 2
+        Case "dialog": TokenToBorderStyle = 3
+        Case Else: TokenToBorderStyle = 2 ' Default: Sizable
+    End Select
+End Function
+
+' Mapea token canónico a valor numérico de ScrollBars
+Function TokenToScrollBars(token)
+    Select Case LCase(token)
+        Case "neither": TokenToScrollBars = 0
+        Case "horizontal": TokenToScrollBars = 1
+        Case "vertical": TokenToScrollBars = 2
+        Case "both": TokenToScrollBars = 3
+        Case Else: TokenToScrollBars = 0 ' Default: Neither
+    End Select
+End Function
+
+' Mapea token canónico a valor numérico de MinMaxButtons
+Function TokenToMinMaxButtons(token)
+    Select Case LCase(token)
+        Case "none": TokenToMinMaxButtons = 0
+        Case "min enabled": TokenToMinMaxButtons = 1
+        Case "max enabled": TokenToMinMaxButtons = 2
+        Case "both enabled": TokenToMinMaxButtons = 3
+        Case Else: TokenToMinMaxButtons = 0 ' Default: None
+    End Select
+End Function
+
+' Mapea token canónico a valor numérico de RecordsetType
+Function TokenToRecordsetType(token)
+    Select Case LCase(token)
+        Case "dynaset": TokenToRecordsetType = 0
+        Case "snapshot": TokenToRecordsetType = 1
+        Case "dynaset (inconsistent updates)": TokenToRecordsetType = 2
+        Case Else: TokenToRecordsetType = 0 ' Default: Dynaset
+    End Select
+End Function
+
+' Mapea token canónico a valor numérico de Orientation
+Function TokenToOrientation(token)
+    Select Case LCase(token)
+        Case "lefttoright": TokenToOrientation = 0
+        Case "righttoleft": TokenToOrientation = 1
+        Case Else: TokenToOrientation = 0 ' Default: LeftToRight
+    End Select
+End Function
+
+' Mapea token canónico a valor numérico de SplitFormOrientation
+Function TokenToSplitFormOrientation(token)
+    Select Case LCase(token)
+        Case "datasheetontop": TokenToSplitFormOrientation = 0
+        Case "datasheetonbottom": TokenToSplitFormOrientation = 1
+        Case "datasheetonleft": TokenToSplitFormOrientation = 2
+        Case "datasheetonright": TokenToSplitFormOrientation = 3
+        Case Else: TokenToSplitFormOrientation = 0 ' Default: DatasheetOnTop
+    End Select
+End Function
+
+' ============================================================================
+' REGLAS DE COHERENCIA ENTRE PROPIEDADES
+' ============================================================================
+
+' Aplica reglas de coherencia entre propiedades de formulario
+' Parámetros:
+'   - props: Diccionario con las propiedades del formulario
+'   - strictMode: Si es True, genera errores; si es False, solo advertencias
+'   - verbose: Si es True, muestra las decisiones tomadas
+Sub ApplyCoherenceRules(props, strictMode, verbose)
+    Dim borderStyle, controlBox, minMaxButtons, modal, popUp, defaultView
+    Dim hasError
+    hasError = False
+    
+    ' Obtener valores actuales
+    borderStyle = ""
+    If props.Exists("borderStyle") Then borderStyle = props("borderStyle")
+    
+    controlBox = True
+    If props.Exists("controlBox") Then controlBox = props("controlBox")
+    
+    minMaxButtons = ""
+    If props.Exists("minMaxButtons") Then minMaxButtons = props("minMaxButtons")
+    
+    modal = False
+    If props.Exists("modal") Then modal = props("modal")
+    
+    popUp = False
+    If props.Exists("popUp") Then popUp = props("popUp")
+    
+    defaultView = ""
+    If props.Exists("defaultView") Then defaultView = props("defaultView")
+    
+    ' Regla 1: Si borderStyle ∈ {"None","Dialog"} ⇒ controlBox=false y minMaxButtons="None"
+    If borderStyle = "None" Or borderStyle = "Dialog" Then
+        If controlBox = True Then
+            If verbose Then LogInfo "Coherencia: borderStyle='" & borderStyle & "' requiere controlBox=false"
+            props("controlBox") = False
+        End If
+        If minMaxButtons <> "None" And minMaxButtons <> "" Then
+            If verbose Then LogInfo "Coherencia: borderStyle='" & borderStyle & "' requiere minMaxButtons='None'"
+            props("minMaxButtons") = "None"
+        End If
+    End If
+    
+    ' Regla 2: Si controlBox=false ⇒ ignorar closeButton y minMaxButtons
+    If controlBox = False Then
+        If props.Exists("closeButton") Then
+            If verbose Then LogInfo "Coherencia: controlBox=false, ignorando closeButton"
+            props.Remove("closeButton")
+        End If
+        If minMaxButtons <> "None" And minMaxButtons <> "" Then
+            If verbose Then LogInfo "Coherencia: controlBox=false, forzando minMaxButtons='None'"
+            props("minMaxButtons") = "None"
+        End If
+    End If
+    
+    ' Regla 3: Si modal=true o popUp=true y borderStyle≠"Sizable" ⇒ no permitir min/max
+    If (modal = True Or popUp = True) And borderStyle <> "Sizable" Then
+        If minMaxButtons <> "None" And minMaxButtons <> "" Then
+            Dim msg
+            msg = "Incoherencia: formulario modal/popup con borderStyle='" & borderStyle & "' no debe tener minMaxButtons='" & minMaxButtons & "'"
+            If strictMode Then
+                LogErr msg
+                hasError = True
+            Else
+                LogWarn msg
+                If verbose Then LogInfo "Coherencia: forzando minMaxButtons='None' para modal/popup"
+                props("minMaxButtons") = "None"
+            End If
+        End If
+    End If
+    
+    ' Regla 4: SplitForm* solo si es Split Form
+    Dim isSplitForm
+    isSplitForm = (defaultView = "Split Form")
+    
+    If Not isSplitForm Then
+        Dim splitProps
+        splitProps = Array("splitFormSize", "splitFormOrientation", "splitFormSplitterBar")
+        Dim i
+        For i = 0 To UBound(splitProps)
+            If props.Exists(splitProps(i)) Then
+                Dim splitMsg
+                splitMsg = "Propiedad '" & splitProps(i) & "' solo aplicable a Split Forms (defaultView='Split Form')"
+                If strictMode Then
+                    LogErr splitMsg
+                    hasError = True
+                Else
+                    LogWarn splitMsg
+                    If verbose Then LogInfo "Coherencia: removiendo propiedad '" & splitProps(i) & "' (no es Split Form)"
+                    props.Remove(splitProps(i))
+                End If
+            End If
+        Next
+    End If
+    
+    ' Si hay errores en modo estricto, terminar
+    If hasError And strictMode Then
+        LogErr "Errores de coherencia detectados en modo --strict. Abortando."
+        WScript.Quit 1
+    End If
+End Sub
 
 ' ============================================================================
 ' SISTEMA DE LOGGING

@@ -1,1 +1,0 @@
-"CREATE TABLE tbEstados (idEstado LONG PRIMARY KEY, nombreEstado TEXT(100) NOT NULL, descripcion TEXT(255), esEstadoInicial YESNO, esEstadoFinal YESNO);"
