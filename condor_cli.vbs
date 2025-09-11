@@ -13,6 +13,18 @@ Dim objArgs
 Dim strDbPassword
 Dim pathArg, i
 Dim gVerbose ' Variable global para soporte --verbose
+Dim gBypassStartup ' Variable global para --bypassstartup
+Dim gPassword ' Variable global para --password
+Dim gDbPath ' Variable global para --db
+
+' Variables globales para bypass restoration
+Dim gBypassStartupEnabled
+Dim gPreviousAllowBypassKey
+Dim gCurrentDbPath
+Dim gCurrentPassword
+Dim gPreviousStartupForm
+Dim gPreviousHasAutoExec
+Dim gUsedStrategyB ' Flag para saber si se usó estrategia B
 
 ' Configuracion
 ' Configuracion inicial - se determinara la base de datos segun la accion
@@ -23,6 +35,20 @@ strSourcePath = "C:\Proyectos\CONDOR\src"
 
 ' Obtener argumentos de linea de comandos
 Set objArgs = WScript.Arguments
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+
+' Inicializar variables globales
+gVerbose = False
+gBypassStartup = False
+gPassword = ""
+gDbPath = ""
+gBypassStartupEnabled = False
+gPreviousAllowBypassKey = Null
+gCurrentDbPath = ""
+gCurrentPassword = ""
+gPreviousStartupForm = Null
+gPreviousHasAutoExec = False
+gUsedStrategyB = False
 
 ' Verificar si se solicita ayuda
 If objArgs.Count > 0 Then
@@ -87,16 +113,25 @@ If objArgs.Count = 0 Then
     WScript.Quit 1
 End If
 
+' Obtener acción
 strAction = LCase(objArgs(0))
 
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'lint', 'bundle', 'migrate', 'export-form', 'import-form', 'validate-form-json', 'roundtrip-form' o 'list-forms'"
+' Validar comando
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "update" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'update', 'lint', 'bundle', 'migrate', 'export-form', 'import-form', 'validate-form-json', 'roundtrip-form' o 'list-forms'"
     WScript.Quit 1
 End If
 
-Set objFSO = CreateObject("Scripting.FileSystemObject")
+' PASO 1: Resolver flags ANTES de cualquier apertura de Access
+Call ResolveFlags()
 
-' Los comandos bundle, validate-schema y validate-form-json no requieren Access
+' PASO 2: Resolver ruta de base de datos
+Call ResolveDbPath()
+
+' PASO 3: Determinar bypass startup por defecto según comando
+Call SetDefaultBypassStartup()
+
+' PASO 4: Ejecutar comandos que NO requieren Access
 If strAction = "bundle" Then
     ' Verificar si se solicita ayuda específica para bundle
     If objArgs.Count > 1 Then
@@ -118,45 +153,13 @@ ElseIf strAction = "roundtrip-form" Then
     WScript.Quit 0
 End If
 
-' Determinar qué base de datos usar según la acción
-If strAction = "createtable" Or strAction = "droptable" Or strAction = "migrate" Then
-    strAccessPath = strDataPath
-ElseIf strAction = "listtables" Then
-    pathArg = ""
-    ' Buscar un argumento que no sea el flag --schema
-    For i = 1 To objArgs.Count - 1
-        If LCase(objArgs(i)) <> "--schema" Then
-            pathArg = objArgs(i)
-            Exit For
-        End If
-    Next
-    
-    If pathArg <> "" Then
-        ' Resolver ruta relativa a absoluta
-        strAccessPath = ResolveRelativePath(pathArg)
-    Else
-        strAccessPath = strDataPath
-    End If
-ElseIf strAction = "import-form" Then
-    ' Para import-form, usar la base de datos especificada como segundo argumento
-    If objArgs.Count >= 3 Then
-        strAccessPath = ResolveRelativePath(objArgs(2))
-    Else
-        strAccessPath = strDataPath
-    End If
-End If
-
-' Para rebuild y test, usar la base de datos de desarrollo
-If strAction = "rebuild" Or strAction = "test" Then
-    strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
-End If
-
-' Verificar que existe la base de datos
+' PASO 5: Verificar que existe la base de datos
 If Not objFSO.FileExists(strAccessPath) Then
     WScript.Echo "Error: La base de datos no existe: " & strAccessPath
     WScript.Quit 1
 End If
 
+' PASO 6: Mostrar información de inicio
 If strAction = "import-form" Then
     WScript.Echo "=== IMPORTANDO FORMULARIO ==="
 Else
@@ -165,77 +168,23 @@ End If
 WScript.Echo "Accion: " & strAction
 WScript.Echo "Base de datos: " & strAccessPath
 WScript.Echo "Directorio: " & strSourcePath
+If gVerbose Then
+    WScript.Echo "[VERBOSE] Password: " & IIf(gPassword <> "", "***", "(none)")
+    WScript.Echo "[VERBOSE] BypassStartup: " & gBypassStartup
+End If
 
-
-
-' Verificar y cerrar procesos de Access existentes
+' PASO 7: Cerrar procesos de Access existentes
 Call CloseExistingAccessProcesses()
 
-On Error Resume Next
-
-' Crear aplicacion Access
-WScript.Echo "Iniciando aplicacion Access..."
-Set objAccess = CreateObject("Access.Application")
-
-If Err.Number <> 0 Then
-    WScript.Echo "Error al crear aplicacion Access: " & Err.Description
-    WScript.Quit 1
+' PASO 8: Abrir Access con OpenAccessApp unificado (solo si es necesario)
+If strAction <> "bundle" And strAction <> "validate-schema" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" Then
+    Set objAccess = OpenAccessApp(strAccessPath, gPassword, gBypassStartup)
+    If Not objAccess Is Nothing Then
+        Call EnsureVBReferences
+    End If
 End If
 
-' Configurar Access en modo silencioso
-objAccess.Visible = False
-objAccess.UserControl = False
-' Suprimir alertas y diálogos de confirmación
-' ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación  ' Comentado temporalmente por error de compilación
-objAccess.Application.Echo False
-' Configuraciones adicionales para suprimir diálogos
-On Error Resume Next
-objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
-objAccess.VBE.MainWindow.Visible = False
-Err.Clear
-On Error GoTo 0
-
-' Para import-form, no abrir base de datos aquí (ImportForm lo manejará)
-If strAction <> "import-form" Then
-    ' Abrir base de datos con compilacion condicional
-    WScript.Echo "Abriendo base de datos..."
-    
-    ' Configurar Access para evitar errores de compilación
-    On Error Resume Next
-    ' Intentar configurar propiedades si están disponibles
-    objAccess.DisplayAlerts = False
-    Err.Clear
-    
-    ' Determinar contraseña para la base de datos
-    strDbPassword = GetDatabasePassword(strAccessPath)
-    
-    ' Abrir base de datos con manejo de errores robusto
-    If strDbPassword = "" Then
-        ' Sin contraseña
-        objAccess.OpenCurrentDatabase strAccessPath
-    Else
-        ' Con contrasena - usar solo dos parametros
-        objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al abrir base de datos: " & Err.Description
-        objAccess.Quit
-        WScript.Quit 1
-    End If
-    
-    On Error GoTo 0
-    WScript.Echo "Base de datos abierta correctamente."
-    Call EnsureVBReferences
-End If
-
-' Verificar opciones especiales
-For i = 1 To objArgs.Count - 1
-    If LCase(objArgs(i)) = "--verbose" Then
-        gVerbose = True
-        WScript.Echo "[MODO VERBOSE] Informacion detallada activada"
-    End If
-Next
+' PASO 9: Ejecutar comando correspondiente
 
 If strAction = "validate" Then
     Call ValidateAllModules()
@@ -252,7 +201,8 @@ ElseIf strAction = "listtables" Then
 
 ElseIf strAction = "rebuild" Then
     Call RebuildProject()
-
+ElseIf strAction = "update" Then
+    Call UpdateProject()
 ElseIf strAction = "lint" Then
     Call LintProject()
 ElseIf strAction = "relink" Then
@@ -265,23 +215,20 @@ ElseIf strAction = "import-form" Then
     Call ImportForm()
 ElseIf strAction = "list-forms" Then
     Call ListForms()
+ElseIf strAction = "list-modules" Then
+    Call ListModules()
 
+Else
+    WScript.Echo "Error: Comando no reconocido: " & strAction
+    WScript.Quit 1
 End If
 
-' Cerrar Access
-WScript.Echo "Cerrando Access..."
-' Restaurar estado normal de Access antes de cerrar
-On Error Resume Next
-objAccess.Application.Echo True
-objAccess.Quit 2  ' acQuitSaveNone = 2
-If Err.Number <> 0 Then
-    ' Intentar cerrar sin guardar si hay problemas
-    objAccess.Quit 2  ' acQuitSaveNone = 2
+' PASO 10: Cerrar Access si fue abierto (unificado)
+If Not objAccess Is Nothing Then
+    Call CloseAccessApp(objAccess)
 End If
-On Error GoTo 0
-WScript.Echo "Access cerrado correctamente"
 
-WScript.Echo "=== IMPORTACION DE FORMULARIO COMPLETADA EXITOSAMENTE ==="
+WScript.Echo "=== COMANDO COMPLETADO EXITOSAMENTE ==="
 WScript.Quit 0
 
 ' Subrutina para validar todos los modulos sin importar
@@ -368,17 +315,12 @@ Sub ExportModules()
             End If
             
             On Error Resume Next
-            Call ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
+            Call ExportModuleToUtf8(objAccess, vbComponent.Name, strExportPath)
             
             If Err.Number <> 0 Then
                 WScript.Echo "Error al exportar modulo " & vbComponent.Name & ": " & Err.Description
                 Err.Clear
             Else
-                If gVerbose Then
-                    WScript.Echo "  ✓ Modulo " & vbComponent.Name & " exportado a: " & strExportPath
-                Else
-                    WScript.Echo "✓ " & vbComponent.Name & ".bas"
-                End If
                 exportedCount = exportedCount + 1
             End If
         ElseIf vbComponent.Type = 2 Then  ' vbext_ct_ClassModule
@@ -389,17 +331,12 @@ Sub ExportModules()
             End If
             
             On Error Resume Next
-            Call ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
+            Call ExportModuleToUtf8(objAccess, vbComponent.Name, strExportPath)
             
             If Err.Number <> 0 Then
                 WScript.Echo "Error al exportar clase " & vbComponent.Name & ": " & Err.Description
                 Err.Clear
             Else
-                If gVerbose Then
-                    WScript.Echo "  ✓ Clase " & vbComponent.Name & " exportada a: " & strExportPath
-                Else
-                    WScript.Echo "✓ " & vbComponent.Name & ".cls"
-                End If
                 exportedCount = exportedCount + 1
             End If
         End If
@@ -640,9 +577,8 @@ Sub LintProject()
     WScript.Echo "Accion: lint"
     WScript.Echo "Base de datos: " & strAccessPath
     
-    Set objAccess = CreateObject("Access.Application")
-    objAccess.Visible = False
-    objAccess.OpenCurrentDatabase strAccessPath, False
+    ' Usar la instancia global de Access ya abierta
+    ' (objAccess ya está disponible desde el dispatcher principal)
     
     WScript.Echo "=== AUDITORIA DE CABECERAS VBA ==="
     WScript.Echo ""
@@ -689,14 +625,11 @@ Sub LintProject()
         WScript.Echo ""
         WScript.Echo "=== LINT FALLIDO ==="
         WScript.Echo "Se encontraron cabeceras duplicadas."
-        objAccess.Quit
         WScript.Quit 1
     Else
         WScript.Echo ""
         WScript.Echo "=== LINT COMPLETADO EXITOSAMENTE ==="
     End If
-    
-    objAccess.Quit
 End Sub
 
 ' Subrutina para compilación condicional de módulos
@@ -1374,9 +1307,19 @@ Sub ShowHelp()
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
-    WScript.Echo "  rebuild                      - Método principal de sincronización del proyecto"
+    WScript.Echo "  rebuild [--verbose] [--bypassstartup on|off] - Método principal de sincronización del proyecto"
     WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
     WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
+    WScript.Echo "                                 Transaccional: usa la misma sesión de Access"
+    WScript.Echo "  update <opciones|módulos> [--verbose] [--bypassstartup on|off] - Actualización selectiva de módulos VBA"
+    WScript.Echo "                                 --changed: Solo módulos modificados (comparación por hash/fecha)"
+    WScript.Echo "                                 --all: Todos los módulos (sync suave, sin eliminar)"
+    WScript.Echo "                                 <Nombre>: Módulo específico (acepta nombre sin extensión)"
+    WScript.Echo "                                 Transaccional: usa la misma sesión de Access"
+    WScript.Echo "                                 Ejemplo: update --changed"
+    WScript.Echo "                                 Ejemplo: update --all"
+    WScript.Echo "                                 Ejemplo: update ModuloA"
+    WScript.Echo "                                 Ejemplo: update CClaseB ModuloC"
     WScript.Echo ""
     WScript.Echo "✅ VALIDACIÓN Y PRUEBAS:"
     WScript.Echo "  validate [--verbose] [--src] - Validar sintaxis VBA sin importar a Access"
@@ -1398,6 +1341,12 @@ Sub ShowHelp()
     WScript.Echo "                                 db_path opcional (por defecto: ./condor.accdb)"
     WScript.Echo "                                 --password: Contraseña de la base de datos"
     WScript.Echo "                                 --json: Salida en formato JSON (array de nombres)"
+    WScript.Echo "  list-modules [--json] [--expectSrc] [--diff] - Listar módulos VBA con análisis avanzado"
+    WScript.Echo "                                 --json: Salida en formato JSON estructurado"
+    WScript.Echo "                                 --expectSrc: Verificar existencia de archivos fuente en /src"
+    WScript.Echo "                                 --diff: Detectar inconsistencias entre BD y archivos fuente"
+    WScript.Echo "                                 Análisis: módulos faltantes, huérfanos, desactualizados"
+    WScript.Echo "                                 Indicadores: ✓ (sincronizado), ⚠ (advertencia), ✗ (error)"
     WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
     WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
     WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
@@ -1546,6 +1495,12 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo "  --strict                     - Modo estricto: validación exhaustiva de coherencia"
     WScript.Echo "                                 entre JSON y código VBA en formularios"
     WScript.Echo "  --verbose                    - Mostrar información detallada durante la operación"
+    WScript.Echo "  --db <ruta>, /db:<ruta>      - Especificar ruta de base de datos"
+    WScript.Echo "                                 (por defecto: ENV('CONDOR_DEV_DB') o ruta por defecto)"
+    WScript.Echo "  --password <clave>, /pwd:<clave> - Especificar contraseña de base de datos"
+    WScript.Echo "  --bypassstartup on|off, /bypassstartup:on|off - Controlar bypass de startup"
+    WScript.Echo "                                 (por defecto: ON para rebuild/update/export-form/import-form/list-forms/test;"
+    WScript.Echo "                                  OFF para validate/bundle/validate-schema/validate-form-json)"
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
     WScript.Echo "  1. cscript condor_cli.vbs validate     (validar sintaxis antes de importar)"
@@ -1562,35 +1517,103 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo "  cscript condor_cli.vbs createtable MiTabla ""CREATE TABLE MiTabla (ID LONG)"""
     WScript.Echo "  cscript condor_cli.vbs listtables"
     WScript.Echo "  cscript condor_cli.vbs relink --all"
+    WScript.Echo "  cscript condor_cli.vbs rebuild --verbose --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs update --changed --verbose"
+    WScript.Echo "  cscript condor_cli.vbs update --all"
+    WScript.Echo "  cscript condor_cli.vbs update ModuloA CClaseB"
+    WScript.Echo "  cscript condor_cli.vbs test --password miClave --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs list-forms --db """"C:\\MiDB.accdb"""" --password miClave --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs export-form MiDB.accdb MiForm --bypassstartup on"
+    WScript.Echo ""
+    WScript.Echo "  # Ejemplos de export/import por referencias (subformularios y TabControl):"
+    WScript.Echo "  # 1. Exportar formularios hijo y padre por separado"
+    WScript.Echo "  cscript condor_cli.vbs export-form """"C:\\MiDB.accdb"""" """"FormHijo"""" --pretty --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs export-form """"C:\\MiDB.accdb"""" """"FormPadre"""" --pretty --bypassstartup on"
+    WScript.Echo ""
+    WScript.Echo "  # 2. Importar por dependencias desde carpeta (toposort automático)"
+    WScript.Echo "  cscript condor_cli.vbs import-form """".\\ui\\forms"""" """"C:\\MiDB.accdb"""" --strict --bypassstartup on"
+    WScript.Echo ""
+    WScript.Echo "  # 3. Importar formulario individual con validación estricta"
+    WScript.Echo "  cscript condor_cli.vbs import-form """"FormPadre.json"""" """"C:\\MiDB.accdb"""" --strict --bypassstartup on"
     WScript.Echo ""
     WScript.Echo "CONFIGURACIÓN:"
     WScript.Echo "  Base de datos desarrollo: C:\\Proyectos\\CONDOR\\back\\Desarrollo\\CONDOR.accdb"
+    WScript.Echo "                            (o ENV('CONDOR_DEV_DB') si está definida)"
     WScript.Echo "  Base de datos datos:      C:\\Proyectos\\CONDOR\\back\\CONDOR_datos.accdb"
     WScript.Echo "  Directorio fuente:        C:\\Proyectos\\CONDOR\\src"
+    WScript.Echo "  Variable de entorno:      CONDOR_DEV_DB (opcional, para ruta de BD personalizada)"
     WScript.Echo ""
     WScript.Echo "Para más información, consulte la documentación en docs/CONDOR_MASTER_PLAN.md"
 End Sub
 
-' Nueva función que usa DoCmd.LoadFromText para evitar confirmaciones
+' Importa un módulo .bas o .cls desde /src en la sesión ACTUAL sin diálogos.
+' - .bas: Application.LoadFromText acModule
+' - .cls: VBIDE.VBComponents.Import y renombrado
+Sub ImportVbaFile(sourcePath, moduleName)
+    On Error Resume Next
+    Dim ext: ext = LCase(CreateObject("Scripting.FileSystemObject").GetExtensionName(sourcePath))
+    If ext <> "bas" And ext <> "cls" Then
+        WScript.Echo "  ❌ Tipo no soportado: " & ext
+        Exit Sub
+    End If
+
+    ' Validación previa (si existe)
+    Dim errDet, ok: ok = ValidateVBASyntax(sourcePath, errDet)
+    If ok <> True Then
+        WScript.Echo "  ❌ Sintaxis inválida en " & moduleName & ": " & errDet
+        Exit Sub
+    End If
+
+    ' .bas vía Application.LoadFromText (acModule = 5)
+    If ext = "bas" Then
+        Err.Clear
+        objAccess.Application.LoadFromText 5, moduleName, sourcePath
+        If Err.Number <> 0 Then
+            WScript.Echo "  ❌ Error LoadFromText(" & moduleName & "): " & Err.Description
+            Err.Clear
+            Exit Sub
+        End If
+        WScript.Echo "  ✓ Módulo estándar importado: " & moduleName
+        Exit Sub
+    End If
+
+    ' .cls vía VBIDE (requiere "Trust access..." y ref. VBIDE)
+    Dim vbProj, vbComp
+    Set vbProj = objAccess.VBE.ActiveVBProject
+    If vbProj Is Nothing Then
+        WScript.Echo "  ❌ VBE no disponible. Habilite 'Trust access to the VBA project object model'."
+        Exit Sub
+    End If
+
+    Err.Clear
+    Set vbComp = vbProj.VBComponents.Import(sourcePath)
+    If Err.Number <> 0 Or vbComp Is Nothing Then
+        WScript.Echo "  ❌ Error VBComponents.Import(" & moduleName & "): " & Err.Description
+        Err.Clear
+        Exit Sub
+    End If
+
+    ' Renombrar al nombre esperado si difiere
+    If vbComp.Name <> moduleName Then
+        On Error Resume Next
+        vbComp.Name = moduleName
+        If Err.Number <> 0 Then
+            WScript.Echo "  ⚠️ Importado como '" & vbComp.Name & "' (no se pudo renombrar a '" & moduleName & "')"
+            Err.Clear
+        End If
+    End If
+    WScript.Echo "  ✓ Clase importada: " & moduleName
+End Sub
+
+' Nueva función que usa VBComponents.Import para importar módulos (OBSOLETA - usar ImportVbaFile)
 Sub ImportModuleWithLoadFromText(strSourceFile, moduleName, fileExtension)
     On Error Resume Next
     
-    ' Determinar el tipo de objeto Access para DoCmd.LoadFromText
-    Dim objectType
-    If fileExtension = "bas" Then
-        objectType = 5  ' acModule para módulos estándar
-    ElseIf fileExtension = "cls" Then
-        objectType = 5  ' acModule también para módulos de clase
-    Else
-        WScript.Echo "  ❌ Error: Tipo de archivo no soportado: " & fileExtension
-        Exit Sub
-    End If
-    
-    ' Usar DoCmd.LoadFromText para importar el módulo
-    objAccess.DoCmd.LoadFromText objectType, moduleName, strSourceFile
+    ' Usar VBE.ActiveVBProject.VBComponents.Import como se usa en otras partes del código
+    objAccess.VBE.ActiveVBProject.VBComponents.Import strSourceFile
     
     If Err.Number <> 0 Then
-        WScript.Echo "  ❌ Error al importar módulo " & moduleName & " con LoadFromText: " & Err.Description
+        WScript.Echo "  ❌ Error al importar módulo " & moduleName & " con VBComponents.Import: " & Err.Description
         Err.Clear
         Exit Sub
     End If
@@ -1638,7 +1661,6 @@ Sub ExecuteTests()
         WScript.Echo "  Descripción: " & Err.Description
         WScript.Echo "  Fuente: " & Err.Source
         WScript.Echo "SUGERENCIA: Abre Access manualmente y ejecuta ExecuteAllTestsForCLI desde el módulo modTestRunner."
-        objAccess.Quit
         WScript.Quit 1
     End If
     On Error GoTo 0
@@ -1647,7 +1669,6 @@ Sub ExecuteTests()
     If IsEmpty(reportString) Or reportString = "" Then
         WScript.Echo "ERROR: El motor de pruebas de Access no devolvió ningún resultado."
         WScript.Echo "SUGERENCIA: Verifique que la función 'ExecuteAllTestsForCLI' en 'modTestRunner' no esté fallando silenciosamente."
-        objAccess.Quit
         WScript.Quit 1
     End If
     
@@ -1948,7 +1969,6 @@ Sub RelinkTables()
         WScript.Echo "  db_path: Ruta a la base de datos frontend (.accdb)"
         WScript.Echo "  local_folder: Ruta a la carpeta con las bases de datos locales"
         WScript.Echo "  --all: Re-vincular todas las bases de datos en ./back automáticamente"
-        objAccess.Quit
         WScript.Quit 1
     End If
     
@@ -1962,13 +1982,11 @@ Sub RelinkTables()
     ' Verificar que los paths existen
     If Not objFSO.FileExists(strDbPath) Then
         WScript.Echo "Error: La base de datos frontend no existe: " & strDbPath
-        objAccess.Quit
         WScript.Quit 1
     End If
     
     If Not objFSO.FolderExists(strLocalFolder) Then
         WScript.Echo "Error: La carpeta de backends locales no existe: " & strLocalFolder
-        objAccess.Quit
         WScript.Quit 1
     End If
     
@@ -1993,7 +2011,6 @@ Sub RelinkAllDatabases()
     ' Verificar que existe el directorio back
     If Not objFSO.FolderExists(strBackPath) Then
         WScript.Echo "Error: El directorio ./back no existe: " & strBackPath
-        objAccess.Quit
         WScript.Quit 1
     End If
     
@@ -2181,19 +2198,28 @@ End Function
 
 ' Subrutina para reconstruir completamente el proyecto VBA
 Sub RebuildProject()
+    ' VERSIÓN TRANSACCIONAL - Asume objAccess ya abierto por OpenAccessApp
+    ' No abre ni cierra Access; trabaja en la misma sesión
+    
     WScript.Echo "=== RECONSTRUCCION COMPLETA DEL PROYECTO VBA ==="
     WScript.Echo "ADVERTENCIA: Se eliminaran TODOS los modulos VBA existentes"
     WScript.Echo "Iniciando proceso de reconstruccion..."
     
     On Error Resume Next
     
-    ' Paso 1: Eliminar todos los módulos existentes
+    ' Verificar que objAccess esté disponible
+    If objAccess Is Nothing Then
+        WScript.Echo "Error: Access no está abierto. RebuildProject requiere una sesión activa."
+        WScript.Quit 1
+    End If
+    
+    ' Paso 1: Eliminar todos los módulos existentes vía VBE
     WScript.Echo "Paso 1: Eliminando todos los modulos VBA existentes..."
     
     Dim vbProject, vbComponent
     Set vbProject = objAccess.VBE.ActiveVBProject
     
-    Dim componentCount, i, errorDetails
+    Dim componentCount, i
     componentCount = vbProject.VBComponents.Count
     
     ' Iterar hacia atrás para evitar problemas al eliminar elementos
@@ -2202,185 +2228,376 @@ Sub RebuildProject()
         
         ' Solo eliminar módulos estándar y de clase (no formularios ni informes)
         If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' vbext_ct_StdModule = 1, vbext_ct_ClassModule = 2
-            WScript.Echo "  Eliminando: " & vbComponent.Name & " (Tipo: " & vbComponent.Type & ")"
+            If gVerbose Then
+                WScript.Echo "  Eliminando: " & vbComponent.Name & " (Tipo: " & vbComponent.Type & ")"
+            End If
+            
             vbProject.VBComponents.Remove vbComponent
             
             If Err.Number <> 0 Then
                 WScript.Echo "  ❌ Error eliminando " & vbComponent.Name & ": " & Err.Description
                 Err.Clear
             Else
-                WScript.Echo "  ✓ Eliminado: " & vbComponent.Name
+                If gVerbose Then
+                    WScript.Echo "  ✓ Eliminado: " & vbComponent.Name
+                End If
             End If
         End If
     Next
     
-    WScript.Echo "Paso 2: Cerrando base de datos..."
-    
-    ' Cerrar sin guardar explícitamente para evitar confirmaciones
-    objAccess.Quit 1  ' acQuitSaveAll = 1
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Advertencia al cerrar Access: " & Err.Description
-        Err.Clear
-    End If
-    
-    Set objAccess = Nothing
-    WScript.Echo "✓ Base de datos cerrada y guardada"
-    
-    ' Paso 3: Volver a abrir la base de datos
-    WScript.Echo "Paso 3: Reabriendo base de datos con proyecto VBA limpio..."
-    
-    Set objAccess = CreateObject("Access.Application")
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "❌ Error al crear nueva instancia de Access: " & Err.Description
-        WScript.Quit 1
-    End If
-    
-    ' Configurar Access en modo silencioso
-    objAccess.Visible = False
-    objAccess.UserControl = False
-    
-    ' Suprimir alertas y diálogos de confirmación
-    On Error Resume Next
-    ' objAccess.DoCmd.SetWarnings False  ' Comentado temporalmente por error de compilación
-    objAccess.Application.Echo False
-    objAccess.DisplayAlerts = False
-    ' Configuraciones adicionales para suprimir diálogos
-    objAccess.Application.AutomationSecurity = 1  ' msoAutomationSecurityLow
-    objAccess.VBE.MainWindow.Visible = False
-    Err.Clear
-    On Error GoTo 0
-    
-    ' Determinar contraseña para la base de datos
-    Dim strDbPassword
-    strDbPassword = GetDatabasePassword(strAccessPath)
-    
-    ' Abrir base de datos
-    If strDbPassword = "" Then
-        objAccess.OpenCurrentDatabase strAccessPath
-    Else
-        objAccess.OpenCurrentDatabase strAccessPath, , strDbPassword
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "❌ Error al reabrir base de datos: " & Err.Description
-        WScript.Quit 1
-    End If
-    
-    WScript.Echo "✓ Base de datos reabierta con proyecto VBA limpio"
-    
-    ' Paso 4: Importar todos los módulos de nuevo
-    WScript.Echo "Paso 4: Importando todos los modulos desde /src..."
-    
-    ' Integrar lógica de importación directamente
-    Dim objFolder, objFile
-    Dim strModuleName, strFileName, strContent
-    Dim srcModules
-    Dim moduleExists
-    Dim validationResult
-    Dim totalFiles, validFiles, invalidFiles
+    ' Paso 2: Importar todos los módulos desde /src usando la rutina unificada ImportVbaFile
+    WScript.Echo "Paso 2: Importando todos los modulos desde /src..."
     
     If Not objFSO.FolderExists(strSourcePath) Then
         WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
-        objAccess.Quit
         WScript.Quit 1
     End If
     
-    ' PASO 4.1: Validacion previa de sintaxis
-    WScript.Echo "Validando sintaxis de todos los modulos..."
+    Dim objFolder, objFile
+    Dim strModuleName, importedCount, moduleType
     Set objFolder = objFSO.GetFolder(strSourcePath)
-    totalFiles = 0
-    validFiles = 0
-    invalidFiles = 0
+    importedCount = 0
     
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            strModuleName = objFSO.GetBaseName(objFile.Name)
+            
+            If gVerbose Then
+                WScript.Echo "  Importando: " & strModuleName
+            End If
+            
+            ' Usar la rutina unificada ImportVbaFile
+            Call ImportVbaFile(objFile.Path, strModuleName)
+            
+            ' Contar como importado si no hubo error (ImportVbaFile maneja sus propios errores)
+            If Err.Number = 0 Then
+                importedCount = importedCount + 1
+            End If
+        End If
+    Next
+    
+    ' Verificar si hubo errores de importación
+    Dim totalFiles: totalFiles = 0
     For Each objFile In objFolder.Files
         If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
             totalFiles = totalFiles + 1
-            validationResult = ValidateVBASyntax(objFile.Path, errorDetails)
-            
-            If validationResult = True Then
-                validFiles = validFiles + 1
-                WScript.Echo "  ✓ " & objFile.Name & " - Sintaxis valida"
-            Else
-                invalidFiles = invalidFiles + 1
-                WScript.Echo "  ✗ ERROR en " & objFile.Name & ": " & errorDetails
-            End If
         End If
     Next
     
-    If invalidFiles > 0 Then
-        WScript.Echo "ABORTANDO: Se encontraron " & invalidFiles & " archivos con errores de sintaxis."
-        WScript.Echo "Use 'cscript condor_cli.vbs validate --verbose' para más detalles."
-        objAccess.Quit
+    If importedCount < totalFiles Then
+        WScript.Echo "=== RECONSTRUCCION COMPLETADA CON ERRORES ==="
+        WScript.Echo "Modulos importados: " & importedCount & " de " & totalFiles
+        WScript.Echo "Algunos módulos no se pudieron importar. Revise los errores anteriores."
         WScript.Quit 1
+    Else
+        WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
+        WScript.Echo "Modulos importados: " & importedCount
+        WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
+        
+        ' Verificación opcional de módulos
+        Call VerifyModulesIfRequested()
     End If
-    
-    WScript.Echo "✓ Validacion completada: " & validFiles & " archivos validos"
-    
-    ' PASO 4.2: Procesar archivos de modulos
-    Set objFolder = objFSO.GetFolder(strSourcePath)
-    
-    For Each objFile In objFolder.Files
-        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
-            strFileName = objFile.Path
-            strModuleName = objFSO.GetBaseName(objFile.Name)
-            
-            WScript.Echo "Procesando modulo: " & strModuleName
-            
-            ' Determinar tipo de archivo
-            Dim fileExtension
-            fileExtension = LCase(objFSO.GetExtensionName(objFile.Name))
-            
-            ' Limpiar archivo antes de importar (eliminar metadatos Attribute)
-            Dim cleanedContent
-            cleanedContent = CleanVBAFile(strFileName, fileExtension)
-            
-            ' Importar usando contenido limpio
-            WScript.Echo "  Clase " & strModuleName & " importada correctamente"
-            Call ImportModuleWithAnsiEncoding(strFileName, strModuleName, fileExtension, Nothing, cleanedContent)
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "Error al importar modulo " & strModuleName & ": " & Err.Description
-                Err.Clear
-            End If
-        End If
-    Next
-    
-    ' PASO 4.3: Guardar cada modulo individualmente
-    WScript.Echo "Guardando modulos individualmente..."
-    On Error Resume Next
-    
-    For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
-        If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
-            WScript.Echo "Guardando modulo: " & vbComponent.Name
-            objAccess.DoCmd.Save 5, vbComponent.Name  ' acModule = 5
-            If Err.Number <> 0 Then
-                WScript.Echo "Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
-                Err.Clear
-            End If
-        ElseIf vbComponent.Type = 2 Then  ' vbext_ct_ClassModule
-            WScript.Echo "Guardando clase: " & vbComponent.Name
-            objAccess.DoCmd.Save 7, vbComponent.Name  ' acClassModule = 7
-            If Err.Number <> 0 Then
-                WScript.Echo "Advertencia al guardar " & vbComponent.Name & ": " & Err.Description
-                Err.Clear
-            End If
-        End If
-    Next
-    
-    ' PASO 4.4: Verificacion de integridad y compilacion
-    WScript.Echo "Verificando integridad de nombres de modulos..."
-    Call VerifyModuleNames()
-    
-    WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
-    WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
-    WScript.Echo "Todos los modulos han sido reimportados desde /src"
     
     On Error GoTo 0
 End Sub
 
+' Subrutina para actualizar módulos específicos del proyecto
+Sub UpdateProject()
+    ' VERSIÓN TRANSACCIONAL - Asume objAccess ya abierto por OpenAccessApp
+    ' No abre ni cierra Access; trabaja en la misma sesión
+    
+    WScript.Echo "=== ACTUALIZACION DE MODULOS VBA ==="
+    
+    ' Verificar que objAccess esté disponible
+    If objAccess Is Nothing Then
+        WScript.Echo "Error: Access no está abierto. UpdateProject requiere una sesión activa."
+        WScript.Quit 1
+    End If
+    
+    ' Obtener argumentos específicos del comando update
+    Dim updateTarget, i, foundTarget
+    updateTarget = ""
+    foundTarget = False
+    
+    ' Buscar el argumento después de "update"
+    For i = 0 To objArgs.Count - 1
+        If LCase(objArgs(i)) = "update" And i < objArgs.Count - 1 Then
+            updateTarget = objArgs(i + 1)
+            ' Verificar que no sea una flag
+            If Left(updateTarget, 2) <> "--" And Left(updateTarget, 1) <> "/" Then
+                foundTarget = True
+                Exit For
+            End If
+        End If
+    Next
+    
+    If Not foundTarget Then
+        WScript.Echo "Error: Debe especificar un target para update"
+        WScript.Echo "Uso: cscript condor_cli.vbs update <NombreModulo|--changed|--all> [--verbose] [--bypassstartup]"
+        WScript.Quit 1
+    End If
+    
+    If Not objFSO.FolderExists(strSourcePath) Then
+        WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
+        WScript.Quit 1
+    End If
+    
+    On Error Resume Next
+    
+    If updateTarget = "--all" Then
+        ' Importar todos los módulos (sync suave sin eliminar)
+        WScript.Echo "Actualizando todos los modulos desde /src..."
+        Call UpdateAllModulesTransactional()
+    ElseIf updateTarget = "--changed" Then
+        ' Importar solo los módulos cambiados por comparación
+        WScript.Echo "Actualizando solo modulos cambiados..."
+        Call UpdateChangedModulesTransactional()
+    Else
+        ' Importar módulo específico
+        WScript.Echo "Actualizando modulo especifico: " & updateTarget
+        Call UpdateSingleModuleTransactional(updateTarget)
+    End If
+    
+    WScript.Echo "=== ACTUALIZACION COMPLETADA EXITOSAMENTE ==="
+    
+    ' Verificación opcional de módulos
+    Call VerifyModulesIfRequested()
+    
+    On Error GoTo 0
+End Sub
 
+' Actualizar todos los módulos
+Sub UpdateAllModules()
+    Dim objFolder, objFile, strModuleName, importedCount
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    importedCount = 0
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            strModuleName = objFSO.GetBaseName(objFile.Name)
+            
+            If gVerbose Then
+                WScript.Echo "Importando: " & strModuleName
+            End If
+            
+            Call ImportVbaFile(objFile.Path, strModuleName)
+            
+            If Err.Number = 0 Then
+                importedCount = importedCount + 1
+            End If
+        End If
+    Next
+    
+    ' Verificar si hubo errores de importación
+    Dim totalFiles: totalFiles = 0
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            totalFiles = totalFiles + 1
+        End If
+    Next
+    
+    If importedCount < totalFiles Then
+        WScript.Echo "Modulos actualizados: " & importedCount & " de " & totalFiles & " (CON ERRORES)"
+        WScript.Quit 1
+    Else
+        WScript.Echo "Modulos actualizados: " & importedCount
+    End If
+End Sub
+
+' Actualizar solo módulos cambiados (comparación por hash MD5)
+Sub UpdateChangedModules()
+    Dim objFolder, objFile, strModuleName, importedCount
+    Dim cacheDir, tempExportDir, needsComparison
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    importedCount = 0
+    
+    ' Verificar si existe .cache/export
+    cacheDir = objFSO.BuildPath(objFSO.GetParentFolderName(strDatabasePath), ".cache")
+    tempExportDir = objFSO.BuildPath(cacheDir, "export")
+    needsComparison = False
+    
+    If Not objFSO.FolderExists(tempExportDir) Then
+        WScript.Echo "Cache de exportación no encontrado. Creando exportación temporal para comparación..."
+        
+        ' Crear directorio temporal en %TEMP%
+        tempExportDir = objFSO.BuildPath(objFSO.GetSpecialFolder(2), "condor_temp_export_" & Timer)
+        If Not objFSO.FolderExists(tempExportDir) Then
+            objFSO.CreateFolder tempExportDir
+        End If
+        
+        ' Exportar módulos actuales a directorio temporal
+        Call ExportModulesToDirectory(tempExportDir)
+        needsComparison = True
+    End If
+    
+    WScript.Echo "Comparando archivos por hash MD5..."
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            strModuleName = objFSO.GetBaseName(objFile.Name)
+            
+            ' Comparar hash del archivo fuente con el exportado
+            Dim sourceHash, exportedHash, exportedFile
+            exportedFile = objFSO.BuildPath(tempExportDir, objFile.Name)
+            
+            sourceHash = GetFileHash(objFile.Path)
+            
+            If objFSO.FileExists(exportedFile) Then
+                exportedHash = GetFileHash(exportedFile)
+            Else
+                exportedHash = "" ' Archivo no existe, forzar importación
+            End If
+            
+            ' Solo importar si los hashes son diferentes
+            If sourceHash <> exportedHash Then
+                If gVerbose Then
+                    WScript.Echo "Importando: " & strModuleName & " (cambio detectado por hash)"
+                End If
+                
+                Call ImportVbaFile(objFile.Path, strModuleName)
+                
+                If Err.Number = 0 Then
+                    importedCount = importedCount + 1
+                End If
+            Else
+                If gVerbose Then
+                    WScript.Echo "  - " & strModuleName & " sin cambios (hash idéntico)"
+                End If
+            End If
+        End If
+    Next
+    
+    ' Limpiar directorio temporal si se creó
+    If needsComparison And objFSO.FolderExists(tempExportDir) Then
+        objFSO.DeleteFolder tempExportDir, True
+        If gVerbose Then
+            WScript.Echo "Directorio temporal eliminado: " & tempExportDir
+        End If
+    End If
+    
+    ' No verificamos totalFiles aquí porque UpdateChangedModules solo actualiza módulos que cambiaron
+    ' El éxito se mide por si importedCount >= módulos que necesitaban actualización
+    WScript.Echo "Modulos actualizados: " & importedCount
+End Sub
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: GetFileHash
+' Descripción: Calcula hash MD5 simple de un archivo (basado en tamaño y fecha)
+' Parámetros: filePath - Ruta del archivo
+' Retorna: Hash como cadena
+' ============================================================================
+Private Function GetFileHash(filePath)
+    Dim objFile, hashStr
+    
+    If Not objFSO.FileExists(filePath) Then
+        GetFileHash = ""
+        Exit Function
+    End If
+    
+    Set objFile = objFSO.GetFile(filePath)
+    
+    ' Hash simple basado en tamaño y fecha de modificación
+    hashStr = CStr(objFile.Size) & "|" & CStr(objFile.DateLastModified)
+    
+    ' Convertir a un hash más compacto usando suma de caracteres
+    Dim i, charSum
+    charSum = 0
+    For i = 1 To Len(hashStr)
+        charSum = charSum + Asc(Mid(hashStr, i, 1))
+    Next
+    
+    GetFileHash = CStr(charSum) & "|" & CStr(objFile.Size)
+End Function
+
+' ============================================================================
+' SUBRUTINA AUXILIAR: ExportModulesToDirectory
+' Descripción: Exporta todos los módulos VBA a un directorio específico
+' Parámetros: targetDir - Directorio destino
+' ============================================================================
+Private Sub ExportModulesToDirectory(targetDir)
+    Dim objAccess, objModule, i
+    
+    ' Abrir Access para exportar módulos
+    Set objAccess = OpenAccessApp()
+    
+    If objAccess Is Nothing Then
+        WScript.Echo "Error: No se pudo abrir Access para exportar módulos"
+        Exit Sub
+    End If
+    
+    On Error Resume Next
+    
+    ' Exportar módulos estándar (.bas)
+    For i = 0 To objAccess.CurrentProject.AllModules.Count - 1
+        Set objModule = objAccess.CurrentProject.AllModules(i)
+        
+        Dim exportPath
+        exportPath = objFSO.BuildPath(targetDir, objModule.Name & ".bas")
+        
+        Call ExportModuleToUtf8(objAccess, objModule.Name, exportPath)
+        
+        If Err.Number <> 0 Then
+            If gVerbose Then
+                WScript.Echo "Advertencia: No se pudo exportar módulo " & objModule.Name & ": " & Err.Description
+            End If
+            Err.Clear
+        End If
+    Next
+    
+    ' Exportar módulos de clase (.cls)
+    For i = 0 To objAccess.CurrentProject.AllModules.Count - 1
+        Set objModule = objAccess.CurrentProject.AllModules(i)
+        
+        ' Verificar si es un módulo de clase
+        If objAccess.Modules(objModule.Name).Type = 1 Then ' acClassModule = 1
+            exportPath = objFSO.BuildPath(targetDir, objModule.Name & ".cls")
+            
+            Call ExportModuleToUtf8(objAccess, objModule.Name, exportPath)
+            
+            If Err.Number <> 0 Then
+                If gVerbose Then
+                    WScript.Echo "Advertencia: No se pudo exportar módulo de clase " & objModule.Name & ": " & Err.Description
+                End If
+                Err.Clear
+            End If
+        End If
+    Next
+    
+    On Error GoTo 0
+    
+    ' Cerrar Access
+    Call CloseAccessApp(objAccess)
+    
+    If gVerbose Then
+        WScript.Echo "Módulos exportados a: " & targetDir
+    End If
+End Sub
+
+' Actualizar un módulo específico
+Sub UpdateSingleModule(moduleName)
+    Dim srcFile, srcPath
+    
+    ' Buscar el archivo .bas o .cls correspondiente
+    srcPath = strSourcePath & "\" & moduleName & ".bas"
+    If Not objFSO.FileExists(srcPath) Then
+        srcPath = strSourcePath & "\" & moduleName & ".cls"
+        If Not objFSO.FileExists(srcPath) Then
+            WScript.Echo "Error: No se encontró el archivo " & moduleName & ".bas o " & moduleName & ".cls en /src"
+            WScript.Quit 1
+        End If
+    End If
+    
+    If gVerbose Then
+        WScript.Echo "Importando: " & moduleName & " desde " & srcPath
+    End If
+    
+    Call ImportVbaFile(srcPath, moduleName)
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al importar " & moduleName & ": " & Err.Description
+        WScript.Quit 1
+    End If
+End Sub
 
 ' Subrutina para verificar y cerrar procesos de Access existentes
 Sub CloseExistingAccessProcesses()
@@ -2468,9 +2685,9 @@ Sub ImportSingleModuleOptimized(moduleName)
     
     WScript.Echo "  ✓ Contenido limpiado"
     
-    ' Paso 4: Importar el módulo usando DoCmd.LoadFromText (sin confirmaciones)
+    ' Paso 4: Importar el módulo usando la rutina unificada ImportVbaFile
     WScript.Echo "  Importando módulo: " & moduleName
-    Call ImportModuleWithLoadFromText(strSourceFile, moduleName, fileExtension)
+    Call ImportVbaFile(strSourceFile, moduleName)
     
     If Err.Number <> 0 Then
         WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
@@ -2725,6 +2942,14 @@ Function GetFunctionalityFiles(strFunctionality)
                            "modSolicitudServiceFactory.bas", "modWordManagerFactory.bas", _
                            "modWorkflowServiceFactory.bas")
         
+        Case "forms", "formularios", "ui"
+            ' Funcionalidad de Formularios - UI as Code
+            arrFiles = Array("condor_cli.vbs")
+            
+        Case "cli", "infrastructure", "infraestructura"
+            ' Funcionalidad CLI e Infraestructura
+            arrFiles = Array("condor_cli.vbs")
+            
         Case "tests", "pruebas", "testing", "test"
             ' Sección 12 - Archivos de Pruebas (Autodescubrimiento)
             arrFiles = Array()
@@ -3167,12 +3392,12 @@ End Function
 
 ' ===================================================================
 ' SUBRUTINA: ExportForm
-' Descripción: Exporta el diseño de un formulario a JSON enriquecido con JsonWriter.
+' Descripción: Exporta el diseño de un formulario a JSON enriquecido con JsonWriter usando APIs oficiales de Microsoft Access.
 ' ===================================================================
 Sub ExportForm()
     Dim strDbPath, strFormName, strOutputPath, strPassword
     Dim strSchemaVersion, strExpand, strResourceRoot, strSrcDir
-    Dim bPretty, bNoControls, bStrict
+    Dim bPretty, bNoControls, bStrict, bypassStartup
     Dim i
     
     ' Verificar argumentos mínimos
@@ -3194,29 +3419,54 @@ Sub ExportForm()
     bPretty = False
     bNoControls = False
     bStrict = False
+    bypassStartup = False
     
     ' Procesar argumentos opcionales
     For i = 3 To objArgs.Count - 1
-        If LCase(objArgs(i)) = "--output" And i < objArgs.Count - 1 Then
+        Dim currentArg
+        currentArg = objArgs(i)
+        
+        If LCase(currentArg) = "--output" And i < objArgs.Count - 1 Then
             strOutputPath = objArgs(i + 1)
-        ElseIf LCase(objArgs(i)) = "--password" And i < objArgs.Count - 1 Then
+        ElseIf LCase(currentArg) = "--password" And i < objArgs.Count - 1 Then
             strPassword = objArgs(i + 1)
-        ElseIf LCase(objArgs(i)) = "--schema-version" And i < objArgs.Count - 1 Then
+        ElseIf LCase(currentArg) = "--schema-version" And i < objArgs.Count - 1 Then
             strSchemaVersion = objArgs(i + 1)
-        ElseIf LCase(Left(objArgs(i), 9)) = "--expand=" Then
-            strExpand = Mid(objArgs(i), 10)
-        ElseIf LCase(objArgs(i)) = "--resource-root" And i < objArgs.Count - 1 Then
+        ElseIf LCase(Left(currentArg, 9)) = "--expand=" Then
+            strExpand = Mid(currentArg, 10)
+        ElseIf LCase(currentArg) = "--resource-root" And i < objArgs.Count - 1 Then
             strResourceRoot = objArgs(i + 1)
-        ElseIf LCase(objArgs(i)) = "--pretty" Then
+        ElseIf LCase(currentArg) = "--pretty" Then
             bPretty = True
-        ElseIf LCase(objArgs(i)) = "--no-controls" Then
+        ElseIf LCase(currentArg) = "--no-controls" Then
             bNoControls = True
-        ElseIf LCase(objArgs(i)) = "--verbose" Then
+        ElseIf LCase(currentArg) = "--verbose" Then
             gVerbose = True
-        ElseIf LCase(objArgs(i)) = "--src" And i < objArgs.Count - 1 Then
+        ElseIf LCase(currentArg) = "--src" And i < objArgs.Count - 1 Then
             strSrcDir = objArgs(i + 1)
-        ElseIf LCase(objArgs(i)) = "--strict" Then
+        ElseIf LCase(currentArg) = "--strict" Then
             bStrict = True
+        Else
+            ' Verificar banderas con formato /bandera:valor
+            If Left(currentArg, 4) = "/pwd" Then
+                If Mid(currentArg, 5, 1) = ":" Then
+                    strPassword = Mid(currentArg, 6)
+                Else
+                    WScript.Echo "Error: Formato incorrecto para /pwd. Use /pwd:<clave>"
+                    WScript.Quit 1
+                End If
+            ElseIf Left(currentArg, 15) = "/bypassstartup:" Then
+                Dim bypassValue
+                bypassValue = LCase(Mid(currentArg, 16))
+                If bypassValue = "on" Then
+                    bypassStartup = True
+                ElseIf bypassValue = "off" Then
+                    bypassStartup = False
+                Else
+                    WScript.Echo "Error: Valor inválido para /bypassStartup. Use 'on' o 'off'"
+                    WScript.Quit 1
+                End If
+            End If
         End If
     Next
     
@@ -3247,29 +3497,15 @@ Sub ExportForm()
     
     If gVerbose Then WScript.Echo "Abriendo base de datos: " & strDbPath
     
-    ' Crear instancia de Access
-    Set objAccess = CreateObject("Access.Application")
-    objAccess.Visible = False
+    ' Abrir Access con bypass startup si está habilitado
+    Set objAccess = OpenAccessApp(strDbPath, strPassword, bypassStartup)
     
-    ' Abrir base de datos
-    On Error Resume Next
-    If strPassword = "" Then
-        objAccess.OpenCurrentDatabase strDbPath
-    Else
-        objAccess.OpenCurrentDatabase strDbPath, , strPassword
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al abrir la base de datos: " & Err.Description
-        objAccess.Quit
-        WScript.Quit 1
-    End If
-    
-    ' Abrir formulario en modo diseño con manejo de errores para código de inicio
+    ' Verificar que el formulario esté abierto en vista Diseño antes de exportar
     If gVerbose Then WScript.Echo "Intentando abrir el formulario '" & strFormName & "' en modo diseño..."
     On Error Resume Next
     
-    objAccess.DoCmd.OpenForm strFormName, 3 ' acDesign
+    ' Usar DoCmd.OpenForm con acDesign para abrir en vista Diseño
+    objAccess.DoCmd.OpenForm strFormName, 0 ' acDesign = 0
     
     If Err.Number <> 0 Then
         WScript.Echo "--------------------------------------------------------------------"
@@ -3278,7 +3514,7 @@ Sub ExportForm()
         WScript.Echo "ACCION: Este es un problema conocido en la base de datos de destino y no se puede solucionar desde el CLI. Exporte un formulario diferente o revise el código del formulario de destino."
         WScript.Echo "Detalle del error VBA (" & Err.Number & "): " & Err.Description
         WScript.Echo "--------------------------------------------------------------------"
-        objAccess.Quit
+        CloseAccessApp objAccess
         WScript.Quit 1
     End If
     
@@ -3589,6 +3825,24 @@ Sub ExportForm()
                                  End If
                              End If
                              If control.Transparent <> False Then jsonWriter.AddProperty "transparent", control.Transparent
+                         ElseIf controlType = "SubForm" Then
+                             ' Subformulario: solo referencia, no JSON incrustado
+                             If control.SourceObject <> "" Then jsonWriter.AddProperty "sourceObject", control.SourceObject
+                             If control.LinkMasterFields <> "" Then jsonWriter.AddProperty "linkMasterFields", control.LinkMasterFields
+                             If control.LinkChildFields <> "" Then jsonWriter.AddProperty "linkChildFields", control.LinkChildFields
+                         ElseIf controlType = "TabControl" Then
+                             ' TabControl: serializar páginas mínimas
+                             jsonWriter.StartArrayProperty "pages"
+                             Dim pageIndex, pageCount
+                             pageCount = control.Pages.Count
+                             For pageIndex = 0 To pageCount - 1
+                                 jsonWriter.StartObject
+                                 jsonWriter.AddProperty "name", control.Pages(pageIndex).Name
+                                 jsonWriter.AddProperty "caption", control.Pages(pageIndex).Caption
+                                 jsonWriter.AddProperty "pageIndex", pageIndex
+                                 jsonWriter.EndObject
+                             Next
+                             jsonWriter.EndArray
                          End If
                          
                          ' Propiedades de color (si expand incluye formatting)
@@ -3668,6 +3922,36 @@ Sub ExportForm()
     Dim detectedHandlers
     Set detectedHandlers = DetectModuleAndHandlers(jsonWriter, strFormName, strSrcDir, gVerbose)
     
+    ' Dependencies: extraer nombres de subformularios referenciados
+    jsonWriter.StartArrayProperty "dependencies"
+    Dim dependencyNames
+    Set dependencyNames = CreateObject("Scripting.Dictionary")
+    
+    ' Recorrer todas las secciones para encontrar subformularios
+    Dim sectionIdx, currentSec, ctrl
+    For sectionIdx = 0 To 2
+        On Error Resume Next
+        Set currentSec = frm.Section(sectionIdx)
+        If Err.Number = 0 And Not currentSec Is Nothing Then
+            For Each ctrl In currentSec.Controls
+                If TypeName(ctrl) = "SubForm" And ctrl.SourceObject <> "" Then
+                    ' Extraer solo el nombre del formulario (sin "Form." prefix)
+                    Dim depName
+                    depName = ctrl.SourceObject
+                    If Left(depName, 5) = "Form." Then depName = Mid(depName, 6)
+                    If Not dependencyNames.Exists(depName) Then
+                        dependencyNames.Add depName, True
+                        jsonWriter.WriteValue depName
+                    End If
+                End If
+            Next
+        End If
+        Err.Clear
+        On Error GoTo 0
+    Next
+    
+    jsonWriter.EndArray ' dependencies
+    
     jsonWriter.EndObject ' root object
     
     If gVerbose Then WScript.Echo "Estructura de datos del formulario extraída correctamente."
@@ -3694,7 +3978,7 @@ Sub ExportForm()
     End If
     
     ' Lógica de limpieza
-    objAccess.DoCmd.Close
+    CloseAccessApp objAccess
 End Sub
 
 ' Detecta módulo y handlers de eventos para el formulario
@@ -3997,21 +4281,12 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     
     If gVerbose Then WScript.Echo "Exportando " & formName & " desde " & dbPath & " a " & outputPath
     
-    ' Crear instancia de Access
+    ' Crear instancia de Access usando función unificada
     Dim objAccessLocal
-    Set objAccessLocal = CreateObject("Access.Application")
-    objAccessLocal.Visible = False
+    Set objAccessLocal = OpenAccessApp(dbPath, password, True)
     
-    On Error Resume Next
-    If password = "" Then
-        objAccessLocal.OpenCurrentDatabase dbPath
-    Else
-        objAccessLocal.OpenCurrentDatabase dbPath, , password
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al abrir la base de datos para export: " & Err.Description
-        objAccessLocal.Quit
+    If objAccessLocal Is Nothing Then
+        WScript.Echo "Error al abrir la base de datos para export"
         Exit Sub
     End If
     
@@ -4019,7 +4294,7 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     
     If Err.Number <> 0 Then
         WScript.Echo "Error al abrir formulario para export: " & Err.Description
-        objAccessLocal.Quit
+        CloseAccessApp objAccessLocal
         Exit Sub
     End If
     
@@ -4046,7 +4321,7 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     objFileLocal.Close
     
     objAccessLocal.DoCmd.Close
-    objAccessLocal.Quit
+    CloseAccessApp objAccessLocal
 End Sub
 
 ' ===================================================================
@@ -4072,21 +4347,12 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
         formName = "FormularioImportado"
     End If
     
-    ' Crear instancia de Access
+    ' Crear instancia de Access usando función unificada
     Dim objAccessLocal
-    Set objAccessLocal = CreateObject("Access.Application")
-    objAccessLocal.Visible = False
+    Set objAccessLocal = OpenAccessApp(dbPath, password, True)
     
-    On Error Resume Next
-    If password = "" Then
-        objAccessLocal.OpenCurrentDatabase dbPath
-    Else
-        objAccessLocal.OpenCurrentDatabase dbPath, , password
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al abrir la base de datos para import: " & Err.Description
-        objAccessLocal.Quit
+    If objAccessLocal Is Nothing Then
+        WScript.Echo "Error al abrir la base de datos para import"
         Exit Sub
     End If
     
@@ -4094,7 +4360,7 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
     objAccessLocal.DoCmd.NewForm
     objAccessLocal.DoCmd.Save , formName
     
-    objAccessLocal.Quit
+    CloseAccessApp objAccessLocal
     On Error GoTo 0
 End Sub
 
@@ -4303,23 +4569,55 @@ Private Function MapEnumValue(enumType, stringValue)
                 Case "single", "singleform": MapEnumValue = 0
                 Case "continuous", "continuousforms": MapEnumValue = 1
                 Case "datasheet": MapEnumValue = 2
-                Case Else: MapEnumValue = 0
+                Case Else: 
+                    LogWarn "Valor desconocido para DefaultView: '" & stringValue & "', usando Single (0)"
+                    MapEnumValue = 0
             End Select
         Case "cycle"
             Select Case LCase(stringValue)
                 Case "allrecords": MapEnumValue = 0
                 Case "currentrecord": MapEnumValue = 1
                 Case "currentpage": MapEnumValue = 2
-                Case Else: MapEnumValue = 0
+                Case Else: 
+                    LogWarn "Valor desconocido para Cycle: '" & stringValue & "', usando AllRecords (0)"
+                    MapEnumValue = 0
             End Select
         Case "recordsourcetype"
             Select Case LCase(stringValue)
                 Case "table": MapEnumValue = 0
                 Case "dynaset": MapEnumValue = 1
                 Case "snapshot": MapEnumValue = 2
-                Case Else: MapEnumValue = 0
+                Case Else: 
+                    LogWarn "Valor desconocido para RecordSourceType: '" & stringValue & "', usando Table (0)"
+                    MapEnumValue = 0
+            End Select
+        Case "borderstyle"
+            Select Case LCase(stringValue)
+                Case "transparent": MapEnumValue = 0
+                Case "solid": MapEnumValue = 1
+                Case "dashes": MapEnumValue = 2
+                Case "short dashes": MapEnumValue = 3
+                Case "dots": MapEnumValue = 4
+                Case "sparse dots": MapEnumValue = 5
+                Case "dash dot": MapEnumValue = 6
+                Case "dash dot dot": MapEnumValue = 7
+                Case Else: 
+                    LogWarn "Valor desconocido para BorderStyle: '" & stringValue & "', usando Solid (1)"
+                    MapEnumValue = 1
+            End Select
+        Case "scrollbars"
+            Select Case LCase(stringValue)
+                Case "none": MapEnumValue = 0
+                Case "horizontal": MapEnumValue = 1
+                Case "vertical": MapEnumValue = 2
+                Case "both": MapEnumValue = 3
+                Case Else: 
+                    LogWarn "Valor desconocido para ScrollBars: '" & stringValue & "', usando None (0)"
+                    MapEnumValue = 0
             End Select
         Case Else
+            ' Para tipos de enum no reconocidos, devolver el valor original
+            LogWarn "Tipo de enumeración desconocido: '" & enumType & "', devolviendo valor original"
             MapEnumValue = stringValue
     End Select
 End Function
@@ -4331,23 +4629,22 @@ End Function
 Sub ImportForm()
     ' Verificar argumentos mínimos
     If objArgs.Count < 3 Then
-        WScript.Echo "Error: Se requieren al menos 2 argumentos: <json_path> <db_path>"
-        WScript.Echo "Sintaxis: cscript condor_cli.vbs import-form <json_path> <db_path> [opciones]"
+        WScript.Echo "Error: Se requieren al menos 2 argumentos: <json_path_or_folder> <db_path>"
+        WScript.Echo "Sintaxis: cscript condor_cli.vbs import-form <json_path_or_folder> <db_path> [opciones]"
         WScript.Echo "Opciones:"
         WScript.Echo "  --dry-run              Solo validar, no crear formulario"
         WScript.Echo "  --strict               Modo estricto: fallar en coherencias"
         WScript.Echo "  --password <pwd>       Contraseña de base de datos"
+        WScript.Echo "  --bypassstartup on|off Bypass startup forms"
         WScript.Quit 1
     End If
     
     ' Declarar variables
     Dim strJsonPath, strDbPath, strPassword
-    Dim bDryRun, bStrict
-    Dim jsonString, formData, formName
-    Dim frm, tmpName, i, j
-    Dim controls, ctrl, ctlDest
-    Dim sections, detailSection, formProps, ctlProps
-    Dim warnings
+    Dim bDryRun, bStrict, bypassStartup
+    Dim objJsonData, formName
+    Dim objAccess, frm
+    Dim warnings, i
     
     ' Inicializar variables
     strJsonPath = objArgs(1)
@@ -4355,12 +4652,20 @@ Sub ImportForm()
     strPassword = ""
     bDryRun = False
     bStrict = False
+    bypassStartup = False
     
     Set warnings = CreateObject("Scripting.Dictionary")
     
+    ' Detectar si es carpeta o archivo individual
+    Dim isFolder
+    isFolder = objFSO.FolderExists(strJsonPath)
+    
     ' Procesar argumentos opcionales
     For i = 3 To objArgs.Count - 1
-        Select Case LCase(objArgs(i))
+        Dim currentArg
+        currentArg = objArgs(i)
+        
+        Select Case LCase(currentArg)
             Case "--dry-run"
                 bDryRun = True
             Case "--strict"
@@ -4372,6 +4677,27 @@ Sub ImportForm()
                 Else
                     WScript.Echo "Error: --password requiere una contraseña"
                     WScript.Quit 1
+                End If
+            Case Else
+                ' Verificar banderas con formato /bandera:valor
+                If Left(currentArg, 4) = "/pwd" Then
+                    If Mid(currentArg, 5, 1) = ":" Then
+                        strPassword = Mid(currentArg, 6)
+                    Else
+                        WScript.Echo "Error: Formato incorrecto para /pwd. Use /pwd:<clave>"
+                        WScript.Quit 1
+                    End If
+                ElseIf Left(currentArg, 15) = "/bypassstartup:" Then
+                    Dim bypassValue
+                    bypassValue = LCase(Mid(currentArg, 16))
+                    If bypassValue = "on" Then
+                        bypassStartup = True
+                    ElseIf bypassValue = "off" Then
+                        bypassStartup = False
+                    Else
+                        WScript.Echo "Error: Valor inválido para /bypassStartup. Use 'on' o 'off'"
+                        WScript.Quit 1
+                    End If
                 End If
         End Select
     Next
@@ -4390,9 +4716,14 @@ Sub ImportForm()
         End If
     End If
     
-    ' Verificar que los archivos existen
-    If Not objFSO.FileExists(strJsonPath) Then
+    ' Verificar que la ruta existe
+    If Not isFolder And Not objFSO.FileExists(strJsonPath) Then
         WScript.Echo "Error: El archivo JSON no existe: " & strJsonPath
+        WScript.Quit 1
+    End If
+    
+    If isFolder And Not objFSO.FolderExists(strJsonPath) Then
+        WScript.Echo "Error: La carpeta no existe: " & strJsonPath
         WScript.Quit 1
     End If
     
@@ -4401,8 +4732,25 @@ Sub ImportForm()
         WScript.Quit 1
     End If
     
+    If isFolder Then
+        ' Importar múltiples formularios con resolución de dependencias
+        ImportFormsFromFolder strJsonPath, strDbPath, strPassword, bypassStartup, bDryRun, bStrict
+    Else
+        ' Importar un solo formulario (lógica original)
+        ImportSingleForm strJsonPath, strDbPath, strPassword, bypassStartup, bDryRun, bStrict
+    End If
+End Sub
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: ImportSingleForm
+' Descripción: Importa un solo formulario desde un archivo JSON
+' ============================================================================
+Private Sub ImportSingleForm(strJsonPath, strDbPath, strPassword, bypassStartup, bDryRun, bStrict)
+    Dim objJsonData, formName, objAccess, frm, warnings
+    Set warnings = CreateObject("Scripting.Dictionary")
+    
     ' Leer y parsear el archivo JSON
-    Dim strJsonContent, objJsonData
+    Dim strJsonContent
     strJsonContent = ReadTextFile(strJsonPath)
     
     On Error Resume Next
@@ -4419,8 +4767,8 @@ Sub ImportForm()
         WScript.Quit 1
     End If
     
-    If Not objJsonData.Exists("controls") Then
-        WScript.Echo "Error: El JSON debe contener 'controls'"
+    If Not objJsonData.Exists("controls") And Not objJsonData.Exists("sections") Then
+        WScript.Echo "Error: El JSON debe contener 'controls' o 'sections'"
         WScript.Quit 1
     End If
     
@@ -4442,57 +4790,329 @@ Sub ImportForm()
         End If
         
         WScript.Echo "Validación completada exitosamente."
-        WScript.Quit 0
+        Exit Sub
     End If
     
-    ' Crear instancia de Access oculta si no existe
-    On Error Resume Next
-    Set objAccess = CreateObject("Access.Application")
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al crear instancia de Access: " & Err.Description
-        WScript.Quit 1
-    End If
-    On Error GoTo 0
+    ' Abrir Access con bypass startup si está habilitado
+    Set objAccess = OpenAccessApp(strDbPath, strPassword, bypassStartup)
     
     ' Configurar Access
-    objAccess.Visible = False
     objAccess.UserControl = False
-    
-    ' Abrir la base de datos
-    On Error Resume Next
-    If strPassword <> "" Then
-        objAccess.OpenCurrentDatabase strDbPath, , strPassword
-    Else
-        objAccess.OpenCurrentDatabase strDbPath
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al abrir la base de datos: " & Err.Description
-        WScript.Echo "Ruta: " & strDbPath
-        WScript.Quit 1
-    End If
-    On Error GoTo 0
     
     WScript.Echo "Base de datos abierta: " & objAccess.CurrentProject.Name
     
-    ' Eliminar formulario existente si existe
-    On Error Resume Next
-    objAccess.DoCmd.DeleteObject 1, formName  ' acForm
-    On Error GoTo 0
-    
-    ' Crear nuevo formulario
-    On Error Resume Next
-    Set frm = objAccess.CreateForm()
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al crear el formulario: " & Err.Description
+    ' Crear o reemplazar formulario usando función auxiliar
+    Set frm = CreateOrReplaceForm(objAccess, formName)
+    If frm Is Nothing Then
+        CloseAccessApp objAccess
         WScript.Quit 1
+    End If
+    
+    ' Aplicar propiedades del formulario usando función auxiliar
+    ApplyFormProperties frm, objJsonData, bStrict
+    
+    ' Añadir controles usando función auxiliar
+    AddControlsFromJson objAccess, frm, objJsonData
+    
+    ' Guardar y cerrar formulario
+    On Error Resume Next
+    objAccess.DoCmd.Save 1, frm.Name  ' acForm
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al guardar el formulario: " & Err.Description
+        CloseAccessApp objAccess
+        WScript.Quit 1
+    End If
+    
+    ' Cerrar el formulario
+    objAccess.DoCmd.Close 1, frm.Name, 1  ' acForm, formName, acSaveYes
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al cerrar el formulario: " & Err.Description
     End If
     On Error GoTo 0
     
-    ' Guardar el nombre temporal del formulario
-    tmpName = frm.Name
+    WScript.Echo "Formulario '" & formName & "' creado exitosamente."
     
+    ' Cerrar Access
+    CloseAccessApp objAccess
+End Sub
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: ImportFormsFromFolder
+' Descripción: Importa múltiples formularios desde una carpeta con resolución de dependencias
+' ============================================================================
+Private Sub ImportFormsFromFolder(strFolderPath, strDbPath, strPassword, bypassStartup, bDryRun, bStrict)
+    Dim objFolder, objFile, jsonFiles, formData, dependencyGraph, sortedForms
+    Dim objAccess, i, formName, jsonPath
+    
+    Set jsonFiles = CreateObject("Scripting.Dictionary")
+    Set formData = CreateObject("Scripting.Dictionary")
+    Set dependencyGraph = CreateObject("Scripting.Dictionary")
+    
+    ' Recopilar todos los archivos JSON de la carpeta
+    Set objFolder = objFSO.GetFolder(strFolderPath)
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "json" Then
+            Dim strJsonContent, objJsonData
+            strJsonContent = ReadTextFile(objFile.Path)
+            
+            On Error Resume Next
+            Set objJsonData = ParseJson(strJsonContent)
+            If Err.Number = 0 And objJsonData.Exists("formName") Then
+                formName = objJsonData("formName")
+                jsonFiles.Add formName, objFile.Path
+                formData.Add formName, objJsonData
+                
+                ' Extraer dependencias
+                Dim dependencies
+                Set dependencies = CreateObject("Scripting.Dictionary")
+                If objJsonData.Exists("dependencies") Then
+                    Dim depArray, j
+                    depArray = objJsonData("dependencies")
+                    If IsArray(depArray) Then
+                        For j = 0 To UBound(depArray)
+                            dependencies.Add depArray(j), True
+                        Next
+                    End If
+                End If
+                dependencyGraph.Add formName, dependencies
+                
+                WScript.Echo "Encontrado formulario: " & formName & " (" & dependencies.Count & " dependencias)"
+            End If
+            Err.Clear
+            On Error GoTo 0
+        End If
+    Next
+    
+    If jsonFiles.Count = 0 Then
+        WScript.Echo "Error: No se encontraron archivos JSON válidos en la carpeta: " & strFolderPath
+        WScript.Quit 1
+    End If
+    
+    ' Realizar ordenamiento topológico
+    Set sortedForms = TopologicalSort(dependencyGraph, bStrict)
+    If sortedForms Is Nothing Then
+        WScript.Echo "Error: Dependencias circulares detectadas o formularios faltantes"
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "Orden de importación determinado: " & Join(sortedForms, ", ")
+    
+    If bDryRun Then
+        WScript.Echo "=== MODO DRY-RUN: VALIDACIÓN COMPLETADA ==="
+        WScript.Echo "Se importarían " & UBound(sortedForms) + 1 & " formularios en el orden mostrado."
+        Exit Sub
+    End If
+    
+    ' Abrir Access una sola vez
+    Set objAccess = OpenAccessApp(strDbPath, strPassword, bypassStartup)
+    objAccess.UserControl = False
+    WScript.Echo "Base de datos abierta: " & objAccess.CurrentProject.Name
+    
+    ' Importar formularios en orden topológico
+    For i = 0 To UBound(sortedForms)
+        formName = sortedForms(i)
+        jsonPath = jsonFiles(formName)
+        
+        WScript.Echo "Importando formulario " & (i + 1) & "/" & (UBound(sortedForms) + 1) & ": " & formName
+        
+        ' Importar formulario individual
+        ImportFormFromData objAccess, formName, formData(formName), bStrict
+    Next
+    
+    WScript.Echo "Todos los formularios importados exitosamente."
+    
+    ' Cerrar Access
+    CloseAccessApp objAccess
+End Sub
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: TopologicalSort
+' Descripción: Ordena formularios por dependencias usando algoritmo de Kahn
+' ============================================================================
+Private Function TopologicalSort(dependencyGraph, bStrict)
+    Dim result, inDegree, queue, visited
+    Dim formName, dependencies, depName
+    
+    Set result = CreateObject("Scripting.Dictionary")
+    Set inDegree = CreateObject("Scripting.Dictionary")
+    Set queue = CreateObject("Scripting.Dictionary")
+    Set visited = CreateObject("Scripting.Dictionary")
+    
+    ' Inicializar grados de entrada
+    For Each formName In dependencyGraph.Keys
+        inDegree.Add formName, 0
+    Next
+    
+    ' Calcular grados de entrada
+    For Each formName In dependencyGraph.Keys
+        Set dependencies = dependencyGraph(formName)
+        For Each depName In dependencies.Keys
+            If dependencyGraph.Exists(depName) Then
+                inDegree(depName) = inDegree(depName) + 1
+            ElseIf bStrict Then
+                WScript.Echo "Error: Dependencia faltante: " & depName & " requerida por " & formName
+                Set TopologicalSort = Nothing
+                Exit Function
+            Else
+                WScript.Echo "WARNING: Dependencia faltante: " & depName & " requerida por " & formName
+            End If
+        Next
+    Next
+    
+    ' Encontrar nodos sin dependencias
+    For Each formName In inDegree.Keys
+        If inDegree(formName) = 0 Then
+            queue.Add formName, True
+        End If
+    Next
+    
+    ' Procesar cola
+    Dim sortedArray()
+    Dim count
+    count = 0
+    
+    Do While queue.Count > 0
+        ' Tomar primer elemento de la cola
+        Dim currentForm
+        currentForm = ""
+        For Each formName In queue.Keys
+            currentForm = formName
+            Exit For
+        Next
+        queue.Remove currentForm
+        
+        ' Añadir al resultado
+        ReDim Preserve sortedArray(count)
+        sortedArray(count) = currentForm
+        count = count + 1
+        
+        ' Reducir grado de entrada de dependientes
+        Set dependencies = dependencyGraph(currentForm)
+        For Each depName In dependencies.Keys
+            If dependencyGraph.Exists(depName) Then
+                inDegree(depName) = inDegree(depName) - 1
+                If inDegree(depName) = 0 Then
+                    queue.Add depName, True
+                End If
+            End If
+        Next
+    Loop
+    
+    ' Verificar si hay ciclos
+    If count <> dependencyGraph.Count Then
+        WScript.Echo "Error: Dependencias circulares detectadas"
+        Set TopologicalSort = Nothing
+        Exit Function
+    End If
+    
+    TopologicalSort = sortedArray
+End Function
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: ImportFormFromData
+' Descripción: Importa un formulario desde datos JSON ya parseados
+' ============================================================================
+Private Sub ImportFormFromData(objAccess, formName, objJsonData, bStrict)
+    Dim frm
+    
+    ' Crear o reemplazar formulario
+    Set frm = CreateOrReplaceForm(objAccess, formName)
+    If frm Is Nothing Then
+        WScript.Echo "Error: No se pudo crear el formulario " & formName
+        Exit Sub
+    End If
+    
+    ' Aplicar propiedades del formulario
+    ApplyFormProperties frm, objJsonData, bStrict
+    
+    ' Añadir controles (incluyendo subformularios y TabControls)
+    AddControlsFromJson objAccess, frm, objJsonData
+    
+    ' Guardar y cerrar formulario
+    On Error Resume Next
+    objAccess.DoCmd.Save 1, frm.Name  ' acForm
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al guardar el formulario " & formName & ": " & Err.Description
+        Exit Sub
+    End If
+    
+    ' Cerrar el formulario
+    objAccess.DoCmd.Close 1, frm.Name, 1  ' acForm, formName, acSaveYes
+    If Err.Number <> 0 Then
+        WScript.Echo "WARNING: Error al cerrar el formulario " & formName & ": " & Err.Description
+    End If
+    On Error GoTo 0
+    
+    WScript.Echo "Formulario '" & formName & "' importado exitosamente."
+End Sub
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: CreateOrReplaceForm
+' Descripción: Crea un nuevo formulario o reemplaza uno existente
+' Parámetros: objAccess - Instancia de Access, formName - Nombre del formulario
+' Retorna: Objeto Form creado o Nothing si hay error
+' ============================================================================
+Private Function CreateOrReplaceForm(objAccess, formName)
+    Dim frm, tmpName
+    
+    ' Eliminar formulario existente si existe usando DoCmd.DeleteObject
+    On Error Resume Next
+    objAccess.DoCmd.DeleteObject 2, formName  ' acForm = 2
+    If Err.Number <> 0 Then
+        ' El formulario no existía, continuar
+        Err.Clear
+    End If
+    On Error GoTo 0
+    
+    ' Crear nuevo formulario usando Application.CreateForm
+    On Error Resume Next
+    Set frm = objAccess.Application.CreateForm()
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al crear el formulario: " & Err.Description
+        Set CreateOrReplaceForm = Nothing
+        Exit Function
+    End If
+    On Error GoTo 0
+    
+    ' Abrir formulario en vista Diseño usando DoCmd.OpenForm
+    On Error Resume Next
+    objAccess.DoCmd.OpenForm frm.Name, 0 ' acDesign = 0
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al abrir formulario en modo diseño: " & Err.Description
+        Set CreateOrReplaceForm = Nothing
+        Exit Function
+    End If
+    On Error GoTo 0
+    
+    ' Guardar nombre temporal y renombrar si es necesario
+    tmpName = frm.Name
     WScript.Echo "Formulario creado con nombre temporal: " & tmpName
+    
+    ' Renombrar si el nombre generado difiere del deseado
+    If tmpName <> formName Then
+        On Error Resume Next
+        objAccess.DoCmd.Rename formName, 1, tmpName  ' acForm
+        If Err.Number <> 0 Then
+            WScript.Echo "Error al renombrar formulario: " & Err.Description
+            Set CreateOrReplaceForm = Nothing
+            Exit Function
+        Else
+            WScript.Echo "Formulario renombrado de " & tmpName & " a " & formName
+            frm.Name = formName
+        End If
+        On Error GoTo 0
+    End If
+    
+    Set CreateOrReplaceForm = frm
+End Function
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: ApplyFormProperties
+' Descripción: Aplica las propiedades del formulario desde el JSON
+' Parámetros: frm - Objeto Form, objJsonData - Datos JSON, bStrict - Modo estricto
+' ============================================================================
+Private Sub ApplyFormProperties(frm, objJsonData, bStrict)
+    Dim formProps
     
     ' Asignar propiedades del formulario desde JSON
     If objJsonData.Exists("properties") Then
@@ -4545,122 +5165,345 @@ Sub ImportForm()
             End If
         End If
     End If
+End Sub
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: AddControlsFromJson
+' Descripción: Añade controles al formulario desde el JSON
+' Parámetros: objAccess - Instancia de Access, frm - Objeto Form, objJsonData - Datos JSON
+' ============================================================================
+Private Sub AddControlsFromJson(objAccess, frm, objJsonData)
+    Dim sections, detailSection, headerSection, footerSection, controls, control, i
     
-    ' Añadir controles del JSON
-    If objJsonData.Exists("controls") Then
+    ' Añadir controles del JSON usando Application.CreateControl
+    If objJsonData.Exists("sections") Then
+        Set sections = objJsonData("sections")
+        
+        ' Procesar sección detail si existe
+        If sections.Exists("detail") Then
+            Set detailSection = sections("detail")
+            If detailSection.Exists("controls") Then
+                Set controls = detailSection("controls")
+                
+                For i = 0 To controls.Count - 1
+                    Set control = controls(i)
+                    AddControlFromJson objAccess, frm.Name, control, 0 ' acDetail
+                Next
+            End If
+        End If
+        
+        ' Procesar sección header si existe
+        If sections.Exists("header") Then
+            Set headerSection = sections("header")
+            If headerSection.Exists("controls") Then
+                Set controls = headerSection("controls")
+                
+                For i = 0 To controls.Count - 1
+                    Set control = controls(i)
+                    AddControlFromJson objAccess, frm.Name, control, 1 ' acHeader
+                Next
+            End If
+        End If
+        
+        ' Procesar sección footer si existe
+        If sections.Exists("footer") Then
+            Set footerSection = sections("footer")
+            If footerSection.Exists("controls") Then
+                Set controls = footerSection("controls")
+                
+                For i = 0 To controls.Count - 1
+                    Set control = controls(i)
+                    AddControlFromJson objAccess, frm.Name, control, 2 ' acFooter
+                Next
+            End If
+        End If
+    ElseIf objJsonData.Exists("controls") Then
+        ' Mantener compatibilidad con formato anterior
         Set controls = objJsonData("controls")
         
         For i = 0 To controls.Count - 1
             Set control = controls(i)
-            
-            ' Determinar tipo de control
-            Dim section
-            controlType = GetAccessControlType(control("type"))
-            section = 0  ' acDetail por defecto
-            
-            ' Crear control
-            On Error Resume Next
-            Dim newControl
-            Set newControl = objAccess.CreateControl(tmpName, controlType, section, , , _
-                CLng(control("left")), CLng(control("top")), _
-                CLng(control("width")), CLng(control("height")))
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "Error creando control " & control("name") & ": " & Err.Description
-            Else
-                ' Asignar propiedades del control
-                If control.Exists("name") Then newControl.Name = control("name")
-                If control.Exists("caption") Then newControl.Caption = control("caption")
-                If control.Exists("controlSource") Then newControl.ControlSource = control("controlSource")
-                
-                ' Eventos: si hay handler detectado o es "[Event Procedure]", asignar
-                If control.Exists("onClick") Then
-                    If control("onClick") = "[Event Procedure]" Then
-                        newControl.OnClick = "[Event Procedure]"
-                    End If
-                End If
-                
-                WScript.Echo "Control creado: " & control("name")
-            End If
-            On Error GoTo 0
+            AddControlFromJson objAccess, frm.Name, control, 0 ' acDetail por defecto
         Next
-        End If
+    End If
+End Sub
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: AddControlFromJson
+' Descripción: Añade un control individual al formulario
+' Parámetros: objAccess - Instancia de Access, formName - Nombre del formulario, controlJson - Datos del control
+' ============================================================================
+Private Sub AddControlFromJson(objAccess, formName, controlJson, sectionType)
+    Dim newControl, controlType, parentControl, columnName
+    Dim leftPos, topPos, widthSize, heightSize
     
-    ' Guardar el formulario
+    ' Obtener propiedades de posición y tamaño con valores por defecto en twips
+    leftPos = 0
+    topPos = 0
+    widthSize = 1440 ' Valor por defecto en twips (1 pulgada)
+    heightSize = 300  ' Valor por defecto en twips
+    
+    If controlJson.Exists("left") Then 
+        leftPos = CLng(controlJson("left"))
+    Else
+        LogWarn "Control " & controlJson("name") & ": coordenada 'left' no especificada, usando 0"
+    End If
+    
+    If controlJson.Exists("top") Then 
+        topPos = CLng(controlJson("top"))
+    Else
+        LogWarn "Control " & controlJson("name") & ": coordenada 'top' no especificada, usando 0"
+    End If
+    
+    If controlJson.Exists("width") Then 
+        widthSize = CLng(controlJson("width"))
+    Else
+        LogWarn "Control " & controlJson("name") & ": ancho 'width' no especificado, usando 1440 twips (1 pulgada)"
+    End If
+    
+    If controlJson.Exists("height") Then 
+        heightSize = CLng(controlJson("height"))
+    Else
+        LogWarn "Control " & controlJson("name") & ": altura 'height' no especificada, usando 300 twips"
+    End If
+    
+    ' Validar sección (0=acDetail, 1=acHeader, 2=acFooter)
+    If sectionType < 0 Or sectionType > 2 Then
+        LogWarn "Sección inválida " & sectionType & " para control " & controlJson("name") & ", usando acDetail (0)"
+        sectionType = 0
+    End If
+    
+    parentControl = ""
+    columnName = ""
+    
+    ' Determinar tipo de control usando mapeo centralizado
+    controlType = MapControlType(controlJson("type"))
+    
+    If controlType = -1 Then
+        LogWarn "Tipo de control desconocido: " & controlJson("type") & " para control " & controlJson("name")
+        Exit Sub
+    End If
+    
+    ' Crear control con Application.CreateControl
     On Error Resume Next
-    objAccess.DoCmd.Save 1, tmpName  ' acForm
+    Set newControl = objAccess.Application.CreateControl(formName, controlType, sectionType, parentControl, columnName, leftPos, topPos, widthSize, heightSize)
+    
     If Err.Number <> 0 Then
-        WScript.Echo "Error al guardar el formulario: " & Err.Description
-        WScript.Quit 1
+        WScript.Echo "Error creando control " & controlJson("name") & ": " & Err.Description
+        Err.Clear
+        Exit Sub
     End If
     On Error GoTo 0
     
-    ' Renombrar si el nombre generado difiere del deseado
-    If tmpName <> formName Then
-        On Error Resume Next
-        objAccess.DoCmd.Rename formName, 1, tmpName  ' acForm
-        If Err.Number <> 0 Then
-            WScript.Echo "Error al renombrar formulario: " & Err.Description
-            WScript.Quit 1
+    ' Asignar propiedades adicionales del control después de crearlo
+    If controlJson.Exists("name") Then newControl.Name = controlJson("name")
+    
+    ' Aplicar propiedades adicionales si existen
+    If controlJson.Exists("properties") Then
+        Dim properties, prop, propValue
+        Set properties = controlJson("properties")
+        
+        For Each prop In properties.Keys
+            propValue = properties(prop)
+            
+            On Error Resume Next
+            newControl.Properties(prop) = propValue
+            If Err.Number <> 0 Then
+                If gStrict Then
+                    WScript.Echo "Error aplicando propiedad " & prop & " al control " & controlJson("name") & ": " & Err.Description
+                    WScript.Quit 1
+                Else
+                    LogWarn "Propiedad " & prop & " no aplicable al control " & controlJson("name") & " (tipo: " & controlJson("type") & ")"
+                End If
+                Err.Clear
+            End If
+            On Error GoTo 0
+        Next
+    End If
+    
+    ' Propiedades específicas por tipo (compatibilidad con formato anterior)
+    If LCase(controlJson("type")) = "textbox" Then
+        If controlJson.Exists("controlSource") Then 
+            On Error Resume Next
+            newControl.ControlSource = controlJson("controlSource")
+            If Err.Number <> 0 Then
+                LogWarn "No se pudo asignar ControlSource al control " & controlJson("name")
+                Err.Clear
+            End If
+            On Error GoTo 0
+        End If
+    ElseIf LCase(controlJson("type")) = "label" Then
+        If controlJson.Exists("caption") Then 
+            On Error Resume Next
+            newControl.Caption = controlJson("caption")
+            If Err.Number <> 0 Then
+                LogWarn "No se pudo asignar Caption al control " & controlJson("name")
+                Err.Clear
+            End If
+            On Error GoTo 0
+        End If
+    ElseIf LCase(controlJson("type")) = "commandbutton" Then
+        If controlJson.Exists("caption") Then 
+            On Error Resume Next
+            newControl.Caption = controlJson("caption")
+            If Err.Number <> 0 Then
+                LogWarn "No se pudo asignar Caption al control " & controlJson("name")
+                Err.Clear
+            End If
+            On Error GoTo 0
+        End If
+    ElseIf LCase(controlJson("type")) = "subform" Then
+        ' Propiedades específicas de Subform
+        If controlJson.Exists("sourceObject") Then 
+            On Error Resume Next
+            newControl.SourceObject = controlJson("sourceObject")
+            If Err.Number <> 0 Then
+                If gStrict Then
+                    WScript.Echo "ERROR: No se pudo asignar SourceObject al subformulario " & controlJson("name") & ": " & Err.Description
+                    WScript.Quit 1
+                Else
+                    LogWarn "No se pudo asignar SourceObject al subformulario " & controlJson("name") & ". Subformulario creado sin referencia."
+                End If
+                Err.Clear
+            End If
+            On Error GoTo 0
         Else
-            WScript.Echo "Formulario renombrado de " & tmpName & " a " & formName
+            If gStrict Then
+                WScript.Echo "ERROR: Subformulario " & controlJson("name") & " no tiene sourceObject definido"
+                WScript.Quit 1
+            Else
+                LogWarn "Subformulario " & controlJson("name") & " creado sin sourceObject"
+            End If
+        End If
+        
+        If controlJson.Exists("linkMasterFields") Then 
+            On Error Resume Next
+            newControl.LinkMasterFields = controlJson("linkMasterFields")
+            If Err.Number <> 0 Then
+                LogWarn "No se pudo asignar LinkMasterFields al subformulario " & controlJson("name")
+                Err.Clear
+            End If
+            On Error GoTo 0
+        End If
+        
+        If controlJson.Exists("linkChildFields") Then 
+            On Error Resume Next
+            newControl.LinkChildFields = controlJson("linkChildFields")
+            If Err.Number <> 0 Then
+                LogWarn "No se pudo asignar LinkChildFields al subformulario " & controlJson("name")
+                Err.Clear
+            End If
+            On Error GoTo 0
+        End If
+    ElseIf LCase(controlJson("type")) = "tabcontrol" Then
+        ' Propiedades específicas de TabControl
+        If controlJson.Exists("pages") Then
+            Dim pages, page, j
+            Set pages = controlJson("pages")
+            
+            ' Intentar crear páginas del TabControl
+            For j = 0 To pages.Count - 1
+                Set page = pages(j)
+                
+                On Error Resume Next
+                ' Intentar crear página usando CreateControl
+                Dim newPage
+                Set newPage = objAccess.Application.CreateControl(formName, 124, sectionType, newControl.Name) ' acPage
+                
+                If Err.Number <> 0 Then
+                    LogWarn "WARNING: No se pudo crear página " & page("name") & " del TabControl " & controlJson("name") & ". Su versión de Access podría no soportar creación de páginas por API."
+                    Err.Clear
+                    Exit For
+                Else
+                    ' Asignar propiedades de la página
+                    If page.Exists("name") Then newPage.Name = page("name")
+                    If page.Exists("caption") Then newPage.Caption = page("caption")
+                    If page.Exists("pageIndex") Then newPage.PageIndex = page("pageIndex")
+                End If
+                On Error GoTo 0
+            Next
+        End If
+    End If
+    
+    ' Aplicar eventos si existen (solo como metadatos, no generar handlers)
+    If controlJson.Exists("events") Then
+        Dim events
+        Set events = controlJson("events")
+        
+        For Each prop In events.Keys
+            propValue = events(prop)
+            
+            On Error Resume Next
+            newControl.Properties(prop) = propValue
+            If Err.Number <> 0 Then
+                LogWarn "Evento " & prop & " no aplicable al control " & controlJson("name")
+                Err.Clear
+            End If
+            On Error GoTo 0
+        Next
+    End If
+    
+    ' Eventos del control (compatibilidad con formato anterior)
+    If controlJson.Exists("onClick") Then
+        On Error Resume Next
+        newControl.OnClick = controlJson("onClick")
+        If Err.Number <> 0 Then
+            LogWarn "No se pudo asignar evento OnClick al control " & controlJson("name")
+            Err.Clear
         End If
         On Error GoTo 0
     End If
     
-    ' Cerrar el formulario
-    On Error Resume Next
-    objAccess.DoCmd.Close 1, formName, 1  ' acForm, formName, acSaveYes
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al cerrar el formulario: " & Err.Description
-    End If
-    On Error GoTo 0
-    
-    WScript.Echo "Formulario '" & formName & "' creado exitosamente."
-
-    ' Guardar y cerrar el formulario
-    On Error Resume Next
-    
-    ' Cerrar y guardar el formulario automáticamente
-    objAccess.DoCmd.Close 1, originalFormName, -1  ' acForm, formName, acSaveYes
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al cerrar y guardar el formulario: " & Err.Description
-        WScript.Quit 1
-    End If
-    
-    WScript.Echo "Formulario guardado con nombre: " & originalFormName
-    
-    ' Actualizar el catálogo de objetos de Access (según documentación Microsoft)
-    Err.Clear
-    objAccess.DoCmd.RefreshDatabaseWindow
-    If Err.Number <> 0 Then
-        WScript.Echo "Advertencia: No se pudo actualizar el catálogo de objetos: " & Err.Description
-        Err.Clear
-    Else
-        WScript.Echo "Catálogo de objetos actualizado"
-    End If
-    
-    ' Si el nombre deseado es diferente al original, renombrar después de cerrar
-    If originalFormName <> formName Then
-        ' Esperar un momento para que Access complete el guardado y la actualización
-        WScript.Sleep 1000
-        
-        ' Intentar renombrar el formulario cerrado
-        objAccess.DoCmd.Rename formName, 1, originalFormName  ' newName, acForm, oldName
-        If Err.Number <> 0 Then
-            WScript.Echo "Error al renombrar formulario: " & Err.Description
-            WScript.Echo "El formulario permanece con el nombre: " & originalFormName
-            formName = originalFormName
-        Else
-            WScript.Echo "Formulario renombrado exitosamente a: " & formName
-        End If
-    End If
-    
-    WScript.Echo "Formulario final: " & formName
-    
-    On Error GoTo 0
-    
+    WScript.Echo "Control creado: " & controlJson("name")
 End Sub
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: MapControlType
+' Descripción: Mapea tipos de control de cadena a constantes de Access
+' Parámetros: controlTypeStr - Tipo de control como cadena
+' Retorna: Constante numérica de Access o -1 si no se reconoce
+' ============================================================================
+Private Function MapControlType(controlTypeStr)
+    Select Case LCase(Trim(controlTypeStr))
+        Case "textbox"
+            MapControlType = 109 ' acTextBox
+        Case "label"
+            MapControlType = 100 ' acLabel
+        Case "commandbutton", "button"
+            MapControlType = 104 ' acCommandButton
+        Case "combobox"
+            MapControlType = 111 ' acComboBox
+        Case "listbox"
+            MapControlType = 110 ' acListBox
+        Case "checkbox"
+            MapControlType = 106 ' acCheckBox
+        Case "optionbutton"
+            MapControlType = 105 ' acOptionButton
+        Case "togglebutton"
+            MapControlType = 122 ' acToggleButton
+        Case "optiongroup"
+            MapControlType = 107 ' acOptionGroup
+        Case "boundframe"
+            MapControlType = 108 ' acBoundObjectFrame
+        Case "unboundframe"
+            MapControlType = 114 ' acObjectFrame
+        Case "subform"
+            MapControlType = 112 ' acSubform
+        Case "line"
+            MapControlType = 102 ' acLine
+        Case "rectangle"
+            MapControlType = 101 ' acRectangle
+        Case "image"
+            MapControlType = 103 ' acImage
+        Case "page"
+            MapControlType = 124 ' acPage
+        Case "tabcontrol"
+            MapControlType = 123 ' acTabCtl
+        Case Else
+            ' Tipo desconocido, retornar -1 para indicar error
+            MapControlType = -1
+    End Select
+End Function
 
 ' ============================================================================
 ' SUBRUTINA: ListForms
@@ -4672,7 +5515,7 @@ End Sub
 '   --json: Salida en formato JSON (opcional, por defecto texto)
 ' ============================================================================
 Sub ListForms()
-    Dim dbPath, password, bJsonOutput
+    Dim dbPath, password, bJsonOutput, bypassStartup
     Dim i, arg
     Dim objAccess, objFSO
     Dim formsList, formCount
@@ -4682,6 +5525,7 @@ Sub ListForms()
     dbPath = "./condor.accdb"
     password = ""
     bJsonOutput = False
+    bypassStartup = False
     
     ' Procesar argumentos
     i = 1
@@ -4709,6 +5553,24 @@ Sub ListForms()
                 WScript.Echo "Error: --password requiere un valor"
                 WScript.Quit 1
             End If
+        ElseIf Left(arg, 4) = "/pwd" Then
+            If Mid(arg, 5, 1) = ":" Then
+                password = Mid(arg, 6)
+            Else
+                WScript.Echo "Error: Formato incorrecto para /pwd. Use /pwd:<clave>"
+                WScript.Quit 1
+            End If
+        ElseIf Left(arg, 15) = "/bypassstartup:" Then
+            Dim bypassValue
+            bypassValue = LCase(Mid(arg, 16))
+            If bypassValue = "on" Then
+                bypassStartup = True
+            ElseIf bypassValue = "off" Then
+                bypassStartup = False
+            Else
+                WScript.Echo "Error: Valor inválido para /bypassStartup. Use 'on' o 'off'"
+                WScript.Quit 1
+            End If
         ElseIf arg = "--json" Then
             bJsonOutput = True
         ElseIf Left(arg, 2) <> "--" Then
@@ -4729,33 +5591,8 @@ Sub ListForms()
         WScript.Quit 1
     End If
     
-    ' Crear instancia de Access
-    On Error Resume Next
-    Set objAccess = CreateObject("Access.Application")
-    If Err.Number <> 0 Then
-        WScript.Echo "Error: No se puede crear instancia de Access: " & Err.Description
-        WScript.Quit 1
-    End If
-    On Error GoTo 0
-    
-    ' Configurar Access en modo silencioso
-    objAccess.Visible = False
-    objAccess.Application.Echo False
-    
-    ' Abrir la base de datos
-    On Error Resume Next
-    If password <> "" Then
-        objAccess.OpenCurrentDatabase dbPath, False, password
-    Else
-        objAccess.OpenCurrentDatabase dbPath, False
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al abrir la base de datos: " & Err.Description
-        objAccess.Quit 2
-        WScript.Quit 1
-    End If
-    On Error GoTo 0
+    ' Abrir Access con bypass startup si está habilitado
+    Set objAccess = OpenAccessApp(dbPath, password, bypassStartup)
     
     ' Enumerar formularios
     Dim formsArray()
@@ -4802,11 +5639,8 @@ Sub ListForms()
         End If
     End If
     
-    ' Cerrar Access
-    On Error Resume Next
-    objAccess.Application.Echo True
-    objAccess.Quit 2
-    On Error GoTo 0
+    ' Cerrar Access y restaurar estado
+    CloseAccessApp objAccess
     
 End Sub
 
@@ -5382,6 +6216,123 @@ Function FileExists(path)
     FileExists = objFSO.FileExists(path)
 End Function
 
+' ============================================================================
+' UTILIDADES DE CODIFICACIÓN Y ARCHIVOS TEMPORALES
+' ============================================================================
+
+' Crea copia temporal ANSI (ACP del SO) de un archivo UTF-8 del repo.
+Function MakeAnsiTempCopy(srcPath)
+    On Error Resume Next
+    Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
+    If Not fso.FileExists(srcPath) Then MakeAnsiTempCopy = "": Exit Function
+    Dim tmpDir: tmpDir = fso.GetSpecialFolder(2) 'Temp
+    Dim tmpPath: tmpPath = fso.BuildPath(tmpDir, fso.GetTempName() & "_" & fso.GetFileName(srcPath))
+    ' Leer UTF-8
+    Dim sIn: Set sIn = CreateObject("ADODB.Stream")
+    sIn.Type = 2: sIn.Charset = "utf-8": sIn.Open: sIn.LoadFromFile srcPath
+    Dim txt: txt = sIn.ReadText: sIn.Close
+    ' Escribir ANSI usando ACP del SO (FSO.CreateTextFile con unicode:=False)
+    Dim t: Set t = fso.CreateTextFile(tmpPath, True, False)
+    t.Write txt: t.Close
+    If Err.Number <> 0 Then MakeAnsiTempCopy = "" Else MakeAnsiTempCopy = tmpPath
+    Err.Clear
+End Function
+
+Sub SafeDeleteFile(p)
+    On Error Resume Next
+    If Len(p)>0 Then CreateObject("Scripting.FileSystemObject").DeleteFile p, True
+    Err.Clear
+End Sub
+
+' Lee un archivo ANSI (ACP) y lo guarda como UTF-8 en dstPath.
+Sub ConvertAnsiFileToUtf8(srcAnsiPath, dstUtf8Path)
+    On Error Resume Next
+    Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
+    ' Leer ANSI con ACP del SO
+    Dim t: Set t = fso.OpenTextFile(srcAnsiPath, 1, False) ' ForReading, ANSI
+    Dim txt: txt = t.ReadAll: t.Close
+    ' Escribir UTF-8 (ADODB.Stream con Charset utf-8)
+    Dim sOut: Set sOut = CreateObject("ADODB.Stream")
+    sOut.Type = 2: sOut.Charset = "utf-8": sOut.Open
+    sOut.WriteText txt
+    sOut.SaveToFile dstUtf8Path, 2
+    sOut.Close
+    Err.Clear
+End Sub
+
+' Usa SaveAsText (ANSI) a un temporal y luego convierte a UTF-8 en destino repo.
+Sub ExportModuleToUtf8(app, moduleName, dstPath)
+    On Error Resume Next
+    Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
+    Dim tmp: tmp = fso.BuildPath(fso.GetSpecialFolder(2), fso.GetTempName() & "_" & moduleName & ".txt")
+    ' acModule = 5
+    app.Application.SaveAsText 5, moduleName, tmp
+    If Err.Number <> 0 Then WScript.Echo "  ❌ SaveAsText(" & moduleName & "): " & Err.Description: Err.Clear: Exit Sub
+    Call ConvertAnsiFileToUtf8(tmp, dstPath)
+    Call SafeDeleteFile(tmp)
+    WScript.Echo "  ✓ Exportado UTF-8: " & moduleName & " → " & dstPath
+End Sub
+
+' Intenta eliminar un componente por nombre usando VBIDE; fallback DoCmd.DeleteObject acModule.
+Sub RemoveModuleIfExists(app, moduleName)
+    On Error Resume Next
+    Dim vbProj, vbComp, i
+    Set vbProj = app.VBE.ActiveVBProject
+    If Not vbProj Is Nothing Then
+        For i = vbProj.VBComponents.Count To 1 Step -1
+            Set vbComp = vbProj.VBComponents(i)
+            If LCase(vbComp.Name) = LCase(moduleName) Then vbProj.VBComponents.Remove vbComp: Exit Sub
+        Next
+    End If
+    ' Fallback (acModule = 5)
+    app.DoCmd.DeleteObject 5, moduleName
+    Err.Clear
+End Sub
+
+' Importa .bas/.cls desde SRC (UTF-8) creando temp ANSI. .bas → LoadFromText; .cls → VBIDE.Import (+rename).
+Sub ImportVbaFile(srcPath, moduleName)
+    On Error Resume Next
+    Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
+    If Not fso.FileExists(srcPath) Then WScript.Echo "  ❌ No existe: " & srcPath: Exit Sub
+    Dim ext: ext = LCase(fso.GetExtensionName(srcPath))
+    If ext <> "bas" And ext <> "cls" Then WScript.Echo "  ❌ Tipo no soportado: " & ext: Exit Sub
+    Dim tmp: tmp = MakeAnsiTempCopy(srcPath)
+    If Len(tmp)=0 Then WScript.Echo "  ❌ No se pudo generar temporal ANSI": Exit Sub
+
+    ' Eliminar si ya existe
+    Call RemoveModuleIfExists(objAccess, moduleName)
+
+    If ext = "bas" Then
+        ' acModule = 5
+        objAccess.Application.LoadFromText 5, moduleName, tmp
+        If Err.Number <> 0 Then
+            WScript.Echo "  ❌ LoadFromText(" & moduleName & "): " & Err.Description
+            Err.Clear
+        Else
+            WScript.Echo "  ✓ Módulo estándar importado: " & moduleName
+        End If
+        Call SafeDeleteFile(tmp): Exit Sub
+    End If
+
+    ' .cls vía VBIDE
+    Dim vbProj, vbComp: Set vbProj = objAccess.VBE.ActiveVBProject
+    If vbProj Is Nothing Then
+        WScript.Echo "  ❌ VBIDE no disponible. Habilite 'Trust access to the VBA project object model'."
+        Call SafeDeleteFile(tmp): Exit Sub
+    End If
+    Set vbComp = vbProj.VBComponents.Import(tmp)
+    If Err.Number <> 0 Or vbComp Is Nothing Then
+        WScript.Echo "  ❌ Import(" & moduleName & "): " & Err.Description: Err.Clear
+    Else
+        If vbComp.Name <> moduleName Then
+            vbComp.Name = moduleName
+            If Err.Number <> 0 Then WScript.Echo "  ⚠️ Renombre a '" & moduleName & "' no aplicado (quedó '" & vbComp.Name & "').": Err.Clear
+        End If
+        WScript.Echo "  ✓ Clase importada: " & moduleName
+    End If
+    Call SafeDeleteFile(tmp)
+End Sub
+
 Function DirExists(path)
     DirExists = objFSO.FolderExists(path)
 End Function
@@ -5832,16 +6783,838 @@ Sub LogErr(message)
 End Sub
 
 ' ============================================================================
-' FUNCIÓN GetFunctionalityFiles ACTUALIZADA
+' ============================================================================
+' FUNCIONES DAO PARA BYPASS STARTUP
 ' ============================================================================
 
-Function GetFunctionalityFiles(functionality)
-    ' Esta función devuelve únicamente condor_cli.vbs para mejoras de infraestructura
-    If functionality = "CLI" Or functionality = "Infrastructure" Then
-        GetFunctionalityFiles = Array("condor_cli.vbs")
+' Función para abrir base de datos con DAO
+Function DaoOpenDatabase(dbPath, password)
+    Dim dbEngine, db
+    
+    On Error Resume Next
+    ' Intentar DAO 12.0 primero (Access 2007+)
+    Set dbEngine = CreateObject("DAO.DBEngine.120")
+    If Err.Number <> 0 Then
+        Err.Clear
+        ' Fallback a DAO 3.6 (Access 2003)
+        Set dbEngine = CreateObject("DAO.DBEngine.36")
+        If Err.Number <> 0 Then
+            WScript.Echo "ERROR: No se pudo crear DAO.DBEngine. Instala Access/Access Database Engine."
+            WScript.Quit 1
+        End If
+    End If
+    
+    ' Abrir base de datos
+    If password <> "" Then
+        Set db = dbEngine.OpenDatabase(dbPath, True, False, "MS Access;PWD=" & password)
+    Else
+        Set db = dbEngine.OpenDatabase(dbPath, True, False)
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "ERROR: No se pudo abrir la base de datos: " & Err.Description
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
+    
+    Set DaoOpenDatabase = db
+End Function
+
+' Función para verificar si una propiedad existe
+Function HasProp(db, propName)
+    Dim prop
+    On Error Resume Next
+    Set prop = db.Properties(propName)
+    If Err.Number = 3270 Then ' Property not found
+        HasProp = False
+        Err.Clear
+    Else
+        HasProp = True
+    End If
+    On Error GoTo 0
+End Function
+
+' Función para obtener AllowByPassKey
+Function GetAllowBypassKey(dbPath, password)
+    Dim db
+    Set db = DaoOpenDatabase(dbPath, password)
+    
+    If HasProp(db, "AllowByPassKey") Then
+        GetAllowBypassKey = CBool(db.Properties("AllowByPassKey"))
+    Else
+        GetAllowBypassKey = Null
+    End If
+    
+    db.Close
+End Function
+
+' Subrutina para establecer AllowByPassKey
+Sub SetAllowBypassKey(dbPath, password, value)
+    Dim db, prop
+    Set db = DaoOpenDatabase(dbPath, password)
+    
+    On Error Resume Next
+    If HasProp(db, "AllowByPassKey") Then
+        db.Properties("AllowByPassKey") = value
+    Else
+        Set prop = db.CreateProperty("AllowByPassKey", 1, value) ' dbBoolean = 1
+        db.Properties.Append prop
+    End If
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "ERROR: No se pudo establecer AllowByPassKey: " & Err.Description
+    End If
+    On Error GoTo 0
+    
+    db.Close
+End Sub
+
+' Lista módulos VBA con opciones de formato y verificación
+Sub ListModules()
+    Dim flagJson, flagExpectSrc, flagDiff, i
+    flagJson = False
+    flagExpectSrc = False
+    flagDiff = False
+    
+    ' Procesar flags
+    For i = 1 To objArgs.Count - 1
+        If objArgs(i) = "--json" Then flagJson = True
+        If objArgs(i) = "--expectSrc" Then flagExpectSrc = True
+        If objArgs(i) = "--diff" Then flagDiff = True
+    Next
+    
+    Dim objAccess: Set objAccess = OpenAccessApp()
+    If objAccess Is Nothing Then
+        WScript.Echo "Error: No se pudo abrir Access"
+        WScript.Quit 1
+    End If
+    
+    Dim vbProject, vbComponent, modules, srcFiles
+    Set vbProject = objAccess.VBE.ActiveVBProject
+    Set modules = CreateObject("Scripting.Dictionary")
+    Set srcFiles = CreateObject("Scripting.Dictionary")
+    
+    ' Recopilar módulos del proyecto
+    For Each vbComponent In vbProject.VBComponents
+        If vbComponent.Type = 1 Or vbComponent.Type = 2 Then
+            Dim ext: ext = IIf(vbComponent.Type = 1, ".bas", ".cls")
+            modules.Add vbComponent.Name, ext
+        End If
+    Next
+    
+    ' Si --expectSrc o --diff, escanear archivos fuente
+    If flagExpectSrc Or flagDiff Then
+        Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
+        If fso.FolderExists(strSourcePath) Then
+            Dim folder: Set folder = fso.GetFolder(strSourcePath)
+            Dim file
+            For Each file In folder.Files
+                If LCase(fso.GetExtensionName(file.Name)) = "bas" Or LCase(fso.GetExtensionName(file.Name)) = "cls" Then
+                    Dim baseName: baseName = fso.GetBaseName(file.Name)
+                    srcFiles.Add baseName, "." & LCase(fso.GetExtensionName(file.Name))
+                End If
+            Next
+        End If
+    End If
+    
+    ' Generar salida
+    If flagJson Then
+        WScript.Echo "{"
+        WScript.Echo "  \"modules\": ["
+        Dim first: first = True
+        Dim key
+        For Each key In modules.Keys
+            If Not first Then WScript.Echo ","
+            WScript.Echo "    {\"name\": \"" & key & "\", \"type\": \"" & modules(key) & "\"}"
+            first = False
+        Next
+        WScript.Echo "  ]"
+        WScript.Echo "}"
+    Else
+        WScript.Echo "Módulos VBA encontrados:"
+        For Each key In modules.Keys
+            Dim status: status = ""
+            If flagExpectSrc Then
+                If srcFiles.Exists(key) Then
+                    status = " [✓ src]"
+                Else
+                    status = " [❌ no src]"
+                End If
+            End If
+            If flagDiff And srcFiles.Exists(key) Then
+                If modules(key) <> srcFiles(key) Then
+                    status = status & " [⚠ ext diff]"
+                End If
+            End If
+            WScript.Echo "  " & key & modules(key) & status
+        Next
+        
+        If flagExpectSrc Then
+            WScript.Echo "Archivos fuente sin módulo:"
+            For Each key In srcFiles.Keys
+                If Not modules.Exists(key) Then
+                    WScript.Echo "  " & key & srcFiles(key) & " [❌ no module]"
+                End If
+            Next
+        End If
+    End If
+    
+    Call CloseAccessApp(objAccess)
+End Sub
+
+' Verifica módulos si se especifica el flag --verifyModules
+Sub VerifyModulesIfRequested()
+    Dim i, hasVerifyFlag
+    hasVerifyFlag = False
+    
+    ' Buscar flag --verifyModules en argumentos
+    For i = 0 To objArgs.Count - 1
+        If objArgs(i) = "--verifyModules" Then
+            hasVerifyFlag = True
+            Exit For
+        End If
+    Next
+    
+    If hasVerifyFlag Then
+        WScript.Echo "\n=== VERIFICACION DE MODULOS ==="
+        WScript.Echo "Ejecutando verificación de consistencia..."
+        
+        ' Simular llamada a list-modules --expectSrc --diff
+        Dim objShell, cmd, result
+        Set objShell = CreateObject("WScript.Shell")
+        cmd = "cscript \"" & WScript.ScriptFullName & "\" list-modules --expectSrc --diff"
+        
+        On Error Resume Next
+        result = objShell.Run(cmd, 0, True)
+        
+        If Err.Number <> 0 Then
+            WScript.Echo "⚠ Advertencia: No se pudo ejecutar verificación automática"
+            WScript.Echo "Ejecute manualmente: cscript condor_cli.vbs list-modules --expectSrc --diff"
+            Err.Clear
+        ElseIf result <> 0 Then
+            WScript.Echo "⚠ La verificación detectó inconsistencias"
+        Else
+            WScript.Echo "✓ Verificación completada sin inconsistencias"
+        End If
+        
+        On Error GoTo 0
+    End If
+End Sub
+
+' Subrutina para eliminar AllowByPassKey
+Sub DeleteAllowBypassKey(dbPath, password)
+    Dim db
+    Set db = DaoOpenDatabase(dbPath, password)
+    
+    On Error Resume Next
+    If HasProp(db, "AllowByPassKey") Then
+        db.Properties.Delete "AllowByPassKey"
+    End If
+    On Error GoTo 0
+    
+    db.Close
+End Sub
+
+' ============================================================================
+' FUNCIONES PARA APERTURA DE ACCESS CON BYPASS
+' ============================================================================
+
+' Función para abrir Access con bypass startup
+Function OpenAccessApp(dbPath, password, bypassStartup)
+    Dim app
+    
+    ' Inicializar variables globales
+    gBypassStartupEnabled = bypassStartup
+    gCurrentDbPath = dbPath
+    gCurrentPassword = password
+    gUsedStrategyB = False
+    
+    If bypassStartup = True Then
+        If gVerbose Then WScript.Echo "[VERBOSE] Intentando bypass con Estrategia A (msaccess.exe /nostartup)"
+        
+        ' ESTRATEGIA A (preferida): msaccess.exe /nostartup
+        Set app = TryStrategyA(dbPath, password)
+        
+        If app Is Nothing Then
+            If gVerbose Then WScript.Echo "[VERBOSE] Estrategia A falló, intentando Estrategia B (DAO)"
+            
+            ' ESTRATEGIA B (fallback): DAO con modificación temporal
+            Set app = TryStrategyB(dbPath, password)
+            gUsedStrategyB = True
+        End If
+    Else
+        ' Sin bypass, apertura normal
+        If gVerbose Then WScript.Echo "[VERBOSE] Apertura normal sin bypass"
+        Set app = CreateAccessApp(dbPath, password)
+    End If
+    
+    If app Is Nothing Then
+        WScript.Echo "ERROR: No se pudo abrir Access con ninguna estrategia"
+        WScript.Quit 1
+    End If
+    
+    ' Configurar Access en modo silencioso
+    On Error Resume Next
+    app.Visible = False
+    app.Application.Echo False
+    On Error GoTo 0
+    
+    Set OpenAccessApp = app
+End Function
+
+' Subrutina para cerrar Access y restaurar estado
+Sub CloseAccessApp(app)
+    On Error Resume Next
+    app.Application.Echo True
+    app.CloseCurrentDatabase
+    app.Quit
+    Set app = Nothing
+    On Error GoTo 0
+    
+    ' Restaurar estado solo si se usó Estrategia B
+    If gBypassStartupEnabled = True And gUsedStrategyB = True Then
+        If gVerbose Then WScript.Echo "[VERBOSE] Restaurando estado después de Estrategia B"
+        
+        ' Restaurar StartupForm
+        If Not IsNull(gPreviousStartupForm) Then
+            SetStartupForm gCurrentDbPath, gCurrentPassword, gPreviousStartupForm
+        Else
+            ClearStartupForm gCurrentDbPath, gCurrentPassword
+        End If
+        
+        ' Restaurar macro AutoExec
+        If gPreviousHasAutoExec Then
+            RenameMacroIfExists gCurrentDbPath, gCurrentPassword, "AutoExec__CONDOR_DISABLED", "AutoExec"
+        End If
+        
+        ' Restaurar AllowByPassKey
+        If IsNull(gPreviousAllowBypassKey) Then
+            DeleteAllowBypassKey gCurrentDbPath, gCurrentPassword
+        Else
+            SetAllowBypassKey gCurrentDbPath, gCurrentPassword, CBool(gPreviousAllowBypassKey)
+        End If
+        
+        If gVerbose Then WScript.Echo "[VERBOSE] Estado restaurado completamente"
+    End If
+    
+    ' Limpiar variables globales
+    gBypassStartupEnabled = False
+    gPreviousAllowBypassKey = Null
+    gCurrentDbPath = ""
+    gCurrentPassword = ""
+    gPreviousStartupForm = Null
+    gPreviousHasAutoExec = False
+    gUsedStrategyB = False
+End Sub
+
+' ============================================================================
+' NUEVAS FUNCIONES AUXILIARES PARA REFACTORIZACIÓN
+' ============================================================================
+
+' Subrutina para resolver todos los flags antes de abrir Access
+Sub ResolveFlags()
+    Dim i, arg, nextArg
+    
+    For i = 1 To objArgs.Count - 1
+        arg = LCase(objArgs(i))
+        
+        If arg = "--verbose" Then
+            gVerbose = True
+            If gVerbose Then WScript.Echo "[VERBOSE] Modo verbose activado"
+            
+        ElseIf arg = "--db" And i < objArgs.Count - 1 Then
+            i = i + 1
+            gDbPath = objArgs(i)
+            
+        ElseIf Left(arg, 4) = "/db:" Then
+            gDbPath = Mid(objArgs(i), 5)
+            
+        ElseIf arg = "--password" And i < objArgs.Count - 1 Then
+            i = i + 1
+            gPassword = objArgs(i)
+            
+        ElseIf Left(arg, 5) = "/pwd:" Then
+            gPassword = Mid(objArgs(i), 6)
+            
+        ElseIf arg = "--bypassstartup" And i < objArgs.Count - 1 Then
+            i = i + 1
+            nextArg = LCase(objArgs(i))
+            If nextArg = "on" Then
+                gBypassStartup = True
+            ElseIf nextArg = "off" Then
+                gBypassStartup = False
+            Else
+                WScript.Echo "Error: Valor inválido para --bypassstartup. Use 'on' o 'off'"
+                WScript.Quit 1
+            End If
+            
+        ElseIf Left(arg, 15) = "/bypassstartup:" Then
+            nextArg = LCase(Mid(objArgs(i), 16))
+            If nextArg = "on" Then
+                gBypassStartup = True
+            ElseIf nextArg = "off" Then
+                gBypassStartup = False
+            Else
+                WScript.Echo "Error: Valor inválido para /bypassStartup. Use 'on' o 'off'"
+                WScript.Quit 1
+            End If
+        End If
+    Next
+End Sub
+
+' Subrutina para resolver la ruta de base de datos
+Sub ResolveDbPath()
+    ' Prioridad: --db > ENV("CONDOR_DEV_DB") > default según acción
+    If gDbPath <> "" Then
+        strAccessPath = ResolveRelativePath(gDbPath)
+    Else
+        Dim envDb
+        envDb = CreateObject("WScript.Shell").Environment("Process")("CONDOR_DEV_DB")
+        If envDb <> "" Then
+            strAccessPath = ResolveRelativePath(envDb)
+        Else
+            ' Default según acción
+            If strAction = "createtable" Or strAction = "droptable" Or strAction = "migrate" Then
+                strAccessPath = strDataPath
+            ElseIf strAction = "listtables" Then
+                ' Buscar argumento de BD en listtables
+                Dim pathArg
+                pathArg = ""
+                For i = 1 To objArgs.Count - 1
+                    If LCase(objArgs(i)) <> "--schema" And LCase(objArgs(i)) <> "--output" Then
+                        pathArg = objArgs(i)
+                        Exit For
+                    End If
+                Next
+                If pathArg <> "" Then
+                    strAccessPath = ResolveRelativePath(pathArg)
+                Else
+                    strAccessPath = strDataPath
+                End If
+            ElseIf strAction = "import-form" Then
+                ' Para import-form, usar BD especificada como segundo argumento
+                If objArgs.Count >= 3 Then
+                    strAccessPath = ResolveRelativePath(objArgs(2))
+                Else
+                    strAccessPath = strDataPath
+                End If
+            ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "update" Then
+                strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
+            Else
+                strAccessPath = strDataPath
+            End If
+        End If
+    End If
+    
+    ' Resolver contraseña si no se especificó
+    If gPassword = "" Then
+        gPassword = GetDatabasePassword(strAccessPath)
+    End If
+End Sub
+
+' Subrutina para determinar bypass startup por defecto según comando
+Sub SetDefaultBypassStartup()
+    ' Solo establecer default si el usuario no especificó explícitamente
+    Dim userSpecified
+    userSpecified = False
+    
+    For i = 1 To objArgs.Count - 1
+        If LCase(objArgs(i)) = "--bypassstartup" Or Left(LCase(objArgs(i)), 15) = "/bypassstartup:" Then
+            userSpecified = True
+            Exit For
+        End If
+    Next
+    
+    If Not userSpecified Then
+         If strAction = "rebuild" Or strAction = "test" Or strAction = "update" Or strAction = "export-form" Or strAction = "import-form" Or strAction = "list-forms" Then
+             gBypassStartup = True  ' ON por defecto
+         Else
+             gBypassStartup = False  ' OFF por defecto
+         End If
+     End If
+ End Sub
+
+' Función para obtener el StartupForm actual
+Function GetStartupForm(dbPath, password)
+    On Error Resume Next
+    Dim db, prop
+    Set db = DaoOpenDatabase(dbPath, password)
+    If Err.Number <> 0 Then
+        GetStartupForm = Null
         Exit Function
     End If
     
-    ' Resto de funcionalidades existentes...
-    ' [Código existente de GetFunctionalityFiles se mantiene igual]
+    For Each prop In db.Properties
+        If prop.Name = "StartupForm" Then
+            GetStartupForm = prop.Value
+            db.Close
+            Set db = Nothing
+            Exit Function
+        End If
+    Next
+    
+    GetStartupForm = Null
+    db.Close
+    Set db = Nothing
 End Function
+
+' Subrutina para limpiar el StartupForm
+Sub ClearStartupForm(dbPath, password)
+    On Error Resume Next
+    Dim db, prop
+    Set db = DaoOpenDatabase(dbPath, password)
+    If Err.Number <> 0 Then Exit Sub
+    
+    For Each prop In db.Properties
+        If prop.Name = "StartupForm" Then
+            db.Properties.Delete "StartupForm"
+            Exit For
+        End If
+    Next
+    
+    db.Close
+     Set db = Nothing
+ End Sub
+
+' ============================================================================
+' FUNCIONES TRANSACCIONALES PARA COMANDO UPDATE
+' ============================================================================
+
+' Actualizar todos los módulos (sync suave)
+Sub UpdateAllModulesTransactional()
+    Dim objFolder, objFile, strModuleName, importedCount, moduleType
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    importedCount = 0
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            strModuleName = objFSO.GetBaseName(objFile.Name)
+            
+            If gVerbose Then
+                WScript.Echo "  Importando: " & strModuleName
+            End If
+            
+            ' Usar la rutina unificada ImportVbaFile
+            Call ImportVbaFile(objFile.Path, strModuleName)
+            
+            ' Contar como importado si no hubo error (ImportVbaFile maneja sus propios errores)
+            If Err.Number = 0 Then
+                importedCount = importedCount + 1
+            End If
+        End If
+    Next
+    
+    WScript.Echo "Modulos actualizados: " & importedCount
+End Sub
+
+' Actualizar módulo específico
+Sub UpdateSingleModuleTransactional(moduleName)
+    Dim sourceFile, moduleType, actualFile
+    
+    ' Buscar archivo .bas o .cls
+    sourceFile = objFSO.BuildPath(strSourcePath, moduleName & ".bas")
+    If objFSO.FileExists(sourceFile) Then
+        moduleType = 5  ' acModule
+        actualFile = sourceFile
+    Else
+        sourceFile = objFSO.BuildPath(strSourcePath, moduleName & ".cls")
+        If objFSO.FileExists(sourceFile) Then
+            moduleType = 9  ' acClassModule
+            actualFile = sourceFile
+        Else
+            WScript.Echo "Error: No se encontró el módulo " & moduleName & " (.bas o .cls) en /src"
+            Exit Sub
+        End If
+    End If
+    
+    If gVerbose Then
+        WScript.Echo "  Importando: " & moduleName & " desde " & actualFile
+    End If
+    
+    ' Usar la rutina unificada ImportVbaFile
+    Call ImportVbaFile(actualFile, moduleName)
+    
+    If Err.Number = 0 Then
+        WScript.Echo "✓ " & moduleName & " actualizado correctamente"
+    End If
+End Sub
+
+' Actualizar solo módulos cambiados (comparación por tamaño+fecha)
+Sub UpdateChangedModulesTransactional()
+    Dim objFolder, objFile, strModuleName, importedCount, moduleType
+    Dim tempExportDir, exportedFile, needsUpdate
+    Set objFolder = objFSO.GetFolder(strSourcePath)
+    importedCount = 0
+    
+    ' Crear directorio temporal para exportación
+    tempExportDir = objFSO.BuildPath(objFSO.GetSpecialFolder(2), "condor_temp_export_" & Timer)
+    If Not objFSO.FolderExists(tempExportDir) Then
+        objFSO.CreateFolder tempExportDir
+    End If
+    
+    WScript.Echo "Exportando módulos actuales para comparación..."
+    Call ExportModulesToDirectoryTransactional(tempExportDir)
+    
+    WScript.Echo "Comparando archivos por tamaño y fecha..."
+    
+    For Each objFile In objFolder.Files
+        If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
+            strModuleName = objFSO.GetBaseName(objFile.Name)
+            exportedFile = objFSO.BuildPath(tempExportDir, objFile.Name)
+            needsUpdate = False
+            
+            ' Determinar si necesita actualización
+            If Not objFSO.FileExists(exportedFile) Then
+                needsUpdate = True  ' Archivo no existe en BD
+            Else
+                ' Comparar tamaño y fecha
+                Dim sourceFileObj, exportedFileObj
+                Set sourceFileObj = objFSO.GetFile(objFile.Path)
+                Set exportedFileObj = objFSO.GetFile(exportedFile)
+                
+                If sourceFileObj.Size <> exportedFileObj.Size Or sourceFileObj.DateLastModified <> exportedFileObj.DateLastModified Then
+                    needsUpdate = True
+                End If
+            End If
+            
+            ' Solo importar si necesita actualización
+            If needsUpdate Then
+                If gVerbose Then
+                    WScript.Echo "  Importando: " & strModuleName & " (cambio detectado)"
+                End If
+                
+                ' Usar la rutina unificada ImportVbaFile
+                Call ImportVbaFile(objFile.Path, strModuleName)
+                
+                ' Contar como importado si no hubo error (ImportVbaFile maneja sus propios errores)
+                If Err.Number = 0 Then
+                    importedCount = importedCount + 1
+                End If
+            Else
+                If gVerbose Then
+                    WScript.Echo "  - " & strModuleName & " (sin cambios)"
+                End If
+            End If
+        End If
+    Next
+    
+    ' Limpiar directorio temporal
+    If objFSO.FolderExists(tempExportDir) Then
+        objFSO.DeleteFolder tempExportDir, True
+    End If
+    
+    WScript.Echo "Modulos actualizados: " & importedCount
+End Sub
+
+' Exportar módulos a directorio (versión transaccional)
+Sub ExportModulesToDirectoryTransactional(exportDir)
+    Dim vbProject, vbComponent
+    Set vbProject = objAccess.VBE.ActiveVBProject
+    
+    For Each vbComponent In vbProject.VBComponents
+        If vbComponent.Type = 1 Or vbComponent.Type = 2 Then ' Módulos estándar y de clase
+            Dim exportPath, moduleType
+            
+            If vbComponent.Type = 1 Then
+                exportPath = objFSO.BuildPath(exportDir, vbComponent.Name & ".bas")
+                moduleType = 5  ' acModule
+            Else
+                exportPath = objFSO.BuildPath(exportDir, vbComponent.Name & ".cls")
+                moduleType = 9  ' acClassModule
+            End If
+            
+            ' Usar ExportModuleToUtf8 para exportar con codificación UTF-8
+            Call ExportModuleToUtf8(objAccess, vbComponent.Name, exportPath)
+            
+            If Err.Number <> 0 Then
+                If gVerbose Then
+                    WScript.Echo "  Advertencia: No se pudo exportar " & vbComponent.Name & ": " & Err.Description
+                End If
+                Err.Clear
+            End If
+        End If
+    Next
+End Sub
+
+' Subrutina para restaurar el StartupForm
+Sub RestoreStartupForm(dbPath, password, startupForm)
+    On Error Resume Next
+    If IsNull(startupForm) Or startupForm = "" Then Exit Sub
+    
+    Dim db, prop
+    Set db = DaoOpenDatabase(dbPath, password)
+    If Err.Number <> 0 Then Exit Sub
+    
+    ' Eliminar propiedad existente si existe
+    For Each prop In db.Properties
+        If prop.Name = "StartupForm" Then
+            db.Properties.Delete "StartupForm"
+            Exit For
+        End If
+    Next
+    
+    ' Crear nueva propiedad
+    Set prop = db.CreateProperty("StartupForm", 10, startupForm)  ' 10 = dbText
+    db.Properties.Append prop
+    
+    db.Close
+    Set db = Nothing
+End Sub
+
+' ============================================================================
+' FUNCIONES DE ESTRATEGIAS PARA BYPASS STARTUP
+' ============================================================================
+
+' Función para crear aplicación Access normal
+Function CreateAccessApp(dbPath, password)
+    On Error Resume Next
+    Dim app
+    Set app = CreateObject("Access.Application")
+    If Err.Number <> 0 Then
+        Set CreateAccessApp = Nothing
+        Exit Function
+    End If
+    
+    ' Configurar Access para acceso programático
+    app.Visible = False
+    app.DisplayAlerts = False
+    app.UserControl = False
+    
+    If password <> "" Then
+        app.OpenCurrentDatabase dbPath, False, password
+    Else
+        app.OpenCurrentDatabase dbPath, False
+    End If
+    
+    If Err.Number <> 0 Then
+        app.Quit
+        Set app = Nothing
+        Set CreateAccessApp = Nothing
+        Exit Function
+    End If
+    
+    ' Verificar acceso al VBE después de abrir la base de datos
+    On Error Resume Next
+    Dim testVBE
+    Set testVBE = app.VBE
+    If Err.Number <> 0 Then
+        WScript.Echo "⚠️ Advertencia: No se puede acceder al VBE. Verifique la configuración de seguridad de macros."
+        Err.Clear
+    End If
+    On Error GoTo 0
+    
+    Set CreateAccessApp = app
+End Function
+
+' Estrategia A: Usar msaccess.exe /nostartup (no implementada aún)
+Function TryStrategyA(dbPath, password)
+    On Error Resume Next
+    Dim sh, cmd, q, exe, rc, t0, app, i
+    Set sh = CreateObject("WScript.Shell")
+    q = Chr(34)
+    exe = "msaccess.exe"
+    cmd = exe & " " & q & dbPath & q & " /nostartup"
+    If password <> "" Then cmd = cmd & " /pwd " & q & password & q
+
+    rc = sh.Run(cmd, 0, False) ' no esperar
+
+    ' Intentar adjuntarnos a la instancia
+    Set app = Nothing
+    For i = 1 To 50 ' ~5s
+        On Error Resume Next
+        Set app = GetObject(, "Access.Application")
+        On Error GoTo 0
+        If Not app Is Nothing Then Exit For
+        WScript.Sleep 100
+    Next
+
+    ' Si no pudimos adjuntar, devolver Nothing
+    If app Is Nothing Then
+        Set TryStrategyA = Nothing
+        Exit Function
+    End If
+
+    ' Silencio UI
+    On Error Resume Next
+    app.Visible = False
+    app.DisplayAlerts = False
+    app.UserControl = False
+    app.Application.Echo False
+    On Error GoTo 0
+
+    ' Si la BD no quedó abierta (depende de asociación), ábrela sin startup otra vez
+    On Error Resume Next
+    If app.CurrentProject Is Nothing Or app.CurrentProject.Name = "" Then
+        If password <> "" Then
+            app.OpenCurrentDatabase dbPath, False, password
+        Else
+            app.OpenCurrentDatabase dbPath, False
+        End If
+    End If
+    On Error GoTo 0
+
+    Set TryStrategyA = app
+End Function
+
+' Estrategia B: DAO con modificación temporal
+Function TryStrategyB(dbPath, password)
+    On Error Resume Next
+    
+    ' Guardar estado actual
+    gPreviousStartupForm = GetStartupForm(dbPath, password)
+    gPreviousHasAutoExec = MacroExists(dbPath, password, "AutoExec")
+    gPreviousAllowBypassKey = GetAllowBypassKey(dbPath, password)
+    
+    ' Deshabilitar startup temporalmente
+    ClearStartupForm dbPath, password
+    RenameMacroIfExists dbPath, password, "AutoExec", "AutoExec__CONDOR_DISABLED"
+    SetAllowBypassKey dbPath, password, True
+    
+    ' Crear aplicación Access
+    Dim app
+    Set app = CreateAccessApp(dbPath, password)
+    
+    Set TryStrategyB = app
+End Function
+
+' Función para verificar si existe una macro
+Function MacroExists(dbPath, password, macroName)
+    On Error Resume Next
+    Dim db, doc
+    Set db = DaoOpenDatabase(dbPath, password)
+    If Err.Number <> 0 Then
+        MacroExists = False
+        Exit Function
+    End If
+    
+    For Each doc In db.Containers("Modules").Documents
+        If doc.Name = macroName Then
+            MacroExists = True
+            db.Close
+            Set db = Nothing
+            Exit Function
+        End If
+    Next
+    
+    MacroExists = False
+    db.Close
+    Set db = Nothing
+End Function
+
+' Subrutina para renombrar macro si existe
+Sub RenameMacroIfExists(dbPath, password, oldName, newName)
+    On Error Resume Next
+    Dim db, doc
+    Set db = DaoOpenDatabase(dbPath, password)
+    If Err.Number <> 0 Then Exit Sub
+    
+    For Each doc In db.Containers("Modules").Documents
+        If doc.Name = oldName Then
+            doc.Name = newName
+            Exit For
+        End If
+    Next
+    
+    db.Close
+    Set db = Nothing
+End Sub

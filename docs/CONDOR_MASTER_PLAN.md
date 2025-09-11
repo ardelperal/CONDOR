@@ -2000,232 +2000,414 @@ Luego se detiene y espera confirmación.
 
 ### 19.1. Herramienta CLI de Desarrollo (condor_cli.vbs)
 
-CONDOR incluye una herramienta de línea de comandos que facilita el desarrollo y mantenimiento del código VBA.
+`condor_cli.vbs` es una herramienta de línea de comandos completa para la gestión del proyecto CONDOR. Proporciona funcionalidades para construcción, testing, migración de base de datos, gestión de formularios, empaquetado de funcionalidades y mucho más.
+
+#### Sintaxis General
+
+```
+cscript condor_cli.vbs <comando> [argumentos] [opciones]
+```
 
 #### Comandos Disponibles
 
-**Actualización Selectiva de Módulos (Recomendado)**
+##### 1. Comandos de Construcción y Testing
 
-```bash
-# Actualizar un solo módulo
-cscript condor_cli.vbs update CAuthService
+**`build`**
+Construye el proyecto CONDOR importando todos los módulos VBA.
 
-# Actualizar múltiples módulos específicos
-cscript condor_cli.vbs update CAuthService,modUtils,CConfig
-
-# Sincronización automática optimizada (solo abre BD si hay cambios)
-cscript condor_cli.vbs update
+**Sintaxis:**
+```
+cscript condor_cli.vbs build [--verbose] [--password <pwd>]
 ```
 
-- Comando optimizando para sincronización discrecional de archivos
-- Optimización de rendimiento: verifica cambios antes de abrir la base de datos
-- Conversión automática UTF-8 a ANSI para soporte completo de caracteres especiales
-- Permite actualizar módulos específicos sin afectar el resto del proyecto
-- Sintaxis: Los nombres de módulos se separan con comas (sin espacios)
+**Opciones:**
+- `--verbose`: Muestra información detallada del proceso
+- `--password <pwd>`: Contraseña de la base de datos
 
-**Exportación de Módulos**
+**Funcionalidad:**
+- Importa todos los archivos `.bas`, `.cls` y `.frm` desde `/src` usando `ImportVbaFile()`
+- Utiliza `Application.LoadFromText` para módulos estándar y `VBIDE.Import` para clases
+- Apertura segura con Strategy A: `/nostartup` y Strategy B: DAO (AllowBypassKey, StartupForm, AutoExec rename)
+- Valida sintaxis antes de importar
+- Reporta errores y estadísticas de importación
 
-```bash
-cscript condor_cli.vbs export
+**`rebuild`**
+Reconstruye completamente el proyecto (limpia e importa todo).
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs rebuild [--verbose] [--password <pwd>]
 ```
 
-- Exporta todos los módulos VBA desde la base de datos Access hacia archivos `.bas` en el directorio `src/`
-- Útil para sincronizar cambios realizados directamente en Access hacia el control de versiones
+**Funcionalidad:**
+- Elimina todos los módulos existentes
+- Importa todos los módulos desde cero usando `ImportVbaFile()` con apertura segura
+- Strategy A: `msaccess.exe /nostartup` para bypass completo de startup
+- Strategy B: DAO con neutralización temporal de StartupForm y AutoExec (restauración automática)
+- Garantiza un estado limpio del proyecto sin interferencias de código de inicio
 
-**Reconstrucción Completa del Proyecto**
+**`test`**
+Ejecuta las pruebas unitarias del proyecto.
 
-```bash
-cscript condor_cli.vbs rebuild
+**Sintaxis:**
+```
+cscript condor_cli.vbs test [patrón] [--verbose] [--password <pwd>]
 ```
 
-- Elimina todos los módulos VBA existentes de la base de datos Access
-- Importa todos los archivos `.bas` del directorio `src/` hacia la base de datos Access
-- Compila automáticamente los módulos después de la importación
-- Garantiza un estado 100% limpio y compilado
-- Usar solo cuando `update` no sea suficiente (problemas de sincronización graves)
+**Parámetros:**
+- `patrón`: Patrón opcional para filtrar tests (ej: "Test*User*")
 
-**Validación de Esquemas de Base de Datos**
+**Funcionalidad:**
+- Ejecuta todos los métodos que empiecen con "Test"
+- Reporta resultados detallados (passed/failed/errors)
+- Soporte para filtrado por patrones
 
-```bash
-cscript condor_cli.vbs validate-schema
+**`clean`**
+Limpia todos los módulos VBA de la base de datos.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs clean [--password <pwd>]
 ```
 
-- Valida que los esquemas de las bases de datos de prueba coincidan con las especificaciones definidas
-- Verifica la existencia de tablas y campos requeridos en:
-  - `Lanzadera_test_template.accdb`
-  - `CONDOR_test_template.accdb`
-- Reporta discrepancias entre el esquema esperado y el actual
-- Esencial para prevenir desincronización entre código y estructura de base de datos
+##### 2. Comandos de Migración de Base de Datos
 
-**Ejecución de Pruebas Automatizadas**
+**`migrate`**
+Ejecuta migraciones SQL desde `/db/migrations`.
 
-```bash
-cscript condor_cli.vbs test
+**Sintaxis:**
+```
+cscript condor_cli.vbs migrate [archivo.sql] [--password <pwd>]
 ```
 
-- Ejecuta el framework completo de testing de CONDOR de forma automatizada
-- **Auto-suficiente e Idempotente**: Resetea automáticamente el entorno a un estado prístino antes de cada ejecución
-- **Aprovisionamiento Automático**: Crea y configura las bases de datos de prueba necesarias
-- **Ejecución Desatendida**: No requiere interacción del usuario, ideal para integración continua
-- **Reporte Detallado**: Genera reportes completos de resultados con estadísticas de éxito/fallo
-- **Validación Completa**: Ejecuta todas las suites de pruebas registradas en el sistema
+**Parámetros:**
+- `archivo.sql`: Archivo específico a migrar (opcional)
 
-**Gestión de Tablas de Base de Datos**
+**Funcionalidad:**
+- Sin parámetros: ejecuta todos los archivos `.sql` en orden alfabético
+- Con archivo: ejecuta solo ese archivo específico
+- Limpia comentarios SQL y líneas vacías
+- Maneja codificación UTF-8 correctamente
 
-```bash
-# Listar todas las tablas de una base de datos
-cscript condor_cli.vbs listtables <db_path> [--schema] [--output]
+##### 3. Comandos de Gestión de Formularios
 
-# Crear tabla desde definición
-cscript condor_cli.vbs createtable <table_definition>
+**`export-form`**
+Exporta el diseño de un formulario a JSON.
 
-# Eliminar tabla
-cscript condor_cli.vbs droptable <table_name>
+**Sintaxis:**
+```
+cscript condor_cli.vbs export-form <form_name> [output_path] [--password <pwd>] [--expand <opciones>]
 ```
 
-- **Listado de Tablas**: Muestra todas las tablas existentes en una base de datos Access
-- **Esquema Detallado**: Con `--schema` incluye información de campos y tipos de datos
-- **Salida Configurable**: Con `--output` permite especificar formato y destino de la salida
-- **Creación de Tablas**: Permite crear nuevas tablas mediante definiciones estructuradas
-- **Eliminación Segura**: Elimina tablas con validaciones de integridad
+**Parámetros:**
+- `form_name`: Nombre del formulario a exportar
+- `output_path`: Ruta de salida (opcional, por defecto `./resources/forms/<form_name>.json`)
 
-**Validación y Mantenimiento**
+**Opciones de --expand:**
+- `events`: Incluye eventos de controles
+- `formatting`: Incluye propiedades de formato detalladas
+- `all`: Incluye todo (events + formatting)
 
-```bash
-# Validar integridad del proyecto
-cscript condor_cli.vbs validate
+**Funcionalidad:**
+- Exporta estructura completa del formulario
+- Incluye propiedades, secciones y controles
+- Detecta módulos asociados y handlers de eventos
+- Convierte colores OLE a formato hexadecimal
+- Genera metadatos de exportación
 
-# Análisis de calidad de código
-cscript condor_cli.vbs lint
+**`import-form`**
+Importa un formulario desde JSON.
 
-# Reenlazar tablas vinculadas
-cscript condor_cli.vbs relink
+**Sintaxis:**
+```
+cscript condor_cli.vbs import-form <json_path> [db_path] [--password <pwd>] [--dry-run] [--strict]
 ```
 
-- **Validación de Integridad**: Verifica la consistencia general del proyecto y sus componentes
-- **Análisis de Código**: Ejecuta verificaciones de calidad y estándares de codificación
-- **Reenlazado de Tablas**: Actualiza las conexiones de tablas vinculadas en bases de datos Access
-- **Mantenimiento Preventivo**: Detecta y reporta problemas potenciales antes de que afecten la producción
+**Parámetros:**
+- `json_path`: Ruta al archivo JSON del formulario
+- `db_path`: Ruta a la base de datos (opcional)
 
-**Migraciones de Base de Datos**
+**Opciones:**
+- `--dry-run`: Simula la importación sin realizar cambios
+- `--strict`: Modo estricto (falla en advertencias)
 
+**Funcionalidad:**
+- Crea o reemplaza formularios existentes
+- Aplica propiedades del formulario y secciones
+- Crea controles con posicionamiento exacto
+- Valida coherencia entre propiedades
+- Soporte para múltiples tipos de controles
+
+**`list-forms`**
+Lista todos los formularios de la base de datos.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json]
+```
+
+**Opciones:**
+- `--json`: Salida en formato JSON
+
+**`validate-form-json`**
+Valida la estructura JSON de un formulario.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs validate-form-json <json_path> [--strict] [--schema]
+```
+
+**Opciones:**
+- `--strict`: Modo estricto (falla en advertencias)
+- `--schema`: Muestra el esquema JSON esperado
+
+**`roundtrip-form`**
+Prueba de roundtrip: export→import→export y compara resultados.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs roundtrip-form <form_name> [--password <pwd>] [--verbose] [--keep-temp]
+```
+
+**Opciones:**
+- `--verbose`: Muestra información detallada
+- `--keep-temp`: Mantiene archivos temporales para inspección
+
+##### 4. Comandos de Empaquetado
+
+**`bundle`**
+Crea paquetes de funcionalidades específicas.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs bundle <funcionalidad> [destino] [--mode <modo>]
+```
+
+**Funcionalidades disponibles:**
+- `workflow`: Sistema de flujos de trabajo
+- `mapping`: Sistema de mapeo de datos
+- `notification`: Sistema de notificaciones
+- `validation`: Sistema de validación
+- `security`: Sistema de seguridad
+- `reporting`: Sistema de reportes
+- `integration`: Integraciones externas
+- `ui`: Componentes de interfaz
+- `data`: Acceso a datos
+- `testing`: Infraestructura de testing
+- `CLI`: Herramientas de línea de comandos
+
+**Modos de detección:**
+- `smart`: Detección inteligente (por defecto)
+- `explicit`: Solo archivos explícitamente definidos
+- `pattern`: Detección por patrones de nombres
+
+##### 5. Comandos de Análisis y Verificación
+
+**`verify-logging`**
+Verifica la refactorización del sistema de logging.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs verify-logging
+```
+
+**Funcionalidad:**
+- Cuenta llamadas obsoletas a `Debug.Print`
+- Cuenta llamadas refactorizadas al `IErrorHandlerService`
+- Reporta progreso de la migración
+
+**`analyze`**
+Analiza la estructura del proyecto.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs analyze [--detailed]
+```
+
+**Funcionalidad:**
+- Cuenta archivos por tipo
+- Analiza dependencias entre módulos
+- Reporta estadísticas del proyecto
+
+##### 6. Comandos de Utilidad
+
+**`help`**
+Muestra ayuda general o específica de comandos.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs help [comando]
+```
+
+**`version`**
+Muestra información de versión.
+
+**Sintaxis:**
+```
+cscript condor_cli.vbs version
+```
+
+#### Características Técnicas
+
+##### Gestión de Access
+- **Bypass Startup**: Soporte para `/bypassStartup:on|off`
+- **Contraseñas**: Soporte completo para bases de datos protegidas
+- **Modo Silencioso**: Access se ejecuta en modo invisible
+- **Gestión de Estado**: Restauración automática de configuraciones
+
+##### Procesamiento JSON
+- **Parser Nativo**: Implementación completa en VBScript
+- **Validación**: Verificación de estructura y tipos
+- **Normalización**: Conversión de tokens en español a inglés
+- **Diff Semántico**: Comparación inteligente de estructuras
+
+##### Sistema de Logging
+- **Niveles**: INFO, WARN, ERROR
+- **Modo Verbose**: Control detallado de salida
+- **Colores**: Diferenciación visual en terminal
+
+##### Validaciones y Coherencia
+- **Reglas de Formulario**: Validación de propiedades interdependientes
+- **Modo Estricto**: Control de tolerancia a errores
+- **Advertencias**: Sistema de alertas no bloqueantes
+
+#### Estructura de Archivos JSON para Formularios
+
+##### Esquema Básico
+```json
+{
+  "name": "string (requerido)",
+  "properties": {
+    "caption": "string",
+    "width": "number",
+    "height": "number",
+    "backColor": "string (hex: #RRGGBB)",
+    "defaultView": "enum (single|continuous|datasheet)",
+    "allowEdits": "boolean"
+  },
+  "sections": {
+    "detail": {
+      "height": "number",
+      "backColor": "string (hex: #RRGGBB)"
+    }
+  },
+  "controls": [
+    {
+      "name": "string (requerido)",
+      "type": "enum (CommandButton|Label|TextBox)",
+      "properties": {
+        "top": "number (requerido)",
+        "left": "number (requerido)",
+        "width": "number (requerido)",
+        "height": "number (requerido)"
+      }
+    }
+  ]
+}
+```
+
+##### Tipos de Controles Soportados
+- `TextBox`: Cajas de texto
+- `Label`: Etiquetas
+- `CommandButton`: Botones de comando
+- `ComboBox`: Listas desplegables
+- `ListBox`: Listas de selección
+- `CheckBox`: Casillas de verificación
+- `OptionButton`: Botones de opción
+- `ToggleButton`: Botones de alternancia
+- `OptionGroup`: Grupos de opciones
+- `SubForm`: Subformularios
+- `Line`: Líneas
+- `Rectangle`: Rectángulos
+- `Image`: Imágenes
+- `TabControl`: Controles de pestañas
+
+##### Propiedades de Color
+Todos los colores se manejan en formato hexadecimal `#RRGGBB`:
+- `#FF0000`: Rojo
+- `#00FF00`: Verde
+- `#0000FF`: Azul
+- `#FFFFFF`: Blanco
+- `#000000`: Negro
+
+#### Reglas de Coherencia
+
+El sistema aplica automáticamente reglas de coherencia entre propiedades:
+
+1. **BorderStyle + ControlBox**: Si `borderStyle` es "None" o "Dialog", `controlBox` se fuerza a `false`
+2. **ControlBox + MinMaxButtons**: Si `controlBox` es `false`, `minMaxButtons` se fuerza a "None"
+3. **Modal/Popup + MinMax**: Formularios modales o popup no pueden tener botones min/max
+4. **Split Form**: Propiedades `splitForm*` solo se aplican si `defaultView` es "Split Form"
+
+#### Ejemplos de Uso
+
+##### Construcción Completa
+```bash
+# Reconstruir proyecto completo
+cscript condor_cli.vbs rebuild --verbose
+
+# Ejecutar todas las pruebas
+cscript condor_cli.vbs test --verbose
+```
+
+##### Gestión de Formularios
+```bash
+# Exportar formulario con eventos
+cscript condor_cli.vbs export-form MainForm --expand events
+
+# Importar formulario en modo estricto
+cscript condor_cli.vbs import-form ./forms/MainForm.json --strict
+
+# Validar estructura JSON
+cscript condor_cli.vbs validate-form-json ./forms/MainForm.json --schema
+```
+
+##### Empaquetado
+```bash
+# Crear bundle de workflow
+cscript condor_cli.vbs bundle workflow ./dist/workflow --mode smart
+
+# Crear bundle de UI
+cscript condor_cli.vbs bundle ui ./packages/ui-components
+```
+
+##### Migraciones
 ```bash
 # Ejecutar todas las migraciones
 cscript condor_cli.vbs migrate
 
-# Ejecutar una migración específica
-cscript condor_cli.vbs migrate 001_seed_tbEstados.sql
+# Ejecutar migración específica
+cscript condor_cli.vbs migrate 001_create_tables.sql
 ```
 
-- **Database as Code**: Gestiona cambios de base de datos mediante scripts SQL versionados
-- **Ejecución Idempotente**: Los scripts pueden ejecutarse múltiples veces sin efectos secundarios
-- **Orden Secuencial**: Ejecuta automáticamente todos los archivos `.sql` en orden alfabético
-- **Migración Específica**: Permite ejecutar scripts individuales para cambios puntuales
-- **Trazabilidad Completa**: Todos los cambios quedan registrados en el control de versiones
+#### Códigos de Salida
 
-**Empaquetado de Artefactos (Bundle)**
+- `0`: Éxito
+- `1`: Error general
+- `2`: Argumentos inválidos
+- `3`: Archivo no encontrado
+- `4`: Error de base de datos
+- `5`: Error de validación
 
-```bash
-# Empaquetado por funcionalidad
-cscript condor_cli.vbs bundle Auth
-cscript condor_cli.vbs bundle Document
-cscript condor_cli.vbs bundle Tests
+#### Notas Técnicas
 
-# Empaquetado por lista de ficheros específicos
-cscript condor_cli.vbs bundle IConfig.cls,modTestRunner.bas,Lecciones_aprendidas.md
-```
+##### Dependencias
+- **Microsoft Access**: Requerido para operaciones de base de datos
+- **DAO**: Para manipulación directa de propiedades de base de datos
+- **ADO**: Para ejecución de scripts SQL
+- **Scripting.FileSystemObject**: Para operaciones de archivos
 
-- **Doble Capacidad**: El comando bundle soporta dos modos de operación:
-  - **Por Funcionalidad**: Empaqueta automáticamente todos los archivos relacionados con una funcionalidad específica (Auth, Document, Tests, etc.)
-  - **Por Lista de Ficheros**: Permite especificar una lista exacta de archivos separados por comas
-- **Detección Inteligente**: El sistema detecta automáticamente si el argumento es una funcionalidad conocida o una lista de archivos
-- **Generación de Manifiesto**: Crea automáticamente un archivo `bundle_manifest.txt` con hashes SHA256 para verificación de integridad
-- **Estructura Organizada**: Los paquetes se crean en directorios `bundle_[funcionalidad]_[timestamp]` o `bundle_custom_[timestamp]`
-- **Preservación de Rutas**: Mantiene la estructura de directorios relativa de los archivos empaquetados
+##### Limitaciones
+- Máximo 20 niveles de anidación en JSON
+- Archivos de texto limitados a codificación UTF-8
+- Requiere permisos de escritura en directorio de trabajo
 
-**Exportación de Formularios (UI as Code)**
+##### Rendimiento
+- Importación optimizada con validación previa
+- Caché de objetos Access para operaciones múltiples
+- Procesamiento por lotes para migraciones
 
-```bash
-# Exportar formulario a JSON
-cscript condor_cli.vbs export-form <db_path> <form_name> [--output] [--password]
-
-# Ejemplos
-cscript condor_cli.vbs export-form ./front/CONDOR.accdb frmPrincipal
-cscript condor_cli.vbs export-form ./front/CONDOR.accdb frmPrincipal --output ./forms/
-cscript condor_cli.vbs export-form ./front/CONDOR.accdb frmPrincipal --password mipassword
-```
-
-- **Exportación Completa**: Extrae el diseño completo del formulario incluyendo propiedades, secciones y controles
-- **Formato JSON Estructurado**: Genera archivos JSON legibles y versionables para control de cambios
-- **Soporte de Controles Dinámicos**: Captura todos los tipos de controles (TextBox, Label, CommandButton, etc.)
-- **Propiedades Detalladas**: Incluye posición, tamaño, formato, fuentes y todas las propiedades configurables
-- **Salida Configurable**: Permite especificar directorio de destino con `--output`
-- **Bases de Datos Protegidas**: Soporte para bases de datos con contraseña mediante `--password`
-
-**Importación de Formularios (UI as Code)**
-
-```bash
-# Crear/Modificar formulario desde JSON
-cscript condor_cli.vbs import-form <json_path> <db_path> [--password]
-
-# Ejemplos
-cscript condor_cli.vbs import-form ./forms/frmPrincipal.json ./front/CONDOR.accdb
-cscript condor_cli.vbs import-form ./forms/frmPrincipal.json ./front/CONDOR.accdb --password mipassword
-```
-
-- **Creación Automática**: Crea formularios nuevos o reemplaza existentes basándose en la definición JSON
-- **Controles Dinámicos**: Genera automáticamente todos los controles especificados en el JSON
-- **Aplicación de Propiedades**: Configura automáticamente posición, tamaño, formato y todas las propiedades
-- **Mapeo de Tipos**: Convierte automáticamente los tipos de controles del JSON a objetos Access nativos
-- **Reemplazo Seguro**: Elimina formularios existentes antes de crear la nueva versión
-- **Validación de Estructura**: Verifica la integridad del JSON antes de proceder con la importación
-
-**Validación de Formularios JSON**
-
-```bash
-# Validar estructura JSON de formulario
-cscript condor_cli.vbs validate-form-json <json_path> [--strict] [--schema]
-
-# Ejemplos
-cscript condor_cli.vbs validate-form-json ./forms/frmPrincipal.json
-cscript condor_cli.vbs validate-form-json ./forms/frmPrincipal.json --strict
-cscript condor_cli.vbs validate-form-json ./forms/frmPrincipal.json --schema
-```
-
-- **Validación de Estructura**: Verifica que el JSON tenga la estructura correcta para formularios
-- **Validación de Tipos**: Comprueba que los tipos de controles sean válidos
-- **Validación de Propiedades**: Verifica que las propiedades tengan valores válidos
-- **Modo Estricto**: Con `--strict` aplica validaciones adicionales más rigurosas
-- **Validación de Esquema**: Con `--schema` valida contra el esquema JSON formal
-- **Validación de Colores**: Verifica que los códigos de color sean válidos
-- **Validación de Enums**: Comprueba que los valores enumerados sean correctos
-
-**Test de Roundtrip de Formularios**
-
-```bash
-# Test export→import→export de formulario
-cscript condor_cli.vbs roundtrip-form <db_path> <form_name> [--password] [--temp-dir] [--verbose]
-
-# Ejemplos
-cscript condor_cli.vbs roundtrip-form ./front/CONDOR.accdb frmPrincipal
-cscript condor_cli.vbs roundtrip-form ./front/CONDOR.accdb frmPrincipal --password mipassword
-cscript condor_cli.vbs roundtrip-form ./front/CONDOR.accdb frmPrincipal --temp-dir ./temp --verbose
-```
-
-- **Test de Integridad**: Verifica que export→import→export produzca resultados idénticos
-- **Detección de Pérdida de Datos**: Identifica propiedades que se pierden en el proceso
-- **Comparación Automática**: Compara automáticamente los JSON inicial y final
-- **Directorio Temporal**: Permite especificar directorio para archivos temporales
-- **Modo Verbose**: Proporciona información detallada del proceso de testing
-- **Limpieza Automática**: Elimina archivos temporales al finalizar el test
-
-**Ayuda de Comandos**
-
-```bash
-cscript condor_cli.vbs help
-```
-
-- Muestra una lista detallada de todos los comandos disponibles y su descripción
+Esta herramienta representa el núcleo de automatización del proyecto CONDOR, proporcionando una interfaz unificada para todas las operaciones de desarrollo, testing y despliegue.
 
 **Ventajas del Sistema CLI:**
 
@@ -2343,10 +2525,12 @@ cscript condor_cli.vbs import-form ./ui/definitions/frmPrincipal.json ./back/CON
 
 **Funcionalidades:**
 - Crea formularios nuevos o reemplaza existentes basándose en la definición JSON
-- Genera automáticamente todos los controles especificados
+- **Utiliza APIs oficiales de Microsoft Access**: `Application.CreateForm()` y `Application.CreateControl()`
+- Genera automáticamente todos los controles especificados con parámetros precisos
 - Configura automáticamente posición, tamaño, formato y propiedades
 - Mapeo automático de tipos de controles del JSON a objetos Access nativos
-- Reemplazo seguro con eliminación previa de formularios existentes
+- Reemplazo seguro con eliminación previa usando `DoCmd.DeleteObject acForm`
+- Apertura automática en modo diseño (`acDesign`) antes de manipular controles
 - Validación de estructura del JSON antes de proceder
 
 ### Flujo de Trabajo Obligatorio
@@ -2398,6 +2582,58 @@ Durante la exportación (`export-form`), el sistema busca automáticamente archi
 
 - **Patrones de búsqueda**: `Form_<FormName>.bas`, `<FormName>.bas`, `frm<FormName>.bas`, `Form_<FormName>.cls`
 - **Ubicación**: Directorio especificado por `--src` (por defecto: `./src`)
+
+### Sistema de Referencias y Flujo de Dependencias
+
+El sistema implementa un mecanismo avanzado de gestión de dependencias entre formularios para manejar relaciones complejas como subformularios y controles TabControl con múltiples páginas.
+
+#### Principio de Referencias por Nombre
+
+En lugar de incrustar formularios completos como JSON anidado, el sistema utiliza **referencias por nombre** para mantener la modularidad y evitar duplicación:
+
+- **Subformularios**: Se exportan solo con la propiedad `sourceObject` que referencia el nombre del formulario hijo
+- **TabControl**: Se exportan las páginas con propiedades mínimas (`name`, `caption`, `pageIndex`) sin contenido incrustado
+- **Formularios independientes**: Cada formulario se mantiene como un archivo JSON separado
+
+#### Resolución Automática de Dependencias
+
+El comando `import-form` implementa resolución automática de dependencias usando **ordenamiento topológico** (algoritmo de Kahn):
+
+```bash
+# Importar desde carpeta con resolución automática de dependencias
+cscript condor_cli.vbs import-form ./ui/forms/ MiDB.accdb --strict
+```
+
+**Proceso de resolución:**
+1. **Extracción**: Analiza todos los archivos JSON en la carpeta para identificar dependencias
+2. **Mapeo**: Construye un grafo de dependencias basado en referencias `sourceObject`
+3. **Ordenamiento**: Aplica algoritmo topológico para determinar orden de importación
+4. **Validación**: Detecta dependencias circulares y formularios faltantes
+5. **Importación**: Procesa formularios en el orden correcto (hijos antes que padres)
+
+#### Manejo de Dependencias Complejas
+
+**Subformularios anidados:**
+```
+FormPadre → FormHijo1 → FormNieto
+         → FormHijo2
+```
+
+**Orden de importación automático:** `FormNieto` → `FormHijo1` → `FormHijo2` → `FormPadre`
+
+**TabControl con múltiples páginas:**
+- Cada página se define con propiedades mínimas en el JSON del formulario principal
+- No se requieren archivos separados para páginas individuales
+- El sistema recrea automáticamente la estructura de pestañas durante la importación
+
+#### Ventajas del Sistema de Referencias
+
+- **Modularidad**: Cada formulario es un archivo independiente y reutilizable
+- **Mantenibilidad**: Cambios en formularios hijo no afectan definiciones de formularios padre
+- **Versionado granular**: Cada formulario puede versionarse independientemente
+- **Reutilización**: Un formulario hijo puede ser referenciado por múltiples formularios padre
+- **Detección temprana**: Identifica dependencias faltantes antes de la importación
+- **Prevención de ciclos**: Detecta y reporta dependencias circulares automáticamente
 - **Detección de handlers**: Expresión regular `Sub\s+(\w+)_(\w+)\s*\(` para identificar Event Procedures
 
 #### Eventos Soportados
@@ -3253,7 +3489,34 @@ cscript condor_cli.vbs validate-form-json <json_path> [--strict] [--schema]
 - Detección de errores de sintaxis JSON
 - Verificación de integridad de propiedades de controles
 
-### 24.4. Nuevos Flags CLI Globales
+### 24.4. Bypass Automático de Startup de Access
+
+**Funcionalidad:** Bypass automático del startup de Access para operaciones CLI
+
+**Implementación:**
+- Parsing automático de banderas `/bypassStartup:on|off` y `/pwd:<clave>`
+- Funciones DAO para gestión de la propiedad AllowByPassKey
+- Gestión transparente de OpenAccessApp/CloseAccessApp con bypass
+- Integración en todos los comandos que requieren abrir bases de datos
+
+**Funcionalidades Implementadas:**
+- **DaoOpenDatabase**: Apertura de bases de datos con manejo de contraseñas
+- **HasProp/GetAllowBypassKey/SetAllowBypassKey**: Gestión de la propiedad AllowByPassKey
+- **OpenAccessApp**: Apertura de Access con bypass automático del startup
+- **CloseAccessApp**: Cierre seguro con restauración del estado original
+- **Integración CLI**: Soporte en comandos export-form, import-form, update, rebuild
+- **Manejo de Errores**: Logging centralizado de todas las operaciones de bypass
+- **Compatibilidad**: Funciona con bases de datos protegidas y sin proteger
+
+**Comandos Soportados:**
+```bash
+cscript condor_cli.vbs export-form ./db.accdb form1 /bypassStartup:on
+cscript condor_cli.vbs import-form ./form1.json ./db.accdb /bypassStartup:on
+cscript condor_cli.vbs update /bypassStartup:on
+cscript condor_cli.vbs rebuild /bypassStartup:on
+```
+
+### 24.5. Nuevos Flags CLI Globales
 
 **Flags Implementados:**
 
@@ -3273,3 +3536,91 @@ cscript condor_cli.vbs validate-form-json <json_path> [--strict] [--schema]
 - Descripciones detalladas de funcionalidades de exportación/importación
 - Guías de uso para validación de JSON
 - Documentación de flags globales y sus valores por defecto
+
+### 24.6. Exportación UTF-8 de Módulos VBA
+
+**Funcionalidad:** `ExportModuleToUtf8`
+
+**Implementación:**
+- Función especializada para exportar módulos VBA con codificación UTF-8
+- Reemplazo automático de `DoCmd.OutputTo` en comandos export, rebuild y update
+- Integración transparente en `ExportModulesToDirectory`
+- Preservación de caracteres especiales, acentos y símbolos Unicode
+- Compatibilidad mejorada con herramientas de control de versiones
+- Manejo robusto de errores con logging centralizado
+
+**Comandos Actualizados:**
+```bash
+# Los siguientes comandos ahora usan exportación UTF-8 automáticamente
+cscript condor_cli.vbs export
+cscript condor_cli.vbs rebuild
+cscript condor_cli.vbs update
+```
+
+### 24.7. Comando list-modules con Análisis Avanzado
+
+**Comando:** `list-modules`
+
+```bash
+cscript condor_cli.vbs list-modules [--json] [--expectSrc] [--diff]
+```
+
+**Funcionalidades Implementadas:**
+- **--json**: Salida en formato JSON estructurado para integración con herramientas
+- **--expectSrc**: Verifica existencia de archivos fuente correspondientes en /src
+- **--diff**: Detecta inconsistencias entre módulos en BD y archivos fuente
+- Listado completo de módulos VBA (estándar .bas y de clase .cls)
+- Análisis de sincronización entre base de datos y código fuente
+- Detección automática de módulos faltantes, huérfanos o desactualizados
+- Reporte visual con indicadores de estado (✓, ⚠, ✗)
+
+**Casos de Uso:**
+```bash
+# Listar todos los módulos con información básica
+cscript condor_cli.vbs list-modules
+
+# Verificar sincronización completa con archivos fuente
+cscript condor_cli.vbs list-modules --expectSrc --diff
+
+# Exportar inventario de módulos en formato JSON
+cscript condor_cli.vbs list-modules --json
+
+# Análisis completo con todas las opciones
+cscript condor_cli.vbs list-modules --json --expectSrc --diff
+```
+
+### 24.8. Verificación Automática de Módulos
+
+**Flag:** `--verifyModules`
+
+**Funcionalidad:**
+- Verificación opcional post-operación en comandos rebuild y update
+- Ejecución automática de `list-modules --expectSrc --diff` tras completar sincronización
+- Detección inmediata de inconsistencias después de operaciones de sincronización
+- Reporte de estado con indicadores visuales claros (✓, ⚠)
+- Integración transparente sin impacto en el flujo normal de comandos
+
+**Comandos Soportados:**
+```bash
+# Rebuild con verificación automática de consistencia
+cscript condor_cli.vbs rebuild --verifyModules
+
+# Update con verificación automática de consistencia
+cscript condor_cli.vbs update --verifyModules
+```
+
+**Salida de Ejemplo:**
+```
+=== ACTUALIZACION COMPLETADA EXITOSAMENTE ===
+
+=== VERIFICACION DE MODULOS ===
+Ejecutando verificación de consistencia...
+✓ Verificación completada sin inconsistencias
+```
+
+**Casos de Error:**
+```
+=== VERIFICACION DE MODULOS ===
+Ejecutando verificación de consistencia...
+⚠ La verificación detectó inconsistencias
+```
