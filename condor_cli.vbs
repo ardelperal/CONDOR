@@ -24,7 +24,8 @@ Dim gCurrentDbPath
 Dim gCurrentPassword
 Dim gPreviousStartupForm
 Dim gPreviousHasAutoExec
-Dim gUsedStrategyB ' Flag para saber si se usó estrategia B
+
+Dim gPrevStartupForm, gHadAutoExec
 
 ' Configuracion
 ' Configuracion inicial - se determinara la base de datos segun la accion
@@ -48,7 +49,7 @@ gCurrentDbPath = ""
 gCurrentPassword = ""
 gPreviousStartupForm = Null
 gPreviousHasAutoExec = False
-gUsedStrategyB = False
+
 
 ' Verificar si se solicita ayuda
 If objArgs.Count > 0 Then
@@ -117,8 +118,8 @@ End If
 strAction = LCase(objArgs(0))
 
 ' Validar comando
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "update" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'update', 'lint', 'bundle', 'migrate', 'export-form', 'import-form', 'validate-form-json', 'roundtrip-form' o 'list-forms'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "update" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" And strAction <> "list-modules" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'update', 'lint', 'bundle', 'migrate', 'export-form', 'import-form', 'validate-form-json', 'roundtrip-form', 'list-forms' o 'list-modules'"
     WScript.Quit 1
 End If
 
@@ -169,7 +170,11 @@ WScript.Echo "Accion: " & strAction
 WScript.Echo "Base de datos: " & strAccessPath
 WScript.Echo "Directorio: " & strSourcePath
 If gVerbose Then
-    WScript.Echo "[VERBOSE] Password: " & IIf(gPassword <> "", "***", "(none)")
+    If gPassword <> "" Then
+        WScript.Echo "[VERBOSE] Password: ***"
+    Else
+        WScript.Echo "[VERBOSE] Password: (none)"
+    End If
     WScript.Echo "[VERBOSE] BypassStartup: " & gBypassStartup
 End If
 
@@ -178,7 +183,15 @@ Call CloseExistingAccessProcesses()
 
 ' PASO 8: Abrir Access con OpenAccessApp unificado (solo si es necesario)
 If strAction <> "bundle" And strAction <> "validate-schema" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" Then
-    Set objAccess = OpenAccessApp(strAccessPath, gPassword, gBypassStartup)
+    If strAction <> "import-form" Then
+        ' Desactivar arranque por DAO para evitar ejecución de código al abrir
+        Call DisableStartup(strAccessPath, gPassword, gPrevStartupForm, gHadAutoExec)
+        If gVerbose Then WScript.Echo "[VERBOSE] Startup deshabilitado temporalmente (StartupForm vacío + AutoExec renombrada si existía)."
+        ' Abrir Access en silencio con contraseña correcta (sustituye el bloque de OpenCurrentDatabase actual por esta llamada)
+        Call OpenAccessSilently(strAccessPath, gPassword, objAccess)
+    Else
+        Set objAccess = OpenAccessApp(strAccessPath, gPassword, gBypassStartup)
+    End If
     If Not objAccess Is Nothing Then
         Call EnsureVBReferences
     End If
@@ -216,7 +229,8 @@ ElseIf strAction = "import-form" Then
 ElseIf strAction = "list-forms" Then
     Call ListForms()
 ElseIf strAction = "list-modules" Then
-    Call ListModules()
+    Call ListModulesCommand()
+    WScript.Quit 0
 
 Else
     WScript.Echo "Error: Comando no reconocido: " & strAction
@@ -225,6 +239,12 @@ End If
 
 ' PASO 10: Cerrar Access si fue abierto (unificado)
 If Not objAccess Is Nothing Then
+    ' Restaurar startup antes de cerrar (solo si no es import-form)
+    If strAction <> "import-form" Then
+        On Error Resume Next
+        Call RestoreStartup(strAccessPath, gPassword, gPrevStartupForm, gHadAutoExec)
+        On Error GoTo 0
+    End If
     Call CloseAccessApp(objAccess)
 End If
 
@@ -1067,11 +1087,9 @@ Function CleanVBAFile(filePath, fileType)
                 Left(Trim(strLine), 17) = "VERSION 1.0 CLASS" Or _
                 Trim(strLine) = "BEGIN" Or _
                 Left(Trim(strLine), 8) = "MultiUse" Or _
-                Trim(strLine) = "END" Or _
-                Trim(strLine) = "Option Compare Database" Or _
-                Trim(strLine) = "Option Explicit") Then
+                Trim(strLine) = "END") Then
             
-            ' Si no cumple ninguna condición, es código VBA válido
+            ' Si no cumple ninguna condición, es código VBA válido (incluyendo Option Explicit y Option Compare)
             ' Se añade al cleanedContent seguida de un salto de línea
             cleanedContent = cleanedContent & strLine & vbCrLf
         End If
@@ -1291,6 +1309,44 @@ Sub EnsureVBReferences()
     On Error GoTo 0
 End Sub
 
+' ===== VBIDE Import Helpers (compactos) =====
+Function EnsureVBProject(app)
+    On Error Resume Next
+    Dim p: Set p = app.VBE.ActiveVBProject
+    If Err.Number<>0 Then WScript.Echo "❌ Activa 'Confiar en el modelo de objetos VBA'": WScript.Quit 1
+    Set EnsureVBProject = p
+End Function
+
+Sub RemoveVBComponentIfExists(app, name)
+    On Error Resume Next
+    Dim p,c: Set p = EnsureVBProject(app)
+    Set c = p.VBComponents(name)
+    If Err.Number=0 Then p.VBComponents.Remove c
+    Err.Clear
+End Sub
+
+Function CreateAnsiTempFrom(path)
+    On Error Resume Next
+    Dim sIn,sOut,tmp: tmp = objFSO.BuildPath(objFSO.GetSpecialFolder(2),"condor_tmp_"&objFSO.GetFileName(path))
+    Set sIn=CreateObject("ADODB.Stream"): sIn.Type=2: sIn.Charset="UTF-8": sIn.Open: sIn.LoadFromFile path
+    Dim txt: txt=sIn.ReadText(-1): sIn.Close
+    Set sOut=CreateObject("ADODB.Stream"): sOut.Type=2: sOut.Charset="Windows-1252": sOut.Open
+    sOut.WriteText txt: sOut.SaveToFile tmp,2: sOut.Close
+    If Err.Number<>0 And Not objFSO.FileExists(tmp) Then objFSO.CopyFile path,tmp,True
+    CreateAnsiTempFrom = tmp
+End Function
+
+Function ImportVbComponentFromFile(app, moduleName, srcPath)
+    On Error Resume Next
+    Dim p,tmp,c: Set p=EnsureVBProject(app): tmp=CreateAnsiTempFrom(srcPath)
+    p.VBComponents.Import tmp: If Err.Number<>0 Then WScript.Echo "❌ Import "&srcPath&": "&Err.Description: ImportVbComponentFromFile=False: Err.Clear: Exit Function
+    Set c = p.VBComponents(p.VBComponents.Count): c.Name = moduleName
+    app.DoCmd.SetWarnings False: app.DoCmd.Save 5, moduleName: app.DoCmd.SetWarnings True ' 5=acModule
+    If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True
+    ImportVbComponentFromFile = True
+End Function
+' ===== FIN Helpers =====
+
 ' Subrutina para mostrar ayuda completa
 Sub ShowHelp()
     WScript.Echo "=== CONDOR CLI - Herramienta de línea de comandos ==="
@@ -1307,14 +1363,16 @@ Sub ShowHelp()
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
-    WScript.Echo "  rebuild [--verbose] [--bypassstartup on|off] - Método principal de sincronización del proyecto"
+    WScript.Echo "  rebuild [--verbose] [--bypassstartup on|off] [--verifyModules] - Método principal de sincronización del proyecto"
     WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
     WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
+    WScript.Echo "                                 --verifyModules: Verificar automáticamente tras importar"
     WScript.Echo "                                 Transaccional: usa la misma sesión de Access"
-    WScript.Echo "  update <opciones|módulos> [--verbose] [--bypassstartup on|off] - Actualización selectiva de módulos VBA"
+    WScript.Echo "  update <opciones|módulos> [--verbose] [--bypassstartup on|off] [--verifyModules] - Actualización selectiva de módulos VBA"
     WScript.Echo "                                 --changed: Solo módulos modificados (comparación por hash/fecha)"
     WScript.Echo "                                 --all: Todos los módulos (sync suave, sin eliminar)"
     WScript.Echo "                                 <Nombre>: Módulo específico (acepta nombre sin extensión)"
+    WScript.Echo "                                 --verifyModules: Verificar automáticamente tras importar"
     WScript.Echo "                                 Transaccional: usa la misma sesión de Access"
     WScript.Echo "                                 Ejemplo: update --changed"
     WScript.Echo "                                 Ejemplo: update --all"
@@ -1341,7 +1399,7 @@ Sub ShowHelp()
     WScript.Echo "                                 db_path opcional (por defecto: ./condor.accdb)"
     WScript.Echo "                                 --password: Contraseña de la base de datos"
     WScript.Echo "                                 --json: Salida en formato JSON (array de nombres)"
-    WScript.Echo "  list-modules [--json] [--expectSrc] [--diff] - Listar módulos VBA con análisis avanzado"
+    WScript.Echo "  list-modules [--db <path>] [--password <pwd>] [--includeDocs] [--pattern <regex>] [--json] [--expectSrc [path]] [--diff]"
     WScript.Echo "                                 --json: Salida en formato JSON estructurado"
     WScript.Echo "                                 --expectSrc: Verificar existencia de archivos fuente en /src"
     WScript.Echo "                                 --diff: Detectar inconsistencias entre BD y archivos fuente"
@@ -1521,6 +1579,8 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo "  cscript condor_cli.vbs update --changed --verbose"
     WScript.Echo "  cscript condor_cli.vbs update --all"
     WScript.Echo "  cscript condor_cli.vbs update ModuloA CClaseB"
+    WScript.Echo "  # NOTA: --bypassstartup on es DEFAULT para rebuild/update/test y deshabilita"
+    WScript.Echo "  # temporalmente StartupForm y AutoExec para evitar errores durante importación"
     WScript.Echo "  cscript condor_cli.vbs test --password miClave --bypassstartup on"
     WScript.Echo "  cscript condor_cli.vbs list-forms --db """"C:\\MiDB.accdb"""" --password miClave --bypassstartup on"
     WScript.Echo "  cscript condor_cli.vbs export-form MiDB.accdb MiForm --bypassstartup on"
@@ -1551,81 +1611,32 @@ End Sub
 ' - .cls: VBIDE.VBComponents.Import y renombrado
 Sub ImportVbaFile(sourcePath, moduleName)
     On Error Resume Next
-    Dim ext: ext = LCase(CreateObject("Scripting.FileSystemObject").GetExtensionName(sourcePath))
+    
+    ' Validar existencia y extensión
+    If Not objFSO.FileExists(sourcePath) Then
+        WScript.Echo "  ❌ Archivo no encontrado: " & sourcePath
+        Exit Sub
+    End If
+    
+    Dim ext
+    ext = LCase(objFSO.GetExtensionName(sourcePath))
     If ext <> "bas" And ext <> "cls" Then
-        WScript.Echo "  ❌ Tipo no soportado: " & ext
+        WScript.Echo "  ❌ Extensión no válida: " & ext & " (esperado .bas o .cls)"
         Exit Sub
     End If
 
-    ' Validación previa (si existe)
-    Dim errDet, ok: ok = ValidateVBASyntax(sourcePath, errDet)
-    If ok <> True Then
-        WScript.Echo "  ❌ Sintaxis inválida en " & moduleName & ": " & errDet
-        Exit Sub
-    End If
+    ' Eliminar módulo previo si existe
+    Call RemoveVBComponentIfExists(objAccess, moduleName)
 
-    ' .bas vía Application.LoadFromText (acModule = 5)
-    If ext = "bas" Then
-        Err.Clear
-        objAccess.Application.LoadFromText 5, moduleName, sourcePath
-        If Err.Number <> 0 Then
-            WScript.Echo "  ❌ Error LoadFromText(" & moduleName & "): " & Err.Description
-            Err.Clear
-            Exit Sub
-        End If
-        WScript.Echo "  ✓ Módulo estándar importado: " & moduleName
-        Exit Sub
-    End If
-
-    ' .cls vía VBIDE (requiere "Trust access..." y ref. VBIDE)
-    Dim vbProj, vbComp
-    Set vbProj = objAccess.VBE.ActiveVBProject
-    If vbProj Is Nothing Then
-        WScript.Echo "  ❌ VBE no disponible. Habilite 'Trust access to the VBA project object model'."
-        Exit Sub
-    End If
-
-    Err.Clear
-    Set vbComp = vbProj.VBComponents.Import(sourcePath)
-    If Err.Number <> 0 Or vbComp Is Nothing Then
-        WScript.Echo "  ❌ Error VBComponents.Import(" & moduleName & "): " & Err.Description
-        Err.Clear
-        Exit Sub
-    End If
-
-    ' Renombrar al nombre esperado si difiere
-    If vbComp.Name <> moduleName Then
-        On Error Resume Next
-        vbComp.Name = moduleName
-        If Err.Number <> 0 Then
-            WScript.Echo "  ⚠️ Importado como '" & vbComp.Name & "' (no se pudo renombrar a '" & moduleName & "')"
-            Err.Clear
-        End If
-    End If
-    WScript.Echo "  ✓ Clase importada: " & moduleName
+    ' Importar usando helper compacto
+    Dim ok
+    ok = ImportVbComponentFromFile(objAccess, moduleName, sourcePath)
+    If Not ok Then WScript.Quit 1
+    
+    WScript.Echo "  ✓ Módulo importado (VBIDE): " & moduleName
 End Sub
 
-' Nueva función que usa VBComponents.Import para importar módulos (OBSOLETA - usar ImportVbaFile)
-Sub ImportModuleWithLoadFromText(strSourceFile, moduleName, fileExtension)
-    On Error Resume Next
-    
-    ' Usar VBE.ActiveVBProject.VBComponents.Import como se usa en otras partes del código
-    objAccess.VBE.ActiveVBProject.VBComponents.Import strSourceFile
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "  ❌ Error al importar módulo " & moduleName & " con VBComponents.Import: " & Err.Description
-        Err.Clear
-        Exit Sub
-    End If
-    
-    If fileExtension = "cls" Then
-        WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
-    Else
-        WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
-    End If
-    
-    On Error GoTo 0
-End Sub
+
 
 ' Subrutina para ejecutar la suite de pruebas unitarias
 Sub ExecuteTests()
@@ -2196,6 +2207,35 @@ Function RelinkSingleDatabase(strDbPath, strPassword, strBackPath)
     On Error GoTo 0
 End Function
 
+' Subrutina para crear backup de seguridad de la base de datos
+Sub BackupDatabaseSafely(dbPath)
+    On Error Resume Next
+    
+    Dim backupDir, backupName, backupPath
+    backupDir = objFSO.GetParentFolderName(dbPath)
+    
+    ' Crear nombre con timestamp
+    Dim timestamp
+    timestamp = Replace(Replace(Now, ":", "-"), "/", "-")
+    timestamp = Replace(timestamp, " ", "_")
+    
+    backupName = "backup_" & timestamp & ".accdb"
+    backupPath = objFSO.BuildPath(backupDir, backupName)
+    
+    If gVerbose Then WScript.Echo "[VERBOSE] Creando backup de seguridad: " & backupPath
+    
+    objFSO.CopyFile dbPath, backupPath
+    If Err.Number = 0 Then
+        If gVerbose Then WScript.Echo "[VERBOSE] Backup creado exitosamente: " & backupName
+    Else
+        WScript.Echo "[WARNING] No se pudo crear backup: " & Err.Description
+        WScript.Echo "[WARNING] Continuando con rebuild sin backup..."
+        Err.Clear
+    End If
+    
+    On Error GoTo 0
+End Sub
+
 ' Subrutina para reconstruir completamente el proyecto VBA
 Sub RebuildProject()
     ' VERSIÓN TRANSACCIONAL - Asume objAccess ya abierto por OpenAccessApp
@@ -2212,6 +2252,16 @@ Sub RebuildProject()
         WScript.Echo "Error: Access no está abierto. RebuildProject requiere una sesión activa."
         WScript.Quit 1
     End If
+    
+    ' Suprimir alertas
+    objAccess.DoCmd.SetWarnings False
+    If Err.Number <> 0 Then
+        If gVerbose Then WScript.Echo "[VERBOSE] No se pudieron suprimir alertas: " & Err.Description
+        Err.Clear
+    End If
+    
+    ' Crear backup de seguridad antes de proceder
+    BackupDatabaseSafely gCurrentDbPath
     
     ' Paso 1: Eliminar todos los módulos existentes vía VBE
     WScript.Echo "Paso 1: Eliminando todos los modulos VBA existentes..."
@@ -2277,7 +2327,8 @@ Sub RebuildProject()
     Next
     
     ' Verificar si hubo errores de importación
-    Dim totalFiles: totalFiles = 0
+    Dim totalFiles
+    totalFiles = 0
     For Each objFile In objFolder.Files
         If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
             totalFiles = totalFiles + 1
@@ -2290,9 +2341,20 @@ Sub RebuildProject()
         WScript.Echo "Algunos módulos no se pudieron importar. Revise los errores anteriores."
         WScript.Quit 1
     Else
+        ' Asegurar referencias VBA antes de compilar
+        WScript.Echo "Verificando referencias VBA..."
+        Call EnsureVBReferences()
+        
+        ' Compilar y guardar todo
+        WScript.Echo "Compilando proyecto VBA..."
+        On Error Resume Next
+        objAccess.DoCmd.RunCommand 636 ' Compile & Save All Modules
+        If Err.Number<>0 Then WScript.Echo "❌ Compilación: "&Err.Number&" - "&Err.Description: WScript.Quit 1
+        On Error GoTo 0
+        
         WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
         WScript.Echo "Modulos importados: " & importedCount
-        WScript.Echo "El proyecto VBA ha sido completamente reconstruido"
+        WScript.Echo "El proyecto VBA ha sido completamente reconstruido y compilado"
         
         ' Verificación opcional de módulos
         Call VerifyModulesIfRequested()
@@ -2389,7 +2451,8 @@ Sub UpdateAllModules()
     Next
     
     ' Verificar si hubo errores de importación
-    Dim totalFiles: totalFiles = 0
+    Dim totalFiles
+        totalFiles = 0
     For Each objFile In objFolder.Files
         If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
             totalFiles = totalFiles + 1
@@ -2401,6 +2464,9 @@ Sub UpdateAllModules()
         WScript.Quit 1
     Else
         WScript.Echo "Modulos actualizados: " & importedCount
+        
+        ' Verificación opcional de módulos
+        Call VerifyModulesIfRequested()
     End If
 End Sub
 
@@ -2478,6 +2544,9 @@ Sub UpdateChangedModules()
     ' No verificamos totalFiles aquí porque UpdateChangedModules solo actualiza módulos que cambiaron
     ' El éxito se mide por si importedCount >= módulos que necesitaban actualización
     WScript.Echo "Modulos actualizados: " & importedCount
+    
+    ' Verificación opcional de módulos
+    Call VerifyModulesIfRequested()
 End Sub
 
 ' ============================================================================
@@ -4708,9 +4777,9 @@ Sub ImportForm()
     End If
     
     If InStr(strDbPath, ":") = 0 Then
-        ' Si no se especifica ruta, usar la base de datos de desarrollo por defecto
+        ' Si no se especifica ruta, usar la base de datos por defecto
         If strDbPath = "" Then
-            strDbPath = objFSO.GetAbsolutePathName("C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb")
+            strDbPath = objFSO.GetAbsolutePathName(strDataPath)
         Else
             strDbPath = objFSO.GetAbsolutePathName(strDbPath)
         End If
@@ -5161,7 +5230,11 @@ Private Sub ApplyFormProperties(frm, objJsonData, bStrict)
                     frm.MinMaxButtons = 0  ' None
                 End If
             Else
-                frm.MinMaxButtons = IIf(minMaxButtons, 3, 0)  ' Both o None
+                If minMaxButtons Then
+                    frm.MinMaxButtons = 3  ' Both
+                Else
+                    frm.MinMaxButtons = 0  ' None
+                End If
             End If
         End If
     End If
@@ -5525,7 +5598,7 @@ Sub ListForms()
     dbPath = "./condor.accdb"
     password = ""
     bJsonOutput = False
-    bypassStartup = False
+    bypassStartup = True  ' Por defecto ON para list-forms
     
     ' Procesar argumentos
     i = 1
@@ -6217,20 +6290,156 @@ Function FileExists(path)
 End Function
 
 ' ============================================================================
+' UTILIDADES DE ARGUMENTOS Y FLAGS
+' ============================================================================
+
+Function GetArgValue(flag)
+    Dim i
+    For i = 0 To WScript.Arguments.Count - 2
+        If LCase(WScript.Arguments(i)) = LCase("--" & flag) Then
+            GetArgValue = WScript.Arguments(i+1)
+            Exit Function
+        End If
+    Next
+    GetArgValue = ""
+End Function
+
+Function HasFlag(flag)
+    Dim i: HasFlag = False
+    For i = 0 To WScript.Arguments.Count - 1
+        If LCase(WScript.Arguments(i)) = LCase("--" & flag) Then
+            HasFlag = True
+            Exit Function
+        End If
+    Next
+End Function
+
+' ============================================================================
 ' UTILIDADES DE CODIFICACIÓN Y ARCHIVOS TEMPORALES
 ' ============================================================================
+
+' Devuelve el directorio temporal del sistema o "." si falla
+Function GetTempDir()
+    On Error Resume Next
+    Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
+    GetTempDir = fso.GetSpecialFolder(2) ' Temp folder
+    If Err.Number <> 0 Then GetTempDir = "."
+    Err.Clear
+End Function
+
+' Convierte archivo UTF-8 a ANSI temporal y devuelve la ruta del temporal
+Function ConvertToAnsiTemp(srcPath)
+    On Error Resume Next
+    Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
+    If Not fso.FileExists(srcPath) Then ConvertToAnsiTemp = "": Exit Function
+    
+    Dim tmpDir, tmpPath
+    tmpDir = GetTempDir()
+    tmpPath = fso.BuildPath(tmpDir, fso.GetTempName() & "_" & fso.GetFileName(srcPath))
+    
+    ' Leer UTF-8
+    Dim sIn: Set sIn = CreateObject("ADODB.Stream")
+    sIn.Type = 2: sIn.Charset = "utf-8": sIn.Open: sIn.LoadFromFile srcPath
+    Dim txt
+    txt = sIn.ReadText: sIn.Close
+    
+    ' Escribir ANSI usando ACP del SO (FSO.CreateTextFile con unicode:=False)
+    Dim t: Set t = fso.CreateTextFile(tmpPath, True, False)
+    t.Write txt: t.Close
+    
+    If Err.Number <> 0 Then ConvertToAnsiTemp = "" Else ConvertToAnsiTemp = tmpPath
+    Err.Clear
+End Function
+
+' Lee archivo como UTF-8, con fallback a Windows-1252 si falla
+Function ReadAllTextUtf8WithFallback(path)
+    On Error Resume Next
+    Dim stream, content
+    
+    ' Intentar UTF-8 primero
+    Set stream = CreateObject("ADODB.Stream")
+    stream.Type = 2
+    stream.Charset = "UTF-8"
+    stream.Open
+    stream.LoadFromFile path
+    content = stream.ReadText
+    stream.Close
+    
+    If Err.Number = 0 Then
+        ReadAllTextUtf8WithFallback = content
+        Exit Function
+    End If
+    
+    ' Fallback a Windows-1252
+    Err.Clear
+    Set stream = CreateObject("ADODB.Stream")
+    stream.Type = 2
+    stream.Charset = "Windows-1252"
+    stream.Open
+    stream.LoadFromFile path
+    content = stream.ReadText
+    stream.Close
+    
+    If Err.Number = 0 Then
+        ReadAllTextUtf8WithFallback = content
+    Else
+        ReadAllTextUtf8WithFallback = ""
+    End If
+    Err.Clear
+End Function
+
+' Elimina módulo usando exclusivamente VBIDE
+Function RemoveModuleVBIDEIfExists(name)
+    On Error Resume Next
+    Dim vbProj: Set vbProj = objAccess.VBE.ActiveVBProject
+    Dim comp: Set comp = vbProj.VBComponents(name)
+    If Err.Number = 0 Then vbProj.VBComponents.Remove comp
+    Err.Clear
+End Function
+
+' Importa clase desde string usando VBIDE
+Sub ImportClassFromString(moduleName, content)
+    On Error Resume Next
+    Dim vbProj: Set vbProj = objAccess.VBE.ActiveVBProject
+    Dim comp: Set comp = vbProj.VBComponents.Add(2) ' vbext_ct_ClassModule = 2
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error creando módulo de clase: " & Err.Description
+        Err.Clear
+        Exit Sub
+    End If
+    
+    ' Asignar contenido al módulo
+    comp.CodeModule.DeleteLines 1, comp.CodeModule.CountOfLines
+    comp.CodeModule.AddFromString content
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error agregando código al módulo: " & Err.Description
+        Err.Clear
+        Exit Sub
+    End If
+    
+    ' Renombrar al nombre esperado
+    comp.Name = moduleName
+    If Err.Number <> 0 Then
+        WScript.Echo "  ⚠️ No se pudo renombrar a '" & moduleName & "': " & Err.Description
+        Err.Clear
+    End If
+End Sub
 
 ' Crea copia temporal ANSI (ACP del SO) de un archivo UTF-8 del repo.
 Function MakeAnsiTempCopy(srcPath)
     On Error Resume Next
     Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
     If Not fso.FileExists(srcPath) Then MakeAnsiTempCopy = "": Exit Function
-    Dim tmpDir: tmpDir = fso.GetSpecialFolder(2) 'Temp
-    Dim tmpPath: tmpPath = fso.BuildPath(tmpDir, fso.GetTempName() & "_" & fso.GetFileName(srcPath))
+    Dim tmpDir
+    tmpDir = fso.GetSpecialFolder(2) 'Temp
+    Dim tmpPath
+    tmpPath = fso.BuildPath(tmpDir, fso.GetTempName() & "_" & fso.GetFileName(srcPath))
     ' Leer UTF-8
     Dim sIn: Set sIn = CreateObject("ADODB.Stream")
     sIn.Type = 2: sIn.Charset = "utf-8": sIn.Open: sIn.LoadFromFile srcPath
-    Dim txt: txt = sIn.ReadText: sIn.Close
+    Dim txt
+    txt = sIn.ReadText: sIn.Close
     ' Escribir ANSI usando ACP del SO (FSO.CreateTextFile con unicode:=False)
     Dim t: Set t = fso.CreateTextFile(tmpPath, True, False)
     t.Write txt: t.Close
@@ -6250,7 +6459,8 @@ Sub ConvertAnsiFileToUtf8(srcAnsiPath, dstUtf8Path)
     Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
     ' Leer ANSI con ACP del SO
     Dim t: Set t = fso.OpenTextFile(srcAnsiPath, 1, False) ' ForReading, ANSI
-    Dim txt: txt = t.ReadAll: t.Close
+    Dim txt
+    txt = t.ReadAll: t.Close
     ' Escribir UTF-8 (ADODB.Stream con Charset utf-8)
     Dim sOut: Set sOut = CreateObject("ADODB.Stream")
     sOut.Type = 2: sOut.Charset = "utf-8": sOut.Open
@@ -6264,7 +6474,8 @@ End Sub
 Sub ExportModuleToUtf8(app, moduleName, dstPath)
     On Error Resume Next
     Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
-    Dim tmp: tmp = fso.BuildPath(fso.GetSpecialFolder(2), fso.GetTempName() & "_" & moduleName & ".txt")
+    Dim tmp
+    tmp = fso.BuildPath(fso.GetSpecialFolder(2), fso.GetTempName() & "_" & moduleName & ".txt")
     ' acModule = 5
     app.Application.SaveAsText 5, moduleName, tmp
     If Err.Number <> 0 Then WScript.Echo "  ❌ SaveAsText(" & moduleName & "): " & Err.Description: Err.Clear: Exit Sub
@@ -6273,65 +6484,13 @@ Sub ExportModuleToUtf8(app, moduleName, dstPath)
     WScript.Echo "  ✓ Exportado UTF-8: " & moduleName & " → " & dstPath
 End Sub
 
-' Intenta eliminar un componente por nombre usando VBIDE; fallback DoCmd.DeleteObject acModule.
+' Elimina un componente por nombre usando solo VBIDE.
 Sub RemoveModuleIfExists(app, moduleName)
-    On Error Resume Next
-    Dim vbProj, vbComp, i
-    Set vbProj = app.VBE.ActiveVBProject
-    If Not vbProj Is Nothing Then
-        For i = vbProj.VBComponents.Count To 1 Step -1
-            Set vbComp = vbProj.VBComponents(i)
-            If LCase(vbComp.Name) = LCase(moduleName) Then vbProj.VBComponents.Remove vbComp: Exit Sub
-        Next
-    End If
-    ' Fallback (acModule = 5)
-    app.DoCmd.DeleteObject 5, moduleName
-    Err.Clear
+    Call RemoveVBComponentIfExists(app, moduleName)
 End Sub
 
 ' Importa .bas/.cls desde SRC (UTF-8) creando temp ANSI. .bas → LoadFromText; .cls → VBIDE.Import (+rename).
-Sub ImportVbaFile(srcPath, moduleName)
-    On Error Resume Next
-    Dim fso: Set fso = CreateObject("Scripting.FileSystemObject")
-    If Not fso.FileExists(srcPath) Then WScript.Echo "  ❌ No existe: " & srcPath: Exit Sub
-    Dim ext: ext = LCase(fso.GetExtensionName(srcPath))
-    If ext <> "bas" And ext <> "cls" Then WScript.Echo "  ❌ Tipo no soportado: " & ext: Exit Sub
-    Dim tmp: tmp = MakeAnsiTempCopy(srcPath)
-    If Len(tmp)=0 Then WScript.Echo "  ❌ No se pudo generar temporal ANSI": Exit Sub
 
-    ' Eliminar si ya existe
-    Call RemoveModuleIfExists(objAccess, moduleName)
-
-    If ext = "bas" Then
-        ' acModule = 5
-        objAccess.Application.LoadFromText 5, moduleName, tmp
-        If Err.Number <> 0 Then
-            WScript.Echo "  ❌ LoadFromText(" & moduleName & "): " & Err.Description
-            Err.Clear
-        Else
-            WScript.Echo "  ✓ Módulo estándar importado: " & moduleName
-        End If
-        Call SafeDeleteFile(tmp): Exit Sub
-    End If
-
-    ' .cls vía VBIDE
-    Dim vbProj, vbComp: Set vbProj = objAccess.VBE.ActiveVBProject
-    If vbProj Is Nothing Then
-        WScript.Echo "  ❌ VBIDE no disponible. Habilite 'Trust access to the VBA project object model'."
-        Call SafeDeleteFile(tmp): Exit Sub
-    End If
-    Set vbComp = vbProj.VBComponents.Import(tmp)
-    If Err.Number <> 0 Or vbComp Is Nothing Then
-        WScript.Echo "  ❌ Import(" & moduleName & "): " & Err.Description: Err.Clear
-    Else
-        If vbComp.Name <> moduleName Then
-            vbComp.Name = moduleName
-            If Err.Number <> 0 Then WScript.Echo "  ⚠️ Renombre a '" & moduleName & "' no aplicado (quedó '" & vbComp.Name & "').": Err.Clear
-        End If
-        WScript.Echo "  ✓ Clase importada: " & moduleName
-    End If
-    Call SafeDeleteFile(tmp)
-End Sub
 
 Function DirExists(path)
     DirExists = objFSO.FolderExists(path)
@@ -6386,6 +6545,146 @@ Function RgbHexToOle(hex)
         RgbHexToOle = 0
     End If
 End Function
+
+' ==== DAO helpers canónicos para password + bypass de inicio (.accdb) ====
+
+Sub DaoEnsureEngine(ByRef dao)
+    On Error Resume Next
+    Set dao = CreateObject("DAO.DBEngine.120")
+    If Err.Number <> 0 Then Err.Clear: Set dao = CreateObject("DAO.DBEngine.36")
+    On Error GoTo 0
+End Sub
+
+Function DaoOpenDatabase(dbPath, pwd)
+    Dim dao: Call DaoEnsureEngine(dao)
+    If pwd <> "" Then
+        Set DaoOpenDatabase = dao.OpenDatabase(dbPath, False, False, ";PWD=" & pwd)
+    Else
+        Set DaoOpenDatabase = dao.OpenDatabase(dbPath, False, False)
+    End If
+End Function
+
+Function GetMacrosContainerName(db)
+    If Not IsEmpty(db.Containers("Scripts")) Then GetMacrosContainerName = "Scripts": Exit Function
+    If Not IsEmpty(db.Containers("Macros")) Then GetMacrosContainerName = "Macros": Exit Function
+    GetMacrosContainerName = ""
+End Function
+
+Function IsEmpty(o) : On Error Resume Next: Dim t: Set t = o: IsEmpty = (Err.Number <> 0): Err.Clear: End Function
+
+Function MacroExists(dbPath, pwd, macroName)
+    On Error Resume Next
+    Dim db, cName, c, d
+    Set db = DaoOpenDatabase(dbPath, pwd)
+    If Err.Number <> 0 Then MacroExists = False: Exit Function
+    cName = GetMacrosContainerName(db)
+    If cName = "" Then MacroExists = False: db.Close: Exit Function
+    Set c = db.Containers(cName)
+    For Each d In c.Documents
+        If LCase(d.Name) = LCase(macroName) Then MacroExists = True: db.Close: Exit Function
+    Next
+    MacroExists = False
+    db.Close
+End Function
+
+Sub RenameMacroIfExists(dbPath, pwd, oldName, newName)
+    On Error Resume Next
+    Dim db, cName, c, d
+    Set db = DaoOpenDatabase(dbPath, pwd)
+    If Err.Number <> 0 Then Exit Sub
+    cName = GetMacrosContainerName(db)
+    If cName = "" Then db.Close: Exit Sub
+    Set c = db.Containers(cName)
+    For Each d In c.Documents
+        If LCase(d.Name) = LCase(oldName) Then d.Name = newName: Exit For
+    Next
+    db.Close
+End Sub
+
+Sub DisableStartup(dbPath, pwd, ByRef prevStartupForm, ByRef hadAutoExec)
+    On Error Resume Next
+    Dim db: Set db = DaoOpenDatabase(dbPath, pwd)
+    prevStartupForm = ""
+    prevStartupForm = db.Containers("Databases").Documents("UserDefined").Properties("StartupForm").Value
+    db.Containers("Databases").Documents("UserDefined").Properties("StartupForm").Value = ""
+    hadAutoExec = False
+    Dim cName, c, d: cName = GetMacrosContainerName(db)
+    If cName <> "" Then
+        Set c = db.Containers(cName)
+        For Each d In c.Documents
+            If LCase(d.Name) = "autoexec" Then d.Name = "AutoExec__CONDOR_DISABLED": hadAutoExec = True: Exit For
+        Next
+    End If
+    db.Close
+End Sub
+
+Sub RestoreStartup(dbPath, pwd, prevStartupForm, hadAutoExec)
+    On Error Resume Next
+    Dim db: Set db = DaoOpenDatabase(dbPath, pwd)
+    If prevStartupForm <> "" Then _
+        db.Containers("Databases").Documents("UserDefined").Properties("StartupForm").Value = prevStartupForm
+    Dim cName, c, d: cName = GetMacrosContainerName(db)
+    If hadAutoExec And cName <> "" Then
+        Set c = db.Containers(cName)
+        For Each d In c.Documents
+            If LCase(d.Name) = "autoexec__condor_disabled" Then d.Name = "AutoExec": Exit For
+        Next
+    End If
+    db.Close
+End Sub
+
+Sub OpenAccessSilently(dbPath, pwd, ByRef app)
+    On Error Resume Next
+    Set app = CreateObject("Access.Application")
+    If Err.Number <> 0 Then
+        Set app = Nothing
+        Exit Sub
+    End If
+    app.Visible = False
+    app.UserControl = False
+    If pwd <> "" Then
+        app.OpenCurrentDatabase dbPath, False, pwd
+    Else
+        app.OpenCurrentDatabase dbPath, False
+    End If
+    If Err.Number <> 0 Then
+        app.Quit
+        Set app = Nothing
+        Exit Sub
+    End If
+    app.Application.Echo False
+    On Error GoTo 0
+End Sub
+
+Function OpenAccessApp(dbPath, password, bypassStartup)
+    Dim app
+    If bypassStartup Then
+        Call DisableStartup(dbPath, password, gPreviousStartupForm, gPreviousHasAutoExec)
+        gBypassStartupEnabled = True
+        gCurrentDbPath = dbPath
+        gCurrentPassword = password
+        Call OpenAccessSilently(dbPath, password, app)
+    Else
+        Call OpenAccessSilently(dbPath, password, app)
+    End If
+    Set OpenAccessApp = app
+End Function
+
+Sub CloseAccessApp(app)
+    On Error Resume Next
+    app.Application.Echo True
+    app.CloseCurrentDatabase
+    app.Quit
+    Set app = Nothing
+    If gBypassStartupEnabled Then
+        Call RestoreStartup(gCurrentDbPath, gCurrentPassword, gPreviousStartupForm, gPreviousHasAutoExec)
+    End If
+    gBypassStartupEnabled = False
+    gCurrentDbPath = "": gCurrentPassword = ""
+    Set gPreviousStartupForm = Nothing: gPreviousHasAutoExec = False
+End Sub
+
+' ==== FIN helpers canónicos ====
 
 ' ============================================================================
 ' DIFF SEMÁNTICO JSON
@@ -6787,67 +7086,6 @@ End Sub
 ' FUNCIONES DAO PARA BYPASS STARTUP
 ' ============================================================================
 
-' Función para abrir base de datos con DAO
-Function DaoOpenDatabase(dbPath, password)
-    Dim dbEngine, db
-    
-    On Error Resume Next
-    ' Intentar DAO 12.0 primero (Access 2007+)
-    Set dbEngine = CreateObject("DAO.DBEngine.120")
-    If Err.Number <> 0 Then
-        Err.Clear
-        ' Fallback a DAO 3.6 (Access 2003)
-        Set dbEngine = CreateObject("DAO.DBEngine.36")
-        If Err.Number <> 0 Then
-            WScript.Echo "ERROR: No se pudo crear DAO.DBEngine. Instala Access/Access Database Engine."
-            WScript.Quit 1
-        End If
-    End If
-    
-    ' Abrir base de datos
-    If password <> "" Then
-        Set db = dbEngine.OpenDatabase(dbPath, True, False, "MS Access;PWD=" & password)
-    Else
-        Set db = dbEngine.OpenDatabase(dbPath, True, False)
-    End If
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "ERROR: No se pudo abrir la base de datos: " & Err.Description
-        WScript.Quit 1
-    End If
-    On Error GoTo 0
-    
-    Set DaoOpenDatabase = db
-End Function
-
-' Función para verificar si una propiedad existe
-Function HasProp(db, propName)
-    Dim prop
-    On Error Resume Next
-    Set prop = db.Properties(propName)
-    If Err.Number = 3270 Then ' Property not found
-        HasProp = False
-        Err.Clear
-    Else
-        HasProp = True
-    End If
-    On Error GoTo 0
-End Function
-
-' Función para obtener AllowByPassKey
-Function GetAllowBypassKey(dbPath, password)
-    Dim db
-    Set db = DaoOpenDatabase(dbPath, password)
-    
-    If HasProp(db, "AllowByPassKey") Then
-        GetAllowBypassKey = CBool(db.Properties("AllowByPassKey"))
-    Else
-        GetAllowBypassKey = Null
-    End If
-    
-    db.Close
-End Function
-
 ' Subrutina para establecer AllowByPassKey
 Sub SetAllowBypassKey(dbPath, password, value)
     Dim db, prop
@@ -6897,7 +7135,12 @@ Sub ListModules()
     ' Recopilar módulos del proyecto
     For Each vbComponent In vbProject.VBComponents
         If vbComponent.Type = 1 Or vbComponent.Type = 2 Then
-            Dim ext: ext = IIf(vbComponent.Type = 1, ".bas", ".cls")
+            Dim ext
+            If vbComponent.Type = 1 Then
+                ext = ".bas"
+            Else
+                ext = ".cls"
+            End If
             modules.Add vbComponent.Name, ext
         End If
     Next
@@ -6910,7 +7153,8 @@ Sub ListModules()
             Dim file
             For Each file In folder.Files
                 If LCase(fso.GetExtensionName(file.Name)) = "bas" Or LCase(fso.GetExtensionName(file.Name)) = "cls" Then
-                    Dim baseName: baseName = fso.GetBaseName(file.Name)
+                    Dim baseName
+                    baseName = fso.GetBaseName(file.Name)
                     srcFiles.Add baseName, "." & LCase(fso.GetExtensionName(file.Name))
                 End If
             Next
@@ -6920,12 +7164,13 @@ Sub ListModules()
     ' Generar salida
     If flagJson Then
         WScript.Echo "{"
-        WScript.Echo "  \"modules\": ["
-        Dim first: first = True
+        WScript.Echo "  ""modules"": ["
+        Dim first
+        first = True
         Dim key
         For Each key In modules.Keys
             If Not first Then WScript.Echo ","
-            WScript.Echo "    {\"name\": \"" & key & "\", \"type\": \"" & modules(key) & "\"}"
+            WScript.Echo "    {""name"": """ & key & """, ""type"": """ & modules(key) & """}"
             first = False
         Next
         WScript.Echo "  ]"
@@ -6933,7 +7178,8 @@ Sub ListModules()
     Else
         WScript.Echo "Módulos VBA encontrados:"
         For Each key In modules.Keys
-            Dim status: status = ""
+            Dim status
+            status = ""
             If flagExpectSrc Then
                 If srcFiles.Exists(key) Then
                     status = " [✓ src]"
@@ -6976,125 +7222,67 @@ Sub VerifyModulesIfRequested()
     Next
     
     If hasVerifyFlag Then
-        WScript.Echo "\n=== VERIFICACION DE MODULOS ==="
+        WScript.Echo ""
+        WScript.Echo "=== VERIFICACION DE MODULOS ==="
         WScript.Echo "Ejecutando verificación de consistencia..."
         
-        ' Simular llamada a list-modules --expectSrc --diff
-        Dim objShell, cmd, result
-        Set objShell = CreateObject("WScript.Shell")
-        cmd = "cscript \"" & WScript.ScriptFullName & "\" list-modules --expectSrc --diff"
-        
-        On Error Resume Next
-        result = objShell.Run(cmd, 0, True)
-        
-        If Err.Number <> 0 Then
-            WScript.Echo "⚠ Advertencia: No se pudo ejecutar verificación automática"
-            WScript.Echo "Ejecute manualmente: cscript condor_cli.vbs list-modules --expectSrc --diff"
-            Err.Clear
-        ElseIf result <> 0 Then
-            WScript.Echo "⚠ La verificación detectó inconsistencias"
-        Else
-            WScript.Echo "✓ Verificación completada sin inconsistencias"
-        End If
-        
-        On Error GoTo 0
+        ' Llamar directamente a la verificación interna
+        Call VerifyModulesInternal()
     End If
 End Sub
 
-' Subrutina para eliminar AllowByPassKey
-Sub DeleteAllowBypassKey(dbPath, password)
-    Dim db
-    Set db = DaoOpenDatabase(dbPath, password)
-    
+' Verificación interna de módulos
+Sub VerifyModulesInternal()
     On Error Resume Next
-    If HasProp(db, "AllowByPassKey") Then
-        db.Properties.Delete "AllowByPassKey"
-    End If
-    On Error GoTo 0
+    Dim app, arr(), expected, diffInfo, hasVBIDE
     
-    db.Close
-End Sub
-
-' ============================================================================
-' FUNCIONES PARA APERTURA DE ACCESS CON BYPASS
-' ============================================================================
-
-' Función para abrir Access con bypass startup
-Function OpenAccessApp(dbPath, password, bypassStartup)
-    Dim app
-    
-    ' Inicializar variables globales
-    gBypassStartupEnabled = bypassStartup
-    gCurrentDbPath = dbPath
-    gCurrentPassword = password
-    gUsedStrategyB = False
-    
-    If bypassStartup = True Then
-        If gVerbose Then WScript.Echo "[VERBOSE] Intentando bypass con Estrategia A (msaccess.exe /nostartup)"
-        
-        ' ESTRATEGIA A (preferida): msaccess.exe /nostartup
-        Set app = TryStrategyA(dbPath, password)
-        
-        If app Is Nothing Then
-            If gVerbose Then WScript.Echo "[VERBOSE] Estrategia A falló, intentando Estrategia B (DAO)"
-            
-            ' ESTRATEGIA B (fallback): DAO con modificación temporal
-            Set app = TryStrategyB(dbPath, password)
-            gUsedStrategyB = True
-        End If
-    Else
-        ' Sin bypass, apertura normal
-        If gVerbose Then WScript.Echo "[VERBOSE] Apertura normal sin bypass"
-        Set app = CreateAccessApp(dbPath, password)
-    End If
-    
+    ' Usar la sesión de Access ya abierta
+    Set app = objAccess
     If app Is Nothing Then
-        WScript.Echo "ERROR: No se pudo abrir Access con ninguna estrategia"
-        WScript.Quit 1
+        WScript.Echo "⚠ Advertencia: No hay sesión de Access disponible para verificación"
+        Exit Sub
     End If
     
-    ' Configurar Access en modo silencioso
-    On Error Resume Next
-    app.Visible = False
-    app.Application.Echo False
+    ' Inicializar array
+    ReDim arr(-1)
+    
+    ' Intentar listar con VBIDE primero
+    hasVBIDE = TryListModulesVBIDE(app, False, "", arr)
+    
+    ' Si falla, usar fallback
+    If Not hasVBIDE Then
+        arr = Array()
+        If Not TryListModulesAllModules(app, "", arr) Then
+            WScript.Echo "⚠ Advertencia: No se pudieron listar los módulos para verificación"
+            Exit Sub
+        End If
+    End If
+    
+    ' Cargar módulos esperados desde /src
+    Set expected = LoadExpectedFromSrc(strSourcePath)
+    Set diffInfo = DiffModules(arr, expected)
+    
+    ' Verificar diferencias
+    If diffInfo("missingCount") > 0 Or diffInfo("extraCount") > 0 Then
+        WScript.Echo "⚠ La verificación detectó inconsistencias:"
+        If diffInfo("missingCount") > 0 Then
+            WScript.Echo "  - Módulos faltantes: " & diffInfo("missingCount")
+        End If
+        If diffInfo("extraCount") > 0 Then
+            WScript.Echo "  - Módulos extras: " & diffInfo("extraCount")
+        End If
+        WScript.Echo "Ejecute: cscript condor_cli.vbs list-modules /expectSrc:\"" & strSourcePath & "\" /diff:on"
+        WScript.Quit 1
+    Else
+        WScript.Echo "✓ Verificación completada sin inconsistencias"
+    End If
+    
     On Error GoTo 0
     
-    Set OpenAccessApp = app
-End Function
-
-' Subrutina para cerrar Access y restaurar estado
-Sub CloseAccessApp(app)
-    On Error Resume Next
-    app.Application.Echo True
-    app.CloseCurrentDatabase
-    app.Quit
-    Set app = Nothing
-    On Error GoTo 0
-    
-    ' Restaurar estado solo si se usó Estrategia B
-    If gBypassStartupEnabled = True And gUsedStrategyB = True Then
-        If gVerbose Then WScript.Echo "[VERBOSE] Restaurando estado después de Estrategia B"
-        
-        ' Restaurar StartupForm
-        If Not IsNull(gPreviousStartupForm) Then
-            SetStartupForm gCurrentDbPath, gCurrentPassword, gPreviousStartupForm
-        Else
-            ClearStartupForm gCurrentDbPath, gCurrentPassword
-        End If
-        
-        ' Restaurar macro AutoExec
-        If gPreviousHasAutoExec Then
-            RenameMacroIfExists gCurrentDbPath, gCurrentPassword, "AutoExec__CONDOR_DISABLED", "AutoExec"
-        End If
-        
-        ' Restaurar AllowByPassKey
-        If IsNull(gPreviousAllowBypassKey) Then
-            DeleteAllowBypassKey gCurrentDbPath, gCurrentPassword
-        Else
-            SetAllowBypassKey gCurrentDbPath, gCurrentPassword, CBool(gPreviousAllowBypassKey)
-        End If
-        
-        If gVerbose Then WScript.Echo "[VERBOSE] Estado restaurado completamente"
+    ' Restaurar estado si se usó bypass
+    If gBypassStartupEnabled = True Then
+        If gVerbose Then WScript.Echo "[VERBOSE] Restaurando estado después de usar DisableStartup"
+        Call RestoreStartup(gCurrentDbPath, gCurrentPassword, gPreviousStartupForm, gPreviousHasAutoExec)
     End If
     
     ' Limpiar variables globales
@@ -7104,7 +7292,6 @@ Sub CloseAccessApp(app)
     gCurrentPassword = ""
     gPreviousStartupForm = Null
     gPreviousHasAutoExec = False
-    gUsedStrategyB = False
 End Sub
 
 ' ============================================================================
@@ -7198,8 +7385,12 @@ Sub ResolveDbPath()
                 Else
                     strAccessPath = strDataPath
                 End If
-            ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "update" Then
-                strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
+            ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "update" Or strAction = "list-modules" Then
+                If objArgs.Count > 1 Then
+                    strAccessPath = ResolveRelativePath(objArgs(1))
+                Else
+                    strAccessPath = strDataPath
+                End If
             Else
                 strAccessPath = strDataPath
             End If
@@ -7305,6 +7496,9 @@ Sub UpdateAllModulesTransactional()
     Next
     
     WScript.Echo "Modulos actualizados: " & importedCount
+    
+    ' Verificación opcional de módulos
+    Call VerifyModulesIfRequested()
 End Sub
 
 ' Actualizar módulo específico
@@ -7404,6 +7598,9 @@ Sub UpdateChangedModulesTransactional()
     End If
     
     WScript.Echo "Modulos actualizados: " & importedCount
+    
+    ' Verificación opcional de módulos
+    Call VerifyModulesIfRequested()
 End Sub
 
 ' Exportar módulos a directorio (versión transaccional)
@@ -7461,134 +7658,321 @@ Sub RestoreStartupForm(dbPath, password, startupForm)
     Set db = Nothing
 End Sub
 
-' ============================================================================
-' FUNCIONES DE ESTRATEGIAS PARA BYPASS STARTUP
-' ============================================================================
+' ===== FUNCIONES PARA LIST-MODULES =====
 
-' Función para crear aplicación Access normal
-Function CreateAccessApp(dbPath, password)
+' Función para listar módulos usando VBIDE
+' ===== LIST-MODULES | Núcleo de listado y salida =====
+
+Function TryListModulesVBIDE(app, includeDocs, pattern, ByRef arr)
     On Error Resume Next
-    Dim app
-    Set app = CreateObject("Access.Application")
-    If Err.Number <> 0 Then
-        Set CreateAccessApp = Nothing
+    Dim vbComp, regex, kind, name
+    If pattern <> "" Then
+        Set regex = CreateObject("VBScript.RegExp")
+        regex.Pattern = pattern
+        regex.IgnoreCase = True
+    End If
+    ReDim arr(-1)
+    
+    ' Verificar acceso a VBE
+    If app.VBE Is Nothing Then
+        WScript.Echo "DEBUG: app.VBE es Nothing"
+        TryListModulesVBIDE = False
         Exit Function
     End If
     
-    ' Configurar Access para acceso programático
-    app.Visible = False
-    app.DisplayAlerts = False
-    app.UserControl = False
+    If app.VBE.ActiveVBProject Is Nothing Then
+        WScript.Echo "DEBUG: app.VBE.ActiveVBProject es Nothing"
+        TryListModulesVBIDE = False
+        Exit Function
+    End If
     
-    If password <> "" Then
-        app.OpenCurrentDatabase dbPath, False, password
+    WScript.Echo "DEBUG: Accediendo a VBComponents..."
+    For Each vbComp In app.VBE.ActiveVBProject.VBComponents
+        Select Case vbComp.Type
+            Case 1: kind = "STD"
+            Case 2: kind = "CLS"
+            Case 3: kind = "FRM"
+            Case 100: kind = "RPT"
+            Case Else: kind = "OTHER"
+        End Select
+        name = vbComp.Name
+        If (kind = "FRM" Or kind = "RPT") And Not includeDocs Then
+            ' omitidos
+        Else
+            If pattern = "" Or regex.Test(name) Then
+                If UBound(arr) = -1 Then
+                    ReDim arr(0)
+                Else
+                    ReDim Preserve arr(UBound(arr)+1)
+                End If
+                Set arr(UBound(arr)) = CreateObject("Scripting.Dictionary")
+                arr(UBound(arr)).Add "kind", kind
+                arr(UBound(arr)).Add "name", name
+            End If
+        End If
+    Next
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "DEBUG: Error en TryListModulesVBIDE: " & Err.Number & " - " & Err.Description
+        TryListModulesVBIDE = False
     Else
-        app.OpenCurrentDatabase dbPath, False
-    End If
-    
-    If Err.Number <> 0 Then
-        app.Quit
-        Set app = Nothing
-        Set CreateAccessApp = Nothing
-        Exit Function
-    End If
-    
-    ' Verificar acceso al VBE después de abrir la base de datos
-    On Error Resume Next
-    Dim testVBE
-    Set testVBE = app.VBE
-    If Err.Number <> 0 Then
-        WScript.Echo "⚠️ Advertencia: No se puede acceder al VBE. Verifique la configuración de seguridad de macros."
-        Err.Clear
+        TryListModulesVBIDE = True
     End If
     On Error GoTo 0
-    
-    Set CreateAccessApp = app
 End Function
 
-' Estrategia A: Usar msaccess.exe /nostartup (no implementada aún)
-Function TryStrategyA(dbPath, password)
+Function TryListModulesAllModules(app, pattern, ByRef arr)
     On Error Resume Next
-    Dim sh, cmd, q, exe, rc, t0, app, i
-    Set sh = CreateObject("WScript.Shell")
-    q = Chr(34)
-    exe = "msaccess.exe"
-    cmd = exe & " " & q & dbPath & q & " /nostartup"
-    If password <> "" Then cmd = cmd & " /pwd " & q & password & q
-
-    rc = sh.Run(cmd, 0, False) ' no esperar
-
-    ' Intentar adjuntarnos a la instancia
-    Set app = Nothing
-    For i = 1 To 50 ' ~5s
-        On Error Resume Next
-        Set app = GetObject(, "Access.Application")
-        On Error GoTo 0
-        If Not app Is Nothing Then Exit For
-        WScript.Sleep 100
-    Next
-
-    ' Si no pudimos adjuntar, devolver Nothing
-    If app Is Nothing Then
-        Set TryStrategyA = Nothing
+    Dim obj, regex, name, dict
+    If pattern <> "" Then
+        Set regex = CreateObject("VBScript.RegExp")
+        regex.Pattern = pattern
+        regex.IgnoreCase = True
+    End If
+    ReDim arr(-1)
+    
+    ' Verificar acceso a CurrentProject
+    If app.CurrentProject Is Nothing Then
+        WScript.Echo "DEBUG: app.CurrentProject es Nothing"
+        TryListModulesAllModules = False
         Exit Function
     End If
-
-    ' Silencio UI
-    On Error Resume Next
-    app.Visible = False
-    app.DisplayAlerts = False
-    app.UserControl = False
-    app.Application.Echo False
+    
+    WScript.Echo "DEBUG: Accediendo a AllModules..."
+    For Each obj In app.CurrentProject.AllModules
+        name = obj.Name
+        If pattern = "" Or regex.Test(name) Then
+            If UBound(arr) = -1 Then
+                ReDim arr(0)
+            Else
+                ReDim Preserve arr(UBound(arr)+1)
+            End If
+            Set dict = CreateObject("Scripting.Dictionary")
+            dict.Add "kind", "STD"
+            dict.Add "name", name
+            Set arr(UBound(arr)) = dict
+        End If
+    Next
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "DEBUG: Error en TryListModulesAllModules: " & Err.Number & " - " & Err.Description
+        TryListModulesAllModules = False
+    Else
+        TryListModulesAllModules = True
+    End If
     On Error GoTo 0
+End Function
 
-    ' Si la BD no quedó abierta (depende de asociación), ábrela sin startup otra vez
-    On Error Resume Next
-    If app.CurrentProject Is Nothing Or app.CurrentProject.Name = "" Then
-        If password <> "" Then
-            app.OpenCurrentDatabase dbPath, False, password
+Sub PrintModulesText(arr)
+    Dim total, i: total = 0
+    If IsArray(arr) Then If UBound(arr) >= 0 Then total = UBound(arr)+1
+    WScript.Echo "KIND  Name": WScript.Echo "----  ----"
+    If total > 0 Then
+        For i = 0 To UBound(arr)
+            WScript.Echo arr(i)("kind") & "   " & arr(i)("name")
+        Next
+    End If
+    WScript.Echo "": WScript.Echo "Total: " & total & " módulos"
+End Sub
+
+Sub PrintModulesJson(arr, diffInfo)
+    Dim total, i: total = 0
+    If IsArray(arr) Then If UBound(arr) >= 0 Then total = UBound(arr)+1
+    Dim json, first: json = "{""modules"":[" : first = True
+    If total > 0 Then
+        For i = 0 To UBound(arr)
+            If Not first Then json = json & ","
+            json = json & "{""kind"":""" & arr(i)("kind") & """,""name"":""" & arr(i)("name") & """}"
+            first = False
+        Next
+    End If
+    json = json & "],""total"":" & total
+
+    If IsObject(diffInfo) Then
+        json = json & ",""diff"":{" & _
+               """missing"":" & diffInfo("missingCount") & "," & _
+               """extra"":" & diffInfo("extraCount") & "}"
+    End If
+
+    json = json & "}"
+    WScript.Echo json
+End Sub
+
+Function LoadExpectedFromSrc(srcFolder)
+    Dim expected, objFile, fileName, baseName
+    Set expected = CreateObject("Scripting.Dictionary")
+    If objFSO.FolderExists(srcFolder) Then
+        For Each objFile In objFSO.GetFolder(srcFolder).Files
+            fileName = objFile.Name
+            If LCase(Right(fileName,4)) = ".bas" Then
+                baseName = Left(fileName, Len(fileName)-4): expected(baseName) = "STD"
+            ElseIf LCase(Right(fileName,4)) = ".cls" Then
+                baseName = Left(fileName, Len(fileName)-4): expected(baseName) = "CLS"
+            End If
+        Next
+    End If
+    Set LoadExpectedFromSrc = expected
+End Function
+
+Function DiffModules(arr, expected)
+    Dim present, missing, extra, diffInfo, i, name, kind, key
+    Set present = CreateObject("Scripting.Dictionary")
+    Set missing = CreateObject("Scripting.Dictionary")
+    Set extra   = CreateObject("Scripting.Dictionary")
+    If IsArray(arr) Then
+        For i = 0 To UBound(arr)
+            kind = arr(i)("kind"): name = arr(i)("name")
+            If kind = "STD" Or kind = "CLS" Then present(name) = kind
+        Next
+    End If
+    For Each key In expected.Keys
+        If Not present.Exists(key) Then missing(key) = expected(key)
+    Next
+    For Each key In present.Keys
+        If Not expected.Exists(key) Then extra(key) = present(key)
+    Next
+    Set diffInfo = CreateObject("Scripting.Dictionary")
+    diffInfo("missing") = missing: diffInfo("extra") = extra
+    diffInfo("missingCount") = missing.Count: diffInfo("extraCount") = extra.Count
+    Set DiffModules = diffInfo
+End Function
+
+' ===== FIN núcleo list-modules =====
+
+' Comando principal list-modules
+' ===== LIST-MODULES | Comando principal =====
+Sub ListModulesCommand()
+    Dim app, closeAfter, arr(), includeDocs, pattern, jsonOn, diffOn
+    Dim expectSrc, expectRaw, expected, diffInfo, ok
+    Dim dbPath, pwd
+
+    includeDocs = HasFlag("includeDocs")     ' --includeDocs
+    pattern     = GetArgValue("pattern")     ' --pattern <regex>
+    jsonOn      = HasFlag("json")            ' --json
+    diffOn      = HasFlag("diff")            ' --diff
+
+    ' DB/Password explícitos o por defecto del CLI
+    dbPath = GetArgValue("db")
+    password = GetArgValue("password")
+    If dbPath = "" Then dbPath = strAccessPath
+    If password = "" Then password = gPassword
+
+    ' Expectación de /src para diff (si --expectSrc sin valor, usar strSourcePath)
+    expectRaw = GetArgValue("expectSrc")     ' --expectSrc [ruta]
+    If HasFlag("expectSrc") Then
+        If expectRaw = "" Or LCase(expectRaw) = "on" Then
+            expectSrc = strSourcePath
         Else
-            app.OpenCurrentDatabase dbPath, False
+            expectSrc = expectRaw
+        End If
+    Else
+        expectSrc = ""
+    End If
+
+    ' Verificar si necesitamos abrir Access o usar instancia existente
+    Set app = Nothing
+    closeAfter = False
+    
+    ' Si objAccess existe y tiene la BD correcta, usarlo
+    If Not objAccess Is Nothing Then
+        On Error Resume Next
+        If objAccess.CurrentDb.Name = dbPath Then
+            Set app = objAccess
+        End If
+        On Error GoTo 0
+    End If
+    
+    ' Si no tenemos app válida, abrir nueva instancia
+    If app Is Nothing Then
+        Set app = OpenAccessApp(dbPath, password, True) ' bypass on
+        If app Is Nothing Then
+            WScript.Echo "Error: No se pudo abrir Access para listar módulos."
+            WScript.Quit 1
+        End If
+        closeAfter = True
+    End If
+
+    ' Preferir VBIDE; fallback AllModules
+    WScript.Echo "DEBUG: Intentando TryListModulesVBIDE..."
+    ok = TryListModulesVBIDE(app, includeDocs, pattern, arr)
+    WScript.Echo "DEBUG: TryListModulesVBIDE resultado: " & ok
+    If Not ok Then
+        WScript.Echo "DEBUG: Intentando TryListModulesAllModules..."
+        ok = TryListModulesAllModules(app, pattern, arr)
+        WScript.Echo "DEBUG: TryListModulesAllModules resultado: " & ok
+        If Not ok Then
+            Call CloseAccessApp(app)
+            WScript.Echo "Error: No se pudieron listar los módulos."
+            WScript.Quit 1
         End If
     End If
-    On Error GoTo 0
 
-    Set TryStrategyA = app
+    ' Diff opcional contra /src
+    If expectSrc <> "" And objFSO.FolderExists(expectSrc) Then
+        Set expected = LoadExpectedFromSrc(expectSrc)
+        Set diffInfo = DiffModules(arr, expected)
+    End If
+
+    ' Salida
+    If jsonOn Then
+        Call PrintModulesJson(arr, diffInfo)
+    Else
+        Call PrintModulesText(arr)
+        If IsObject(diffInfo) Then
+            If diffInfo("missingCount") > 0 Or diffInfo("extraCount") > 0 Then
+                WScript.Echo "DIFERENCIAS:"
+                WScript.Echo "  Faltantes: " & diffInfo("missingCount")
+                WScript.Echo "  Extras:    " & diffInfo("extraCount")
+            End If
+        End If
+    End If
+
+    If closeAfter Then Call CloseAccessApp(app)
+End Sub
+' ===== FIN comando principal =====
+
+
+
+' Función para verificar si existe un contenedor en la base de datos
+Function HasContainer(db, name)
+    On Error Resume Next
+    Dim container
+    Set container = db.Containers(name)
+    HasContainer = (Err.Number = 0)
+    On Error GoTo 0
 End Function
 
-' Estrategia B: DAO con modificación temporal
-Function TryStrategyB(dbPath, password)
-    On Error Resume Next
-    
-    ' Guardar estado actual
-    gPreviousStartupForm = GetStartupForm(dbPath, password)
-    gPreviousHasAutoExec = MacroExists(dbPath, password, "AutoExec")
-    gPreviousAllowBypassKey = GetAllowBypassKey(dbPath, password)
-    
-    ' Deshabilitar startup temporalmente
-    ClearStartupForm dbPath, password
-    RenameMacroIfExists dbPath, password, "AutoExec", "AutoExec__CONDOR_DISABLED"
-    SetAllowBypassKey dbPath, password, True
-    
-    ' Crear aplicación Access
-    Dim app
-    Set app = CreateAccessApp(dbPath, password)
-    
-    Set TryStrategyB = app
+' Función para obtener el nombre del contenedor de macros
+Function GetMacroContainerName(db)
+    If HasContainer(db, "Scripts") Then
+        GetMacroContainerName = "Scripts"
+    ElseIf HasContainer(db, "Macros") Then
+        GetMacroContainerName = "Macros"
+    Else
+        GetMacroContainerName = ""
+    End If
 End Function
 
 ' Función para verificar si existe una macro
 Function MacroExists(dbPath, password, macroName)
     On Error Resume Next
-    Dim db, doc
+    Dim db, doc, cName
     Set db = DaoOpenDatabase(dbPath, password)
     If Err.Number <> 0 Then
         MacroExists = False
         Exit Function
     End If
     
-    For Each doc In db.Containers("Modules").Documents
-        If doc.Name = macroName Then
+    cName = GetMacroContainerName(db)
+    If cName = "" Then
+        MacroExists = False
+        db.Close
+        Set db = Nothing
+        Exit Function
+    End If
+    
+    For Each doc In db.Containers(cName).Documents
+        If LCase(doc.Name) = LCase(macroName) Then
             MacroExists = True
             db.Close
             Set db = Nothing
@@ -7599,17 +7983,25 @@ Function MacroExists(dbPath, password, macroName)
     MacroExists = False
     db.Close
     Set db = Nothing
+    On Error GoTo 0
 End Function
 
 ' Subrutina para renombrar macro si existe
 Sub RenameMacroIfExists(dbPath, password, oldName, newName)
     On Error Resume Next
-    Dim db, doc
+    Dim db, doc, cName
     Set db = DaoOpenDatabase(dbPath, password)
     If Err.Number <> 0 Then Exit Sub
     
-    For Each doc In db.Containers("Modules").Documents
-        If doc.Name = oldName Then
+    cName = GetMacroContainerName(db)
+    If cName = "" Then
+        db.Close
+        Set db = Nothing
+        Exit Sub
+    End If
+    
+    For Each doc In db.Containers(cName).Documents
+        If LCase(doc.Name) = LCase(oldName) Then
             doc.Name = newName
             Exit For
         End If
@@ -7617,4 +8009,5 @@ Sub RenameMacroIfExists(dbPath, password, oldName, newName)
     
     db.Close
     Set db = Nothing
+    On Error GoTo 0
 End Sub
