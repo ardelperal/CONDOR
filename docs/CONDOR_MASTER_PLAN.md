@@ -2046,6 +2046,15 @@ cscript condor_cli.vbs rebuild [--verbose] [--password <pwd>]
 - Strategy B: DAO con neutralización temporal de StartupForm y AutoExec (restauración automática)
 - Garantiza un estado limpio del proyecto sin interferencias de código de inicio
 
+**Patrón Canónico de Importación VBA:**
+- **Archivos .bas**: `Application.LoadFromText(5, moduleName, tmpFileAnsi)` - Conversión UTF-8→ANSI automática
+- **Archivos .cls**: `VBComponents.Import(tmpFileAnsi)` + rename automático - Conversión UTF-8→ANSI automática
+- **Sin DoCmd.Save por módulo**: Eliminado completamente para evitar errores "424 - Se requiere un objeto"
+- **Guardado global único**: `RunCommand 636` (Compile & Save All Modules) al final del proceso
+- **Flujo unificado**: CreateAnsiTempFrom → LoadFromText/Import → RemoveComponent → Global Save
+- **Requisito crítico**: Trust Center → "Confiar en el acceso al modelo de objetos de proyectos de VBA"
+- **Compilación centralizada**: Una sola operación de guardado y compilación al completar todas las importaciones
+
 **`test`**
 Ejecuta las pruebas unitarias del proyecto.
 

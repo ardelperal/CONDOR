@@ -1,0 +1,48 @@
+{
+  "formName": "TestForm",
+  "properties": {
+    "caption": "Formulario de Prueba",
+    "width": 8000,
+    "height": 6000,
+    "backColor": "#FFFFFF",
+    "modal": false,
+    "popup": false,
+    "borderStyle": "Sizable",
+    "controlBox": true,
+    "minMaxButtons": true
+  },
+  "sections": {
+    "detail": {
+      "controls": [
+        {
+          "name": "lblTitulo",
+          "type": "label",
+          "caption": "Título del Formulario",
+          "left": 500,
+          "top": 300,
+          "width": 3000,
+          "height": 400
+        },
+        {
+          "name": "txtNombre",
+          "type": "textbox",
+          "controlSource": "Nombre",
+          "left": 500,
+          "top": 1000,
+          "width": 2500,
+          "height": 300
+        },
+        {
+          "name": "btnGuardar",
+          "type": "commandbutton",
+          "caption": "Guardar",
+          "left": 500,
+          "top": 1500,
+          "width": 1200,
+          "height": 400,
+          "onClick": "[Event Procedure]"
+        }
+      ]
+    }
+  }
+}

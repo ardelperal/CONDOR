@@ -193,6 +193,8 @@ If strAction <> "bundle" And strAction <> "validate-schema" And strAction <> "va
         Set objAccess = OpenAccessApp(strAccessPath, gPassword, gBypassStartup)
     End If
     If Not objAccess Is Nothing Then
+        ' Remover referencias rotas SIEMPRE después de abrir la BD
+        Call RemoveBrokenReferences(objAccess)
         Call EnsureVBReferences
     End If
 End If
@@ -1313,7 +1315,10 @@ End Sub
 Function EnsureVBProject(app)
     On Error Resume Next
     Dim p: Set p = app.VBE.ActiveVBProject
-    If Err.Number<>0 Then WScript.Echo "❌ Activa 'Confiar en el modelo de objetos VBA'": WScript.Quit 1
+    If Err.Number<>0 Or p Is Nothing Then
+        WScript.Echo "❌ VBIDE no accesible. Activa 'Confiar en el modelo de objetos de proyectos de VBA'."
+        WScript.Quit 1
+    End If
     Set EnsureVBProject = p
 End Function
 
@@ -1333,15 +1338,16 @@ Function CreateAnsiTempFrom(path)
     Set sOut=CreateObject("ADODB.Stream"): sOut.Type=2: sOut.Charset="Windows-1252": sOut.Open
     sOut.WriteText txt: sOut.SaveToFile tmp,2: sOut.Close
     If Err.Number<>0 And Not objFSO.FileExists(tmp) Then objFSO.CopyFile path,tmp,True
+    Err.Clear
     CreateAnsiTempFrom = tmp
 End Function
 
 Function ImportVbComponentFromFile(app, moduleName, srcPath)
     On Error Resume Next
     Dim p,tmp,c: Set p=EnsureVBProject(app): tmp=CreateAnsiTempFrom(srcPath)
-    p.VBComponents.Import tmp: If Err.Number<>0 Then WScript.Echo "❌ Import "&srcPath&": "&Err.Description: ImportVbComponentFromFile=False: Err.Clear: Exit Function
+    p.VBComponents.Import tmp
+    If Err.Number<>0 Then WScript.Echo "  ❌ Import VBIDE "&srcPath&": "&Err.Number&" - "&Err.Description: Err.Clear: ImportVbComponentFromFile=False: Exit Function
     Set c = p.VBComponents(p.VBComponents.Count): c.Name = moduleName
-    app.DoCmd.SetWarnings False: app.DoCmd.Save 5, moduleName: app.DoCmd.SetWarnings True ' 5=acModule
     If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True
     ImportVbComponentFromFile = True
 End Function
@@ -1609,32 +1615,29 @@ End Sub
 ' Importa un módulo .bas o .cls desde /src en la sesión ACTUAL sin diálogos.
 ' - .bas: Application.LoadFromText acModule
 ' - .cls: VBIDE.VBComponents.Import y renombrado
-Sub ImportVbaFile(sourcePath, moduleName)
+Function ImportVbaFile(sourcePath, moduleName)
     On Error Resume Next
-    
-    ' Validar existencia y extensión
-    If Not objFSO.FileExists(sourcePath) Then
-        WScript.Echo "  ❌ Archivo no encontrado: " & sourcePath
-        Exit Sub
-    End If
-    
-    Dim ext
-    ext = LCase(objFSO.GetExtensionName(sourcePath))
-    If ext <> "bas" And ext <> "cls" Then
-        WScript.Echo "  ❌ Extensión no válida: " & ext & " (esperado .bas o .cls)"
-        Exit Sub
-    End If
+    ImportVbaFile = False
+    If Not objFSO.FileExists(sourcePath) Then WScript.Echo "  ❌ Archivo no encontrado: " & sourcePath: Exit Function
+    Dim ext: ext = LCase(objFSO.GetExtensionName(sourcePath))
+    If ext<>"bas" And ext<>"cls" Then WScript.Echo "  ❌ Extensión no válida: " & ext: Exit Function
 
-    ' Eliminar módulo previo si existe
+    ' Siempre garantizar VBIDE y limpiar existente
     Call RemoveVBComponentIfExists(objAccess, moduleName)
 
-    ' Importar usando helper compacto
-    Dim ok
-    ok = ImportVbComponentFromFile(objAccess, moduleName, sourcePath)
-    If Not ok Then WScript.Quit 1
-    
-    WScript.Echo "  ✓ Módulo importado (VBIDE): " & moduleName
-End Sub
+    If ext="bas" Then
+        Dim tmp: tmp = CreateAnsiTempFrom(sourcePath)
+        objAccess.Application.LoadFromText 5, moduleName, tmp ' 5=acModule
+        If Err.Number<>0 Then WScript.Echo "  ❌ LoadFromText " & moduleName & ": " & Err.Number & " - " & Err.Description: Err.Clear: If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True: Exit Function
+        If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True
+        ImportVbaFile = True
+    Else
+        ImportVbaFile = ImportVbComponentFromFile(objAccess, moduleName, sourcePath)
+    End If
+
+    If ImportVbaFile Then WScript.Echo "  ✓ Importado: " & moduleName
+    Err.Clear
+End Function
 
 
 
@@ -1700,263 +1703,7 @@ Sub ExecuteTests()
 End Sub
 
 ' Función para importar módulo con conversión UTF-8 -> ANSI
-Sub ImportModuleWithAnsiEncoding(strImportPath, moduleName, fileExtension, vbComponent, cleanedContent)
-    ' Declarar variables locales
-    Dim tempFolderPath, tempFileName, tempFilePath
-    Dim objTempFile
-    Dim importError, renameError, existingComponent
-    
-    If fileExtension = "bas" Then
-        ' Lógica corregida para módulos estándar (.bas) - usar Add(1)
-        On Error Resume Next
-        
-        ' Buscar si ya existe un componente con este nombre
-        Set vbComponent = Nothing
-        For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents
-            If existingComponent.Name = moduleName Then
-                Set vbComponent = existingComponent
-                Exit For
-            End If
-        Next
-        
-        ' Si no existe, crear nuevo componente
-        If vbComponent Is Nothing Then
-            Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(1) ' 1 = vbext_ct_StdModule
-            If Err.Number <> 0 Then
-                WScript.Echo "❌ ERROR: No se pudo crear componente estándar para " & moduleName & ": " & Err.Description
-                On Error GoTo 0
-                Exit Sub
-            End If
-            
-            ' Renombrar inmediatamente después de crear
-            vbComponent.Name = moduleName
-            renameError = Err.Number
-            If renameError <> 0 Then
-                WScript.Echo "❌ ERROR: No se pudo renombrar el módulo nuevo a '" & moduleName & "': " & Err.Description & " (Código: " & Err.Number & ")"
-                On Error GoTo 0
-                Exit Sub
-            End If
-        Else
-            ' Si existe, limpiar el código existente
-            If vbComponent.CodeModule.CountOfLines > 0 Then
-                vbComponent.CodeModule.DeleteLines 1, vbComponent.CodeModule.CountOfLines
-            End If
-        End If
-        
-        ' Insertar el contenido limpio en el módulo de código
-        vbComponent.CodeModule.AddFromString cleanedContent
-        If Err.Number <> 0 Then
-            WScript.Echo "❌ ERROR: No se pudo insertar código en el módulo " & moduleName & ": " & Err.Description
-            On Error GoTo 0
-            Exit Sub
-        End If
-        
-        On Error GoTo 0
-        ' Confirmar éxito
-        WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
-        
-    ElseIf fileExtension = "cls" Then
-        ' Lógica específica para módulos de clase (.cls)
-        On Error Resume Next
-        
-        ' Buscar si ya existe un componente con este nombre
-        Set vbComponent = Nothing
-        For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents
-            If existingComponent.Name = moduleName Then
-                Set vbComponent = existingComponent
-                Exit For
-            End If
-        Next
-        
-        ' Si no existe, crear nuevo componente
-        If vbComponent Is Nothing Then
-            Set vbComponent = objAccess.VBE.ActiveVBProject.VBComponents.Add(2) ' 2 = vbext_ct_ClassModule
-            If Err.Number <> 0 Then
-                WScript.Echo "❌ ERROR: No se pudo crear componente de clase para " & moduleName & ": " & Err.Description
-                On Error GoTo 0
-                Exit Sub
-            End If
-            
-            ' Renombrar inmediatamente después de crear
-            vbComponent.Name = moduleName
-            renameError = Err.Number
-            If renameError <> 0 Then
-                WScript.Echo "❌ ERROR: No se pudo renombrar la clase nueva a '" & moduleName & "': " & Err.Description & " (Código: " & Err.Number & ")"
-                On Error GoTo 0
-                Exit Sub
-            End If
-        Else
-            ' Si existe, limpiar el código existente
-            If vbComponent.CodeModule.CountOfLines > 0 Then
-                vbComponent.CodeModule.DeleteLines 1, vbComponent.CodeModule.CountOfLines
-            End If
-        End If
-        
-        ' Insertar el contenido limpio en el módulo de código
-        vbComponent.CodeModule.AddFromString cleanedContent
-        If Err.Number <> 0 Then
-            WScript.Echo "❌ ERROR: No se pudo insertar código en la clase " & moduleName & ": " & Err.Description
-            On Error GoTo 0
-            Exit Sub
-        End If
-        
-        On Error GoTo 0
-        ' Confirmar éxito
-        WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
-    End If
-End Sub
 
-' Función simplificada usando VBComponents.Import() - método desatendido
-Sub ImportModuleWithAnsiEncodingNew(strImportPath, moduleName, fileExtension, vbComponent, cleanedContent)
-    ' Método con verificación de referencias VBA y enlace tardío
-    Dim existingComponent, vbeObject, vbProject, vbComponents
-    
-    On Error Resume Next
-    
-    ' Verificar que VBE esté disponible usando enlace tardío
-    Set vbeObject = objAccess.VBE
-    If Err.Number <> 0 Then
-        WScript.Echo "❌ ERROR: VBA no está habilitado o no se puede acceder al VBE: " & Err.Description
-        On Error GoTo 0
-        Exit Sub
-    End If
-    
-    ' Verificar que el proyecto VBA esté disponible
-    Set vbProject = vbeObject.ActiveVBProject
-    If Err.Number <> 0 Then
-        WScript.Echo "❌ ERROR: No se puede acceder al proyecto VBA activo: " & Err.Description
-        On Error GoTo 0
-        Exit Sub
-    End If
-    
-    ' Verificar que VBComponents esté disponible
-    Set vbComponents = vbProject.VBComponents
-    If Err.Number <> 0 Then
-        WScript.Echo "❌ ERROR: No se puede acceder a VBComponents (referencias VBA requeridas): " & Err.Description
-        On Error GoTo 0
-        Exit Sub
-    End If
-    
-    ' Eliminar el componente existente si ya existe
-    Set vbComponent = Nothing
-    For Each existingComponent In vbComponents
-        If existingComponent.Name = moduleName Then
-            vbComponents.Remove existingComponent
-            If Err.Number <> 0 Then
-                WScript.Echo "❌ ERROR: No se pudo eliminar componente existente " & moduleName & ": " & Err.Description
-                On Error GoTo 0
-                Exit Sub
-            End If
-            Exit For
-        End If
-    Next
-    
-    ' Importar directamente el archivo usando VBComponents.Import()
-    Set vbComponent = vbComponents.Import(strImportPath)
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "❌ ERROR: No se pudo importar " & moduleName & ": " & Err.Description
-        WScript.Echo "  Verifique que las referencias 'Microsoft Visual Basic for Applications Extensibility' estén habilitadas"
-        On Error GoTo 0
-        Exit Sub
-    End If
-    
-    ' Verificar si el componente fue importado correctamente
-    If vbComponent Is Nothing Then
-        WScript.Echo "❌ ERROR: El componente importado es Nothing"
-        On Error GoTo 0
-        Exit Sub
-    End If
-    
-    ' Renombrar el componente solo si es necesario
-    If vbComponent.Name <> moduleName Then
-        Dim originalName
-        originalName = vbComponent.Name
-        vbComponent.Name = moduleName
-        If Err.Number <> 0 Then
-            WScript.Echo "⚠️ ADVERTENCIA: No se pudo renombrar de '" & originalName & "' a '" & moduleName & "': " & Err.Description
-            WScript.Echo "  El módulo se importó como '" & originalName & "' - verifique el nombre en el archivo fuente"
-            Err.Clear
-        End If
-    End If
-    
-    On Error GoTo 0
-    
-    ' Confirmar éxito según el tipo
-    If fileExtension = "bas" Then
-        WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
-    ElseIf fileExtension = "cls" Then
-        WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
-    End If
-End Sub
-
-
-' Función desatendida para importar módulos usando VBComponents.Import()
-' Mantiene la funcionalidad de limpieza de código de rebuild
-Sub ImportModuleDesatendido(strImportPath, moduleName, fileExtension, cleanedContent)
-    ' Declarar variables locales
-    Dim tempFolderPath, tempFileName, tempFilePath
-    Dim objTempFile, existingComponent, vbComp
-    
-    On Error Resume Next
-    
-    ' Eliminar módulo si ya existe
-    Set vbComp = Nothing
-    For Each existingComponent In objAccess.VBE.ActiveVBProject.VBComponents
-        If existingComponent.Name = moduleName Then
-            objAccess.VBE.ActiveVBProject.VBComponents.Remove existingComponent
-            If Err.Number <> 0 Then
-                WScript.Echo "❌ ERROR: No se pudo eliminar componente existente " & moduleName & ": " & Err.Description
-                On Error GoTo 0
-                Exit Sub
-            End If
-            Exit For
-        End If
-    Next
-    
-    ' Crear archivo temporal con contenido limpio
-    tempFolderPath = objFSO.GetSpecialFolder(2) ' Carpeta temporal del sistema
-    tempFileName = "temp_" & moduleName & "." & fileExtension
-    tempFilePath = objFSO.BuildPath(tempFolderPath, tempFileName)
-    
-    ' Escribir contenido limpio al archivo temporal
-    Set objTempFile = objFSO.CreateTextFile(tempFilePath, True, False) ' False = ANSI encoding
-    objTempFile.Write cleanedContent
-    objTempFile.Close
-    Set objTempFile = Nothing
-    
-    ' Importar módulo usando VBComponents.Import()
-    Set vbComp = objAccess.VBE.ActiveVBProject.VBComponents.Import(tempFilePath)
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "❌ ERROR: No se pudo importar " & moduleName & ": " & Err.Description
-        ' Limpiar archivo temporal
-        If objFSO.FileExists(tempFilePath) Then objFSO.DeleteFile tempFilePath
-        On Error GoTo 0
-        Exit Sub
-    End If
-    
-    ' Renombrar el componente si es necesario
-    If Not vbComp Is Nothing And vbComp.Name <> moduleName Then
-        vbComp.Name = moduleName
-        If Err.Number <> 0 Then
-            WScript.Echo "⚠️ ADVERTENCIA: No se pudo renombrar a '" & moduleName & "': " & Err.Description
-            Err.Clear
-        End If
-    End If
-    
-    ' Limpiar archivo temporal
-    If objFSO.FileExists(tempFilePath) Then objFSO.DeleteFile tempFilePath
-    
-    On Error GoTo 0
-    
-    ' Confirmar éxito
-    If fileExtension = "bas" Then
-        WScript.Echo "✅ Módulo " & moduleName & " importado correctamente"
-    ElseIf fileExtension = "cls" Then
-        WScript.Echo "✅ Clase " & moduleName & " importada correctamente"
-    End If
-End Sub
 
 ' Subrutina para re-vincular tablas de Access
 Sub RelinkTables()
@@ -2306,23 +2053,26 @@ Sub RebuildProject()
     Dim objFolder, objFile
     Dim strModuleName, importedCount, moduleType
     Set objFolder = objFSO.GetFolder(strSourcePath)
+    
+    ' Inicialización de contadores y limpieza de errores antes del bucle
     importedCount = 0
+    Err.Clear
     
     For Each objFile In objFolder.Files
         If LCase(objFSO.GetExtensionName(objFile.Name)) = "bas" Or LCase(objFSO.GetExtensionName(objFile.Name)) = "cls" Then
             strModuleName = objFSO.GetBaseName(objFile.Name)
             
+            ' Limpiar errores al comienzo de cada iteración
+            Err.Clear
+            
             If gVerbose Then
                 WScript.Echo "  Importando: " & strModuleName
             End If
             
-            ' Usar la rutina unificada ImportVbaFile
-            Call ImportVbaFile(objFile.Path, strModuleName)
-            
-            ' Contar como importado si no hubo error (ImportVbaFile maneja sus propios errores)
-            If Err.Number = 0 Then
-                importedCount = importedCount + 1
-            End If
+            ' Capturar el retorno Boolean de ImportVbaFile
+            Dim okImport
+            okImport = ImportVbaFile(objFile.Path, strModuleName)
+            If okImport Then importedCount = importedCount + 1
         End If
     Next
     
@@ -2335,30 +2085,40 @@ Sub RebuildProject()
         End If
     Next
     
-    If importedCount < totalFiles Then
-        WScript.Echo "=== RECONSTRUCCION COMPLETADA CON ERRORES ==="
-        WScript.Echo "Modulos importados: " & importedCount & " de " & totalFiles
-        WScript.Echo "Algunos módulos no se pudieron importar. Revise los errores anteriores."
+    ' Verificación: que existan los módulos recién importados
+    Dim vbProj, comp, presentCount
+    presentCount = 0
+    Set vbProj = objAccess.VBE.ActiveVBProject
+    For Each comp In vbProj.VBComponents
+        If comp.Type = 1 Or comp.Type = 2 Or comp.Type = 3 Then ' std/class/forms modules
+            presentCount = presentCount + 1
+        End If
+    Next
+    
+    WScript.Echo "=== RECONSTRUCCIÓN COMPLETADA ==="
+    WScript.Echo "Módulos importados (cuenta lógica): " & importedCount & " de " & totalFiles
+    WScript.Echo "Módulos presentes en proyecto: " & presentCount
+    
+    If importedCount = 0 Or presentCount = 0 Then
+        WScript.Echo "❌ No se detectan módulos en la BD tras el proceso. Revise referencia VBIDE/trust y el popup inicial."
         WScript.Quit 1
-    Else
-        ' Asegurar referencias VBA antes de compilar
-        WScript.Echo "Verificando referencias VBA..."
-        Call EnsureVBReferences()
-        
-        ' Compilar y guardar todo
-        WScript.Echo "Compilando proyecto VBA..."
-        On Error Resume Next
-        objAccess.DoCmd.RunCommand 636 ' Compile & Save All Modules
-        If Err.Number<>0 Then WScript.Echo "❌ Compilación: "&Err.Number&" - "&Err.Description: WScript.Quit 1
-        On Error GoTo 0
-        
-        WScript.Echo "=== RECONSTRUCCION COMPLETADA EXITOSAMENTE ==="
-        WScript.Echo "Modulos importados: " & importedCount
-        WScript.Echo "El proyecto VBA ha sido completamente reconstruido y compilado"
-        
-        ' Verificación opcional de módulos
-        Call VerifyModulesIfRequested()
     End If
+    
+    ' Asegurar referencias VBA antes de compilar
+    WScript.Echo "Verificando referencias VBA..."
+    Call EnsureVBReferences()
+    
+    ' Compilar y guardar todo
+    WScript.Echo "Compilando proyecto VBA..."
+    On Error Resume Next
+    objAccess.DoCmd.RunCommand 636 ' Compile & Save All Modules
+    If Err.Number<>0 Then WScript.Echo "❌ Compilación: "&Err.Number&" - "&Err.Description: WScript.Quit 1
+    On Error GoTo 0
+    
+    WScript.Echo "El proyecto VBA ha sido completamente reconstruido y compilado"
+    
+    ' Verificación opcional de módulos
+    Call VerifyModulesIfRequested()
     
     On Error GoTo 0
 End Sub
@@ -2442,9 +2202,7 @@ Sub UpdateAllModules()
                 WScript.Echo "Importando: " & strModuleName
             End If
             
-            Call ImportVbaFile(objFile.Path, strModuleName)
-            
-            If Err.Number = 0 Then
+            If ImportVbaFile(objFile.Path, strModuleName) Then
                 importedCount = importedCount + 1
             End If
         End If
@@ -2520,9 +2278,7 @@ Sub UpdateChangedModules()
                     WScript.Echo "Importando: " & strModuleName & " (cambio detectado por hash)"
                 End If
                 
-                Call ImportVbaFile(objFile.Path, strModuleName)
-                
-                If Err.Number = 0 Then
+                If ImportVbaFile(objFile.Path, strModuleName) Then
                     importedCount = importedCount + 1
                 End If
             Else
@@ -2660,10 +2416,8 @@ Sub UpdateSingleModule(moduleName)
         WScript.Echo "Importando: " & moduleName & " desde " & srcPath
     End If
     
-    Call ImportVbaFile(srcPath, moduleName)
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al importar " & moduleName & ": " & Err.Description
+    If Not ImportVbaFile(srcPath, moduleName) Then
+        WScript.Echo "Error al importar " & moduleName
         WScript.Quit 1
     End If
 End Sub
@@ -2756,11 +2510,8 @@ Sub ImportSingleModuleOptimized(moduleName)
     
     ' Paso 4: Importar el módulo usando la rutina unificada ImportVbaFile
     WScript.Echo "  Importando módulo: " & moduleName
-    Call ImportVbaFile(strSourceFile, moduleName)
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "  ❌ Error al importar módulo " & moduleName & ": " & Err.Description
-        Err.Clear
+    If Not ImportVbaFile(strSourceFile, moduleName) Then
+        WScript.Echo "  ❌ Error al importar módulo " & moduleName
         Exit Sub
     End If
     
@@ -2889,6 +2640,13 @@ End Sub
 
 ' Función para obtener la lista de archivos por funcionalidad según CONDOR_MASTER_PLAN.md
 ' Incluye dependencias para cada funcionalidad
+' NOTA: El CLI (condor_cli.vbs) se empaqueta aparte y esta función lista módulos .bas/.cls de funcionalidades
+' ============================================================================
+' FUNCIÓN: GetFunctionalityFiles
+' Descripción: Mapea funcionalidades a archivos *.bas/*.cls correspondientes
+' Nota: El CLI usa VBIDE/LoadFromText para importación; esta lista mapea
+'       archivos fuente por funcionalidad para empaquetado y gestión
+' ============================================================================
 Function GetFunctionalityFiles(strFunctionality)
     Dim arrFiles
     
@@ -4427,7 +4185,6 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
     
     ' Crear formulario básico (simulado)
     objAccessLocal.DoCmd.NewForm
-    objAccessLocal.DoCmd.Save , formName
     
     CloseAccessApp objAccessLocal
     On Error GoTo 0
@@ -6546,6 +6303,57 @@ Function RgbHexToOle(hex)
     End If
 End Function
 
+' ===== Limpieza de metadatos VBA (.bas/.cls) =====
+Function NormalizeEOL(s)
+    If InStr(s, vbCrLf) = 0 And InStr(s, vbLf) > 0 Then s = Replace(s, vbLf, vbCrLf)
+    NormalizeEOL = s
+End Function
+
+Function CleanVBAContent(rawText, ext)
+    Dim lines, i, ln, out, isClass, inVB6Block, skipLine
+    isClass = (LCase(ext) = "cls")
+    inVB6Block = False
+    rawText = NormalizeEOL(rawText)
+    lines = Split(rawText, vbCrLf)
+    out = ""
+    For i = 0 To UBound(lines)
+        ln = Trim(lines(i))
+        skipLine = False
+        
+        ' Quitar cabecera VB6 de clases
+        If isClass Then
+            If LCase(Left(ln, 7)) = "version" Then
+                inVB6Block = True
+                skipLine = True
+            ElseIf inVB6Block Then
+                If UCase(ln) = "END" Then inVB6Block = False
+                skipLine = True
+            End If
+        End If
+        
+        ' Quitar atributos y opciones duplicadas
+        If Not skipLine Then
+            If LCase(Left(ln, 17)) = "attribute vb_name" Then skipLine = True
+            If isClass And LCase(Left(ln, 10)) = "attribute " Then skipLine = True
+            If LCase(ln) = "option compare database" Then skipLine = True
+            If LCase(ln) = "option explicit" Then skipLine = True
+        End If
+        
+        ' Mantener el resto
+        If Not skipLine Then
+            If out <> "" Then out = out & vbCrLf
+            out = out & lines(i)
+        End If
+        
+    Next
+    ' Trim final de líneas vacías iniciales
+    Do While Left(out, 2) = vbCrLf
+        out = Mid(out, 3)
+    Loop
+    CleanVBAContent = out
+End Function
+' ===== FIN limpieza =====
+
 ' ==== DAO helpers canónicos para password + bypass de inicio (.accdb) ====
 
 Sub DaoEnsureEngine(ByRef dao)
@@ -6642,17 +6450,17 @@ Sub OpenAccessSilently(dbPath, pwd, ByRef app)
     End If
     app.Visible = False
     app.UserControl = False
+    ' Desactivar macros/auto-automatización si está disponible (no falla si no existe)
+    app.AutomationSecurity = 3  ' msoAutomationSecurityForceDisable
+    ' Abrir la BD sin UI
     If pwd <> "" Then
         app.OpenCurrentDatabase dbPath, False, pwd
     Else
         app.OpenCurrentDatabase dbPath, False
     End If
-    If Err.Number <> 0 Then
-        app.Quit
-        Set app = Nothing
-        Exit Sub
-    End If
-    app.Application.Echo False
+    If Err.Number <> 0 Then app.Quit: Set app = Nothing: Exit Sub
+    app.Echo False
+    Call RemoveBrokenReferences(app)
     On Error GoTo 0
 End Sub
 
@@ -7386,10 +7194,46 @@ Sub ResolveDbPath()
                     strAccessPath = strDataPath
                 End If
             ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "update" Or strAction = "list-modules" Then
-                If objArgs.Count > 1 Then
-                    strAccessPath = ResolveRelativePath(objArgs(1))
+                ' Buscar argumento de BD que no sea un flag
+                Dim dbPathArg
+                dbPathArg = ""
+                For i = 1 To objArgs.Count - 1
+                    Dim currentArg
+                    currentArg = LCase(objArgs(i))
+                    ' Saltar flags conocidos y sus valores
+                    If currentArg = "--verbose" Then
+                        ' Flag sin valor, continuar
+                    ElseIf currentArg = "--bypassstartup" Then
+                        ' Flag con valor, saltar el siguiente argumento también
+                        i = i + 1
+                    ElseIf Left(currentArg, 15) = "/bypassstartup:" Then
+                        ' Flag con valor inline, continuar
+                    ElseIf currentArg = "--db" Then
+                        ' Flag con valor, saltar el siguiente argumento también
+                        i = i + 1
+                    ElseIf Left(currentArg, 4) = "/db:" Then
+                        ' Flag con valor inline, continuar
+                    ElseIf currentArg = "--password" Then
+                        ' Flag con valor, saltar el siguiente argumento también
+                        i = i + 1
+                    ElseIf Left(currentArg, 5) = "/pwd:" Then
+                        ' Flag con valor inline, continuar
+                    Else
+                        ' No es un flag conocido, debe ser la ruta de BD
+                        dbPathArg = objArgs(i)
+                        Exit For
+                    End If
+                Next
+                
+                If dbPathArg <> "" Then
+                    strAccessPath = ResolveRelativePath(dbPathArg)
                 Else
-                    strAccessPath = strDataPath
+                    ' Para rebuild y test sin argumentos de BD, usar la base de datos de desarrollo
+                    If strAction = "rebuild" Or strAction = "test" Then
+                        strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
+                    Else
+                        strAccessPath = strDataPath
+                    End If
                 End If
             Else
                 strAccessPath = strDataPath
@@ -7486,10 +7330,7 @@ Sub UpdateAllModulesTransactional()
             End If
             
             ' Usar la rutina unificada ImportVbaFile
-            Call ImportVbaFile(objFile.Path, strModuleName)
-            
-            ' Contar como importado si no hubo error (ImportVbaFile maneja sus propios errores)
-            If Err.Number = 0 Then
+            If ImportVbaFile(objFile.Path, strModuleName) Then
                 importedCount = importedCount + 1
             End If
         End If
@@ -7526,10 +7367,10 @@ Sub UpdateSingleModuleTransactional(moduleName)
     End If
     
     ' Usar la rutina unificada ImportVbaFile
-    Call ImportVbaFile(actualFile, moduleName)
-    
-    If Err.Number = 0 Then
+    If ImportVbaFile(actualFile, moduleName) Then
         WScript.Echo "✓ " & moduleName & " actualizado correctamente"
+    Else
+        WScript.Echo "❌ Error actualizando " & moduleName
     End If
 End Sub
 
@@ -7578,10 +7419,7 @@ Sub UpdateChangedModulesTransactional()
                 End If
                 
                 ' Usar la rutina unificada ImportVbaFile
-                Call ImportVbaFile(objFile.Path, strModuleName)
-                
-                ' Contar como importado si no hubo error (ImportVbaFile maneja sus propios errores)
-                If Err.Number = 0 Then
+                If ImportVbaFile(objFile.Path, strModuleName) Then
                     importedCount = importedCount + 1
                 End If
             Else
@@ -8010,4 +7848,18 @@ Sub RenameMacroIfExists(dbPath, password, oldName, newName)
     db.Close
     Set db = Nothing
     On Error GoTo 0
+End Sub
+
+Sub RemoveBrokenReferences(app)
+    On Error Resume Next
+    Dim vbProj, ref
+    Set vbProj = app.VBE.ActiveVBProject
+    If vbProj Is Nothing Then Exit Sub
+    For Each ref In vbProj.References
+        If ref.IsBroken Then vbProj.References.Remove ref
+    Next
+    ' Asegurar referencias clave
+    vbProj.References.AddFromGuid "{420B2830-E718-11CF-893D-00A0C9054228}", 1, 0   ' Scripting Runtime
+    vbProj.References.AddFromGuid "{0002E157-0000-0000-C000-000000000046}", 5, 3   ' VBIDE Extensibility
+    Err.Clear
 End Sub
