@@ -163,6 +163,8 @@ End If
 ' PASO 6: Mostrar información de inicio
 If strAction = "import-form" Then
     WScript.Echo "=== IMPORTANDO FORMULARIO ==="
+ElseIf strAction = "list-forms" Then
+    WScript.Echo "=== LISTANDO FORMULARIOS ==="
 Else
     WScript.Echo "=== INICIANDO SINCRONIZACION VBA ==="
 End If
@@ -187,8 +189,8 @@ If strAction <> "bundle" And strAction <> "validate-schema" And strAction <> "va
         ' Desactivar arranque por DAO para evitar ejecución de código al abrir
         Call DisableStartup(strAccessPath, gPassword, gPrevStartupForm, gHadAutoExec)
         If gVerbose Then WScript.Echo "[VERBOSE] Startup deshabilitado temporalmente (StartupForm vacío + AutoExec renombrada si existía)."
-        ' Abrir Access en silencio con contraseña correcta (sustituye el bloque de OpenCurrentDatabase actual por esta llamada)
-        Call OpenAccessSilently(strAccessPath, gPassword, objAccess)
+        ' Abrir Access en silencio con contraseña correcta usando función canónica
+        Set objAccess = OpenAccessApp(strAccessPath, gPassword, True)
     Else
         Set objAccess = OpenAccessApp(strAccessPath, gPassword, gBypassStartup)
     End If
@@ -1451,12 +1453,13 @@ Sub ShowHelp()
     WScript.Echo "                                 db_path opcional (por defecto: ./condor.accdb)"
     WScript.Echo "                                 --password: Contraseña de la base de datos"
     WScript.Echo "                                 --json: Salida en formato JSON (array de nombres)"
-    WScript.Echo "  list-modules [--db <path>] [--password <pwd>] [--includeDocs] [--pattern <regex>] [--json] [--expectSrc [path]] [--diff]"
+    WScript.Echo "  list-modules [--includeDocs] [--pattern <regex>] [--json] [--db <path>] [--password <pwd>] [--expectSrc [path]] [--diff]"
     WScript.Echo "                                 --json: Salida en formato JSON estructurado"
     WScript.Echo "                                 --expectSrc: Verificar existencia de archivos fuente en /src"
     WScript.Echo "                                 --diff: Detectar inconsistencias entre BD y archivos fuente"
     WScript.Echo "                                 Análisis: módulos faltantes, huérfanos, desactualizados"
     WScript.Echo "                                 Indicadores: ✓ (sincronizado), ⚠ (advertencia), ✗ (error)"
+    WScript.Echo "                                 Orden de obtención: VBIDE → AllModules → DAO (fallback). Útil cuando VBIDE está bloqueado por políticas."
     WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
     WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
     WScript.Echo "  migrate [file.sql]           - Ejecutar scripts de migración SQL desde ./db/migrations"
@@ -2967,13 +2970,8 @@ Sub CopyFilesToBundle(arrFiles, strBundlePath)
         End If
         
         If objFSO.FileExists(filePath) Then
-            ' Caso especial para condorcli: copiar como .txt en la misma ruta
-            If fileName = "condor_cli.vbs" And InStr(strBundlePath, "bundle_condorcli_") > 0 Then
-                destFilePath = objFSO.BuildPath(objFSO.GetParentFolderName(WScript.ScriptFullName), fileName & ".txt")
-            Else
-                ' Copiar archivo con extensión .txt añadida
-                destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
-            End If
+            ' Copiar archivo con extensión .txt añadida al directorio del bundle
+            destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
             objFSO.CopyFile filePath, destFilePath, True
             
             If Err.Number <> 0 Then
@@ -5419,6 +5417,9 @@ Sub ListForms()
     password = ""
     bJsonOutput = False
     bypassStartup = True  ' Por defecto ON para list-forms
+    Set objAccess = Nothing
+    Dim bUseDefaultDb
+    bUseDefaultDb = True  ' Indica si se está usando la DB por defecto
     
     ' Procesar argumentos
     i = 1
@@ -5442,6 +5443,7 @@ Sub ListForms()
             If i + 1 < objArgs.Count Then
                 i = i + 1
                 password = objArgs(i)
+                bUseDefaultDb = False
             Else
                 WScript.Echo "Error: --password requiere un valor"
                 WScript.Quit 1
@@ -5469,6 +5471,7 @@ Sub ListForms()
         ElseIf Left(arg, 2) <> "--" Then
             ' Es el db_path
             dbPath = objArgs(i)
+            bUseDefaultDb = False
         Else
             WScript.Echo "Error: Opción desconocida: " & objArgs(i)
             WScript.Quit 1
@@ -5477,45 +5480,74 @@ Sub ListForms()
         i = i + 1
     Wend
     
-    ' Verificar que existe la base de datos
-    Set objFSO = CreateObject("Scripting.FileSystemObject")
-    If Not objFSO.FileExists(dbPath) Then
-        WScript.Echo "Error: No se encuentra la base de datos: " & dbPath
-        WScript.Quit 1
+    ' Intentar obtener formularios usando diferentes métodos
+    Dim formsArray(), bSuccess
+    formCount = 0
+    bSuccess = False
+    
+    ' Si se usa DB por defecto sin password, intentar fallback DAO
+    If bUseDefaultDb And password = "" Then
+        If gVerbose Then WScript.Echo "[DEBUG] Intentando fallback DAO para formularios..."
+        bSuccess = TryListFormsDAO(dbPath, password, "", formsArray)
+        If bSuccess Then
+            formCount = UBound(formsArray) + 1
+            If gVerbose Then WScript.Echo "[DEBUG] Fallback DAO exitoso: " & formCount & " formularios"
+        Else
+            If gVerbose Then WScript.Echo "[DEBUG] Fallback DAO falló, intentando Access..."
+        End If
     End If
     
-    ' Abrir Access con bypass startup si está habilitado
-    Set objAccess = OpenAccessApp(dbPath, password, bypassStartup)
-    
-    ' Enumerar formularios
-    Dim formsArray()
-    formCount = 0
-    
-    ' Contar formularios primero
-    For Each accessObj In objAccess.CurrentProject.AllForms
-        formCount = formCount + 1
-    Next
-    
-    ' Redimensionar array y llenar
-    If formCount > 0 Then
-        ReDim formsArray(formCount - 1)
-        Dim formIndex
-        formIndex = 0
+    ' Si DAO falló o no se intentó, usar Access
+    If Not bSuccess Then
+        ' Verificar que existe la base de datos
+        Set objFSO = CreateObject("Scripting.FileSystemObject")
+        If Not objFSO.FileExists(dbPath) Then
+            WScript.Echo "Error: No se encuentra la base de datos: " & dbPath
+            WScript.Quit 1
+        End If
+        
+        ' Abrir Access con bypass startup si está habilitado
+        Set objAccess = OpenAccessApp(dbPath, password, bypassStartup)
+        If objAccess Is Nothing Then
+            WScript.Echo "Error: No se pudo abrir la base de datos con Access"
+            WScript.Quit 1
+        End If
+        
+        ' Contar formularios primero
         For Each accessObj In objAccess.CurrentProject.AllForms
-            formsArray(formIndex) = accessObj.Name
-            formIndex = formIndex + 1
+            formCount = formCount + 1
         Next
+        
+        ' Redimensionar array y llenar
+        If formCount > 0 Then
+            ReDim formsArray(formCount - 1)
+            Dim formIndex
+            formIndex = 0
+            For Each accessObj In objAccess.CurrentProject.AllForms
+                formsArray(formIndex) = accessObj.Name
+                formIndex = formIndex + 1
+            Next
+        End If
+        
+        ' Cerrar Access
+        CloseAccessApp objAccess
     End If
     
     ' Generar salida
     If bJsonOutput Then
         ' Salida JSON
-        Dim jsonOutput, i_form
+        Dim jsonOutput, i_form, formName
         jsonOutput = "["
         If formCount > 0 Then
             For i_form = 0 To UBound(formsArray)
                 If i_form > 0 Then jsonOutput = jsonOutput & ","
-                jsonOutput = jsonOutput & "\"" & formsArray(i_form) & "\""
+                ' Manejar tanto strings (Access) como diccionarios (DAO)
+                If IsObject(formsArray(i_form)) Then
+                    formName = formsArray(i_form)("name")
+                Else
+                    formName = formsArray(i_form)
+                End If
+                jsonOutput = jsonOutput & "\"" & formName & "\""
             Next
         End If
         jsonOutput = jsonOutput & "]"
@@ -5527,13 +5559,16 @@ Sub ListForms()
         Else
             WScript.Echo "Formularios encontrados (" & formCount & "):"
             For i_form = 0 To UBound(formsArray)
-                WScript.Echo "  " & formsArray(i_form)
+                ' Manejar tanto strings (Access) como diccionarios (DAO)
+                If IsObject(formsArray(i_form)) Then
+                    formName = formsArray(i_form)("name")
+                Else
+                    formName = formsArray(i_form)
+                End If
+                WScript.Echo "  " & formName
             Next
         End If
     End If
-    
-    ' Cerrar Access y restaurar estado
-    CloseAccessApp objAccess
     
 End Sub
 
@@ -7256,7 +7291,7 @@ Sub ResolveDbPath()
                 Else
                     strAccessPath = strDataPath
                 End If
-            ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "list-modules" Then
+            ElseIf strAction = "rebuild" Or strAction = "test" Then
                 ' Buscar argumento de BD que no sea un flag
                 Dim dbPathArg
                 dbPathArg = ""
@@ -7292,12 +7327,11 @@ Sub ResolveDbPath()
                     strAccessPath = ResolveRelativePath(dbPathArg)
                 Else
                     ' Para rebuild y test sin argumentos de BD, usar la base de datos de desarrollo
-                    If strAction = "rebuild" Or strAction = "test" Then
-                        strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
-                    Else
-                        strAccessPath = strDataPath
-                    End If
+                    strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
                 End If
+            ElseIf strAction = "list-modules" Then
+                ' Para list-modules, usar siempre la base de datos de desarrollo por defecto como update
+                strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
             ElseIf strAction = "update" Then
                 ' Para update, usar siempre la base de datos de desarrollo por defecto
                 ' El primer argumento después de update es el target del módulo, no una ruta de BD
@@ -7589,108 +7623,93 @@ End Sub
 
 ' ===== FUNCIONES PARA LIST-MODULES =====
 
+'--- BEGIN: WaitForProjectReady ---
+Function WaitForProjectReady(app, retries, delayMs)
+  On Error Resume Next
+  Dim i, ok, tmp
+  ok = False
+  For i = 1 To retries
+    Err.Clear
+    tmp = app.CurrentProject.Name
+    If Err.Number = 0 Then ok = True
+    If Not ok Then
+      Err.Clear
+      Dim p: Set p = app.VBE.ActiveVBProject
+      If Err.Number = 0 And Not p Is Nothing Then ok = True
+    End If
+    If ok Then Exit For
+    WScript.Sleep delayMs
+  Next
+  WaitForProjectReady = ok
+  On Error GoTo 0
+End Function
+'--- END: WaitForProjectReady ---
+
 ' Función para listar módulos usando VBIDE
 ' ===== LIST-MODULES | Núcleo de listado y salida =====
 
+'--- BEGIN: TryListModulesVBIDE (robusto) ---
 Function TryListModulesVBIDE(app, includeDocs, pattern, ByRef arr)
-    On Error Resume Next
-    Dim vbComp, regex, kind, name
-    If pattern <> "" Then
-        Set regex = CreateObject("VBScript.RegExp")
-        regex.Pattern = pattern
-        regex.IgnoreCase = True
-    End If
-    ReDim arr(-1)
-    
-    ' Verificar acceso a VBE
-    If app.VBE Is Nothing Then
-        WScript.Echo "DEBUG: app.VBE es Nothing"
-        TryListModulesVBIDE = False
-        Exit Function
-    End If
-    
-    If app.VBE.ActiveVBProject Is Nothing Then
-        WScript.Echo "DEBUG: app.VBE.ActiveVBProject es Nothing"
-        TryListModulesVBIDE = False
-        Exit Function
-    End If
-    
-    WScript.Echo "DEBUG: Accediendo a VBComponents..."
-    For Each vbComp In app.VBE.ActiveVBProject.VBComponents
-        Select Case vbComp.Type
-            Case 1: kind = "STD"
-            Case 2: kind = "CLS"
-            Case 3: kind = "FRM"
-            Case 100: kind = "RPT"
-            Case Else: kind = "OTHER"
-        End Select
-        name = vbComp.Name
-        If (kind = "FRM" Or kind = "RPT") And Not includeDocs Then
-            ' omitidos
-        Else
-            If pattern = "" Or regex.Test(name) Then
-                If UBound(arr) = -1 Then
-                    ReDim arr(0)
-                Else
-                    ReDim Preserve arr(UBound(arr)+1)
-                End If
-                Set arr(UBound(arr)) = CreateObject("Scripting.Dictionary")
-                arr(UBound(arr)).Add "kind", kind
-                arr(UBound(arr)).Add "name", name
-            End If
-        End If
-    Next
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "DEBUG: Error en TryListModulesVBIDE: " & Err.Number & " - " & Err.Description
-        TryListModulesVBIDE = False
-    Else
-        TryListModulesVBIDE = True
-    End If
-    On Error GoTo 0
-End Function
+  On Error Resume Next
+  ReDim arr(-1)
+  If Not WaitForProjectReady(app, 20, 250) Then TryListModulesVBIDE = False: Exit Function
 
-Function TryListModulesAllModules(app, pattern, ByRef arr)
-    On Error Resume Next
-    Dim obj, regex, name, dict
-    If pattern <> "" Then
-        Set regex = CreateObject("VBScript.RegExp")
-        regex.Pattern = pattern
-        regex.IgnoreCase = True
+  Dim regex: If pattern<>"" Then Set regex = CreateObject("VBScript.RegExp"): regex.Pattern=pattern: regex.IgnoreCase=True
+  Dim p, comps, i, vbComp, kind, name, dict
+  Set p = app.VBE.ActiveVBProject: If Err.Number<>0 Or p Is Nothing Then Err.Clear: TryListModulesVBIDE=False: Exit Function
+  Set comps = p.VBComponents: If Err.Number<>0 Or comps Is Nothing Then Err.Clear: TryListModulesVBIDE=False: Exit Function
+
+  For i = 1 To comps.Count
+    Set vbComp = comps(i)
+    Select Case vbComp.Type
+      Case 1: kind="STD"
+      Case 2: kind="CLS"
+      Case 3: kind="FRM"
+      Case 100: kind="RPT"
+      Case Else: kind="OTHER"
+    End Select
+    name = vbComp.Name
+    If (kind="FRM" Or kind="RPT") And Not includeDocs Then
+      ' omit
+    ElseIf pattern="" Or regex.Test(name) Then
+      If UBound(arr)=-1 Then ReDim arr(0) Else ReDim Preserve arr(UBound(arr)+1)
+      Set dict = CreateObject("Scripting.Dictionary")
+      dict.Add "kind", kind
+      dict.Add "name", name
+      Set arr(UBound(arr)) = dict
     End If
-    ReDim arr(-1)
-    
-    ' Verificar acceso a CurrentProject
-    If app.CurrentProject Is Nothing Then
-        WScript.Echo "DEBUG: app.CurrentProject es Nothing"
-        TryListModulesAllModules = False
-        Exit Function
-    End If
-    
-    WScript.Echo "DEBUG: Accediendo a AllModules..."
-    For Each obj In app.CurrentProject.AllModules
-        name = obj.Name
-        If pattern = "" Or regex.Test(name) Then
-            If UBound(arr) = -1 Then
-                ReDim arr(0)
-            Else
-                ReDim Preserve arr(UBound(arr)+1)
-            End If
-            Set dict = CreateObject("Scripting.Dictionary")
-            dict.Add "kind", "STD"
-            dict.Add "name", name
-            Set arr(UBound(arr)) = dict
-        End If
-    Next
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "DEBUG: Error en TryListModulesAllModules: " & Err.Number & " - " & Err.Description
-        TryListModulesAllModules = False
-    Else
-        TryListModulesAllModules = True
-    End If
-    On Error GoTo 0
+  Next
+
+  TryListModulesVBIDE = (Err.Number=0)
+  On Error GoTo 0
 End Function
+'--- END: TryListModulesVBIDE ---
+
+'--- BEGIN: TryListModulesAllModules (robusto) ---
+Function TryListModulesAllModules(app, pattern, ByRef arr)
+  On Error Resume Next
+  ReDim arr(-1)
+  If Not WaitForProjectReady(app, 20, 250) Then TryListModulesAllModules=False: Exit Function
+
+  If app.CurrentProject Is Nothing Then TryListModulesAllModules=False: Exit Function
+  Dim mods, regex, m, name, dict
+  If pattern<>"" Then Set regex=CreateObject("VBScript.RegExp"): regex.Pattern=pattern: regex.IgnoreCase=True
+  Set mods = app.CurrentProject.AllModules: If Err.Number<>0 Or mods Is Nothing Then Err.Clear: TryListModulesAllModules=False: Exit Function
+
+  For Each m In mods
+    name = m.Name
+    If pattern="" Or regex.Test(name) Then
+      If UBound(arr)=-1 Then ReDim arr(0) Else ReDim Preserve arr(UBound(arr)+1)
+      Set dict = CreateObject("Scripting.Dictionary")
+      dict.Add "kind", "STD"
+      dict.Add "name", name
+      Set arr(UBound(arr)) = dict
+    End If
+  Next
+  TryListModulesAllModules = (Err.Number=0)
+  On Error GoTo 0
+End Function
+'--- END: TryListModulesAllModules ---
 
 Sub PrintModulesText(arr)
     Dim total, i: total = 0
@@ -7773,7 +7792,7 @@ End Function
 Sub ListModulesCommand()
     Dim app, closeAfter, arr(), includeDocs, pattern, jsonOn, diffOn
     Dim expectSrc, expectRaw, expected, diffInfo, ok
-    Dim dbPath, pwd
+    Dim dbPath, pwd, password
 
     includeDocs = HasFlag("includeDocs")     ' --includeDocs
     pattern     = GetArgValue("pattern")     ' --pattern <regex>
@@ -7784,7 +7803,14 @@ Sub ListModulesCommand()
     dbPath = GetArgValue("db")
     password = GetArgValue("password")
     If dbPath = "" Then dbPath = strAccessPath
-    If password = "" Then password = gPassword
+    
+    ' Resolver contraseña si no se especificó
+    If password = "" Then
+        If gPassword = "" Then
+            gPassword = GetDatabasePassword(strAccessPath)
+        End If
+        password = gPassword
+    End If
 
     ' Expectación de /src para diff (si --expectSrc sin valor, usar strSourcePath)
     expectRaw = GetArgValue("expectSrc")     ' --expectSrc [ruta]
@@ -7813,6 +7839,7 @@ Sub ListModulesCommand()
     
     ' Si no tenemos app válida, abrir nueva instancia
     If app Is Nothing Then
+        WScript.Echo "DEBUG: password = '" & password & "'"
         Set app = OpenAccessApp(dbPath, password, True) ' bypass on
         If app Is Nothing Then
             WScript.Echo "Error: No se pudo abrir Access para listar módulos."
@@ -7829,11 +7856,16 @@ Sub ListModulesCommand()
         WScript.Echo "DEBUG: Intentando TryListModulesAllModules..."
         ok = TryListModulesAllModules(app, pattern, arr)
         WScript.Echo "DEBUG: TryListModulesAllModules resultado: " & ok
-        If Not ok Then
-            Call CloseAccessApp(app)
-            WScript.Echo "Error: No se pudieron listar los módulos."
-            WScript.Quit 1
-        End If
+    End If
+    If Not ok Then
+        WScript.Echo "DEBUG: Intentando TryListModulesDAO (Containers/DAO)..."
+        ok = TryListModulesDAO(dbPath, password, pattern, arr)
+        WScript.Echo "DEBUG: TryListModulesDAO resultado: " & ok
+    End If
+    If Not ok Then
+        Call CloseAccessApp(app)
+        WScript.Echo "Error: No se pudieron listar los módulos."
+        WScript.Quit 1
     End If
 
     ' Diff opcional contra /src
@@ -7881,6 +7913,58 @@ Function GetMacroContainerName(db)
         GetMacroContainerName = ""
     End If
 End Function
+
+'--- BEGIN: TryListModulesDAO ---
+Function TryListModulesDAO(dbPath, password, pattern, ByRef arr)
+  On Error Resume Next
+  ReDim arr(-1)
+  Dim db: Set db = DaoOpenDatabase(dbPath, password)
+  If Err.Number<>0 Or db Is Nothing Then Err.Clear: TryListModulesDAO=False: Exit Function
+
+  Dim regex: If pattern<>"" Then Set regex=CreateObject("VBScript.RegExp"): regex.Pattern=pattern: regex.IgnoreCase=True
+  Dim dict, doc, name
+  If Not HasContainer(db,"Modules") Then db.Close: TryListModulesDAO=False: Exit Function
+
+  For Each doc In db.Containers("Modules").Documents
+    name = doc.Name
+    If pattern="" Or regex.Test(name) Then
+      If UBound(arr)=-1 Then ReDim arr(0) Else ReDim Preserve arr(UBound(arr)+1)
+      Set dict = CreateObject("Scripting.Dictionary")
+      dict.Add "kind","STD"
+      dict.Add "name",name
+      Set arr(UBound(arr))=dict
+    End If
+  Next
+  db.Close
+  TryListModulesDAO = True
+  On Error GoTo 0
+End Function
+'--- END: TryListModulesDAO ---
+
+Function TryListFormsDAO(dbPath, password, pattern, ByRef arr)
+  On Error Resume Next
+  ReDim arr(-1)
+  Dim db: Set db = DaoOpenDatabase(dbPath, password)
+  If Err.Number<>0 Or db Is Nothing Then Err.Clear: TryListFormsDAO=False: Exit Function
+
+  Dim regex: If pattern<>"" Then Set regex=CreateObject("VBScript.RegExp"): regex.Pattern=pattern: regex.IgnoreCase=True
+  Dim dict, doc, name
+  If Not HasContainer(db,"Forms") Then db.Close: TryListFormsDAO=False: Exit Function
+
+  For Each doc In db.Containers("Forms").Documents
+    name = doc.Name
+    If pattern="" Or regex.Test(name) Then
+      If UBound(arr)=-1 Then ReDim arr(0) Else ReDim Preserve arr(UBound(arr)+1)
+      Set dict = CreateObject("Scripting.Dictionary")
+      dict.Add "name",name
+      Set arr(UBound(arr))=dict
+    End If
+  Next
+  db.Close
+  TryListFormsDAO = True
+  On Error GoTo 0
+End Function
+'--- END: TryListFormsDAO ---
 
 ' Función para verificar si existe una macro
 Function MacroExists(dbPath, password, macroName)

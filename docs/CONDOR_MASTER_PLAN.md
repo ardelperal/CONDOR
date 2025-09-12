@@ -3586,6 +3586,7 @@ cscript condor_cli.vbs list-modules [--json] [--expectSrc] [--diff]
 - Análisis de sincronización entre base de datos y código fuente
 - Detección automática de módulos faltantes, huérfanos o desactualizados
 - Reporte visual con indicadores de estado (✓, ⚠, ✗)
+- list-modules usa VBIDE→AllModules→DAO
 
 **Casos de Uso:**
 ```bash
