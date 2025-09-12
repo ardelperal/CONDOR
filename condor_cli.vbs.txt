@@ -1315,7 +1315,10 @@ End Sub
 Function EnsureVBProject(app)
     On Error Resume Next
     Dim p: Set p = app.VBE.ActiveVBProject
-    If Err.Number<>0 Then WScript.Echo "❌ Activa 'Confiar en el modelo de objetos VBA'": WScript.Quit 1
+    If Err.Number<>0 Or p Is Nothing Then
+        WScript.Echo "❌ VBIDE no accesible. Activa 'Confiar en el modelo de objetos de proyectos de VBA'."
+        WScript.Quit 1
+    End If
     Set EnsureVBProject = p
 End Function
 
@@ -1335,13 +1338,15 @@ Function CreateAnsiTempFrom(path)
     Set sOut=CreateObject("ADODB.Stream"): sOut.Type=2: sOut.Charset="Windows-1252": sOut.Open
     sOut.WriteText txt: sOut.SaveToFile tmp,2: sOut.Close
     If Err.Number<>0 And Not objFSO.FileExists(tmp) Then objFSO.CopyFile path,tmp,True
+    Err.Clear
     CreateAnsiTempFrom = tmp
 End Function
 
 Function ImportVbComponentFromFile(app, moduleName, srcPath)
     On Error Resume Next
     Dim p,tmp,c: Set p=EnsureVBProject(app): tmp=CreateAnsiTempFrom(srcPath)
-    p.VBComponents.Import tmp: If Err.Number<>0 Then WScript.Echo "❌ Import "&srcPath&": "&Err.Description: ImportVbComponentFromFile=False: Err.Clear: Exit Function
+    p.VBComponents.Import tmp
+    If Err.Number<>0 Then WScript.Echo "  ❌ Import VBIDE "&srcPath&": "&Err.Number&" - "&Err.Description: Err.Clear: ImportVbComponentFromFile=False: Exit Function
     Set c = p.VBComponents(p.VBComponents.Count): c.Name = moduleName
     If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True
     ImportVbComponentFromFile = True
@@ -1613,40 +1618,24 @@ End Sub
 Function ImportVbaFile(sourcePath, moduleName)
     On Error Resume Next
     ImportVbaFile = False
-
-    If Not objFSO.FileExists(sourcePath) Then
-        WScript.Echo "  ❌ Archivo no encontrado: " & sourcePath
-        Exit Function
-    End If
-
+    If Not objFSO.FileExists(sourcePath) Then WScript.Echo "  ❌ Archivo no encontrado: " & sourcePath: Exit Function
     Dim ext: ext = LCase(objFSO.GetExtensionName(sourcePath))
-    If ext <> "bas" And ext <> "cls" Then
-        WScript.Echo "  ❌ Extensión no válida: " & ext
-        Exit Function
-    End If
+    If ext<>"bas" And ext<>"cls" Then WScript.Echo "  ❌ Extensión no válida: " & ext: Exit Function
 
-    ' Leer + limpiar
-    Dim txt, cleaned: txt = ReadAllTextUtf8WithFallback(sourcePath)
-    cleaned = CleanVBAContent(txt, ext)
-
-    ' Eliminar si existe y crear componente del tipo adecuado
+    ' Siempre garantizar VBIDE y limpiar existente
     Call RemoveVBComponentIfExists(objAccess, moduleName)
-    Dim vbProj, comp, newType
-    Set vbProj = EnsureVBProject(objAccess)
-    newType = IIf(ext = "cls", 2, 1) ' 2=Class, 1=Std
 
-    Set comp = vbProj.VBComponents.Add(newType)
-    comp.Name = moduleName
-    comp.CodeModule.DeleteLines 1, comp.CodeModule.CountOfLines
-    comp.CodeModule.AddFromString cleaned
-
-    If Err.Number = 0 Then
-        WScript.Echo "  ✓ Importado: " & moduleName
+    If ext="bas" Then
+        Dim tmp: tmp = CreateAnsiTempFrom(sourcePath)
+        objAccess.Application.LoadFromText 5, moduleName, tmp ' 5=acModule
+        If Err.Number<>0 Then WScript.Echo "  ❌ LoadFromText " & moduleName & ": " & Err.Number & " - " & Err.Description: Err.Clear: If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True: Exit Function
+        If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True
         ImportVbaFile = True
     Else
-        WScript.Echo "  ❌ Error importando " & moduleName & ": " & Err.Number & " - " & Err.Description
-        ImportVbaFile = False
+        ImportVbaFile = ImportVbComponentFromFile(objAccess, moduleName, sourcePath)
     End If
+
+    If ImportVbaFile Then WScript.Echo "  ✓ Importado: " & moduleName
     Err.Clear
 End Function
 
@@ -2652,6 +2641,12 @@ End Sub
 ' Función para obtener la lista de archivos por funcionalidad según CONDOR_MASTER_PLAN.md
 ' Incluye dependencias para cada funcionalidad
 ' NOTA: El CLI (condor_cli.vbs) se empaqueta aparte y esta función lista módulos .bas/.cls de funcionalidades
+' ============================================================================
+' FUNCIÓN: GetFunctionalityFiles
+' Descripción: Mapea funcionalidades a archivos *.bas/*.cls correspondientes
+' Nota: El CLI usa VBIDE/LoadFromText para importación; esta lista mapea
+'       archivos fuente por funcionalidad para empaquetado y gestión
+' ============================================================================
 Function GetFunctionalityFiles(strFunctionality)
     Dim arrFiles
     
@@ -2782,6 +2777,10 @@ Function GetFunctionalityFiles(strFunctionality)
             ' Funcionalidad CLI e Infraestructura
             arrFiles = Array("condor_cli.vbs")
             
+        Case "condorcli"
+            ' Funcionalidad especial para copiar condor_cli.vbs como .txt
+            arrFiles = Array("condor_cli.vbs")
+            
         Case "tests", "pruebas", "testing", "test"
             ' Sección 12 - Archivos de Pruebas (Autodescubrimiento)
             arrFiles = Array()
@@ -2900,11 +2899,22 @@ Sub CopyFilesToBundle(arrFiles, strBundlePath)
     Dim i, fileName, filePath, destFilePath
     For i = 0 To UBound(arrFiles)
         fileName = Trim(arrFiles(i))
-        filePath = objFSO.BuildPath(strSourcePath, fileName)
+        
+        ' Caso especial para condorcli: copiar desde la raíz del proyecto
+        If fileName = "condor_cli.vbs" And InStr(strBundlePath, "bundle_condorcli_") > 0 Then
+            filePath = objFSO.BuildPath(objFSO.GetParentFolderName(WScript.ScriptFullName), fileName)
+        Else
+            filePath = objFSO.BuildPath(strSourcePath, fileName)
+        End If
         
         If objFSO.FileExists(filePath) Then
-            ' Copiar archivo con extensión .txt añadida
-            destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
+            ' Caso especial para condorcli: copiar como .txt en la misma ruta
+            If fileName = "condor_cli.vbs" And InStr(strBundlePath, "bundle_condorcli_") > 0 Then
+                destFilePath = objFSO.BuildPath(objFSO.GetParentFolderName(WScript.ScriptFullName), fileName & ".txt")
+            Else
+                ' Copiar archivo con extensión .txt añadida
+                destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
+            End If
             objFSO.CopyFile filePath, destFilePath, True
             
             If Err.Number <> 0 Then
@@ -4190,7 +4200,6 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
     
     ' Crear formulario básico (simulado)
     objAccessLocal.DoCmd.NewForm
-    objAccessLocal.DoCmd.Save , formName
     
     CloseAccessApp objAccessLocal
     On Error GoTo 0
@@ -7199,7 +7208,7 @@ Sub ResolveDbPath()
                 Else
                     strAccessPath = strDataPath
                 End If
-            ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "update" Or strAction = "list-modules" Then
+            ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "list-modules" Then
                 ' Buscar argumento de BD que no sea un flag
                 Dim dbPathArg
                 dbPathArg = ""
@@ -7241,6 +7250,10 @@ Sub ResolveDbPath()
                         strAccessPath = strDataPath
                     End If
                 End If
+            ElseIf strAction = "update" Then
+                ' Para update, usar siempre la base de datos de desarrollo por defecto
+                ' El primer argumento después de update es el target del módulo, no una ruta de BD
+                strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
             Else
                 strAccessPath = strDataPath
             End If

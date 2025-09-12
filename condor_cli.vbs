@@ -1344,11 +1344,57 @@ End Function
 
 Function ImportVbComponentFromFile(app, moduleName, srcPath)
     On Error Resume Next
-    Dim p,tmp,c: Set p=EnsureVBProject(app): tmp=CreateAnsiTempFrom(srcPath)
+    
+    ' Establecer modo silencioso antes de cualquier importación
+    app.Application.DisplayAlerts = False
+    app.Application.Echo False
+    app.DoCmd.SetWarnings False
+    
+    ' a) Crear temp ANSI con CreateAnsiTempFrom
+    Dim tmp: tmp = CreateAnsiTempFrom(srcPath)
+    If Err.Number <> 0 Or tmp = "" Then
+        WScript.Echo "  ❌ Error creando archivo temporal ANSI: " & Err.Description
+        ImportVbComponentFromFile = False
+        Exit Function
+    End If
+    
+    ' b) Set p = app.VBE.ActiveVBProject (fallar con mensaje si no hay VBIDE/trust)
+    Dim p: Set p = app.VBE.ActiveVBProject
+    If Err.Number <> 0 Or p Is Nothing Then
+        WScript.Echo "  ❌ Error accediendo VBE.ActiveVBProject - Verificar VBIDE/trust: " & Err.Description
+        If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp, True
+        ImportVbComponentFromFile = False
+        Exit Function
+    End If
+    
+    ' c) p.VBComponents.Import tmp y después p.VBComponents(p.VBComponents.Count).Name = moduleName
     p.VBComponents.Import tmp
-    If Err.Number<>0 Then WScript.Echo "  ❌ Import VBIDE "&srcPath&": "&Err.Number&" - "&Err.Description: Err.Clear: ImportVbComponentFromFile=False: Exit Function
-    Set c = p.VBComponents(p.VBComponents.Count): c.Name = moduleName
-    If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Import VBIDE " & srcPath & ": " & Err.Number & " - " & Err.Description
+        If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp, True
+        ImportVbComponentFromFile = False
+        Exit Function
+    End If
+    
+    p.VBComponents(p.VBComponents.Count).Name = moduleName
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error renombrando componente a " & moduleName & ": " & Err.Description
+        If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp, True
+        ImportVbComponentFromFile = False
+        Exit Function
+    End If
+    
+    ' d) Guardar el módulo para evitar diálogos de confirmación
+    app.DoCmd.Save 5, moduleName  ' 5 = acModule
+    If Err.Number <> 0 Then
+        WScript.Echo "  ❌ Error guardando módulo " & moduleName & ": " & Err.Description
+        If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp, True
+        ImportVbComponentFromFile = False
+        Exit Function
+    End If
+    
+    ' e) Borra el temp y devuelve True/False
+    If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp, True
     ImportVbComponentFromFile = True
 End Function
 ' ===== FIN Helpers =====
@@ -2136,6 +2182,14 @@ Sub UpdateProject()
         WScript.Quit 1
     End If
     
+    ' Establecer modo silencioso antes de cualquier importación
+    On Error Resume Next
+    objAccess.Application.DisplayAlerts = False
+    objAccess.Application.Echo False
+    objAccess.DoCmd.SetWarnings False
+    Err.Clear
+    On Error GoTo 0
+    
     ' Obtener argumentos específicos del comando update
     Dim updateTarget, i, foundTarget
     updateTarget = ""
@@ -2624,12 +2678,17 @@ WScript.Echo "   Incluye: ITestReporter, CTestResult, CTestSuiteResult, CTestRep
     WScript.Echo "   Incluye: Todos los archivos Test* e IntegrationTest* del proyecto"
     WScript.Echo "            (TestAppManager, TestAuthService, TestCConfig, etc.)"
     WScript.Echo ""
+    WScript.Echo "🖥️ CondorCli - CLI de CONDOR"
+    WScript.Echo "   Copia condor_cli.vbs como condor_cli.vbs.txt en la raíz del proyecto"
+    WScript.Echo "   (sobreescribe si existe)"
+    WScript.Echo ""
     WScript.Echo "EJEMPLOS DE USO:"
     WScript.Echo "  cscript condor_cli.vbs bundle Auth"
     WScript.Echo "  cscript condor_cli.vbs bundle Document C:\\temp"
     WScript.Echo "  cscript condor_cli.vbs bundle TestFramework"
     WScript.Echo "  cscript condor_cli.vbs bundle Tests"
     WScript.Echo "  cscript condor_cli.vbs bundle Config"
+    WScript.Echo "  cscript condor_cli.vbs bundle condorcli"
     WScript.Echo ""
     WScript.Echo "NOTAS:"
     WScript.Echo "  • Los archivos se copian con extensión .txt para fácil visualización"
@@ -2777,6 +2836,10 @@ Function GetFunctionalityFiles(strFunctionality)
             ' Funcionalidad CLI e Infraestructura
             arrFiles = Array("condor_cli.vbs")
             
+        Case "condorcli"
+            ' Funcionalidad especial para copiar condor_cli.vbs como .txt
+            arrFiles = Array("condor_cli.vbs")
+            
         Case "tests", "pruebas", "testing", "test"
             ' Sección 12 - Archivos de Pruebas (Autodescubrimiento)
             arrFiles = Array()
@@ -2895,11 +2958,22 @@ Sub CopyFilesToBundle(arrFiles, strBundlePath)
     Dim i, fileName, filePath, destFilePath
     For i = 0 To UBound(arrFiles)
         fileName = Trim(arrFiles(i))
-        filePath = objFSO.BuildPath(strSourcePath, fileName)
+        
+        ' Caso especial para condorcli: copiar desde la raíz del proyecto
+        If fileName = "condor_cli.vbs" And InStr(strBundlePath, "bundle_condorcli_") > 0 Then
+            filePath = objFSO.BuildPath(objFSO.GetParentFolderName(WScript.ScriptFullName), fileName)
+        Else
+            filePath = objFSO.BuildPath(strSourcePath, fileName)
+        End If
         
         If objFSO.FileExists(filePath) Then
-            ' Copiar archivo con extensión .txt añadida
-            destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
+            ' Caso especial para condorcli: copiar como .txt en la misma ruta
+            If fileName = "condor_cli.vbs" And InStr(strBundlePath, "bundle_condorcli_") > 0 Then
+                destFilePath = objFSO.BuildPath(objFSO.GetParentFolderName(WScript.ScriptFullName), fileName & ".txt")
+            Else
+                ' Copiar archivo con extensión .txt añadida
+                destFilePath = objFSO.BuildPath(strBundlePath, fileName & ".txt")
+            End If
             objFSO.CopyFile filePath, destFilePath, True
             
             If Err.Number <> 0 Then
@@ -4640,14 +4714,8 @@ Private Sub ImportSingleForm(strJsonPath, strDbPath, strPassword, bypassStartup,
     ' Añadir controles usando función auxiliar
     AddControlsFromJson objAccess, frm, objJsonData
     
-    ' Guardar y cerrar formulario
+    ' Cerrar formulario (sin guardar explícitamente)
     On Error Resume Next
-    objAccess.DoCmd.Save 1, frm.Name  ' acForm
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al guardar el formulario: " & Err.Description
-        CloseAccessApp objAccess
-        WScript.Quit 1
-    End If
     
     ' Cerrar el formulario
     objAccess.DoCmd.Close 1, frm.Name, 1  ' acForm, formName, acSaveYes
@@ -4854,13 +4922,8 @@ Private Sub ImportFormFromData(objAccess, formName, objJsonData, bStrict)
     ' Añadir controles (incluyendo subformularios y TabControls)
     AddControlsFromJson objAccess, frm, objJsonData
     
-    ' Guardar y cerrar formulario
+    ' Cerrar formulario (sin guardar explícitamente)
     On Error Resume Next
-    objAccess.DoCmd.Save 1, frm.Name  ' acForm
-    If Err.Number <> 0 Then
-        WScript.Echo "Error al guardar el formulario " & formName & ": " & Err.Description
-        Exit Sub
-    End If
     
     ' Cerrar el formulario
     objAccess.DoCmd.Close 1, frm.Name, 1  ' acForm, formName, acSaveYes
@@ -7193,7 +7256,7 @@ Sub ResolveDbPath()
                 Else
                     strAccessPath = strDataPath
                 End If
-            ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "update" Or strAction = "list-modules" Then
+            ElseIf strAction = "rebuild" Or strAction = "test" Or strAction = "list-modules" Then
                 ' Buscar argumento de BD que no sea un flag
                 Dim dbPathArg
                 dbPathArg = ""
@@ -7235,6 +7298,10 @@ Sub ResolveDbPath()
                         strAccessPath = strDataPath
                     End If
                 End If
+            ElseIf strAction = "update" Then
+                ' Para update, usar siempre la base de datos de desarrollo por defecto
+                ' El primer argumento después de update es el target del módulo, no una ruta de BD
+                strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
             Else
                 strAccessPath = strDataPath
             End If
@@ -7317,6 +7384,14 @@ Sub ClearStartupForm(dbPath, password)
 
 ' Actualizar todos los módulos (sync suave)
 Sub UpdateAllModulesTransactional()
+    ' Establecer modo silencioso antes de cualquier importación
+    On Error Resume Next
+    objAccess.Application.DisplayAlerts = False
+    objAccess.Application.Echo False
+    objAccess.DoCmd.SetWarnings False
+    Err.Clear
+    On Error GoTo 0
+    
     Dim objFolder, objFile, strModuleName, importedCount, moduleType
     Set objFolder = objFSO.GetFolder(strSourcePath)
     importedCount = 0
@@ -7344,6 +7419,14 @@ End Sub
 
 ' Actualizar módulo específico
 Sub UpdateSingleModuleTransactional(moduleName)
+    ' Establecer modo silencioso antes de cualquier importación
+    On Error Resume Next
+    objAccess.Application.DisplayAlerts = False
+    objAccess.Application.Echo False
+    objAccess.DoCmd.SetWarnings False
+    Err.Clear
+    On Error GoTo 0
+    
     Dim sourceFile, moduleType, actualFile
     
     ' Buscar archivo .bas o .cls
@@ -7376,6 +7459,14 @@ End Sub
 
 ' Actualizar solo módulos cambiados (comparación por tamaño+fecha)
 Sub UpdateChangedModulesTransactional()
+    ' Establecer modo silencioso antes de cualquier importación
+    On Error Resume Next
+    objAccess.Application.DisplayAlerts = False
+    objAccess.Application.Echo False
+    objAccess.DoCmd.SetWarnings False
+    Err.Clear
+    On Error GoTo 0
+    
     Dim objFolder, objFile, strModuleName, importedCount, moduleType
     Dim tempExportDir, exportedFile, needsUpdate
     Set objFolder = objFSO.GetFolder(strSourcePath)

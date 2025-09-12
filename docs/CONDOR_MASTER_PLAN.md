@@ -2204,6 +2204,7 @@ cscript condor_cli.vbs bundle <funcionalidad> [destino] [--mode <modo>]
 - `data`: Acceso a datos
 - `testing`: Infraestructura de testing
 - `CLI`: Herramientas de línea de comandos
+- `condorcli`: CLI de CONDOR (copia condor_cli.vbs como .txt en la raíz del proyecto)
 
 **Modos de detección:**
 - `smart`: Detección inteligente (por defecto)
@@ -2378,6 +2379,9 @@ cscript condor_cli.vbs bundle workflow ./dist/workflow --mode smart
 
 # Crear bundle de UI
 cscript condor_cli.vbs bundle ui ./packages/ui-components
+
+# Crear copia del CLI como archivo de texto
+cscript condor_cli.vbs bundle condorcli
 ```
 
 ##### Migraciones

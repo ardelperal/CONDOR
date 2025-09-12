@@ -158,3 +158,6 @@ errorHandler:
     GetCurrentUserEmail = "unknown@domain.com"
 End Function
 
+'----------------------------------
+' PRUEBA
+'-------------------------------------
