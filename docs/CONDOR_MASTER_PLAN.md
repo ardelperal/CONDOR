@@ -3669,3 +3669,11 @@ Ejecutando verificación de consistencia...
 Ejecutando verificación de consistencia...
 ⚠ La verificación detectó inconsistencias
 ```
+
+
+## Herramienta CLI/UI-as-code
+
+- Apertura/cierre con bypass automático SIEMPRE activo.
+- Contrato JSON de formulario: controls[].section (detail|header|footer) + properties mínimas.
+- Reglas de salida de export-form (--json/--output).
+- Resolución de BD: flag → posicional → ENV → defaultForAction (frontend/backend).

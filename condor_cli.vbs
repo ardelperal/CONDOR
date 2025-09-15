@@ -125,8 +125,9 @@ End Function
 ' ===== FUNCIONES HELPER PARA BYPASS DEL FORMULARIO DE INICIO =====
 
 Function DetectStartupOptionName(app)
-    ' En Access, la opción siempre se llama "Startup Form"
-    DetectStartupOptionName = "Startup Form"
+    ' La opción de startup form no se maneja con SetOption, sino como propiedad de BD
+    ' Retornamos cadena vacía para desactivar el bypass
+    DetectStartupOptionName = ""
 End Function
 
 Function SafeGetOption(app, optName, ByRef outVal)
@@ -145,12 +146,12 @@ Function SafeSetOption(app, optName, newVal)
 End Function
 
 Sub StartupBypass_Enable(app)
-    ' Deshabilitar completamente el bypass por ahora hasta resolver el problema
-    ' gStartupOptName = DetectStartupOptionName(app)
-    ' gStartupPrev = ""
-    ' If Len(gStartupOptName) = 0 Then Exit Sub
-    ' Call SafeGetOption(app, gStartupOptName, gStartupPrev)
-    ' Call SafeSetOption(app, gStartupOptName, Null)
+    ' BYPASS SIEMPRE ACTIVO: detectar y desactivar el formulario de inicio
+    gStartupOptName = DetectStartupOptionName(app)
+    gStartupPrev = ""
+    If Len(gStartupOptName) = 0 Then Exit Sub
+    Call SafeGetOption(app, gStartupOptName, gStartupPrev)
+    Call SafeSetOption(app, gStartupOptName, "")
 End Sub
 
 Sub StartupBypass_Restore(app)
@@ -158,6 +159,83 @@ Sub StartupBypass_Restore(app)
     Call SafeSetOption(app, gStartupOptName, gStartupPrev)
     gStartupOptName = ""
     gStartupPrev = ""
+End Sub
+
+' ===== FUNCIONES CENTRALIZADAS DE APERTURA/CIERRE CON BYPASS AUTOMÁTICO =====
+
+' Apertura centralizada con bypass SIEMPRE activo
+Function OpenAccessQuiet(dbPath, password)
+    ' Verificar que la BD existe antes de intentar abrirla
+    If Not objFSO.FileExists(dbPath) Then
+        WScript.Echo "ERROR: La base de datos no existe: " & dbPath
+        WScript.Quit 1
+    End If
+    
+    Dim app
+    On Error Resume Next
+    Set app = CreateObject("Access.Application")
+    If Err.Number <> 0 Then
+        WScript.Echo "ERROR: No se pudo crear Access.Application: " & Err.Description
+        WScript.Quit 1
+    End If
+    Err.Clear
+    
+    ' Configuración silenciosa
+    app.Visible = False
+    app.UserControl = False
+    On Error Resume Next
+    app.AutomationSecurity = 3  ' msoAutomationSecurityForceDisable - deshabilita macros
+    If Err.Number <> 0 Then app.AutomationSecurity = 1  ' fallback a msoAutomationSecurityLow
+    Err.Clear
+    app.DisplayAlerts = False
+    app.Echo False
+    On Error GoTo 0
+    
+    ' BYPASS SIEMPRE ACTIVO: detectar y desactivar el formulario de inicio ANTES de abrir la BD
+    Call StartupBypass_Enable(app)
+    
+    ' Abrir la BD
+    On Error Resume Next
+    If Len(password) > 0 Then
+        app.OpenCurrentDatabase dbPath, False, password
+    Else
+        app.OpenCurrentDatabase dbPath
+    End If
+    
+    If Err.Number <> 0 Then 
+        WScript.Echo "ERROR: No se pudo abrir la base de datos: " & Err.Description
+        Call StartupBypass_Restore(app)
+        app.Quit
+        Set app = Nothing
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
+    
+    ' Guardar información para el cierre
+    gCurrentDbPath = dbPath
+    gCurrentPassword = password
+    
+    Call RemoveBrokenReferences(app)
+    Set OpenAccessQuiet = app
+End Function
+
+' Cierre centralizado que restaura el Startup Form
+Sub CloseAccessQuiet(app)
+    On Error Resume Next
+    
+    ' Restaurar siempre el valor previo del Startup Form
+    Call StartupBypass_Restore(app)
+    
+    ' Limpiar variables globales
+    gCurrentDbPath = ""
+    gCurrentPassword = ""
+    
+    ' Cerrar limpiamente
+    app.Application.Echo True
+    app.CloseCurrentDatabase
+    app.Quit
+    Set app = Nothing
+    Err.Clear
 End Sub
 
 ' ===== FIN FUNCIONES HELPER PARA BYPASS DEL FORMULARIO DE INICIO =====
@@ -170,7 +248,7 @@ Function ResolveDbForAction(actionName, ByRef origin)
     
     ' Prioridad 1: Si existe --db <ruta>
     If gDbPath <> "" Then
-        resolvedPath = ToAbsolute(gDbPath)
+        resolvedPath = ToAbsolute(TrimQuotes(gDbPath))
         origin = "flag"
         ResolveDbForAction = resolvedPath
         Exit Function
@@ -182,7 +260,7 @@ Function ResolveDbForAction(actionName, ByRef origin)
         ' Saltar flags conocidos
         If Left(LCase(arg), 2) <> "--" And Left(arg, 1) <> "/" Then
             If IsDbPathToken(arg) Then
-                resolvedPath = ToAbsolute(arg)
+                resolvedPath = ToAbsolute(TrimQuotes(arg))
                 origin = "positional"
                 ResolveDbForAction = resolvedPath
                 Exit Function
@@ -195,24 +273,31 @@ Function ResolveDbForAction(actionName, ByRef origin)
     envDb = CreateObject("WScript.Shell").Environment("Process")("CONDOR_DEV_DB")
     On Error GoTo 0
     If envDb <> "" Then
-        resolvedPath = ToAbsolute(envDb)
+        resolvedPath = ToAbsolute(TrimQuotes(envDb))
         origin = "env"
         ResolveDbForAction = resolvedPath
         Exit Function
     End If
     
-    ' Prioridad 4: Default según acción
-    If actionName = "rebuild" Or actionName = "update" Or actionName = "export" Or actionName = "validate" Or actionName = "test" Or actionName = "export-form" Or actionName = "import-form" Or actionName = "list-forms" Or actionName = "list-modules" Or actionName = "roundtrip-form" Then
-        ' Frontend por defecto para acciones de código/desarrollo
-        resolvedPath = DefaultFrontendDb()
-        origin = "default-frontend"
-    Else
-        ' Backend por defecto para acciones de datos (listtables, migrate, relink, createtable, droptable)
-        resolvedPath = DefaultBackendDb()
-        origin = "default-backend"
-    End If
-    
+    ' Prioridad 4: Default según acción usando DefaultForAction
+    resolvedPath = DefaultForAction(actionName, origin)
     ResolveDbForAction = resolvedPath
+End Function
+
+' Función que determina la BD por defecto según la acción
+Function DefaultForAction(actionName, ByRef origin)
+    ' FRONTEND por defecto para acciones de código/desarrollo
+    If actionName = "rebuild" Or actionName = "update" Or actionName = "export" Or _
+       actionName = "validate" Or actionName = "test" Or actionName = "export-form" Or _
+       actionName = "import-form" Or actionName = "list-forms" Or actionName = "list-modules" Or _
+       actionName = "roundtrip-form" Or actionName = "validate-form-json" Then
+        origin = "default-frontend"
+        DefaultForAction = DefaultFrontendDb()
+    Else
+        ' BACKEND por defecto para comandos de datos (listtables, migrate, relink, createtable, droptable, etc.)
+        origin = "default-backend"
+        DefaultForAction = DefaultBackendDb()
+    End If
 End Function
 
 ' ===== FIN RESOLUCIÓN CANÓNICA DE BASE DE DATOS =====
@@ -253,12 +338,32 @@ End Function
 
 ' Función para obtener la ruta por defecto de la BD frontend
 Function DefaultFrontendDb()
-    DefaultFrontendDb = objFSO.BuildPath(RepoRoot(), "back\Desarrollo\CONDOR.accdb")
+    Dim defaultPath, legacyPath
+    defaultPath = objFSO.BuildPath(RepoRoot(), "front\Desarrollo\CONDOR.accdb")
+    legacyPath = objFSO.BuildPath(RepoRoot(), "back\Desarrollo\CONDOR.accdb")
+    If Not objFSO.FileExists(defaultPath) And objFSO.FileExists(legacyPath) Then
+        If gVerbose Or gPrintDb Then
+            WScript.Echo "WARNING: usando ruta legacy back\Desarrollo\CONDOR.accdb; migre a front\Desarrollo\CONDOR.accdb (deprecado)"
+        End If
+        DefaultFrontendDb = legacyPath
+    Else
+        DefaultFrontendDb = defaultPath
+    End If
 End Function
 
 ' Función para obtener la ruta por defecto de la BD backend
 Function DefaultBackendDb()
-    DefaultBackendDb = objFSO.BuildPath(RepoRoot(), "back\CONDOR_datos.accdb")
+    Dim defaultPath, legacyPath
+    defaultPath = objFSO.BuildPath(RepoRoot(), "back\data\CONDOR_datos.accdb")
+    legacyPath = objFSO.BuildPath(RepoRoot(), "back\CONDOR_datos.accdb")
+    If Not objFSO.FileExists(defaultPath) And objFSO.FileExists(legacyPath) Then
+        If gVerbose Or gPrintDb Then
+            WScript.Echo "WARNING: usando ruta legacy back\CONDOR_datos.accdb; migre a back\data\CONDOR_datos.accdb (deprecado)"
+        End If
+        DefaultBackendDb = legacyPath
+    Else
+        DefaultBackendDb = defaultPath
+    End If
 End Function
 
 
@@ -360,7 +465,8 @@ If strAction = "bundle" Then
     Call BundleFunctionality()
     WScript.Quit 0
 ElseIf strAction = "validate-schema" Then
-    Call ValidateSchema()
+    ' Usar rutas de producción por defecto
+    Call ValidateSchema("C:\Proyectos\CONDOR\back\test_env\fixtures\databases\Lanzadera_test_template.accdb", "C:\Proyectos\CONDOR\back\test_env\fixtures\databases\Document_test_template.accdb")
     WScript.Quit 0
 ElseIf strAction = "validate-form-json" Then
     Call ValidateFormJsonCommand()
@@ -433,17 +539,16 @@ End If
 ' PASO 7: Cerrar procesos de Access existentes
 Call CloseExistingAccessProcesses()
 
-' PASO 8: Abrir Access con OpenAccessApp unificado (solo si es necesario)
+' PASO 8: Abrir Access con OpenAccessQuiet unificado (solo si es necesario)
 If strAction <> "bundle" And strAction <> "validate-schema" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" Then
     If strAction <> "import-form" Then
         ' Abrir Access en silencio con contraseña correcta usando función canónica
-        Set objAccess = OpenAccessApp(strAccessPath, gPassword, True)
+        Set objAccess = OpenAccessQuiet(strAccessPath, gPassword)
     Else
-        Set objAccess = OpenAccessApp(strAccessPath, gPassword, gBypassStartup)
+        Set objAccess = OpenAccessQuiet(strAccessPath, gPassword)
     End If
     If Not objAccess Is Nothing Then
-        ' Remover referencias rotas SIEMPRE después de abrir la BD
-        Call RemoveBrokenReferences(objAccess)
+        ' RemoveBrokenReferences ya se llama dentro de OpenAccessQuiet
         Call EnsureVBReferences
     End If
 End If
@@ -1086,7 +1191,9 @@ Function ValidateVBASyntax(filePath, ByRef errorDetails)
 End Function
 
 ' Función de serialización recursiva para convertir Dictionary a JSON
-Private Function DictionaryToJson(obj, indentLevel)
+Private Function DictionaryToJson(obj, indentLevel, quiet)
+    If IsEmpty(quiet) Then quiet = True
+    
     Dim result, indent, i, key, value, keys
     Dim isLast
     
@@ -1107,11 +1214,11 @@ Private Function DictionaryToJson(obj, indentLevel)
             If TypeName(obj(keys(0))) = "Dictionary" Then
                 If obj(keys(0)).Exists("name") And obj(keys(0)).Exists("type") Then
                     isControlsCollection = True
-                    WScript.Echo "DEBUG: Detectada colección de controles con " & obj.Count & " elementos"
+                    If gVerbose And Not quiet Then WScript.Echo "DEBUG: Detectada colección de controles con " & obj.Count & " elementos"
                 End If
             End If
         Else
-            WScript.Echo "DEBUG: Dictionary vacío encontrado"
+            If gVerbose And Not quiet Then WScript.Echo "DEBUG: Dictionary vacío encontrado"
         End If
         
         If isControlsCollection Then
@@ -1128,15 +1235,15 @@ Private Function DictionaryToJson(obj, indentLevel)
                 On Error GoTo 0
                 isLast = (i = UBound(keys))
                 
-                WScript.Echo "DEBUG: Procesando elemento array " & i & ": " & keys(i)
+                If gVerbose And Not quiet Then WScript.Echo "DEBUG: Procesando elemento array " & i & ": " & keys(i)
                 result = result & indent & "    "
                 On Error Resume Next
                 If IsObject(value) Then
                     If Not value Is Nothing Then
-                        WScript.Echo "DEBUG: Serializando objeto control: " & TypeName(value)
-                        result = result & DictionaryToJson(value, indentLevel + 1)
+                        If gVerbose And Not quiet Then WScript.Echo "DEBUG: Serializando objeto control: " & TypeName(value)
+                        result = result & DictionaryToJson(value, indentLevel + 1, quiet)
                     Else
-                        WScript.Echo "DEBUG: Objeto es Nothing"
+                        If gVerbose And Not quiet Then WScript.Echo "DEBUG: Objeto es Nothing"
                         result = result & "null"
                     End If
                 ElseIf IsNull(value) Then
@@ -1183,7 +1290,7 @@ Private Function DictionaryToJson(obj, indentLevel)
                 result = result & indent & "    " & Chr(34) & key & Chr(34) & ": "
                 If IsObject(value) Then
                     If Not value Is Nothing Then
-                        result = result & DictionaryToJson(value, indentLevel + 1)
+                        result = result & DictionaryToJson(value, indentLevel + 1, quiet)
                     Else
                         result = result & "null"
                     End If
@@ -1397,12 +1504,24 @@ Sub ExportModuleWithAnsiEncoding(vbComponent, strExportPath)
 End Sub
 
 ' Subrutina principal para validar esquemas de base de datos
-Sub ValidateSchema()
+Sub ValidateSchema(lanzaderaPath, condorPath)
     WScript.Echo "=== INICIANDO VALIDACIÓN DE ESQUEMA DE BASE DE DATOS ==="
     
     Dim lanzaderaSchema, condorSchema
     Dim allOk
     allOk = True
+    
+    ' Si no se proporcionan rutas, usar las por defecto (producción)
+    If IsEmpty(lanzaderaPath) Or lanzaderaPath = "" Then 
+        lanzaderaPath = strSourcePath & "\..\back\Lanzadera_Datos.accdb"
+    End If
+    If IsEmpty(condorPath) Or condorPath = "" Then 
+        condorPath = strSourcePath & "\..\back\CONDOR_datos.accdb"
+    End If
+    
+    WScript.Echo "Validando bases de datos:"
+    WScript.Echo "  - Lanzadera: " & lanzaderaPath
+    WScript.Echo "  - CONDOR: " & condorPath
     
     ' Definir esquema esperado para Lanzadera
     Set lanzaderaSchema = CreateObject("Scripting.Dictionary")
@@ -1426,8 +1545,8 @@ Sub ValidateSchema()
     condorSchema.Add "TbLocalConfig", Array("clave", "valor", "descripcion", "categoria")
     
     ' Validar las bases de datos
-    If Not VerifySchema(strSourcePath & "\..\back\test_env\fixtures\databases\Lanzadera_test_template.accdb", "dpddpd", lanzaderaSchema) Then allOk = False
-        If Not VerifySchema(strSourcePath & "\..ack\test_env\fixtures\databases\Document_test_template.accdb", "", condorSchema) Then allOk = False
+    If Not VerifySchema(lanzaderaPath, "dpddpd", lanzaderaSchema) Then allOk = False
+    If Not VerifySchema(condorPath, "", condorSchema) Then allOk = False
     
     If allOk Then
         WScript.Echo "✓ VALIDACIÓN DE ESQUEMA EXITOSA. Todas las bases de datos son consistentes."
@@ -1669,6 +1788,8 @@ Sub ShowHelp()
     WScript.Echo "SINTAXIS:"
     WScript.Echo "  cscript condor_cli.vbs [comando] [opciones] [parámetros]"
     WScript.Echo ""
+    WScript.Echo "Por defecto, acciones de código usan front\Desarrollo\CONDOR.accdb; acciones de datos usan back\data\CONDOR_datos.accdb”."
+    WScript.Echo ""
     WScript.Echo "COMANDOS PRINCIPALES:"
     WScript.Echo ""
     WScript.Echo "📤 EXPORTACIÓN:"
@@ -1677,13 +1798,13 @@ Sub ShowHelp()
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
-    WScript.Echo "  rebuild [--verbose] [--bypassstartup on|off] [--verifyModules] - Método principal de sincronización del proyecto"
-    WScript.Echo "                                 Opera sobre FRONTEND por defecto (back\Desarrollo\CONDOR.accdb)"
+    WScript.Echo "  rebuild [--verbose] [--verifyModules] - Método principal de sincronización del proyecto"
+    WScript.Echo "                                 Opera sobre FRONTEND por defecto (front\Desarrollo\CONDOR.accdb)"
     WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
     WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
     WScript.Echo "                                 --verifyModules: Verificar automáticamente tras importar"
     WScript.Echo "                                 Transaccional: usa la misma sesión de Access"
-    WScript.Echo "  update <opciones|módulos> [--verbose] [--bypassstartup on|off] [--verifyModules] - Actualización selectiva de módulos VBA"
+    WScript.Echo "  update <opciones|módulos> [--verbose] [--verifyModules] - Actualización selectiva de módulos VBA"
     WScript.Echo "                                 --changed: Solo módulos modificados (comparación por hash/fecha)"
     WScript.Echo "                                 --all: Todos los módulos (sync suave, sin eliminar)"
     WScript.Echo "                                 <Nombre>: Módulo específico (acepta nombre sin extensión)"
@@ -1709,7 +1830,7 @@ Sub ShowHelp()
     WScript.Echo "  createtable <nombre> <sql>   - Crear tabla con consulta SQL personalizada"
     WScript.Echo "  droptable <nombre>           - Eliminar tabla de la base de datos"
     WScript.Echo "  listtables [db_path]         - Listar todas las tablas"
-    WScript.Echo "                                 db_path opcional (por defecto: CONDOR_datos.accdb)"
+    WScript.Echo "                                 db_path opcional (por defecto: back\data\CONDOR_datos.accdb)"
     WScript.Echo "  list-forms [db_path] [--password <pwd>] [--json] - Listar todos los formularios"
     WScript.Echo "                                 db_path opcional (por defecto: ./condor.accdb)"
     WScript.Echo "                                 --password: Contraseña de la base de datos"
@@ -1733,6 +1854,7 @@ Sub ShowHelp()
     WScript.Echo "                                 Opciones:"
     WScript.Echo "                                   --output <archivo>        - Archivo de salida (por defecto: <form_name>.json)"
     WScript.Echo "                                   --password <pwd>          - Contraseña de la base de datos"
+    WScript.Echo "                                   --json                    - Salida JSON a consola (no guarda archivo)"
     WScript.Echo "                                   --schema-version <ver>    - Versión del esquema (por defecto: 1.0.0)"
     WScript.Echo "                                   --expand <ámbitos>        - Ámbitos a incluir: events,formatting,resources"
     WScript.Echo "                                                               (por defecto: todos)"
@@ -1867,17 +1989,16 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo "OPCIONES GLOBALES:"
     WScript.Echo "  --help, -h, help             - Mostrar esta ayuda completa"
     WScript.Echo "  --src <directorio>           - Especificar directorio fuente alternativo"
-    WScript.Echo "                                 (por defecto: C:\\Proyectos\\CONDOR\\src)"
+    WScript.Echo "                                 (por defecto: " & RepoRoot() & "\\src)"
     WScript.Echo "  --strict                     - Modo estricto: validación exhaustiva de coherencia"
     WScript.Echo "                                 entre JSON y código VBA en formularios"
     WScript.Echo "  --verbose                    - Mostrar información detallada durante la operación"
     WScript.Echo "  --db <ruta>, /db:<ruta>      - Especificar ruta de base de datos"
     WScript.Echo "                                 (por defecto: ENV('CONDOR_DEV_DB') o ruta por defecto)"
     WScript.Echo "  --password <clave>, /pwd:<clave> - Especificar contraseña de base de datos"
-    WScript.Echo "  --bypassstartup on|off, /bypassstartup:on|off - Controlar bypass de startup (OBSOLETO)"
+    WScript.Echo "  --print-db                   - Mostrar la ruta de base de datos que se utilizará"
     WScript.Echo "                                 ⚠️  NOTA: El CLI desactiva automáticamente el 'Startup Form'/'Display Form'"
-    WScript.Echo "                                     al abrir la BD y lo restaura al cerrar. No requiere parámetros."
-    WScript.Echo "                                     Esta opción se mantiene por compatibilidad pero no tiene efecto."
+    WScript.Echo "                                     al abrir la BD y lo restaura al cerrar automáticamente."
     WScript.Echo ""
     WScript.Echo "FLUJO DE TRABAJO RECOMENDADO:"
     WScript.Echo "  1. cscript condor_cli.vbs validate     (validar sintaxis antes de importar)"
@@ -1886,7 +2007,7 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo ""
     WScript.Echo "EJEMPLOS DE USO:"
     WScript.Echo "  cscript condor_cli.vbs --help"
-    WScript.Echo "  cscript condor_cli.vbs validate --verbose --src C:\\MiProyecto\\src"
+    WScript.Echo "  cscript condor_cli.vbs validate --verbose --src " & RepoRoot() & "\\src"
     WScript.Echo "  cscript condor_cli.vbs export --verbose"
     WScript.Echo "  cscript condor_cli.vbs validate-form-json formulario.json --strict"
     WScript.Echo "  cscript condor_cli.vbs bundle Auth"
@@ -1894,15 +2015,13 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo "  cscript condor_cli.vbs createtable MiTabla ""CREATE TABLE MiTabla (ID LONG)"""
     WScript.Echo "  cscript condor_cli.vbs listtables"
     WScript.Echo "  cscript condor_cli.vbs relink --all"
-    WScript.Echo "  cscript condor_cli.vbs rebuild --verbose --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs rebuild --verbose"
     WScript.Echo "  cscript condor_cli.vbs update --changed --verbose"
     WScript.Echo "  cscript condor_cli.vbs update --all"
     WScript.Echo "  cscript condor_cli.vbs update ModuloA CClaseB"
-    WScript.Echo "  # NOTA: --bypassstartup on es DEFAULT para rebuild/update/test y deshabilita"
-    WScript.Echo "  # temporalmente StartupForm y AutoExec para evitar errores durante importación"
-    WScript.Echo "  cscript condor_cli.vbs test --password miClave --bypassstartup on"
-    WScript.Echo "  cscript condor_cli.vbs list-forms --db """"C:\\MiDB.accdb"""" --password miClave --bypassstartup on"
-    WScript.Echo "  cscript condor_cli.vbs export-form MiDB.accdb MiForm --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs test --password miClave"
+    WScript.Echo "  cscript condor_cli.vbs list-forms --password miClave"
+    WScript.Echo "  cscript condor_cli.vbs export-form MiDB.accdb MiForm"
     WScript.Echo ""
     WScript.Echo "RESOLUCIÓN DE BASE DE DATOS:"
     WScript.Echo "  Todos los comandos aceptan ruta posicional o --db <ruta>."
@@ -1915,20 +2034,20 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo ""
     WScript.Echo "  # Ejemplos de export/import por referencias (subformularios y TabControl):"
     WScript.Echo "  # 1. Exportar formularios hijo y padre por separado"
-    WScript.Echo "  cscript condor_cli.vbs export-form """"C:\\MiDB.accdb"""" """"FormHijo"""" --pretty --bypassstartup on"
-    WScript.Echo "  cscript condor_cli.vbs export-form """"C:\\MiDB.accdb"""" """"FormPadre"""" --pretty --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs export-form """"FormHijo"""" --pretty"
+    WScript.Echo "  cscript condor_cli.vbs export-form """"FormPadre"""" --pretty"
     WScript.Echo ""
     WScript.Echo "  # 2. Importar por dependencias desde carpeta (toposort automático)"
-    WScript.Echo "  cscript condor_cli.vbs import-form """".\\ui\\forms"""" """"C:\\MiDB.accdb"""" --strict --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs import-form """".\\ui\\forms"""" --strict"
     WScript.Echo ""
     WScript.Echo "  # 3. Importar formulario individual con validación estricta"
-    WScript.Echo "  cscript condor_cli.vbs import-form """"FormPadre.json"""" """"C:\\MiDB.accdb"""" --strict --bypassstartup on"
+    WScript.Echo "  cscript condor_cli.vbs import-form """"FormPadre.json"""" --strict"
     WScript.Echo ""
     WScript.Echo "CONFIGURACIÓN:"
-    WScript.Echo "  Base de datos desarrollo: C:\\Proyectos\\CONDOR\\back\\Desarrollo\\CONDOR.accdb"
+    WScript.Echo "  Base de datos desarrollo: " & DefaultFrontendDb()
     WScript.Echo "                            (o ENV('CONDOR_DEV_DB') si está definida)"
-    WScript.Echo "  Base de datos datos:      C:\\Proyectos\\CONDOR\\back\\CONDOR_datos.accdb"
-    WScript.Echo "  Directorio fuente:        C:\\Proyectos\\CONDOR\\src"
+    WScript.Echo "  Base de datos datos:      " & DefaultBackendDb()
+    WScript.Echo "  Directorio fuente:        " & RepoRoot() & "\\src"
     WScript.Echo "  Variable de entorno:      CONDOR_DEV_DB (opcional, para ruta de BD personalizada)"
     WScript.Echo ""
     WScript.Echo "Para más información, consulte la documentación en docs/CONDOR_MASTER_PLAN.md"
@@ -2749,8 +2868,12 @@ End Function
 Private Sub ExportModulesToDirectory(targetDir)
     Dim objAccess, objModule, i
     
+    ' Resolver BD usando función canónica
+    Dim dbPath, dbOrigin
+    Call ResolveDbForAction("export", dbPath, dbOrigin)
+    
     ' Abrir Access para exportar módulos
-    Set objAccess = OpenAccessApp()
+    Set objAccess = OpenAccessQuiet(dbPath, gPassword)
     
     If objAccess Is Nothing Then
         WScript.Echo "Error: No se pudo abrir Access para exportar módulos"
@@ -2798,7 +2921,7 @@ Private Sub ExportModulesToDirectory(targetDir)
     On Error GoTo 0
     
     ' Cerrar Access
-    Call CloseAccessApp(objAccess)
+    Call CloseAccessQuiet(objAccess)
     
     If gVerbose Then
         WScript.Echo "Módulos exportados a: " & targetDir
@@ -3687,7 +3810,7 @@ End Function
 Sub ExportForm()
     Dim strDbPath, strFormName, strOutputPath, strPassword
     Dim strSchemaVersion, strExpand, strResourceRoot, strSrcDir
-    Dim bPretty, bNoControls, bStrict, bypassStartup
+    Dim bPretty, bNoControls, bStrict, bypassStartup, bJsonOutput
     Dim i
     
     ' Verificar argumentos mínimos
@@ -3710,6 +3833,7 @@ Sub ExportForm()
     bNoControls = False
     bStrict = False
     bypassStartup = False
+    bJsonOutput = False
     
     ' Procesar argumentos opcionales
     For i = 3 To objArgs.Count - 1
@@ -3720,6 +3844,8 @@ Sub ExportForm()
             strOutputPath = objArgs(i + 1)
         ElseIf LCase(currentArg) = "--password" And i < objArgs.Count - 1 Then
             strPassword = objArgs(i + 1)
+        ElseIf LCase(currentArg) = "--json" Then
+            bJsonOutput = True
         ElseIf LCase(currentArg) = "--schema-version" And i < objArgs.Count - 1 Then
             strSchemaVersion = objArgs(i + 1)
         ElseIf LCase(Left(currentArg, 9)) = "--expand=" Then
@@ -4261,17 +4387,23 @@ Sub ExportForm()
         jsonString = jsonWriter.GetJson() ' Compact
     End If
     
-    ' Guardar en archivo con codificación UTF-8
-    Dim objFile
-    Set objFile = objFSO.CreateTextFile(strOutputPath, True, True) ' True = UTF-8 encoding
-    objFile.Write jsonString
-    objFile.Close
-    
-    If gVerbose Then
-        WScript.Echo "Éxito: El formulario ha sido exportado a " & strOutputPath
-        WScript.Echo "Esquema: " & strSchemaVersion & ", Expand: " & strExpand
+    ' Manejar salida según --json flag
+    If bJsonOutput Then
+        ' Salida JSON a consola
+        WScript.Echo jsonString
     Else
-        WScript.Echo "Éxito: El formulario ha sido exportado a " & strOutputPath
+        ' Guardar en archivo con codificación UTF-8
+        Dim objFile
+        Set objFile = objFSO.CreateTextFile(strOutputPath, True, True) ' True = UTF-8 encoding
+        objFile.Write jsonString
+        objFile.Close
+        
+        If gVerbose Then
+            WScript.Echo "Éxito: El formulario ha sido exportado a " & strOutputPath
+            WScript.Echo "Esquema: " & strSchemaVersion & ", Expand: " & strExpand
+        Else
+            WScript.Echo "Éxito: El formulario ha sido exportado a " & strOutputPath
+        End If
     End If
     
     ' Lógica de limpieza
@@ -4521,9 +4653,13 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     
     If gVerbose Then WScript.Echo "Exportando " & formName & " desde " & dbPath & " a " & outputPath
     
+    ' Resolver BD usando función canónica
+    Dim resolvedDbPath, dbOrigin
+    resolvedDbPath = ResolveDbForAction(dbPath, "export-form", dbOrigin)
+    
     ' Crear instancia de Access usando función unificada
     Dim objAccessLocal
-    Set objAccessLocal = OpenAccessApp(dbPath, password, True)
+    Set objAccessLocal = OpenAccessQuiet(resolvedDbPath, password)
     
     If objAccessLocal Is Nothing Then
         WScript.Echo "Error al abrir la base de datos para export"
@@ -4539,7 +4675,7 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     If Err.Number <> 0 Then
         WScript.Echo "Error al abrir formulario para export: " & Err.Description
         objAccessLocal.Echo True
-        CloseAccessApp objAccessLocal
+        CloseAccessQuiet objAccessLocal
         Exit Sub
     End If
     
@@ -4602,7 +4738,7 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     objFileLocal.Write jsonContent
     objFileLocal.Close
     
-    CloseAccessApp objAccessLocal
+    CloseAccessQuiet objAccessLocal
 End Sub
 
 ' ===================================================================
@@ -5914,6 +6050,13 @@ Sub ListForms()
             bJsonOutput = True
         ElseIf arg = "--print-db" Then
             ' Flag ya procesado globalmente, ignorar aquí
+        ElseIf arg = "--db" Then
+            ' Flag ya procesado globalmente, ignorar aquí
+            If i + 1 < objArgs.Count Then
+                i = i + 1 ' Saltar el valor del --db
+            End If
+        ElseIf Left(arg, 4) = "/db:" Then
+            ' Flag ya procesado globalmente, ignorar aquí
         ElseIf Left(arg, 2) <> "--" Then
             ' Ignorar argumentos posicionales - la BD ya está resuelta
             WScript.Echo "Advertencia: Argumento posicional ignorado (usar --db): " & objArgs(i)
@@ -7151,35 +7294,13 @@ Sub OpenAccessSilently(dbPath, pwd, ByRef app)
 End Sub
 
 Function OpenAccessApp(dbPath, password, bypassStartup)
-    Dim app
-    Call OpenAccessSilently(dbPath, password, app)
-    
-    ' Si bypass está activo, establecer variables globales
-    If bypassStartup Then
-        gBypassStartupEnabled = True
-        gCurrentDbPath = dbPath
-        gCurrentPassword = password
-    End If
-    
-    Set OpenAccessApp = app
+    ' DEPRECATED: Usar OpenAccessQuiet en su lugar
+    Set OpenAccessApp = OpenAccessQuiet(dbPath, password)
 End Function
 
 Sub CloseAccessApp(app)
-    On Error Resume Next
-    
-    ' Si bypass estaba activo, restaurar startup
-    If gBypassStartupEnabled Then
-        Call StartupBypass_Restore(app)
-        gBypassStartupEnabled = False
-        gCurrentDbPath = ""
-        gCurrentPassword = ""
-    End If
-    
-    app.Application.Echo True
-    app.CloseCurrentDatabase
-    app.Quit
-    Set app = Nothing
-    Err.Clear
+    ' DEPRECATED: Usar CloseAccessQuiet en su lugar
+    Call CloseAccessQuiet(app)
 End Sub
 
 ' ==== FIN helpers canónicos ====
