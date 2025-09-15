@@ -1,5 +1,4 @@
-Attribute VB_Name = "TestWorkflowService"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -126,7 +125,7 @@ Private Function TestGetNextStates_ValidState() As CTestResult
     
     ' Assert
     modAssert.AssertEquals 1, result.Count, "Debe haber exactamente un estado siguiente."
-    modAssert.AssertTrue result.exists(2), "Debe existir el estado ID 2 (Desarrollo)."
+    modAssert.AssertTrue result.Exists(2), "Debe existir el estado ID 2 (Desarrollo)."
     
     TestGetNextStates_ValidState.Pass
 Cleanup:
@@ -235,8 +234,3 @@ Cleanup:
     Set service = Nothing
     Set mockRepo = Nothing
 End Function
-
-
-
-
-

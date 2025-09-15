@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "ESolicitud"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -51,13 +46,3 @@ Public Property Get usuarioModificacion() As String: usuarioModificacion = m_usu
 Public Property Let usuarioModificacion(ByVal value As String): m_usuarioModificacion = value: End Property
 Public Property Get observaciones() As String: observaciones = m_observaciones: End Property
 Public Property Let observaciones(ByVal value As String): m_observaciones = value: End Property
-
-
-
-
-
-
-
-
-
-

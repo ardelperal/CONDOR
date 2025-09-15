@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CMockWorkflowRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -37,4 +32,3 @@ End Function
 Private Function IWorkflowRepository_GetNextStates(ByVal idEstadoActual As Long, ByVal usuarioRol As String) As Object
     Set IWorkflowRepository_GetNextStates = m_GetNext_Result
 End Function
-

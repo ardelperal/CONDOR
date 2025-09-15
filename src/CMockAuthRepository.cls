@@ -1,9 +1,4 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CMockAuthRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -84,4 +79,3 @@ End Function
 Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
     Set GetUserAuthData = IAuthRepository_GetUserAuthData(userEmail)
 End Function
-

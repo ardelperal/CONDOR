@@ -1,9 +1,4 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CMockDocumentService"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -68,4 +63,3 @@ Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String) A
     m_LeerDocumento_LastRuta = rutaDocumento
     Set IDocumentService_LeerDocumento = m_LeerDocumento_ReturnValue
 End Function
-

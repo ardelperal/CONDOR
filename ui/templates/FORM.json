@@ -1,0 +1,10 @@
+{
+  "formName": "TestFormImport",
+  "properties": {
+    "caption": "Formulario de Prueba Import",
+    "recordSource": "",
+    "width": 8000,
+    "height": 6000,
+    "backColor": "#E0E0E0"
+  }
+}

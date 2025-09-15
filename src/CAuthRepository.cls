@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CAuthRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -29,17 +24,17 @@ Private m_isInitialized As Boolean
 ' Inicializa el repositorio con sus dependencias
 ' @param configService: Servicio de configuración para obtener ruta del Backend
 ' @param errorHandler: Servicio de manejo de errores
-Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal configService As IConfig, ByVal ErrorHandler As IErrorHandlerService)
     If configService Is Nothing Then
         Err.Raise 5, "CAuthRepository.Initialize", "configService no puede ser Nothing"
     End If
     
-    If errorHandler Is Nothing Then
+    If ErrorHandler Is Nothing Then
         Err.Raise 5, "CAuthRepository.Initialize", "errorHandler no puede ser Nothing"
     End If
     
     Set m_configService = configService
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
     m_isInitialized = True
 End Sub
 
@@ -55,7 +50,7 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     Dim qdf As DAO.QueryDef
     Dim rs As DAO.Recordset
     
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' Conectar a la base de datos Lanzadera
     Dim backendPath As String: backendPath = m_configService.GetLanzaderaDataPath()
@@ -69,7 +64,7 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     ' Eliminar la QueryDef temporal si existiera
     On Error Resume Next
     db.QueryDefs.Delete "tempAuthQuery"
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' Crear QueryDef con la consulta desde modQueries
     Set qdf = db.CreateQueryDef("tempAuthQuery", GET_AUTH_DATA_BY_EMAIL)
@@ -83,10 +78,10 @@ Private Function IAuthRepository_GetUserAuthData(ByVal userEmail As String) As E
     ' Poblar el objeto AuthData basándose en los resultados
     If Not rs.EOF Then
         authData.UserExists = True
-        If Not IsNull(rs("EsAdministrador").Value) And rs("EsAdministrador").Value = "Sí" Then
+        If Not IsNull(rs("EsAdministrador").value) And rs("EsAdministrador").value = "Sí" Then
             authData.IsGlobalAdmin = True
         End If
-        If Not IsNull(rs("EsUsuarioAdministrador").Value) And rs("EsUsuarioAdministrador").Value = True Then
+        If Not IsNull(rs("EsUsuarioAdministrador").value) And rs("EsUsuarioAdministrador").value = True Then
             authData.IsAppAdmin = True
         End If
         ' ... (resto de los mapeos de roles)
@@ -100,7 +95,7 @@ Cleanup:
     Set rs = Nothing: Set db = Nothing
     Exit Function
     
-errorHandler:
+ErrorHandler:
     If Not m_ErrorHandler Is Nothing Then
         m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthRepository.GetUserAuthData"
     End If
@@ -110,9 +105,3 @@ End Function
 Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
     Set GetUserAuthData = IAuthRepository_GetUserAuthData(userEmail)
 End Function
-
-
-
-
-
-

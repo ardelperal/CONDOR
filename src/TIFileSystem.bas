@@ -1,5 +1,4 @@
-Attribute VB_Name = "TIFileSystem"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 Private Const TEST_DIR As String = "fs_tests\"

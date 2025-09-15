@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CExpedienteRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -18,9 +13,9 @@ Private Const MODULE_NAME As String = "CExpedienteRepository"
 Private m_Config As IConfig
 Private m_ErrorHandler As IErrorHandlerService
 
-Public Sub Initialize(ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal config As IConfig, ByVal ErrorHandler As IErrorHandlerService)
     Set m_Config = config
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
 End Sub
 
 ' --- IMPLEMENTACIÓN DE LA INTERFAZ (PRIVADA) ---
@@ -31,7 +26,7 @@ Private Function IExpedienteRepository_ObtenerExpedientePorId(ByVal idExpediente
     Dim rs As DAO.Recordset
     Dim expediente As EExpediente
     
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Set db = GetDatabaseConnection()
     
@@ -57,7 +52,7 @@ Cleanup:
     Set expediente = Nothing
     Exit Function
 
-errorHandler:
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".IExpedienteRepository_ObtenerExpedientePorId: " & Err.Description
     Resume Cleanup
 End Function
@@ -89,7 +84,7 @@ End Function
 ' --- FUNCIONES AUXILIARES (PRIVADAS) ---
 
 Private Function GetDatabaseConnection() As DAO.Database
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim dbPath As String
     dbPath = m_Config.GetExpedientesDataPath()
@@ -104,31 +99,27 @@ Private Function GetDatabaseConnection() As DAO.Database
     Set GetDatabaseConnection = DBEngine.OpenDatabase(dbPath, False, True, ";PWD=" & dbPassword)
     Exit Function
     
-errorHandler:
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".GetDatabaseConnection: " & Err.Description
     Set GetDatabaseConnection = Nothing
 End Function
 
 Private Function MapRecordsetToExpediente(ByVal rs As DAO.Recordset) As EExpediente
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim expediente As New EExpediente
     
     ' Mapeo completo y seguro de propiedades
-    expediente.idExpediente = Nz(rs!idExpediente.Value, 0)
-    expediente.Nemotecnico = Nz(rs!Nemotecnico.Value, "")
-    expediente.Titulo = Nz(rs!Titulo.Value, "")
-    expediente.ContratistaPrincipal = Nz(rs!ContratistaPrincipal.Value, "")
-    expediente.Pecal = Nz(rs!Pecal.Value, "")
+    expediente.idExpediente = Nz(rs!idExpediente.value, 0)
+    expediente.Nemotecnico = Nz(rs!Nemotecnico.value, "")
+    expediente.Titulo = Nz(rs!Titulo.value, "")
+    expediente.ContratistaPrincipal = Nz(rs!ContratistaPrincipal.value, "")
+    expediente.Pecal = Nz(rs!Pecal.value, "")
     
     Set MapRecordsetToExpediente = expediente
     
     Exit Function
-errorHandler:
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, "Error en " & MODULE_NAME & ".MapRecordsetToExpediente: " & Err.Description
     Set MapRecordsetToExpediente = Nothing
 End Function
-
-
-
-

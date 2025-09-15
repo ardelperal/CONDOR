@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CWorkflowRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -48,7 +43,7 @@ Private Function IWorkflowRepository_IsValidTransition(ByVal tipoSolicitud As St
     Set rs = qdf.OpenRecordset(dbOpenSnapshot)
     
     If Not rs.EOF Then
-        isValid = (rs!TransicionExiste.Value > 0)
+        isValid = (rs!TransicionExiste.value > 0)
     End If
     
     IWorkflowRepository_IsValidTransition = isValid
@@ -98,7 +93,7 @@ Private Function IWorkflowRepository_GetNextStates(ByVal idEstadoActual As Long,
     
     ' Poblar el diccionario con los resultados (ID como clave, Nombre como valor)
     While Not rs.EOF
-        dict.Add key:=rs!IdEstadoDestino.Value, Item:=rs!NombreEstado.Value
+        dict.Add key:=rs!IdEstadoDestino.value, Item:=rs!NombreEstado.value
         rs.MoveNext
     Wend
     
@@ -119,10 +114,3 @@ ErrorHandler:
     Set IWorkflowRepository_GetNextStates = dict ' Devolver diccionario vacío en caso de error
     GoTo Cleanup
 End Function
-
-
-
-
-
-
-

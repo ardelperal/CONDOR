@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CAuthService"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -22,24 +17,24 @@ Private Sub Class_Initialize()
     ' Inicialización sin dependencias
 End Sub
 
-Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository, errorHandler As IErrorHandlerService)
-    On Error GoTo errorHandler
+Public Sub Initialize(config As IConfig, operationLogger As IOperationLogger, authRepository As IAuthRepository, ErrorHandler As IErrorHandlerService)
+    On Error GoTo ErrorHandler
     
     Set configSvc = config
     Set m_OperationLogger = operationLogger
     Set m_AuthRepository = authRepository
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
     
     Exit Sub
     
-errorHandler:
+ErrorHandler:
     If Not m_ErrorHandler Is Nothing Then
         m_ErrorHandler.LogError Err.Number, Err.Description, "CAuthService.Initialize"
     End If
 End Sub
 
 Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
 
     ' Logging de auditoría: Consulta de rol de usuario
     If Not m_OperationLogger Is Nothing Then
@@ -111,7 +106,7 @@ Private Function IAuthService_GetUserRole(ByVal userEmail As String) As UserRole
     IAuthService_GetUserRole = role
     Exit Function
 
-errorHandler:
+ErrorHandler:
     IAuthService_GetUserRole = RolDesconocido
     If Not authData Is Nothing Then
         Set authData = Nothing
@@ -158,13 +153,3 @@ End Function
 Public Function GetCurrentUserEmail() As String
     GetCurrentUserEmail = IAuthService_GetCurrentUserEmail()
 End Function
-
-
-
-
-
-
-
-
-
-

@@ -1,9 +1,4 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "EEstado"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -19,7 +14,7 @@ Option Explicit
 ' Campos privados según especificación tbEstados
 Private m_idEstado As Long
 Private m_nombreEstado As String
-Private m_descripcion As String
+Private m_Descripcion As String
 Private m_esEstadoInicial As Boolean
 Private m_esEstadoFinal As Boolean
 Private m_orden As Integer
@@ -41,12 +36,12 @@ Public Property Let NombreEstado(ByVal value As String)
     m_nombreEstado = value
 End Property
 
-Public Property Get Descripcion() As String
-    Descripcion = m_descripcion
+Public Property Get descripcion() As String
+    descripcion = m_Descripcion
 End Property
 
-Public Property Let Descripcion(ByVal value As String)
-    m_descripcion = value
+Public Property Let descripcion(ByVal value As String)
+    m_Descripcion = value
 End Property
 
 Public Property Get EsEstadoInicial() As Boolean
@@ -72,6 +67,3 @@ End Property
 Public Property Let Orden(ByVal value As Integer)
     m_orden = value
 End Property
-
-
-

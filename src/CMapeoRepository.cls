@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CMapeoRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -17,13 +12,13 @@ Implements IMapeoRepository
 Private m_Config As IConfig
 Private m_ErrorHandler As IErrorHandlerService
 
-Public Sub Initialize(ByVal configService As IConfig, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal configService As IConfig, ByVal ErrorHandler As IErrorHandlerService)
     Set m_Config = configService
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
 End Sub
 
 Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' Variables para la consulta parametrizada
     Dim db As DAO.Database
@@ -56,11 +51,11 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     ' Mapear recordset a objeto de dominio
     If Not rs.EOF Then
         Set mapeo = New EMapeo
-        mapeo.IdMapeo = rs!IdMapeo.Value
-        mapeo.NombrePlantilla = rs!NombrePlantilla.Value & ""
-        mapeo.NombreCampoTabla = rs!NombreCampoTabla.Value & ""
-        mapeo.ValorAsociado = rs!ValorAsociado.Value & ""
-        mapeo.NombreCampoWord = rs!NombreCampoWord.Value & ""
+        mapeo.IdMapeo = rs!IdMapeo.value
+        mapeo.NombrePlantilla = rs!NombrePlantilla.value & ""
+        mapeo.NombreCampoTabla = rs!NombreCampoTabla.value & ""
+        mapeo.ValorAsociado = rs!ValorAsociado.value & ""
+        mapeo.NombreCampoWord = rs!NombreCampoWord.value & ""
     End If
     
     ' Limpiar recursos
@@ -74,7 +69,7 @@ Private Function IMapeoRepository_GetMapeoPorTipo(ByVal tipoSolicitud As String)
     Set IMapeoRepository_GetMapeoPorTipo = mapeo
     
     Exit Function
-errorHandler:
+ErrorHandler:
     ' Limpiar recursos en caso de error
     If Not rs Is Nothing Then rs.Close
     If Not qdf Is Nothing Then Set qdf = Nothing
@@ -105,7 +100,3 @@ End Function
 Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Object
     Set ObtenerMapeosPorCategoria = IMapeoRepository_ObtenerMapeosPorCategoria(categoria)
 End Function
-
-
-
-

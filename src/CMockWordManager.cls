@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CMockWordManager"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -106,10 +101,10 @@ Private Sub IWordManager_Dispose()
     m_Dispose_WasCalled = True
 End Sub
 
-Private Function IWordManager_SetBookmarkText(ByVal BookmarkName As String, ByVal Value As String) As Boolean
+Private Function IWordManager_SetBookmarkText(ByVal BookmarkName As String, ByVal value As String) As Boolean
     m_SetBookmarkText_WasCalled = True
     m_SetBookmarkText_LastBookmarkName = BookmarkName
-    m_SetBookmarkText_LastValue = Value
+    m_SetBookmarkText_LastValue = value
     IWordManager_SetBookmarkText = m_SetBookmarkText_ReturnValue
 End Function
 

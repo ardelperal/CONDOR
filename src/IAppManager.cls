@@ -1,9 +1,4 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "IAppManager"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -26,7 +21,7 @@ Option Explicit
 '   - config: Servicio de configuración
 '   - errorHandler: Manejador de errores
 ' =====================================================
-Public Sub Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal ErrorHandler As IErrorHandlerService)
 End Sub
 
 ' =====================================================
@@ -62,4 +57,3 @@ End Function
 ' =====================================================
 Public Function Ping() As String
 End Function
-

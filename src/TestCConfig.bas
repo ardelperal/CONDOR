@@ -1,5 +1,4 @@
-Attribute VB_Name = "TestCConfig"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -144,6 +143,3 @@ End Function
 ' ============================================================================
 ' PRUEBAS UNITARIAS
 ' ============================================================================
-
-
-

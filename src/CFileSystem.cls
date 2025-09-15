@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CFileSystem"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -192,9 +187,3 @@ End Sub
 Public Sub WriteLineToFile(ByVal filePath As String, ByVal line As String)
     Call IFileSystem_WriteLineToFile(filePath, line)
 End Sub
-
-
-
-
-
-

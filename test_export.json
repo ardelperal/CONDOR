@@ -1,0 +1,45 @@
+{
+  "name": "TestFormSections",
+  "properties": {
+    "caption": "Formulario de Prueba",
+    "width": 10000,
+    "height": 8000
+  },
+  "controls": [
+    {
+      "name": "lblHeader",
+      "type": "Label",
+      "section": "header",
+      "properties": {
+        "caption": "Encabezado",
+        "top": 200,
+        "left": 500,
+        "width": 3000,
+        "height": 400
+      }
+    },
+    {
+      "name": "txtNombre",
+      "type": "TextBox",
+      "section": "detail",
+      "properties": {
+        "top": 500,
+        "left": 500,
+        "width": 2000,
+        "height": 300
+      }
+    },
+    {
+      "name": "lblFooter",
+      "type": "Label",
+      "section": "footer",
+      "properties": {
+        "caption": "Pie",
+        "top": 200,
+        "left": 500,
+        "width": 3000,
+        "height": 300
+      }
+    }
+  ]
+}

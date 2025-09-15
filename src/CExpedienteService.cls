@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CExpedienteService"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -16,10 +11,10 @@ Private m_Repo As IExpedienteRepository
 Private m_Logger As IOperationLogger
 Private m_ErrorHandler As IErrorHandlerService
 
-Public Sub Initialize(ByVal repo As IExpedienteRepository, ByVal logger As IOperationLogger, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal repo As IExpedienteRepository, ByVal logger As IOperationLogger, ByVal ErrorHandler As IErrorHandlerService)
     Set m_Repo = repo
     Set m_Logger = logger
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
 End Sub
 
 ' --- IMPLEMENTACIÓN DE LA INTERFAZ (PRIVADA) ---
@@ -52,31 +47,3 @@ End Function
 Public Function ObtenerExpedientesParaSelector() As Object
     Set ObtenerExpedientesParaSelector = IExpedienteService_ObtenerExpedientesParaSelector()
 End Function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

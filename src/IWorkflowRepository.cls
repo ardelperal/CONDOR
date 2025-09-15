@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "IWorkflowRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -15,7 +10,3 @@ End Function
 
 Public Function GetNextStates(ByVal idEstadoActual As Long, ByVal usuarioRol As String) As Object
 End Function
-
-
-
-

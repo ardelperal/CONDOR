@@ -1,5 +1,4 @@
-Attribute VB_Name = "TIMapeoRepository"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 ' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
@@ -118,4 +117,3 @@ Cleanup:
     Set mapeoResult = Nothing
     Set repository = Nothing
 End Function
-

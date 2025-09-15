@@ -1,5 +1,4 @@
-Attribute VB_Name = "modTestRunner"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -370,19 +369,3 @@ End Function
 Public Sub EjecutarTodasLasPruebas()
     Call RunTestFramework
 End Sub
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

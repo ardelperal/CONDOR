@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CSolicitudRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -96,7 +91,7 @@ Private Function ISolicitudRepository_SaveSolicitud(ByVal solicitud As ESolicitu
     ' Obtener el ID para devolverlo
     If solicitud.idSolicitud = 0 Then
         rs.Bookmark = rs.LastModified
-        newId = rs!idSolicitud.Value
+        newId = rs!idSolicitud.value
         solicitud.idSolicitud = newId ' Actualizar el objeto original con el nuevo ID
     Else
         newId = solicitud.idSolicitud
@@ -122,7 +117,7 @@ Private Function GetDatabaseConnection() As DAO.Database
     On Error GoTo ErrorHandler
     Dim dbPath As String, pwd As String, connect As String
     dbPath = m_Config.GetValue("SOLICITUD_DATA_PATH")
-    pwd    = m_Config.GetValue("SOLICITUD_PASSWORD")
+    pwd = m_Config.GetValue("SOLICITUD_PASSWORD")
     If Len(dbPath) = 0 Then dbPath = m_Config.GetCondorDataPath()
     If Len(pwd) = 0 Then pwd = m_Config.GetCondorPassword()
     If Len(pwd) > 0 Then connect = ";PWD=" & pwd Else connect = vbNullString
@@ -134,24 +129,18 @@ End Function
 
 Private Function MapRecordsetToSolicitud(ByVal rs As DAO.Recordset) As ESolicitud
     Dim s As New ESolicitud
-    s.idSolicitud = Nz(rs!idSolicitud.Value, 0)
-    s.idExpediente = Nz(rs!idExpediente.Value, 0)
-    s.tipoSolicitud = Nz(rs!tipoSolicitud.Value, "")
-    s.subTipoSolicitud = Nz(rs!subTipoSolicitud.Value, "")
-    s.codigoSolicitud = Nz(rs!codigoSolicitud.Value, "")
-    s.idEstadoInterno = Nz(rs!idEstadoInterno.Value, 0) ' Usando el campo Long normalizado
-    s.fechaCreacion = rs!fechaCreacion.Value
-    s.usuarioCreacion = Nz(rs!usuarioCreacion.Value, "")
-    s.fechaPaseTecnico = Nz(rs!fechaPaseTecnico.Value, 0)
-    s.fechaCompletadoTecnico = Nz(rs!fechaCompletadoTecnico.Value, 0)
-    s.fechaModificacion = Nz(rs!fechaModificacion.Value, 0)
-    s.usuarioModificacion = Nz(rs!usuarioModificacion.Value, "")
+    s.idSolicitud = Nz(rs!idSolicitud.value, 0)
+    s.idExpediente = Nz(rs!idExpediente.value, 0)
+    s.tipoSolicitud = Nz(rs!tipoSolicitud.value, "")
+    s.subTipoSolicitud = Nz(rs!subTipoSolicitud.value, "")
+    s.codigoSolicitud = Nz(rs!codigoSolicitud.value, "")
+    s.idEstadoInterno = Nz(rs!idEstadoInterno.value, 0) ' Usando el campo Long normalizado
+    s.fechaCreacion = rs!fechaCreacion.value
+    s.usuarioCreacion = Nz(rs!usuarioCreacion.value, "")
+    s.fechaPaseTecnico = Nz(rs!fechaPaseTecnico.value, 0)
+    s.fechaCompletadoTecnico = Nz(rs!fechaCompletadoTecnico.value, 0)
+    s.fechaModificacion = Nz(rs!fechaModificacion.value, 0)
+    s.usuarioModificacion = Nz(rs!usuarioModificacion.value, "")
     
     Set MapRecordsetToSolicitud = s
 End Function
-
-
-
-
-
-

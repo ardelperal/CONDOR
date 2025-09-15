@@ -1,10 +1,9 @@
-Attribute VB_Name = "modDocumentServiceFactory"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
 Public Function CreateDocumentService(Optional ByVal config As IConfig = Nothing) As IDocumentService
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim effectiveConfig As IConfig
     If config Is Nothing Then
@@ -39,11 +38,7 @@ Public Function CreateDocumentService(Optional ByVal config As IConfig = Nothing
     Set CreateDocumentService = serviceImpl
     Exit Function
     
-errorHandler:
+ErrorHandler:
     Debug.Print "Error crítico en modDocumentServiceFactory: " & Err.Description
     Set CreateDocumentService = Nothing
 End Function
-
-
-
-

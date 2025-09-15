@@ -1,5 +1,4 @@
-﻿Attribute VB_Name = "modAssert"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -120,4 +119,3 @@ End Sub
 Public Sub AreEqual(expected As Variant, actual As Variant, Optional message As String = "")
     Call AssertEquals(expected, actual, message)
 End Sub
-

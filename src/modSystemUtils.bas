@@ -1,5 +1,4 @@
-Attribute VB_Name = "modSystemUtils"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 Public Sub RunSystemHealthCheck()

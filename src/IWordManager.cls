@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "IWordManager"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -35,7 +30,7 @@ End Function
 '   - BookmarkName: Nombre del marcador
 '   - Value: Valor a establecer en el marcador
 ' Retorna: True si se estableció correctamente, False en caso contrario
-Public Function SetBookmarkText(ByVal BookmarkName As String, ByVal Value As String) As Boolean
+Public Function SetBookmarkText(ByVal BookmarkName As String, ByVal value As String) As Boolean
 End Function
 
 ' Obtiene el texto de un marcador (bookmark) del documento
@@ -51,6 +46,3 @@ Public Function GuardarDocumento() As Boolean
 End Function
 Public Sub Dispose()
 End Sub
-
-
-

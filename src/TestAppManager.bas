@@ -1,5 +1,4 @@
-﻿Attribute VB_Name = "TestAppManager"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -48,21 +47,3 @@ TestFail:
     TestStartApplication_AdminUser_Success.Fail "Error: " & Err.Description
     Resume Cleanup
 End Function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,5 +1,4 @@
-Attribute VB_Name = "TIWorkflowRepository"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 Public Function TIWorkflowRepositoryRunAll() As CTestSuiteResult

@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "COperationRepository"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -17,13 +12,13 @@ Implements IOperationRepository
 Private m_configService As IConfig
 Private m_ErrorHandler As IErrorHandlerService
 
-Public Sub Initialize(config As IConfig, errorHandler As IErrorHandlerService)
+Public Sub Initialize(config As IConfig, ErrorHandler As IErrorHandlerService)
     Set m_configService = config
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
 End Sub
 
 Private Sub IOperationRepository_SaveLog(ByVal logEntry As EOperationLog)
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
@@ -46,7 +41,7 @@ Private Sub IOperationRepository_SaveLog(ByVal logEntry As EOperationLog)
     db.Close
     Exit Sub
     
-errorHandler:
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "COperationRepository.SaveLog"
     If Not qdf Is Nothing Then Set qdf = Nothing
     If Not db Is Nothing Then db.Close
@@ -55,8 +50,3 @@ End Sub
 Public Sub SaveLog(ByVal logEntry As EOperationLog)
     Call IOperationRepository_SaveLog(logEntry)
 End Sub
-
-
-
-
-

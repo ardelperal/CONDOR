@@ -1,5 +1,4 @@
-Attribute VB_Name = "modTestUtils"
-Option Compare Database
+﻿Option Compare Database
     Option Explicit
 
     Public Function GetProjectPath() As String
@@ -25,7 +24,7 @@ Option Compare Database
         Debug.Print "--- INICIO DE APROVISIONAMIENTO CENTRALIZADO ---"
         
         Dim config As IConfig: Set config = modTestContext.GetTestConfig()
-        Dim fs As IFileSystem: Set fs = modFileSystemFactory.createFileSystem(config)
+        Dim fs As IFileSystem: Set fs = modFileSystemFactory.CreateFileSystem(config)
         
         fs.CreateFolder GetWorkspacePath()
         
@@ -64,14 +63,14 @@ Option Compare Database
 
         Debug.Print "--- FIN DE APROVISIONAMIENTO ---"
         Exit Sub
-    ErrorHandler:
+ErrorHandler:
         Debug.Print "--- FALLO CRÍTICO EN APROVISIONAMIENTO: " & Err.Description & " ---"
         Err.Raise Err.Number, "modTestUtils.ProvisionTestDatabases", Err.Description
     End Sub
     
     Public Sub CleanupWorkspace()
         On Error Resume Next
-        Dim fs As IFileSystem: Set fs = modFileSystemFactory.createFileSystem()
+        Dim fs As IFileSystem: Set fs = modFileSystemFactory.CreateFileSystem()
         Dim workspacePath As String: workspacePath = GetWorkspacePath()
         If fs.FolderExists(workspacePath) Then
             fs.DeleteFolderRecursive workspacePath
@@ -111,13 +110,13 @@ Option Compare Database
             If InStr(value, "\") > 0 And (InStr(value, ".accdb") > 0 Or InStr(value, ".log") > 0 Or Right(value, 1) = "\") Then
                 If Right(value, 1) = "\" Then ' Es un directorio
                     If fs.FolderExists(value) Then
-                        status = "[✓ DIRECTORIO OK]"
+                        status = "[? DIRECTORIO OK]"
                     Else
                         status = "[X DIRECTORIO NO ENCONTRADO]"
                     End If
                 Else ' Es un fichero
                     If fs.FileExists(value) Then
-                        status = "[✓ FICHERO OK]"
+                        status = "[? FICHERO OK]"
                     Else
                         status = "[X FICHERO NO ENCONTRADO]"
                     End If
@@ -134,6 +133,6 @@ Option Compare Database
         Set mockConfig = Nothing
         Exit Sub
 
-    ErrorHandler:
+ErrorHandler:
         Debug.Print "ERROR CRÍTICO durante la auditoría de configuración: " & Err.Description
     End Sub

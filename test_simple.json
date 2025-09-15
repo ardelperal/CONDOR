@@ -1,0 +1,17 @@
+{
+  "name": "TestForm",
+  "controls": [
+    {
+      "name": "lblTest",
+      "type": "Label",
+      "section": "detail",
+      "properties": {
+        "caption": "Test",
+        "top": 100,
+        "left": 100,
+        "width": 1000,
+        "height": 300
+      }
+    }
+  ]
+}

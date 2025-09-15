@@ -1,9 +1,4 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "EExpediente"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -38,7 +33,7 @@ Private m_FechaInicio As Date
 Private m_FechaFinPrevista As Date
 Private m_FechaFinContrato As Date
 Private m_FechaFinGarantia As Date
-Private m_descripcion As String
+Private m_Descripcion As String
 Private m_fechaCreacion As Date
 Private m_Estado As String
 Private m_IdUsuarioCreador As Long
@@ -153,11 +148,11 @@ Public Property Let FechaFinGarantia(ByVal value As Date)
     m_FechaFinGarantia = value
 End Property
 
-Public Property Get Descripcion() As String
-    Descripcion = m_descripcion
+Public Property Get descripcion() As String
+    descripcion = m_Descripcion
 End Property
-Public Property Let Descripcion(ByVal value As String)
-    m_descripcion = value
+Public Property Let descripcion(ByVal value As String)
+    m_Descripcion = value
 End Property
 
 Public Property Get fechaCreacion() As Date
@@ -198,22 +193,3 @@ Public Function EsValido() As Boolean
                 Len(ResponsableCalidad) > 0 And _
                 Len(EmailResponsable) > 0)
 End Function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

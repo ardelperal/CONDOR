@@ -1,9 +1,4 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "IWorkflowService"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -22,6 +17,3 @@ End Function
 ' Verifica si un estado es final en el nuevo flujo (Aprobada = ID 7)
 Public Function IsEstadoFinal(ByVal estadoActual As String) As Boolean
 End Function
-
-
-

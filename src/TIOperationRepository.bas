@@ -1,5 +1,4 @@
-Attribute VB_Name = "TIOperationRepository"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 ' ============================================================================
@@ -92,11 +91,11 @@ Private Function TestSaveLog_Success() As CTestResult
     Set rs = db.OpenRecordset("SELECT * FROM tbOperacionesLog WHERE tipoOperacion = 'TEST_OP'")
     
     modAssert.AssertFalse rs.EOF, "Se debería haber insertado un registro de log."
-    modAssert.AssertEquals 123, rs!idEntidad.Value, "El ID de entidad no coincide."
-    modAssert.AssertEquals "Solicitud", rs!entidad.Value, "La entidad no coincide."
-    modAssert.AssertEquals "Descripción de prueba.", rs!descripcion.Value, "La descripción no coincide."
-    modAssert.AssertEquals "SUCCESS", rs!resultado.Value, "El resultado no coincide."
-    modAssert.AssertEquals "Detalles de prueba.", rs!detalles.Value, "Los detalles no coinciden."
+    modAssert.AssertEquals 123, rs!IdEntidad.value, "El ID de entidad no coincide."
+    modAssert.AssertEquals "Solicitud", rs!entidad.value, "La entidad no coincide."
+    modAssert.AssertEquals "Descripción de prueba.", rs!descripcion.value, "La descripción no coincide."
+    modAssert.AssertEquals "SUCCESS", rs!resultado.value, "El resultado no coincide."
+    modAssert.AssertEquals "Detalles de prueba.", rs!detalles.value, "Los detalles no coinciden."
 
     TestSaveLog_Success.Pass
     GoTo Cleanup
@@ -114,5 +113,3 @@ Cleanup:
     Set config = Nothing
     Set logEntry = Nothing
 End Function
-
-

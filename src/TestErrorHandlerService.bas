@@ -1,5 +1,4 @@
-Attribute VB_Name = "TestErrorHandlerService"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -57,4 +56,3 @@ Cleanup:
     Set mockFileSystem = Nothing
     Set service = Nothing
 End Function
-

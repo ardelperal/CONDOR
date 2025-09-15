@@ -1,5 +1,4 @@
-﻿Attribute VB_Name = "modEnumeraciones"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -12,6 +11,3 @@ Public Enum UserRole
     RolCalidad = 2
     RolTecnico = 3
 End Enum
-
-
-

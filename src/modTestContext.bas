@@ -1,5 +1,4 @@
-Attribute VB_Name = "modTestContext"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -57,4 +56,3 @@ End Function
 Public Sub ResetTestContext()
     Set g_TestConfig = Nothing
 End Sub
-

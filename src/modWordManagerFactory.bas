@@ -1,5 +1,4 @@
-Attribute VB_Name = "modWordManagerFactory"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -12,7 +11,7 @@ Option Explicit
 ' =====================================================
 
 Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As IWordManager
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim effectiveConfig As IConfig
     If config Is Nothing Then
@@ -24,10 +23,10 @@ Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As
     End If
     
     Dim wordApp As Object
-    Dim errorHandler As IErrorHandlerService
+    Dim ErrorHandler As IErrorHandlerService
     
     ' Crear dependencias
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     ' Crear instancia de Word y luego inicializar
     Set wordApp = CreateObject("Word.Application")
@@ -35,15 +34,12 @@ Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As
     wordApp.DisplayAlerts = False
     
     Dim wordManagerInstance As New CWordManager
-    wordManagerInstance.Initialize wordApp, errorHandler
+    wordManagerInstance.Initialize wordApp, ErrorHandler
     Set CreateWordManager = wordManagerInstance
     
     Exit Function
     
-errorHandler:
+ErrorHandler:
     Debug.Print "Error en modWordManagerFactory.CreateWordManager: " & Err.Description
     Err.Raise Err.Number, "modWordManagerFactory.CreateWordManager", Err.Description
 End Function
-
-
-

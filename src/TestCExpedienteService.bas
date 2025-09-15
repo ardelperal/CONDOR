@@ -1,5 +1,4 @@
-Attribute VB_Name = "TestCExpedienteService"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 '===============================================================================
@@ -95,4 +94,3 @@ Cleanup:
 End Function
 
 #End If
-

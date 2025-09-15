@@ -1,9 +1,4 @@
-﻿VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CAppManager"
-Attribute VB_GlobalNameSpace = False
+﻿Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -21,7 +16,7 @@ Implements IAppManager
 ' =====================================================
 
 ' Variables privadas para dependencias
-Private m_AuthService As IAuthService
+Private m_authService As IAuthService
 Private m_Config As IConfig
 Private m_ErrorHandler As IErrorHandlerService
 Private m_isInitialized As Boolean
@@ -33,10 +28,10 @@ Private m_CurrentUserRole As UserRole
 ' =====================================================
 ' METODO: Initialize (IAppManager)
 ' =====================================================
-Private Sub IAppManager_Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
-    Set m_AuthService = authService
+Private Sub IAppManager_Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal ErrorHandler As IErrorHandlerService)
+    Set m_authService = authService
     Set m_Config = config
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
     m_isInitialized = False
     m_CurrentUserRole = RolDesconocido
 End Sub
@@ -45,7 +40,7 @@ End Sub
 ' METODO: StartApplication (IAppManager)
 ' =====================================================
 Private Function IAppManager_StartApplication(Optional ByVal userEmail As String = "") As Boolean
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' 1. Obtener el email del usuario actual
     Dim finalUserEmail As String
@@ -62,7 +57,7 @@ Private Function IAppManager_StartApplication(Optional ByVal userEmail As String
     End If
 
     ' 2. Determinar el rol del usuario y guardarlo
-    m_CurrentUserRole = m_AuthService.GetUserRole(finalUserEmail)
+    m_CurrentUserRole = m_authService.GetUserRole(finalUserEmail)
 
     ' 3. Verificar que la configuración se haya cargado correctamente
     If Not m_Config.GetValue("IsInitialized") Then
@@ -92,7 +87,7 @@ Private Function IAppManager_StartApplication(Optional ByVal userEmail As String
     IAppManager_StartApplication = True
     Exit Function
     
-errorHandler:
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "CAppManager.StartApplication", "CRITICAL_STARTUP_ERROR"
     IAppManager_StartApplication = False
 End Function
@@ -121,8 +116,8 @@ End Function
 ' =====================================================
 ' METODOS PUBLICOS DE CONVENIENCIA (Lección 24)
 ' =====================================================
-Public Sub Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
-    IAppManager_Initialize authService, config, errorHandler
+Public Sub Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal ErrorHandler As IErrorHandlerService)
+    IAppManager_Initialize authService, config, ErrorHandler
 End Sub
 
 Public Function StartApplication(Optional ByVal userEmail As String = "") As Boolean
@@ -146,14 +141,14 @@ End Function
 ' PROPOSITO: Obtener el email del usuario actual con capacidad de suplantación en desarrollo
 ' =====================================================
 Private Function GetCurrentUserEmail() As String
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' Usar el usuario actual de Windows
     GetCurrentUserEmail = Environ("USERNAME") & "@" & m_Config.GetValue("DEFAULT_DOMAIN")
     
     Exit Function
     
-errorHandler:
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "CAppManager.GetCurrentUserEmail"
     GetCurrentUserEmail = "unknown@domain.com"
 End Function

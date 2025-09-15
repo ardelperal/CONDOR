@@ -1,5 +1,4 @@
-﻿Attribute VB_Name = "TestModAssert"
-Option Compare Database
+﻿Option Compare Database
 Option Explicit
 
 
@@ -262,4 +261,3 @@ TestFail:
         TestFailAlwaysFails.Fail "Fail falló con error incorrecto. Esperado: " & (vbObjectError + 515) & ", Actual: " & Err.Number
     End If
 End Function
-
