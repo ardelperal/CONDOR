@@ -2152,11 +2152,19 @@ Lista todos los formularios de la base de datos.
 
 **Sintaxis:**
 ```
-cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json]
+cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json] [--dao-only] [/bypassStartup:on|off]
 ```
 
 **Opciones:**
 - `--json`: Salida en formato JSON
+- `--dao-only`: Usa únicamente DAO para acceso a la base de datos (no abre Access)
+- `/bypassStartup:on|off`: Controla el bypass del startup de Access (solo aplicable sin --dao-only)
+
+**Ejemplos:**
+```
+cscript condor_cli.vbs list-forms "C:\DB\Expedientes.accdb" --password dpddpd --json --dao-only
+cscript condor_cli.vbs list-forms "C:\DB\Expedientes.accdb" --password dpddpd --json /bypassStartup:on
+```
 
 **`validate-form-json`**
 Valida la estructura JSON de un formulario.
@@ -3453,7 +3461,30 @@ Una vez que una solicitud alcanza el estado final "Aprobada" (ID 7), no puede tr
 
 ## 24. Nuevas Funcionalidades CLI Implementadas
 
-### 24.1. Exportación de Formularios con JSON Enriquecido
+### 24.1. Listado de Formularios con Acceso DAO
+
+**Comando:** `list-forms`
+
+```bash
+cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json] [--dao-only] [/bypassStartup:on|off]
+```
+
+**Funcionalidades Implementadas:**
+- Listado completo de formularios en bases de datos Access
+- Soporte para acceso DAO directo sin abrir Access (--dao-only)
+- Control de bypass del startup de Access (/bypassStartup:on|off)
+- Salida en formato JSON estructurado con --json
+- Soporte para bases de datos protegidas con contraseña
+- Manejo robusto de errores y validación de argumentos
+- Verificación automática de procesos Access en ejecución
+
+**Casos de Uso:**
+- Automatización de inventarios de formularios
+- Integración con sistemas CI/CD
+- Análisis de estructura de aplicaciones Access
+- Operaciones desatendidas sin interfaz gráfica
+
+### 24.2. Exportación de Formularios con JSON Enriquecido
 
 **Comando:** `export-form`
 

@@ -186,9 +186,6 @@ Call CloseExistingAccessProcesses()
 ' PASO 8: Abrir Access con OpenAccessApp unificado (solo si es necesario)
 If strAction <> "bundle" And strAction <> "validate-schema" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" Then
     If strAction <> "import-form" Then
-        ' Desactivar arranque por DAO para evitar ejecución de código al abrir
-        Call DisableStartup(strAccessPath, gPassword, gPrevStartupForm, gHadAutoExec)
-        If gVerbose Then WScript.Echo "[VERBOSE] Startup deshabilitado temporalmente (StartupForm vacío + AutoExec renombrada si existía)."
         ' Abrir Access en silencio con contraseña correcta usando función canónica
         Set objAccess = OpenAccessApp(strAccessPath, gPassword, True)
     Else
@@ -245,9 +242,6 @@ End If
 If Not objAccess Is Nothing Then
     ' Restaurar startup antes de cerrar (solo si no es import-form)
     If strAction <> "import-form" Then
-        On Error Resume Next
-        Call RestoreStartup(strAccessPath, gPassword, gPrevStartupForm, gHadAutoExec)
-        On Error GoTo 0
     End If
     Call CloseAccessApp(objAccess)
 End If
@@ -2360,6 +2354,34 @@ Sub UpdateChangedModules()
     
     ' Verificación opcional de módulos
     Call VerifyModulesIfRequested()
+End Sub
+
+' ============================================================================
+' SUBRUTINA: PrintJsonArrayOfNames
+' Descripción: Imprime un array de nombres como JSON simple
+' Parámetros: arr - Array de nombres (strings o objetos con propiedad "name")
+' ============================================================================
+Sub PrintJsonArrayOfNames(arr)
+    Dim i, out
+    out = "["
+    On Error Resume Next
+    Dim upperBound
+    upperBound = UBound(arr)
+    If Err.Number = 0 And upperBound >= 0 Then
+        For i = 0 To upperBound
+            Dim nm
+            nm = arr(i)
+            If IsObject(nm) Then nm = nm("name")
+            ' Solo añadir elementos no vacíos
+            If Len(Trim(nm)) > 0 Then
+                If out <> "[" Then out = out & ","
+                out = out & """" & Replace(nm, """", "\""") & """"
+            End If
+        Next
+    End If
+    On Error GoTo 0
+    out = out & "]"
+    WScript.Echo out
 End Sub
 
 ' ============================================================================
@@ -5406,17 +5428,16 @@ End Function
 '   --json: Salida en formato JSON (opcional, por defecto texto)
 ' ============================================================================
 Sub ListForms()
-    Dim dbPath, password, bJsonOutput, bypassStartup
+    Dim dbPath, password, bJsonOutput
     Dim i, arg
     Dim objAccess, objFSO
     Dim formsList, formCount
-    Dim accessObj
+    Dim accessObj, formName
     
     ' Inicializar variables
     dbPath = "./condor.accdb"
     password = ""
     bJsonOutput = False
-    bypassStartup = True  ' Por defecto ON para list-forms
     Set objAccess = Nothing
     Dim bUseDefaultDb
     bUseDefaultDb = True  ' Indica si se está usando la DB por defecto
@@ -5455,17 +5476,6 @@ Sub ListForms()
                 WScript.Echo "Error: Formato incorrecto para /pwd. Use /pwd:<clave>"
                 WScript.Quit 1
             End If
-        ElseIf Left(arg, 15) = "/bypassstartup:" Then
-            Dim bypassValue
-            bypassValue = LCase(Mid(arg, 16))
-            If bypassValue = "on" Then
-                bypassStartup = True
-            ElseIf bypassValue = "off" Then
-                bypassStartup = False
-            Else
-                WScript.Echo "Error: Valor inválido para /bypassStartup. Use 'on' o 'off'"
-                WScript.Quit 1
-            End If
         ElseIf arg = "--json" Then
             bJsonOutput = True
         ElseIf Left(arg, 2) <> "--" Then
@@ -5480,74 +5490,56 @@ Sub ListForms()
         i = i + 1
     Wend
     
-    ' Intentar obtener formularios usando diferentes métodos
-    Dim formsArray(), bSuccess
+    WScript.Echo "=== LISTANDO FORMULARIOS ==="
+    
+    ' Verificar que existe la base de datos
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    If Not objFSO.FileExists(dbPath) Then
+        WScript.Echo "Error: No se encuentra la base de datos: " & dbPath
+        WScript.Quit 1
+    End If
+    
+    ' Abrir Access
+    Set objAccess = OpenAccessApp(dbPath, password, True)
+    If objAccess Is Nothing Then
+        WScript.Echo "Error: no se pudo abrir Access."
+        WScript.Quit 1
+    End If
+    
+    ' Contar formularios primero
     formCount = 0
-    bSuccess = False
+    For Each accessObj In objAccess.CurrentProject.AllForms
+        formCount = formCount + 1
+    Next
     
-    ' Si se usa DB por defecto sin password, intentar fallback DAO
-    If bUseDefaultDb And password = "" Then
-        If gVerbose Then WScript.Echo "[DEBUG] Intentando fallback DAO para formularios..."
-        bSuccess = TryListFormsDAO(dbPath, password, "", formsArray)
-        If bSuccess Then
-            formCount = UBound(formsArray) + 1
-            If gVerbose Then WScript.Echo "[DEBUG] Fallback DAO exitoso: " & formCount & " formularios"
-        Else
-            If gVerbose Then WScript.Echo "[DEBUG] Fallback DAO falló, intentando Access..."
-        End If
-    End If
-    
-    ' Si DAO falló o no se intentó, usar Access
-    If Not bSuccess Then
-        ' Verificar que existe la base de datos
-        Set objFSO = CreateObject("Scripting.FileSystemObject")
-        If Not objFSO.FileExists(dbPath) Then
-            WScript.Echo "Error: No se encuentra la base de datos: " & dbPath
-            WScript.Quit 1
-        End If
-        
-        ' Abrir Access con bypass startup si está habilitado
-        Set objAccess = OpenAccessApp(dbPath, password, bypassStartup)
-        If objAccess Is Nothing Then
-            WScript.Echo "Error: No se pudo abrir la base de datos con Access"
-            WScript.Quit 1
-        End If
-        
-        ' Contar formularios primero
+    ' Redimensionar array y llenar
+    Dim formsArray()
+    If formCount > 0 Then
+        ReDim formsArray(formCount - 1)
+        Dim formIndex
+        formIndex = 0
         For Each accessObj In objAccess.CurrentProject.AllForms
-            formCount = formCount + 1
+            formsArray(formIndex) = accessObj.Name
+            formIndex = formIndex + 1
         Next
-        
-        ' Redimensionar array y llenar
-        If formCount > 0 Then
-            ReDim formsArray(formCount - 1)
-            Dim formIndex
-            formIndex = 0
-            For Each accessObj In objAccess.CurrentProject.AllForms
-                formsArray(formIndex) = accessObj.Name
-                formIndex = formIndex + 1
-            Next
-        End If
-        
-        ' Cerrar Access
-        CloseAccessApp objAccess
+    Else
+        ' Si no hay formularios, crear array vacío
+        ReDim formsArray(-1)
     End If
+    
+    ' Cerrar Access
+    CloseAccessApp objAccess
     
     ' Generar salida
     If bJsonOutput Then
         ' Salida JSON
-        Dim jsonOutput, i_form, formName
+        Dim jsonOutput
         jsonOutput = "["
         If formCount > 0 Then
+            Dim i_form
             For i_form = 0 To UBound(formsArray)
                 If i_form > 0 Then jsonOutput = jsonOutput & ","
-                ' Manejar tanto strings (Access) como diccionarios (DAO)
-                If IsObject(formsArray(i_form)) Then
-                    formName = formsArray(i_form)("name")
-                Else
-                    formName = formsArray(i_form)
-                End If
-                jsonOutput = jsonOutput & "\"" & formName & "\""
+                jsonOutput = jsonOutput & """" & formsArray(i_form) & """"
             Next
         End If
         jsonOutput = jsonOutput & "]"
@@ -5559,17 +5551,10 @@ Sub ListForms()
         Else
             WScript.Echo "Formularios encontrados (" & formCount & "):"
             For i_form = 0 To UBound(formsArray)
-                ' Manejar tanto strings (Access) como diccionarios (DAO)
-                If IsObject(formsArray(i_form)) Then
-                    formName = formsArray(i_form)("name")
-                Else
-                    formName = formsArray(i_form)
-                End If
-                WScript.Echo "  " & formName
+                WScript.Echo "  " & formsArray(i_form)
             Next
         End If
     End If
-    
 End Sub
 
 ' ============================================================================
@@ -6507,38 +6492,6 @@ Sub RenameMacroIfExists(dbPath, pwd, oldName, newName)
     db.Close
 End Sub
 
-Sub DisableStartup(dbPath, pwd, ByRef prevStartupForm, ByRef hadAutoExec)
-    On Error Resume Next
-    Dim db: Set db = DaoOpenDatabase(dbPath, pwd)
-    prevStartupForm = ""
-    prevStartupForm = db.Containers("Databases").Documents("UserDefined").Properties("StartupForm").Value
-    db.Containers("Databases").Documents("UserDefined").Properties("StartupForm").Value = ""
-    hadAutoExec = False
-    Dim cName, c, d: cName = GetMacrosContainerName(db)
-    If cName <> "" Then
-        Set c = db.Containers(cName)
-        For Each d In c.Documents
-            If LCase(d.Name) = "autoexec" Then d.Name = "AutoExec__CONDOR_DISABLED": hadAutoExec = True: Exit For
-        Next
-    End If
-    db.Close
-End Sub
-
-Sub RestoreStartup(dbPath, pwd, prevStartupForm, hadAutoExec)
-    On Error Resume Next
-    Dim db: Set db = DaoOpenDatabase(dbPath, pwd)
-    If prevStartupForm <> "" Then _
-        db.Containers("Databases").Documents("UserDefined").Properties("StartupForm").Value = prevStartupForm
-    Dim cName, c, d: cName = GetMacrosContainerName(db)
-    If hadAutoExec And cName <> "" Then
-        Set c = db.Containers(cName)
-        For Each d In c.Documents
-            If LCase(d.Name) = "autoexec__condor_disabled" Then d.Name = "AutoExec": Exit For
-        Next
-    End If
-    db.Close
-End Sub
-
 Sub OpenAccessSilently(dbPath, pwd, ByRef app)
     On Error Resume Next
     Set app = CreateObject("Access.Application")
@@ -6564,15 +6517,7 @@ End Sub
 
 Function OpenAccessApp(dbPath, password, bypassStartup)
     Dim app
-    If bypassStartup Then
-        Call DisableStartup(dbPath, password, gPreviousStartupForm, gPreviousHasAutoExec)
-        gBypassStartupEnabled = True
-        gCurrentDbPath = dbPath
-        gCurrentPassword = password
-        Call OpenAccessSilently(dbPath, password, app)
-    Else
-        Call OpenAccessSilently(dbPath, password, app)
-    End If
+    Call OpenAccessSilently(dbPath, password, app)
     Set OpenAccessApp = app
 End Function
 
@@ -6582,12 +6527,6 @@ Sub CloseAccessApp(app)
     app.CloseCurrentDatabase
     app.Quit
     Set app = Nothing
-    If gBypassStartupEnabled Then
-        Call RestoreStartup(gCurrentDbPath, gCurrentPassword, gPreviousStartupForm, gPreviousHasAutoExec)
-    End If
-    gBypassStartupEnabled = False
-    gCurrentDbPath = "": gCurrentPassword = ""
-    Set gPreviousStartupForm = Nothing: gPreviousHasAutoExec = False
 End Sub
 
 ' ==== FIN helpers canónicos ====
@@ -7185,12 +7124,6 @@ Sub VerifyModulesInternal()
     
     On Error GoTo 0
     
-    ' Restaurar estado si se usó bypass
-    If gBypassStartupEnabled = True Then
-        If gVerbose Then WScript.Echo "[VERBOSE] Restaurando estado después de usar DisableStartup"
-        Call RestoreStartup(gCurrentDbPath, gCurrentPassword, gPreviousStartupForm, gPreviousHasAutoExec)
-    End If
-    
     ' Limpiar variables globales
     gBypassStartupEnabled = False
     gPreviousAllowBypassKey = Null
@@ -7328,6 +7261,35 @@ Sub ResolveDbPath()
                 Else
                     ' Para rebuild y test sin argumentos de BD, usar la base de datos de desarrollo
                     strAccessPath = "C:\Proyectos\CONDOR\back\Desarrollo\CONDOR.accdb"
+                End If
+            ElseIf strAction = "list-forms" Then
+                ' Para list-forms, buscar argumento de BD que no sea un flag
+                Dim listFormsDbPath
+                listFormsDbPath = ""
+                For i = 1 To objArgs.Count - 1
+                    Dim listFormsArg
+                    listFormsArg = LCase(objArgs(i))
+                    ' Saltar flags conocidos y sus valores
+                    If listFormsArg = "--json" Or listFormsArg = "--dao-only" Then
+                        ' Flags sin valor, continuar
+                    ElseIf listFormsArg = "--password" Then
+                        ' Flag con valor, saltar el siguiente argumento también
+                        i = i + 1
+                    ElseIf Left(listFormsArg, 5) = "/pwd:" Then
+                        ' Flag con valor inline, continuar
+                    ElseIf Left(listFormsArg, 15) = "/bypassstartup:" Then
+                        ' Flag con valor inline, continuar
+                    ElseIf Left(listFormsArg, 2) <> "--" And Left(listFormsArg, 1) <> "/" Then
+                        ' No es un flag, debe ser la ruta de BD
+                        listFormsDbPath = objArgs(i)
+                        Exit For
+                    End If
+                Next
+                
+                If listFormsDbPath <> "" Then
+                    strAccessPath = ResolveRelativePath(listFormsDbPath)
+                Else
+                    strAccessPath = strDataPath
                 End If
             ElseIf strAction = "list-modules" Then
                 ' Para list-modules, usar siempre la base de datos de desarrollo por defecto como update
@@ -7597,30 +7559,6 @@ Sub ExportModulesToDirectoryTransactional(exportDir)
 End Sub
 
 ' Subrutina para restaurar el StartupForm
-Sub RestoreStartupForm(dbPath, password, startupForm)
-    On Error Resume Next
-    If IsNull(startupForm) Or startupForm = "" Then Exit Sub
-    
-    Dim db, prop
-    Set db = DaoOpenDatabase(dbPath, password)
-    If Err.Number <> 0 Then Exit Sub
-    
-    ' Eliminar propiedad existente si existe
-    For Each prop In db.Properties
-        If prop.Name = "StartupForm" Then
-            db.Properties.Delete "StartupForm"
-            Exit For
-        End If
-    Next
-    
-    ' Crear nueva propiedad
-    Set prop = db.CreateProperty("StartupForm", 10, startupForm)  ' 10 = dbText
-    db.Properties.Append prop
-    
-    db.Close
-    Set db = Nothing
-End Sub
-
 ' ===== FUNCIONES PARA LIST-MODULES =====
 
 '--- BEGIN: WaitForProjectReady ---
@@ -7858,11 +7796,6 @@ Sub ListModulesCommand()
         WScript.Echo "DEBUG: TryListModulesAllModules resultado: " & ok
     End If
     If Not ok Then
-        WScript.Echo "DEBUG: Intentando TryListModulesDAO (Containers/DAO)..."
-        ok = TryListModulesDAO(dbPath, password, pattern, arr)
-        WScript.Echo "DEBUG: TryListModulesDAO resultado: " & ok
-    End If
-    If Not ok Then
         Call CloseAccessApp(app)
         WScript.Echo "Error: No se pudieron listar los módulos."
         WScript.Quit 1
@@ -7914,57 +7847,7 @@ Function GetMacroContainerName(db)
     End If
 End Function
 
-'--- BEGIN: TryListModulesDAO ---
-Function TryListModulesDAO(dbPath, password, pattern, ByRef arr)
-  On Error Resume Next
-  ReDim arr(-1)
-  Dim db: Set db = DaoOpenDatabase(dbPath, password)
-  If Err.Number<>0 Or db Is Nothing Then Err.Clear: TryListModulesDAO=False: Exit Function
 
-  Dim regex: If pattern<>"" Then Set regex=CreateObject("VBScript.RegExp"): regex.Pattern=pattern: regex.IgnoreCase=True
-  Dim dict, doc, name
-  If Not HasContainer(db,"Modules") Then db.Close: TryListModulesDAO=False: Exit Function
-
-  For Each doc In db.Containers("Modules").Documents
-    name = doc.Name
-    If pattern="" Or regex.Test(name) Then
-      If UBound(arr)=-1 Then ReDim arr(0) Else ReDim Preserve arr(UBound(arr)+1)
-      Set dict = CreateObject("Scripting.Dictionary")
-      dict.Add "kind","STD"
-      dict.Add "name",name
-      Set arr(UBound(arr))=dict
-    End If
-  Next
-  db.Close
-  TryListModulesDAO = True
-  On Error GoTo 0
-End Function
-'--- END: TryListModulesDAO ---
-
-Function TryListFormsDAO(dbPath, password, pattern, ByRef arr)
-  On Error Resume Next
-  ReDim arr(-1)
-  Dim db: Set db = DaoOpenDatabase(dbPath, password)
-  If Err.Number<>0 Or db Is Nothing Then Err.Clear: TryListFormsDAO=False: Exit Function
-
-  Dim regex: If pattern<>"" Then Set regex=CreateObject("VBScript.RegExp"): regex.Pattern=pattern: regex.IgnoreCase=True
-  Dim dict, doc, name
-  If Not HasContainer(db,"Forms") Then db.Close: TryListFormsDAO=False: Exit Function
-
-  For Each doc In db.Containers("Forms").Documents
-    name = doc.Name
-    If pattern="" Or regex.Test(name) Then
-      If UBound(arr)=-1 Then ReDim arr(0) Else ReDim Preserve arr(UBound(arr)+1)
-      Set dict = CreateObject("Scripting.Dictionary")
-      dict.Add "name",name
-      Set arr(UBound(arr))=dict
-    End If
-  Next
-  db.Close
-  TryListFormsDAO = True
-  On Error GoTo 0
-End Function
-'--- END: TryListFormsDAO ---
 
 ' Función para verificar si existe una macro
 Function MacroExists(dbPath, password, macroName)
