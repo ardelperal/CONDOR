@@ -543,9 +543,9 @@ Call CloseExistingAccessProcesses()
 If strAction <> "bundle" And strAction <> "validate-schema" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" Then
     If strAction <> "import-form" Then
         ' Abrir Access en silencio con contraseña correcta usando función canónica
-        Set objAccess = OpenAccessQuiet(strAccessPath, gPassword)
+        Set objAccess = OpenAccessApp(strAccessPath, gPassword, True)
     Else
-        Set objAccess = OpenAccessQuiet(strAccessPath, gPassword)
+        Set objAccess = OpenAccessApp(strAccessPath, gPassword, True)
     End If
     If Not objAccess Is Nothing Then
         ' RemoveBrokenReferences ya se llama dentro de OpenAccessQuiet
@@ -1191,160 +1191,7 @@ Function ValidateVBASyntax(filePath, ByRef errorDetails)
 End Function
 
 ' Función de serialización recursiva para convertir Dictionary a JSON
-Private Function DictionaryToJson(obj, indentLevel, quiet)
-    If IsEmpty(quiet) Then quiet = True
-    
-    Dim result, indent, i, key, value, keys
-    Dim isLast
-    
-    ' Crear indentación
-    indent = String(indentLevel * 4, " ")
-    
-    ' Verificar qué tipo de objeto estamos procesando
-    
-    ' Verificar el tipo de objeto
-    If TypeName(obj) = "Dictionary" Then
-        ' Verificar si es una colección de controles (Dictionary que contiene objetos con propiedades 'name' y 'type')
-        Dim isControlsCollection
-        isControlsCollection = False
-        
-        If obj.Count > 0 Then
-            keys = obj.Keys
-            ' Verificar si el primer elemento es un diccionario con 'name' y 'type'
-            If TypeName(obj(keys(0))) = "Dictionary" Then
-                If obj(keys(0)).Exists("name") And obj(keys(0)).Exists("type") Then
-                    isControlsCollection = True
-                    If gVerbose And Not quiet Then WScript.Echo "DEBUG: Detectada colección de controles con " & obj.Count & " elementos"
-                End If
-            End If
-        Else
-            If gVerbose And Not quiet Then WScript.Echo "DEBUG: Dictionary vacío encontrado"
-        End If
-        
-        If isControlsCollection Then
-            ' Manejar como array de controles
-            result = "[" & vbCrLf
-            keys = obj.Keys
-            For i = 0 To UBound(keys)
-                On Error Resume Next
-                Set value = obj(keys(i))
-                If Err.Number <> 0 Then
-                    Err.Clear
-                    value = obj(keys(i))
-                End If
-                On Error GoTo 0
-                isLast = (i = UBound(keys))
-                
-                If gVerbose And Not quiet Then WScript.Echo "DEBUG: Procesando elemento array " & i & ": " & keys(i)
-                result = result & indent & "    "
-                On Error Resume Next
-                If IsObject(value) Then
-                    If Not value Is Nothing Then
-                        If gVerbose And Not quiet Then WScript.Echo "DEBUG: Serializando objeto control: " & TypeName(value)
-                        result = result & DictionaryToJson(value, indentLevel + 1, quiet)
-                    Else
-                        If gVerbose And Not quiet Then WScript.Echo "DEBUG: Objeto es Nothing"
-                        result = result & "null"
-                    End If
-                ElseIf IsNull(value) Then
-                    result = result & "null"
-                Else
-                    ' Manejar valores simples directamente
-                    If VarType(value) = vbString Then
-                        result = result & Chr(34) & Replace(CStr(value), Chr(34), "\" & Chr(34)) & Chr(34)
-                    ElseIf VarType(value) = vbBoolean Then
-                        If value Then
-                            result = result & "true"
-                        Else
-                            result = result & "false"
-                        End If
-                    ElseIf IsNumeric(value) Then
-                        result = result & CStr(value)
-                    Else
-                        result = result & Chr(34) & CStr(value) & Chr(34)
-                    End If
-                End If
-                On Error GoTo 0
-                
-                If Not isLast Then
-                    result = result & ","
-                End If
-                result = result & vbCrLf
-            Next
-            result = result & indent & "]"
-        Else
-            ' Manejar Dictionary normal
-            result = "{" & vbCrLf
-            keys = obj.Keys
-            For i = 0 To UBound(keys)
-                key = keys(i)
-                On Error Resume Next
-                Set value = obj(key)
-                If Err.Number <> 0 Then
-                    Err.Clear
-                    value = obj(key)
-                End If
-                On Error GoTo 0
-                isLast = (i = UBound(keys))
-                
-                result = result & indent & "    " & Chr(34) & key & Chr(34) & ": "
-                If IsObject(value) Then
-                    If Not value Is Nothing Then
-                        result = result & DictionaryToJson(value, indentLevel + 1, quiet)
-                    Else
-                        result = result & "null"
-                    End If
-                ElseIf IsNull(value) Then
-                    result = result & "null"
-                Else
-                    ' Manejar valores simples directamente
-                    If VarType(value) = vbString Then
-                        result = result & Chr(34) & Replace(CStr(value), Chr(34), "\" & Chr(34)) & Chr(34)
-                    ElseIf VarType(value) = vbBoolean Then
-                        If value Then
-                            result = result & "true"
-                        Else
-                            result = result & "false"
-                        End If
-                    ElseIf IsNumeric(value) Then
-                        result = result & CStr(value)
-                    Else
-                        result = result & Chr(34) & CStr(value) & Chr(34)
-                    End If
-                End If
-                On Error GoTo 0
-                
-                If Not isLast Then
-                    result = result & ","
-                End If
-                result = result & vbCrLf
-            Next
-            result = result & indent & "}"
-        End If
 
-    Else
-        ' Manejar valores simples
-        If VarType(obj) = vbString Then
-            ' String - escapar comillas dobles
-            result = Chr(34) & Replace(CStr(obj), Chr(34), "\" & Chr(34)) & Chr(34)
-        ElseIf VarType(obj) = vbBoolean Then
-            ' Boolean
-            If obj Then
-                result = "true"
-            Else
-                result = "false"
-            End If
-        ElseIf IsNumeric(obj) Then
-            ' Numérico
-            result = CStr(obj)
-        Else
-            ' Otros tipos como string
-            result = Chr(34) & CStr(obj) & Chr(34)
-        End If
-    End If
-    
-    DictionaryToJson = result
-End Function
 
 ' Función para leer archivo con codificación ANSI
 Function ReadFileWithAnsiEncoding(filePath)
@@ -1662,7 +1509,7 @@ End Function
 Function ParseJsonFile(filePath)
     Dim objFSO, objFile, strContent
     Set objFSO = CreateObject("Scripting.FileSystemObject")
-    Set objFile = objFSO.OpenTextFile(filePath, 1, False, 0) ' 0 = ASCII
+    Set objFile = objFSO.OpenTextFile(filePath, 1, False, 0) ' Cambiar a ASCII
     strContent = objFile.ReadAll
     objFile.Close
     Set ParseJsonFile = ParseJson(strContent)
@@ -2873,7 +2720,7 @@ Private Sub ExportModulesToDirectory(targetDir)
     Call ResolveDbForAction("export", dbPath, dbOrigin)
     
     ' Abrir Access para exportar módulos
-    Set objAccess = OpenAccessQuiet(dbPath, gPassword)
+    Set objAccess = OpenAccessApp(dbPath, gPassword, True)
     
     If objAccess Is Nothing Then
         WScript.Echo "Error: No se pudo abrir Access para exportar módulos"
@@ -2921,7 +2768,7 @@ Private Sub ExportModulesToDirectory(targetDir)
     On Error GoTo 0
     
     ' Cerrar Access
-    Call CloseAccessQuiet(objAccess)
+    Call CloseAccessApp(objAccess)
     
     If gVerbose Then
         WScript.Echo "Módulos exportados a: " & targetDir
@@ -4659,7 +4506,7 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     
     ' Crear instancia de Access usando función unificada
     Dim objAccessLocal
-    Set objAccessLocal = OpenAccessQuiet(resolvedDbPath, password)
+    Set objAccessLocal = OpenAccessApp(resolvedDbPath, password, True)
     
     If objAccessLocal Is Nothing Then
         WScript.Echo "Error al abrir la base de datos para export"
@@ -4901,12 +4748,24 @@ Private Function ParseJson(jsonText)
     ' Parsear JSON usando expresiones regulares simples
     Set ParseJson = CreateObject("Scripting.Dictionary")
     
+    ' Limpiar BOM y caracteres especiales al inicio
+    Dim cleanText
+    cleanText = jsonText
+    ' Remover BOM UTF-8 (EF BB BF)
+    If Len(cleanText) > 0 And Asc(Left(cleanText, 1)) = 239 Then
+        cleanText = Mid(cleanText, 4)
+    End If
+    ' Remover otros caracteres de control al inicio
+    Do While Len(cleanText) > 0 And (Asc(Left(cleanText, 1)) < 32 Or Asc(Left(cleanText, 1)) > 126)
+        cleanText = Mid(cleanText, 2)
+    Loop
+    
     ' Extraer formName
     Dim regEx, matches
     Set regEx = CreateObject("VBScript.RegExp")
     regEx.Pattern = """formName""\s*:\s*""([^""]+)"""
     regEx.Global = False
-    Set matches = regEx.Execute(jsonText)
+    Set matches = regEx.Execute(cleanText)
     If matches.Count > 0 Then
         ParseJson.Add "formName", matches(0).SubMatches(0)
     Else
@@ -4919,14 +4778,14 @@ Private Function ParseJson(jsonText)
     
     ' Extraer caption
     regEx.Pattern = """caption""\s*:\s*""([^""]+)"""
-    Set matches = regEx.Execute(jsonText)
+    Set matches = regEx.Execute(cleanText)
     If matches.Count > 0 Then
         formProps.Add "caption", matches(0).SubMatches(0)
     End If
     
     ' Extraer width
     regEx.Pattern = """width""\s*:\s*(\d+)"
-    Set matches = regEx.Execute(jsonText)
+    Set matches = regEx.Execute(cleanText)
     If matches.Count > 0 Then
         formProps.Add "width", matches(0).SubMatches(0)
     End If
@@ -4941,7 +4800,7 @@ Private Function ParseJson(jsonText)
     
     ' Extraer height de la sección Detail
     regEx.Pattern = """Detail""[^}]*""height""\s*:\s*(\d+)"
-    Set matches = regEx.Execute(jsonText)
+    Set matches = regEx.Execute(cleanText)
     If matches.Count > 0 Then
         detailProps.Add "height", matches(0).SubMatches(0)
     End If
@@ -4955,7 +4814,7 @@ Private Function ParseJson(jsonText)
     ' Buscar todos los controles en la sección Detail
     regEx.Pattern = "\{[^}]*""name""\s*:\s*""([^""]+)""[^}]*""type""\s*:\s*""([^""]+)""[^}]*\}"
     regEx.Global = True
-    Set matches = regEx.Execute(jsonText)
+    Set matches = regEx.Execute(cleanText)
     
     Dim controlIndex
     controlIndex = 0
@@ -5724,6 +5583,7 @@ End Sub
 Private Sub AddControlFromJson(objAccess, formName, controlJson, sectionType)
     Dim newControl, controlType, parentControl, columnName
     Dim leftPos, topPos, widthSize, heightSize
+    Dim properties, prop, propValue
     
     ' Obtener propiedades de posición y tamaño con valores por defecto en twips
     leftPos = 0
@@ -5731,28 +5591,66 @@ Private Sub AddControlFromJson(objAccess, formName, controlJson, sectionType)
     widthSize = 1440 ' Valor por defecto en twips (1 pulgada)
     heightSize = 300  ' Valor por defecto en twips
     
-    If controlJson.Exists("left") Then 
-        leftPos = CLng(controlJson("left"))
+    ' Normalizar propiedades numéricas usando CLng/CDbl
+    If controlJson.Exists("properties") Then
+        Set properties = controlJson("properties")
+        
+        If properties.Exists("left") Then 
+            leftPos = CLng(properties("left"))
+        ElseIf controlJson.Exists("left") Then 
+            leftPos = CLng(controlJson("left"))
+        Else
+            LogWarn "Control " & controlJson("name") & ": coordenada 'left' no especificada, usando 0"
+        End If
+        
+        If properties.Exists("top") Then 
+            topPos = CLng(properties("top"))
+        ElseIf controlJson.Exists("top") Then 
+            topPos = CLng(controlJson("top"))
+        Else
+            LogWarn "Control " & controlJson("name") & ": coordenada 'top' no especificada, usando 0"
+        End If
+        
+        If properties.Exists("width") Then 
+            widthSize = CLng(properties("width"))
+        ElseIf controlJson.Exists("width") Then 
+            widthSize = CLng(controlJson("width"))
+        Else
+            LogWarn "Control " & controlJson("name") & ": ancho 'width' no especificado, usando 1440 twips (1 pulgada)"
+        End If
+        
+        If properties.Exists("height") Then 
+            heightSize = CLng(properties("height"))
+        ElseIf controlJson.Exists("height") Then 
+            heightSize = CLng(controlJson("height"))
+        Else
+            LogWarn "Control " & controlJson("name") & ": altura 'height' no especificada, usando 300 twips"
+        End If
     Else
-        LogWarn "Control " & controlJson("name") & ": coordenada 'left' no especificada, usando 0"
-    End If
-    
-    If controlJson.Exists("top") Then 
-        topPos = CLng(controlJson("top"))
-    Else
-        LogWarn "Control " & controlJson("name") & ": coordenada 'top' no especificada, usando 0"
-    End If
-    
-    If controlJson.Exists("width") Then 
-        widthSize = CLng(controlJson("width"))
-    Else
-        LogWarn "Control " & controlJson("name") & ": ancho 'width' no especificado, usando 1440 twips (1 pulgada)"
-    End If
-    
-    If controlJson.Exists("height") Then 
-        heightSize = CLng(controlJson("height"))
-    Else
-        LogWarn "Control " & controlJson("name") & ": altura 'height' no especificada, usando 300 twips"
+        ' Formato legacy: propiedades directas en el control
+        If controlJson.Exists("left") Then 
+            leftPos = CLng(controlJson("left"))
+        Else
+            LogWarn "Control " & controlJson("name") & ": coordenada 'left' no especificada, usando 0"
+        End If
+        
+        If controlJson.Exists("top") Then 
+            topPos = CLng(controlJson("top"))
+        Else
+            LogWarn "Control " & controlJson("name") & ": coordenada 'top' no especificada, usando 0"
+        End If
+        
+        If controlJson.Exists("width") Then 
+            widthSize = CLng(controlJson("width"))
+        Else
+            LogWarn "Control " & controlJson("name") & ": ancho 'width' no especificado, usando 1440 twips (1 pulgada)"
+        End If
+        
+        If controlJson.Exists("height") Then 
+            heightSize = CLng(controlJson("height"))
+        Else
+            LogWarn "Control " & controlJson("name") & ": altura 'height' no especificada, usando 300 twips"
+        End If
     End If
     
     ' Validar sección (0=acDetail, 1=acHeader, 2=acFooter)
@@ -5788,28 +5686,43 @@ Private Sub AddControlFromJson(objAccess, formName, controlJson, sectionType)
     
     ' Aplicar propiedades adicionales si existen
     If controlJson.Exists("properties") Then
-        Dim properties, prop, propValue
+        ' Reutilizar la variable properties ya declarada
         Set properties = controlJson("properties")
         
         For Each prop In properties.Keys
             propValue = properties(prop)
             
-            On Error Resume Next
-            newControl.Properties(prop) = propValue
-            If Err.Number <> 0 Then
-                If gStrict Then
-                    WScript.Echo "Error aplicando propiedad " & prop & " al control " & controlJson("name") & ": " & Err.Description
-                    WScript.Quit 1
+            ' Saltar propiedades de posición y tamaño ya procesadas
+            If LCase(prop) <> "left" And LCase(prop) <> "top" And LCase(prop) <> "width" And LCase(prop) <> "height" Then
+                On Error Resume Next
+                ' Normalizar valores numéricos si es necesario
+                If IsNumeric(propValue) Then
+                    If InStr(LCase(prop), "color") > 0 Or LCase(prop) = "backcolor" Or LCase(prop) = "forecolor" Or LCase(prop) = "bordercolor" Then
+                        newControl.Properties(prop) = CLng(propValue)
+                    ElseIf LCase(prop) = "fontsize" Or InStr(LCase(prop), "size") > 0 Then
+                        newControl.Properties(prop) = CDbl(propValue)
+                    Else
+                        newControl.Properties(prop) = propValue
+                    End If
                 Else
-                    LogWarn "Propiedad " & prop & " no aplicable al control " & controlJson("name") & " (tipo: " & controlJson("type") & ")"
+                    newControl.Properties(prop) = propValue
                 End If
-                Err.Clear
+                
+                If Err.Number <> 0 Then
+                    If gStrict Then
+                        WScript.Echo "Error aplicando propiedad " & prop & " al control " & controlJson("name") & ": " & Err.Description
+                        WScript.Quit 1
+                    Else
+                        LogWarn "Propiedad " & prop & " no aplicable al control " & controlJson("name") & " (tipo: " & controlJson("type") & ")"
+                    End If
+                    Err.Clear
+                End If
+                On Error GoTo 0
             End If
-            On Error GoTo 0
         Next
     End If
     
-    ' Propiedades específicas por tipo (compatibilidad con formato anterior)
+    ' Propiedades específicas por tipo (compatibilidad con formato legacy)
     If LCase(controlJson("type")) = "textbox" Then
         If controlJson.Exists("controlSource") Then 
             On Error Resume Next
@@ -6155,7 +6068,7 @@ Private Sub ValidateFormJsonCommand()
     Set errors = CreateObject("Scripting.Dictionary")
     
     ' Procesar argumentos
-    For i = 2 To WScript.Arguments.Count - 1
+    For i = 1 To WScript.Arguments.Count - 1
         arg = WScript.Arguments(i)
         If Left(arg, 2) = "--" Then
             Select Case arg
@@ -6201,7 +6114,7 @@ Private Sub ValidateFormJsonCommand()
     
     ' Leer y parsear el JSON
     On Error Resume Next
-    Set objFile = objFSO.OpenTextFile(jsonPath, 1, False, -1)
+    Set objFile = objFSO.OpenTextFile(jsonPath, 1, False, 0) ' Cambiar a ASCII
     jsonContent = objFile.ReadAll
     objFile.Close
     
@@ -6218,6 +6131,13 @@ Private Sub ValidateFormJsonCommand()
         WScript.Echo "Error: JSON inválido - " & Err.Description
         WScript.Quit 1
     End If
+    
+    ' Verificar que el resultado sea un objeto (Dictionary)
+    If TypeName(formData) <> "Dictionary" Then
+        WScript.Echo "Error: JSON inválido - Se requiere un objeto"
+        WScript.Quit 1
+    End If
+    
     On Error GoTo 0
     
     ' Validar estructura del formulario
@@ -6250,34 +6170,198 @@ End Sub
 ' ============================================================================
 ' SUBRUTINA: ValidateFormData
 ' Descripción: Valida la estructura de datos del formulario
+' Acepta ambos formatos: secciones (canónico) y legacy (root.controls)
 ' ============================================================================
 Private Sub ValidateFormData(formData, bStrict, warnings)
-    ' Validar que existe el array de controles
-    If Not IsPresent(formData, "controls") Then
-        warnings("controls_missing") = "No se encontró el array 'controls' en el JSON"
+    Dim hasControls, hasSections
+    hasControls = IsPresent(formData, "controls")
+    hasSections = IsPresent(formData, "sections")
+    
+    ' Validar que existe al menos uno de los formatos
+    If Not hasControls And Not hasSections Then
+        warnings("no_controls_or_sections") = "No se encontró ni 'controls' ni 'sections' en el JSON"
         Exit Sub
     End If
     
-    Dim controls
-    Set controls = formData("controls")
-    
-    ' Validar cada control
-    Dim i
-    For i = 0 To controls.Count - 1
-        Dim control
-        Set control = controls(i)
+    ' Procesar formato por secciones (canónico)
+    If hasSections Then
+        Dim sections, sectionNames, sectionName, section
+        Set sections = formData("sections")
+        sectionNames = Array("header", "detail", "footer")
         
-        ' Validar campo section
-        If Not IsPresent(control, "section") Then
-            warnings("control_" & i & "_section_missing") = "Control " & i & ": Campo 'section' faltante (se asumirá 'detail')"
-        Else
-            Dim sectionValue
-            sectionValue = control("section")
-            If sectionValue <> "detail" And sectionValue <> "header" And sectionValue <> "footer" Then
-                warnings("control_" & i & "_section_invalid") = "Control " & i & ": Valor de 'section' inválido '" & sectionValue & "' (debe ser detail|header|footer)"
+        Dim i, j
+        For i = 0 To UBound(sectionNames)
+            sectionName = sectionNames(i)
+            If IsPresent(sections, sectionName) Then
+                Set section = sections(sectionName)
+                
+                ' Validar controles de la sección si existen
+                If IsPresent(section, "controls") Then
+                    Dim sectionControls
+                    Set sectionControls = section("controls")
+                    
+                    For j = 0 To sectionControls.Count - 1
+                        ValidateControl sectionControls(j), sectionName, j, warnings, bStrict
+                    Next
+                End If
+            End If
+        Next
+    End If
+    
+    ' Procesar formato legacy (root.controls)
+    If hasControls And Not hasSections Then
+        Dim controls
+        Set controls = formData("controls")
+        
+        For i = 0 To controls.Count - 1
+            Dim control
+            Set control = controls(i)
+            
+            ' En formato legacy, exigir campo "section"
+            If Not IsPresent(control, "section") Then
+                warnings("control_" & i & "_section_missing") = "Control " & i & ": Campo 'section' obligatorio en formato legacy"
+            Else
+                Dim controlSection
+                controlSection = control("section")
+                ValidateControl control, controlSection, i, warnings, bStrict
+            End If
+        Next
+    End If
+    
+    ' Si existen ambos formatos, generar advertencia
+    If hasControls And hasSections Then
+        warnings("dual_format_detected") = "Se detectaron ambos formatos 'sections' y 'controls'. Se procesará 'sections' (canónico)"
+    End If
+End Sub
+
+' ============================================================================
+' SUBRUTINA: ValidateControl
+' Descripción: Valida un control individual
+' ============================================================================
+Private Sub ValidateControl(control, expectedSection, controlIndex, warnings, bStrict)
+    Dim controlName
+    controlName = "control_" & controlIndex
+    
+    ' Validar campos obligatorios
+    If Not IsPresent(control, "name") Then
+        warnings(controlName & "_name_missing") = "Control " & controlIndex & ": Campo 'name' obligatorio"
+    End If
+    
+    If Not IsPresent(control, "type") Then
+        warnings(controlName & "_type_missing") = "Control " & controlIndex & ": Campo 'type' obligatorio"
+    Else
+        ' Validar tipo soportado
+        Dim controlType
+        controlType = control("type")
+        Dim supportedTypes
+        supportedTypes = Array("CommandButton", "Label", "TextBox", "ComboBox", "ListBox", "CheckBox", "OptionButton", "Image", "Rectangle", "Line")
+        
+        Dim typeFound, i
+        typeFound = False
+        For i = 0 To UBound(supportedTypes)
+            If LCase(controlType) = LCase(supportedTypes(i)) Then
+                typeFound = True
+                Exit For
+            End If
+        Next
+        
+        If Not typeFound Then
+            warnings(controlName & "_type_unsupported") = "Control " & controlIndex & ": Tipo '" & controlType & "' no soportado"
+        End If
+    End If
+    
+    ' Validar sección si está presente
+    If IsPresent(control, "section") Then
+        Dim controlSection
+        controlSection = control("section")
+        
+        ' Validar que la sección es válida
+        If controlSection <> "header" And controlSection <> "detail" And controlSection <> "footer" Then
+            warnings(controlName & "_section_invalid") = "Control " & controlIndex & ": Valor de 'section' inválido '" & controlSection & "' (debe ser header|detail|footer)"
+        End If
+        
+        ' Validar coherencia con sección portadora
+        If controlSection <> expectedSection Then
+            Dim warningKey
+            warningKey = controlName & "_section_mismatch"
+            If bStrict Then
+                warnings(warningKey) = "ERROR: Control " & controlIndex & ": 'section' (" & controlSection & ") no coincide con sección portadora (" & expectedSection & ")"
+            Else
+                warnings(warningKey) = "WARNING: Control " & controlIndex & ": 'section' (" & controlSection & ") no coincide con sección portadora (" & expectedSection & ")"
             End If
         End If
-    Next
+    End If
+    
+    ' Validar propiedades si existen
+    If IsPresent(control, "properties") Then
+        Dim properties
+        Set properties = control("properties")
+        
+        ' Validar propiedades de posición y tamaño (obligatorias)
+        Dim requiredProps
+        requiredProps = Array("top", "left", "width", "height")
+        
+        For i = 0 To UBound(requiredProps)
+            Dim propName
+            propName = requiredProps(i)
+            If Not IsPresent(properties, propName) Then
+                warnings(controlName & "_" & propName & "_missing") = "Control " & controlIndex & ": Propiedad '" & propName & "' obligatoria"
+            Else
+                ' Validar que es numérico
+                Dim propValue
+                propValue = properties(propName)
+                If Not IsNumeric(propValue) Then
+                    warnings(controlName & "_" & propName & "_not_numeric") = "Control " & controlIndex & ": Propiedad '" & propName & "' debe ser numérica"
+                Else
+                    ' Validar coherencia (width > 0, height > 0)
+                    If (propName = "width" Or propName = "height") And CDbl(propValue) <= 0 Then
+                        warnings(controlName & "_" & propName & "_invalid") = "Control " & controlIndex & ": Propiedad '" & propName & "' debe ser mayor que 0"
+                    End If
+                End If
+            End If
+        Next
+    End If
+End Sub
+
+' ============================================================================
+' SUBRUTINA: ValidateResources
+' Descripción: Valida la estructura de recursos del formulario
+' ============================================================================
+Private Sub ValidateResources(formData, basePath, warnings)
+    ' Validar sección de recursos si existe
+    If IsPresent(formData, "resources") Then
+        Dim resources
+        Set resources = formData("resources")
+        
+        ' Validar imágenes si existen
+        If IsPresent(resources, "images") Then
+            Dim images
+            Set images = resources("images")
+            
+            Dim i
+            For i = 0 To images.Count - 1
+                Dim imagePath
+                imagePath = images(i)
+                
+                ' Validar que es una cadena
+                If VarType(imagePath) <> vbString Then
+                    warnings("resource_image_" & i & "_not_string") = "Recurso imagen " & i & ": Debe ser una cadena de texto"
+                Else
+                    ' Validar formato de ruta relativa
+                    If InStr(imagePath, ":") > 0 Or Left(imagePath, 1) = "\" Or Left(imagePath, 1) = "/" Then
+                        warnings("resource_image_" & i & "_not_relative") = "Recurso imagen " & i & ": Debe ser una ruta relativa (" & imagePath & ")"
+                    End If
+                    
+                    ' Validar extensión de archivo
+                    Dim ext
+                    ext = LCase(Right(imagePath, 4))
+                    If ext <> ".png" And ext <> ".jpg" And ext <> ".gif" And ext <> ".bmp" Then
+                        warnings("resource_image_" & i & "_invalid_ext") = "Recurso imagen " & i & ": Extensión no soportada (" & imagePath & ")"
+                    End If
+                End If
+            Next
+        End If
+    End If
 End Sub
 
 ' ============================================================================
@@ -6285,9 +6369,11 @@ End Sub
 ' Descripción: Muestra el esquema JSON esperado para formularios
 ' ============================================================================
 Private Sub ShowFormJsonSchema()
-    WScript.Echo "\n=== ESQUEMA JSON DE FORMULARIO ==="
+    WScript.Echo "\n=== ESQUEMA JSON CANÓNICO DE FORMULARIO ==="
     WScript.Echo "{"
-    WScript.Echo "  ""name"": ""string (requerido)"","
+    WScript.Echo "  ""schemaVersion"": ""1.x"","
+    WScript.Echo "  ""units"": ""twips"","
+    WScript.Echo "  ""formName"": ""string (requerido)"","
     WScript.Echo "  ""properties"": {"
     WScript.Echo "    ""caption"": ""string"","
     WScript.Echo "    ""width"": ""number"","
@@ -6302,36 +6388,79 @@ Private Sub ShowFormJsonSchema()
     WScript.Echo "    ""allowDeletions"": ""boolean"""
     WScript.Echo "  },"
     WScript.Echo "  ""sections"": {"
+    WScript.Echo "    ""header"": {"
+    WScript.Echo "      ""height"": ""number"","
+    WScript.Echo "      ""backColor"": ""string (hex: #RRGGBB)"","
+    WScript.Echo "      ""controls"": ["
+    WScript.Echo "        { ""control_object"": ""ver estructura de control abajo"" }"
+    WScript.Echo "      ]"
+    WScript.Echo "    },"
     WScript.Echo "    ""detail"": {"
     WScript.Echo "      ""height"": ""number"","
-    WScript.Echo "      ""backColor"": ""string (hex: #RRGGBB)"""
+    WScript.Echo "      ""backColor"": ""string (hex: #RRGGBB)"","
+    WScript.Echo "      ""controls"": ["
+    WScript.Echo "        { ""control_object"": ""ver estructura de control abajo"" }"
+    WScript.Echo "      ]"
+    WScript.Echo "    },"
+    WScript.Echo "    ""footer"": {"
+    WScript.Echo "      ""height"": ""number"","
+    WScript.Echo "      ""backColor"": ""string (hex: #RRGGBB)"","
+    WScript.Echo "      ""controls"": ["
+    WScript.Echo "        { ""control_object"": ""ver estructura de control abajo"" }"
+    WScript.Echo "      ]"
     WScript.Echo "    }"
     WScript.Echo "  },"
-    WScript.Echo "  ""controls"": ["
-    WScript.Echo "    {"
-    WScript.Echo "      ""name"": ""string (requerido)"","
-    WScript.Echo "      ""type"": ""enum (CommandButton|Label|TextBox) (requerido)"","
-    WScript.Echo "      ""section"": ""enum (detail|header|footer) (requerido)"","
-    WScript.Echo "      ""properties"": {"
-    WScript.Echo "        ""caption"": ""string"","
-    WScript.Echo "        ""top"": ""number (requerido)"","
-    WScript.Echo "        ""left"": ""number (requerido)"","
-    WScript.Echo "        ""width"": ""number (requerido)"","
-    WScript.Echo "        ""height"": ""number (requerido)"","
-    WScript.Echo "        ""backColor"": ""string (hex: #RRGGBB)"","
-    WScript.Echo "        ""foreColor"": ""string (hex: #RRGGBB)"","
-    WScript.Echo "        ""fontName"": ""string"","
-    WScript.Echo "        ""fontSize"": ""number"","
-    WScript.Echo "        ""fontBold"": ""boolean"","
-    WScript.Echo "        ""fontItalic"": ""boolean"","
-    WScript.Echo "        ""picture"": ""string (ruta relativa)"","
-    WScript.Echo "        ""textAlign"": ""enum (left|center|right)"","
-    WScript.Echo "        ""borderStyle"": ""enum (transparent|solid|dashes|dots)"","
-    WScript.Echo "        ""specialEffect"": ""enum (flat|raised|sunken|etched|shadowed|chiseled)"""
-    WScript.Echo "      }"
+    WScript.Echo "  ""resources"": {"
+    WScript.Echo "    ""images"": ["
+    WScript.Echo "      ""relative/path.png"","
+    WScript.Echo "      ""..."
+    WScript.Echo "    ]"
+    WScript.Echo "  },"
+    WScript.Echo "  ""code"": {"
+    WScript.Echo "    ""module"": {"
+    WScript.Echo "      ""exists"": ""boolean"","
+    WScript.Echo "      ""filename"": ""string"","
+    WScript.Echo "      ""handlers"": ["
+    WScript.Echo "        {"
+    WScript.Echo "          ""control"": ""string"","
+    WScript.Echo "          ""event"": ""string"","
+    WScript.Echo "          ""signature"": ""string"""
+    WScript.Echo "        }"
+    WScript.Echo "      ]"
     WScript.Echo "    }"
-    WScript.Echo "  ]"
+    WScript.Echo "  }"
     WScript.Echo "}"
+    WScript.Echo "\n=== ESTRUCTURA DE CONTROL ==="
+    WScript.Echo "{"
+    WScript.Echo "  ""name"": ""string (requerido)"","
+    WScript.Echo "  ""type"": ""enum (CommandButton|Label|TextBox|...) (requerido)"","
+    WScript.Echo "  ""section"": ""enum (header|detail|footer) (opcional en export, obligatorio si aparece en raíz)"","
+    WScript.Echo "  ""properties"": {"
+    WScript.Echo "    ""top"": ""number (requerido)"","
+    WScript.Echo "    ""left"": ""number (requerido)"","
+    WScript.Echo "    ""width"": ""number (requerido)"","
+    WScript.Echo "    ""height"": ""number (requerido)"","
+    WScript.Echo "    ""caption"": ""string"","
+    WScript.Echo "    ""backColor"": ""string (hex: #RRGGBB)"","
+    WScript.Echo "    ""foreColor"": ""string (hex: #RRGGBB)"","
+    WScript.Echo "    ""fontName"": ""string"","
+    WScript.Echo "    ""fontSize"": ""number"","
+    WScript.Echo "    ""fontBold"": ""boolean"","
+    WScript.Echo "    ""fontItalic"": ""boolean"","
+    WScript.Echo "    ""picture"": ""string (ruta relativa)"","
+    WScript.Echo "    ""textAlign"": ""enum (left|center|right)"","
+    WScript.Echo "    ""borderStyle"": ""enum (transparent|solid|dashes|dots)"","
+    WScript.Echo "    ""specialEffect"": ""enum (flat|raised|sunken|etched|shadowed|chiseled)"""
+    WScript.Echo "  },"
+    WScript.Echo "  ""events"": {"
+    WScript.Echo "    ""detected"": ["
+    WScript.Echo "      ""Click"","
+    WScript.Echo "      ""..."
+    WScript.Echo "    ]"
+    WScript.Echo "  }"
+    WScript.Echo "}"
+    WScript.Echo "\n=== COMPATIBILIDAD DE LECTURA ==="
+    WScript.Echo "NOTA: También se acepta 'root.controls[]' (legacy), pero la forma oficial es 'sections.*.controls[]'"
     WScript.Echo "\n=== COLORES VÁLIDOS ==="
     WScript.Echo "Formato hexadecimal: #RRGGBB (ej: #FF0000 para rojo)"
     WScript.Echo "\n=== ENUMS VÁLIDOS ==="
@@ -6607,6 +6736,21 @@ Class JsonParser
     Public Function Parse(json)
         jsonText = json
         pos = 1
+        
+        ' Limpiar BOM y caracteres especiales al inicio
+        Do While pos <= Len(jsonText)
+            Dim firstChar
+            firstChar = Mid(jsonText, pos, 1)
+            Dim asciiVal
+            asciiVal = Asc(firstChar)
+            ' Saltar BOM UTF-8 y otros caracteres de control
+            If asciiVal = 239 Or asciiVal = 187 Or asciiVal = 191 Or asciiVal < 32 Then
+                pos = pos + 1
+            Else
+                Exit Do
+            End If
+        Loop
+        
         SkipWhitespace
         Set Parse = ParseValue()
     End Function
@@ -6660,12 +6804,19 @@ Class JsonParser
             pos = pos + 1
             
             Dim value
-             Set value = ParseValue()
-             If IsObject(value) Then
-                 Set obj(key) = value
-             Else
-                 obj(key) = value
-             End If
+            On Error Resume Next
+            Set value = ParseValue()
+            If Err.Number <> 0 Then
+                Err.Clear
+                value = ParseValue()
+            End If
+            On Error GoTo 0
+            
+            If IsObject(value) Then
+                Set obj(key) = value
+            Else
+                obj(key) = value
+            End If
             
             SkipWhitespace
             Dim nextChar
@@ -6697,13 +6848,20 @@ Class JsonParser
         End If
         
         Do
-             Dim value
-             Set value = ParseValue()
-             If IsObject(value) Then
-                 arr.Add value
-             Else
-                 arr.Add value
-             End If
+            Dim value
+            On Error Resume Next
+            Set value = ParseValue()
+            If Err.Number <> 0 Then
+                Err.Clear
+                value = ParseValue()
+            End If
+            On Error GoTo 0
+            
+            If IsObject(value) Then
+                arr.Add value
+            Else
+                arr.Add value
+            End If
             
             SkipWhitespace
             Dim nextChar
@@ -7256,50 +7414,15 @@ Sub RenameMacroIfExists(dbPath, pwd, oldName, newName)
     db.Close
 End Sub
 
-Sub OpenAccessSilently(dbPath, pwd, ByRef app)
-    On Error Resume Next
-    Set app = CreateObject("Access.Application")
-    If Err.Number <> 0 Then
-        WScript.Echo "ERROR: No se pudo crear Access.Application: " & Err.Description
-        WScript.Quit 1
-    End If
-    Err.Clear
-    
-    app.Visible = False
-    app.UserControl = False
-    On Error Resume Next
-    app.AutomationSecurity = 1  ' msoAutomationSecurityLow - permite acceso a VBIDE
-    Err.Clear : On Error GoTo 0
-    
-    ' BYPASS SIEMPRE ACTIVO: detectar y desactivar el formulario de inicio ANTES de abrir la BD
-    Call StartupBypass_Enable(app)
-    
-    ' Abrir la BD
-    If Len(pwd) > 0 Then
-        app.OpenCurrentDatabase dbPath, False, pwd
-    Else
-        app.OpenCurrentDatabase dbPath
-    End If
-    
-    If Err.Number <> 0 Then 
-        Call StartupBypass_Restore(app)
-        app.Quit
-        Set app = Nothing
-        Exit Sub
-    End If
-    
-    app.Echo False
-    Call RemoveBrokenReferences(app)
-    On Error GoTo 0
-End Sub
+
 
 Function OpenAccessApp(dbPath, password, bypassStartup)
-    ' DEPRECATED: Usar OpenAccessQuiet en su lugar
+    ' Función unificada que usa OpenAccessQuiet con bypass siempre activo
     Set OpenAccessApp = OpenAccessQuiet(dbPath, password)
 End Function
 
 Sub CloseAccessApp(app)
-    ' DEPRECATED: Usar CloseAccessQuiet en su lugar
+    ' Función unificada que usa CloseAccessQuiet
     Call CloseAccessQuiet(app)
 End Sub
 
@@ -8314,24 +8437,24 @@ Function TryListModulesDAO(app, pattern, ByRef arr)
   ReDim arr(-1)
   
   If app Is Nothing Then 
-    WScript.Echo "DEBUG: TryListModulesDAO - app es Nothing"
+    If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - app es Nothing"
     TryListModulesDAO = False: Exit Function
   End If
   
   If app.CurrentProject Is Nothing Then 
-    WScript.Echo "DEBUG: TryListModulesDAO - CurrentProject es Nothing"
+    If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - CurrentProject es Nothing"
     TryListModulesDAO = False: Exit Function
   End If
   
   Dim regex, db, obj, name, dict, moduleCount
   If pattern<>"" Then Set regex=CreateObject("VBScript.RegExp"): regex.Pattern=pattern: regex.IgnoreCase=True
   
-  WScript.Echo "DEBUG: TryListModulesDAO - Intentando acceder a AllModules..."
+  If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - Intentando acceder a AllModules..."
   
   ' Usar variable intermedia como en el código de inspiración
   Set db = app.CurrentProject
   If Err.Number <> 0 Then
-    WScript.Echo "DEBUG: TryListModulesDAO - Error asignando CurrentProject: " & Err.Number & " - " & Err.Description
+    If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - Error asignando CurrentProject: " & Err.Number & " - " & Err.Description
     Err.Clear
     TryListModulesDAO = False
     Exit Function
@@ -8341,16 +8464,16 @@ Function TryListModulesDAO(app, pattern, ByRef arr)
   moduleCount = 0
   For Each obj In db.AllModules
     If Err.Number <> 0 Then
-      WScript.Echo "DEBUG: TryListModulesDAO - Error en For Each (conteo): " & Err.Number & " - " & Err.Description
+      If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - Error en For Each (conteo): " & Err.Number & " - " & Err.Description
       ' No salir inmediatamente, intentar continuar
       Err.Clear
     Else
       name = obj.Name
       If Err.Number <> 0 Then
-        WScript.Echo "DEBUG: TryListModulesDAO - Error obteniendo Name: " & Err.Number & " - " & Err.Description
+        If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - Error obteniendo Name: " & Err.Number & " - " & Err.Description
         Err.Clear
       Else
-        WScript.Echo "DEBUG: TryListModulesDAO - Encontrado módulo: " & name
+        If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - Encontrado módulo: " & name
         If pattern="" Or regex.Test(name) Then
           moduleCount = moduleCount + 1
         End If
@@ -8358,7 +8481,7 @@ Function TryListModulesDAO(app, pattern, ByRef arr)
     End If
   Next
   
-  WScript.Echo "DEBUG: TryListModulesDAO - Módulos que coinciden con patrón: " & moduleCount
+  If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - Módulos que coinciden con patrón: " & moduleCount
   
   ' Llenar el array con los módulos que coinciden
   If moduleCount > 0 Then
@@ -8387,7 +8510,7 @@ Function TryListModulesDAO(app, pattern, ByRef arr)
   Set db = Nothing
   
   TryListModulesDAO = (moduleCount > 0)
-  WScript.Echo "DEBUG: TryListModulesDAO - Resultado final: " & TryListModulesDAO & ", Módulos encontrados: " & moduleCount
+  If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO - Resultado final: " & TryListModulesDAO & ", Módulos encontrados: " & moduleCount
   On Error GoTo 0
 End Function
 '--- END: TryListModulesDAO ---
@@ -8518,7 +8641,7 @@ Sub ListModulesCommand()
     
     ' Si no tenemos app válida, abrir nueva instancia
     If app Is Nothing Then
-        WScript.Echo "DEBUG: password = '" & password & "'"
+        If gVerbose Then WScript.Echo "DEBUG: password = '" & password & "'"
         Set app = OpenAccessApp(strAccessPath, password, True) ' bypass on
         If app Is Nothing Then
             WScript.Echo "Error: No se pudo abrir Access para listar módulos."
@@ -8528,18 +8651,18 @@ Sub ListModulesCommand()
     End If
 
     ' Preferir VBIDE; fallback AllModules; fallback DAO
-    WScript.Echo "DEBUG: Intentando TryListModulesVBIDE..."
+    If gVerbose Then WScript.Echo "DEBUG: Intentando TryListModulesVBIDE..."
     ok = TryListModulesVBIDE(app, includeDocs, pattern, arr)
-    WScript.Echo "DEBUG: TryListModulesVBIDE resultado: " & ok
+    If gVerbose Then WScript.Echo "DEBUG: TryListModulesVBIDE resultado: " & ok
     If Not ok Then
-        WScript.Echo "DEBUG: Intentando TryListModulesAllModules..."
+        If gVerbose Then WScript.Echo "DEBUG: Intentando TryListModulesAllModules..."
         ok = TryListModulesAllModules(app, pattern, arr)
-        WScript.Echo "DEBUG: TryListModulesAllModules resultado: " & ok
+        If gVerbose Then WScript.Echo "DEBUG: TryListModulesAllModules resultado: " & ok
     End If
     If Not ok Then
-        WScript.Echo "DEBUG: Intentando TryListModulesDAO..."
+        If gVerbose Then WScript.Echo "DEBUG: Intentando TryListModulesDAO..."
         ok = TryListModulesDAO(app, pattern, arr)
-        WScript.Echo "DEBUG: TryListModulesDAO resultado: " & ok
+        If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO resultado: " & ok
     End If
     If Not ok Then
         Call CloseAccessApp(app)

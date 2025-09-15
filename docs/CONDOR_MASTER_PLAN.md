@@ -2008,6 +2008,37 @@ Luego se detiene y espera confirmación.
 cscript condor_cli.vbs <comando> [argumentos] [opciones]
 ```
 
+#### Resolución de Base de Datos por Defecto
+
+El CLI utiliza diferentes bases de datos por defecto según el tipo de acción:
+
+**Acciones de Frontend** (UI, formularios, VBA, lógica):
+- **Base de datos por defecto**: `front\Desarrollo\CONDOR.accdb`
+- **Comandos**: `rebuild`, `list-modules`, `export`, `import`, `validate-form-json`
+
+**Acciones de Backend** (datos y auxiliares):
+- **Base de datos por defecto**: `back\data\CONDOR_datos.accdb`
+- **Comandos**: `validate-schema`, `listtables`, `sync`, `migrate`
+
+#### Precedencia de Resolución de Base de Datos
+
+El CLI resuelve la base de datos a usar siguiendo esta precedencia (de mayor a menor):
+
+1. **Parámetro `--db`**: `--db "ruta\especifica.accdb"`
+2. **Argumento posicional**: `cscript condor_cli.vbs comando "ruta\posicional.accdb"`
+3. **Variable de entorno**: `set DB=ruta\entorno.accdb`
+4. **Default por acción**: Frontend o Backend según el comando
+
+#### Bypass Automático de Startup Form
+
+**Funcionalidad automática**: El CLI implementa bypass automático del "Startup Form" al abrir bases de datos Access y restaura la configuración original al cerrar.
+
+**Estrategias implementadas**:
+- **Strategy A**: `msaccess.exe /nostartup` para bypass completo
+- **Strategy B**: DAO con neutralización temporal de `StartupForm` y `AutoExec` (restauración automática al cerrar)
+
+**Integración**: Activo automáticamente en todos los comandos que abren bases de datos (`rebuild`, `export-form`, `import-form`, `list-forms`, etc.)
+
 #### Comandos Disponibles
 
 ##### 1. Comandos de Construcción y Testing
@@ -2497,7 +2528,52 @@ El proyecto CONDOR implementa el principio arquitectónico **"UI como Código"**
 
 Los formularios de Access se serializan como archivos JSON estructurados que contienen toda la información necesaria para recrear el formulario: propiedades, controles, posicionamiento, formato y configuración. Estos archivos JSON se consideran la **fuente de verdad** para los formularios de la aplicación.
 
-### Estructura de Directorios Canónica
+### Estructura del Proyecto
+
+```
+CONDOR/
+├── front/                    ← Frontend: UI, formularios, VBA, lógica
+│   └── Desarrollo/
+│       └── CONDOR.accdb     ← Base de datos frontend principal
+├── back/                    ← Backend: datos y auxiliares
+│   ├── data/               ← Bases de datos de datos
+│   │   ├── CONDOR_datos.accdb    ← BD principal de datos
+│   │   ├── Expedientes_datos.accdb
+│   │   ├── Lanzadera_Datos.accdb
+│   │   └── *.accdb         ← Otras BDs auxiliares
+│   ├── Desarrollo/         ← Archivos de desarrollo (Templates, copias)
+│   ├── logs/              ← Logs del sistema
+│   ├── recursos/          ← Recursos y plantillas
+│   └── test_env/          ← Entorno de pruebas
+├── src/                   ← Código fuente VBA (.bas, .cls)
+├── ui/                    ← UI as Code (JSON definitions)
+│   ├── definitions/       ← Definiciones JSON de formularios
+│   ├── assets/           ← Recursos gráficos (iconos, imágenes)
+│   ├── sources/          ← Bases de datos fuente para UI
+│   ├── templates/        ← Plantillas base para formularios
+│   └── work/             ← Directorio de trabajo temporal
+├── docs/                 ← Documentación del proyecto
+├── scripts/              ← Scripts de utilidad
+└── db/                   ← Migraciones y esquemas
+    └── migrations/
+```
+
+#### Responsabilidades por Directorio
+
+**Frontend (`front/`)**:
+- **Propósito**: Contiene la interfaz de usuario, formularios, VBA y lógica de aplicación
+- **Archivo principal**: `front\Desarrollo\CONDOR.accdb`
+- **Contenido**: Formularios Access, módulos VBA, lógica de negocio, interfaces de usuario
+- **Acciones CLI que lo usan**: `rebuild`, `list-modules`, `export`, `import`, `validate-form-json`
+
+**Backend (`back/`)**:
+- **Propósito**: Almacena datos y bases de datos auxiliares
+- **Directorio principal**: `back\data\`
+- **Archivo principal**: `back\data\CONDOR_datos.accdb`
+- **Contenido**: Tablas de datos, esquemas, información persistente
+- **Acciones CLI que lo usan**: `validate-schema`, `listtables`, `sync`, `migrate`
+
+### Estructura de Directorios UI as Code
 
 ```
 ui/
@@ -2509,7 +2585,9 @@ ui/
 │   ├── Guardar1_25x25.png
 │   ├── Cerrar1_25x25.png
 │   └── ...
-└── templates/      ← Plantillas base para nuevos formularios
+├── sources/        ← Bases de datos fuente para extracción
+├── templates/      ← Plantillas base para nuevos formularios
+└── work/          ← Directorio temporal para roundtrips
 ```
 
 ### Herramientas CLI
