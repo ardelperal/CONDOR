@@ -204,7 +204,7 @@ graph TD
 - **Contexto de BD**: Separación entre Lanzadera_datos y CONDOR_datos
 - **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
 - **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
-- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `front/test_env/workspace/`
 - **Configuración**: CMockConfig e inyección de dependencias
 - **Runner de Pruebas**: modTestRunner.bas con inyección de dependencias
 - **QueryDef Nombrado**: CAuthRepository.cls con "tempAuthQuery" para evitar conflictos
@@ -286,7 +286,7 @@ graph TD
 - **Integración Real**: TIDocumentService usa dependencias reales con BD de prueba
 - **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
 - **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
-- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `front/test_env/workspace/`
 - **Limpieza Completa**: Eliminación de archivos temporales y cierre de Word
 - **Manejo de Errores**: Bloques TestFail/Cleanup con liberación de recursos
 - **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
@@ -572,7 +572,7 @@ graph TD
 - **Integración Básica**: TIWorkflowRepository prueba conexión a BD con tipos correctos
 - **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
 - **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
-- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `front/test_env/workspace/`
 - **Manejo de Errores**: Bloques TestFail/Cleanup consistentes
 - **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
 
@@ -648,7 +648,7 @@ graph TD
 - **Integración Directa**: TIMapeoRepository prueba directamente contra BD
 - **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
 - **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
-- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `front/test_env/workspace/`
 - **Sin Variables Globales**: Variables de módulo, declaración local
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Limpieza de Recursos**: Cierre explícito de recordsets y liberación de objetos
@@ -759,10 +759,10 @@ graph TD
 - **Integración con BD Separada**: TINotificationRepository usa BD de notificaciones independiente
 - **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
 - **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
-- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `front/test_env/workspace/`
 - **Fixtures de Testing**:
   - Fixture: `back\test_env\fixtures\databases\correos_test_template.accdb`
-  - Activa por suite: `back\test_env\workspace\correos_integration_test.accdb`
+  - Activa por suite: `front\test_env\workspace\correos_integration_test.accdb`
 - **Esquema Garantizado**: SuiteSetup garantiza esquema idempotente
   - Tabla `TbCorreosEnviados` con columnas: Id, Destinatarios, Asunto, Cuerpo, DestinatariosConCopia, DestinatariosConCopiaOculta, URLAdjunto, FechaGrabacion
 - **Sin Variables Globales**: Eliminadas variables de módulo, declaración local
@@ -846,7 +846,7 @@ graph TD
 - **Integración con BD**: TIOperationRepository prueba directamente contra BD
 - **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
 - **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
-- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `front/test_env/workspace/`
 - **Configuración de Pruebas**: TestOperationLogger implementa patrón estándar con inyección de mocks
 - **Estado Refactorizado**: ✅ Integrado con sistema de autoaprovisionamiento centralizado
 
@@ -1098,7 +1098,7 @@ graph TD
   - `Test_AbrirFicheroInexistente_DevuelveFalse()` - Manejo de errores
 - **Configuración Centralizada**: Utiliza `modTestContext.GetTestConfig()` como única fuente de verdad para configuración de tests
 - **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
-- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `back/test_env/workspace/`
+- **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `front/test_env/workspace/`
 - **Manejo de Errores**: Bloques ErrorHandler/Cleanup consistentes
 - **Robustez**: Protección condicional en `m_ErrorHandler.LogError` calls
 - **Estado Refactorizado**: ✅ Integrado con sistema de configuración centralizada de tests
@@ -1257,6 +1257,11 @@ graph TD
 ### 🎯 **Autoaprovisionamiento Exclusivo del Framework**
 El autoaprovisionamiento es responsabilidad **exclusiva** del framework de testing, ejecutado automáticamente antes de cada suite. No requiere configuración manual ni intervención externa.
 
+### 📂 **Distribución de Archivos por Ubicación**
+- **Masters (DEV_*)** → `back\*.accdb` (bases de datos de desarrollo)
+- **Workspace (copias de prueba)** → `front\test_env\workspace\` (bases de datos activas para testing)
+- **Plantillas productivas** → `front\recursos\Plantillas\` (vía PRODUCTION_TEMPLATES_PATH)
+
 ### 📋 **Estándares Oficiales de Naming y Rutas**
 
 **Fixtures (Plantillas):**
@@ -1265,12 +1270,12 @@ El autoaprovisionamiento es responsabilidad **exclusiva** del framework de testi
 - Ejemplos: `Document_test_template.accdb`, `Expedientes_test_template.accdb`, `Workflow_test_template.accdb`
 
 **Activos (Bases de Datos de Prueba):**
-- Ubicación: `back\test_env\workspace\`
+- Ubicación: `front\test_env\workspace\`
 - Naming: `{Nombre}_integration_test.accdb` (o `_itest.accdb`)
 - Ejemplos: `Document_integration_test.accdb`, `Expedientes_integration_test.accdb`
 
 **Plantillas de Documentos:**
-- Origen: `back\recursos\Plantillas\`
+- Origen: `front\recursos\Plantillas\`
 - Destino: `back\test_env\fixtures\documents\`
 - Copia automática durante el setup de pruebas
 
@@ -1278,7 +1283,7 @@ El autoaprovisionamiento es responsabilidad **exclusiva** del framework de testi
 
 **Funciones de Ruta:**
 - `GetProjectPath()`: Ruta base del proyecto CONDOR
-- `GetWorkspacePath()`: Ruta del workspace de pruebas (`back\test_env\workspace\`)
+- `GetWorkspacePath()`: Ruta del workspace de pruebas (`front\test_env\workspace\`)
 
 **Gestión de Bases de Datos:**
 - `PrepareTestDatabase(templateName, activeName)`: Copia plantilla → activo
@@ -1414,11 +1419,11 @@ Uso de contraseñas (ej: "dpddpd") obtenidas desde:
 │    • modRepositoryFactory.bas        ← Usa GetTestConfig()  │
 │                                                             │
 │ ⚙️ CONFIGURACIÓN ESTÁNDAR DE PRUEBAS:                     │
-│    • DATA_PATH: back\test_env\workspace\CONDOR_integration_test.accdb │
+│    • DATA_PATH: front\test_env\workspace\CONDOR_integration_test.accdb │
 │    • DATABASE_PASSWORD: "" (sin contraseña)               │
 │    • LOG_FILE_PATH: condor_test_run.log                    │
 │    • USUARIO_ACTUAL: test.user@condor.com                  │
-│    • TEMPLATES_PATH: back\recursos\Plantillas\             │
+│    • TEMPLATES_PATH: front\recursos\Plantillas\             │
 │    • TEMPLATE_*_FILENAME: Nombres exactos de plantillas Word │
 │                                                             │
 │ 💡 PATRÓN SINGLETON:                                       │
@@ -1755,7 +1760,7 @@ Al ejecutar `cscript condor_cli.vbs test`, ocurre la siguiente secuencia:
 3. **Recreación:** Se vuelven a crear las carpetas `fixtures` (con sus subcarpetas `databases` y `documents`) y `workspace`.
 4. **Aprovisionamiento de Fixtures:**
    * Las bases de datos maestras (ej. `CONDOR_datos.accdb`) se copian desde `back/` a `back/test_env/fixtures/databases/` y se renombran (ej. `CONDOR_master.accdb`).
-   * Las plantillas de documentos se copian desde `back/recursos/Plantillas/` a `back/test_env/fixtures/documents/`.
+   * Las plantillas de documentos se copian desde `front/recursos/Plantillas/` a `back/test_env/fixtures/documents/`.
 5. **Ejecución de Suites:** Cada suite de pruebas (`TI*.bas`) utiliza los "fixtures" para crear su propio entorno de trabajo dentro de la carpeta `workspace`, asegurando un aislamiento total.
 
 ### ⚖️ **Patrón Simétrico SuiteSetup/SuiteTeardown**
@@ -2198,19 +2203,20 @@ Lista todos los formularios de la base de datos.
 
 **Sintaxis:**
 ```
-cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json] [--dao-only] [/bypassStartup:on|off]
+cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json] [--dao-only]
 ```
 
 **Opciones:**
 - `--json`: Salida en formato JSON
 - `--dao-only`: Usa únicamente DAO para acceso a la base de datos (no abre Access)
-- `/bypassStartup:on|off`: Controla el bypass del startup de Access (solo aplicable sin --dao-only)
 
 **Ejemplos:**
 ```
 cscript condor_cli.vbs list-forms "C:\DB\Expedientes.accdb" --password dpddpd --json --dao-only
-cscript condor_cli.vbs list-forms "C:\DB\Expedientes.accdb" --password dpddpd --json /bypassStartup:on
+cscript condor_cli.vbs list-forms "C:\DB\Expedientes.accdb" --password dpddpd --json
 ```
+
+**Nota:** `/bypassStartup:on|off` está DEPRECADO. El CLI aplica bypass automáticamente cuando es necesario.
 
 **`validate-form-json`**
 Valida la estructura JSON de un formulario.
@@ -2314,7 +2320,7 @@ cscript condor_cli.vbs version
 #### Características Técnicas
 
 ##### Gestión de Access
-- **Bypass Startup**: Soporte para `/bypassStartup:on|off`
+- **Bypass Startup**: Aplicado automáticamente cuando es necesario
 - **Contraseñas**: Soporte completo para bases de datos protegidas
 - **Modo Silencioso**: Access se ejecuta en modo invisible
 - **Gestión de Estado**: Restauración automática de configuraciones
@@ -2613,19 +2619,19 @@ El sistema proporciona dos comandos principales para implementar este principio:
 
 ```bash
 # Exportar formulario a JSON
-cscript condor_cli.vbs export-form <db_path> <form_name> [--output] [--password]
+cscript condor_cli.vbs export-form <db_path> <form_name> [--password <pwd>] [--outdir <dir>] [--verbose]
 
 # Ejemplos
-cscript condor_cli.vbs export-form ./back/CONDOR.accdb frmPrincipal
-cscript condor_cli.vbs export-form ./back/CONDOR.accdb frmPrincipal --output ./ui/definitions/
+cscript condor_cli.vbs export-form ./ui/sources/Expedientes.accdb FormComercial --password dpddpd
+cscript condor_cli.vbs export-form ./ui/sources/Expedientes.accdb FormComercial --password dpddpd --outdir ./ui/definitions/
 ```
 
 **Funcionalidades:**
-- Extrae el diseño completo del formulario incluyendo propiedades, secciones y controles
-- Genera archivos JSON legibles y versionables
-- Captura todos los tipos de controles (TextBox, Label, CommandButton, etc.)
-- Incluye propiedades detalladas: posición, tamaño, formato, fuentes
-- Soporte para bases de datos protegidas con contraseña
+- Exporta formulario a JSON vía SaveAsText (acForm), sin abrir en UI
+- Apertura exclusiva por defecto; reintentos y aviso sobre .laccdb
+- Genera archivos JSON UTF-8 sin BOM con metadatos y contenido VBE
+- Flags: --password para BD protegidas, --outdir para directorio de salida
+- Manejo robusto de bloqueos de BD con mensajería clara
 
 #### Importación de Formularios (`import-form`)
 
@@ -3559,17 +3565,19 @@ Una vez que una solicitud alcanza el estado final "Aprobada" (ID 7), no puede tr
 **Comando:** `list-forms`
 
 ```bash
-cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json] [--dao-only] [/bypassStartup:on|off]
+cscript condor_cli.vbs list-forms [db_path] [--password <pwd>] [--json] [--dao-only]
 ```
 
 **Funcionalidades Implementadas:**
 - Listado completo de formularios en bases de datos Access
 - Soporte para acceso DAO directo sin abrir Access (--dao-only)
-- Control de bypass del startup de Access (/bypassStartup:on|off)
 - Salida en formato JSON estructurado con --json
 - Soporte para bases de datos protegidas con contraseña
 - Manejo robusto de errores y validación de argumentos
 - Verificación automática de procesos Access en ejecución
+- Bypass automático del startup de Access cuando es necesario
+
+**Nota:** `/bypassStartup:on|off` está DEPRECADO. El CLI aplica bypass automáticamente.
 
 **Casos de Uso:**
 - Automatización de inventarios de formularios
@@ -3631,10 +3639,10 @@ cscript condor_cli.vbs validate-form-json <json_path> [--strict] [--schema]
 **Funcionalidad:** Bypass automático del startup de Access para operaciones CLI
 
 **Implementación:**
-- Parsing automático de banderas `/bypassStartup:on|off` y `/pwd:<clave>`
 - Funciones DAO para gestión de la propiedad AllowByPassKey
 - Gestión transparente de OpenAccessApp/CloseAccessApp con bypass
 - Integración en todos los comandos que requieren abrir bases de datos
+- Bypass aplicado automáticamente sin necesidad de flags del usuario
 
 **Funcionalidades Implementadas:**
 - **DaoOpenDatabase**: Apertura de bases de datos con manejo de contraseñas
@@ -3647,11 +3655,13 @@ cscript condor_cli.vbs validate-form-json <json_path> [--strict] [--schema]
 
 **Comandos Soportados:**
 ```bash
-cscript condor_cli.vbs export-form ./db.accdb form1 /bypassStartup:on
-cscript condor_cli.vbs import-form ./form1.json ./db.accdb /bypassStartup:on
-cscript condor_cli.vbs update /bypassStartup:on
-cscript condor_cli.vbs rebuild /bypassStartup:on
+cscript condor_cli.vbs export-form ./db.accdb form1
+cscript condor_cli.vbs import-form ./form1.json ./db.accdb
+cscript condor_cli.vbs update
+cscript condor_cli.vbs rebuild
 ```
+
+**Nota:** `/bypassStartup:on|off` está DEPRECADO. El bypass se aplica automáticamente en todos los comandos.
 
 ### 24.5. Nuevos Flags CLI Globales
 

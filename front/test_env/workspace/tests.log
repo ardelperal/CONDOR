@@ -1,0 +1,10 @@
+16/09/2025 12:57:19 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+16/09/2025 12:57:21 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+16/09/2025 12:57:22 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+16/09/2025 12:57:22 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+16/09/2025 12:57:22 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+16/09/2025 13:53:58 | ERROR | Err: 3296 | La expresión JOIN no se admite. | Source: CAuthRepository.GetUserAuthData
+16/09/2025 13:54:00 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+16/09/2025 13:54:00 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+16/09/2025 13:54:00 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog
+16/09/2025 13:54:00 | ERROR | Err: 3314 | Escriba un valor en el campo 'tbOperacionesLog.entidad'. | Source: COperationRepository.SaveLog

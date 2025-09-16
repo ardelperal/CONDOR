@@ -1,4 +1,4 @@
-﻿Attribute VB_GlobalNameSpace = False
+Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
@@ -41,12 +41,15 @@ Attribute VB_Exposed = False
             m_Settings("CORREOS_DATA_PATH") = JoinPath(prodBasePath, "00Recursos\correos_datos.accdb") ' CORREGIDO
             m_Settings("TEMPLATES_PATH") = JoinPath(JoinPath(prodBasePath, "Condor\"), "recursos\Plantillas\")
         Else ' DESARROLLO
-            Dim devBasePath As String: devBasePath = Left(CurrentDb.Name, InStrRev(CurrentDb.Name, "\back\") - 1)
-            m_Settings("DATA_PATH") = JoinPath(devBasePath, "back\condor_datos.accdb")
-            m_Settings("LANZADERA_DATA_PATH") = JoinPath(devBasePath, "back\Lanzadera_Datos.accdb")
-            m_Settings("EXPEDIENTES_DATA_PATH") = JoinPath(devBasePath, "back\Expedientes_datos.accdb")
-            m_Settings("CORREOS_DATA_PATH") = JoinPath(devBasePath, "back\correos_datos.accdb")
-            m_Settings("TEMPLATES_PATH") = JoinPath(devBasePath, "back\recursos\Plantillas\")
+            Dim devBasePath As String: devBasePath = modTestUtils.GetProjectPath()
+            Dim backData As String: backData = JoinPath(devBasePath, "back\data")
+            Dim frontRoot As String: frontRoot = JoinPath(devBasePath, "front")
+            
+            m_Settings("DATA_PATH")              = JoinPath(backData,  "CONDOR_datos.accdb")
+            m_Settings("LANZADERA_DATA_PATH")    = JoinPath(backData,  "Lanzadera_Datos.accdb")
+            m_Settings("EXPEDIENTES_DATA_PATH")  = JoinPath(backData,  "Expedientes_datos.accdb")
+            m_Settings("CORREOS_DATA_PATH")      = JoinPath(backData,  "correos_datos.accdb")
+            m_Settings("TEMPLATES_PATH")         = JoinPath(frontRoot, "recursos\Plantillas\")
         End If
 
         ' 3. LEER *TODA* LA CONFIGURACIÓN DEL BACKEND PARA SOBRESCRIBIR

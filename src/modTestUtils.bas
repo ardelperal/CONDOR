@@ -3,11 +3,28 @@ Option Compare Database
 Option Explicit
 
     Public Function GetProjectPath() As String
-        GetProjectPath = Left(CurrentProject.FullName, InStrRev(CurrentProject.FullName, "\back\") - 1)
+        ' Detecta "\front\" o "\back\" en la ruta del proyecto y devuelve la raíz del repo.
+        Dim full As String: full = CurrentProject.FullName
+        Dim pFront As Long: pFront = InStrRev(full, "\front\", -1, vbTextCompare)
+        Dim pBack  As Long: pBack  = InStrRev(full, "\back\",  -1, vbTextCompare)
+        Dim cutPos As Long
+
+        If pFront > 0 Then
+            cutPos = pFront - 1
+        ElseIf pBack > 0 Then
+            cutPos = pBack - 1
+        Else
+            ' Fallback seguro: carpeta del .accdb
+            GetProjectPath = CurrentProject.Path
+            Exit Function
+        End If
+
+        GetProjectPath = Left$(full, cutPos)
     End Function
 
     Public Function GetWorkspacePath() As String
-        GetWorkspacePath = JoinPath(GetProjectPath(), "back\test_env\workspace\")
+        ' El workspace de pruebas vive en FRONT
+        GetWorkspacePath = JoinPath(GetProjectPath(), "front\test_env\workspace\")
     End Function
     
     Public Function JoinPath(ByVal basePath As String, ByVal relativePath As String) As String
@@ -137,3 +154,6 @@ ErrorHandler:
 ErrorHandler:
         Debug.Print "ERROR CRÍTICO durante la auditoría de configuración: " & Err.Description
     End Sub
+
+
+    'HOLA'

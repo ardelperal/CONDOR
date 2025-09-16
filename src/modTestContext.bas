@@ -19,10 +19,10 @@ Public Function GetTestConfig() As IConfig
         Dim mockConfigImpl As New CMockConfig
         
         ' --- Definición de Rutas de ORIGEN (Masters en /back) ---
-        mockConfigImpl.SetSetting "DEV_CONDOR_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetProjectPath(), "back\CONDOR_datos.accdb")
-        mockConfigImpl.SetSetting "DEV_LANZADERA_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetProjectPath(), "back\Lanzadera_datos.accdb")
-        mockConfigImpl.SetSetting "DEV_EXPEDIENTES_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetProjectPath(), "back\Expedientes_datos.accdb")
-        mockConfigImpl.SetSetting "DEV_CORREOS_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetProjectPath(), "back\correos_datos.accdb")
+        mockConfigImpl.SetSetting "DEV_CONDOR_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetProjectPath(), "back\data\CONDOR_datos.accdb")
+        mockConfigImpl.SetSetting "DEV_LANZADERA_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetProjectPath(), "back\data\Lanzadera_Datos.accdb")
+        mockConfigImpl.SetSetting "DEV_EXPEDIENTES_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetProjectPath(), "back\data\Expedientes_datos.accdb")
+        mockConfigImpl.SetSetting "DEV_CORREOS_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetProjectPath(), "back\data\correos_datos.accdb")
 
         ' --- Definición de Rutas de DESTINO (Copias temporales en /workspace) ---
         mockConfigImpl.SetSetting "CONDOR_DATA_PATH", modTestUtils.JoinPath(modTestUtils.GetWorkspacePath(), "CONDOR_integration_test.accdb")

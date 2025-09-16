@@ -370,3 +370,5 @@ End Function
 Public Sub EjecutarTodasLasPruebas()
     Call RunTestFramework
 End Sub
+
+'hola'
