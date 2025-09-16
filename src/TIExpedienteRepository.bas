@@ -1,4 +1,6 @@
-﻿Option Compare Database
+Attribute VB_Name = "TIExpedienteRepository"
+
+Option Compare Database
 Option Explicit
 
 Public Function TIExpedienteRepositoryRunAll() As CTestSuiteResult

@@ -1,4 +1,5 @@
-﻿Option Compare Database
+﻿Attribute VB_Name = "TestOperationLogger"
+Option Compare Database
 Option Explicit
 
 Public Function TestOperationLoggerRunAll() As CTestSuiteResult

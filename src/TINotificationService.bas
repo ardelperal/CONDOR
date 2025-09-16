@@ -1,4 +1,5 @@
 ﻿
+Attribute VB_Name = "TINotificationService"
 Option Compare Database
 Option Explicit
 

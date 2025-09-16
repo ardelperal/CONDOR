@@ -1,4 +1,5 @@
-﻿Option Compare Database
+Attribute VB_Name = "TestCConfig"
+Option Compare Database
 Option Explicit
 
 

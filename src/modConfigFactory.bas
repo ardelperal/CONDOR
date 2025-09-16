@@ -1,4 +1,5 @@
-﻿Option Compare Database
+Attribute VB_Name = "modConfigFactory"
+Option Compare Database
 Option Explicit
 
 ' =====================================================

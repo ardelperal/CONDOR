@@ -65,6 +65,7 @@ Dim gVerbose ' Variable global para soporte --verbose
 Dim gBypassStartup ' Variable global para --bypassstartup
 Dim gPassword ' Variable global para --password
 Dim gDbPath ' Variable global para --db
+Dim gDryRun ' Variable global para --dry-run
 
 ' Variables globales para bypass restoration
 Dim gBypassStartupEnabled
@@ -318,6 +319,7 @@ gVerbose = False
 gBypassStartup = False
 gPassword = ""
 gDbPath = ""
+gDryRun = False
 gBypassStartupEnabled = False
 gPreviousAllowBypassKey = Null
 gCurrentDbPath = ""
@@ -339,7 +341,7 @@ End Function
 ' Función para obtener la ruta por defecto de la BD frontend
 Function DefaultFrontendDb()
     Dim defaultPath, legacyPath
-    defaultPath = objFSO.BuildPath(RepoRoot(), "front\Desarrollo\CONDOR.accdb")
+    defaultPath = GetDevDbPath()
     legacyPath = objFSO.BuildPath(RepoRoot(), "back\Desarrollo\CONDOR.accdb")
     If Not objFSO.FileExists(defaultPath) And objFSO.FileExists(legacyPath) Then
         If gVerbose Or gPrintDb Then
@@ -354,7 +356,7 @@ End Function
 ' Función para obtener la ruta por defecto de la BD backend
 Function DefaultBackendDb()
     Dim defaultPath, legacyPath
-    defaultPath = objFSO.BuildPath(RepoRoot(), "back\data\CONDOR_datos.accdb")
+    defaultPath = objFSO.BuildPath(GetAuxDataRoot(), "CONDOR_datos.accdb")
     legacyPath = objFSO.BuildPath(RepoRoot(), "back\CONDOR_datos.accdb")
     If Not objFSO.FileExists(defaultPath) And objFSO.FileExists(legacyPath) Then
         If gVerbose Or gPrintDb Then
@@ -364,6 +366,43 @@ Function DefaultBackendDb()
     Else
         DefaultBackendDb = defaultPath
     End If
+End Function
+
+' ===== HELPERS DE RUTAS CENTRALIZADAS =====
+
+' Función para obtener la carpeta raíz del repositorio (ya existe arriba)
+Function GetRepoRoot()
+    GetRepoRoot = RepoRoot()
+End Function
+
+' Función para obtener la carpeta front
+Function GetFrontRoot()
+    GetFrontRoot = objFSO.BuildPath(GetRepoRoot(), "front")
+End Function
+
+' Función para obtener la carpeta back
+Function GetBackRoot()
+    GetBackRoot = objFSO.BuildPath(GetRepoRoot(), "back")
+End Function
+
+' Función para obtener la ruta de plantillas
+Function GetTemplatesPath()
+    GetTemplatesPath = objFSO.BuildPath(GetFrontRoot(), "recursos\Plantillas")
+End Function
+
+' Función para obtener la ruta del entorno de pruebas
+Function GetTestEnvPath()
+    GetTestEnvPath = objFSO.BuildPath(GetFrontRoot(), "test_env")
+End Function
+
+' Función para obtener la ruta de la BD de desarrollo
+Function GetDevDbPath()
+    GetDevDbPath = objFSO.BuildPath(GetFrontRoot(), "Desarrollo\CONDOR.accdb")
+End Function
+
+' Función para obtener la ruta de datos auxiliares
+Function GetAuxDataRoot()
+    GetAuxDataRoot = objFSO.BuildPath(GetBackRoot(), "data")
 End Function
 
 
@@ -434,8 +473,8 @@ End If
 strAction = LCase(objArgs(0))
 
 ' Validar comando
-If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "update" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" And strAction <> "list-modules" Then
-    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'update', 'lint', 'bundle', 'migrate', 'export-form', 'import-form', 'validate-form-json', 'roundtrip-form', 'list-forms' o 'list-modules'"
+If strAction <> "export" And strAction <> "validate" And strAction <> "validate-schema" And strAction <> "test" And strAction <> "createtable" And strAction <> "droptable" And strAction <> "listtables" And strAction <> "relink" And strAction <> "rebuild" And strAction <> "update" And strAction <> "lint" And strAction <> "bundle" And strAction <> "migrate" And strAction <> "export-form" And strAction <> "import-form" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" And strAction <> "list-modules" And strAction <> "fix-src-headers" Then
+    WScript.Echo "Error: Comando debe ser 'export', 'validate', 'validate-schema', 'test', 'createtable', 'droptable', 'listtables', 'relink', 'rebuild', 'update', 'lint', 'bundle', 'migrate', 'export-form', 'import-form', 'validate-form-json', 'roundtrip-form', 'list-forms', 'list-modules' o 'fix-src-headers'"
     WScript.Quit 1
 End If
 
@@ -466,13 +505,16 @@ If strAction = "bundle" Then
     WScript.Quit 0
 ElseIf strAction = "validate-schema" Then
     ' Usar rutas de producción por defecto
-    Call ValidateSchema("C:\Proyectos\CONDOR\back\test_env\fixtures\databases\Lanzadera_test_template.accdb", "C:\Proyectos\CONDOR\back\test_env\fixtures\databases\Document_test_template.accdb")
+    Call ValidateSchema(objFSO.BuildPath(GetTestEnvPath(), "fixtures\databases\Lanzadera_test_template.accdb"), objFSO.BuildPath(GetTestEnvPath(), "fixtures\databases\Document_test_template.accdb"))
     WScript.Quit 0
 ElseIf strAction = "validate-form-json" Then
     Call ValidateFormJsonCommand()
     WScript.Quit 0
 ElseIf strAction = "roundtrip-form" Then
     Call RoundtripFormCommand()
+    WScript.Quit 0
+ElseIf strAction = "fix-src-headers" Then
+    Call FixSrcHeadersCommand()
     WScript.Quit 0
 End If
 
@@ -669,12 +711,13 @@ End Sub
 
 ' Subrutina para exportar modulos
 Sub ExportModules()
-    Dim vbComponent
-    Dim strExportPath
+    Dim vbProj, vbComp
+    Dim destPath, ext
     Dim exportedCount
     
     WScript.Echo "Iniciando exportacion de modulos VBA..."
     
+    ' Asegurar que existe la carpeta ./src
     If Not objFSO.FolderExists(strSourcePath) Then
         objFSO.CreateFolder strSourcePath
         WScript.Echo "Directorio de destino creado: " & strSourcePath
@@ -682,40 +725,57 @@ Sub ExportModules()
     
     exportedCount = 0
     
-    For Each vbComponent In objAccess.VBE.ActiveVBProject.VBComponents
-        If vbComponent.Type = 1 Then  ' vbext_ct_StdModule
-            strExportPath = strSourcePath & "\" & vbComponent.Name & ".bas"
-            
-            If gVerbose Then
-                WScript.Echo "Exportando modulo: " & vbComponent.Name
-            End If
-            
-            On Error Resume Next
-            Call ExportModuleToUtf8(objAccess, vbComponent.Name, strExportPath)
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "Error al exportar modulo " & vbComponent.Name & ": " & Err.Description
-                Err.Clear
-            Else
-                exportedCount = exportedCount + 1
-            End If
-        ElseIf vbComponent.Type = 2 Then  ' vbext_ct_ClassModule
-            strExportPath = strSourcePath & "\" & vbComponent.Name & ".cls"
-            
-            If gVerbose Then
-                WScript.Echo "Exportando clase: " & vbComponent.Name
-            End If
-            
-            On Error Resume Next
-            Call ExportModuleToUtf8(objAccess, vbComponent.Name, strExportPath)
-            
-            If Err.Number <> 0 Then
-                WScript.Echo "Error al exportar clase " & vbComponent.Name & ": " & Err.Description
-                Err.Clear
-            Else
-                exportedCount = exportedCount + 1
-            End If
-        End If
+    ' Usar VBE.ActiveVBProject para acceder a los componentes
+    Set vbProj = objAccess.VBE.ActiveVBProject
+    
+    For Each vbComp In vbProj.VBComponents
+        ' Exportar SOLO vbext_ct_StdModule (1) y vbext_ct_ClassModule (2)
+        ' NO exportar módulos de documento (Forms/Reports)
+        Select Case vbComp.Type
+            Case 1  ' vbext_ct_StdModule
+                ext = ".bas"
+                destPath = objFSO.BuildPath(strSourcePath, vbComp.Name & ext)
+                
+                If gVerbose Then
+                    WScript.Echo "Exported: " & vbComp.Name & " (Std) -> " & destPath
+                End If
+                
+                On Error Resume Next
+                ' Usar VBComponents.Export cuando sea posible
+                vbComp.Export destPath
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "Error al exportar modulo " & vbComp.Name & ": " & Err.Description
+                    Err.Clear
+                Else
+                    ' Postprocesar cabecera para garantizar formato canónico
+                    PostProcessHeader destPath
+                    exportedCount = exportedCount + 1
+                End If
+                
+            Case 2  ' vbext_ct_ClassModule
+                ext = ".cls"
+                destPath = objFSO.BuildPath(strSourcePath, vbComp.Name & ext)
+                
+                If gVerbose Then
+                    WScript.Echo "Exported: " & vbComp.Name & " (Class) -> " & destPath
+                End If
+                
+                On Error Resume Next
+                ' Usar VBComponents.Export cuando sea posible
+                vbComp.Export destPath
+                
+                If Err.Number <> 0 Then
+                    WScript.Echo "Error al exportar clase " & vbComp.Name & ": " & Err.Description
+                    Err.Clear
+                Else
+                    ' Postprocesar cabecera para garantizar formato canónico
+                    PostProcessHeader destPath
+                    exportedCount = exportedCount + 1
+                End If
+                
+            ' Ignorar otros tipos (Document modules, etc.)
+        End Select
     Next
     
     WScript.Echo "Exportacion completada exitosamente. Modulos exportados: " & exportedCount
@@ -1560,14 +1620,37 @@ End Sub
 
 Function CreateAnsiTempFrom(path)
     On Error Resume Next
-    Dim sIn,sOut,tmp: tmp = objFSO.BuildPath(objFSO.GetSpecialFolder(2),"condor_tmp_"&objFSO.GetFileName(path))
-    Set sIn=CreateObject("ADODB.Stream"): sIn.Type=2: sIn.Charset="UTF-8": sIn.Open: sIn.LoadFromFile path
-    Dim txt: txt=sIn.ReadText(-1): sIn.Close
-    Set sOut=CreateObject("ADODB.Stream"): sOut.Type=2: sOut.Charset="Windows-1252": sOut.Open
-    sOut.WriteText txt: sOut.SaveToFile tmp,2: sOut.Close
-    If Err.Number<>0 And Not objFSO.FileExists(tmp) Then objFSO.CopyFile path,tmp,True
+    
+    ' Leer texto usando ReadAllText (que ya maneja UTF-8 y fallback)
+    Dim text
+    text = ReadAllText(path)
+    
+    ' Normalizar EOL a CRLF
+    text = Replace(text, vbCrLf, vbLf)
+    text = Replace(text, vbCr, vbLf)
+    text = Replace(text, vbLf, vbCrLf)
+    
+    ' Crear archivo temporal en %TEMP%\condor_tmp_<nombre>
+    Dim tmpPath
+    tmpPath = objFSO.BuildPath(objFSO.GetSpecialFolder(2), "condor_tmp_" & objFSO.GetFileName(path))
+    
+    ' Escribir a archivo temporal usando ADODB.Stream con Windows-1252 SIN BOM
+    Dim stream
+    Set stream = CreateObject("ADODB.Stream")
+    stream.Type = 2 ' adTypeText
+    stream.Charset = "Windows-1252"
+    stream.Open
+    stream.WriteText text
+    stream.SaveToFile tmpPath, 2 ' adSaveCreateOverWrite
+    stream.Close
+    
+    ' Si hay error, devolver cadena vacía
+    If Err.Number <> 0 Then
+        tmpPath = ""
+    End If
+    
+    CreateAnsiTempFrom = tmpPath
     Err.Clear
-    CreateAnsiTempFrom = tmp
 End Function
 
 Function ImportVbComponentFromFile(app, moduleName, srcPath)
@@ -1642,13 +1725,18 @@ Sub ShowHelp()
     WScript.Echo "📤 EXPORTACIÓN:"
     WScript.Echo "  export [--verbose]           - Exportar módulos VBA desde Access a /src"
     WScript.Echo "                                 Codificación: ANSI para compatibilidad"
+    WScript.Echo "                                 Las cabeceras SIEMPRE quedan correctas en ./src"
+    WScript.Echo "                                 CÓDIGO (VBIDE): .bas/.cls con cabeceras canónicas"
+    WScript.Echo "                                 UI (JSON): usar export-form/import-form para formularios"
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
     WScript.Echo "🔄 SINCRONIZACIÓN:"
     WScript.Echo "  rebuild [--verbose] [--verifyModules] - Método principal de sincronización del proyecto"
-    WScript.Echo "                                 Opera sobre FRONTEND por defecto (front\Desarrollo\CONDOR.accdb)"
+    WScript.Echo "                                 Opera sobre FRONTEND por defecto (" & GetDevDbPath() & ")"
     WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
     WScript.Echo "                                 y reimporta desde /src para garantizar coherencia"
+    WScript.Echo "                                 TOLERANTE A CABECERAS: acepta .bas/.cls con o sin cabecera;"
+    WScript.Echo "                                 si falta, el CLI inyecta una cabecera temporal según la extensión"
     WScript.Echo "                                 --verifyModules: Verificar automáticamente tras importar"
     WScript.Echo "                                 Transaccional: usa la misma sesión de Access"
     WScript.Echo "  update <opciones|módulos> [--verbose] [--verifyModules] - Actualización selectiva de módulos VBA"
@@ -1779,7 +1867,9 @@ Sub ShowHelp()
     WScript.Echo "    3. import-form MiForm.json db.accdb --strict"
     WScript.Echo "    → Los handlers existentes se preservan automáticamente"
     WScript.Echo ""
-    WScript.Echo "  ⚠️  NOTA: Los comandos export/import/roundtrip operan en vista Diseño (no ejecutan eventos)."
+    WScript.Echo "  ⚠️  NOTA: Los comandos export/import/roundtrip operan SIEMPRE en vista Diseño para evitar"
+    WScript.Echo "           la ejecución de eventos y garantizar operaciones seguras. El CLI desactiva"
+    WScript.Echo "           automáticamente el 'Startup Form'/'Display Form' al abrir la BD."
     WScript.Echo ""
     WScript.Echo "FUNCIONALIDADES DISPONIBLES PARA 'bundle' (con dependencias automáticas):"
     WScript.Echo "(Basadas en CONDOR_MASTER_PLAN.md)"
@@ -1903,29 +1993,174 @@ End Sub
 ' Importa un módulo .bas o .cls desde /src en la sesión ACTUAL sin diálogos.
 ' - .bas: Application.LoadFromText acModule
 ' - .cls: VBIDE.VBComponents.Import y renombrado
-Function ImportVbaFile(sourcePath, moduleName)
+' Función robusta para importar archivos VBA con inyección de cabeceras temporales
+' Importa un archivo VBA (.bas o .cls) con inyección de cabeceras si es necesario
+' POLÍTICA DE IMPORTACIÓN:
+' - .bas → LoadFromText acModule(5) + Save
+' POLÍTICA DE IMPORTACIÓN VBA POR TIPO (FUENTE DE VERDAD DEL PROYECTO)
+' 
+' Esta función implementa la política oficial de importación VBA de CONDOR:
+' - .bas → Application.LoadFromText(acModule, moduleName, tmpFileAnsi) + DoCmd.Save
+' - .cls → ImportVbComponentFromFile(tmpFileAnsi) (VBIDE.Import + rename) + DoCmd.Save
+' 
+' FLUJO UNIFICADO:
+' 1. Creación temporal ANSI (Windows-1252) - conversión automática UTF-8→ANSI
+' 2. Eliminación previa del componente VBA si existe
+' 3. Inyección de cabeceras solo si faltan (BuildBasHeader/BuildClsHeader)
+' 4. Importación por tipo específico según extensión
+' 5. Guardado individual con DoCmd.Save
+' 6. Limpieza automática de archivos temporales
+' 
+' REQUISITO: Trust Center → "Confiar en el acceso al modelo de objetos de proyectos de VBA"
+Function ImportVbaFileRobust(sourcePath, moduleName, tmpDir)
     On Error Resume Next
-    ImportVbaFile = False
-    If Not objFSO.FileExists(sourcePath) Then WScript.Echo "  ❌ Archivo no encontrado: " & sourcePath: Exit Function
-    Dim ext: ext = LCase(objFSO.GetExtensionName(sourcePath))
-    If ext<>"bas" And ext<>"cls" Then WScript.Echo "  ❌ Extensión no válida: " & ext: Exit Function
-
-    ' Siempre garantizar VBIDE y limpiar existente
-    Call RemoveVBComponentIfExists(objAccess, moduleName)
-
-    If ext="bas" Then
-        Dim tmp: tmp = CreateAnsiTempFrom(sourcePath)
-        objAccess.Application.LoadFromText 5, moduleName, tmp ' 5=acModule
-        If Err.Number<>0 Then WScript.Echo "  ❌ LoadFromText " & moduleName & ": " & Err.Number & " - " & Err.Description: Err.Clear: If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True: Exit Function
-        If objFSO.FileExists(tmp) Then objFSO.DeleteFile tmp,True
-        ImportVbaFile = True
-    Else
-        ImportVbaFile = ImportVbComponentFromFile(objAccess, moduleName, sourcePath)
+    ImportVbaFileRobust = False
+    
+    If Not FileExists(sourcePath) Then 
+        WScript.Echo "  ❌ Archivo no encontrado: " & sourcePath
+        Exit Function
     End If
-
-    If ImportVbaFile Then WScript.Echo "  ✓ Importado: " & moduleName
+    
+    Dim ext
+    ext = LCase(objFSO.GetExtensionName(sourcePath))
+    If ext <> "bas" And ext <> "cls" Then 
+        WScript.Echo "  ❌ Extensión no válida: " & ext
+        Exit Function
+    End If
+    
+    ' Leer contenido del archivo usando ReadAllText robusto
+    Dim fileContent, headerBodyResult, header, body
+    fileContent = ReadAllText(sourcePath)
+    headerBodyResult = SplitHeaderBody(fileContent)
+    header = headerBodyResult(0)
+    body = headerBodyResult(1)
+    
+    ' Verificar si la cabecera satisface los requisitos
+    Dim hasValidHeader, finalPath, tmpPath
+    hasValidHeader = HeaderSatisfies(ext, header)
+    
+    If hasValidHeader Then
+        ' Cabecera válida, crear archivo temporal ANSI usando CreateAnsiTempFrom
+        finalPath = CreateAnsiTempFrom(sourcePath)
+        If finalPath = "" Then
+            WScript.Echo "  ❌ Error creando archivo temporal ANSI"
+            Exit Function
+        End If
+        If gVerbose Then
+            WScript.Echo "    ✓ Cabecera válida, usando archivo temporal ANSI: " & finalPath
+        End If
+    Else
+        ' Cabecera inválida o ausente, crear archivo temporal con cabecera inyectada
+        If gVerbose Then
+            WScript.Echo "    ⚠ Cabecera ausente/inválida, inyectando cabecera temporal"
+        End If
+        
+        Dim injectedHeader, nameFromFilename
+        nameFromFilename = objFSO.GetBaseName(sourcePath)
+        
+        If ext = "bas" Then
+            injectedHeader = BuildBasHeader(nameFromFilename)
+        ElseIf ext = "cls" Then
+            injectedHeader = BuildClsHeader(nameFromFilename)
+        End If
+        
+        ' Crear archivo temporal con cabecera inyectada + cuerpo original
+        tmpPath = objFSO.BuildPath(tmpDir, objFSO.GetFileName(sourcePath))
+        Dim tmpContent
+        tmpContent = injectedHeader & vbCrLf & body
+        
+        ' Escribir archivo temporal usando WriteAllText robusto
+        WriteAllText tmpPath, tmpContent
+        
+        ' Crear versión ANSI del archivo temporal usando CreateAnsiTempFrom
+        finalPath = CreateAnsiTempFrom(tmpPath)
+        If finalPath = "" Then
+            WScript.Echo "  ❌ Error creando archivo temporal ANSI"
+            ' Limpiar archivo temporal intermedio
+            If FileExists(tmpPath) Then objFSO.DeleteFile tmpPath, True
+            Exit Function
+        End If
+        
+        If gVerbose Then
+            WScript.Echo "    → Archivo temporal ANSI creado: " & finalPath
+        End If
+    End If
+    
+    ' Eliminar componente previo antes de importar
+    Call RemoveVBComponentIfExists(objAccess, moduleName)
+    
+    ' Diferenciación .bas/.cls según especificación
+    If ext = "bas" Then
+        ' Para archivos .bas: usar LoadFromText directamente
+        On Error Resume Next
+        objAccess.Application.LoadFromText 5, moduleName, finalPath  ' 5 = acModule
+        If Err.Number <> 0 Then
+            If gVerbose Then
+                WScript.Echo "  ❌ Error en LoadFromText para " & moduleName & ": " & Err.Number & " - " & Err.Description
+            End If
+            Err.Clear
+            ' Limpiar archivos temporales
+            If FileExists(finalPath) Then objFSO.DeleteFile finalPath, True
+            If Not hasValidHeader And FileExists(tmpPath) Then objFSO.DeleteFile tmpPath, True
+            ImportVbaFileRobust = False
+            Exit Function
+        End If
+        
+        ' Guardar el módulo
+        objAccess.DoCmd.Save 5, moduleName  ' 5 = acModule
+        If Err.Number <> 0 Then
+            If gVerbose Then
+                WScript.Echo "  ❌ Error guardando módulo " & moduleName & ": " & Err.Number & " - " & Err.Description
+            End If
+            Err.Clear
+            ' Limpiar archivos temporales
+            If FileExists(finalPath) Then objFSO.DeleteFile finalPath, True
+            If Not hasValidHeader And FileExists(tmpPath) Then objFSO.DeleteFile tmpPath, True
+            ImportVbaFileRobust = False
+            Exit Function
+        End If
+        
+        ' Post-check: verificar que el módulo existe en VBComponents
+        On Error Resume Next
+        Dim vbProj, testComp
+        Set vbProj = EnsureVBProject(objAccess)
+        Set testComp = vbProj.VBComponents(moduleName)
+        If Err.Number <> 0 Or testComp Is Nothing Then
+            If gVerbose Then
+                WScript.Echo "  ❌ Post-check fallido: módulo " & moduleName & " no encontrado en VBComponents"
+            End If
+            Err.Clear
+            ' Limpiar archivos temporales
+            If FileExists(finalPath) Then objFSO.DeleteFile finalPath, True
+            If Not hasValidHeader And FileExists(tmpPath) Then objFSO.DeleteFile tmpPath, True
+            ImportVbaFileRobust = False
+            Exit Function
+        End If
+        Err.Clear
+        
+    Else
+        ' Para archivos .cls: usar ImportVbComponentFromFile
+        Dim importResult
+        importResult = ImportVbComponentFromFile(objAccess, moduleName, finalPath)
+        If Not importResult Then
+            ' Limpiar archivos temporales
+            If FileExists(finalPath) Then objFSO.DeleteFile finalPath, True
+            If Not hasValidHeader And FileExists(tmpPath) Then objFSO.DeleteFile tmpPath, True
+            ImportVbaFileRobust = False
+            Exit Function
+        End If
+    End If
+    
+    ' Limpiar archivos temporales
+    If FileExists(finalPath) Then objFSO.DeleteFile finalPath, True
+    If Not hasValidHeader And FileExists(tmpPath) Then objFSO.DeleteFile tmpPath, True
+    
+    ImportVbaFileRobust = True
+    WScript.Echo "  ✓ Importado: " & moduleName
+    
     Err.Clear
 End Function
+
 
 
 
@@ -2358,6 +2593,7 @@ Sub RebuildProject()
     
     ' Iterar hacia atrás para evitar problemas al eliminar elementos
     For i = componentCount To 1 Step -1
+        On Error Resume Next
         Set vbComponent = vbProject.VBComponents(i)
         
         ' Solo eliminar módulos estándar y de clase (no formularios ni informes)
@@ -2369,7 +2605,8 @@ Sub RebuildProject()
             vbProject.VBComponents.Remove vbComponent
             
             If Err.Number <> 0 Then
-                WScript.Echo "  ❌ Error eliminando " & vbComponent.Name & ": " & Err.Description
+                WScript.Echo "  ❌ Error eliminando " & vbComponent.Name & ": " & Err.Description & " (Código: " & Err.Number & ")"
+                WScript.Echo "  ⚠️ Continuando con el siguiente módulo..."
                 Err.Clear
             Else
                 If gVerbose Then
@@ -2377,14 +2614,30 @@ Sub RebuildProject()
                 End If
             End If
         End If
+        On Error GoTo 0
     Next
     
-    ' Paso 2: Importar todos los módulos desde /src usando la rutina unificada ImportVbaFile
+    ' Paso 2: Importar todos los módulos desde /src usando importación robusta con inyección de cabeceras
     WScript.Echo "Paso 2: Importando todos los modulos desde /src..."
     
     If Not objFSO.FolderExists(strSourcePath) Then
         WScript.Echo "Error: Directorio de origen no existe: " & strSourcePath
         WScript.Quit 1
+    End If
+    
+    ' Crear directorio temporal para archivos con cabeceras inyectadas
+    Dim tmpDir, tmpParent
+    tmpParent = objFSO.BuildPath(RepoRoot(), ".tmp")
+    tmpDir = objFSO.BuildPath(tmpParent, "vbe")
+    
+    ' Crear directorio padre .tmp si no existe
+    If Not objFSO.FolderExists(tmpParent) Then
+        objFSO.CreateFolder tmpParent
+    End If
+    
+    ' Crear directorio vbe si no existe
+    If Not objFSO.FolderExists(tmpDir) Then
+        objFSO.CreateFolder tmpDir
     End If
     
     Dim objFolder, objFile
@@ -2403,12 +2656,12 @@ Sub RebuildProject()
             Err.Clear
             
             If gVerbose Then
-                WScript.Echo "  Importando: " & strModuleName
+                WScript.Echo "  Procesando: " & strModuleName
             End If
             
-            ' Capturar el retorno Boolean de ImportVbaFile
+            ' Importación robusta con inyección de cabeceras
             Dim okImport
-            okImport = ImportVbaFile(objFile.Path, strModuleName)
+            okImport = ImportVbaFileRobust(objFile.Path, strModuleName, tmpDir)
             If okImport Then importedCount = importedCount + 1
         End If
     Next
@@ -3348,6 +3601,9 @@ Sub CopyFilesToBundle(arrFiles, strBundlePath)
         End If
     Next
     
+    ' NOTA: front\recursos y front\test_env se incluyen solo si son relevantes para la funcionalidad específica
+    ' Call CopyResourceDirectories(strBundlePath, copiedFiles)
+    
     WScript.Echo ""
     WScript.Echo "=== RESULTADO DEL EMPAQUETADO ==="
     WScript.Echo "Archivos copiados: " & copiedFiles
@@ -3359,6 +3615,56 @@ Sub CopyFilesToBundle(arrFiles, strBundlePath)
     Else
         WScript.Echo "? Empaquetado completado exitosamente"
     End If
+End Sub
+
+' NUEVA SUBRUTINA: Copia directorios de recursos al bundle
+Sub CopyResourceDirectories(strBundlePath, ByRef copiedFiles)
+    Dim frontRecursosPath, frontTestEnvPath
+    frontRecursosPath = GetFrontRoot() & "\recursos"
+    frontTestEnvPath = GetFrontRoot() & "\test_env"
+    
+    ' Copiar front\recursos si existe
+    If objFSO.FolderExists(frontRecursosPath) Then
+        Dim destRecursosPath
+        destRecursosPath = objFSO.BuildPath(strBundlePath, "front_recursos")
+        Call CopyFolderRecursive(frontRecursosPath, destRecursosPath)
+        WScript.Echo "  ? front\recursos -> front_recursos/"
+        copiedFiles = copiedFiles + 1
+    End If
+    
+    ' Copiar front\test_env si existe
+    If objFSO.FolderExists(frontTestEnvPath) Then
+        Dim destTestEnvPath
+        destTestEnvPath = objFSO.BuildPath(strBundlePath, "front_test_env")
+        Call CopyFolderRecursive(frontTestEnvPath, destTestEnvPath)
+        WScript.Echo "  ? front\test_env -> front_test_env/"
+        copiedFiles = copiedFiles + 1
+    End If
+End Sub
+
+' NUEVA SUBRUTINA: Copia recursiva de carpetas
+Sub CopyFolderRecursive(sourcePath, destPath)
+    On Error Resume Next
+    
+    ' Crear carpeta destino si no existe
+    If Not objFSO.FolderExists(destPath) Then
+        objFSO.CreateFolder destPath
+    End If
+    
+    ' Copiar archivos
+    Dim sourceFolder, file
+    Set sourceFolder = objFSO.GetFolder(sourcePath)
+    For Each file In sourceFolder.Files
+        objFSO.CopyFile file.Path, objFSO.BuildPath(destPath, file.Name), True
+    Next
+    
+    ' Copiar subcarpetas recursivamente
+    Dim subFolder
+    For Each subFolder In sourceFolder.SubFolders
+        Call CopyFolderRecursive(subFolder.Path, objFSO.BuildPath(destPath, subFolder.Name))
+    Next
+    
+    On Error GoTo 0
 End Sub
 
 ' Función auxiliar para convertir rutas relativas a absolutas
@@ -3705,6 +4011,8 @@ Sub ExportForm()
             bNoControls = True
         ElseIf LCase(currentArg) = "--verbose" Then
             gVerbose = True
+        ElseIf LCase(currentArg) = "--dry-run" Then
+            gDryRun = True
         ElseIf LCase(currentArg) = "--src" And i < objArgs.Count - 1 Then
             strSrcDir = objArgs(i + 1)
         ElseIf LCase(currentArg) = "--strict" Then
@@ -4415,10 +4723,12 @@ Sub RoundtripFormCommand()
         End If
         On Error GoTo 0
         
-        If objJsonData.Exists("name") Then
+        If objJsonData.Exists("formName") Then
+            strFormName = objJsonData("formName")
+        ElseIf objJsonData.Exists("name") Then
             strFormName = objJsonData("name")
         Else
-            WScript.Echo "Error: El archivo JSON no contiene el campo 'name' requerido."
+            WScript.Echo "Error: El archivo JSON no contiene el campo 'formName' o 'name' requerido."
             WScript.Quit 1
         End If
     Else
@@ -4495,8 +4805,8 @@ End Sub
 ' Descripción: Versión interna de ExportForm para uso en roundtrip
 ' ===================================================================
 Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
-    ' Implementación completa de export de formularios a JSON
-    ' Asegura apertura en vista Diseño y propiedades mínimas estables
+    ' Implementación completa de export de formularios a JSON canónico
+    ' Asegura apertura en vista Diseño y usa JsonWriter para generar JSON por secciones
     
     If gVerbose Then WScript.Echo "Exportando " & formName & " desde " & dbPath & " a " & outputPath
     
@@ -4504,7 +4814,7 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     Dim resolvedDbPath, dbOrigin
     resolvedDbPath = ResolveDbForAction(dbPath, "export-form", dbOrigin)
     
-    ' Crear instancia de Access usando función unificada
+    ' Crear instancia de Access usando función unificada con bypass
     Dim objAccessLocal
     Set objAccessLocal = OpenAccessApp(resolvedDbPath, password, True)
     
@@ -4532,48 +4842,204 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     Dim frm
     Set frm = objAccessLocal.Forms(formName)
     
-    ' Leer propiedades mínimas estables
-    Dim caption, width, height, backColor, recordSource, recordSourceType, recordsetType
+    ' Crear JsonWriter para generar JSON canónico
+    Dim writer
+    Set writer = New JsonWriter
     
-    caption = frm.Caption
-    width = frm.Width
-    height = frm.Section(acDetail).Height
-    backColor = OleToHex(frm.Section(acDetail).BackColor)
-    recordSource = frm.RecordSource
-    recordsetType = frm.RecordsetType
+    ' Iniciar objeto raíz
+    writer.StartObject
     
-    ' Determinar recordSourceType con tokens específicos
-    Dim rstType
-    rstType = "none"
-    If Len(frm.RecordSource) > 0 Then
-        If InStr(1, frm.RecordSource, "SELECT", vbTextCompare) > 0 Then
-            rstType = "sql"
-        Else
-            rstType = "table"
+    ' Propiedades básicas del formulario
+    writer.AddProperty "schemaVersion", "1.0"
+    writer.AddProperty "units", "twips"
+    writer.AddProperty "formName", frm.Name
+    
+    ' Propiedades del formulario
+    writer.StartObjectProperty "properties"
+    
+    On Error Resume Next
+    writer.AddProperty "caption", frm.Caption
+    writer.AddProperty "width", frm.Width
+    writer.AddProperty "height", frm.InsideHeight
+    writer.AddProperty "recordSource", frm.RecordSource
+    writer.AddProperty "recordsetType", frm.RecordsetType
+    writer.AddProperty "allowEdits", frm.AllowEdits
+    writer.AddProperty "allowDeletions", frm.AllowDeletions
+    writer.AddProperty "allowAdditions", frm.AllowAdditions
+    writer.AddProperty "dataEntry", frm.DataEntry
+    writer.AddProperty "defaultView", frm.DefaultView
+    writer.AddProperty "viewsAllowed", frm.ViewsAllowed
+    writer.AddProperty "scrollBars", MapScrollBarsToToken(frm.ScrollBars)
+    writer.AddProperty "recordSelectors", frm.RecordSelectors
+    writer.AddProperty "navigationButtons", frm.NavigationButtons
+    writer.AddProperty "dividerLines", frm.DividerLines
+    writer.AddProperty "autoResize", frm.AutoResize
+    writer.AddProperty "autoCenter", frm.AutoCenter
+    writer.AddProperty "popUp", frm.PopUp
+    writer.AddProperty "modal", frm.Modal
+    writer.AddProperty "borderStyle", MapBorderStyleToToken(frm.BorderStyle)
+    writer.AddProperty "controlBox", frm.ControlBox
+    writer.AddProperty "minMaxButtons", frm.MinMaxButtons
+    writer.AddProperty "closeButton", frm.CloseButton
+    writer.AddProperty "whatsThisButton", frm.WhatsThisButton
+    writer.AddProperty "shortcutMenu", frm.ShortcutMenu
+    writer.AddProperty "shortcutMenuBar", frm.ShortcutMenuBar
+    writer.AddProperty "menuBar", frm.MenuBar
+    writer.AddProperty "toolbar", frm.Toolbar
+    writer.AddProperty "cycle", frm.Cycle
+    writer.AddProperty "onLoad", frm.OnLoad
+    writer.AddProperty "onUnload", frm.OnUnload
+    writer.AddProperty "onOpen", frm.OnOpen
+    writer.AddProperty "onClose", frm.OnClose
+    writer.AddProperty "onActivate", frm.OnActivate
+    writer.AddProperty "onDeactivate", frm.OnDeactivate
+    writer.AddProperty "onGotFocus", frm.OnGotFocus
+    writer.AddProperty "onLostFocus", frm.OnLostFocus
+    writer.AddProperty "onClick", frm.OnClick
+    writer.AddProperty "onDblClick", frm.OnDblClick
+    writer.AddProperty "onMouseDown", frm.OnMouseDown
+    writer.AddProperty "onMouseMove", frm.OnMouseMove
+    writer.AddProperty "onMouseUp", frm.OnMouseUp
+    writer.AddProperty "onKeyDown", frm.OnKeyDown
+    writer.AddProperty "onKeyPress", frm.OnKeyPress
+    writer.AddProperty "onKeyUp", frm.OnKeyUp
+    writer.AddProperty "onResize", frm.OnResize
+    writer.AddProperty "onError", frm.OnError
+    writer.AddProperty "onFilter", frm.OnFilter
+    writer.AddProperty "onApplyFilter", frm.OnApplyFilter
+    writer.AddProperty "onTimer", frm.OnTimer
+    writer.AddProperty "timerInterval", frm.TimerInterval
+    On Error GoTo 0
+    
+    writer.EndObject ' Cerrar properties
+    
+    ' Secciones del formulario
+    writer.StartObjectProperty "sections"
+    
+    ' Definir las secciones estándar
+    Dim sectionNames, sectionIds, i
+    sectionNames = Array("header", "detail", "footer")
+    sectionIds = Array(acHeader, acDetail, acFooter)
+    
+    For i = 0 To UBound(sectionNames)
+        Dim sectionName, sectionId
+        sectionName = sectionNames(i)
+        sectionId = sectionIds(i)
+        
+        ' Verificar si la sección existe
+        On Error Resume Next
+        Dim sectionHeight, sectionBackColor
+        sectionHeight = frm.Section(sectionId).Height
+        sectionBackColor = frm.Section(sectionId).BackColor
+        On Error GoTo 0
+        
+        If Err.Number = 0 Then
+            ' La sección existe, crear su objeto
+            writer.StartObjectProperty sectionName
+            writer.AddProperty "height", sectionHeight
+            writer.AddProperty "backColor", OleToHex(sectionBackColor)
+            
+            ' Obtener controles de esta sección
+            writer.StartArrayProperty "controls"
+            
+            Dim control
+            For Each control In frm.Controls
+                ' Verificar si el control pertenece a esta sección
+                On Error Resume Next
+                Dim controlSection
+                controlSection = control.Section
+                On Error GoTo 0
+                
+                If controlSection = sectionId Then
+                    writer.StartObject
+                    writer.AddProperty "name", control.Name
+                    writer.AddProperty "type", GetControlTypeName(control.ControlType)
+                    writer.AddProperty "section", sectionName ' Campo informativo
+                    
+                    ' Propiedades del control
+                    writer.StartObjectProperty "properties"
+                    On Error Resume Next
+                    writer.AddProperty "top", control.Top
+                    writer.AddProperty "left", control.Left
+                    writer.AddProperty "width", control.Width
+                    writer.AddProperty "height", control.Height
+                    writer.AddProperty "caption", control.Caption
+                    writer.AddProperty "controlSource", control.ControlSource
+                    writer.AddProperty "visible", control.Visible
+                    writer.AddProperty "enabled", control.Enabled
+                    writer.AddProperty "locked", control.Locked
+                    writer.AddProperty "default", control.Default
+                    ' Detectar Picture relativo para resources.images
+                    If control.Picture <> "" And Not IsAbsolutePath(control.Picture) Then
+                        writer.AddProperty "picture", control.Picture
+                    End If
+                    On Error GoTo 0
+                    
+                    writer.EndObject ' Cerrar properties del control
+                    writer.EndObject ' Cerrar control
+                End If
+            Next
+            
+            writer.EndArray ' Cerrar controls
+            writer.EndObject ' Cerrar sección
         End If
+    Next
+    
+    writer.EndObject ' Cerrar sections
+    
+    ' Recursos (imágenes) - detectar Pictures relativos
+    writer.StartObjectProperty "resources"
+    writer.StartArrayProperty "images"
+    
+    For Each control In frm.Controls
+        On Error Resume Next
+        If control.Picture <> "" And Not IsAbsolutePath(control.Picture) Then
+            writer.StartObject
+            writer.AddProperty "path", control.Picture
+            writer.AddProperty "controlName", control.Name
+            writer.EndObject
+        End If
+        On Error GoTo 0
+    Next
+    
+    writer.EndArray ' Cerrar images
+    writer.EndObject ' Cerrar resources
+    
+    ' Código del módulo - detección básica
+    writer.StartObjectProperty "code"
+    writer.StartObjectProperty "module"
+    
+    Dim hasModule, moduleFilename
+    hasModule = False
+    moduleFilename = ""
+    
+    ' Detectar si hay código en el módulo del formulario
+    On Error Resume Next
+    If frm.HasModule Then
+        hasModule = True
+        moduleFilename = frm.Name & ".frm"
+    End If
+    On Error GoTo 0
+    
+    writer.AddProperty "exists", hasModule
+    writer.AddProperty "filename", moduleFilename
+    writer.StartArrayProperty "handlers"
+    
+    ' Detección básica de handlers - se puede expandir
+    If hasModule Then
+        ' Aquí se podría implementar detección de Sub <Control>_<Event>
+        ' Por ahora dejamos el array vacío
     End If
     
-    ' Generar JSON con propiedades mínimas
-    Dim jsonContent
-    jsonContent = "{" & vbCrLf
-    jsonContent = jsonContent & "  ""schemaVersion"": ""1.0.0""," & vbCrLf
-    jsonContent = jsonContent & "  ""formName"": """ & frm.Name & """," & vbCrLf
-    jsonContent = jsonContent & "  ""properties"": {" & vbCrLf
-    jsonContent = jsonContent & "    ""caption"": """ & caption & """," & vbCrLf
-    jsonContent = jsonContent & "    ""width"": " & width & "," & vbCrLf
-    jsonContent = jsonContent & "    ""height"": " & height & "," & vbCrLf
-    jsonContent = jsonContent & "    ""backColor"": """ & backColor & """," & vbCrLf
-    jsonContent = jsonContent & "    ""recordSource"": """ & recordSource & """," & vbCrLf
-    jsonContent = jsonContent & "    ""recordSourceType"": """ & rstType & """," & vbCrLf
-    jsonContent = jsonContent & "    ""recordsetType"": " & recordsetType & vbCrLf
-    jsonContent = jsonContent & "  }," & vbCrLf
-    jsonContent = jsonContent & "  ""sections"": {" & vbCrLf
-    jsonContent = jsonContent & "    ""detail"": {" & vbCrLf
-    jsonContent = jsonContent & "      ""height"": " & height & "," & vbCrLf
-    jsonContent = jsonContent & "      ""backColor"": """ & backColor & """" & vbCrLf
-    jsonContent = jsonContent & "    }" & vbCrLf
-    jsonContent = jsonContent & "  }" & vbCrLf
-    jsonContent = jsonContent & "}" & vbCrLf
+    writer.EndArray ' Cerrar handlers
+    writer.EndObject ' Cerrar module
+    writer.EndObject ' Cerrar code
+    
+    writer.EndObject ' Cerrar objeto raíz
+    
+    ' Obtener JSON generado
+    Dim jsonString
+    jsonString = writer.GetJson()
     
     ' Cerrar formulario sin guardar
     objAccessLocal.DoCmd.Close acForm, formName, acSaveNo
@@ -4582,8 +5048,10 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     ' Guardar archivo JSON
     Dim objFileLocal
     Set objFileLocal = objFSO.CreateTextFile(outputPath, True, True)
-    objFileLocal.Write jsonContent
+    objFileLocal.Write jsonString
     objFileLocal.Close
+    
+    If gVerbose Then WScript.Echo "Éxito: El formulario ha sido exportado a " & outputPath
     
     CloseAccessQuiet objAccessLocal
 End Sub
@@ -4591,15 +5059,33 @@ End Sub
 ' ===================================================================
 ' SUBRUTINA AUXILIAR: ImportFormInternal
 ' Descripción: Versión interna de ImportForm para uso en roundtrip
+' Opera SIEMPRE en vista Diseño con validación previa usando JsonParser
 ' ===================================================================
 Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
     ' Implementación determinista y silenciosa de import de formularios
     If gVerbose Then WScript.Echo "Importando " & jsonPath & " a " & dbPath
     
-    ' Parsear JSON y obtener name y properties
+    ' Parsear JSON usando JsonParser unificado
     Dim jsonContent, jsonData, name, props
     jsonContent = ReadTextFile(jsonPath)
-    Set jsonData = ParseJson(jsonContent)
+    
+    Dim parser
+    Set parser = New JsonParser
+    Set jsonData = parser.Parse(jsonContent)
+    
+    ' Validar estructura del JSON antes de proceder
+    Dim warnings
+    Set warnings = CreateObject("Scripting.Dictionary")
+    ValidateFormData jsonData, True, warnings ' Usar modo strict
+    
+    ' Si hay errores críticos en modo strict, abortar
+    Dim warningKey
+    For Each warningKey In warnings.Keys
+        If InStr(warnings(warningKey), "ERROR:") > 0 Then
+            WScript.Echo "Error de validación: " & warnings(warningKey)
+            Exit Sub
+        End If
+    Next
     
     name = jsonData("formName")
     If IsPresent(jsonData, "properties") Then
@@ -4608,7 +5094,7 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
         Set props = CreateObject("Scripting.Dictionary")
     End If
     
-    ' Crear instancia de Access usando función unificada
+    ' Crear instancia de Access usando función unificada con bypass
     Dim objAccess
     Set objAccess = OpenAccessApp(dbPath, password, True)
     
@@ -4639,16 +5125,19 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
         End If
     End If
     
-    ' Crear nuevo formulario vacío en diseño
+    ' Crear nuevo formulario vacío en vista Diseño
     objAccess.DoCmd.NewForm
     Dim tmpName
     tmpName = objAccess.Screen.ActiveForm.Name
     objAccess.DoCmd.Rename name, acForm, tmpName
     
+    ' Abrir en vista Diseño explícitamente
+    objAccess.DoCmd.OpenForm name, acViewDesign
+    
     Dim frm
     Set frm = objAccess.Forms(name)
     
-    ' Aplicar propiedades si existen
+    ' Aplicar propiedades del formulario
     On Error Resume Next
     If IsPresent(props, "caption") Then 
         frm.Caption = props("caption")
@@ -4670,7 +5159,13 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
         frm.Section(acDetail).BackColor = HexToOle(props("backColor"))
         If gVerbose Then WScript.Echo "Aplicado BackColor: " & props("backColor")
     End If
-    On Error Resume Next
+    On Error GoTo 0
+    
+    ' Agregar controles usando AddControlsFromJson
+    AddControlsFromJson frm, jsonData, objAccess
+    
+    ' Aplicar eventos si hay handlers en code.module
+    ApplyEventHandlers frm, jsonData
     
     ' Guardar y cerrar sin ejecutar
     objAccess.DoCmd.Save acForm, name
@@ -4682,7 +5177,7 @@ Private Sub ImportFormInternal(jsonPath, dbPath, password, overwrite)
     CloseAccessApp objAccess
     Exit Sub
     
-    ' Manejo de errores simplificado - ya no se usa ImportFail
+    ' Manejo de errores
     If Err.Number <> 0 Then
         objAccess.Echo True
         objAccess.Application.DisplayAlerts = True
@@ -4722,7 +5217,7 @@ End Function
 ' ===================================================================
 Private Function ReadTextFile(filePath)
     Dim objFile, content
-    Set objFile = objFSO.OpenTextFile(filePath, 1, False, -1) ' UTF-8
+    Set objFile = objFSO.OpenTextFile(filePath, 1, False, 0) ' ASCII
     content = objFile.ReadAll
     objFile.Close
     ReadTextFile = content
@@ -5102,8 +5597,8 @@ Private Sub ImportSingleForm(strJsonPath, strDbPath, strPassword, bypassStartup,
     On Error GoTo 0
     
     ' Validaciones mínimas de los datos del formulario
-    If Not objJsonData.Exists("formName") Then
-        WScript.Echo "Error: El JSON debe contener 'formName'"
+    If Not objJsonData.Exists("formName") And Not objJsonData.Exists("name") Then
+        WScript.Echo "Error: El JSON debe contener 'formName' o 'name'"
         WScript.Quit 1
     End If
     
@@ -5113,7 +5608,11 @@ Private Sub ImportSingleForm(strJsonPath, strDbPath, strPassword, bypassStartup,
     End If
     
     ' Obtener nombre del formulario
-    formName = objJsonData("formName")
+    If objJsonData.Exists("formName") Then
+        formName = objJsonData("formName")
+    Else
+        formName = objJsonData("name")
+    End If
     WScript.Echo "Formulario a procesar: " & formName
     
     ' Si es dry-run, mostrar reporte y salir
@@ -5376,61 +5875,86 @@ Private Sub ImportFormFromData(objAccess, formName, objJsonData, bStrict)
 End Sub
 
 ' ============================================================================
-' FUNCIÓN AUXILIAR: CreateOrReplaceForm
-' Descripción: Crea un nuevo formulario o reemplaza uno existente
+' FUNCIÓN PRINCIPAL REFACTORIZADA: CreateOrReplaceForm
+' Descripción: Crea un nuevo formulario o reemplaza uno existente de forma robusta.
 ' Parámetros: objAccess - Instancia de Access, formName - Nombre del formulario
 ' Retorna: Objeto Form creado o Nothing si hay error
 ' ============================================================================
 Private Function CreateOrReplaceForm(objAccess, formName)
-    Dim frm, tmpName
+    Dim frm ' Usar 'Object' para late binding es más seguro en VBScript
     
-    ' Eliminar formulario existente si existe usando DoCmd.DeleteObject
+    ' --- PASO 1: Limpieza ---
+    ' Eliminar el formulario antiguo si existe. Es crucial que la BD esté en modo
+    ' que permita cambios de diseño.
     On Error Resume Next
-    objAccess.DoCmd.DeleteObject acObjectForm, formName
-    If Err.Number <> 0 Then
-        ' El formulario no existía, continuar
-        Err.Clear
+    objAccess.DoCmd.Close acForm, formName, acSaveNo ' Cerrar por si está abierto
+    objAccess.DoCmd.DeleteObject acForm, formName
+    If Err.Number <> 0 And Err.Number <> 2501 And Err.Number <> 7874 Then
+        ' Ignoramos el error si 'Close' falla porque el form no estaba abierto (2501)
+        ' o si 'DeleteObject' falla porque no existía (7874).
+        ' Pero si es otro error, lo mostramos.
+        WScript.Echo "Error inesperado durante la limpieza: " & Err.Description
     End If
+    Err.Clear
     On Error GoTo 0
     
-    ' Crear nuevo formulario usando Application.CreateForm
+    ' --- PASO 2: Creación y Obtención del Objeto ---
+    ' CreateForm crea un formulario y LO DEJA ABIERTO en vista Diseño.
+    ' NO es necesario volver a abrirlo.
     On Error Resume Next
-    Set frm = objAccess.Application.CreateForm()
+    Set frm = objAccess.CreateForm()
     If Err.Number <> 0 Then
-        WScript.Echo "Error al crear el formulario: " & Err.Description
+        WScript.Echo "Error fatal al ejecutar objAccess.CreateForm(): " & Err.Description
         Set CreateOrReplaceForm = Nothing
         Exit Function
     End If
     On Error GoTo 0
     
-    ' Abrir formulario en vista Diseño usando DoCmd.OpenForm
+    WScript.Echo "Formulario temporal creado con éxito: " & frm.Name
+    
+    ' Aquí es donde aplicarías las propiedades. El formulario está abierto en
+    ' vista Diseño y el objeto 'frm' es válido.
+    ' Ejemplo:
+    ' ApplyFormProperties frm, objJsonData, True
+    
+    ' --- PASO 3: Guardado Definitivo y Cierre ---
+    ' Una vez aplicadas todas las propiedades y añadidos los controles,
+    ' guardamos el formulario DIRECTAMENTE con su nombre final y lo cerramos.
     On Error Resume Next
-    objAccess.DoCmd.OpenForm frm.Name, acViewDesign
+    
+    ' Guardamos el objeto formulario activo (que es el nuestro) con el nombre final.
+    objAccess.DoCmd.Save acForm, formName
+    
     If Err.Number <> 0 Then
-        WScript.Echo "Error al abrir formulario en modo diseño: " & Err.Description
+        WScript.Echo "Error fatal al guardar el formulario como '" & formName & "': " & Err.Description
+        ' Si falla el guardado, intentamos cerrar el temporal sin guardar cambios.
+        objAccess.DoCmd.Close acForm, frm.Name, acSaveNo
         Set CreateOrReplaceForm = Nothing
         Exit Function
     End If
+
+    ' Cerramos el formulario que ahora se llama 'formName'.
+    objAccess.DoCmd.Close acForm, formName, acSaveNo ' Ya está guardado, no hace falta guardar de nuevo.
+
+    WScript.Echo "Formulario '" & formName & "' creado y guardado permanentemente."
     On Error GoTo 0
+
+    ' --- PASO 4: Devolver una referencia al objeto recién creado (opcional) ---
+    ' Si después necesitas manipularlo, debes reabrirlo. Si no, devuelve True/False.
+    ' Para este ejemplo, no devolvemos el objeto, ya que está cerrado.
+    ' La función podría modificarse para devolver solo un booleano de éxito.
+    ' Línea corregida para indicar éxito (el objeto ya está cerrado):
     
-    ' Guardar nombre temporal y renombrar si es necesario
-    tmpName = frm.Name
-    WScript.Echo "Formulario creado con nombre temporal: " & tmpName
-    
-    ' Renombrar si el nombre generado difiere del deseado
-    If tmpName <> formName Then
-        On Error Resume Next
-        objAccess.DoCmd.Rename formName, 1, tmpName  ' acForm
-        If Err.Number <> 0 Then
-            WScript.Echo "Error al renombrar formulario: " & Err.Description
-            Set CreateOrReplaceForm = Nothing
-            Exit Function
-        Else
-            WScript.Echo "Formulario renombrado de " & tmpName & " a " & formName
-            frm.Name = formName
-        End If
-        On Error GoTo 0
+    ' Para mantener compatibilidad con el código existente, reabrimos el formulario
+    On Error Resume Next
+    objAccess.DoCmd.OpenForm formName, acViewDesign
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al reabrir formulario para devolverlo: " & Err.Description
+        Set CreateOrReplaceForm = Nothing
+        Exit Function
     End If
+    Set frm = objAccess.Forms(formName)
+    On Error GoTo 0
     
     Set CreateOrReplaceForm = frm
 End Function
@@ -5443,22 +5967,46 @@ End Function
 Private Sub ApplyFormProperties(frm, objJsonData, bStrict)
     Dim formProps
     
+    ' Verificar que el formulario esté disponible
+    On Error Resume Next
+    Dim testProp
+    testProp = frm.Name
+    If Err.Number <> 0 Then
+        WScript.Echo "Error: El formulario no está disponible para modificar propiedades"
+        Exit Sub
+    End If
+    On Error GoTo 0
+    
     ' Asignar propiedades del formulario desde JSON
     If objJsonData.Exists("properties") Then
         Set formProps = objJsonData("properties")
         
-        ' Propiedades básicas
+        ' Propiedades básicas con manejo de errores
+        On Error Resume Next
         If formProps.Exists("caption") Then
             frm.Caption = formProps("caption")
+            If Err.Number <> 0 Then
+                WScript.Echo "Warning: No se pudo establecer Caption: " & Err.Description
+                Err.Clear
+            End If
         End If
         
         If formProps.Exists("width") Then
             frm.Width = CLng(formProps("width"))
+            If Err.Number <> 0 Then
+                WScript.Echo "Warning: No se pudo establecer Width: " & Err.Description
+                Err.Clear
+            End If
         End If
         
         If formProps.Exists("height") Then
             frm.WindowHeight = CLng(formProps("height"))
+            If Err.Number <> 0 Then
+                WScript.Echo "Warning: No se pudo establecer Height: " & Err.Description
+                Err.Clear
+            End If
         End If
+        On Error GoTo 0
         
         ' Colores (convertir #RRGGBB a OLE)
         If formProps.Exists("backColor") Then
@@ -5905,6 +6453,94 @@ Private Function MapControlType(controlTypeStr)
             MapControlType = -1
     End Select
 End Function
+
+' ============================================================================
+' FUNCIÓN AUXILIAR: ApplyEventHandlers
+' Descripción: Aplica manejadores de eventos desde el JSON al formulario
+' Parámetros: frm - Objeto Form, jsonData - Datos JSON del formulario
+' ============================================================================
+Private Sub ApplyEventHandlers(frm, jsonData)
+    Dim code, moduleCode, eventHandlers, handler, i
+    
+    ' Verificar si hay código del módulo en el JSON
+    If Not jsonData.Exists("code") Then
+        If gVerbose Then WScript.Echo "No hay código de módulo en el JSON"
+        Exit Sub
+    End If
+    
+    Set code = jsonData("code")
+    
+    ' Verificar si hay código del módulo
+    If Not code.Exists("module") Then
+        If gVerbose Then WScript.Echo "No hay código de módulo definido"
+        Exit Sub
+    End If
+    
+    moduleCode = code("module")
+    
+    ' Si hay código del módulo, intentar aplicarlo
+    If Len(Trim(moduleCode)) > 0 Then
+        On Error Resume Next
+        ' Intentar acceder al módulo del formulario
+        Dim formModule
+        Set formModule = frm.Module
+        
+        If Err.Number <> 0 Then
+            LogWarn "No se puede acceder al módulo del formulario " & frm.Name & ": " & Err.Description
+            Err.Clear
+            On Error GoTo 0
+            Exit Sub
+        End If
+        
+        ' Limpiar el módulo existente (opcional, solo si está vacío)
+        If formModule.CountOfLines = 0 Then
+            formModule.InsertLines 1, moduleCode
+            If gVerbose Then WScript.Echo "Código del módulo aplicado al formulario " & frm.Name
+        Else
+            LogWarn "El módulo del formulario " & frm.Name & " ya contiene código, no se sobrescribe"
+        End If
+        
+        On Error GoTo 0
+    End If
+    
+    ' Verificar si hay manejadores de eventos específicos
+    If code.Exists("eventHandlers") Then
+        Set eventHandlers = code("eventHandlers")
+        
+        For i = 0 To eventHandlers.Count - 1
+            Set handler = eventHandlers(i)
+            
+            If handler.Exists("event") And handler.Exists("code") Then
+                On Error Resume Next
+                
+                ' Aplicar el manejador de evento al formulario
+                Select Case LCase(handler("event"))
+                    Case "onload", "form_load"
+                        frm.OnLoad = "[Event Procedure]"
+                    Case "onopen", "form_open"
+                        frm.OnOpen = "[Event Procedure]"
+                    Case "onclose", "form_close"
+                        frm.OnClose = "[Event Procedure]"
+                    Case "oncurrent", "form_current"
+                        frm.OnCurrent = "[Event Procedure]"
+                    Case "onunload", "form_unload"
+                        frm.OnUnload = "[Event Procedure]"
+                    Case Else
+                        LogWarn "Evento no reconocido: " & handler("event")
+                End Select
+                
+                If Err.Number <> 0 Then
+                    LogWarn "No se pudo aplicar evento " & handler("event") & " al formulario " & frm.Name & ": " & Err.Description
+                    Err.Clear
+                End If
+                
+                On Error GoTo 0
+            End If
+        Next
+        
+        If gVerbose Then WScript.Echo "Manejadores de eventos aplicados al formulario " & frm.Name
+    End If
+End Sub
 
 ' ============================================================================
 ' SUBRUTINA: ListForms
@@ -6857,10 +7493,22 @@ Class JsonParser
             End If
             On Error GoTo 0
             
-            If IsObject(value) Then
-                arr.Add value
+            ' Verificar si arr es ArrayList o Dictionary
+            If TypeName(arr) = "ArrayList" Then
+                If IsObject(value) Then
+                    arr.Add value
+                Else
+                    arr.Add value
+                End If
             Else
-                arr.Add value
+                ' Es Dictionary, usar índice numérico
+                Dim index
+                index = arr.Count
+                If IsObject(value) Then
+                    Set arr(index) = value
+                Else
+                    arr(index) = value
+                End If
             End If
             
             SkipWhitespace
@@ -6872,6 +7520,7 @@ Class JsonParser
                 Exit Do
             ElseIf nextChar = "," Then
                 pos = pos + 1
+                SkipWhitespace
             Else
                 Err.Raise 1004, "JsonParser", "Se esperaba ',' o ']'"
             End If
@@ -7026,25 +7675,72 @@ End Function
 ' ============================================================================
 
 Function ReadAllText(path)
-    Dim stream
+    On Error Resume Next
+    Dim stream, content
+    
+    ' Intentar primero con UTF-8
     Set stream = CreateObject("ADODB.Stream")
     stream.Type = 2 ' adTypeText
     stream.Charset = "UTF-8"
     stream.Open
     stream.LoadFromFile path
-    ReadAllText = stream.ReadText
+    content = stream.ReadText(-1) ' adReadAll
     stream.Close
+    
+    ' Si hay error o contenido vacío, reintentar con Windows-1252
+    If Err.Number <> 0 Or Len(content) = 0 Then
+        Err.Clear
+        Set stream = CreateObject("ADODB.Stream")
+        stream.Type = 2
+        stream.Charset = "Windows-1252"
+        stream.Open
+        stream.LoadFromFile path
+        content = stream.ReadText(-1) ' adReadAll
+        stream.Close
+        
+        If Err.Number <> 0 Then
+            content = ""
+        End If
+    End If
+    
+    ' Quitar BOM si existe
+    If Len(content) > 0 Then
+        ' Quitar BOM Unicode (ChrW(&HFEFF))
+        If Left(content, 1) = ChrW(&HFEFF) Then
+            content = Mid(content, 2)
+        End If
+        
+        ' Quitar secuencia BOM UTF-8 "ï»¿" si apareciera
+        If Left(content, 3) = "ï»¿" Then
+            content = Mid(content, 4)
+        End If
+    End If
+    
+    ReadAllText = content
+    Err.Clear
 End Function
 
 Sub WriteAllText(path, text)
-    Dim stream
-    Set stream = CreateObject("ADODB.Stream")
-    stream.Type = 2 ' adTypeText
-    stream.Charset = "UTF-8"
-    stream.Open
-    stream.WriteText text
-    stream.SaveToFile path, 2 ' adSaveCreateOverWrite
-    stream.Close
+    ' Normalizar EOL: convertir todo a CRLF antes de escribir
+    Dim normalizedText
+    normalizedText = text
+    
+    ' Reemplazar CRLF por LF temporalmente para evitar duplicación
+    normalizedText = Replace(normalizedText, vbCrLf, vbLf)
+    ' Reemplazar CR solitarios por LF
+    normalizedText = Replace(normalizedText, vbCr, vbLf)
+    ' Convertir todo a CRLF
+    normalizedText = Replace(normalizedText, vbLf, vbCrLf)
+    
+    ' Escribir como ANSI usando CreateTextFile (tercer parámetro False)
+    On Error Resume Next
+    Dim file
+    Set file = objFSO.CreateTextFile(path, True, False) ' Overwrite, ANSI
+    If Err.Number = 0 Then
+        file.Write normalizedText
+        file.Close
+    End If
+    On Error GoTo 0
 End Sub
 
 Function FileExists(path)
@@ -8085,6 +8781,10 @@ Sub ResolveFlags()
         ElseIf arg = "--print-db" Then
             gPrintDb = True
             
+        ElseIf arg = "--dry-run" Then
+            gDryRun = True
+            If gVerbose Then WScript.Echo "[VERBOSE] Flag --dry-run activado"
+            
         End If
     Next
 End Sub
@@ -8840,3 +9540,392 @@ Function IsPresent(dict, key)
     End If
     On Error GoTo 0
 End Function
+
+' ===================================================================
+' FUNCIONES HELPER PARA FIX-SRC-HEADERS
+' ===================================================================
+
+
+
+' Función para normalizar nombre desde filename
+Function NormalizeNameFromFilename(filePath)
+    Dim baseName
+    baseName = objFSO.GetBaseName(filePath)
+    NormalizeNameFromFilename = baseName
+End Function
+
+' Función para verificar si una línea es parte de la cabecera
+Function IsHeaderLine(line)
+    Dim trimmedLine
+    trimmedLine = Trim(line)
+    
+    ' Líneas de cabecera típicas
+    If Left(trimmedLine, 9) = "Attribute" Then
+        IsHeaderLine = True
+    ElseIf Left(trimmedLine, 7) = "VERSION" Then
+        IsHeaderLine = True
+    ElseIf Left(trimmedLine, 6) = "Option" Then
+        IsHeaderLine = True
+    ElseIf trimmedLine = "" Then
+        IsHeaderLine = True ' Líneas vacías al inicio se consideran cabecera
+    ElseIf Left(trimmedLine, 1) = "'" Then
+        IsHeaderLine = True ' Comentarios al inicio se consideran cabecera
+    Else
+        IsHeaderLine = False
+    End If
+End Function
+
+' Función para separar cabecera y cuerpo
+Function SplitHeaderBody(content)
+    ' Normalizar EOL: reemplazar CRLF y CR por LF; Split por LF
+    Dim normalizedContent
+    normalizedContent = content
+    
+    ' Reemplazar CRLF por LF
+    normalizedContent = Replace(normalizedContent, vbCrLf, vbLf)
+    ' Reemplazar CR solitarios por LF
+    normalizedContent = Replace(normalizedContent, vbCr, vbLf)
+    
+    ' Split por LF
+    Dim lines, i, headerEnd, result(1)
+    lines = Split(normalizedContent, vbLf)
+    
+    ' Recorrer desde la 1ª línea; mientras IsHeaderLine(line)=True, formar cabecera
+    headerEnd = -1
+    For i = 0 To UBound(lines)
+        If Not IsHeaderLine(lines(i)) Then
+            headerEnd = i - 1
+            Exit For
+        End If
+    Next
+    
+    ' Si no se encontró fin de cabecera, todo es cabecera
+    If headerEnd = -1 Then headerEnd = UBound(lines)
+    
+    ' Construir cabecera - recomponer con CRLF
+    If headerEnd >= 0 Then
+        Dim headerLines()
+        ReDim headerLines(headerEnd)
+        For i = 0 To headerEnd
+            headerLines(i) = lines(i)
+        Next
+        result(0) = Join(headerLines, vbCrLf)
+    Else
+        result(0) = ""
+    End If
+    
+    ' Construir cuerpo - recomponer con CRLF
+    If headerEnd < UBound(lines) Then
+        Dim bodyLines()
+        ReDim bodyLines(UBound(lines) - headerEnd - 1)
+        For i = headerEnd + 1 To UBound(lines)
+            bodyLines(i - headerEnd - 1) = lines(i)
+        Next
+        result(1) = Join(bodyLines, vbCrLf)
+    Else
+        result(1) = ""
+    End If
+    
+    SplitHeaderBody = result
+End Function
+
+' Función para construir cabecera de módulo .bas
+Function BuildBasHeader(moduleName)
+    Dim header
+    header = "Attribute VB_Name = """ & moduleName & """" & vbCrLf
+    header = header & "Option Compare Database" & vbCrLf
+    header = header & "Option Explicit" & vbCrLf
+    BuildBasHeader = header
+End Function
+
+' Función para construir cabecera de clase .cls
+Function BuildClsHeader(className)
+    ' Genera cabecera mínima válida para Access con formato específico
+    Dim header
+    header = "VERSION 1.0 CLASS" & vbCrLf
+    header = header & "BEGIN" & vbCrLf
+    header = header & "  MultiUse = -1  'True" & vbCrLf
+    header = header & "END" & vbCrLf
+    header = header & "Attribute VB_Name = """ & className & """" & vbCrLf
+    header = header & "Attribute VB_GlobalNameSpace = False" & vbCrLf
+    header = header & "Attribute VB_Creatable = False" & vbCrLf
+    header = header & "Attribute VB_PredeclaredId = False" & vbCrLf
+    header = header & "Attribute VB_Exposed = False" & vbCrLf
+    header = header & "Option Compare Database" & vbCrLf
+    header = header & "Option Explicit" & vbCrLf
+    BuildClsHeader = header
+End Function
+
+' Función para validar si una cabecera satisface los requisitos según el tipo
+Function HeaderSatisfies(expectedType, headerText)
+    ' expectedType: "bas" o "cls"
+    ' headerText: texto de la cabecera a validar
+    ' Retorna: True si la cabecera es válida para el tipo, False si no
+    
+    HeaderSatisfies = False
+    
+    If Len(Trim(headerText)) = 0 Then
+        Exit Function ' Cabecera vacía no satisface ningún tipo
+    End If
+    
+    ' Limpiar BOM antes de validar tokens
+    Dim cleanHeader
+    cleanHeader = headerText
+    
+    ' Eliminar BOM UTF-8 (EF BB BF)
+    If Len(cleanHeader) >= 3 Then
+        If Asc(Mid(cleanHeader, 1, 1)) = 239 And Asc(Mid(cleanHeader, 2, 1)) = 187 And Asc(Mid(cleanHeader, 3, 1)) = 191 Then
+            cleanHeader = Mid(cleanHeader, 4)
+        End If
+    End If
+    
+    ' Eliminar BOM UTF-16 LE (FF FE)
+    If Len(cleanHeader) >= 2 Then
+        If Asc(Mid(cleanHeader, 1, 1)) = 255 And Asc(Mid(cleanHeader, 2, 1)) = 254 Then
+            cleanHeader = Mid(cleanHeader, 3)
+        End If
+    End If
+    
+    ' Eliminar BOM UTF-16 BE (FE FF)
+    If Len(cleanHeader) >= 2 Then
+        If Asc(Mid(cleanHeader, 1, 1)) = 254 And Asc(Mid(cleanHeader, 2, 1)) = 255 Then
+            cleanHeader = Mid(cleanHeader, 3)
+        End If
+    End If
+    
+    Dim lines, i, line
+    lines = Split(cleanHeader, vbCrLf)
+    
+    If expectedType = "bas" Then
+        ' Para .bas necesitamos: Attribute VB_Name
+        For i = 0 To UBound(lines)
+            line = Trim(lines(i))
+            If InStr(1, line, "Attribute VB_Name", vbTextCompare) = 1 Then
+                HeaderSatisfies = True
+                Exit Function
+            End If
+        Next
+    ElseIf expectedType = "cls" Then
+        ' Para .cls necesitamos: VERSION 1.0 CLASS y Attribute VB_Name
+        Dim hasVersion, hasVbName
+        hasVersion = False
+        hasVbName = False
+        
+        For i = 0 To UBound(lines)
+            line = Trim(lines(i))
+            If InStr(1, line, "VERSION 1.0 CLASS", vbTextCompare) = 1 Then
+                hasVersion = True
+            ElseIf InStr(1, line, "Attribute VB_Name", vbTextCompare) = 1 Then
+                hasVbName = True
+            End If
+        Next
+        
+        HeaderSatisfies = hasVersion And hasVbName
+    End If
+End Function
+
+' ===================================================================
+' COMANDO: FIX-SRC-HEADERS
+' ===================================================================
+Sub FixSrcHeadersCommand()
+    Dim srcFolder, totalFiles, processedFiles, changedFiles
+    Dim isDryRun, isVerbose
+    
+    ' Verificar flags
+    isDryRun = gDryRun
+    isVerbose = gVerbose
+    
+    ' Inicializar contadores
+    totalFiles = 0
+    processedFiles = 0
+    changedFiles = 0
+    
+    ' Verificar que existe la carpeta src
+    srcFolder = objFSO.BuildPath(RepoRoot(), "src")
+    If Not objFSO.FolderExists(srcFolder) Then
+        WScript.Echo "Error: No se encontró la carpeta ./src"
+        WScript.Quit 1
+    End If
+    
+    WScript.Echo "=== CONDOR CLI - Canonizador de Cabeceras ==="
+    If isDryRun Then
+        WScript.Echo "MODO: Dry-run (solo análisis, sin modificaciones)"
+    Else
+        WScript.Echo "MODO: Ejecución real (modificará archivos)"
+    End If
+    WScript.Echo "Procesando: " & srcFolder
+    WScript.Echo ""
+    
+    ' Procesar archivos recursivamente
+    Call ProcessFolderRecursive(srcFolder, totalFiles, processedFiles, changedFiles, isDryRun, isVerbose)
+    
+    ' Mostrar resumen final
+    WScript.Echo ""
+    WScript.Echo "=== RESUMEN ==="
+    WScript.Echo "Archivos encontrados: " & totalFiles
+    WScript.Echo "Archivos procesados: " & processedFiles
+    WScript.Echo "Archivos modificados: " & changedFiles
+    WScript.Echo "Archivos sin cambios: " & (processedFiles - changedFiles)
+    
+    If isDryRun Then
+        WScript.Echo ""
+        WScript.Echo "Para aplicar los cambios, ejecute sin --dry-run"
+    End If
+End Sub
+
+' Función auxiliar para procesar carpetas recursivamente
+Sub ProcessFolderRecursive(folderPath, totalFiles, processedFiles, changedFiles, isDryRun, isVerbose)
+    Dim folder, file, subFolder
+    Set folder = objFSO.GetFolder(folderPath)
+    
+    ' Procesar archivos en la carpeta actual
+    For Each file In folder.Files
+        Dim ext
+        ext = LCase(objFSO.GetExtensionName(file.Name))
+        
+        If ext = "bas" Or ext = "cls" Then
+            totalFiles = totalFiles + 1
+            Call ProcessSourceFile(file.Path, ext, processedFiles, changedFiles, isDryRun, isVerbose)
+        End If
+    Next
+    
+    ' Procesar subcarpetas recursivamente
+    For Each subFolder In folder.SubFolders
+        Call ProcessFolderRecursive(subFolder.Path, totalFiles, processedFiles, changedFiles, isDryRun, isVerbose)
+    Next
+End Sub
+
+' Función para procesar un archivo fuente individual
+Sub ProcessSourceFile(filePath, fileExt, processedFiles, changedFiles, isDryRun, isVerbose)
+    Dim originalContent, normalizedContent, headerBodyResult
+    Dim currentName, expectedName, newHeader, needsChange
+    Dim backupPath
+    
+    processedFiles = processedFiles + 1
+    needsChange = False
+    
+    ' Leer contenido original
+    originalContent = ReadAllText(filePath)
+    If originalContent = "" Then
+        If isVerbose Then
+            WScript.Echo "WARNING: No se pudo leer " & objFSO.GetFileName(filePath)
+        End If
+        Exit Sub
+    End If
+    
+    ' Obtener nombre esperado del archivo
+    expectedName = NormalizeNameFromFilename(filePath)
+    
+    ' Separar cabecera y cuerpo
+    headerBodyResult = SplitHeaderBody(originalContent)
+    
+    ' Construir nueva cabecera según el tipo
+    If fileExt = "bas" Then
+        newHeader = BuildBasHeader(expectedName)
+    Else ' cls
+        newHeader = BuildClsHeader(expectedName)
+    End If
+    
+    ' Normalizar saltos de línea y ensamblar contenido
+    Dim bodyContent
+    bodyContent = headerBodyResult(1)
+    
+    ' Asegurar que el cuerpo no empiece con líneas vacías innecesarias
+    Do While Left(bodyContent, 2) = vbCrLf
+        bodyContent = Mid(bodyContent, 3)
+    Loop
+    
+    ' Ensamblar contenido final
+    If bodyContent <> "" Then
+        normalizedContent = newHeader & vbCrLf & bodyContent
+    Else
+        normalizedContent = newHeader
+    End If
+    
+    ' Normalizar todos los saltos de línea a CRLF
+    normalizedContent = Replace(normalizedContent, vbLf, vbCrLf)
+    normalizedContent = Replace(normalizedContent, vbCrLf & vbCrLf, vbCrLf)
+    
+    ' Verificar si hay cambios
+    If originalContent <> normalizedContent Then
+        needsChange = True
+        changedFiles = changedFiles + 1
+        
+        If isVerbose Or isDryRun Then
+            WScript.Echo "CAMBIO: " & objFSO.GetFileName(filePath) & " (nombre: " & expectedName & ")"
+        End If
+        
+        ' Aplicar cambios si no es dry-run
+        If Not isDryRun Then
+            ' Crear backup si no existe
+            backupPath = filePath & ".bak"
+            If Not objFSO.FileExists(backupPath) Then
+                objFSO.CopyFile filePath, backupPath
+                If isVerbose Then
+                    WScript.Echo "  Backup creado: " & objFSO.GetFileName(backupPath)
+                End If
+            End If
+            
+            ' Escribir contenido normalizado
+            Call WriteAllText(filePath, normalizedContent)
+            If isVerbose Then
+                WScript.Echo "  Archivo actualizado"
+            End If
+        End If
+    Else
+        If isVerbose Then
+            WScript.Echo "OK: " & objFSO.GetFileName(filePath)
+        End If
+    End If
+End Sub
+
+' ===================================================================
+' FUNCIÓN: PostProcessHeader
+' Descripción: Postprocesa un archivo exportado para garantizar cabeceras canónicas
+' Parámetros: filePath - Ruta del archivo .bas/.cls a postprocesar
+' ===================================================================
+Sub PostProcessHeader(filePath)
+    Dim content, parts, newHeader, newContent, moduleName, ext
+    
+    ' Leer contenido del archivo
+    content = ReadAllText(filePath)
+    If content = "" Then Exit Sub
+    
+    ' Obtener extensión y nombre del módulo
+    ext = LCase(objFSO.GetExtensionName(filePath))
+    moduleName = objFSO.GetBaseName(filePath)
+    
+    ' Dividir en cabecera y cuerpo
+    parts = SplitHeaderBody(content)
+    
+    ' Construir nueva cabecera canónica según el tipo
+    If ext = "bas" Then
+        newHeader = BuildBasHeader(moduleName)
+    ElseIf ext = "cls" Then
+        newHeader = BuildClsHeader(moduleName)
+    Else
+        ' Tipo no soportado, no modificar
+        Exit Sub
+    End If
+    
+    ' Reconstruir contenido con cabecera canónica
+    If parts(1) <> "" Then
+        newContent = newHeader & vbCrLf & parts(1)
+    Else
+        newContent = newHeader
+    End If
+    
+    ' Escribir archivo con cabecera canónica
+    WriteAllText filePath, newContent
+    
+    ' Validar cabecera resultante
+    If ext = "bas" Then
+        If InStr(newContent, "Attribute VB_Name") = 0 Then
+            WScript.Echo "Warning: Archivo .bas sin Attribute VB_Name: " & filePath
+        End If
+    ElseIf ext = "cls" Then
+        If InStr(newContent, "VERSION 1.0 CLASS") = 0 Then
+            WScript.Echo "Warning: Archivo .cls sin VERSION 1.0 CLASS: " & filePath
+        End If
+    End If
+End Sub

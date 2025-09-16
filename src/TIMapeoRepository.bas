@@ -1,4 +1,5 @@
-﻿Option Compare Database
+Attribute VB_Name = "TIMapeoRepository"
+Option Compare Database
 Option Explicit
 
 ' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---

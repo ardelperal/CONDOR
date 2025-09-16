@@ -1,4 +1,6 @@
-﻿Option Compare Database
+Attribute VB_Name = "modExpedienteServiceFactory"
+
+Option Compare Database
 Option Explicit
 
 

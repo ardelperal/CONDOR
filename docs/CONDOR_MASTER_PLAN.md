@@ -2071,20 +2071,35 @@ cscript condor_cli.vbs rebuild [--verbose] [--password <pwd>]
 ```
 
 **Funcionalidad:**
-- Elimina todos los módulos existentes
-- Importa todos los módulos desde cero usando `ImportVbaFile()` con apertura segura
+- Elimina todos los módulos VBA existentes de la base de datos
+- Reimporta todos los módulos desde el directorio `/src` usando `ImportVbaFileRobust()`
 - Strategy A: `msaccess.exe /nostartup` para bypass completo de startup
 - Strategy B: DAO con neutralización temporal de StartupForm y AutoExec (restauración automática)
 - Garantiza un estado limpio del proyecto sin interferencias de código de inicio
 
-**Patrón Canónico de Importación VBA:**
-- **Archivos .bas**: `Application.LoadFromText(5, moduleName, tmpFileAnsi)` - Conversión UTF-8→ANSI automática
-- **Archivos .cls**: `VBComponents.Import(tmpFileAnsi)` + rename automático - Conversión UTF-8→ANSI automática
-- **Sin DoCmd.Save por módulo**: Eliminado completamente para evitar errores "424 - Se requiere un objeto"
-- **Guardado global único**: `RunCommand 636` (Compile & Save All Modules) al final del proceso
-- **Flujo unificado**: CreateAnsiTempFrom → LoadFromText/Import → RemoveComponent → Global Save
-- **Requisito crítico**: Trust Center → "Confiar en el acceso al modelo de objetos de proyectos de VBA"
-- **Compilación centralizada**: Una sola operación de guardado y compilación al completar todas las importaciones
+**Política de Importación por Tipo (Fuente de Verdad del Proyecto):**
+
+El comando `rebuild` implementa la política oficial de importación VBA del proyecto CONDOR:
+
+- **Archivos .bas**: `Application.LoadFromText(acModule, moduleName, tmpFileAnsi)` + `DoCmd.Save`
+  - Utiliza LoadFromText con tipo acModule (5) para módulos estándar
+  - Conversión automática UTF-8 → ANSI (Windows-1252) antes de importar
+  
+- **Archivos .cls**: `ImportVbComponentFromFile(tmpFileAnsi)` (VBIDE.Import + rename) + `DoCmd.Save`
+  - Utiliza VBIDE.VBComponents.Import seguido de renombrado automático
+  - Conversión automática UTF-8 → ANSI (Windows-1252) antes de importar
+
+**Flujo de Importación Unificado:**
+1. **Creación temporal ANSI**: Siempre se crea archivo temporal ANSI (Windows-1252) antes de importar
+2. **Eliminación previa**: `RemoveVBComponentIfExists()` antes de cada importación
+3. **Inyección de cabeceras**: Solo si faltan (`BuildBasHeader`/`BuildClsHeader`)
+4. **Importación por tipo**: LoadFromText para .bas, ImportVbComponentFromFile para .cls
+5. **Guardado individual**: `DoCmd.Save` después de cada importación exitosa
+6. **Limpieza**: Eliminación automática de archivos temporales
+
+**Requisito crítico**: Trust Center → "Confiar en el acceso al modelo de objetos de proyectos de VBA"
+
+Este flujo es la **fuente de verdad** del proyecto y garantiza la consistencia en la importación de módulos VBA.
 
 **`test`**
 Ejecuta las pruebas unitarias del proyecto.

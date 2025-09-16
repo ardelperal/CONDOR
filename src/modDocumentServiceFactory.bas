@@ -1,4 +1,6 @@
-﻿Option Compare Database
+﻿Attribute VB_Name = "modDocumentServiceFactory"
+Attribute VB_Name = "modDocumentServiceFactory"
+Option Compare Database
 Option Explicit
 
 

@@ -1,5 +1,6 @@
-﻿Option Compare Database
-    Option Explicit
+﻿Attribute VB_Name = "modTestUtils"
+Option Compare Database
+Option Explicit
 
     Public Function GetProjectPath() As String
         GetProjectPath = Left(CurrentProject.FullName, InStrRev(CurrentProject.FullName, "\back\") - 1)

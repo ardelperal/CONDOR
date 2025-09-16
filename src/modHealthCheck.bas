@@ -1,4 +1,5 @@
-﻿Option Compare Database
+﻿Attribute VB_Name = "modHealthCheck"
+Option Compare Database
 Option Explicit
 
 Public Function GenerateHealthReport() As String

@@ -1,4 +1,5 @@
-﻿Option Compare Database
+Attribute VB_Name = "TIAuthRepository"
+Option Compare Database
 Option Explicit
 
 Public Function TIAuthRepositoryRunAll() As CTestSuiteResult

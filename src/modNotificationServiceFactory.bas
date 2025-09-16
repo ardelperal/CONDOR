@@ -1,4 +1,6 @@
-﻿Option Compare Database
+﻿Attribute VB_Name = "modNotificationServiceFactory"
+
+Option Compare Database
 Option Explicit
 
 
