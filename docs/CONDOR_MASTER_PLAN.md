@@ -3780,3 +3780,159 @@ Ejecutando verificación de consistencia...
 - Contrato JSON de formulario: controls[].section (detail|header|footer) + properties mínimas.
 - Reglas de salida de export-form (--json/--output).
 - Resolución de BD: flag → posicional → ENV → defaultForAction (frontend/backend).
+
+## 25. CLI – Formularios (JSON↔Access)
+
+El sistema CONDOR implementa un conjunto completo de comandos CLI para la gestión de formularios de Access como código fuente mediante serialización JSON, siguiendo el principio "UI as Code".
+
+### 25.1. Comandos Disponibles
+
+#### export-form
+Exporta formularios de Access a formato JSON con estructura completa.
+
+**Sintaxis:**
+```bash
+cscript condor_cli.vbs export-form <db_path> <form_name> [opciones]
+```
+
+**Opciones:**
+- `--password <pwd>` - Contraseña de la base de datos
+- `--output <file>` - Archivo de salida (por defecto: <form_name>.json)
+- `--pretty` - Formato JSON con indentación legible
+- `--src <dir>` - Directorio de código fuente para detección de handlers VBA
+
+#### import-form
+Importa formularios desde archivos JSON con creación/modificación automática.
+
+**Sintaxis:**
+```bash
+cscript condor_cli.vbs import-form <json_file> <db_path> [opciones]
+```
+
+**Opciones:**
+- `--password <pwd>` - Contraseña de la base de datos
+- `--replace` - Reemplazar formulario existente
+- `--strict` - Modo estricto (falla si hay inconsistencias)
+- `--verbose` - Mostrar información detallada del proceso
+
+#### roundtrip-form
+Realiza test completo de export→import para verificar integridad.
+
+**Sintaxis:**
+```bash
+cscript condor_cli.vbs roundtrip-form <db_path> <form_name> [opciones]
+```
+
+**Opciones:**
+- `--password <pwd>` - Contraseña de la base de datos
+- `--temp-dir <dir>` - Directorio temporal (por defecto: %TEMP%)
+- `--verbose` - Mostrar información detallada del proceso
+
+#### validate-form-json
+Valida estructura e integridad de archivos JSON de formularios.
+
+**Sintaxis:**
+```bash
+cscript condor_cli.vbs validate-form-json <json_file> [opciones]
+```
+
+**Opciones:**
+- `--strict` - Validación estricta (requiere Controls y Properties)
+- `--schema` - Detectar y validar esquema automáticamente
+- `--verbose` - Mostrar información detallada de validación
+
+#### list-forms
+Lista formularios disponibles en la base de datos.
+
+**Sintaxis:**
+```bash
+cscript condor_cli.vbs list-forms [db_path] [opciones]
+```
+
+**Opciones:**
+- `--password <pwd>` - Contraseña de la base de datos
+- `--json` - Salida en formato JSON estructurado
+
+### 25.2. Dependencias Internas
+
+El sistema utiliza las siguientes funciones internas:
+
+- **JsonWriter/JsonParser** - Serialización y deserialización JSON
+- **NormalizeJsonObject** - Normalización de objetos JSON para comparación
+- **DiffJsonSemantico** - Comparación semántica de estructuras JSON
+- **OpenAccessQuiet** - Apertura silenciosa de Access con bypass automático
+- **ResolveDbForAction** - Resolución automática de rutas de base de datos
+
+### 25.3. Flujo de Trabajo Roundtrip
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Access Form   │───▶│   pre.json      │───▶│  Temp Access    │
+│   (Original)    │    │   (Export)      │    │  (Import)       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │
+┌─────────────────┐    ┌─────────────────┐             │
+│  Diff Report    │◀───│   post.json     │◀────────────┘
+│  (Comparison)   │    │   (Re-export)   │
+└─────────────────┘    └─────────────────┘
+```
+
+**Proceso:**
+1. Exporta el formulario original a JSON (pre.json)
+2. Importa desde pre.json (recrea el formulario)
+3. Exporta nuevamente a JSON (post.json)
+4. Compara pre.json vs post.json semánticamente
+5. Reporta diferencias encontradas
+
+### 25.4. Ejemplos de Uso
+
+**Paths reales de pruebas:**
+```bash
+# Exportar formulario con contraseña dpddpd (UI/sources)
+cscript condor_cli.vbs export-form "C:\Proyectos\CONDOR\ui\sources\Expedientes.accdb" "F_Expediente" --password dpddpd --output ".\out\F_Expediente.json" --pretty
+
+# Importar formulario a desarrollo
+cscript condor_cli.vbs import-form ".\out\F_Expediente.json" "C:\Proyectos\CONDOR\front\Desarrollo\CONDOR.accdb" --replace --verbose
+
+# Test de integridad roundtrip
+cscript condor_cli.vbs roundtrip-form "C:\Proyectos\CONDOR\front\Desarrollo\CONDOR.accdb" "F_Expediente" --temp ".\rt" --verbose
+
+# Validación estricta de JSON
+cscript condor_cli.vbs validate-form-json ".\out\F_Expediente.json" --strict --verbose
+
+# Listar formularios disponibles
+cscript condor_cli.vbs list-forms "C:\Proyectos\CONDOR\ui\sources\Expedientes.accdb" --password dpddpd --json
+```
+
+**Nota:** La contraseña `dpddpd` se utiliza para las bases de datos en `ui/sources/`.
+
+### 25.5. Estructura JSON Canónica
+
+Los formularios se serializan en formato JSON con la siguiente estructura:
+
+```json
+{
+  "FormName": "F_Expediente",
+  "Properties": {
+    "Caption": "Gestión de Expedientes",
+    "RecordSource": "tbExpedientes"
+  },
+  "sections": {
+    "header": {
+      "controls": [...]
+    },
+    "detail": {
+      "controls": [...]
+    },
+    "footer": {
+      "controls": [...]
+    }
+  }
+}
+```
+
+### 25.6. Códigos de Salida
+
+- **0** - Operación exitosa
+- **1** - Error en el proceso o diferencias encontradas (roundtrip-form)
+- **2** - Error de validación (validate-form-json en modo strict)

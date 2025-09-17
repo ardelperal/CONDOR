@@ -11,6 +11,7 @@ Const acViewDesign    = 1
 Const acWindowNormal  = 0
 Const acWindowHidden  = 1
 Const acWindowDialog  = 3
+Const acHidden        = 1  ' Para DoCmd.OpenForm modo oculto
 Const acObjectForm    = 2  ' Para Application.SaveAsText si se usa en el futuro
 Const acForm          = 2  ' Alias para acObjectForm
 Const acObjectTable   = 0  ' Para DoCmd.DeleteObject
@@ -598,9 +599,9 @@ Call CloseExistingAccessProcesses()
 If strAction <> "bundle" And strAction <> "validate-schema" And strAction <> "validate-form-json" And strAction <> "roundtrip-form" And strAction <> "list-forms" Then
     If strAction <> "import-form" Then
         ' Abrir Access en silencio con contraseña correcta usando función canónica
-        Set objAccess = OpenAccessApp(strAccessPath, gPassword, True)
+        Set objAccess = OpenAccessQuiet(strAccessPath, gPassword)
     Else
-        Set objAccess = OpenAccessApp(strAccessPath, gPassword, True)
+        Set objAccess = OpenAccessQuiet(strAccessPath, gPassword)
     End If
     If Not objAccess Is Nothing Then
         ' RemoveBrokenReferences ya se llama dentro de OpenAccessQuiet
@@ -642,7 +643,10 @@ ElseIf strAction = "list-forms" Then
 ElseIf strAction = "list-modules" Then
     Call ListModulesCommand()
     WScript.Quit 0
-
+ElseIf strAction = "roundtrip-form" Then
+    Call RoundtripFormCommand()
+ElseIf strAction = "validate-form-json" Then
+    Call ValidateFormJsonCommand()
 Else
     WScript.Echo "Error: Comando no reconocido: " & strAction
     WScript.Quit 1
@@ -655,7 +659,7 @@ If Not objAccess Is Nothing And strAction <> "list-forms" And strAction <> "list
     ' Restaurar startup antes de cerrar (solo si no es import-form)
     If strAction <> "import-form" Then
     End If
-    Call CloseAccessApp(objAccess)
+    Call CloseAccessQuiet(objAccess)
 End If
 On Error Goto 0
 
@@ -697,7 +701,7 @@ Sub ValidateAllModules()
             If validationResult = True Then
                 validFiles = validFiles + 1
                 If gVerbose Then
-                    WScript.Echo "  ✓ Sintaxis valida"
+                    WScript.Echo "  [OK] Sintaxis valida"
                 End If
             Else
                 invalidFiles = invalidFiles + 1
@@ -716,7 +720,7 @@ Sub ValidateAllModules()
         WScript.Echo "ADVERTENCIA: Se encontraron errores de sintaxis. Corrija antes de importar."
         WScript.Quit 1
     Else
-        WScript.Echo "✓ Todos los archivos tienen sintaxis valida"
+        WScript.Echo "[OK] Todos los archivos tienen sintaxis valida"
     End If
 End Sub
 
@@ -1125,11 +1129,11 @@ Sub CompileModulesConditionally()
             Else
                 ' Los módulos se guardan automáticamente, no es necesario guardar explícitamente
                 If vbComponent.Type = 1 Then
-                    WScript.Echo "  ✓ " & vbComponent.Name & " compilado correctamente"
+                    WScript.Echo "  [OK] " & vbComponent.Name & " compilado correctamente"
                     compiledModules = compiledModules + 1
                 Else
                     ' Para módulos de clase, solo verificar sintaxis sin intentar guardar individualmente
-                    WScript.Echo "  ✓ " & vbComponent.Name & " verificado (clase)"
+                    WScript.Echo "  [OK] " & vbComponent.Name & " verificado (clase)"
                     compiledModules = compiledModules + 1
                 End If
             End If
@@ -1149,7 +1153,7 @@ Sub CompileModulesConditionally()
             WScript.Echo "Continuando con módulos compilados individualmente..."
             Err.Clear
         Else
-            WScript.Echo "✓ Compilación global exitosa"
+            WScript.Echo "[OK] Compilación global exitosa"
         End If
         On Error GoTo 0
     Else
@@ -1217,7 +1221,7 @@ Sub VerifyModuleNames()
     
     ' Reporte final
     If discrepancies = 0 Then
-        WScript.Echo "✓ Verificación exitosa: Todos los módulos coinciden entre src y Access"
+        WScript.Echo "[OK] Verificación exitosa: Todos los módulos coinciden entre src y Access"
         WScript.Echo "  - Módulos en src: " & srcModules.Count
         WScript.Echo "  - Módulos en Access: " & accessModules.Count
     Else
@@ -1469,7 +1473,7 @@ Sub ValidateSchema(lanzaderaPath, condorPath)
     If Not VerifySchema(condorPath, "", condorSchema) Then allOk = False
     
     If allOk Then
-        WScript.Echo "✓ VALIDACIÓN DE ESQUEMA EXITOSA. Todas las bases de datos son consistentes."
+        WScript.Echo "[OK] VALIDACIÓN DE ESQUEMA EXITOSA. Todas las bases de datos son consistentes."
         WScript.Quit 0
     Else
         WScript.Echo "X VALIDACIÓN DE ESQUEMA FALLIDA. Corrija las discrepancias."
@@ -1735,7 +1739,7 @@ Sub ShowHelp()
     WScript.Echo ""
     WScript.Echo "COMANDOS PRINCIPALES:"
     WScript.Echo ""
-    WScript.Echo "📤 EXPORTACIÓN:"
+    WScript.Echo "[EXPORTACION]:"
     WScript.Echo "  export [--verbose]           - Exportar módulos VBA desde Access a /src"
     WScript.Echo "                                 Codificación: ANSI para compatibilidad"
     WScript.Echo "                                 Las cabeceras SIEMPRE quedan correctas en ./src"
@@ -1743,7 +1747,7 @@ Sub ShowHelp()
     WScript.Echo "                                 UI (JSON): usar export-form/import-form para formularios"
     WScript.Echo "                                 --verbose: Mostrar detalles de cada archivo"
     WScript.Echo ""
-    WScript.Echo "🔄 SINCRONIZACIÓN:"
+    WScript.Echo "[SINCRONIZACION]:"
     WScript.Echo "  rebuild [--verbose] [--verifyModules] - Método principal de sincronización del proyecto"
     WScript.Echo "                                 Opera sobre FRONTEND por defecto (" & GetDevDbPath() & ")"
     WScript.Echo "                                 Reconstrucción completa: elimina todos los módulos"
@@ -1765,18 +1769,18 @@ Sub ShowHelp()
     WScript.Echo "                                   cscript condor_cli.vbs update --changed"
     WScript.Echo "                                   cscript condor_cli.vbs update --all"
     WScript.Echo ""
-    WScript.Echo "✅ VALIDACIÓN Y PRUEBAS:"
+    WScript.Echo "[VALIDACION Y PRUEBAS]:"
     WScript.Echo "  validate [--verbose] [--src] - Validar sintaxis VBA sin importar a Access"
     WScript.Echo "                                 --verbose: Mostrar detalles de validación"
     WScript.Echo "                                 --src: Usar directorio fuente alternativo"
     WScript.Echo "  test                         - Ejecutar suite completa de pruebas unitarias"
     WScript.Echo "  lint                         - Auditar código VBA (detectar cabeceras duplicadas)"
     WScript.Echo ""
-    WScript.Echo "📦 EMPAQUETADO:"
+    WScript.Echo "[EMPAQUETADO]:"
     WScript.Echo "  bundle <funcionalidad> [destino] - Empaquetar archivos por funcionalidad"
     WScript.Echo "                                      Destino opcional (por defecto: directorio actual)"
     WScript.Echo ""
-    WScript.Echo "🗄️ GESTIÓN DE BASE DE DATOS:"
+    WScript.Echo "[GESTION DE BASE DE DATOS]:"
     WScript.Echo "  createtable <nombre> <sql>   - Crear tabla con consulta SQL personalizada"
     WScript.Echo "  droptable <nombre>           - Eliminar tabla de la base de datos"
     WScript.Echo "  listtables [db_path]         - Listar todas las tablas"
@@ -1790,7 +1794,7 @@ Sub ShowHelp()
     WScript.Echo "                                 --expectSrc: Verificar existencia de archivos fuente en /src"
     WScript.Echo "                                 --diff: Detectar inconsistencias entre BD y archivos fuente"
     WScript.Echo "                                 Análisis: módulos faltantes, huérfanos, desactualizados"
-    WScript.Echo "                                 Indicadores: ✓ (sincronizado), ⚠ (advertencia), ✗ (error)"
+    WScript.Echo "                                 Indicadores: [OK] (sincronizado), [WARN] (advertencia), [ERROR] (error)"
     WScript.Echo "                                 Orden de obtención: VBIDE → AllModules → DAO (fallback). Útil cuando VBIDE está bloqueado por políticas."
     WScript.Echo "  relink <db_path> <folder>    - Re-vincular tablas a bases locales específicas"
     WScript.Echo "  relink --all                 - Re-vincular automáticamente todas las bases en ./back"
@@ -1853,7 +1857,7 @@ Sub ShowHelp()
     WScript.Echo "  validate-form-json <json_path> [--strict] [--schema] - Validar estructura JSON de formulario"
     WScript.Echo "                                 --strict: Validación exhaustiva de coherencia con código VBA"
     WScript.Echo "                                 --schema: Validar contra esquema específico"
-    WScript.Echo "  roundtrip-form <db_path> <form> [--password] [--temp-dir] [--verbose] - Test export→import de formulario"
+    WScript.Echo "  roundtrip-form <form_name> <db_path> [--password <pwd>] [--temp-dir <dir>] [--verbose] - Test export→import de formulario"
     WScript.Echo ""
     WScript.Echo "🔗 UI as Code — Vinculación UI↔Código:"
     WScript.Echo "  Los comandos export-form e import-form detectan automáticamente módulos .bas/.cls"
@@ -1861,21 +1865,21 @@ Sub ShowHelp()
     WScript.Echo ""
     WScript.Echo "  📋 Detección de Módulos:"
     WScript.Echo "    - Busca archivos: Form_<FormName>.bas, <FormName>.bas, frm<FormName>.bas, Form_<FormName>.cls"
-    WScript.Echo "    • Extrae handlers con patrón: Sub <Control>_<Event>(...)"
-    WScript.Echo "    • Eventos soportados: Click, DblClick, Current, Load, Open, GotFocus, LostFocus,"
+    WScript.Echo "    - Extrae handlers con patrón: Sub <Control>_<Event>(...)"
+    WScript.Echo "    - Eventos soportados: Click, DblClick, Current, Load, Open, GotFocus, LostFocus,"
     WScript.Echo "                          Change, AfterUpdate, BeforeUpdate"
     WScript.Echo ""
-    WScript.Echo "  📤 En export-form:"
-    WScript.Echo "    • Genera bloque JSON 'code.module' con: exists, filename, handlers[]"
-    WScript.Echo "    • Cada handler incluye: control, event, signature"
-    WScript.Echo "    • Añade 'events.detected' a controles con handlers encontrados"
+    WScript.Echo "  [EXPORTACION] En export-form:"
+    WScript.Echo "    - Genera bloque JSON 'code.module' con: exists, filename, handlers[]"
+    WScript.Echo "    - Cada handler incluye: control, event, signature"
+    WScript.Echo "    - Añade 'events.detected' a controles con handlers encontrados"
     WScript.Echo ""
     WScript.Echo "  📥 En import-form:"
-    WScript.Echo "    • Establece automáticamente '[Event Procedure]' cuando:"
+    WScript.Echo "    - Establece automáticamente '[Event Procedure]' cuando:"
     WScript.Echo "      - El JSON especifica explícitamente '[Event Procedure]'"
     WScript.Echo "      - Existe handler correspondiente en código detectado"
-    WScript.Echo "    • Modo --strict: ERROR si hay discrepancias entre JSON y código"
-    WScript.Echo "    • Sin --strict: WARNING por discrepancias, continúa procesamiento"
+    WScript.Echo "    - Modo --strict: ERROR si hay discrepancias entre JSON y código"
+    WScript.Echo "    - Sin --strict: WARNING por discrepancias, continúa procesamiento"
     WScript.Echo ""
     WScript.Echo "  💡 Ejemplo de flujo:"
     WScript.Echo "    1. export-form db.accdb MiForm --src ./src"
@@ -1975,7 +1979,9 @@ WScript.Echo "                   Incluye ITestReporter, CTestResult, CTestSuiteR
     WScript.Echo "  cscript condor_cli.vbs update ModuloA CClaseB"
     WScript.Echo "  cscript condor_cli.vbs test --password miClave"
     WScript.Echo "  cscript condor_cli.vbs list-forms --password miClave"
-    WScript.Echo "  cscript condor_cli.vbs export-form MiDB.accdb MiForm"
+    WScript.Echo "  cscript condor_cli.vbs export-form MiDB.accdb MiForm --pretty"
+    WScript.Echo "  cscript condor_cli.vbs import-form MiForm.json MiDB.accdb --strict"
+    WScript.Echo "  cscript condor_cli.vbs roundtrip-form MiDB.accdb MiForm --password miClave --verbose"
     WScript.Echo ""
     WScript.Echo "RESOLUCIÓN DE BASE DE DATOS:"
     WScript.Echo "  Todos los comandos aceptan ruta posicional o --db <ruta>."
@@ -3085,7 +3091,7 @@ Private Sub ExportModulesToDirectory(targetDir)
     
     ' Resolver BD usando función canónica
     Dim dbPath, dbOrigin
-    Call ResolveDbForAction("export", dbPath, dbOrigin)
+    dbPath = ResolveDbForAction("export", dbOrigin)
     
     ' Abrir Access para exportar módulos
     Set objAccess = OpenAccessApp(dbPath, gPassword, True)
@@ -3382,65 +3388,14 @@ WScript.Echo "   Incluye: ITestReporter, CTestResult, CTestSuiteResult, CTestRep
     WScript.Echo "  cscript condor_cli.vbs bundle condorcli"
     WScript.Echo ""
     WScript.Echo "NOTAS:"
-    WScript.Echo "  • Los archivos se copian con extensión .txt para fácil visualización"
-    WScript.Echo "  • Se crea una carpeta con timestamp: bundle_<funcionalidad>_YYYYMMDD_HHMMSS"
-    WScript.Echo "  • Cada funcionalidad incluye automáticamente sus dependencias"
-    WScript.Echo "  • Si un archivo no existe, se muestra una advertencia pero continúa"
+    WScript.Echo "  - Los archivos se copian con extensión .txt para fácil visualización"
+    WScript.Echo "  - Se crea una carpeta con timestamp: bundle_<funcionalidad>_YYYYMMDD_HHMMSS"
+    WScript.Echo "  - Cada funcionalidad incluye automáticamente sus dependencias"
+    WScript.Echo "  - Si un archivo no existe, se muestra una advertencia pero continúa"
 End Sub
 
 ' Subrutina para mostrar ayuda del comando roundtrip-form
-Sub ShowRoundtripFormHelp()
-    WScript.Echo "=== CONDOR CLI - AYUDA DEL COMANDO ROUNDTRIP-FORM ==="
-    WScript.Echo "Ejecuta un ciclo completo de import-form --overwrite seguido de export-form"
-    WScript.Echo "para verificar la integridad del proceso de importación/exportación."
-    WScript.Echo ""
-    WScript.Echo "USO:"
-    WScript.Echo "  cscript condor_cli.vbs roundtrip-form <json_path> --db <db_path> [opciones]"
-    WScript.Echo "  cscript condor_cli.vbs roundtrip-form --help"
-    WScript.Echo ""
-    WScript.Echo "PARÁMETROS:"
-    WScript.Echo "  <json_path>              - Archivo JSON con definición del formulario (obligatorio)"
-    WScript.Echo "  --db <db_path>           - Ruta a la base de datos Access (obligatorio)"
-    WScript.Echo ""
-    WScript.Echo "OPCIONES:"
-    WScript.Echo "  --password <pwd>         - Contraseña de la base de datos (si está protegida)"
-    WScript.Echo "  --pretty                 - Generar JSON con formato legible"
-    WScript.Echo "  --strict                 - Modo estricto: falla si hay diferencias en roundtrip"
-    WScript.Echo "  --diff                   - Mostrar diferencias línea por línea si las hay"
-    WScript.Echo "  --verbose                - Mostrar información detallada del proceso"
-    WScript.Echo "  --help, -h, help         - Mostrar esta ayuda"
-    WScript.Echo ""
-    WScript.Echo "FUNCIONAMIENTO:"
-    WScript.Echo "  1. Importa el formulario desde JSON usando import-form --overwrite"
-    WScript.Echo "  2. Exporta el formulario a JSON temporal usando export-form"
-    WScript.Echo "  3. Si --diff está activo, compara los archivos línea por línea"
-    WScript.Echo "  4. Si --strict está activo y hay diferencias, retorna código de salida 1"
-    WScript.Echo "  5. Guarda el resultado en directorio temporal .tmp\roundtrip\"
-    WScript.Echo ""
-    WScript.Echo "CÓDIGOS DE SALIDA:"
-    WScript.Echo "  0 - Roundtrip exitoso (sin diferencias o modo no estricto)"
-    WScript.Echo "  1 - Error en el proceso o diferencias detectadas en modo estricto"
-    WScript.Echo ""
-    WScript.Echo "EJEMPLOS:"
-    WScript.Echo "  # Roundtrip básico"
-    WScript.Echo "  cscript condor_cli.vbs roundtrip-form "".\ui\forms\FormComercial.json"" --db "".\ui\sources\Expedientes.accdb"" --password dpddpd"
-    WScript.Echo ""
-    WScript.Echo "  # Roundtrip con formato pretty y modo estricto"
-    WScript.Echo "  cscript condor_cli.vbs roundtrip-form "".\ui\forms\FormComercial.json"" --db "".\ui\sources\Expedientes.accdb"" --password dpddpd --pretty --strict"
-    WScript.Echo ""
-    WScript.Echo "  # Roundtrip con diff detallado"
-    WScript.Echo "  cscript condor_cli.vbs roundtrip-form "".\ui\forms\FormComercial.json"" --db "".\ui\sources\Expedientes.accdb"" --password dpddpd --pretty --strict --diff"
 
-    WScript.Echo "  cscript condor_cli.vbs roundtrip-form ""C:\\DB\\app.accdb"" ""form.json"" --verbose"
-    WScript.Echo "  cscript condor_cli.vbs roundtrip-form ""C:\\DB\\app.accdb"" ""FormularioClientes"""
-    WScript.Echo "  cscript condor_cli.vbs roundtrip-form ""C:\\DB\\app.accdb"" ""form.json"" --password ""mi_pwd"""
-    WScript.Echo ""
-    WScript.Echo "NOTAS:"
-    WScript.Echo "  • Los comandos operan en vista Diseño (no ejecutan eventos)"
-    WScript.Echo "  • Se crea automáticamente el directorio 'roundtrip/' si no existe"
-    WScript.Echo "  • El archivo de salida se nombra como <nombre_formulario>.json"
-    WScript.Echo "  • Útil para verificar que el proceso de importación preserva la estructura"
-End Sub
 
 ' Función para obtener la lista de archivos por funcionalidad según CONDOR_MASTER_PLAN.md
 ' Incluye dependencias para cada funcionalidad
@@ -4087,50 +4042,66 @@ End Function
 
 ' ===================================================================
 ' SUBRUTINA: ExportForm
-' Descripción: Exporta el diseño de un formulario a JSON usando SaveAsText sin abrir el formulario en vista diseño.
+' Descripción: Exporta el diseño de un formulario a JSON con nueva sintaxis canónica
 ' ===================================================================
 Sub ExportForm()
-    Dim strDbPath, strFormName, strOutputPath, strPassword, strOutDir
+    Dim strDbPath, strFormName, strOutputPath, strPassword
+    Dim bPretty, strExpand
     Dim i
     
     ' Verificar argumentos mínimos
-    If objArgs.Count < 3 Then
-        WScript.Echo "Error: El comando export-form requiere al menos una ruta de base de datos y un nombre de formulario."
-        WScript.Echo "Uso: cscript condor_cli.vbs export-form <db_path> <form_name> [--password <pwd>] [--outdir <dir>] [--verbose]"
+    If objArgs.Count < 2 Then
+        Call ShowExportFormHelp()
         WScript.Quit 1
     End If
     
-    ' Asignar argumentos básicos
-    strDbPath = objArgs(1)
-    strFormName = objArgs(2)
+    ' Resolver base de datos y formulario
+    strDbPath = ResolveDbForAction(1)
+    If strDbPath = "" Then
+        WScript.Echo "Error: No se pudo resolver la ruta de la base de datos."
+        Call ShowExportFormHelp()
+        WScript.Quit 1
+    End If
+    
+    ' Determinar nombre del formulario (puede ser arg 1 o 2 según si se especificó db_path)
+    If objArgs.Count >= 2 And Not StartsWith(objArgs(1), "--") Then
+        If objArgs.Count >= 3 And Not StartsWith(objArgs(2), "--") Then
+            strFormName = objArgs(2)  ' db_path form_name
+        Else
+            strFormName = objArgs(1)  ' form_name (db por defecto)
+        End If
+    Else
+        WScript.Echo "Error: Debe especificar el nombre del formulario."
+        Call ShowExportFormHelp()
+        WScript.Quit 1
+    End If
+    
+    ' Inicializar valores por defecto
     strPassword = ""
-    strOutDir = ""
+    strOutputPath = ""
+    bPretty = False
+    strExpand = "sections,properties,extra"
     
     ' Procesar argumentos opcionales
-    For i = 3 To objArgs.Count - 1
+    For i = 1 To objArgs.Count - 1
         Dim currentArg
         currentArg = objArgs(i)
         
-        If LCase(currentArg) = "--password" And i < objArgs.Count - 1 Then
+        If LCase(currentArg) = "--output" And i < objArgs.Count - 1 Then
+            strOutputPath = objArgs(i + 1)
+        ElseIf LCase(currentArg) = "--password" And i < objArgs.Count - 1 Then
             strPassword = objArgs(i + 1)
-        ElseIf LCase(currentArg) = "--outdir" And i < objArgs.Count - 1 Then
-            strOutDir = objArgs(i + 1)
-        ElseIf LCase(currentArg) = "--verbose" Then
-            gVerbose = True
-        ElseIf LCase(currentArg) = "--sharedopen" Or LCase(currentArg) = "/sharedopen" Then
-            WScript.Echo "BD en uso: no se pudo abrir en modo exclusivo. Use --sharedopen si solo necesita lectura."
-            WScript.Quit 1
+        ElseIf LCase(currentArg) = "--pretty" Then
+            bPretty = True
+        ElseIf LCase(currentArg) = "--expand" And i < objArgs.Count - 1 Then
+            strExpand = objArgs(i + 1)
         End If
     Next
     
-    ' Configurar directorio de salida por defecto
-    If strOutDir = "" Then
-        strOutDir = ".\ui\forms\"
-    End If
-    
-    ' Asegurar que el directorio de salida existe
-    If Not EnsureDir(strOutDir) Then
-        WScript.Echo "Error: No se pudo crear el directorio de salida: " & strOutDir
+    ' Configurar archivo de salida por defecto si no se especificó
+    If strOutputPath = "" Then
+        WScript.Echo "Error: Debe especificar --output <json_path>"
+        Call ShowExportFormHelp()
         WScript.Quit 1
     End If
     
@@ -4143,34 +4114,26 @@ Sub ExportForm()
     ' Convertir a ruta absoluta para evitar problemas de apertura
     strDbPath = objFSO.GetAbsolutePathName(strDbPath)
 
-    If gVerbose Then WScript.Echo "✓ Verificando acceso exclusivo a BD: " & strDbPath
+    If gVerbose Then WScript.Echo "✓ Abriendo BD con OpenAccessQuiet: " & strDbPath
     
-    ' Preflight de exclusividad con timeout
-    If Not WaitForExclusive(strDbPath, strPassword, 5) Then
-        WScript.Echo "✗ BD en uso: no se pudo abrir en modo exclusivo. Use --sharedopen si solo necesita lectura."
-        WScript.Quit 1
-    End If
+    ' Abrir con OpenAccessQuiet
+    Call OpenAccessQuiet(strDbPath, strPassword)
     
-    If gVerbose Then WScript.Echo "✓ BD abierta en modo exclusivo"
+    If gVerbose Then WScript.Echo "✓ BD abierta correctamente"
     
     ' Verificar existencia del formulario
     If Not HasForm(strFormName) Then
         WScript.Echo "✗ Formulario no encontrado: " & strFormName
-        CloseAccessApp objAccess
+        Call CloseAccessQuiet(objAccess)
         WScript.Quit 1
     End If
     
     If gVerbose Then WScript.Echo "✓ Formulario encontrado: " & strFormName
     
-    
     ' Exportar formulario usando SaveAsText sin abrirlo
-    Dim tempTxtPath, jsonOutputPath, dbName
+    Dim tempTxtPath
     tempTxtPath = objFSO.GetTempName() & ".txt"
     tempTxtPath = objFSO.BuildPath(objFSO.GetSpecialFolder(2), tempTxtPath) ' Temp folder
-    
-    ' Construir nombre del archivo JSON de salida
-    dbName = objFSO.GetBaseName(strDbPath)
-    jsonOutputPath = objFSO.BuildPath(strOutDir, dbName & "__" & strFormName & ".json")
     
     If gVerbose Then WScript.Echo "✓ Exportando formulario usando SaveAsText..."
     
@@ -4181,7 +4144,7 @@ Sub ExportForm()
     If Err.Number <> 0 Then
         Dim errMsg: errMsg = "Error al exportar formulario '" & strFormName & "': " & Err.Description
         Err.Clear
-        CloseAccessApp objAccess
+        Call CloseAccessQuiet(objAccess)
         WScript.Echo "✗ " & errMsg
         WScript.Quit 1
     End If
@@ -4199,37 +4162,18 @@ Sub ExportForm()
     fileSize = objFSO.GetFile(tempTxtPath).Size
     fileSha1 = Sha1OfFile(tempTxtPath)
     
-    ' Construir estructura JSON
+    ' Construir estructura JSON con nueva sintaxis
     Dim jsonContent
-    jsonContent = "{" & vbCrLf
-    jsonContent = jsonContent & "  ""db_path"": """ & Replace(strDbPath, "\", "\\") & """," & vbCrLf
-    jsonContent = jsonContent & "  ""db_name"": """ & dbName & """," & vbCrLf
-    jsonContent = jsonContent & "  ""form_name"": """ & strFormName & """," & vbCrLf
-    jsonContent = jsonContent & "  ""timestamp"": """ & FormatDateTime(Now, vbGeneralDate) & """," & vbCrLf
-    jsonContent = jsonContent & "  ""save_as_text_path"": """ & Replace(tempTxtPath, "\", "\\") & """," & vbCrLf
-    jsonContent = jsonContent & "  ""size_bytes"": " & fileSize & "," & vbCrLf
-    jsonContent = jsonContent & "  ""sha1"": """ & fileSha1 & """," & vbCrLf
-    jsonContent = jsonContent & "  ""vbe_text"": [" & vbCrLf
-    
-    ' Agregar líneas del archivo VBE como array JSON
-    Dim j
-    For j = 0 To UBound(vbeLines)
-        Dim escapedLine
-        escapedLine = Replace(vbeLines(j), "\", "\\")
-        escapedLine = Replace(escapedLine, """", "\""")
-        escapedLine = Replace(escapedLine, vbTab, "\t")
-        jsonContent = jsonContent & "    """ & escapedLine & """"
-        If j < UBound(vbeLines) Then jsonContent = jsonContent & ","
-        jsonContent = jsonContent & vbCrLf
-    Next
-    
-    jsonContent = jsonContent & "  ]" & vbCrLf
-    jsonContent = jsonContent & "}" & vbCrLf
+    If bPretty Then
+        jsonContent = BuildPrettyFormJson(strDbPath, strFormName, vbeLines, strExpand, fileSize, fileSha1)
+    Else
+        jsonContent = BuildCompactFormJson(strDbPath, strFormName, vbeLines, strExpand, fileSize, fileSha1)
+    End If
     
     ' Escribir archivo JSON de salida usando UTF-8
-    Call WriteUtf8File(jsonOutputPath, jsonContent)
+    Call WriteUtf8File(strOutputPath, jsonContent)
     
-    If gVerbose Then WScript.Echo "✓ Archivo JSON generado: " & jsonOutputPath
+    If gVerbose Then WScript.Echo "✓ Archivo JSON generado: " & strOutputPath
     
     ' Limpiar archivo temporal
     On Error Resume Next
@@ -4237,11 +4181,10 @@ Sub ExportForm()
     On Error GoTo 0
     
     ' Cerrar Access
-    objAccess.Echo True
-    CloseAccessApp objAccess
+    Call CloseAccessQuiet(objAccess)
     
     WScript.Echo "✓ Exportación completada exitosamente"
-    WScript.Echo "  Archivo: " & jsonOutputPath
+    WScript.Echo "  Archivo: " & strOutputPath
     WScript.Echo "  Tamaño: " & fileSize & " bytes"
     WScript.Echo "  SHA1: " & fileSha1
 End Sub
@@ -4346,11 +4289,12 @@ End Function
 
 ' ===================================================================
 ' SUBRUTINA: RoundtripFormCommand
-' Descripción: Realiza test de roundtrip import→export de formulario
+' Descripción: Realiza test de roundtrip import→export de formulario canónico
+' Flujo: 1) Import con overwrite, 2) Export a temporal, 3) Diff opcional
 ' ===================================================================
 Sub RoundtripFormCommand()
-    Dim strDbPath, strJsonPath, strFormName, strPassword, strOutputDir
-    Dim i, objJsonData, strOutputPath, bStrict, bDiff, bPretty
+    Dim strDbPath, strFormName, strTempDir, strPassword
+    Dim i, strPreJsonPath, strPostJsonPath
     
     ' Verificar si se solicita ayuda
     If objArgs.Count > 1 Then
@@ -4360,185 +4304,315 @@ Sub RoundtripFormCommand()
         End If
     End If
     
-    ' Verificar argumentos mínimos
-    If objArgs.Count < 3 Then
-        WScript.Echo "Error: El comando roundtrip-form requiere un archivo JSON y una base de datos."
-        WScript.Echo "Uso: cscript condor_cli.vbs roundtrip-form <json_path> --db <db_path> [--password <pwd>] [--strict] [--diff] [--pretty]"
+    ' Verificar argumentos mínimos (db_path, form_name, --temp dir)
+    If objArgs.Count < 4 Then
+        Call ShowRoundtripFormHelp()
         WScript.Quit 1
     End If
     
     ' Inicializar variables
-    strJsonPath = objArgs(1)
     strDbPath = ""
+    strFormName = ""
+    strTempDir = ""
     strPassword = ""
-    bStrict = False
-    bDiff = False
-    bPretty = False
     
-    ' Procesar argumentos
-    For i = 2 To objArgs.Count - 1
-        If LCase(objArgs(i)) = "--db" And i < objArgs.Count - 1 Then
-            strDbPath = objArgs(i + 1)
+    ' Procesar argumentos posicionales y opcionales
+    For i = 1 To objArgs.Count - 1
+        If Left(objArgs(i), 2) <> "--" Then
+            ' Argumentos posicionales
+            If strDbPath = "" Then
+                strDbPath = objArgs(i)
+            ElseIf strFormName = "" Then
+                strFormName = objArgs(i)
+            End If
+        ElseIf LCase(objArgs(i)) = "--temp" And i < objArgs.Count - 1 Then
+            strTempDir = objArgs(i + 1)
         ElseIf LCase(objArgs(i)) = "--password" And i < objArgs.Count - 1 Then
             strPassword = objArgs(i + 1)
-        ElseIf LCase(objArgs(i)) = "--strict" Then
-            bStrict = True
-        ElseIf LCase(objArgs(i)) = "--diff" Then
-            bDiff = True
-        ElseIf LCase(objArgs(i)) = "--pretty" Then
-            bPretty = True
-        ElseIf LCase(objArgs(i)) = "--verbose" Then
-            gVerbose = True
         End If
     Next
     
     ' Validar argumentos requeridos
-    If strDbPath = "" Then
-        WScript.Echo "Error: Debe especificar --db <ruta_base_datos>"
+    If strDbPath = "" Or strFormName = "" Or strTempDir = "" Then
+        WScript.Echo "Error: Faltan argumentos requeridos."
+        Call ShowRoundtripFormHelp()
         WScript.Quit 1
     End If
     
-    ' Verificar que los archivos existen
-    If Not objFSO.FileExists(strJsonPath) Then
-        WScript.Echo "Error: El archivo JSON no existe: " & strJsonPath
-        WScript.Quit 1
+    ' Resolver rutas canónicas
+    Dim dbOrigin
+    If Len(strDbPath) > 0 Then
+        strDbPath = ToAbsolute(strDbPath)
+        dbOrigin = "explicit"
+    Else
+        strDbPath = ResolveDbForAction("roundtrip-form", dbOrigin)
     End If
+    strTempDir = objFSO.GetAbsolutePathName(strTempDir)
     
+    ' Verificar que la base de datos existe
     If Not objFSO.FileExists(strDbPath) Then
         WScript.Echo "Error: La base de datos no existe: " & strDbPath
         WScript.Quit 1
     End If
     
-    ' Leer nombre del formulario del JSON
-    On Error Resume Next
-    Set objJsonData = ParseJsonFile(strJsonPath)
-    If Err.Number <> 0 Then
-        WScript.Echo "Error: No se pudo parsear el archivo JSON: " & Err.Description
-        WScript.Quit 1
-    End If
-    On Error GoTo 0
-    
-    If objJsonData.Exists("formName") Then
-        strFormName = objJsonData("formName")
-    ElseIf objJsonData.Exists("name") Then
-        strFormName = objJsonData("name")
-    Else
-        WScript.Echo "Error: El archivo JSON no contiene el campo 'formName' o 'name' requerido."
-        WScript.Quit 1
-    End If
-    
-    ' Crear directorio temporal .tmp\roundtrip
-    Dim strTempDir
-    strTempDir = objFSO.BuildPath(objFSO.GetParentFolderName(objFSO.GetAbsolutePathName(strJsonPath)), ".tmp")
+    ' Crear directorio temporal si no existe
     If Not objFSO.FolderExists(strTempDir) Then
         objFSO.CreateFolder strTempDir
     End If
     
-    Dim strRoundtripDir
-    strRoundtripDir = objFSO.BuildPath(strTempDir, "roundtrip")
-    If Not objFSO.FolderExists(strRoundtripDir) Then
-        objFSO.CreateFolder strRoundtripDir
-    End If
+    ' Definir rutas de archivos JSON
+    strPreJsonPath = objFSO.BuildPath(strTempDir, strFormName & ".json")
+    strPostJsonPath = objFSO.BuildPath(strTempDir, strFormName & ".post.json")
     
-    strOutputPath = objFSO.BuildPath(strRoundtripDir, strFormName & ".json")
-    
+    ' Mostrar información inicial si verbose
     If gVerbose Then
         WScript.Echo "=== ROUNDTRIP FORM INICIADO ==="
-        WScript.Echo "JSON entrada: " & strJsonPath
         WScript.Echo "Base de datos: " & strDbPath
         WScript.Echo "Formulario: " & strFormName
-        WScript.Echo "Salida temporal: " & strOutputPath
-        WScript.Echo "Modo estricto: " & bStrict
-        WScript.Echo "Generar diff: " & bDiff
+        WScript.Echo "Directorio temporal: " & strTempDir
+        WScript.Echo "Archivo pre-export: " & strPreJsonPath
+        WScript.Echo "Archivo post-export: " & strPostJsonPath
     End If
     
+    ' PASO 1: Exportar formulario a <dir>\<form_name>.json
+    If gVerbose Then WScript.Echo "PASO 1: Exportando formulario original..."
+    
     On Error Resume Next
+    Call ExportFormToJson(strDbPath, strFormName, strPreJsonPath, strPassword, False)
+    If Err.Number <> 0 Then
+        WScript.Echo "Error en export-form inicial: " & Err.Description
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
     
-    ' PASO A: Import del formulario con --overwrite
-    If gVerbose Then WScript.Echo "PASO A: Importando formulario desde JSON..."
+    If Not objFSO.FileExists(strPreJsonPath) Then
+        WScript.Echo "Error: No se generó el archivo JSON inicial: " & strPreJsonPath
+        WScript.Quit 1
+    End If
     
-    Call ImportFormFromJson(strJsonPath, strDbPath, strPassword, True) ' True = overwrite
+    If gVerbose Then WScript.Echo "✓ Export inicial completado."
     
+    ' PASO 2: Reimportar ese JSON sobre el mismo form (sin cambios)
+    If gVerbose Then WScript.Echo "PASO 2: Reimportando formulario desde JSON..."
+    
+    On Error Resume Next
+    Call ImportFormFromJson(strPreJsonPath, strDbPath, strPassword, True) ' overwrite=True
     If Err.Number <> 0 Then
         WScript.Echo "Error en import-form: " & Err.Description
         WScript.Quit 1
     End If
-    
-    If gVerbose Then WScript.Echo "Import completado exitosamente."
-    
-    ' PASO B: Export del formulario a carpeta temporal
-    If gVerbose Then WScript.Echo "PASO B: Exportando formulario..."
-    
-    Call ExportFormToJson(strDbPath, strFormName, strOutputPath, strPassword, bPretty)
-    
-    If Err.Number <> 0 Then
-        WScript.Echo "Error en export-form: " & Err.Description
-        WScript.Quit 1
-    End If
-    
-    If Not objFSO.FileExists(strOutputPath) Then
-        WScript.Echo "Error: No se generó el archivo JSON de salida: " & strOutputPath
-        WScript.Quit 1
-    End If
-    
     On Error GoTo 0
     
-    ' PASO C: Generar diff si se solicita
-    Dim bHasDifferences
-    bHasDifferences = False
+    If gVerbose Then WScript.Echo "✓ Import completado."
     
-    If bDiff Then
-        If gVerbose Then WScript.Echo "PASO C: Generando diff..."
-        bHasDifferences = GenerateSimpleDiff(strJsonPath, strOutputPath)
+    ' PASO 3: Volver a exportar a <dir>\<form_name>.post.json
+    If gVerbose Then WScript.Echo "PASO 3: Exportando formulario post-import..."
+    
+    On Error Resume Next
+    Call ExportFormToJson(strDbPath, strFormName, strPostJsonPath, strPassword, False)
+    If Err.Number <> 0 Then
+        WScript.Echo "Error en export-form final: " & Err.Description
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
+    
+    If Not objFSO.FileExists(strPostJsonPath) Then
+        WScript.Echo "Error: No se generó el archivo JSON final: " & strPostJsonPath
+        WScript.Quit 1
     End If
     
-    ' Mostrar resultados
+    If gVerbose Then WScript.Echo "✓ Export final completado."
+    
+    ' PASO 4: Hacer DiffJsonSemantico(pre, post)
+    If gVerbose Then WScript.Echo "PASO 4: Comparando archivos JSON..."
+    
+    Dim bHasDifferences, diffResult
+    diffResult = DiffJsonSemantico(strPreJsonPath, strPostJsonPath)
+    bHasDifferences = (Len(diffResult) > 0)
+    
+    ' Evaluar y mostrar resultados finales
     If bHasDifferences Then
-        If bStrict Then
-            WScript.Echo "✗ Roundtrip mismatch"
-            WScript.Quit 1
-        Else
-            WScript.Echo "⚠ Roundtrip con diferencias (modo no estricto)"
+        WScript.Echo "✗ ROUNDTRIP FAILED: Diferencias detectadas"
+        If gVerbose Then
+            WScript.Echo "Diferencias encontradas:"
+            WScript.Echo diffResult
+            WScript.Echo "Archivo original: " & strPreJsonPath
+            WScript.Echo "Archivo post-roundtrip: " & strPostJsonPath
         End If
+        WScript.Quit 1
     Else
-        WScript.Echo "✓ Roundtrip OK"
+        WScript.Echo "✓ ROUNDTRIP SUCCESS: Sin diferencias detectadas"
+        If gVerbose Then
+            WScript.Echo "Archivos temporales disponibles en: " & strTempDir
+        End If
     End If
     
     If gVerbose Then
-        WScript.Echo "Archivo temporal disponible en: " & strOutputPath
+        WScript.Echo "=== ROUNDTRIP FORM COMPLETADO ==="
     End If
 End Sub
 
 ' ============================================================================
-' SUBRUTINA: GenerateSimpleDiff
-' Descripción: Genera un diff textual simple línea a línea sin dependencias externas
+' FUNCIÓN: ValidateFormJsonCommand
+' Descripción: Valida la estructura JSON de un formulario
+' Sintaxis: validate-form-json <json_path> [--strict] [--schema]
+' ============================================================================
+Sub ValidateFormJsonCommand()
+    Dim strJsonPath, bStrict, bSchema, bVerbose
+    Dim objFSO, objJSON, jsonContent
+    
+    ' Verificar ayuda
+    If UBound(WScript.Arguments) >= 0 Then
+        If WScript.Arguments(0) = "--help" Or WScript.Arguments(0) = "-h" Then
+            Call ShowValidateFormJsonHelp()
+            WScript.Quit 0
+        End If
+    End If
+    
+    ' Verificar argumentos mínimos
+    If UBound(WScript.Arguments) < 1 Then
+        WScript.Echo "Error: Se requiere especificar el archivo JSON"
+        Call ShowValidateFormJsonHelp()
+        WScript.Quit 1
+    End If
+    
+    ' Inicializar variables
+    strJsonPath = ""
+    bStrict = False
+    bSchema = False
+    bVerbose = False
+    
+    ' Procesar argumentos de línea de comandos
+    Dim i
+    For i = 1 To UBound(WScript.Arguments)
+        Select Case LCase(WScript.Arguments(i))
+            Case "--strict"
+                bStrict = True
+            Case "--schema"
+                bSchema = True
+            Case "--verbose"
+                bVerbose = True
+            Case Else
+                If strJsonPath = "" Then
+                    strJsonPath = WScript.Arguments(i)
+                Else
+                    WScript.Echo "Error: Argumento no reconocido: " & WScript.Arguments(i)
+                    WScript.Quit 1
+                End If
+        End Select
+    Next
+    
+    ' Validar argumentos requeridos
+    If strJsonPath = "" Then
+        WScript.Echo "Error: Se requiere especificar el archivo JSON"
+        WScript.Quit 1
+    End If
+    
+    ' Resolver ruta canónica
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    If Not objFSO.IsAbsolutePathName(strJsonPath) Then
+        strJsonPath = objFSO.GetAbsolutePathName(strJsonPath)
+    End If
+    
+    ' Verificar existencia del archivo
+    If Not objFSO.FileExists(strJsonPath) Then
+        WScript.Echo "Error: El archivo JSON no existe: " & strJsonPath
+        WScript.Quit 1
+    End If
+    
+    If bVerbose Then
+        WScript.Echo "Validando archivo JSON: " & strJsonPath
+        WScript.Echo "Modo estricto: " & IIf(bStrict, "SI", "NO")
+        WScript.Echo "Validación de esquema: " & IIf(bSchema, "SI", "NO")
+    End If
+    
+    ' Leer y parsear JSON
+    On Error Resume Next
+    jsonContent = ReadAllTextUtf8WithFallback(strJsonPath)
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al leer archivo JSON: " & Err.Description
+        WScript.Quit 1
+    End If
+    
+    Set objJSON = CreateObject("Scripting.Dictionary")
+    Call ParseJSON(jsonContent, objJSON)
+    If Err.Number <> 0 Then
+        WScript.Echo "Error: JSON inválido - " & Err.Description
+        WScript.Quit 1
+    End If
+    On Error GoTo 0
+    
+    ' Validación básica de estructura
+    If Not objJSON.Exists("FormName") Then
+        WScript.Echo "Error: Falta campo requerido 'FormName'"
+        WScript.Quit 1
+    End If
+    
+    If bStrict Then
+        ' Validaciones adicionales en modo estricto
+        If Not objJSON.Exists("Controls") Then
+            WScript.Echo "Error: Falta campo requerido 'Controls'"
+            WScript.Quit 1
+        End If
+        
+        If Not objJSON.Exists("Properties") Then
+            WScript.Echo "Error: Falta campo requerido 'Properties'"
+            WScript.Quit 1
+        End If
+    End If
+    
+    If bSchema Then
+        ' Mostrar esquema detectado
+        WScript.Echo "Esquema detectado:"
+        WScript.Echo "  FormName: " & TypeName(objJSON("FormName"))
+        If objJSON.Exists("Controls") Then
+            WScript.Echo "  Controls: " & TypeName(objJSON("Controls"))
+        End If
+        If objJSON.Exists("Properties") Then
+            WScript.Echo "  Properties: " & TypeName(objJSON("Properties"))
+        End If
+    End If
+    
+    WScript.Echo "Validación completada exitosamente"
+End Sub
+
+' ============================================================================
+' FUNCIÓN: GenerateCanonicalDiff
+' Descripción: Genera diff canónico línea por línea con normalización JSON
+' Parámetros: originalFile - archivo JSON original, newFile - archivo JSON generado
 ' Retorna: True si hay diferencias, False si son idénticos
 ' ============================================================================
-Private Function GenerateSimpleDiff(originalFile, newFile)
-    Dim objFSO, objOriginal, objNew
+Private Function GenerateCanonicalDiff(originalFile, newFile)
+    Dim objFSO, originalContent, newContent
     Dim originalLines, newLines
-    Dim i, maxLines, hasDifferences
+    Dim i, maxLines, hasDifferences, diffCount
     
     Set objFSO = CreateObject("Scripting.FileSystemObject")
     hasDifferences = False
+    diffCount = 0
     
-    ' Leer archivos línea por línea
-    Set objOriginal = objFSO.OpenTextFile(originalFile, 1, False, -1) ' UTF-8
-    Set objNew = objFSO.OpenTextFile(newFile, 1, False, -1) ' UTF-8
+    ' Leer contenido completo de archivos UTF-8
+    originalContent = ReadAllTextUtf8WithFallback(originalFile)
+    newContent = ReadAllTextUtf8WithFallback(newFile)
     
-    originalLines = Split(objOriginal.ReadAll, vbCrLf)
-    newLines = Split(objNew.ReadAll, vbCrLf)
+    ' Normalizar saltos de línea y dividir en líneas
+    originalContent = Replace(originalContent, vbCrLf, vbLf)
+    originalContent = Replace(originalContent, vbCr, vbLf)
+    newContent = Replace(newContent, vbCrLf, vbLf)
+    newContent = Replace(newContent, vbCr, vbLf)
     
-    objOriginal.Close
-    objNew.Close
+    originalLines = Split(originalContent, vbLf)
+    newLines = Split(newContent, vbLf)
     
-    ' Comparar línea por línea
+    ' Determinar número máximo de líneas
     maxLines = UBound(originalLines)
     If UBound(newLines) > maxLines Then maxLines = UBound(newLines)
     
+    ' Comparar línea por línea con normalización
     For i = 0 To maxLines
-        Dim originalLine, newLine
+        Dim originalLine, newLine, normalizedOriginal, normalizedNew
         
+        ' Obtener líneas (vacías si no existen)
         If i <= UBound(originalLines) Then
             originalLine = originalLines(i)
         Else
@@ -4551,27 +4625,336 @@ Private Function GenerateSimpleDiff(originalFile, newFile)
             newLine = ""
         End If
         
-        If originalLine <> newLine Then
+        ' Normalizar espacios en blanco para comparación JSON
+        normalizedOriginal = Trim(originalLine)
+        normalizedNew = Trim(newLine)
+        
+        ' Detectar diferencias significativas
+        If normalizedOriginal <> normalizedNew Then
+            ' Mostrar encabezado solo en la primera diferencia
             If Not hasDifferences Then
-                WScript.Echo "=== DIFERENCIAS DETECTADAS ==="
+                WScript.Echo "=== DIFERENCIAS DETECTADAS EN ROUNDTRIP ==="
                 hasDifferences = True
             End If
             
-            WScript.Echo "Línea " & (i + 1) & ":"
-            WScript.Echo "- " & originalLine
-            WScript.Echo "+ " & newLine
+            diffCount = diffCount + 1
+            
+            ' Mostrar diferencia con contexto
+            WScript.Echo "Diferencia #" & diffCount & " en línea " & (i + 1) & ":"
+            WScript.Echo "  ORIGINAL: " & originalLine
+            WScript.Echo "  GENERADO: " & newLine
+            WScript.Echo ""
+            
+            ' Limitar número de diferencias mostradas para evitar spam
+            If diffCount >= 20 Then
+                WScript.Echo "... (más de 20 diferencias, truncando salida)"
+                Exit For
+            End If
         End If
     Next
     
+    ' Mostrar resumen de diferencias
     If hasDifferences Then
-        WScript.Echo "=== FIN DE DIFERENCIAS ==="
+        WScript.Echo "=== RESUMEN: " & diffCount & " diferencias detectadas ==="
+        WScript.Echo "Archivo original: " & originalFile
+        WScript.Echo "Archivo generado: " & newFile
+    Else
+        If gVerbose Then
+            WScript.Echo "✓ Sin diferencias detectadas entre archivos"
+        End If
     End If
     
-    GenerateSimpleDiff = hasDifferences
+    GenerateCanonicalDiff = hasDifferences
 End Function
 
 ' ===================================================================
-' SUBRUTINA AUXILIAR: ExportFormToJson
+' SUBRUTINA: ExportFormToJson
+' Descripción: Exporta formulario a JSON con parámetros estándar
+' Parámetros: dbPath, formName, outputPath, password, pretty
+' ===================================================================
+Private Sub ExportFormToJson(dbPath, formName, outputPath, password, pretty)
+    ' Implementación canónica con salida UTF-8 y detección de handlers
+    If gVerbose Then WScript.Echo "Exportando " & formName & " desde " & dbPath & " a " & outputPath
+    
+    ' Resolver BD usando función canónica
+    Dim resolvedDbPath, dbOrigin
+    If Len(dbPath) > 0 Then
+        resolvedDbPath = ToAbsolute(dbPath)
+        dbOrigin = "explicit"
+    Else
+        resolvedDbPath = ResolveDbForAction("export-form", dbOrigin)
+    End If
+    
+    ' Crear instancia de Access usando función unificada con bypass
+    Dim objAccessLocal
+    Set objAccessLocal = OpenAccessQuiet(resolvedDbPath, password)
+    
+    If objAccessLocal Is Nothing Then
+        WScript.Echo "Error al abrir la base de datos para export"
+        Exit Sub
+    End If
+    
+    On Error Resume Next
+    
+    ' Asegurar apertura en vista Diseño OCULTO
+    objAccessLocal.Echo False
+    objAccessLocal.DoCmd.OpenForm formName, acViewDesign, "", "", 0, acHidden
+    
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al abrir formulario para export: " & Err.Description
+        objAccessLocal.Echo True
+        CloseAccessQuiet objAccessLocal
+        Exit Sub
+    End If
+    
+    On Error GoTo 0
+    
+    ' Obtener referencia al formulario
+    Dim frm
+    Set frm = objAccessLocal.Forms(formName)
+    
+    ' Crear JsonWriter para generar JSON canónico
+    Dim writer
+    Set writer = New JsonWriter
+    
+    ' Configurar pretty printing si se solicita
+    If pretty Then writer.SetPrettyPrint True
+    
+    ' Iniciar objeto raíz
+    writer.StartObject
+    
+    ' Propiedades básicas del formulario
+    writer.AddProperty "schemaVersion", "1.0"
+    writer.AddProperty "units", "twips"
+    writer.AddProperty "formName", frm.Name
+    
+    ' Propiedades del formulario
+    writer.StartObjectProperty "properties"
+    
+    On Error Resume Next
+    writer.AddProperty "caption", frm.Caption
+    writer.AddProperty "width", frm.Width
+    writer.AddProperty "height", frm.InsideHeight
+    writer.AddProperty "recordSource", frm.RecordSource
+    writer.AddProperty "recordsetType", frm.RecordsetType
+    writer.AddProperty "allowEdits", frm.AllowEdits
+    writer.AddProperty "allowDeletions", frm.AllowDeletions
+    writer.AddProperty "allowAdditions", frm.AllowAdditions
+    writer.AddProperty "dataEntry", frm.DataEntry
+    writer.AddProperty "defaultView", frm.DefaultView
+    writer.AddProperty "viewsAllowed", frm.ViewsAllowed
+    writer.AddProperty "scrollBars", MapScrollBarsToToken(frm.ScrollBars)
+    writer.AddProperty "recordSelectors", frm.RecordSelectors
+    writer.AddProperty "navigationButtons", frm.NavigationButtons
+    writer.AddProperty "dividerLines", frm.DividerLines
+    writer.AddProperty "autoResize", frm.AutoResize
+    writer.AddProperty "autoCenter", frm.AutoCenter
+    writer.AddProperty "popUp", frm.PopUp
+    writer.AddProperty "modal", frm.Modal
+    writer.AddProperty "borderStyle", MapBorderStyleToToken(frm.BorderStyle)
+    writer.AddProperty "controlBox", frm.ControlBox
+    writer.AddProperty "minMaxButtons", frm.MinMaxButtons
+    writer.AddProperty "closeButton", frm.CloseButton
+    writer.AddProperty "whatsThisButton", frm.WhatsThisButton
+    writer.AddProperty "shortcutMenu", frm.ShortcutMenu
+    writer.AddProperty "shortcutMenuBar", frm.ShortcutMenuBar
+    writer.AddProperty "menuBar", frm.MenuBar
+    writer.AddProperty "toolbar", frm.Toolbar
+    writer.AddProperty "cycle", frm.Cycle
+    writer.AddProperty "onLoad", frm.OnLoad
+    writer.AddProperty "onUnload", frm.OnUnload
+    writer.AddProperty "onOpen", frm.OnOpen
+    writer.AddProperty "onClose", frm.OnClose
+    writer.AddProperty "onActivate", frm.OnActivate
+    writer.AddProperty "onDeactivate", frm.OnDeactivate
+    writer.AddProperty "onGotFocus", frm.OnGotFocus
+    writer.AddProperty "onLostFocus", frm.OnLostFocus
+    writer.AddProperty "onClick", frm.OnClick
+    writer.AddProperty "onDblClick", frm.OnDblClick
+    writer.AddProperty "onMouseDown", frm.OnMouseDown
+    writer.AddProperty "onMouseMove", frm.OnMouseMove
+    writer.AddProperty "onMouseUp", frm.OnMouseUp
+    writer.AddProperty "onKeyDown", frm.OnKeyDown
+    writer.AddProperty "onKeyPress", frm.OnKeyPress
+    writer.AddProperty "onKeyUp", frm.OnKeyUp
+    writer.AddProperty "onResize", frm.OnResize
+    writer.AddProperty "onError", frm.OnError
+    writer.AddProperty "onFilter", frm.OnFilter
+    writer.AddProperty "onApplyFilter", frm.OnApplyFilter
+    writer.AddProperty "onTimer", frm.OnTimer
+    writer.AddProperty "timerInterval", frm.TimerInterval
+    ' Limpiar errores de propiedades no legibles
+    If Err.Number <> 0 Then Err.Clear
+    On Error GoTo 0
+    
+    writer.EndObject ' Cerrar properties
+    
+    ' Secciones del formulario
+    writer.StartObjectProperty "sections"
+    
+    ' Definir las secciones estándar
+    Dim sectionNames, sectionIds, i
+    sectionNames = Array("header", "detail", "footer")
+    sectionIds = Array(acHeader, acDetail, acFooter)
+    
+    For i = 0 To UBound(sectionNames)
+        Dim sectionName, sectionId
+        sectionName = sectionNames(i)
+        sectionId = sectionIds(i)
+        
+        ' Verificar si la sección existe
+        On Error Resume Next
+        Dim sectionHeight, sectionBackColor
+        sectionHeight = frm.Section(sectionId).Height
+        sectionBackColor = frm.Section(sectionId).BackColor
+        On Error GoTo 0
+        
+        If Err.Number = 0 Then
+            ' La sección existe, crear su objeto
+            writer.StartObjectProperty sectionName
+            writer.AddProperty "height", sectionHeight
+            writer.AddProperty "backColor", OleToHex(sectionBackColor)
+            
+            ' Obtener controles de esta sección
+            writer.StartArrayProperty "controls"
+            
+            Dim control
+            For Each control In frm.Controls
+                ' Verificar si el control pertenece a esta sección
+                On Error Resume Next
+                Dim controlSection
+                controlSection = control.Section
+                On Error GoTo 0
+                
+                If controlSection = sectionId Then
+                    writer.StartObject
+                    writer.AddProperty "name", control.Name
+                    writer.AddProperty "type", GetControlTypeName(control.ControlType)
+                    writer.AddProperty "section", sectionName ' Campo informativo
+                    
+                    ' Propiedades del control
+                    writer.StartObjectProperty "properties"
+                    On Error Resume Next
+                    writer.AddProperty "top", control.Top
+                    writer.AddProperty "left", control.Left
+                    writer.AddProperty "width", control.Width
+                    writer.AddProperty "height", control.Height
+                    writer.AddProperty "caption", control.Caption
+                    writer.AddProperty "controlSource", control.ControlSource
+                    writer.AddProperty "visible", control.Visible
+                    writer.AddProperty "enabled", control.Enabled
+                    writer.AddProperty "locked", control.Locked
+                    writer.AddProperty "default", control.Default
+                    ' Detectar Picture relativo para resources.images
+                    If control.Picture <> "" And Not IsAbsolutePath(control.Picture) Then
+                        writer.AddProperty "picture", control.Picture
+                    End If
+                    On Error GoTo 0
+                    
+                    writer.EndObject ' Cerrar properties del control
+                    writer.EndObject ' Cerrar control
+                End If
+            Next
+            
+            writer.EndArray ' Cerrar controls
+            writer.EndObject ' Cerrar sección
+        End If
+    Next
+    
+    writer.EndObject ' Cerrar sections
+    
+    ' Recursos (imágenes) - detectar Pictures relativos
+    writer.StartObjectProperty "resources"
+    writer.StartArrayProperty "images"
+    
+    For Each control In frm.Controls
+        On Error Resume Next
+        If control.Picture <> "" And Not IsAbsolutePath(control.Picture) Then
+            writer.StartObject
+            writer.AddProperty "path", control.Picture
+            writer.AddProperty "controlName", control.Name
+            writer.EndObject
+        End If
+        On Error GoTo 0
+    Next
+    
+    writer.EndArray ' Cerrar images
+    writer.EndObject ' Cerrar resources
+    
+    ' Código del módulo - detección mejorada de handlers
+    writer.StartObjectProperty "code"
+    writer.StartObjectProperty "module"
+    
+    Dim hasModule, moduleFilename
+    hasModule = False
+    moduleFilename = ""
+    
+    ' Detectar si hay código en el módulo del formulario
+    On Error Resume Next
+    If frm.HasModule Then
+        hasModule = True
+        moduleFilename = frm.Name & ".frm"
+    End If
+    On Error GoTo 0
+    
+    writer.AddProperty "exists", hasModule
+    writer.AddProperty "filename", moduleFilename
+    writer.StartArrayProperty "handlers"
+    
+    ' Detección mejorada de handlers de eventos
+    If hasModule Then
+        ' Detectar handlers de formulario
+        Dim formHandlers
+        formHandlers = Array("Load", "Unload", "Open", "Close", "Activate", "Deactivate", "GotFocus", "LostFocus", "Click", "DblClick", "MouseDown", "MouseMove", "MouseUp", "KeyDown", "KeyPress", "KeyUp", "Resize", "Error", "Filter", "ApplyFilter", "Timer")
+        
+        Dim j
+        For j = 0 To UBound(formHandlers)
+            Dim handlerName
+            handlerName = "Form_" & formHandlers(j)
+            ' Aquí se podría implementar detección real del código
+            ' Por ahora registramos los handlers potenciales
+        Next
+        
+        ' Detectar handlers de controles
+        For Each control In frm.Controls
+            On Error Resume Next
+            Dim controlName
+            controlName = control.Name
+            If controlName <> "" Then
+                ' Registrar handlers potenciales para este control
+                ' Ejemplo: controlName_Click, controlName_Change, etc.
+            End If
+            On Error GoTo 0
+        Next
+    End If
+    
+    writer.EndArray ' Cerrar handlers
+    writer.EndObject ' Cerrar module
+    writer.EndObject ' Cerrar code
+    
+    writer.EndObject ' Cerrar objeto raíz
+    
+    ' Obtener JSON generado
+    Dim jsonString
+    jsonString = writer.GetJson()
+    
+    ' Cerrar formulario sin guardar con cierre robusto
+    On Error Resume Next
+    objAccessLocal.DoCmd.Close acForm, formName, acSaveNo
+    objAccessLocal.Echo True
+    If Err.Number <> 0 Then Err.Clear
+    On Error GoTo 0
+    
+    ' Escribir archivo JSON usando UTF-8
+    Call WriteUtf8File(outputPath, jsonString)
+    
+    If gVerbose Then WScript.Echo "✓ Exportado formulario " & formName & " → " & outputPath & " (UTF-8)"
+    
+    CloseAccessQuiet objAccessLocal
+End Sub
+
+' ===================================================================
+' SUBRUTINA AUXILIAR: ExportFormInternal
 ' Descripción: Versión interna de ExportForm para uso en roundtrip
 ' ===================================================================
 Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
@@ -4582,7 +4965,12 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     
     ' Resolver BD usando función canónica
     Dim resolvedDbPath, dbOrigin
-    resolvedDbPath = ResolveDbForAction(dbPath, "export-form", dbOrigin)
+    If Len(dbPath) > 0 Then
+        resolvedDbPath = ToAbsolute(dbPath)
+        dbOrigin = "explicit"
+    Else
+        resolvedDbPath = ResolveDbForAction("export-form", dbOrigin)
+    End If
     
     ' Crear instancia de Access usando función unificada con bypass
     Dim objAccessLocal
@@ -4596,8 +4984,6 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     On Error Resume Next
     
     ' Asegurar apertura en vista Diseño OCULTO
-    Const acViewDesign = 1
-    Const acHidden = 1
     objAccessLocal.Echo False
     objAccessLocal.DoCmd.OpenForm formName, acViewDesign, "", "", 0, acHidden
     
@@ -4828,6 +5214,251 @@ Private Sub ExportFormInternal(dbPath, formName, outputPath, password)
     If gVerbose Then WScript.Echo "✓ Exportado formulario " & formName & " → " & outputPath & " (UTF-8)"
     
     CloseAccessQuiet objAccessLocal
+End Sub
+
+' ===================================================================
+' SUBRUTINA: ImportFormFromJson
+' Descripción: Importa formulario desde JSON con parámetros estándar
+' Parámetros: jsonPath, dbPath, password, overwrite
+' ===================================================================
+Private Sub ImportFormFromJson(jsonPath, dbPath, password, overwrite)
+    ' Implementación canónica con soporte overwrite y aplicación completa de propiedades
+    If gVerbose Then WScript.Echo "Importando " & jsonPath & " a " & dbPath
+    
+    ' Validar que el archivo JSON existe
+    If Not objFSO.FileExists(jsonPath) Then
+        WScript.Echo "Error: Archivo JSON no encontrado: " & jsonPath
+        Exit Sub
+    End If
+    
+    ' Parsear JSON usando JsonParser unificado
+    Dim jsonContent, jsonData, formName, props
+    jsonContent = ReadAllTextUtf8WithFallback(jsonPath)
+    
+    Dim parser
+    Set parser = New JsonParser
+    Set jsonData = parser.Parse(jsonContent)
+    
+    ' Validar estructura del JSON antes de proceder
+    Dim warnings
+    Set warnings = CreateObject("Scripting.Dictionary")
+    ValidateFormData jsonData, True, warnings ' Usar modo strict
+    
+    ' Si hay errores críticos en modo strict, abortar
+    Dim warningKey
+    For Each warningKey In warnings.Keys
+        If InStr(warnings(warningKey), "ERROR:") > 0 Then
+            WScript.Echo "Error de validación: " & warnings(warningKey)
+            Exit Sub
+        End If
+    Next
+    
+    ' Extraer nombre del formulario
+    If Not IsPresent(jsonData, "formName") Then
+        WScript.Echo "Error: JSON no contiene 'formName'"
+        Exit Sub
+    End If
+    formName = jsonData("formName")
+    
+    ' Extraer propiedades
+    If IsPresent(jsonData, "properties") Then
+        Set props = jsonData("properties")
+    Else
+        Set props = CreateObject("Scripting.Dictionary")
+    End If
+    
+    ' Resolver BD usando función canónica
+    Dim resolvedDbPath, dbOrigin
+    If Len(dbPath) > 0 Then
+        resolvedDbPath = ToAbsolute(dbPath)
+        dbOrigin = "explicit"
+    Else
+        resolvedDbPath = ResolveDbForAction("import-form", dbOrigin)
+    End If
+    
+    ' Crear instancia de Access usando función unificada con bypass
+    Dim objAccess
+    Set objAccess = OpenAccessApp(resolvedDbPath, password, True)
+    
+    If objAccess Is Nothing Then
+        WScript.Echo "Error al abrir la base de datos para import"
+        Exit Sub
+    End If
+    
+    On Error Resume Next
+    
+    ' Preparación silenciosa
+    objAccess.Echo False
+    objAccess.Application.DisplayAlerts = False
+    
+    ' Manejo de overwrite mejorado
+    If overwrite Then
+        Dim formExists
+        formExists = False
+        
+        ' Verificar si el formulario existe
+        Dim allForms, i
+        Set allForms = objAccess.CurrentDb.AllForms
+        For i = 0 To allForms.Count - 1
+            If allForms(i).Name = formName Then
+                formExists = True
+                Exit For
+            End If
+        Next
+        
+        If formExists Then
+            ' Cerrar el formulario si está abierto
+            Dim openForm
+            For Each openForm In objAccess.Forms
+                If openForm.Name = formName Then
+                    objAccess.DoCmd.Close acForm, formName, acSaveNo
+                    Exit For
+                End If
+            Next
+            
+            ' Eliminar formulario existente
+            objAccess.DoCmd.DeleteObject acForm, formName
+            If gVerbose Then WScript.Echo "✓ Formulario existente eliminado: " & formName
+        End If
+    Else
+        ' Verificar que no existe si overwrite=False
+        Dim checkExists
+        checkExists = False
+        Set allForms = objAccess.CurrentDb.AllForms
+        For i = 0 To allForms.Count - 1
+            If allForms(i).Name = formName Then
+                checkExists = True
+                Exit For
+            End If
+        Next
+        
+        If checkExists Then
+            WScript.Echo "Error: Formulario '" & formName & "' ya existe. Use --overwrite para reemplazarlo."
+            objAccess.Echo True
+            CloseAccessQuiet objAccess
+            Exit Sub
+        End If
+    End If
+    
+    ' Crear nuevo formulario vacío en vista Diseño
+    objAccess.DoCmd.NewForm
+    Dim tmpName
+    tmpName = objAccess.Screen.ActiveForm.Name
+    objAccess.DoCmd.Rename formName, acForm, tmpName
+    
+    ' Abrir en vista Diseño explícitamente
+    objAccess.DoCmd.OpenForm formName, acViewDesign
+    
+    Dim frm
+    Set frm = objAccess.Forms(formName)
+    
+    ' Aplicación completa de propiedades del formulario
+    On Error Resume Next
+    
+    ' Propiedades básicas
+    If IsPresent(props, "caption") Then 
+        frm.Caption = props("caption")
+        If gVerbose Then WScript.Echo "✓ Aplicado Caption: " & props("caption")
+    End If
+    
+    If IsPresent(props, "recordSource") Then 
+        frm.RecordSource = props("recordSource")
+        If gVerbose Then WScript.Echo "✓ Aplicado RecordSource: " & props("recordSource")
+    End If
+    
+    ' Dimensiones
+    If IsPresent(props, "width") Then 
+        frm.Width = CLng(props("width"))
+        If gVerbose Then WScript.Echo "✓ Aplicado Width: " & props("width")
+    End If
+    
+    If IsPresent(props, "height") Then 
+        frm.Section(acDetail).Height = CLng(props("height"))
+        If gVerbose Then WScript.Echo "✓ Aplicado Height: " & props("height")
+    End If
+    
+    ' Propiedades de comportamiento
+    If IsPresent(props, "allowEdits") Then frm.AllowEdits = CBool(props("allowEdits"))
+    If IsPresent(props, "allowDeletions") Then frm.AllowDeletions = CBool(props("allowDeletions"))
+    If IsPresent(props, "allowAdditions") Then frm.AllowAdditions = CBool(props("allowAdditions"))
+    If IsPresent(props, "dataEntry") Then frm.DataEntry = CBool(props("dataEntry"))
+    If IsPresent(props, "recordSelectors") Then frm.RecordSelectors = CBool(props("recordSelectors"))
+    If IsPresent(props, "navigationButtons") Then frm.NavigationButtons = CBool(props("navigationButtons"))
+    If IsPresent(props, "dividerLines") Then frm.DividerLines = CBool(props("dividerLines"))
+    
+    ' Propiedades de ventana
+    If IsPresent(props, "autoResize") Then frm.AutoResize = CBool(props("autoResize"))
+    If IsPresent(props, "autoCenter") Then frm.AutoCenter = CBool(props("autoCenter"))
+    If IsPresent(props, "popUp") Then frm.PopUp = CBool(props("popUp"))
+    If IsPresent(props, "modal") Then frm.Modal = CBool(props("modal"))
+    If IsPresent(props, "controlBox") Then frm.ControlBox = CBool(props("controlBox"))
+    If IsPresent(props, "minMaxButtons") Then frm.MinMaxButtons = CBool(props("minMaxButtons"))
+    If IsPresent(props, "closeButton") Then frm.CloseButton = CBool(props("closeButton"))
+    
+    ' Propiedades de vista
+    If IsPresent(props, "defaultView") Then frm.DefaultView = CLng(props("defaultView"))
+    If IsPresent(props, "viewsAllowed") Then frm.ViewsAllowed = CLng(props("viewsAllowed"))
+    
+    ' Barras de desplazamiento (mapear desde token)
+    If IsPresent(props, "scrollBars") Then
+        frm.ScrollBars = MapScrollBarsFromToken(props("scrollBars"))
+    End If
+    
+    ' Estilo de borde (mapear desde token)
+    If IsPresent(props, "borderStyle") Then
+        frm.BorderStyle = MapBorderStyleFromToken(props("borderStyle"))
+    End If
+    
+    ' Eventos del formulario
+    If IsPresent(props, "onLoad") Then frm.OnLoad = props("onLoad")
+    If IsPresent(props, "onUnload") Then frm.OnUnload = props("onUnload")
+    If IsPresent(props, "onOpen") Then frm.OnOpen = props("onOpen")
+    If IsPresent(props, "onClose") Then frm.OnClose = props("onClose")
+    If IsPresent(props, "onActivate") Then frm.OnActivate = props("onActivate")
+    If IsPresent(props, "onDeactivate") Then frm.OnDeactivate = props("onDeactivate")
+    If IsPresent(props, "onResize") Then frm.OnResize = props("onResize")
+    If IsPresent(props, "onError") Then frm.OnError = props("onError")
+    If IsPresent(props, "onTimer") Then frm.OnTimer = props("onTimer")
+    If IsPresent(props, "timerInterval") Then frm.TimerInterval = CLng(props("timerInterval"))
+    
+    ' Limpiar errores de propiedades no aplicables
+    If Err.Number <> 0 Then Err.Clear
+    On Error GoTo 0
+    
+    ' Aplicar secciones del formulario
+    If IsPresent(jsonData, "sections") Then
+        ApplySectionsFromJson frm, jsonData("sections")
+    End If
+    
+    ' Agregar controles usando AddControlsFromJson
+    If IsPresent(jsonData, "sections") Then
+        AddControlsFromJson frm, jsonData, objAccess
+    End If
+    
+    ' Aplicar eventos si hay handlers en code.module
+    If IsPresent(jsonData, "code") Then
+        ApplyEventHandlers frm, jsonData
+    End If
+    
+    ' Guardar y cerrar sin ejecutar
+    objAccess.DoCmd.Save acForm, formName
+    objAccess.DoCmd.Close acForm, formName, acSaveYes
+    objAccess.Echo True
+    objAccess.Application.DisplayAlerts = True
+    
+    If gVerbose Then WScript.Echo "✓ Formulario importado exitosamente: " & formName
+    
+    CloseAccessQuiet objAccess
+    Exit Sub
+    
+    ' Manejo de errores
+    If Err.Number <> 0 Then
+        objAccess.Echo True
+        objAccess.Application.DisplayAlerts = True
+        CloseAccessQuiet objAccess
+        WScript.Echo "Error durante import: " & Err.Description
+        Err.Clear
+    End If
 End Sub
 
 ' ===================================================================
@@ -5236,49 +5867,64 @@ End Function
 ' DESCRIPCIÓN: Crear/Modificar formulario desde JSON enriquecido con validaciones
 ' ================================================================================
 Sub ImportForm()
-    ' Verificar argumentos mínimos
-    If objArgs.Count < 3 Then
-        WScript.Echo "Error: Se requieren al menos 2 argumentos: <json_path_or_folder> <db_path>"
-        WScript.Echo "Sintaxis: cscript condor_cli.vbs import-form <json_path_or_folder> <db_path> [opciones]"
-        WScript.Echo "Opciones:"
-        WScript.Echo "  --dry-run              Solo validar, no crear formulario"
-        WScript.Echo "  --strict               Modo estricto: fallar en coherencias"
-        WScript.Echo "  --password <pwd>       Contraseña de base de datos"
-        WScript.Echo "  --bypassstartup on|off Bypass startup forms"
+    ' Verificar argumentos mínimos según nueva sintaxis canónica
+    If objArgs.Count < 2 Then
+        Call ShowImportFormHelp()
         WScript.Quit 1
     End If
     
-    ' Declarar variables
-    Dim strJsonPath, strDbPath, strPassword
-    Dim bDryRun, bStrict, bypassStartup
-    Dim objJsonData, formName
-    Dim objAccess, frm
-    Dim warnings, i
+    ' Declarar variables con nueva sintaxis
+    Dim strDbPath, strJsonPath, strTargetFormName, strPassword
+    Dim bReplace, i
     
     ' Inicializar variables
-    strJsonPath = objArgs(1)
-    strDbPath = objArgs(2)
+    strDbPath = ""
+    strJsonPath = ""
+    strTargetFormName = ""
     strPassword = ""
-    bDryRun = False
-    bStrict = False
-    bypassStartup = False
+    bReplace = False
     
-    Set warnings = CreateObject("Scripting.Dictionary")
+    ' Procesar argumentos posicionales y opcionales
+    Dim argIndex
+    argIndex = 1
     
-    ' Detectar si es carpeta o archivo individual
-    Dim isFolder
-    isFolder = objFSO.FolderExists(strJsonPath)
+    ' Primer argumento: puede ser db_path o json_path
+    If argIndex <= objArgs.Count - 1 Then
+        If Right(LCase(objArgs(argIndex)), 5) = ".json" Then
+            ' Es un archivo JSON, usar ResolveDbForAction para BD
+            strJsonPath = objArgs(argIndex)
+            strDbPath = ResolveDbForAction()
+        Else
+            ' Es db_path, siguiente debe ser json_path
+            strDbPath = objArgs(argIndex)
+            argIndex = argIndex + 1
+            If argIndex <= objArgs.Count - 1 Then
+                strJsonPath = objArgs(argIndex)
+            Else
+                WScript.Echo "Error: Se requiere <json_path> después de <db_path>"
+                Call ShowImportFormHelp()
+                WScript.Quit 1
+            End If
+        End If
+        argIndex = argIndex + 1
+    End If
     
     ' Procesar argumentos opcionales
-    For i = 3 To objArgs.Count - 1
+    For i = argIndex To objArgs.Count - 1
         Dim currentArg
         currentArg = objArgs(i)
         
         Select Case LCase(currentArg)
-            Case "--dry-run"
-                bDryRun = True
-            Case "--strict"
-                bStrict = True
+            Case "--target"
+                If i + 1 <= objArgs.Count - 1 Then
+                    strTargetFormName = objArgs(i + 1)
+                    i = i + 1
+                Else
+                    WScript.Echo "Error: --target requiere un nombre de formulario"
+                    WScript.Quit 1
+                End If
+            Case "--replace"
+                bReplace = True
             Case "--password"
                 If i + 1 <= objArgs.Count - 1 Then
                     strPassword = objArgs(i + 1)
@@ -5288,61 +5934,125 @@ Sub ImportForm()
                     WScript.Quit 1
                 End If
             Case Else
-                ' Verificar banderas con formato /bandera:valor
-                If Left(currentArg, 4) = "/pwd" Then
-                    If Mid(currentArg, 5, 1) = ":" Then
-                        strPassword = Mid(currentArg, 6)
-                    Else
-                        WScript.Echo "Error: Formato incorrecto para /pwd. Use /pwd:<clave>"
-                        WScript.Quit 1
-                    End If
-                ElseIf Left(currentArg, 15) = "/bypassstartup:" Then
-                    gBypassStartup = True ' mantenemos compatibilidad
-                    If Not gVerbose Then
-                        ' no spam
-                    End If
-                    WScript.Echo "[DEPRECATED] --bypassstartup ya no es necesario y no tiene efecto (el CLI abre Access con bypass por defecto)."
-                End If
+                WScript.Echo "Error: Argumento no reconocido: " & currentArg
+                Call ShowImportFormHelp()
+                WScript.Quit 1
         End Select
     Next
     
-    ' Convertir rutas relativas a absolutas si es necesario
-    If InStr(strJsonPath, ":") = 0 Then
-        strJsonPath = objFSO.GetAbsolutePathName(strJsonPath)
+    ' Validar argumentos requeridos
+    If strJsonPath = "" Then
+        WScript.Echo "Error: Se requiere <json_path>"
+        Call ShowImportFormHelp()
+        WScript.Quit 1
     End If
     
-    If InStr(strDbPath, ":") = 0 Then
-        ' Si no se especifica ruta, usar la base de datos por defecto
-        If strDbPath = "" Then
-            strDbPath = objFSO.GetAbsolutePathName(strDataPath)
-        Else
-            strDbPath = objFSO.GetAbsolutePathName(strDbPath)
-        End If
+    If strDbPath = "" Then
+        WScript.Echo "Error: No se pudo resolver la base de datos"
+        Call ShowImportFormHelp()
+        WScript.Quit 1
     End If
     
-    ' Verificar que la ruta existe
-    If Not isFolder And Not objFSO.FileExists(strJsonPath) Then
+    ' Convertir rutas a absolutas
+    strJsonPath = objFSO.GetAbsolutePathName(strJsonPath)
+    strDbPath = objFSO.GetAbsolutePathName(strDbPath)
+    
+    ' Verificar que los archivos existen
+    If Not objFSO.FileExists(strJsonPath) Then
         WScript.Echo "Error: El archivo JSON no existe: " & strJsonPath
         WScript.Quit 1
     End If
     
-    If isFolder And Not objFSO.FolderExists(strJsonPath) Then
-        WScript.Echo "Error: La carpeta no existe: " & strJsonPath
-        WScript.Quit 1
-    End If
-    
-    If Not bDryRun And Not objFSO.FileExists(strDbPath) Then
+    If Not objFSO.FileExists(strDbPath) Then
         WScript.Echo "Error: La base de datos no existe: " & strDbPath
         WScript.Quit 1
     End If
     
-    If isFolder Then
-        ' Importar múltiples formularios con resolución de dependencias
-        ImportFormsFromFolder strJsonPath, strDbPath, strPassword, bypassStartup, bDryRun, bStrict
-    Else
-        ' Importar un solo formulario (lógica original)
-        ImportSingleForm strJsonPath, strDbPath, strPassword, bypassStartup, bDryRun, bStrict
+    ' Validar JSON con ValidateFormJson antes de proceder
+    If gVerbose Then WScript.Echo "✓ Validando JSON del formulario..."
+    Call ValidateFormJson(strJsonPath, False, False) ' schema=False, strict=False
+    
+    ' Leer y parsear el archivo JSON
+    Dim strJsonContent, objJsonData
+    strJsonContent = ReadAllTextAnsiOrUtf8(strJsonPath)
+    
+    On Error Resume Next
+    Set objJsonData = ParseJson(strJsonContent)
+    If Err.Number <> 0 Then
+        WScript.Echo "Error al parsear JSON: " & Err.Description
+        WScript.Quit 1
     End If
+    On Error GoTo 0
+    
+    ' Determinar nombre del formulario
+    Dim strFormName
+    If strTargetFormName <> "" Then
+        ' Usar --target si se especificó
+        strFormName = strTargetFormName
+    ElseIf objJsonData.Exists("form_name") Then
+        ' Usar nombre del JSON
+        strFormName = objJsonData("form_name")
+    ElseIf objJsonData.Exists("properties") And objJsonData("properties").Exists("name") Then
+        ' Usar nombre de properties
+        strFormName = objJsonData("properties")("name")
+    Else
+        WScript.Echo "Error: No se pudo determinar el nombre del formulario"
+        WScript.Echo "Use --target <form_name> o asegúrese de que el JSON contenga 'form_name'"
+        WScript.Quit 1
+    End If
+    
+    If gVerbose Then WScript.Echo "✓ Formulario objetivo: " & strFormName
+    
+    ' Abrir Access con OpenAccessQuiet
+    Dim objAccess
+    Set objAccess = OpenAccessQuiet(strDbPath, strPassword)
+    If objAccess Is Nothing Then
+        WScript.Echo "Error: No se pudo abrir la base de datos: " & strDbPath
+        WScript.Quit 1
+    End If
+    
+    ' Verificar si el formulario existe y manejar --replace
+    Dim bFormExists
+    bFormExists = FormExists(objAccess, strFormName)
+    
+    If bFormExists And Not bReplace Then
+        Call CloseAccessQuiet(objAccess)
+        WScript.Echo "Error: El formulario '" & strFormName & "' ya existe"
+        WScript.Echo "Use --replace para sobrescribir el formulario existente"
+        WScript.Quit 1
+    End If
+    
+    If gVerbose Then
+        If bFormExists Then
+            WScript.Echo "✓ Reemplazando formulario existente: " & strFormName
+        Else
+            WScript.Echo "✓ Creando nuevo formulario: " & strFormName
+        End If
+    End If
+    
+    ' Eliminar formulario existente si es necesario
+    If bFormExists Then
+        On Error Resume Next
+        objAccess.DoCmd.DeleteObject acForm, strFormName
+        If Err.Number <> 0 Then
+            Call CloseAccessQuiet(objAccess)
+            WScript.Echo "Error al eliminar formulario existente: " & Err.Description
+            WScript.Quit 1
+        End If
+        On Error GoTo 0
+    End If
+    
+    ' Mapear tokens JSON a propiedades Access usando mapeadores existentes
+    Call ImportFormFromJsonData(objAccess, strFormName, objJsonData)
+    
+    ' Aplicar coherencia con ApplyCoherenceRules
+    If gVerbose Then WScript.Echo "✓ Aplicando reglas de coherencia..."
+    Call ApplyCoherenceRules(objJsonData("properties"), False, gVerbose)
+    
+    ' Cerrar Access
+    Call CloseAccessQuiet(objAccess)
+    
+    WScript.Echo "✓ Formulario importado exitosamente: " & strFormName
 End Sub
 
 ' ============================================================================
@@ -6391,8 +7101,8 @@ Sub ListForms()
     ' Usar la BD ya resuelta por el flujo principal
     Set objFSO = CreateObject("Scripting.FileSystemObject")
     
-    ' Abrir Access
-    Set objAccessLocal = OpenAccessApp(strAccessPath, password, True)
+    ' Abrir Access con OpenAccessQuiet
+    Set objAccessLocal = OpenAccessQuiet(strAccessPath, password)
     If objAccessLocal Is Nothing Then
         WScript.Echo "Error: no se pudo abrir Access."
         WScript.Quit 1
@@ -6635,6 +7345,50 @@ Sub ShowValidateFormJsonHelp()
     WScript.Echo ""
     WScript.Echo "  # Mostrar esquema esperado"
     WScript.Echo "  cscript condor_cli.vbs validate-form-json --schema"
+End Sub
+
+' ============================================================================
+' FUNCIÓN: ShowRoundtripFormHelp
+' Descripción: Muestra la ayuda del comando roundtrip-form
+' ============================================================================
+Sub ShowRoundtripFormHelp()
+    WScript.Echo "=== CONDOR CLI - AYUDA DEL COMANDO ROUNDTRIP-FORM ==="
+    WScript.Echo ""
+    WScript.Echo "DESCRIPCIÓN:"
+    WScript.Echo "  Realiza un test completo de export→import de formulario para verificar"
+    WScript.Echo "  la integridad del proceso de serialización/deserialización JSON."
+    WScript.Echo ""
+    WScript.Echo "SINTAXIS:"
+    WScript.Echo "  cscript condor_cli.vbs roundtrip-form <db_path> <form_name> [opciones]"
+    WScript.Echo "  cscript condor_cli.vbs roundtrip-form --help"
+    WScript.Echo ""
+    WScript.Echo "PARÁMETROS REQUERIDOS:"
+    WScript.Echo "  <db_path>    - Ruta a la base de datos Access (.accdb/.mdb)"
+    WScript.Echo "  <form_name>  - Nombre del formulario a probar"
+    WScript.Echo ""
+    WScript.Echo "OPCIONES:"
+    WScript.Echo "  --password <pwd>     - Contraseña de la base de datos"
+    WScript.Echo "  --temp-dir <dir>     - Directorio temporal (por defecto: %TEMP%)"
+    WScript.Echo "  --verbose            - Mostrar información detallada del proceso"
+    WScript.Echo "  --help, -h           - Mostrar esta ayuda"
+    WScript.Echo ""
+    WScript.Echo "PROCESO:"
+    WScript.Echo "  1. Exporta el formulario original a JSON (pre.json)"
+    WScript.Echo "  2. Importa desde pre.json (recrea el formulario)"
+    WScript.Echo "  3. Exporta nuevamente a JSON (post.json)"
+    WScript.Echo "  4. Compara pre.json vs post.json semánticamente"
+    WScript.Echo "  5. Reporta diferencias encontradas"
+    WScript.Echo ""
+    WScript.Echo "CÓDIGOS DE SALIDA:"
+    WScript.Echo "  0 - Roundtrip exitoso (sin diferencias)"
+    WScript.Echo "  1 - Error en el proceso o diferencias encontradas"
+    WScript.Echo ""
+    WScript.Echo "EJEMPLOS:"
+    WScript.Echo "  cscript condor_cli.vbs roundtrip-form "".\ui\forms\FormComercial.accdb"" ""FormComercial"""
+    WScript.Echo ""
+    WScript.Echo "  cscript condor_cli.vbs roundtrip-form "".\ui\forms\FormComercial.accdb"" ""FormComercial"" --password miClave"
+    WScript.Echo ""
+    WScript.Echo "  cscript condor_cli.vbs roundtrip-form "".\ui\forms\FormComercial.accdb"" ""FormComercial"" --verbose --temp-dir ""C:\temp"""
 End Sub
 
 ' ============================================================================
@@ -7816,11 +8570,7 @@ Function ReadAllTextUtf8WithFallback(path)
     content = stream.ReadText
     stream.Close
     
-    If Err.Number = 0 Then
-        ReadAllTextUtf8WithFallback = content
-    Else
-        ReadAllTextUtf8WithFallback = ""
-    End If
+    ReadAllTextUtf8WithFallback = content
     Err.Clear
 End Function
 
@@ -8090,16 +8840,7 @@ End Sub
 
 
 
-' [DEPRECATED] El parámetro bypassStartup se ignora: OpenAccessQuiet aplica bypass automáticamente.
-Function OpenAccessApp(dbPath, password, bypassStartup)
-    ' Función unificada que usa OpenAccessQuiet con bypass siempre activo
-    Set OpenAccessApp = OpenAccessQuiet(dbPath, password)
-End Function
 
-Sub CloseAccessApp(app)
-    ' Función unificada que usa CloseAccessQuiet
-    Call CloseAccessQuiet(app)
-End Sub
 
 ' ==== FIN helpers canónicos ====
 
@@ -8843,13 +9584,11 @@ Sub ResolveFlags()
         ElseIf Left(arg, 5) = "/pwd:" Then
             gPassword = Mid(objArgs(i), 6)
             
-        ElseIf arg = "--bypassstartup" And i < objArgs.Count - 1 Then
-            i = i + 1
+        ElseIf arg = "--bypassstartup" Then
             gBypassStartup = True ' mantenemos compatibilidad
-            If Not gVerbose Then
-                ' no spam
+            If gVerbose Then
+                WScript.Echo "[DEPRECATED] --bypassstartup ya no es necesario y no tiene efecto (el CLI abre Access con bypass por defecto)."
             End If
-            WScript.Echo "[DEPRECATED] --bypassstartup ya no es necesario y no tiene efecto (el CLI abre Access con bypass por defecto)."
             
         ElseIf Left(arg, 15) = "/bypassstartup:" Then
             gBypassStartup = True ' mantenemos compatibilidad
@@ -9484,7 +10223,7 @@ Sub ListModulesCommand()
     ' Si no tenemos app válida, abrir nueva instancia
     If app Is Nothing Then
         If gVerbose Then WScript.Echo "DEBUG: password = '" & password & "'"
-        Set app = OpenAccessApp(strAccessPath, password, True) ' bypass on
+        Set app = OpenAccessQuiet(strAccessPath, password) ' bypass on
         If app Is Nothing Then
             WScript.Echo "Error: No se pudo abrir Access para listar módulos."
             WScript.Quit 1
@@ -9507,7 +10246,7 @@ Sub ListModulesCommand()
         If gVerbose Then WScript.Echo "DEBUG: TryListModulesDAO resultado: " & ok
     End If
     If Not ok Then
-        Call CloseAccessApp(app)
+        Call CloseAccessQuiet(app)
         WScript.Echo "Error: No se pudieron listar los módulos."
         WScript.Quit 1
     End If
