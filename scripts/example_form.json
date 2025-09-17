@@ -1,0 +1,200 @@
+{
+  "name": "FormularioEjemplo",
+  "properties": {
+    "caption": "Formulario de Ejemplo CONDOR",
+    "width": 12000,
+    "height": 8000,
+    "recordSource": "",
+    "allowAdditions": true,
+    "allowDeletions": false,
+    "allowEdits": true,
+    "navigationButtons": true,
+    "recordSelectors": true,
+    "dividerLines": true,
+    "autoResize": false,
+    "autoCenter": true,
+    "popUp": false,
+    "modal": false,
+    "borderStyle": "Sizable",
+    "controlBox": true,
+    "minMaxButtons": "Both",
+    "closeButton": true,
+    "whatsThisButton": false,
+    "showInTaskbar": true,
+    "picture": "",
+    "pictureType": "Embedded",
+    "pictureSizeMode": "Clip",
+    "pictureAlignment": "Center",
+    "pictureTiling": false,
+    "gridX": 24,
+    "gridY": 24,
+    "layoutForPrint": false,
+    "fastLaserPrinting": true,
+    "helpFile": "",
+    "helpContextId": 0,
+    "menuBar": "",
+    "toolbar": "",
+    "shortcutMenu": true,
+    "shortcutMenuBar": "",
+    "cycle": "All Records",
+    "viewsAllowed": "Form",
+    "scrollBars": "Neither",
+    "recordLocks": "No Locks",
+    "dataEntry": false
+  },
+  "sections": {
+    "detail": {
+      "height": 6000,
+      "backColor": "#FFFFFF",
+      "specialEffect": "Flat",
+      "visible": true,
+      "displayWhen": "Always",
+      "keepTogether": true,
+      "canGrow": false,
+      "canShrink": false,
+      "newRowOrCol": "None",
+      "repeatSection": false,
+      "insertInHorizontal": false,
+      "tag": "",
+      "alternateBackColor": "#FFFFFF",
+      "backStyle": "Normal"
+    },
+    "header": {
+      "height": 1000,
+      "backColor": "#E6E6FA",
+      "visible": true,
+      "displayWhen": "Always"
+    },
+    "footer": {
+      "height": 500,
+      "backColor": "#F0F0F0",
+      "visible": true,
+      "displayWhen": "Always"
+    }
+  },
+  "controls": [
+    {
+      "name": "txtNombre",
+      "type": "TextBox",
+      "section": "Detail",
+      "properties": {
+        "left": 1440,
+        "top": 720,
+        "width": 3000,
+        "height": 315,
+        "controlSource": "Nombre",
+        "visible": true,
+        "enabled": true,
+        "locked": false,
+        "tabStop": true,
+        "tabIndex": 1,
+        "backStyle": "Normal",
+        "backColor": "#FFFFFF",
+        "foreColor": "#000000",
+        "borderStyle": "Solid",
+        "borderWidth": 1,
+        "borderColor": "#000000",
+        "specialEffect": "Sunken",
+        "fontName": "Calibri",
+        "fontSize": 11,
+        "fontWeight": "Normal",
+        "fontItalic": false,
+        "fontUnderline": false,
+        "textAlign": "Left",
+        "leftMargin": 0,
+        "topMargin": 0,
+        "rightMargin": 0,
+        "bottomMargin": 0,
+        "lineSpacing": 0,
+        "displayAsHyperlink": "Never",
+        "tag": "",
+        "helpContextId": 0,
+        "shortcutMenuBar": "",
+        "controlTipText": "Ingrese el nombre",
+        "statusBarText": "Campo para el nombre del registro"
+      },
+      "events": {
+        "onEnter": "[Event Procedure]",
+        "onExit": "[Event Procedure]",
+        "onChange": "[Event Procedure]"
+      }
+    },
+    {
+      "name": "lblNombre",
+      "type": "Label",
+      "section": "Detail",
+      "properties": {
+        "left": 360,
+        "top": 720,
+        "width": 1020,
+        "height": 315,
+        "caption": "Nombre:",
+        "visible": true,
+        "backStyle": "Transparent",
+        "foreColor": "#000000",
+        "fontName": "Calibri",
+        "fontSize": 11,
+        "fontWeight": "Normal",
+        "fontItalic": false,
+        "fontUnderline": false,
+        "textAlign": "Left",
+        "tag": ""
+      }
+    },
+    {
+      "name": "cmdGuardar",
+      "type": "CommandButton",
+      "section": "Detail",
+      "properties": {
+        "left": 1440,
+        "top": 2160,
+        "width": 1440,
+        "height": 420,
+        "caption": "Guardar",
+        "visible": true,
+        "enabled": true,
+        "tabStop": true,
+        "tabIndex": 2,
+        "backStyle": "Normal",
+        "backColor": "#F0F0F0",
+        "foreColor": "#000000",
+        "borderStyle": "Solid",
+        "borderWidth": 1,
+        "borderColor": "#000000",
+        "fontName": "Calibri",
+        "fontSize": 11,
+        "fontWeight": "Bold",
+        "fontItalic": false,
+        "fontUnderline": false,
+        "picture": "",
+        "pictureType": "Embedded",
+        "tag": "",
+        "helpContextId": 0,
+        "shortcutMenuBar": "",
+        "controlTipText": "Haga clic para guardar",
+        "statusBarText": "Guarda el registro actual"
+      },
+      "events": {
+        "onClick": "[Event Procedure]"
+      }
+    }
+  ],
+  "events": {
+    "onLoad": "[Event Procedure]",
+    "onCurrent": "[Event Procedure]",
+    "onClose": "[Event Procedure]"
+  },
+  "code": {
+    "module": {
+      "handlers": {
+        "Form_Load": "Private Sub Form_Load()\n    ' Código de inicialización del formulario\n    Me.txtNombre.SetFocus\nEnd Sub",
+        "Form_Current": "Private Sub Form_Current()\n    ' Código cuando cambia el registro actual\n    If Me.NewRecord Then\n        Me.Caption = \"Nuevo Registro\"\n    Else\n        Me.Caption = \"Editando: \" & Nz(Me.txtNombre, \"Sin nombre\")\n    End If\nEnd Sub",
+        "Form_Close": "Private Sub Form_Close()\n    ' Código al cerrar el formulario\n    DoCmd.Save acForm, Me.Name\nEnd Sub",
+        "txtNombre_Enter": "Private Sub txtNombre_Enter()\n    ' Código al entrar al campo nombre\n    Me.txtNombre.BackColor = RGB(255, 255, 200)\nEnd Sub",
+        "txtNombre_Exit": "Private Sub txtNombre_Exit(Cancel As Integer)\n    ' Código al salir del campo nombre\n    Me.txtNombre.BackColor = RGB(255, 255, 255)\n    If Len(Trim(Me.txtNombre)) = 0 Then\n        MsgBox \"El nombre es requerido\", vbExclamation\n        Cancel = True\n    End If\nEnd Sub",
+        "txtNombre_Change": "Private Sub txtNombre_Change()\n    ' Código cuando cambia el contenido del nombre\n    If Len(Me.txtNombre) > 50 Then\n        MsgBox \"El nombre no puede exceder 50 caracteres\", vbWarning\n    End If\nEnd Sub",
+        "cmdGuardar_Click": "Private Sub cmdGuardar_Click()\n    ' Código para guardar el registro\n    On Error GoTo ErrorHandler\n    \n    If Me.Dirty Then\n        DoCmd.RunCommand acCmdSaveRecord\n        MsgBox \"Registro guardado exitosamente\", vbInformation\n    Else\n        MsgBox \"No hay cambios para guardar\", vbInformation\n    End If\n    \n    Exit Sub\n    \nErrorHandler:\n    MsgBox \"Error al guardar: \" & Err.Description, vbCritical\nEnd Sub"
+      }
+    }
+  }
+}

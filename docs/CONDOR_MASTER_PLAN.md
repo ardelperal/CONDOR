@@ -37,6 +37,7 @@ This document outlines the master plan for the CONDOR project, including key dia
 21. [Anexo A: Estructura Detallada de Bases de Datos](#21-anexo-a-estructura-detallada-de-bases-de-datos)
 22. [Anexo B: Mapeo de Campos para Generación de Documentos](#22-anexo-b-mapeo-de-campos-para-generación-de-documentos)
 23. [Sistema de Migraciones de Base de Datos](#23-sistema-de-migraciones-de-base-de-datos)
+24. [Contexto para Inteligencia Artificial](#24-contexto-para-inteligencia-artificial)
 
 ---
 
@@ -203,7 +204,7 @@ graph TD
 - **Base de Datos de Prueba**: TIAuthRepository.bas usa Lanzadera_integration_test.accdb
 - **Contexto de BD**: Separación entre Lanzadera_datos y CONDOR_datos
 - **Autoaprovisionamiento Centralizado**: Utiliza `modTestUtils.ProvisionTestDatabases()` desde `ResetTestEnvironment`
-- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
+n- **Patrón Simétrico**: SuiteSetup usa `PrepareTestDatabase()`, SuiteTeardown usa `CleanupTestDatabase()`
 - **Rutas Estandarizadas**: Fixtures en `back/test_env/fixtures/`, workspace en `front/test_env/workspace/`
 - **Configuración**: CMockConfig e inyección de dependencias
 - **Runner de Pruebas**: modTestRunner.bas con inyección de dependencias
@@ -2695,7 +2696,7 @@ Este principio se integra con el **Ciclo de Trabajo de Desarrollo** definido en 
 ### Vinculación UI↔Código
 
 El sistema implementa detección automática y vinculación entre elementos de la interfaz de usuario (controles de formularios) y el código VBA asociado (Event Procedures), garantizando la coherencia entre la definición JSON y los handlers de eventos existentes.
-
+
 #### Detección Automática de Módulos
 
 Durante la exportación (`export-form`), el sistema busca automáticamente archivos de módulo asociados al formulario:
@@ -3790,64 +3791,73 @@ El sistema CONDOR implementa un conjunto completo de comandos CLI para la gesti�
 #### export-form
 Exporta formularios de Access a formato JSON con estructura completa.
 
-**Sintaxis:**
+**Sintaxis Canónica:**
 ```bash
-cscript condor_cli.vbs export-form <db_path> <form_name> [opciones]
+cscript condor_cli.vbs export-form "<db_path>" "<form_name>" --output "<json_path>" [--password <pwd>] [--pretty]
 ```
+
+**Parámetros Requeridos:**
+- `<db_path>` - Ruta de la base de datos Access
+- `<form_name>` - Nombre del formulario a exportar
+- `--output <json_path>` - Ruta del archivo JSON de salida
 
 **Opciones:**
 - `--password <pwd>` - Contraseña de la base de datos
-- `--output <file>` - Archivo de salida (por defecto: <form_name>.json)
-- `--pretty` - Formato JSON con indentación legible
-- `--src <dir>` - Directorio de código fuente para detección de handlers VBA
+- `--pretty` - Formatear JSON con indentación legible
 
 #### import-form
 Importa formularios desde archivos JSON con creación/modificación automática.
 
-**Sintaxis:**
+**Sintaxis Canónica:**
 ```bash
-cscript condor_cli.vbs import-form <json_file> <db_path> [opciones]
+cscript condor_cli.vbs import-form "<db_path>" "<json_path>" [--password <pwd>] [--replace]
 ```
+
+**Parámetros Requeridos:**
+- `<db_path>` - Ruta de la base de datos Access destino
+- `<json_path>` - Ruta del archivo JSON a importar
 
 **Opciones:**
 - `--password <pwd>` - Contraseña de la base de datos
-- `--replace` - Reemplazar formulario existente
-- `--strict` - Modo estricto (falla si hay inconsistencias)
-- `--verbose` - Mostrar información detallada del proceso
+- `--replace` - Reemplazar formulario existente sin confirmación
 
 #### roundtrip-form
-Realiza test completo de export→import para verificar integridad.
+Realiza test completo de export→import→export→diff para verificar integridad.
 
-**Sintaxis:**
+**Sintaxis Canónica:**
 ```bash
-cscript condor_cli.vbs roundtrip-form <db_path> <form_name> [opciones]
+cscript condor_cli.vbs roundtrip-form "<db_path>" "<form_name>" --temp "<dir>" [--password <pwd>]
 ```
+
+**Parámetros Requeridos:**
+- `<db_path>` - Ruta de la base de datos Access
+- `<form_name>` - Nombre del formulario a probar
+- `--temp <dir>` - Directorio temporal para archivos intermedios
 
 **Opciones:**
 - `--password <pwd>` - Contraseña de la base de datos
-- `--temp-dir <dir>` - Directorio temporal (por defecto: %TEMP%)
-- `--verbose` - Mostrar información detallada del proceso
 
 #### validate-form-json
 Valida estructura e integridad de archivos JSON de formularios.
 
-**Sintaxis:**
+**Sintaxis Canónica:**
 ```bash
-cscript condor_cli.vbs validate-form-json <json_file> [opciones]
+cscript condor_cli.vbs validate-form-json "<json_path>"
 ```
 
-**Opciones:**
-- `--strict` - Validación estricta (requiere Controls y Properties)
-- `--schema` - Detectar y validar esquema automáticamente
-- `--verbose` - Mostrar información detallada de validación
+**Parámetros Requeridos:**
+- `<json_path>` - Ruta del archivo JSON a validar
 
 #### list-forms
 Lista formularios disponibles en la base de datos.
 
-**Sintaxis:**
+**Sintaxis Canónica:**
 ```bash
-cscript condor_cli.vbs list-forms [db_path] [opciones]
+cscript condor_cli.vbs list-forms "<db_path>" [--password <pwd>] [--json]
 ```
+
+**Parámetros Requeridos:**
+- `<db_path>` - Ruta de la base de datos Access
 
 **Opciones:**
 - `--password <pwd>` - Contraseña de la base de datos
@@ -3863,44 +3873,54 @@ El sistema utiliza las siguientes funciones internas:
 - **OpenAccessQuiet** - Apertura silenciosa de Access con bypass automático
 - **ResolveDbForAction** - Resolución automática de rutas de base de datos
 
-### 25.3. Flujo de Trabajo Roundtrip
+### 25.3. Mini-UML/Diagrama de Flujo del Roundtrip
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Access Form   │───▶│   pre.json      │───▶│  Temp Access    │
-│   (Original)    │    │   (Export)      │    │  (Import)       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                        │
-┌─────────────────┐    ┌─────────────────┐             │
-│  Diff Report    │◀───│   post.json     │◀────────────┘
-│  (Comparison)   │    │   (Re-export)   │
-└─────────────────┘    └─────────────────┘
+┌─────────────────┐    export-form    ┌─────────────────┐
+│   Access Form   │─────────────────▶│   pre.json      │
+│   (Original)    │                   │   (Export #1)   │
+└─────────────────┘                   └─────────────────┘
+                                                │
+                                                │ import-form
+                                                ▼
+┌─────────────────┐                   ┌─────────────────┐
+│  Diff Report    │                   │  Temp Access    │
+│  (Comparison)   │                   │  (Import)       │
+└─────────────────┘                   └─────────────────┘
+         ▲                                      │
+         │                                      │ export-form
+         │ DiffJsonSemantico                    ▼
+┌─────────────────┐                   ┌─────────────────┐
+│   post.json     │◀──────────────────│   post.json     │
+│   (Export #2)   │                   │   (Export #2)   │
+└─────────────────┘                   └─────────────────┘
 ```
 
-**Proceso:**
-1. Exporta el formulario original a JSON (pre.json)
-2. Importa desde pre.json (recrea el formulario)
-3. Exporta nuevamente a JSON (post.json)
-4. Compara pre.json vs post.json semánticamente
-5. Reporta diferencias encontradas
+**Proceso del Roundtrip:**
+1. **Export #1**: `export-form` extrae el formulario original → `pre.json`
+2. **Import**: `import-form` recrea el formulario desde `pre.json` → Access temporal
+3. **Export #2**: `export-form` extrae el formulario recreado → `post.json`
+4. **Diff**: `DiffJsonSemantico` compara `pre.json` vs `post.json`
+5. **Report**: Reporta diferencias (código salida 1 si hay diferencias, 0 si son idénticos)
 
 ### 25.4. Ejemplos de Uso
 
-**Paths reales de pruebas:**
+**Paths reales de pruebas (contraseña dpddpd para UI/sources):**
+
 ```bash
-# Exportar formulario con contraseña dpddpd (UI/sources)
-cscript condor_cli.vbs export-form "C:\Proyectos\CONDOR\ui\sources\Expedientes.accdb" "F_Expediente" --password dpddpd --output ".\out\F_Expediente.json" --pretty
+# Exportar desde UI/sources:
+cscript condor_cli.vbs export-form "C:\Proyectos\CONDOR\ui\sources\Expedientes.accdb" "FormExpediente" --output ".\out\FormExpediente.json" --password dpddpd
 
-# Importar formulario a desarrollo
-cscript condor_cli.vbs import-form ".\out\F_Expediente.json" "C:\Proyectos\CONDOR\front\Desarrollo\CONDOR.accdb" --replace --verbose
+# Importar en Desarrollo:
+cscript condor_cli.vbs import-form "C:\Proyectos\CONDOR\front\Desarrollo\CONDOR.accdb" ".\out\FormExpediente.json" --replace
 
-# Test de integridad roundtrip
-cscript condor_cli.vbs roundtrip-form "C:\Proyectos\CONDOR\front\Desarrollo\CONDOR.accdb" "F_Expediente" --temp ".\rt" --verbose
+# Test de integridad roundtrip:
+cscript condor_cli.vbs roundtrip-form "C:\Proyectos\CONDOR\ui\sources\Expedientes.accdb" "FormExpediente" --temp ".\rt" --password dpddpd
 
-# Validación estricta de JSON
-cscript condor_cli.vbs validate-form-json ".\out\F_Expediente.json" --strict --verbose
+# Validación de JSON:
+cscript condor_cli.vbs validate-form-json ".\out\FormExpediente.json"
 
-# Listar formularios disponibles
+# Listar formularios disponibles:
 cscript condor_cli.vbs list-forms "C:\Proyectos\CONDOR\ui\sources\Expedientes.accdb" --password dpddpd --json
 ```
 
@@ -3912,27 +3932,59 @@ Los formularios se serializan en formato JSON con la siguiente estructura:
 
 ```json
 {
-  "FormName": "F_Expediente",
-  "Properties": {
-    "Caption": "Gestión de Expedientes",
-    "RecordSource": "tbExpedientes"
+  "schemaVersion": 1,
+  "name": "FormExpediente",
+  "properties": {
+    "name": "FormExpediente",
+    "defaultView": 0,
+    "recordSelectors": true,
+    "navigationButtons": true
   },
-  "sections": {
-    "header": {
-      "controls": [...]
-    },
-    "detail": {
-      "controls": [...]
-    },
-    "footer": {
-      "controls": [...]
+  "sections": [
+    {
+      "name": "Detail",
+      "type": "detail"
     }
-  }
+  ]
 }
 ```
 
 ### 25.6. Códigos de Salida
 
+- **0**: Operación exitosa
+- **1**: Error en parámetros o diferencias encontradas (roundtrip)
+- **2**: Error de acceso a base de datos
+- **3**: Error de validación JSON
+
 - **0** - Operación exitosa
 - **1** - Error en el proceso o diferencias encontradas (roundtrip-form)
 - **2** - Error de validación (validate-form-json en modo strict)
+
+
+## 24. Contexto para Inteligencia Artificial
+
+Para facilitar la colaboración con asistentes de inteligencia artificial (IA) y asegurar que tengan un conocimiento preciso y actualizado del proyecto, se ha establecido un directorio específico para albergar archivos de contexto.
+
+### 24.1. Ubicación y Estructura
+
+-   **Directorio Principal**: `docs/contexto_ia/`
+
+Este directorio contiene archivos de texto plano (`.txt`) que son generados periódicamente o según sea necesario para reflejar el estado actual de componentes clave del proyecto.
+
+### 24.2. Contenido
+
+Los archivos que se encuentran en este directorio incluyen, entre otros:
+
+-   **Esquemas de Tablas (`*_listtables.txt`)**: Archivos que detallan la estructura (columnas, tipos de datos) de las tablas en las diferentes bases de datos del proyecto (`CONDOR_datos`, `correos_datos`, etc.). Esto permite a la IA entender el modelo de datos sin necesidad de acceder directamente a las bases de datos.
+-   **Listados de Código Fuente (`listado_archivos_src.txt`)**: Un inventario de los archivos de código fuente VBA que componen la lógica de la aplicación. Esto ayuda a la IA a conocer la organización del código en el directorio `src/`.
+
+### 24.3. Propósito y Uso
+
+El propósito principal de estos archivos es servir como una fuente de verdad estática y fácilmente analizable para los modelos de lenguaje. Al proporcionar este contexto en los prompts, se mejora la capacidad de la IA para:
+
+-   Generar código que se alinee con las convenciones y la estructura existente.
+-   Realizar análisis de impacto de cambios.
+-   Ayudar en la depuración de problemas.
+-   Comprender las relaciones entre las distintas partes del sistema.
+
+Este directorio y su contenido son una pieza clave en la estrategia de desarrollo asistido por IA del proyecto CONDOR.

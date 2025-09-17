@@ -1,0 +1,1 @@
+{"schemaVersion": 1,"name": "FormExpediente","properties": {"name": "FormExpediente","defaultView": 0,"recordSelectors": true,"navigationButtons": true},"sections": [{"name": "Detail", "type": "detail"}]}
