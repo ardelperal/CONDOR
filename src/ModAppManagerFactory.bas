@@ -3,8 +3,9 @@ Option Compare Database
 Option Explicit
 
 
+
 Public Function CreateAppManager() As IAppManager
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim appManagerImpl As New CAppManager
     
@@ -15,18 +16,20 @@ Public Function CreateAppManager() As IAppManager
     Dim configSvc As IConfig
     Set configSvc = modConfigFactory.CreateConfigService()
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
+    Dim ErrorHandler As IErrorHandlerService
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService()
     
     ' Inyectar dependencias
-    appManagerImpl.Initialize authSvc, configSvc, errorHandler
+    appManagerImpl.Initialize authSvc, configSvc, ErrorHandler
     
     Set CreateAppManager = appManagerImpl
     
     Exit Function
     
-errorHandler:
+ErrorHandler:
     Debug.Print "Error fatal en ModAppManagerFactory.CreateAppManager: " & Err.Description
     Set CreateAppManager = Nothing
 End Function
+
+
 

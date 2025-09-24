@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' =====================================================
 ' Interfaz: IAuthRepository
 ' Propósito: Define el contrato para el acceso a datos de autenticación
@@ -24,6 +25,8 @@ Option Explicit
 ' @return: Objeto EAuthData con toda la información de autenticación
 Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
 End Function
+
+
 
 
 

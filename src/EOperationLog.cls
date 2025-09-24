@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' Versión 2.1 - Sincronizada con el esquema de la base de datos
 
@@ -55,3 +56,4 @@ Public Sub Initialize(ByVal fechaHora As Date, ByVal usuario As String, ByVal ti
     m_Resultado = resultado
     m_Detalles = detalles
 End Sub
+

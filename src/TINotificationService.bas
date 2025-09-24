@@ -1,7 +1,8 @@
-Attribute VB_Name = "TINotificationService"
-
+﻿Attribute VB_Name = "TINotificationService"
 Option Compare Database
 Option Explicit
+
+
 
 ' ============================================================================
 ' FUNCIÓN PRINCIPAL DE LA SUITE (ESTÁNDAR DE ORO)
@@ -270,4 +271,7 @@ Cleanup:
     Set rs = Nothing
     Set localConfig = Nothing
 End Function
+
+
+
 

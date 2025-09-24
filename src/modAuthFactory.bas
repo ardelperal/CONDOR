@@ -1,10 +1,11 @@
-Attribute VB_Name = "modAuthFactory"
+﻿Attribute VB_Name = "modAuthFactory"
 Option Compare Database
 Option Explicit
 
 
+
 Public Function CreateAuthService(Optional ByVal config As IConfig = Nothing) As IAuthService
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim effectiveConfig As IConfig
     If config Is Nothing Then
@@ -15,8 +16,8 @@ Public Function CreateAuthService(Optional ByVal config As IConfig = Nothing) As
         Set effectiveConfig = config
     End If
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    Dim ErrorHandler As IErrorHandlerService
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(effectiveConfig)
@@ -25,14 +26,16 @@ Public Function CreateAuthService(Optional ByVal config As IConfig = Nothing) As
     Set authRepo = modRepositoryFactory.CreateAuthRepository(effectiveConfig) ' CORRECTO
     
     Dim authSvc As New CAuthService
-    authSvc.Initialize effectiveConfig, operationLogger, authRepo, errorHandler
+    authSvc.Initialize effectiveConfig, operationLogger, authRepo, ErrorHandler
     
     Set CreateAuthService = authSvc
     
     Exit Function
     
-errorHandler:
+ErrorHandler:
     Debug.Print "Error en modAuthFactory.CreateAuthService: " & Err.Description
     Set CreateAuthService = Nothing
 End Function
+
+
 

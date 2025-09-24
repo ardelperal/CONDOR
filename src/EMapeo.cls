@@ -12,6 +12,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tbMapeoCampos
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Mapeo entre campos de tablas de datos y marcadores en plantillas Word para generación de documentos
@@ -63,6 +64,8 @@ End Property
 Public Property Let NombreCampoWord(ByVal value As String)
     m_nombreCampoWord = value
 End Property
+
+
 
 
 

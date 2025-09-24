@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IExpedienteRepository
 
@@ -104,4 +105,6 @@ Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() A
     ' Devolver el resultado configurado
     Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = m_GetSelector_Result
 End Function
+
+
 

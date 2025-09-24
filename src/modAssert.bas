@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' ============================================================================
 ' MÓDULO DE ASERCIONES PARA EL FRAMEWORK DE TESTING
 ' ============================================================================
@@ -120,4 +121,6 @@ End Sub
 Public Sub AreEqual(expected As Variant, actual As Variant, Optional message As String = "")
     Call AssertEquals(expected, actual, message)
 End Sub
+
+
 

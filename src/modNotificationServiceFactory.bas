@@ -1,6 +1,7 @@
-Attribute VB_Name = "modNotificationServiceFactory"
+﻿Attribute VB_Name = "modNotificationServiceFactory"
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -13,7 +14,7 @@ Option Explicit
 
 ' Función factory para crear y configurar el servicio de notificaciones
 Public Function CreateNotificationService(Optional ByVal config As IConfig = Nothing) As INotificationService
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim effectiveConfig As IConfig
     If config Is Nothing Then
@@ -24,8 +25,8 @@ Public Function CreateNotificationService(Optional ByVal config As IConfig = Not
         Set effectiveConfig = config
     End If
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    Dim ErrorHandler As IErrorHandlerService
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     Dim operationLogger As IOperationLogger
     Set operationLogger = modOperationLoggerFactory.CreateOperationLogger(effectiveConfig)
@@ -38,17 +39,19 @@ Public Function CreateNotificationService(Optional ByVal config As IConfig = Not
     Dim notificationServiceInstance As New CNotificationService
     
     ' Inicializar la instancia concreta con todas las dependencias
-    Call notificationServiceInstance.Initialize(effectiveConfig, operationLogger, notificationRepository, errorHandler)
+    Call notificationServiceInstance.Initialize(effectiveConfig, operationLogger, notificationRepository, ErrorHandler)
     
     ' Devolver la instancia inicializada como el tipo de la interfaz
     Set CreateNotificationService = notificationServiceInstance
     
     Exit Function
     
-errorHandler:
+ErrorHandler:
     Debug.Print "Error en modNotificationServiceFactory.CreateNotificationService: " & Err.Number & " - " & Err.Description
     Err.Raise Err.Number, Err.Source, Err.Description
 End Function
+
+
 
 
 

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' ============================================================================
@@ -42,8 +43,10 @@ End Function
 ' @param solicitudId: ID de la solicitud
 ' @param nuevoEstadoId: ID del nuevo estado
 ' @return: True si el cambio fue exitoso, False en caso contrario
-Public Function CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
+Public Function CambiarEstadoSolicitud(ByVal SolicitudID As Long, ByVal nuevoEstadoId As Long) As Boolean
 End Function
+
+
 
 
 

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -10,16 +10,17 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 Implements IWorkflowService
 
 Private m_Repo As IWorkflowRepository
 Private m_Logger As IOperationLogger
 Private m_ErrorHandler As IErrorHandlerService
 
-Public Sub Initialize(ByVal repo As IWorkflowRepository, ByVal logger As IOperationLogger, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal repo As IWorkflowRepository, ByVal logger As IOperationLogger, ByVal ErrorHandler As IErrorHandlerService)
     Set m_Repo = repo
     Set m_Logger = logger
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
 End Sub
 
 Private Function IWorkflowService_ValidateTransition(ByVal SolicitudID As Long, ByVal estadoOrigen As String, ByVal estadoDestino As String, ByVal tipoSolicitud As String, ByVal usuarioRol As String) As Boolean
@@ -74,17 +75,17 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, By
     End If
     
     ' Convertir estadoActual String a Long para el repositorio
-    Dim idEstado As Long
+    Dim IdEstado As Long
     
     ' Mapeo de nombres de estados a IDs para el nuevo flujo
     Select Case estadoActual
-        Case "Registrado": idEstado = 1
-        Case "Desarrollo": idEstado = 2
-        Case "Modificación": idEstado = 3
-        Case "Validación": idEstado = 4
-        Case "Revisión": idEstado = 5
-        Case "Formalización": idEstado = 6
-        Case "Aprobada": idEstado = 7
+        Case "Registrado": IdEstado = 1
+        Case "Desarrollo": IdEstado = 2
+        Case "Modificación": IdEstado = 3
+        Case "Validación": IdEstado = 4
+        Case "Revisión": IdEstado = 5
+        Case "Formalización": IdEstado = 6
+        Case "Aprobada": IdEstado = 7
         Case Else
             ' Estado no reconocido
             m_ErrorHandler.LogError 0, "Estado no reconocido: " & estadoActual, "CWorkflowService"
@@ -92,7 +93,7 @@ Private Function IWorkflowService_GetNextStates(ByVal estadoActual As String, By
             Exit Function
     End Select
     
-    Set dict = m_Repo.GetNextStates(idEstado, usuarioRol)
+    Set dict = m_Repo.GetNextStates(IdEstado, usuarioRol)
     Set IWorkflowService_GetNextStates = dict
     Exit Function
     
@@ -105,6 +106,8 @@ Private Function IWorkflowService_IsEstadoFinal(ByVal estadoActual As String) As
     ' Implementación para verificar si un estado es final en el nuevo flujo
     IWorkflowService_IsEstadoFinal = (estadoActual = "Aprobada")
 End Function
+
+
 
 
 

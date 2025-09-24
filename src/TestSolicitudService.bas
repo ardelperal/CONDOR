@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestSolicitudService"
+﻿Attribute VB_Name = "TestSolicitudService"
 Option Compare Database
 Option Explicit
+
 
 
 ' ============================================================================
@@ -172,4 +173,6 @@ Cleanup:
     Set service = Nothing
     Set solicitud = Nothing
 End Function
+
+
 

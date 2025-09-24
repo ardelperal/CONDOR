@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IExpedienteService
 
@@ -47,4 +48,6 @@ Private Function IExpedienteService_ObtenerExpedientesParaSelector() As Object
     ' CORRECCIÓN: El nombre del método ahora coincide exactamente con la interfaz.
     Set IExpedienteService_ObtenerExpedientesParaSelector = m_GetSelector_Result
 End Function
+
+
 

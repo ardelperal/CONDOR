@@ -12,6 +12,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tbLogCambios
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Auditoría de cambios realizados en el sistema
@@ -99,6 +100,8 @@ End Property
 Public Property Let tipoOperacion(ByVal value As String)
     m_TipoOperacion = value
 End Property
+
+
 
 
 

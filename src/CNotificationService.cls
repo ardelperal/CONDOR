@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' CNotificationService.cls
@@ -26,11 +27,11 @@ Private m_NotificationRepository As INotificationRepository
 Private m_ErrorHandler As IErrorHandlerService
 
 ' Método público para inyectar dependencias
-Public Sub Initialize(config As IConfig, logger As IOperationLogger, repository As INotificationRepository, errorHandler As IErrorHandlerService)
+Public Sub Initialize(config As IConfig, logger As IOperationLogger, repository As INotificationRepository, ErrorHandler As IErrorHandlerService)
     ' Asignar ErrorHandler primero para poder usarlo en el manejo de errores
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
     
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Set m_Config = config
     Set m_OperationLogger = logger
@@ -38,7 +39,7 @@ Public Sub Initialize(config As IConfig, logger As IOperationLogger, repository 
     
     Exit Sub
     
-errorHandler:
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.Initialize"
 End Sub
 
@@ -51,7 +52,7 @@ Private Function INotificationService_SendNotification( _
     Optional ByVal conCopiaOculta As String = "", _
     Optional ByVal urlAdjunto As String = "" _
 ) As Boolean
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' Validar que las dependencias estén inyectadas
     If m_Config Is Nothing Or m_OperationLogger Is Nothing Or m_NotificationRepository Is Nothing Then
@@ -73,10 +74,10 @@ Private Function INotificationService_SendNotification( _
     correoAdministrador = m_Config.GetCorreoAdministrador()
     
     ' Llamar al repositorio para encolar el correo (el repositorio calcula el ID)
-    Dim Resultado As Boolean
-    Resultado = m_NotificationRepository.EnqueueEmail(destinatarios, asunto, cuerpoHTML, conCopia, conCopiaOculta, urlAdjunto)
+    Dim resultado As Boolean
+    resultado = m_NotificationRepository.EnqueueEmail(destinatarios, asunto, cuerpoHTML, conCopia, conCopiaOculta, urlAdjunto)
     
-    If Not Resultado Then
+    If Not resultado Then
         INotificationService_SendNotification = False
         Exit Function
     End If
@@ -96,7 +97,7 @@ Private Function INotificationService_SendNotification( _
     INotificationService_SendNotification = True
     Exit Function
     
-errorHandler:
+ErrorHandler:
     m_ErrorHandler.LogError Err.Number, Err.Description, "CNotificationService.SendNotification"
     
     ' No hay recursos específicos que limpiar ya que el repositorio maneja la BD
@@ -127,6 +128,9 @@ Private Sub Class_Terminate()
     Set m_NotificationRepository = Nothing
     Set m_ErrorHandler = Nothing
 End Sub
+
+
+
 
 
 

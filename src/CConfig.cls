@@ -1,15 +1,16 @@
-VERSION 1.0 CLASS
-    BEGIN
-      MultiUse = -1  'True
-    END
-    Attribute VB_Name = "CConfig"
-    Attribute VB_GlobalNameSpace = False
-    Attribute VB_Creatable = False
-    Attribute VB_PredeclaredId = False
-    Attribute VB_Exposed = False
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CConfig"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Compare Database
+Option Explicit
+
     
-    Option Compare Database
-    Option Explicit
 
     Implements IConfig
 
@@ -73,7 +74,7 @@ VERSION 1.0 CLASS
         db.Close
         
         Exit Sub
-    ErrorHandler:
+ErrorHandler:
         If Not rs Is Nothing Then rs.Close
         If Not db Is Nothing Then db.Close
         Err.Raise Err.Number, "CConfig.LoadConfiguration", Err.Description
@@ -84,7 +85,7 @@ VERSION 1.0 CLASS
     End Sub
 
     Private Function IConfig_GetValue(ByVal key As String) As Variant
-        If m_Settings.Exists(key) Then ' CORREGIDO
+        If m_Settings.exists(key) Then ' CORREGIDO
             IConfig_GetValue = m_Settings(key)
         Else
             IConfig_GetValue = ""
@@ -92,7 +93,7 @@ VERSION 1.0 CLASS
     End Function
 
     Private Sub IConfig_SetSetting(ByVal key As String, ByVal value As Variant)
-        If m_Settings.Exists(key) Then ' CORREGIDO
+        If m_Settings.exists(key) Then ' CORREGIDO
             m_Settings(key) = value
         Else
             m_Settings.Add key, value
@@ -212,3 +213,4 @@ VERSION 1.0 CLASS
     Public Function GetAllKeys() As Variant
         GetAllKeys = m_Settings.Keys
     End Function
+

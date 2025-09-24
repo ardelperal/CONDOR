@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' =====================================================
 ' INTERFACE: IAppManager
 ' PROPOSITO: Interface para la gestión centralizada de la aplicación
@@ -26,7 +27,7 @@ Option Explicit
 '   - config: Servicio de configuración
 '   - errorHandler: Manejador de errores
 ' =====================================================
-Public Sub Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal ErrorHandler As IErrorHandlerService)
 End Sub
 
 ' =====================================================
@@ -62,4 +63,6 @@ End Function
 ' =====================================================
 Public Function Ping() As String
 End Function
+
+
 

@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Public Function SendNotification(ByVal destinatarios As String, _
                            ByVal asunto As String, _
                            ByVal cuerpoHTML As String, _
@@ -18,6 +19,9 @@ Public Function SendNotification(ByVal destinatarios As String, _
                            Optional ByVal conCopiaOculta As String = "", _
                            Optional ByVal urlAdjunto As String = "") As Boolean
 End Function
+
+
+
 
 
 

@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestOperationLogger"
+﻿Attribute VB_Name = "TestOperationLogger"
 Option Compare Database
 Option Explicit
+
 
 Public Function TestOperationLoggerRunAll() As CTestSuiteResult
     Set TestOperationLoggerRunAll = New CTestSuiteResult
@@ -107,3 +108,4 @@ Cleanup:
     Set logEntry = Nothing
     Set mockSolicitud = Nothing
 End Function
+

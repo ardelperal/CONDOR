@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' Valida si una transición es permitida en el nuevo flujo de 7 estados
@@ -22,6 +23,8 @@ End Function
 ' Verifica si un estado es final en el nuevo flujo (Aprobada = ID 7)
 Public Function IsEstadoFinal(ByVal estadoActual As String) As Boolean
 End Function
+
+
 
 
 

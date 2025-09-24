@@ -1,6 +1,7 @@
-Attribute VB_Name = "TIWorkflowRepository"
+﻿Attribute VB_Name = "TIWorkflowRepository"
 Option Compare Database
 Option Explicit
+
 
 Public Function TIWorkflowRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
@@ -103,7 +104,7 @@ Private Function TestGetNextStates_ReturnsCorrectStates() As CTestResult
     
     ' Assert: Solo debe poder moverlo a 'Revision' (ID 5)
     modAssert.AssertEquals 1, nextStates.Count, "Un Tecnico en Validacion solo debe tener un estado siguiente."
-    modAssert.AssertTrue nextStates.Exists(5), "El estado siguiente para un Tecnico en Validacion debe ser 'Revision' (ID 5)."
+    modAssert.AssertTrue nextStates.exists(5), "El estado siguiente para un Tecnico en Validacion debe ser 'Revision' (ID 5)."
     
     TestGetNextStates_ReturnsCorrectStates.Pass
     GoTo Cleanup
@@ -113,3 +114,4 @@ Cleanup:
     Set nextStates = Nothing
     Set repo = Nothing
 End Function
+
