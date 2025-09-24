@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockExpedienteRepository"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IExpedienteRepository
 
@@ -98,4 +108,11 @@ Private Function IExpedienteRepository_ObtenerExpedientesActivosParaSelector() A
     m_ObtenerSelector_WasCalled = True
     ' Devolver el resultado configurado
     Set IExpedienteRepository_ObtenerExpedientesActivosParaSelector = m_GetSelector_Result
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

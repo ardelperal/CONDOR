@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' ============================================================================
 ' NOTA SOBRE LA LIBRERÍA "VBIDE Extensibility"
 ' Este módulo utiliza Late Binding para el descubrimiento automático de pruebas,
@@ -275,7 +276,7 @@ Private Sub DiscoverAndRegisterSuites()
                 Dim suiteKey As String
                 suiteKey = moduleName & "RunAll"
                 
-                If Not m_SuiteNames.Exists(suiteKey) Then
+                If Not m_SuiteNames.exists(suiteKey) Then
                     m_SuiteNames.Add suiteKey, suiteKey
                 End If
             End If
@@ -371,4 +372,25 @@ Public Sub EjecutarTodasLasPruebas()
     Call RunTestFramework
 End Sub
 
+<<<<<<< HEAD
 'hola'
+=======
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

@@ -7,6 +7,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tbAdjuntos
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Gestión de ficheros adjuntos a las solicitudes
@@ -66,4 +67,13 @@ End Property
 
 Public Property Let descripcion(ByVal value As String)
     m_Descripcion = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+
+
+>>>>>>> main

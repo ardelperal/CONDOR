@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Public Function CreateWorkflowService(Optional ByVal config As IConfig = Nothing) As IWorkflowService
     On Error GoTo ErrorHandler
 
@@ -42,4 +43,11 @@ Public Function CreateWorkflowServiceWithMocks(ByVal mockRepo As IWorkflowReposi
     ' Inyectar el mock del repositorio y mocks pasivos para las otras dependencias
     serviceImpl.Initialize mockRepo, New CMockOperationLogger, New CMockErrorHandlerService
     Set CreateWorkflowServiceWithMocks = serviceImpl
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

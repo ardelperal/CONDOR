@@ -1,6 +1,7 @@
-Attribute VB_Name = "TIFileSystem"
+﻿Attribute VB_Name = "TIFileSystem"
 Option Compare Database
 Option Explicit
+
 
 Private Const TEST_DIR As String = "fs_tests\"
 
@@ -107,3 +108,4 @@ Cleanup:
     Set fs = Nothing
     Set fso = Nothing
 End Function
+

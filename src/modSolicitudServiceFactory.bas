@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 '******************************************************************************
 ' MÓDULO: modSolicitudServiceFactory
 ' DESCRIPCIÓN: Factory para la inyección de dependencias del servicio de solicitudes
@@ -63,4 +64,13 @@ ErrorHandler:
     ' Usar Debug.Print en una factoría es aceptable si errorHandler falla.
     Debug.Print "Error crítico en modSolicitudServiceFactory.CreateSolicitudService: " & Err.Description
     Set CreateSolicitudService = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+>>>>>>> main

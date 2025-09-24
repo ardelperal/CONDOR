@@ -4,6 +4,7 @@ Option Explicit
 
 
 
+
 ' =====================================================
 ' MÓDULO: modWordManagerFactory
 ' DESCRIPCIÓN: Factory para la creación del servicio de gestión de Word
@@ -43,4 +44,13 @@ Public Function CreateWordManager(Optional ByVal config As IConfig = Nothing) As
 ErrorHandler:
     Debug.Print "Error en modWordManagerFactory.CreateWordManager: " & Err.Description
     Err.Raise Err.Number, "modWordManagerFactory.CreateWordManager", Err.Description
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+>>>>>>> main

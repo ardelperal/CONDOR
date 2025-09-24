@@ -1,6 +1,7 @@
-Attribute VB_Name = "modAuthFactory"
+﻿Attribute VB_Name = "modAuthFactory"
 Option Compare Database
 Option Explicit
+
 
 
 Public Function CreateAuthService(Optional ByVal config As IConfig = Nothing) As IAuthService
@@ -34,4 +35,11 @@ Public Function CreateAuthService(Optional ByVal config As IConfig = Nothing) As
 ErrorHandler:
     Debug.Print "Error en modAuthFactory.CreateAuthService: " & Err.Description
     Set CreateAuthService = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

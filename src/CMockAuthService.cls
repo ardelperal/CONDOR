@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockAuthService"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 Implements IAuthService
@@ -33,4 +43,11 @@ End Function
 
 Public Function GetCurrentUserEmail() As String
     GetCurrentUserEmail = IAuthService_GetCurrentUserEmail()
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

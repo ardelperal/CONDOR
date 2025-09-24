@@ -2,6 +2,7 @@
 Option Compare Database
 Option Explicit
 
+
 ' ============================================================================
 ' MÓDULO: TIOperationRepository
 ' DESCRIPCIÓN: Suite de pruebas de integración para COperationRepository
@@ -113,4 +114,12 @@ Cleanup:
     Set repository = Nothing
     Set config = Nothing
     Set logEntry = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+>>>>>>> main

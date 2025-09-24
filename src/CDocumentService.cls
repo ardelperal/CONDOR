@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CDocumentService"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -104,4 +114,12 @@ Private Function JoinPath(ByVal basePath As String, ByVal relativePath As String
     If Right$(b, 1) = "\" Then b = Left$(b, Len(b) - 1)
     If Left$(r, 1) = "\" Then r = Mid$(r, 2)
     JoinPath = b & "\" & r
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+>>>>>>> main

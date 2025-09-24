@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestSolicitudService"
+﻿Attribute VB_Name = "TestSolicitudService"
 Option Compare Database
 Option Explicit
+
 
 
 ' ============================================================================
@@ -171,4 +172,11 @@ Cleanup:
     Set mockWorkflow = Nothing
     Set service = Nothing
     Set solicitud = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

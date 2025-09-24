@@ -1,6 +1,7 @@
-Attribute VB_Name = "TISolicitudRepository"
+﻿Attribute VB_Name = "TISolicitudRepository"
 Option Compare Database
 Option Explicit
+
 
 ' --- Constantes eliminadas - ahora se usa modTestUtils.GetWorkspacePath() ---
 
@@ -94,4 +95,11 @@ TestFail:
 Cleanup:
     Set retrievedSolicitud = Nothing
     Set repo = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

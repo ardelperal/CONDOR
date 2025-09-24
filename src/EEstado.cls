@@ -7,6 +7,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tbEstados
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Definición de los estados del workflow
@@ -66,4 +67,13 @@ End Property
 
 Public Property Let Orden(ByVal value As Integer)
     m_orden = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+
+
+>>>>>>> main

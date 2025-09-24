@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' Clase de tipo de datos para tbDatosCDCASUB
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 
@@ -370,4 +371,20 @@ End Property
 
 Public Property Let fechaFirmaRACDelegador(ByVal value As Date)
     m_fechaFirmaRACDelegador = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

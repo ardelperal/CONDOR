@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CSolicitudRepository"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements ISolicitudRepository
 
@@ -143,4 +153,16 @@ Private Function MapRecordsetToSolicitud(ByVal rs As DAO.Recordset) As ESolicitu
     s.usuarioModificacion = Nz(rs!usuarioModificacion.value, "")
     
     Set MapRecordsetToSolicitud = s
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+
+
+>>>>>>> main

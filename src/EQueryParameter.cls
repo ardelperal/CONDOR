@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' Clase auxiliar para encapsular parámetros de consulta SQL
 ' Versión 1.0 - Soporte para consultas parametrizadas seguras
 
@@ -41,4 +42,14 @@ End Property
 
 Public Property Set ParameterValue(ByVal value As Variant)
     Set m_value = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+
+
+
+>>>>>>> main

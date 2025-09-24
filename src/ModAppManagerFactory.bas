@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Public Function CreateAppManager() As IAppManager
     On Error GoTo ErrorHandler
     
@@ -28,4 +29,11 @@ Public Function CreateAppManager() As IAppManager
 ErrorHandler:
     Debug.Print "Error fatal en ModAppManagerFactory.CreateAppManager: " & Err.Description
     Set CreateAppManager = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

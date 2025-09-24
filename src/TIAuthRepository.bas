@@ -1,6 +1,7 @@
-Attribute VB_Name = "TIAuthRepository"
+﻿Attribute VB_Name = "TIAuthRepository"
 Option Compare Database
 Option Explicit
+
 
 Public Function TIAuthRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
@@ -32,4 +33,10 @@ Private Function TestGetUserAuthData_AdminUser_ReturnsCorrectData() As CTestResu
     Dim authData As EAuthData: Set authData = repo.GetUserAuthData("admin@example.com")
     modAssert.AssertNotNull authData, "AuthData no debe ser nulo."
     TestGetUserAuthData_AdminUser_ReturnsCorrectData.Pass
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+>>>>>>> main

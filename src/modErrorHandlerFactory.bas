@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 Attribute VB_Name = "modErrorHandlerFactory"
 
+=======
+﻿Attribute VB_Name = "modErrorHandlerFactory"
+>>>>>>> main
 Option Compare Database
 Option Explicit
+
 
 
 ' =====================================================
@@ -34,4 +39,14 @@ Public Function CreateErrorHandlerService(Optional ByVal config As IConfig = Not
 ErrorHandler:
     Debug.Print "Error crítico en modErrorHandlerFactory.CreateErrorHandlerService: " & Err.Description
     Set CreateErrorHandlerService = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+>>>>>>> main

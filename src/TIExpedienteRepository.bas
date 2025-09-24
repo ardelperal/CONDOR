@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 Attribute VB_Name = "TIExpedienteRepository"
 
+=======
+﻿Attribute VB_Name = "TIExpedienteRepository"
+>>>>>>> main
 Option Compare Database
 Option Explicit
+
 
 Public Function TIExpedienteRepositoryRunAll() As CTestSuiteResult
     Dim suiteResult As New CTestSuiteResult
@@ -28,4 +33,11 @@ Private Function Test_ObtenerExpedientePorId_Exitoso() As CTestResult
     modAssert.AssertNotNull result, "El expediente no debe ser Nulo."
     modAssert.AssertEquals "NEMO-001", result.Nemotecnico, "El nemotécnico no coincide."
     Test_ObtenerExpedientePorId_Exitoso.Pass
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

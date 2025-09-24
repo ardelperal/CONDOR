@@ -2,6 +2,7 @@
 Option Compare Database
 Option Explicit
 
+
 Public Function GenerateHealthReport() As String
     On Error GoTo ErrorHandler
     
@@ -88,3 +89,4 @@ Public Function GenerateHealthReport() As String
 ErrorHandler:
     GenerateHealthReport = "ERROR INESPERADO durante la verificación: " & Err.Description
 End Function
+

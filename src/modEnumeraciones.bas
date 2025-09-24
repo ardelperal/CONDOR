@@ -4,6 +4,7 @@ Option Explicit
 
 
 
+
 ' Enumeración de roles de usuario para el sistema CONDOR
 ' Define los diferentes tipos de roles disponibles
 Public Enum UserRole
@@ -11,4 +12,13 @@ Public Enum UserRole
     RolAdmin = 1
     RolCalidad = 2
     RolTecnico = 3
+<<<<<<< HEAD
 End Enum
+=======
+End Enum
+
+
+
+
+
+>>>>>>> main

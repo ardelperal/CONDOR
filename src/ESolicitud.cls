@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ESolicitud"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Private m_idSolicitud As Long
 Private m_idExpediente As Long
@@ -45,4 +55,20 @@ Public Property Let fechaModificacion(ByVal value As Date): m_fechaModificacion 
 Public Property Get usuarioModificacion() As String: usuarioModificacion = m_usuarioModificacion: End Property
 Public Property Let usuarioModificacion(ByVal value As String): m_usuarioModificacion = value: End Property
 Public Property Get observaciones() As String: observaciones = m_observaciones: End Property
+<<<<<<< HEAD
 Public Property Let observaciones(ByVal value As String): m_observaciones = value: End Property
+=======
+Public Property Let observaciones(ByVal value As String): m_observaciones = value: End Property
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main
