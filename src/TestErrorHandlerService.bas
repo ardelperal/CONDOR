@@ -1,6 +1,7 @@
-Attribute VB_Name = "TestErrorHandlerService"
+﻿Attribute VB_Name = "TestErrorHandlerService"
 Option Compare Database
 Option Explicit
+
 
 
 ' =====================================================
@@ -56,4 +57,11 @@ Cleanup:
     Set mockConfig = Nothing
     Set mockFileSystem = Nothing
     Set service = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

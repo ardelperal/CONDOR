@@ -1,7 +1,11 @@
 ﻿Attribute VB_Name = "modOperationLoggerFactory"
+<<<<<<< HEAD
 Attribute VB_Name = "modOperationLoggerFactory"
+=======
+>>>>>>> main
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -47,4 +51,14 @@ Public Function CreateOperationLogger(Optional ByVal config As IConfig = Nothing
 ErrorHandler:
     Debug.Print "Error en modOperationLoggerFactory.CreateOperationLogger: " & Err.Description
     Err.Raise Err.Number, "modOperationLoggerFactory.CreateOperationLogger", Err.Description
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+>>>>>>> main

@@ -81,4 +81,18 @@ Public Const GET_MAPEO_POR_TIPO As String = _
 Public Const INSERT_OPERATION_LOG As String = _
         "PARAMETERS pUsuario TEXT(255), pTipoOperacion TEXT(255), pEntidad TEXT(100), pIdEntidad LONG, pDescripcion TEXT, pResultado TEXT(50), pDetalles TEXT; " & _
         "INSERT INTO tbOperacionesLog (fechaHora, usuario, tipoOperacion, entidad, idEntidad, descripcion, resultado, detalles) " & _
+<<<<<<< HEAD
         "VALUES (Now(), [pUsuario], [pTipoOperacion], [pEntidad], [pIdEntidad], [pDescripcion], [pResultado], [pDetalles]);"
+=======
+        "VALUES (Now(), [pUsuario], [pTipoOperacion], [pEntidad], [pIdEntidad], [pDescripcion], [pResultado], [pDetalles]);"
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

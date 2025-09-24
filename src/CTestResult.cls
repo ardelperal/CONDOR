@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Public Name As String
 Public Passed As Boolean
 Public ErrorMessage As String
@@ -24,4 +25,14 @@ End Sub
 Public Sub Fail(Optional ByVal message As String = "Test failed without a specific message.")
     Passed = False
     ErrorMessage = message
+<<<<<<< HEAD
 End Sub
+=======
+End Sub
+
+
+
+
+
+
+>>>>>>> main

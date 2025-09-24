@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "IFileSystem"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -71,4 +81,14 @@ End Sub
 ' @param filePath: Ruta completa al archivo.
 ' @param line: El texto que se va a escribir en el archivo.
 Public Sub WriteLineToFile(ByVal filePath As String, ByVal line As String)
+<<<<<<< HEAD
 End Sub
+=======
+End Sub
+
+
+
+
+
+
+>>>>>>> main

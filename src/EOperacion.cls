@@ -7,6 +7,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tb_Operaciones_Log
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Registro de operaciones clave del sistema para auditoría y trazabilidad
@@ -93,4 +94,13 @@ End Property
 
 Public Property Let detalles(ByVal value As String)
     m_Detalles = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+
+
+>>>>>>> main

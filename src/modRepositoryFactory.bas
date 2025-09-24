@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' =====================================================
 ' FACTORY: modRepositoryFactory
 ' DESCRIPCIÓN: Crea instancias de TODOS los repositorios del sistema.
@@ -174,4 +175,11 @@ Public Function CreateWorkflowRepository(Optional ByVal config As IConfig = Noth
     Exit Function
 ErrorHandler:
     Debug.Print "Error crítico en modRepositoryFactory.CreateWorkflowRepository: " & Err.Description
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

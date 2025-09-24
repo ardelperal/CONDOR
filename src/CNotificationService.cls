@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CNotificationService"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' CNotificationService.cls
@@ -121,4 +131,30 @@ Private Sub Class_Terminate()
     Set m_OperationLogger = Nothing
     Set m_NotificationRepository = Nothing
     Set m_ErrorHandler = Nothing
+<<<<<<< HEAD
 End Sub
+=======
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockWorkflowService"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IWorkflowService
 
@@ -44,4 +54,11 @@ Private Function IWorkflowService_IsEstadoFinal(ByVal estadoActual As String) As
     ' Por defecto, un mock no considera ningún estado como final
     ' para no interferir con las pruebas, a menos que se configure explícitamente.
     IWorkflowService_IsEstadoFinal = False
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

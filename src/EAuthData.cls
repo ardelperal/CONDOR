@@ -5,6 +5,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' =============================================================================
 ' Proyecto: CONDOR
 ' Clase: EAuthData
@@ -69,4 +70,11 @@ End Property
 
 Public Property Let IsTecnico(ByVal value As Boolean)
     m_IsTecnico = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+>>>>>>> main

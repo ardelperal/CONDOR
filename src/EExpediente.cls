@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 '******************************************************************************
 ' CLASE: EExpediente
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de expedientes
@@ -192,4 +193,30 @@ Public Function EsValido() As Boolean
     EsValido = (Len(NumeroExpediente) > 0 And _
                 Len(ResponsableCalidad) > 0 And _
                 Len(EmailResponsable) > 0)
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

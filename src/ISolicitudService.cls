@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ISolicitudService"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' ============================================================================
@@ -38,4 +48,25 @@ End Function
 ' @param nuevoEstadoId: ID del nuevo estado
 ' @return: True si el cambio fue exitoso, False en caso contrario
 Public Function CambiarEstadoSolicitud(ByVal SolicitudID As Long, ByVal nuevoEstadoId As Long) As Boolean
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

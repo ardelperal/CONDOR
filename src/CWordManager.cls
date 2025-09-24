@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CWordManager"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' ============================================================================
@@ -80,7 +90,11 @@ Private Function IWordManager_SetBookmarkText(ByVal BookmarkName As String, ByVa
     IWordManager_SetBookmarkText = False
     If m_WordDoc Is Nothing Then Exit Function
 
+<<<<<<< HEAD
     If m_WordDoc.Bookmarks.Exists(BookmarkName) Then
+=======
+    If m_WordDoc.Bookmarks.exists(BookmarkName) Then
+>>>>>>> main
         m_WordDoc.FormFields(BookmarkName).result = value
         IWordManager_SetBookmarkText = True
     End If
@@ -97,7 +111,11 @@ Private Function IWordManager_GetBookmarkText(ByVal BookmarkName As String) As S
     IWordManager_GetBookmarkText = ""
     If m_WordDoc Is Nothing Then Exit Function
 
+<<<<<<< HEAD
     If m_WordDoc.Bookmarks.Exists(BookmarkName) Then
+=======
+    If m_WordDoc.Bookmarks.exists(BookmarkName) Then
+>>>>>>> main
         IWordManager_GetBookmarkText = m_WordDoc.FormFields(BookmarkName).result
     End If
 
@@ -178,4 +196,11 @@ Private Sub IWordManager_Dispose()
     
     ' 3. Resetear flags de estado
     m_IsWordAppCreated = False
+<<<<<<< HEAD
 End Sub
+=======
+End Sub
+
+
+
+>>>>>>> main

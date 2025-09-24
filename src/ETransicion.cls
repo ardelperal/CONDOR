@@ -7,6 +7,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tbTransiciones
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Reglas para las transiciones de estado permitidas
@@ -75,4 +76,13 @@ End Property
 
 Public Property Let Activa(ByVal value As Boolean)
     m_activa = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+
+
+>>>>>>> main

@@ -2083,6 +2083,7 @@ cscript condor_cli.vbs rebuild [--verbose] [--password <pwd>]
 - Strategy B: DAO con neutralización temporal de StartupForm y AutoExec (restauración automática)
 - Garantiza un estado limpio del proyecto sin interferencias de código de inicio
 
+<<<<<<< HEAD
 **Política de Importación por Tipo (Fuente de Verdad del Proyecto):**
 
 El comando `rebuild` implementa la política oficial de importación VBA del proyecto CONDOR:
@@ -2117,6 +2118,24 @@ cscript condor_cli.vbs test [patrón] [--verbose] [--password <pwd>]
 
 **Parámetros:**
 - `patrón`: Patrón opcional para filtrar tests (ej: "Test*User*")
+=======
+**Reconstrucción del Proyecto**
+
+```bash
+# Reconstrucción completa (comportamiento por defecto)
+cscript condor_cli.vbs rebuild
+
+# Reconstrucción selectiva de módulos específicos
+cscript condor_cli.vbs rebuild CAuthService,modUtils,CConfig
+```
+
+- **Modo Completo** (sin argumentos): Elimina todos los módulos VBA existentes e importa todos los archivos desde `src/`
+- **Modo Selectivo** (con argumentos): Elimina e importa únicamente los módulos especificados
+- Compila automáticamente los módulos después de la importación
+- Garantiza un estado 100% limpio y compilado
+- Sintaxis selectiva: Los nombres de módulos se separan con comas (sin espacios)
+- Usar solo cuando `update` no sea suficiente (problemas de sincronización graves)
+>>>>>>> main
 
 **Funcionalidad:**
 - Ejecuta todos los métodos que empiecen con "Test"

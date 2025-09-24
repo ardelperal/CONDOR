@@ -1,7 +1,11 @@
 ﻿Attribute VB_Name = "modDocumentServiceFactory"
+<<<<<<< HEAD
 Attribute VB_Name = "modDocumentServiceFactory"
+=======
+>>>>>>> main
 Option Compare Database
 Option Explicit
+
 
 
 Public Function CreateDocumentService(Optional ByVal config As IConfig = Nothing) As IDocumentService
@@ -43,4 +47,14 @@ Public Function CreateDocumentService(Optional ByVal config As IConfig = Nothing
 ErrorHandler:
     Debug.Print "Error crítico en modDocumentServiceFactory: " & Err.Description
     Set CreateDocumentService = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+>>>>>>> main

@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Implements IAppManager
 
 ' =====================================================
@@ -153,6 +154,11 @@ ErrorHandler:
     GetCurrentUserEmail = "unknown@domain.com"
 End Function
 
+<<<<<<< HEAD
 '----------------------------------
 ' PRUEBA
 '-------------------------------------
+=======
+
+
+>>>>>>> main

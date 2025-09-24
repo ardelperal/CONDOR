@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' Clase de tipo de datos para tbDatosPC
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md - Sección 8.2
 
@@ -384,4 +385,20 @@ End Property
 
 Public Property Let fechaFirmaDecisionFinal(ByVal value As Date)
     m_fechaFirmaDecisionFinal = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

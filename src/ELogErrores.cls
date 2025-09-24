@@ -7,6 +7,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tbLogErrores
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Registro de errores de la aplicación
@@ -84,4 +85,13 @@ End Property
 
 Public Property Let Contexto(ByVal value As String)
     m_contexto = value
+<<<<<<< HEAD
 End Property
+=======
+End Property
+
+
+
+
+
+>>>>>>> main

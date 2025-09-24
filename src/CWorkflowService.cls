@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CWorkflowService"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IWorkflowService
 
@@ -99,4 +109,28 @@ End Function
 Private Function IWorkflowService_IsEstadoFinal(ByVal estadoActual As String) As Boolean
     ' Implementación para verificar si un estado es final en el nuevo flujo
     IWorkflowService_IsEstadoFinal = (estadoActual = "Aprobada")
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

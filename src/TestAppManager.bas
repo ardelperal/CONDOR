@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Public Function TestAppManagerRunAll() As CTestSuiteResult
     Set TestAppManagerRunAll = New CTestSuiteResult
     TestAppManagerRunAll.Initialize "TestAppManager"
@@ -47,4 +48,28 @@ Cleanup:
 TestFail:
     TestStartApplication_AdminUser_Success.Fail "Error: " & Err.Description
     Resume Cleanup
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

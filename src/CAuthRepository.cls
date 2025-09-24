@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CAuthRepository"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -104,4 +114,16 @@ End Function
 ' Método público de conveniencia que delega a la interfaz
 Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
     Set GetUserAuthData = IAuthRepository_GetUserAuthData(userEmail)
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+
+
+>>>>>>> main

@@ -10,3 +10,5 @@ Public Sub RunSystemHealthCheck()
     ' Mostrar el informe al usuario.
     Debug.Print report
 End Sub
+
+'PRUEBA DE SINCRONIZMO

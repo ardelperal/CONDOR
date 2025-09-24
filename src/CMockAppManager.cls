@@ -5,6 +5,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 Implements IAppManager
 
 Private m_StartApplication_Result As Boolean
@@ -55,4 +56,11 @@ End Function
 
 Private Function IAppManager_Ping() As String
     IAppManager_Ping = m_Ping_Result
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

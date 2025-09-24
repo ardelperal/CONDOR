@@ -2,6 +2,7 @@
 Option Compare Database
 Option Explicit
 
+
 Public Function TestOperationLoggerRunAll() As CTestSuiteResult
     Set TestOperationLoggerRunAll = New CTestSuiteResult
     TestOperationLoggerRunAll.Initialize "TestOperationLogger"
@@ -107,3 +108,4 @@ Cleanup:
     Set logEntry = Nothing
     Set mockSolicitud = Nothing
 End Function
+

@@ -1,6 +1,10 @@
 ﻿Attribute VB_Name = "modTestUtils"
 Option Compare Database
 Option Explicit
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 
     Public Function GetProjectPath() As String
         ' Detecta "\front\" o "\back\" en la ruta del proyecto y devuelve la raíz del repo.
@@ -155,5 +159,8 @@ ErrorHandler:
         Debug.Print "ERROR CRÍTICO durante la auditoría de configuración: " & Err.Description
     End Sub
 
+<<<<<<< HEAD
 
     'HOLA'
+=======
+>>>>>>> main

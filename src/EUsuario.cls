@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 '******************************************************************************
 ' CLASE: EUsuario
 ' DESCRIPCIÓN: Tipo de datos para almacenar información de usuarios del sistema
@@ -137,4 +138,30 @@ Public Function PuedeConsultarSolicitudes() As Boolean
     PuedeConsultarSolicitudes = (EsUsuarioTecnico Or Rol = RolTecnico Or _
                                 EsUsuarioCalidad Or Rol = RolCalidad Or _
                                 TienePermisosAdmin())
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

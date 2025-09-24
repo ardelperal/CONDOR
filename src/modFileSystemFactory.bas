@@ -1,6 +1,7 @@
-Attribute VB_Name = "modFileSystemFactory"
+﻿Attribute VB_Name = "modFileSystemFactory"
 Option Compare Database
 Option Explicit
+
 
 
 ' Módulo: modFileSystemFactory
@@ -34,4 +35,13 @@ Public Function CreateFileSystem(Optional ByVal config As IConfig = Nothing) As 
 ErrorHandler:
     Debug.Print "Error en modFileSystemFactory.CreateFileSystem: " & Err.Number & " - " & Err.Description
     Set CreateFileSystem = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+>>>>>>> main

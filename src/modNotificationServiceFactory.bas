@@ -1,7 +1,11 @@
 ﻿Attribute VB_Name = "modNotificationServiceFactory"
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -49,4 +53,13 @@ Public Function CreateNotificationService(Optional ByVal config As IConfig = Not
 ErrorHandler:
     Debug.Print "Error en modNotificationServiceFactory.CreateNotificationService: " & Err.Number & " - " & Err.Description
     Err.Raise Err.Number, Err.Source, Err.Description
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+>>>>>>> main

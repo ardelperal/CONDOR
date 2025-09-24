@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 ﻿Attribute VB_GlobalNameSpace = False
+=======
+﻿VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CMockSolicitudService"
+Attribute VB_GlobalNameSpace = False
+>>>>>>> main
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 '*******************************************************************************
 ' CONDOR - Sistema de Gestión de Expedientes
@@ -164,4 +174,11 @@ End Function
 
 Public Function CambiarEstadoSolicitud(ByVal SolicitudID As Long, ByVal nuevoEstadoId As Long) As Boolean
     CambiarEstadoSolicitud = ISolicitudService_CambiarEstadoSolicitud(SolicitudID, nuevoEstadoId)
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main

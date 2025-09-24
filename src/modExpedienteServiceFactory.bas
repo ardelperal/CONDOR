@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 Attribute VB_Name = "modExpedienteServiceFactory"
 
+=======
+﻿Attribute VB_Name = "modExpedienteServiceFactory"
+>>>>>>> main
 Option Compare Database
 Option Explicit
+
 
 
 Public Function CreateExpedienteService(Optional ByVal config As IConfig = Nothing) As IExpedienteService
@@ -36,4 +41,13 @@ Public Function CreateExpedienteService(Optional ByVal config As IConfig = Nothi
 ErrorHandler:
     Debug.Print "Error crítico en modExpedienteServiceFactory: " & Err.Description
     Set CreateExpedienteService = Nothing
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+
+
+>>>>>>> main

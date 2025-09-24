@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' Interfaz: IErrorHandlerService
 ' Descripción: Define el contrato para servicios de manejo de errores del sistema CONDOR
 ' Arquitectura: Capa de Servicios - Interface
@@ -28,4 +29,20 @@ Public Sub LogInfo(ByVal message As String, Optional ByVal moduleName As String)
 End Sub
 
 Public Sub LogWarning(ByVal message As String, Optional ByVal moduleName As String)
+<<<<<<< HEAD
 End Sub
+=======
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> main

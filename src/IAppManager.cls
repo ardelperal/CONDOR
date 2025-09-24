@@ -6,6 +6,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' =====================================================
 ' INTERFACE: IAppManager
 ' PROPOSITO: Interface para la gestión centralizada de la aplicación
@@ -56,4 +57,11 @@ End Function
 ' RETORNA: String - "Pong"
 ' =====================================================
 Public Function Ping() As String
+<<<<<<< HEAD
 End Function
+=======
+End Function
+
+
+
+>>>>>>> main
