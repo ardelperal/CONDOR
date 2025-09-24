@@ -1,6 +1,7 @@
-Attribute VB_Name = "modFileSystemFactory"
+﻿Attribute VB_Name = "modFileSystemFactory"
 Option Compare Database
 Option Explicit
+
 
 
 ' Módulo: modFileSystemFactory
@@ -8,7 +9,7 @@ Option Explicit
 ' Arquitectura: Capa de Servicios - Factory Pattern
 
 Public Function CreateFileSystem(Optional ByVal config As IConfig = Nothing) As IFileSystem
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' 1. Obtener la configuración efectiva
     Dim effectiveConfig As IConfig
@@ -31,10 +32,12 @@ Public Function CreateFileSystem(Optional ByVal config As IConfig = Nothing) As 
     
     Exit Function
     
-errorHandler:
+ErrorHandler:
     Debug.Print "Error en modFileSystemFactory.CreateFileSystem: " & Err.Number & " - " & Err.Description
     Set CreateFileSystem = Nothing
 End Function
+
+
 
 
 

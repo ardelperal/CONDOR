@@ -1,10 +1,11 @@
-Attribute VB_Name = "modWorkflowServiceFactory"
+﻿Attribute VB_Name = "modWorkflowServiceFactory"
 Option Compare Database
 Option Explicit
 
 
+
 Public Function CreateWorkflowService(Optional ByVal config As IConfig = Nothing) As IWorkflowService
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
 
     Dim effectiveConfig As IConfig
     If config Is Nothing Then
@@ -32,7 +33,7 @@ Public Function CreateWorkflowService(Optional ByVal config As IConfig = Nothing
     Set CreateWorkflowService = serviceImpl
     Exit Function
 
-errorHandler:
+ErrorHandler:
     Debug.Print "Error crítico en modWorkflowServiceFactory: " & Err.Description
     Set CreateWorkflowService = Nothing
 End Function
@@ -43,4 +44,6 @@ Public Function CreateWorkflowServiceWithMocks(ByVal mockRepo As IWorkflowReposi
     serviceImpl.Initialize mockRepo, New CMockOperationLogger, New CMockErrorHandlerService
     Set CreateWorkflowServiceWithMocks = serviceImpl
 End Function
+
+
 

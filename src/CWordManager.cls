@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 ' ============================================================================
@@ -45,9 +46,9 @@ End Sub
 ' ============================================================================
 ' INICIALIZACIÓN CON DEPENDENCIAS
 ' ============================================================================
-Public Sub Initialize(ByVal wordApp As Object, ByVal errorHandler As IErrorHandlerService)
+Public Sub Initialize(ByVal wordApp As Object, ByVal ErrorHandler As IErrorHandlerService)
     Set m_WordApp = wordApp
-    Set m_ErrorHandler = errorHandler
+    Set m_ErrorHandler = ErrorHandler
     m_IsWordAppCreated = False ' La aplicación Word se inyecta, no se crea internamente
 End Sub
 
@@ -56,7 +57,7 @@ End Sub
 ' ============================================================================
 
 Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As Boolean
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     ' Verificar que la aplicación Word esté disponible
     If m_WordApp Is Nothing Then
@@ -73,20 +74,20 @@ Private Function IWordManager_AbrirDocumento(ByVal rutaDocumento As String) As B
     IWordManager_AbrirDocumento = True
     Exit Function
     
-errorHandler:
+ErrorHandler:
     ' Si el fichero no se encuentra (error común), no lo logueamos como un error del sistema.
     ' La función simplemente devolverá False, que es el comportamiento esperado.
     IWordManager_AbrirDocumento = False
 End Function
 
-Private Function IWordManager_SetBookmarkText(ByVal BookmarkName As String, ByVal Value As String) As Boolean
+Private Function IWordManager_SetBookmarkText(ByVal BookmarkName As String, ByVal value As String) As Boolean
     On Error GoTo ErrorHandler
 
     IWordManager_SetBookmarkText = False
     If m_WordDoc Is Nothing Then Exit Function
 
-    If m_WordDoc.Bookmarks.Exists(BookmarkName) Then
-        m_WordDoc.FormFields(BookmarkName).Result = Value
+    If m_WordDoc.Bookmarks.exists(BookmarkName) Then
+        m_WordDoc.FormFields(BookmarkName).result = value
         IWordManager_SetBookmarkText = True
     End If
     
@@ -102,8 +103,8 @@ Private Function IWordManager_GetBookmarkText(ByVal BookmarkName As String) As S
     IWordManager_GetBookmarkText = ""
     If m_WordDoc Is Nothing Then Exit Function
 
-    If m_WordDoc.Bookmarks.Exists(BookmarkName) Then
-        IWordManager_GetBookmarkText = m_WordDoc.FormFields(BookmarkName).Result
+    If m_WordDoc.Bookmarks.exists(BookmarkName) Then
+        IWordManager_GetBookmarkText = m_WordDoc.FormFields(BookmarkName).result
     End If
 
     Exit Function
@@ -112,14 +113,14 @@ ErrorHandler:
 End Function
 
 Private Function IWordManager_GuardarDocumento() As Boolean
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     If m_WordDoc Is Nothing Then Exit Function
     
     m_WordDoc.Save
     IWordManager_GuardarDocumento = True
     
     Exit Function
-errorHandler:
+ErrorHandler:
     IWordManager_GuardarDocumento = False
     ' El error ya será logueado por el llamador si es necesario.
 End Function
@@ -132,8 +133,8 @@ Public Function AbrirDocumento(ByVal rutaDocumento As String) As Boolean
     AbrirDocumento = IWordManager_AbrirDocumento(rutaDocumento)
 End Function
 
-Public Function SetBookmarkText(ByVal BookmarkName As String, ByVal Value As String) As Boolean
-    SetBookmarkText = IWordManager_SetBookmarkText(BookmarkName, Value)
+Public Function SetBookmarkText(ByVal BookmarkName As String, ByVal value As String) As Boolean
+    SetBookmarkText = IWordManager_SetBookmarkText(BookmarkName, value)
 End Function
 
 Public Function GetBookmarkText(ByVal BookmarkName As String) As String
@@ -184,4 +185,6 @@ Private Sub IWordManager_Dispose()
     ' 3. Resetear flags de estado
     m_IsWordAppCreated = False
 End Sub
+
+
 

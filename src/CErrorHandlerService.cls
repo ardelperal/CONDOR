@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 Implements IErrorHandlerService
@@ -56,6 +57,8 @@ End Sub
 Private Sub IErrorHandlerService_LogWarning(ByVal message As String, Optional ByVal moduleName As String)
     ' Implementación futura si es necesario
 End Sub
+
+
 
 
 

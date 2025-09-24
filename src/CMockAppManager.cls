@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 Implements IAppManager
 
 Private m_StartApplication_Result As Boolean
@@ -41,7 +42,7 @@ Public Sub ConfigureGetCurrentUserRole(ByVal value As UserRole)
     m_GetCurrentUserRole_Result = value
 End Sub
 
-Private Sub IAppManager_Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal errorHandler As IErrorHandlerService)
+Private Sub IAppManager_Initialize(ByVal authService As IAuthService, ByVal config As IConfig, ByVal ErrorHandler As IErrorHandlerService)
     ' En el mock, la inicialización no necesita hacer nada.
 End Sub
 
@@ -61,4 +62,6 @@ End Function
 Private Function IAppManager_Ping() As String
     IAppManager_Ping = m_Ping_Result
 End Function
+
+
 

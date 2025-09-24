@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Implements IDocumentService
 
 Private m_GenerarDocumento_ReturnValue As String
@@ -68,4 +69,6 @@ Private Function IDocumentService_LeerDocumento(ByVal rutaDocumento As String) A
     m_LeerDocumento_LastRuta = rutaDocumento
     Set IDocumentService_LeerDocumento = m_LeerDocumento_ReturnValue
 End Function
+
+
 

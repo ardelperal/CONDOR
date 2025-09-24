@@ -12,6 +12,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tb_Operaciones_Log
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Registro de operaciones clave del sistema para auditoría y trazabilidad
@@ -21,10 +22,10 @@ Private m_idOperacion As Long
 Private m_FechaHora As Date
 Private m_Usuario As String
 Private m_TipoOperacion As String
-Private m_entidad As String
+Private m_Entidad As String
 Private m_idEntidad As Long
-Private m_descripcion As String
-Private m_resultado As String
+Private m_Descripcion As String
+Private m_Resultado As String
 Private m_Detalles As String
 
 ' Propiedades públicas
@@ -60,12 +61,12 @@ Public Property Let tipoOperacion(ByVal value As String)
     m_TipoOperacion = value
 End Property
 
-Public Property Get Entidad() As String
-    Entidad = m_entidad
+Public Property Get entidad() As String
+    entidad = m_Entidad
 End Property
 
-Public Property Let Entidad(ByVal value As String)
-    m_entidad = value
+Public Property Let entidad(ByVal value As String)
+    m_Entidad = value
 End Property
 
 Public Property Get IdEntidad() As Long
@@ -76,20 +77,20 @@ Public Property Let IdEntidad(ByVal value As Long)
     m_idEntidad = value
 End Property
 
-Public Property Get Descripcion() As String
-    Descripcion = m_descripcion
+Public Property Get descripcion() As String
+    descripcion = m_Descripcion
 End Property
 
-Public Property Let Descripcion(ByVal value As String)
-    m_descripcion = value
+Public Property Let descripcion(ByVal value As String)
+    m_Descripcion = value
 End Property
 
-Public Property Get Resultado() As String
-    Resultado = m_resultado
+Public Property Get resultado() As String
+    resultado = m_Resultado
 End Property
 
-Public Property Let Resultado(ByVal value As String)
-    m_resultado = value
+Public Property Let resultado(ByVal value As String)
+    m_Resultado = value
 End Property
 
 Public Property Get detalles() As String
@@ -99,6 +100,8 @@ End Property
 Public Property Let detalles(ByVal value As String)
     m_Detalles = value
 End Property
+
+
 
 
 

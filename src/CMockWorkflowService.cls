@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 Implements IWorkflowService
 
@@ -50,4 +51,6 @@ Private Function IWorkflowService_IsEstadoFinal(ByVal estadoActual As String) As
     ' para no interferir con las pruebas, a menos que se configure explícitamente.
     IWorkflowService_IsEstadoFinal = False
 End Function
+
+
 

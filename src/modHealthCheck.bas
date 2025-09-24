@@ -1,6 +1,7 @@
-Attribute VB_Name = "modHealthCheck"
+﻿Attribute VB_Name = "modHealthCheck"
 Option Compare Database
 Option Explicit
+
 
 Public Function GenerateHealthReport() As String
     On Error GoTo ErrorHandler
@@ -35,9 +36,9 @@ Public Function GenerateHealthReport() As String
             
             If InStr(key, "PATH") > 0 Then
                 If Right(value, 1) = "\" Then
-                    If fs.FolderExists(value) Then status = "[✓ OK]" Else status = "[X ERROR: Directorio no encontrado]"
+                    If fs.FolderExists(value) Then status = "[? OK]" Else status = "[X ERROR: Directorio no encontrado]"
                 Else
-                    If fs.FileExists(value) Then status = "[✓ OK]" Else status = "[X ERROR: Fichero no encontrado]"
+                    If fs.FileExists(value) Then status = "[? OK]" Else status = "[X ERROR: Fichero no encontrado]"
                 End If
             Else
                 status = "[INFO]" ' No es una ruta, solo se informa del valor
@@ -72,7 +73,7 @@ Public Function GenerateHealthReport() As String
             Else
                 templateFullPath = modTestUtils.JoinPath(templatesPath, templateName)
                 If fs.FileExists(templateFullPath) Then
-                    status = "[✓ OK]"
+                    status = "[? OK]"
                 Else
                     status = "[X ERROR: No encontrada]"
                 End If
@@ -88,3 +89,4 @@ Public Function GenerateHealthReport() As String
 ErrorHandler:
     GenerateHealthReport = "ERROR INESPERADO durante la verificación: " & Err.Description
 End Function
+

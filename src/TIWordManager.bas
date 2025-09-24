@@ -1,6 +1,7 @@
-Attribute VB_Name = "TIWordManager"
+﻿Attribute VB_Name = "TIWordManager"
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -186,6 +187,8 @@ Cleanup:
     If Not wordManager Is Nothing Then wordManager.Dispose
     Set wordManager = Nothing
 End Function
+
+
 
 
 

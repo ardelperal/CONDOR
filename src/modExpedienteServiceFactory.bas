@@ -1,10 +1,11 @@
-Attribute VB_Name = "modExpedienteServiceFactory"
+﻿Attribute VB_Name = "modExpedienteServiceFactory"
 Option Compare Database
 Option Explicit
 
 
+
 Public Function CreateExpedienteService(Optional ByVal config As IConfig = Nothing) As IExpedienteService
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim effectiveConfig As IConfig
     If config Is Nothing Then
@@ -23,19 +24,21 @@ Public Function CreateExpedienteService(Optional ByVal config As IConfig = Nothi
     Dim logger As IOperationLogger
     Set logger = modOperationLoggerFactory.CreateOperationLogger(effectiveConfig)
     
-    Dim errorHandler As IErrorHandlerService
-    Set errorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
+    Dim ErrorHandler As IErrorHandlerService
+    Set ErrorHandler = modErrorHandlerFactory.CreateErrorHandlerService(effectiveConfig)
     
     ' La dependencia de IConfig ahora es manejada por el repositorio, no por el servicio.
-    serviceImpl.Initialize repo, logger, errorHandler
+    serviceImpl.Initialize repo, logger, ErrorHandler
     
     Set CreateExpedienteService = serviceImpl
     Exit Function
     
-errorHandler:
+ErrorHandler:
     Debug.Print "Error crítico en modExpedienteServiceFactory: " & Err.Description
     Set CreateExpedienteService = Nothing
 End Function
+
+
 
 
 

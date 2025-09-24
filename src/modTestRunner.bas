@@ -1,6 +1,7 @@
-Attribute VB_Name = "modTestRunner"
+﻿Attribute VB_Name = "modTestRunner"
 Option Compare Database
 Option Explicit
+
 
 
 ' ============================================================================
@@ -275,7 +276,7 @@ Private Sub DiscoverAndRegisterSuites()
                 Dim suiteKey As String
                 suiteKey = moduleName & "RunAll"
                 
-                If Not m_SuiteNames.Exists(suiteKey) Then
+                If Not m_SuiteNames.exists(suiteKey) Then
                     m_SuiteNames.Add suiteKey, suiteKey
                 End If
             End If
@@ -370,6 +371,9 @@ End Function
 Public Sub EjecutarTodasLasPruebas()
     Call RunTestFramework
 End Sub
+
+
+
 
 
 

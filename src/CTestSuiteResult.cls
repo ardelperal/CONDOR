@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' REQUISITO DE COMPILACIÓN:
 ' Este módulo utiliza Scripting.Dictionary y requiere la referencia a
@@ -49,7 +50,7 @@ End Sub
 
 ' Método crítico que faltaba
 Public Sub AddResult(ByVal testResult As CTestResult)
-    If Results.Exists(testResult.Name) Then
+    If Results.exists(testResult.Name) Then
         ' Evitar duplicados, aunque no debería ocurrir
         Results.Remove testResult.Name
     End If
@@ -63,6 +64,8 @@ Public Sub AddResult(ByVal testResult As CTestResult)
         FailedTests = FailedTests + 1
     End If
 End Sub
+
+
 
 
 

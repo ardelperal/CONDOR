@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 Implements IAuthService
@@ -39,4 +40,6 @@ End Function
 Public Function GetCurrentUserEmail() As String
     GetCurrentUserEmail = IAuthService_GetCurrentUserEmail()
 End Function
+
+
 

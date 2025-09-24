@@ -1,6 +1,7 @@
-Attribute VB_Name = "modSystemUtils"
+﻿Attribute VB_Name = "modSystemUtils"
 Option Compare Database
 Option Explicit
+
 
 Public Sub RunSystemHealthCheck()
     ' Punto de entrada para ejecutar el diagnóstico del sistema desde la UI.
@@ -10,3 +11,4 @@ Public Sub RunSystemHealthCheck()
     ' Mostrar el informe al usuario.
     Debug.Print report
 End Sub
+

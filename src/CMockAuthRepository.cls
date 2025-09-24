@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Implements IAuthRepository
 
 ' =====================================================
@@ -84,4 +85,6 @@ End Function
 Public Function GetUserAuthData(ByVal userEmail As String) As EAuthData
     Set GetUserAuthData = IAuthRepository_GetUserAuthData(userEmail)
 End Function
+
+
 

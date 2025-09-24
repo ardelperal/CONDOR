@@ -1,6 +1,7 @@
-Attribute VB_Name = "modSolicitudServiceFactory"
+﻿Attribute VB_Name = "modSolicitudServiceFactory"
 Option Compare Database
 Option Explicit
+
 
 
 '******************************************************************************
@@ -20,7 +21,7 @@ Option Explicit
 ' RETORNA: ISolicitudService - Instancia del servicio completamente inicializada
 '******************************************************************************
 Public Function CreateSolicitudService(Optional ByVal config As IConfig = Nothing) As ISolicitudService
-    On Error GoTo errorHandler
+    On Error GoTo ErrorHandler
     
     Dim effectiveConfig As IConfig
     If config Is Nothing Then
@@ -59,11 +60,13 @@ Public Function CreateSolicitudService(Optional ByVal config As IConfig = Nothin
     
     Exit Function
     
-errorHandler:
+ErrorHandler:
     ' Usar Debug.Print en una factoría es aceptable si errorHandler falla.
     Debug.Print "Error crítico en modSolicitudServiceFactory.CreateSolicitudService: " & Err.Description
     Set CreateSolicitudService = Nothing
 End Function
+
+
 
 
 

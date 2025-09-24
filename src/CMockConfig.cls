@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
 
+
 ' REQUISITO DE COMPILACIÓN: Este módulo usa Scripting.Dictionary. Active "Microsoft Scripting Runtime".
 
 Implements IConfig
@@ -20,10 +21,10 @@ Private Sub Class_Initialize(): Set m_Settings = New Scripting.Dictionary: m_Set
 Public Sub Reset(): Set m_Settings = New Scripting.Dictionary: m_Settings.CompareMode = TextCompare: End Sub
 
 Private Function IConfig_GetValue(ByVal key As String) As Variant
-    If m_Settings.Exists(key) Then IConfig_GetValue = m_Settings(key) Else IConfig_GetValue = ""
+    If m_Settings.exists(key) Then IConfig_GetValue = m_Settings(key) Else IConfig_GetValue = ""
 End Function
 Private Sub IConfig_SetSetting(ByVal key As String, ByVal value As Variant)
-    If m_Settings.Exists(key) Then m_Settings(key) = value Else m_Settings.Add key, value
+    If m_Settings.exists(key) Then m_Settings(key) = value Else m_Settings.Add key, value
 End Sub
 
 ' --- Implementaciones Específicas ---
@@ -55,10 +56,12 @@ Public Function GetValue(ByVal key As String) As Variant
 End Function
 
 Public Function HasKey(ByVal key As String) As Boolean
-    HasKey = m_Settings.Exists(key)
+    HasKey = m_Settings.exists(key)
 End Function
 
 Public Function GetAllKeys() As Variant
     GetAllKeys = m_Settings.Keys
 End Function
+
+
 

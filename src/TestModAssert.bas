@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' ============================================================================
 ' MÓDULO DE META-TESTING PARA modAssert
 ' ============================================================================
@@ -262,4 +263,6 @@ TestFail:
         TestFailAlwaysFails.Fail "Fail falló con error incorrecto. Esperado: " & (vbObjectError + 515) & ", Actual: " & Err.Number
     End If
 End Function
+
+
 

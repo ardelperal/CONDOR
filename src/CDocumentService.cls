@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -110,5 +111,7 @@ Private Function JoinPath(ByVal basePath As String, ByVal relativePath As String
     If Left$(r, 1) = "\" Then r = Mid$(r, 2)
     JoinPath = b & "\" & r
 End Function
+
+
 
 

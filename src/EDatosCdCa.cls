@@ -11,6 +11,7 @@ Option Compare Database
 Option Explicit
 
 
+
 ' Clase de tipo de datos para tbDatosCDCA
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md - Sección 8.3
 
@@ -255,6 +256,8 @@ End Property
 Public Property Let cargoFirmanteFinal(ByVal value As String)
     m_cargoFirmanteFinal = value
 End Property
+
+
 
 
 

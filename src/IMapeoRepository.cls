@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -12,11 +12,14 @@ Option Explicit
 
 
 
+
 Public Function GetMapeoPorTipo(ByVal tipoSolicitud As String) As EMapeo
 End Function
 
 Public Function ObtenerMapeosPorCategoria(ByVal categoria As String) As Object
 End Function
+
+
 
 
 

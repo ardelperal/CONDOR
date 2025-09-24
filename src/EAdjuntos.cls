@@ -12,6 +12,7 @@ Option Explicit
 
 
 
+
 ' Clase de tipo de datos para tbAdjuntos
 ' Basada en el Anexo A del CONDOR_MASTER_PLAN.md
 ' Propósito: Gestión de ficheros adjuntos a las solicitudes
@@ -22,7 +23,7 @@ Private m_idSolicitud As Long
 Private m_nombreArchivo As String
 Private m_fechaSubida As Date
 Private m_usuarioSubida As String
-Private m_descripcion As String
+Private m_Descripcion As String
 
 ' Propiedades públicas
 Public Property Get IdAdjunto() As Long
@@ -65,13 +66,15 @@ Public Property Let UsuarioSubida(ByVal value As String)
     m_usuarioSubida = value
 End Property
 
-Public Property Get Descripcion() As String
-    Descripcion = m_descripcion
+Public Property Get descripcion() As String
+    descripcion = m_Descripcion
 End Property
 
-Public Property Let Descripcion(ByVal value As String)
-    m_descripcion = value
+Public Property Let descripcion(ByVal value As String)
+    m_Descripcion = value
 End Property
+
+
 
 
 

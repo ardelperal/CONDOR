@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 '*******************************************************************************
 ' CONDOR - Sistema de Gestión de Expedientes
@@ -147,9 +148,9 @@ Private Function ISolicitudService_ObtenerSolicitudPorId(ByVal SolicitudID As Lo
     Set ISolicitudService_ObtenerSolicitudPorId = m_ObtenerSolicitudPorId_Result
 End Function
 
-Private Function ISolicitudService_CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
+Private Function ISolicitudService_CambiarEstadoSolicitud(ByVal SolicitudID As Long, ByVal nuevoEstadoId As Long) As Boolean
     m_CambiarEstado_WasCalled = True
-    m_CambiarEstado_LastSolicitudId = solicitudId
+    m_CambiarEstado_LastSolicitudId = SolicitudID
     m_CambiarEstado_LastNuevoEstadoId = nuevoEstadoId
     ISolicitudService_CambiarEstadoSolicitud = m_CambiarEstado_ReturnValue
 End Function
@@ -167,7 +168,9 @@ Public Function ObtenerSolicitudPorId(ByVal SolicitudID As Long) As ESolicitud
     Set ObtenerSolicitudPorId = ISolicitudService_ObtenerSolicitudPorId(SolicitudID)
 End Function
 
-Public Function CambiarEstadoSolicitud(ByVal solicitudId As Long, ByVal nuevoEstadoId As Long) As Boolean
-    CambiarEstadoSolicitud = ISolicitudService_CambiarEstadoSolicitud(solicitudId, nuevoEstadoId)
+Public Function CambiarEstadoSolicitud(ByVal SolicitudID As Long, ByVal nuevoEstadoId As Long) As Boolean
+    CambiarEstadoSolicitud = ISolicitudService_CambiarEstadoSolicitud(SolicitudID, nuevoEstadoId)
 End Function
+
+
 

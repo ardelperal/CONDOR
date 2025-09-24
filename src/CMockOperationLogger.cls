@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 ' Versión 2.0 - Mock Inteligente con espía (Lección 22)
 
@@ -51,3 +52,4 @@ Private Sub IOperationLogger_LogSolicitudOperation(ByVal logEntry As EOperationL
     Set m_LogSolicitudOperation_LastSolicitud = solicitud
     m_LogSolicitudOperation_LastUserId = userId
 End Sub
+

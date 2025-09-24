@@ -3,6 +3,7 @@ Option Compare Database
 Option Explicit
 
 
+
 Public Function TestAuthServiceRunAll() As CTestSuiteResult
     Set TestAuthServiceRunAll = New CTestSuiteResult
     TestAuthServiceRunAll.Initialize "TestAuthService"
@@ -51,6 +52,8 @@ TestFail:
     TestGetUserRole_Admin_ReturnsAdmin.Fail "Error: " & Err.Description
     Resume Cleanup
 End Function
+
+
 
 
 

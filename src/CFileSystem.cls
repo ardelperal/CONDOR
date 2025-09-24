@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+﻿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 Option Explicit
+
 
 
 
@@ -192,6 +193,9 @@ End Sub
 Public Sub WriteLineToFile(ByVal filePath As String, ByVal line As String)
     Call IFileSystem_WriteLineToFile(filePath, line)
 End Sub
+
+
+
 
 
 
